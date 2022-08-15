@@ -401,14 +401,19 @@ environmentOverrides:
         GITHUB_CLIENT_ID: Iv1.c05e2f0e8027204a
         PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-stg-east
         GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-stg-east
+    scaling:
+      instance: t2.small
+      min: 1
+      max: 1
+      metrics: *CpuMemScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t2.small
+          min: 1
+          max: 5
+          metrics: *CpuMemAndQueuesScalingRules
     resources:
-      - name: rds
-        type: dedicated-rds
-        attributes:
-          parameters:
-            # Adding read replica in staging as it's not enabled by default so we can read state
-            ReadReplica: true
-
       - type: globaledge
         name: proxy
         attributes:
@@ -418,10 +423,18 @@ environmentOverrides:
           ip_whitelist:
             - public
           routes: *blackholeSpammingIPs
-
       - *cryptorGithubServerAppSecrets
-
       - *cryptorJiraInstanceSecrets
+    alarms:
+      overrides:
+        LatencyHigh: null
+        HealthyHostCount: null
+        UnHealthyHostCount: null
+        WebServerAlarmWhenLowCPUCredits: null
+        WebServerDiskSpaceUtilizationAlarmHigh: null
+        WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
+        WebServerMemoryAlarmHigh: null
+        WebServerServiceRespawnAlarm: null
 
   stg-west:
     config:
