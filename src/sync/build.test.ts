@@ -200,8 +200,6 @@ describe("sync/builds", () => {
 
 		createJiraNock(builds);
 
-		expect(data).toEqual(data);
-
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		await verifyMessageSent(data);
 	});
