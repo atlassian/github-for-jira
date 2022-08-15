@@ -11,11 +11,15 @@ import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
+import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
+import { GitHubServerApp } from "~/src/models/github-server-app";
+import { UUID_REGEX } from "routes/github/github-router";
+
 
 export const ApiRouter = Router();
 
@@ -68,7 +72,7 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 
 // RESYNC ALL INSTANCES
 ApiRouter.post(
-	"/resync",
+	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
 	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
@@ -99,8 +103,16 @@ ApiRouter.post(
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
-
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
+		const { uuid } = req.params;
+		let gitHubServerApp;
+		if (uuid) {
+			gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+			if (!gitHubServerApp) {
+				res.status(400).json("No GitHub app found for provided uuid");
+				return;
+			}
+		}
+		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds, gitHubServerApp?.id);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)
@@ -114,6 +126,15 @@ ApiRouter.post(
 ApiRouter.post("/hash", ApiHashPost);
 
 ApiRouter.post("/ping", ApiPingPost);
+
+// TODO: remove once move to DELETE /:installationId/:jiraHost
+ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
 
 // TODO: remove the debug endpoint
 /*
