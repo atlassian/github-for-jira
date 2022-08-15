@@ -34,7 +34,7 @@ subRouter.use(csrfMiddleware);
 subRouter.use("/setup", GithubSetupRouter);
 
 // App Manifest flow routes
-GithubRouter.use("/manifest", GithubManifestRouter);
+subRouter.use("/manifest", GithubManifestRouter);
 
 // All following routes need Github Auth
 subRouter.use(GithubAuthMiddleware);

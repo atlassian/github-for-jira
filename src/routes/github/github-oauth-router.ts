@@ -8,16 +8,20 @@ import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubHostname, getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
-
-const githubClient = envVars.GITHUB_CLIENT_ID;
-const githubSecret = envVars.GITHUB_CLIENT_SECRET;
-const baseURL = envVars.APP_URL;
+const appUrl = envVars.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
+
+const getRedirectUrl = async (req, res, state) => {
+	const { baseUrl } = req;
+	const { hostname, clientId } = res.locals.gitHubAppConfig;
+	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
+	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+};
 
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
 	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
@@ -28,16 +32,13 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	const state = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
-	const { jiraHost, gitHubAppId } = res.locals;
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
-	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
-	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
-	const redirectUrl = `${gitHubHostname}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	const redirectUrl = await getRedirectUrl(req, res, state);
 	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
@@ -85,22 +86,20 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost, gitHubAppId } = res.locals;
-
+	const { jiraHost, gitHubAppConfig } = res.locals;
+	const { hostname, clientId, gitHubClientSecret } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
-
-	logger.info(`${createHashWithSharedSecret(githubSecret)} is used`);
+	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
 
 	try {
 		const response = await axios.get(
-			`${gitHubHostname}/login/oauth/access_token`,
+			`${hostname}/login/oauth/access_token`,
 			{
 				params: {
-					client_id: githubClient,
-					client_secret: githubSecret,
+					client_id: clientId,
+					client_secret: gitHubClientSecret,
 					code,
 					state
 				},
