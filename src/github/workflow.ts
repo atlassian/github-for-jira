@@ -9,7 +9,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId
 	});
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, context.gitHubAppConfig?.gitHubAppId);
 	const jiraPayload = await transformWorkflow(gitHubInstallationClient, payload, logger);
 
 	if (!jiraPayload) {

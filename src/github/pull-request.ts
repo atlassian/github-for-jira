@@ -31,7 +31,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		pullRequestId
 	});
 
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, context.gitHubAppConfig?.gitHubAppId);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
