@@ -286,7 +286,7 @@ export const getJiraClient = async (
 					payload = {
 						deployments: data.deployments,
 						properties: {
-							installationId
+							gitHubInstallationId: installationId
 						},
 						preventTransitions: options?.preventTransitions || false,
 						operationType: options?.operationType || "NORMAL"
@@ -295,7 +295,7 @@ export const getJiraClient = async (
 					payload = {
 						deployments: data.deployments,
 						properties: {
-							installationId
+							gitHubInstallationId: installationId
 						}
 					};
 				}
