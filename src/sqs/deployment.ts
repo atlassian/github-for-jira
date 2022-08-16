@@ -18,6 +18,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 
 	const github = await workerApp.auth(installationId);
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationId = Number(gitHubInstallationClient.githubInstallationId);
 
 	await processDeployment(
 		github,
@@ -26,6 +27,6 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		messagePayload.webhookPayload,
 		new Date(messagePayload.webhookReceived),
 		jiraHost,
-		installationId,
+		gitHubInstallationId,
 		context.log);
 };
