@@ -7,7 +7,7 @@ import { Request, Response } from "express";
  *
  */
 export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost, gitHubAppId } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals;
 	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
 	const installationId = Number(req.params.installationId) || Number(req.body.installationId);
 
@@ -28,18 +28,16 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId,
-		gitHubAppId
+		gitHubAppConfig?.gitHubAppId
 	);
 
-	const gitHubInstallationId = subscription?.gitHubInstallationId;
-
-	if (!subscription || gitHubInstallationId) {
+	if (!subscription) {
 		res.status(404).send("Cannot find Subscription");
 		return;
 	}
 
-	const jiraClient = await getJiraClient(jiraHost, installationId, req.log);
-	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+	const jiraClient = await getJiraClient(jiraHost, subscription.gitHubInstallationId, req.log);
+	await jiraClient.devinfo.installation.delete(installationId);
 	await subscription.destroy();
 
 	res.sendStatus(204);

@@ -14,7 +14,7 @@ describe("DELETE /jira/configuration", () => {
 
 	beforeEach(async () => {
 		subscription = {
-			githubInstallationId: 15,
+			gitHubInstallationId: 15,
 			jiraHost,
 			destroy: jest.fn().mockResolvedValue(undefined)
 		};
@@ -36,17 +36,17 @@ describe("DELETE /jira/configuration", () => {
 	it("Delete Jira Configuration", async () => {
 		jiraNock
 			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
+			.query({ installationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/builds/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		jiraNock
 			.delete("/rest/deployments/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
+			.query({ gitHubInstallationId: subscription.gitHubInstallationId })
 			.reply(200, "OK");
 
 		// TODO: use supertest for this
@@ -56,43 +56,11 @@ describe("DELETE /jira/configuration", () => {
 				jiraHost: subscription.jiraHost
 			},
 			params: {
-				installationId: subscription.githubInstallationId
+				installationId: subscription.gitHubInstallationId
 			}
 		};
 
 		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
-		await JiraDelete(req as any, res as any);
-		expect(subscription.destroy).toHaveBeenCalled();
-		expect(res.sendStatus).toHaveBeenCalledWith(204);
-	});
-
-	it("Delete Jira Configuration with gitHubAppId", async () => {
-		jiraNock
-			.delete("/rest/devinfo/0.10/bulkByProperties")
-			.query({ installationId: subscription.githubInstallationId })
-			.reply(200, "OK");
-
-		jiraNock
-			.delete("/rest/builds/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
-			.reply(200, "OK");
-
-		jiraNock
-			.delete("/rest/deployments/0.1/bulkByProperties")
-			.query({ gitHubInstallationId: subscription.githubInstallationId })
-			.reply(200, "OK");
-
-		const req = {
-			log: getLogger("request"),
-			body: {
-				jiraHost: subscription.jiraHost
-			},
-			params: {
-				installationId: subscription.githubInstallationId
-			}
-		};
-
-		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost, gitHubAppId: 1 } };
 		await JiraDelete(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
