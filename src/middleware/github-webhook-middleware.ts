@@ -97,11 +97,11 @@ export const GithubWebhookMiddleware = (
 		const { name, payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
-		const gitHubInstallationId = Number(payload?.installation?.id);
+		const installationId = Number(payload?.installation?.id);
 
 		context.log = getLogger("github.webhooks", {
 			webhookId,
-			gitHubInstallationId,
+			installationId,
 			event: webhookEvent,
 			webhookReceived,
 			repoName,
@@ -147,7 +147,8 @@ export const GithubWebhookMiddleware = (
 		}
 
 		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId
+			installationId,
+			context.gitHubAppConfig?.gitHubAppId
 		);
 
 		if (!subscriptions.length) {
@@ -169,9 +170,10 @@ export const GithubWebhookMiddleware = (
 
 		for (const subscription of subscriptions) {
 			const { jiraHost } = subscription;
+			const gitHubInstallationId = subscription.gitHubInstallationId;
 			context.sentry?.setTag("jiraHost", jiraHost);
 			context.sentry?.setTag(
-				"gitHubInstallationId",
+				"installationId",
 				gitHubInstallationId.toString()
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });
