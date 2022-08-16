@@ -3,8 +3,6 @@ import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { Tracer } from "config/tracer";
 import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
@@ -20,9 +18,6 @@ const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(logger, "login", traceLogsEnabled);
-
 	// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 	// Create unique state for each oauth request
 	const state = crypto.randomBytes(8).toString("hex");
@@ -44,7 +39,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		redirectUrl,
 		postLoginUrl: req.session[state]
 	}, `Received request for ${req.url}, redirecting to Github OAuth flow`);
-	tracer.trace(`redirecting to ${redirectUrl}`);
+	req.log.debug(`redirecting to ${redirectUrl}`);
 	res.redirect(redirectUrl);
 };
 
@@ -57,18 +52,15 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		state
 	} = req.query as Record<string, string>;
 
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(logger, "callback", traceLogsEnabled);
-
 	const timestampBefore = req.session["timestamp_before_oauth"] as number;
 	if (timestampBefore) {
 		const timestampAfter = Date.now();
-		tracer.trace(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
+		req.log.debug(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
 	}
 
 	// Show the oauth error if there is one
 	if (error) {
-		tracer.trace(`OAuth Error: ${error}`);
+		req.log.debug(`OAuth Error: ${error}`);
 		return next(`OAuth Error: ${error}
       URL: ${error_uri}
       ${error_description}`);
@@ -78,7 +70,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	const redirectUrl = req.session[state] as string;
 	delete req.session[state];
 
-	tracer.trace(`extracted redirectUrl from session: ${redirectUrl}`);
+	req.log.debug(`extracted redirectUrl from session: ${redirectUrl}`);
 	req.log.info({ query: req.query }, `Received request to ${req.url}`);
 
 	// Check if state is available and matches a previous request
@@ -88,7 +80,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	const { jiraHost, gitHubAppId } = res.locals;
 
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
-	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
+	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
 	const gitHubHostname = await getGitHubHostname(jiraHost, gitHubAppId);
 
@@ -116,16 +108,16 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		req.session.githubToken = response.data.access_token;
 
 		if (!req.session.githubToken) {
-			tracer.trace(`didn't get access token from GitHub`);
+			req.log.debug(`didn't get access token from GitHub`);
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
 		}
 
-		tracer.trace(`got access token from GitHub, redirecting to ${redirectUrl}`);
+		req.log.debug(`got access token from GitHub, redirecting to ${redirectUrl}`);
 
 		req.log.info({ redirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 		return res.redirect(redirectUrl);
 	} catch (e) {
-		tracer.trace(`Cannot retrieve access token from Github`);
+		req.log.debug(`Cannot retrieve access token from Github`);
 		return next(new Error("Cannot retrieve access token from Github"));
 	}
 };
