@@ -1,0 +1,497 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: '(qs-1nae5pfk3) Git Hub Enterprise Quickstart License: Apache 2.0 (Please
+  do not remove) May,08,2018'
+Metadata:
+  QuickStartDocumentation:
+    EntrypointName: "Launch into an existing VPC"
+    Order: "2"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: 'Atlassian-specific tags'
+        Parameters:
+          - BusinessUnit
+          - Environment
+          - ResourceOwner
+      - Label:
+          default: ' VPC Network Configuration'
+        Parameters:
+          - AccessCIDR
+          - SubnetId
+          - VPCID
+      - Label:
+          default: GitHub Enterprise Config
+        Parameters:
+          - ImageId
+          - LicenseLocation
+          - GHELicense
+      - Label:
+          default: GitHub Enterprise Organization and Repository
+        Parameters:
+          - InitialOrganization
+          - InitialRepository
+      - Label:
+          default: Site Admin User Information
+        Parameters:
+          - ManagementPassword
+          - SiteAdminUsername
+          - SiteAdminUserEmail
+          - SiteAdminUserPassword
+      - Label:
+          default: Server Configuration
+        Parameters:
+          - InstanceType
+          - KeyPairName
+          - VolumeType
+          - ProvisionedIops
+          - VolumeSize
+      - Label:
+          default: AWS Quick Start Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+    ParameterLabels:
+      KeyPairName:
+        default: Key Pair Name
+      QSS3BucketName:
+        default: Quick Start S3 Bucket Name
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket region
+      QSS3KeyPrefix:
+        default: Quick Start S3 Key Prefix
+      AccessCIDR:
+        default: Permitted IP range
+      LicenseLocation:
+        default: GitHub License Location
+      GHELicense:
+        default: GitHub License Filename
+      InitialOrganization:
+        default: Initial Organization
+      InitialRepository:
+        default: Initial Repository
+      ManagementPassword:
+        default: Management Password
+      SiteAdminUsername:
+        default: Site Admin Username
+      SiteAdminUserPassword:
+        default: Site Admin User Password
+      SiteAdminUserEmail:
+        default: Site Admin User Email
+      VolumeType:
+        default: Volume Type
+      InstanceType:
+        default: Instance Type
+      ProvisionedIops:
+        default: Provisioned IOPS
+      VolumeSize:
+        default: Volume Size
+      SubnetId:
+        default: Subnet Id
+      VPCID:
+        default: VPC ID
+      ImageId:
+        # Get the ImageId of the GHE version you want to deploy here: https://docs.github.com/en/enterprise-server@3.2/admin/release-notes#3.2.0
+        # (click on the version you want to install, select AWS from the drop down, and it will display an AMI)
+        default: GitHub Enterprise AMI ID
+Conditions:
+  GovCloudCondition: !Equals
+    - !Ref 'AWS::Region'
+    - us-gov-west-1
+  Io1Set: !Equals
+    - !Ref 'VolumeType'
+    - io1
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+Outputs:
+  AvailabilityZone:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt 'EC2Instance.AvailabilityZone'
+  EC2InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref 'EC2Instance'
+  EC2InstanceProfileId:
+    Description: ID of the Instance Profile for Elastic Beanstalk
+    Value: !Ref 'EC2InstanceProfile'
+  EC2RoleId:
+    Description: ID of the Role for Elastic Beanstalk
+    Value: !Ref 'EC2InstanceRole'
+  GHEURL:
+    Description: URL of the primary instance
+    Value: !Join
+      - ''
+      - - http://
+        - !GetAtt 'EC2Instance.PublicIp'
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt 'EC2Instance.PublicDnsName'
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt 'EC2Instance.PublicIp'
+Parameters:
+  ResourceOwner:
+    Description: 'User name of the individual person responsible for this resource.'
+    Type: String
+    Default: crolf
+  BusinessUnit:
+    Description: 'Business unit this resource belongs to.'
+    Type: String
+    Default: Engineering-DevOps
+  Environment:
+    Description: 'Environment of this instance.'
+    Type: String
+    Default: dev
+  AccessCIDR:
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Description: The IP address range that can be used to access to the EC2 instance
+    MaxLength: '18'
+    MinLength: '9'
+    Type: String
+    Default: 0.0.0.0/0
+  GHELicense:
+    Description: 'GitHub Enterprise License file that is uploaded to the License S3
+      bucket. Sign up for a trial license here: https://enterprise.github.com/trial'
+    Type: String
+    Default: enterprise.ghl
+  InitialOrganization:
+    Description: The initial organization to hold the GitHub Enterprise repository
+    Default: initial-organization
+    Type: String
+  InitialRepository:
+    Description: The initial repository to create
+    Default: initial-repository
+    Type: String
+  InstanceType:
+    AllowedValues:
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.xlarge
+      - m4.2xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+    ConstraintDescription: >-
+      must be a valid EC2 instance type for GitHub Enterprise: m3.xlarge, m3.2xlarge,
+      m4.xlarge, m4.2xlarge, c3.2xlarge, c3.4xlarge, c3.8xlarge, c4.2xlarge, c4.4xlarge,
+      c4.8xlarge, r3.large, r3.xlarge, r3.xlarge, r3.2xlarge, r3.4xlarge, or r3.8xlarge.
+    Default: m3.xlarge
+    Description: WebServer EC2 instance type
+    Type: String
+  KeyPairName:
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  LicenseLocation:
+    Description: Name of S3 bucket containing GitHub Enterprise license
+    Type: String
+    Default: open-toolchain-ghe-license
+  ManagementPassword:
+    AllowedPattern: (?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]*
+    ConstraintDescription: Passwords must be at least 7 characters long and include
+      at least one number and one upper case letter.
+    Description: Set the Console password for Github Enterprise (Passwords must be
+      at least 7 characters long and include at least one number and one upper case
+      letter)
+    MinLength: '7'
+    NoEcho: 'True'
+    Type: String
+  ProvisionedIops:
+    ConstraintDescription: Range is 100 to 20000 for Provisioned IOPS SSD volumes
+    Description: Set the provisioned IOPs between 100 and 20000. Only set if you are
+      choosing io1 for your volume type
+    Type: String
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
+    Type: String
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*/
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/). It cannot start with
+      forward slash (/) because is it automatically added.
+    Default: quickstart-github-enterprise/
+    Description: >-
+      S3 key prefix for the Quick Start assets. Quick Start key prefix can include
+      numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash
+      (/). It cannot start with forward slash (/) because it is automatically added.
+    Type: String
+  SiteAdminUserEmail:
+    Description: Site Admin Email address
+    Type: String
+    Default: fusion-arc@atlassian.com
+  SiteAdminUserPassword:
+    AllowedPattern: (?=.*\d)(?=.*[a-z])(?=.*[A-Z])[a-zA-Z0-9]*
+    ConstraintDescription: Passwords must be at least 7 characters long and include
+      at least one number and one upper case letter.
+    Description: Set the Console password for Github Enterprise (Passwords must be
+      at least 7 characters long and include at least one number and one upper case
+      letter)
+    MinLength: '7'
+    NoEcho: 'True'
+    Type: String
+  SiteAdminUsername:
+    Description: Set the Site Admin Username
+    Type: String
+    Default: fusion-arc
+  SubnetId:
+    Description: The Public subnet where the GitHub Enterprise instance will be launched
+    Type: AWS::EC2::Subnet::Id
+  VPCID:
+    Description: The VPC to launch the GitHub Enterprise server
+    Type: AWS::EC2::VPC::Id
+  VolumeSize:
+    Default: '100'
+    Description: The size of the EBS attached volume
+    Type: String
+  VolumeType:
+    AllowedValues:
+      - gp2
+      - io1
+    Description: Choose either GP2 or IO1. IO1 is recommended for more than 500 users
+    Default: gp2
+    Type: String
+  ImageId:
+    Description: "The AMI (Amazon Machine Image) that contains the GHE version you want to deploy. Get them by clicking on \"Download\" on https://docs.github.com/en/enterprise-server@3.6/admin/release-notes"
+    Type: String
+    Default: ami-089afb208f3f3dcf4
+Resources:
+  GHECloudWatchAlarmInstanceRecovery:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Trigger a recovery when instance status check fails for 10
+        consecutive minutes.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: 60
+      EvaluationPeriods: 10
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: 0
+      AlarmActions:
+        - !Join
+          - ''
+          - - 'arn:aws:automate:'
+            - !Ref 'AWS::Region'
+            - :ec2:recover
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref 'EC2Instance'
+  EC2Instance:
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          files:
+            /etc/gheadmin.conf:
+              content: !Join
+                - ''
+                - - 'github_console_password:'
+                  - !Ref 'ManagementPassword'
+                  - "\n"
+                  - 'github_s3_bucket:'
+                  - !Ref 'LicenseLocation'
+                  - "\n"
+                  - 'github_adminuser_name:'
+                  - !Ref 'SiteAdminUsername'
+                  - "\n"
+                  - 'github_adminuser_email:'
+                  - !Ref 'SiteAdminUserEmail'
+                  - "\n"
+                  - 'github_adminuser_password:'
+                  - !Ref 'SiteAdminUserPassword'
+                  - "\n"
+                  - 'github_organization:'
+                  - !Ref 'InitialOrganization'
+                  - "\n"
+                  - 'github_repository:'
+                  - !Ref 'InitialRepository'
+                  - "\n"
+                  - 'github_license_file:'
+                  - !Ref 'GHELicense'
+                  - "\n"
+              group: root
+              mode: '000400'
+              user: root
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvdf
+          Ebs:
+            Encrypted: true
+            Iops: !If
+              - Io1Set
+              - !Ref 'ProvisionedIops'
+              - !Ref 'AWS::NoValue'
+            VolumeSize: !Ref 'VolumeSize'
+            VolumeType: !Ref 'VolumeType'
+      EbsOptimized: true
+      IamInstanceProfile: !Ref 'EC2InstanceProfile'
+      ImageId: !Ref 'ImageId'
+      InstanceType: !Ref 'InstanceType'
+      KeyName: !Ref 'KeyPairName'
+      SecurityGroupIds:
+        - !Ref 'InstanceSecurityGroup'
+      SubnetId: !Ref 'SubnetId'
+      Tags:
+        - Key: Name
+          Value: GitHub Enterprise test instance
+        - Key: business_unit
+          Value: !Ref 'BusinessUnit'
+        - Key: environment
+          Value: !Ref 'Environment'
+        - Key: service_name
+          Value: fusion-ghe-testing-instance
+        - Key: service_name
+          Value: !Ref 'ResourceOwner'
+      UserData: !Base64
+        Fn::Join:
+          - ''
+          - - "#!/bin/bash\n"
+            - "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\
+              \ \n"
+            - "wget https://bootstrap.pypa.io/get-pip.py\n"
+            - "sudo python get-pip.py\n"
+            - "sudo pip install awscli\n"
+            - "sleep 5\n"
+            - '/usr/local/bin/cfn-init '
+            - ' --stack '
+            - !Ref 'AWS::StackName'
+            - ' --resource EC2Instance '
+            - ' --region '
+            - !Ref 'AWS::Region'
+            - "\n"
+            - SRC=
+            - !Sub
+              - https://${S3Bucket}.s3.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
+              - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+                S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+            - "scripts/scripts_userdata.sh \n"
+            - "ADMININFO='/etc/gheadmin.conf'\n"
+            - 'curl -L $SRC | bash -s $(cat $ADMININFO| grep github_console_password
+              | awk -F: ''{print $2}'') '
+            - '$(cat $ADMININFO| grep github_s3_bucket | awk -F: ''{print $2}'') '
+            - "$(cat $ADMININFO| grep github_license_file | awk -F: '{print $2}');\
+              \ \n"
+            - SetUp=
+            - !Sub
+              - https://${S3Bucket}.s3.${S3Region}.amazonaws.com/${QSS3KeyPrefix}
+              - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+                S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+            - "scripts/adminuser_org_repo.sh \n"
+            - 'curl -L $SetUp | bash -s $(cat $ADMININFO| grep github_adminuser_name
+              | awk -F'':'' ''{print $2}'') '
+            - '$(cat $ADMININFO| grep github_adminuser_email | awk -F'':'' ''{print
+              $2}'') '
+            - '$(cat $ADMININFO| grep github_adminuser_password | awk -F'':'' ''{print
+              $2}'') '
+            - '$(cat $ADMININFO| grep github_organization | awk -F'':'' ''{print $2}'') '
+            - "$(cat $ADMININFO| grep github_repository | awk -F':' '{print $2}');\
+              \ \n"
+            - "echo \"exit code \"$? \n"
+            - '/usr/local/bin/cfn-signal -e $? '
+            - ' '''
+            - !Ref 'WaitforGitHubEnterpriseInstall'
+            - "'\n"
+            - " rm -f $ADMINNIFO\n"
+    Type: AWS::EC2::Instance
+  EC2InstanceProfile:
+    Properties:
+      Path: /
+      Roles:
+        - !Ref 'EC2InstanceRole'
+    Type: AWS::IAM::InstanceProfile
+  EC2InstanceRole:
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+      Path: /
+    Type: AWS::IAM::Role
+  ElasticIP:
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref 'EC2Instance'
+    Type: AWS::EC2::EIP
+  #  GitHubWaitCondition:
+  #    DependsOn: EC2Instance
+  #    Properties:
+  #      Handle: !Ref 'WaitforGitHubEnterpriseInstall'
+  #      Timeout: '500'
+  #    Type: AWS::CloudFormation::WaitCondition
+  InstanceSecurityGroup:
+    Properties:
+      GroupDescription: Ports needed for GitHub Enterprise
+      SecurityGroupIngress:
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 8080
+          IpProtocol: tcp
+          ToPort: 8080
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 122
+          IpProtocol: tcp
+          ToPort: 122
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 1194
+          IpProtocol: udp
+          ToPort: 1194
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 161
+          IpProtocol: udp
+          ToPort: 161
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 443
+          IpProtocol: tcp
+          ToPort: 443
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 9418
+          IpProtocol: tcp
+          ToPort: 9418
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 25
+          IpProtocol: tcp
+          ToPort: 25
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: 8443
+          IpProtocol: tcp
+          ToPort: 8443
+        # enable "ping" responses
+        - CidrIp: !Ref 'AccessCIDR'
+          FromPort: -1
+          IpProtocol: icmp
+          ToPort: -1
+      VpcId: !Ref 'VPCID'
+    Type: AWS::EC2::SecurityGroup
+  WaitforGitHubEnterpriseInstall:
+    Type: AWS::CloudFormation::WaitConditionHandle
