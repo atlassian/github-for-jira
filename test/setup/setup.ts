@@ -7,6 +7,7 @@ import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -19,6 +20,7 @@ type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<nu
 
 declare global {
 	let jiraHost: string;
+	let gitHubAppConfig: GitHubAppConfig;
 	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
@@ -36,6 +38,7 @@ declare global {
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
+			gitHubAppConfig: GitHubAppConfig;
 			jiraStaginHost: string;
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
@@ -126,10 +129,24 @@ beforeAll(async () => {
 	redis.disconnect();
 });
 
+const globalGitHubAppConfig = {
+	appId: 1,
+	uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
+	hostname: "http://test-server.com",
+	gitHubBaseUrl: "http://test-server.com",
+	gitHubApiUrl: "https://api.test-server.com",
+	clientId: "lvl.128ejqe91n2e128",
+	gitHubClientSecret: "secretone",
+	webhookSecret: "secrettwo",
+	privateKey: "secretthree"
+};
+
 beforeEach(() => {
 	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
+	global.gitHubAppConfig = globalGitHubAppConfig;
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
+	global.jiraStagingNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
