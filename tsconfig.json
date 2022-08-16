@@ -37,8 +37,10 @@
 			"fixtures/*": ["test/fixtures/*"]
 		}
 	},
+	"exclude": [
+		"src/**/*.test.ts"
+	],
 	"include": [
-		"src/**/*",
-		"test/**/*"
+		"src/**/*"
 	]
 }

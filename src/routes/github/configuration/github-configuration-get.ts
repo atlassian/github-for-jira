@@ -55,7 +55,7 @@ const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	reqLog: Logger,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
@@ -70,7 +70,7 @@ const getInstallationsWithAdmin = async (
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];

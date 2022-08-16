@@ -46,7 +46,7 @@ export type PushQueueMessagePayload = {
 }
 
 export type GitHubAppConfig = {
-	gitHubAppId?: number,
+	gitHubAppId: number | undefined,
 	appId: number,
 	clientId: string,
 	gitHubBaseUrl: string,

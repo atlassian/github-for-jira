@@ -81,7 +81,7 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to get
  * information specific to an organization.
  */
-export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId?: number | undefined): Promise<GitHubInstallationClient> {
+export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> {
 
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 		const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
