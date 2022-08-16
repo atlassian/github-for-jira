@@ -173,7 +173,7 @@ export const GithubWebhookMiddleware = (
 			const gitHubInstallationId = subscription.gitHubInstallationId;
 			context.sentry?.setTag("jiraHost", jiraHost);
 			context.sentry?.setTag(
-				"installationId",
+				"gitHubInstallationId",
 				gitHubInstallationId.toString()
 			);
 			context.sentry?.setUser({ jiraHost, gitHubInstallationId });

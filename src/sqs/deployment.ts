@@ -18,7 +18,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 
 	const github = await workerApp.auth(installationId);
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
-	const gitHubInstallationId = Number(gitHubInstallationClient.githubInstallationId);
+	const gitHubInstallationId = Number(gitHubInstallationClient.githubInstallationId.installationId);
 
 	await processDeployment(
 		github,
