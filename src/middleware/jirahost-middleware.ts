@@ -23,7 +23,7 @@ const extractUnsafeJiraHost = (req: Request): string | undefined => {
 };
 
 export const getUnvalidatedJiraHost = (req: Request): string | undefined =>
-	req.session.jiraHost || extractUnsafeJiraHost(req);
+	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 const detectJwtTokenType = (req: Request): TokenType => {
 	if (req.query.xdm_e) {

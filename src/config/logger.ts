@@ -120,8 +120,9 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 };
 
 // This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
-export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	return getLogger(name, { fields });
+export const getUnsafeLogger = (name: string, options: LoggerOptions = {}): Logger => {
+	const logger = createNewLogger(name, options);
+	return options.fields ? logger.child({ ...options.fields }) : logger;
 };
 
 export const cloneAllowedLogFields = (fields: Record<string, unknown>) => omit(fields, ["name"]);

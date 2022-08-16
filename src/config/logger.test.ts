@@ -57,7 +57,7 @@ describe("logger behaviour", () => {
 
 	describe("unsafe logger", () => {
 		it("should not serialize sensitive data", () => {
-			const logger = getUnsafeLogger("name", { jiraHost: "CATS" });
+			const logger = getUnsafeLogger("name", { fields: { jiraHost: "CATS" } });
 			expect(logger.fields.jiraHost).toBe("CATS");
 		});
 	});
