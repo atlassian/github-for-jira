@@ -104,7 +104,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			installationId
+			installationId,
+			payload.gitHubAppConfig?.gitHubAppId
 		);
 
 		if (!subscription) {
@@ -112,9 +113,11 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			return;
 		}
 
+		const gitHubInstallationId = subscription.gitHubInstallationId;
+
 		const jiraClient = await getJiraClient(
 			subscription.jiraHost,
-			installationId,
+			gitHubInstallationId,
 			log
 		);
 

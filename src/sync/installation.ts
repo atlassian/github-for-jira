@@ -177,18 +177,22 @@ export const isNotFoundError = (
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		installationId,
+		data.gitHubAppConfig?.gitHubAppId
 	);
+
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) return;
 
+	const gitHubInstallationId = subscription.gitHubInstallationId;
+
 	const jiraClient = await getJiraClient(
 		subscription.jiraHost,
-		installationId,
+		gitHubInstallationId,
 		logger
 	);
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -241,8 +245,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
-		throw new Error(`Error processing task: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
+		logger.error({ jiraHost, gitHubInstallationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
+		throw new Error(`Error processing task: installationId=${gitHubInstallationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {
