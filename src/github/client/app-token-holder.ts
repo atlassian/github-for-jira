@@ -57,10 +57,10 @@ export class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public async getAppToken(appId: InstallationId): Promise<AuthToken> {
+	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const subscription = await Subscription.findOneForGitHubInstallationId(appId.installationId);
+			const subscription = await Subscription.findOneForGitHubInstallationId(appId.installationId, ghsaId);
 			let key;
 			if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, subscription?.jiraHost)) {
 				key = await keyLocator(subscription?.gitHubAppId);
