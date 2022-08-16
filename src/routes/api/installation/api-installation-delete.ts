@@ -19,7 +19,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	);
 
 	if (!subscription) {
-		req.log.debug("no subscription");
+		req.log.warn("no subscription found for jiraHost " + jiraHost + " and githubInstallationId " + githubInstallationId);
 		res.sendStatus(404);
 		return;
 	}
