@@ -147,7 +147,6 @@ beforeEach(() => {
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
-	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
 	global.gheNock = nock(global.gheUrl);
