@@ -73,7 +73,7 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
 	await sqsQueues.push.sendMessage(createJobData(payload, jiraHost, gitHubAppConfig));
 
-export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
+export const processPush = async (gitHub: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {
 		repository,
 		repository: { owner, name: repo },
@@ -104,7 +104,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			installationId
+			installationId,
+			payload.gitHubAppConfig?.gitHubAppId
 		);
 
 		if (!subscription) {
@@ -112,9 +113,11 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			return;
 		}
 
+		const gitHubInstallationId = subscription.gitHubInstallationId;
+
 		const jiraClient = await getJiraClient(
 			subscription.jiraHost,
-			installationId,
+			gitHubInstallationId,
 			log
 		);
 
@@ -134,7 +137,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 								message
 							}
 						}
-					} = await github.getCommit(owner.login, repo, sha.id);
+					} = await gitHub.getCommit(owner.login, repo, sha.id);
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
 					const filesToSend = files.slice(0, 10);

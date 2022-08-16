@@ -41,10 +41,10 @@ import { GitHubClient } from "./github-client";
 export class GitHubInstallationClient extends GitHubClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
-	public readonly githubInstallationId: InstallationId;
+	public readonly gitHubInstallationId: InstallationId;
 
 	constructor(
-		githubInstallationId: InstallationId,
+		gitHubInstallationId: InstallationId,
 		logger?: Logger,
 		baseUrl?: string,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
@@ -64,7 +64,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		);
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
-		this.githubInstallationId = githubInstallationId;
+		this.gitHubInstallationId = gitHubInstallationId;
 	}
 
 	/**
@@ -303,7 +303,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId);
+		const appToken = await this.appTokenHolder.getAppToken(this.gitHubInstallationId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
@@ -313,12 +313,12 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	/**
-	 * Use this config in a request to authenticate with an installation token for the githubInstallationId.
+	 * Use this config in a request to authenticate with an installation token for the gitHubInstallationId.
 	 */
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
-			this.githubInstallationId.installationId,
-			() => this.createInstallationToken(this.githubInstallationId.installationId));
+			this.gitHubInstallationId.installationId,
+			() => this.createInstallationToken(this.gitHubInstallationId.installationId));
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
@@ -331,11 +331,11 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
 	 * API in the name of an installation of that app (to access the users' data).
 	 */
-	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
-		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
+	private async createInstallationToken(gitHubInstallationId: number): Promise<AuthToken> {
+		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{gitHubInstallationId}/access_tokens`, {}, {
 			...await this.appAuthenticationHeaders(),
 			urlParams: {
-				githubInstallationId
+				gitHubInstallationId
 			}
 		});
 		const tokenResponse: Octokit.AppsCreateInstallationTokenResponse = response.data;

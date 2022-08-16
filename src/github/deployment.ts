@@ -28,9 +28,8 @@ export const processDeployment = async (
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	webhookReceivedDate: Date,
 	jiraHost: string,
-	gitHubInstallationId: number,
 	rootLogger: Logger) => {
-
+	const gitHubInstallationId = Number(newGitHubClient.gitHubInstallationId);
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		gitHubInstallationId,

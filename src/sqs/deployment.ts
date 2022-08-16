@@ -26,6 +26,5 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		messagePayload.webhookPayload,
 		new Date(messagePayload.webhookReceived),
 		jiraHost,
-		installationId,
 		context.log);
 };

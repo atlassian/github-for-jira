@@ -15,7 +15,7 @@ export const getRepositoryTask = async (
 	perPage?: number
 ): Promise<TaskPayload> => {
 	logger.debug("Repository Discovery: started");
-	const installationId = newGithub.githubInstallationId.installationId;
+	const installationId = newGithub.gitHubInstallationId.installationId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId

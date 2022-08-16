@@ -71,7 +71,7 @@ function extractWebhookEventNameFromContext(context: WebhookContext): string {
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
+	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, gitHubInstallationId: number, subscription: Subscription) => Promise<void>
 ) => {
 	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
@@ -97,7 +97,18 @@ export const GithubWebhookMiddleware = (
 		const { name, payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
-		const gitHubInstallationId = Number(payload?.installation?.id);
+		const installationId = Number(payload?.installation?.id);
+		const subscription = await Subscription.findOneForGitHubInstallationId(installationId, context.gitHubAppConfig?.gitHubAppId);
+
+		if (!subscription) {
+			context.log.info(
+				{ noop: "no_subscription", orgName: orgName },
+				"Halting further execution since no subscription was found."
+			);
+			return;
+		}
+
+		const gitHubInstallationId = subscription.gitHubInstallationId;
 
 		context.log = getLogger("github.webhooks", {
 			webhookId,

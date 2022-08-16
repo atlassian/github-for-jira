@@ -234,11 +234,11 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	let config: Config | undefined;
 
 	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId);
+		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.gitHubInstallationId.installationId);
 		if (subscription){
 			config = await getRepoConfig(subscription, payload.repository.id);
 		} else {
-			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not using user config to map environments!");
+			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.gitHubInstallationId.installationId }, "could not find subscription - not using user config to map environments!");
 		}
 	}
 
