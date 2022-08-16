@@ -94,7 +94,8 @@ export const updateJobStatus = async (
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		installationId,
+		data.gitHubAppConfig?.gitHubAppId
 	);
 
 	// handle promise rejection when an org is removed during a sync
