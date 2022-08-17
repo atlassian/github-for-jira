@@ -34,7 +34,7 @@ describe("sync/installation", () => {
 		gitHubAppConfig: {
 			gitHubAppId: GITHUB_APP_ID,
 			appId: 2,
-			clientId: 'client_id',
+			clientId: "client_id",
 			gitHubBaseUrl: "http://ghes.server",
 			gitHubApiUrl: "http://ghes.server",
 			uuid: UUID()
@@ -108,7 +108,7 @@ describe("sync/installation", () => {
 		it("should process the installation with deduplication for cloud", async () => {
 			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
-			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-undefined`, expect.anything());
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-cloud`, expect.anything());
 		});
 
 		it("should process the installation with deduplication for GHES", async () => {

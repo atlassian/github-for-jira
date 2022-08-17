@@ -431,7 +431,7 @@ export const processInstallation = () => {
 			const nextTaskDelaysMs: Array<number> = [];
 
 			const result = await deduplicator.executeWithDeduplication(
-				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId}`,
+				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
 				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
