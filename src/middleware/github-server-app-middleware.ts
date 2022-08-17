@@ -8,8 +8,9 @@ import { GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { uuid } = req.params;
 
+
 	if (uuid) {
-		req.log = req.log.child({ uuid });
+		req.addLogFields({ uuid });
 		req.log.debug("Received request for GitHub Enterprise Server");
 
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
@@ -20,12 +21,13 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		}
 
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
-		req.log.info("Found GitHub server app for installation");
 
-		if (!installation?.jiraHost) {
-			req.log.error({ uuid }, "No Jira host found for GitHub provided uuid.");
-			throw new Error("No Jira host found.");
+		if (!Object.keys(installation).length) {
+			req.log.error({ uuid }, "Halting further execution for GitHub Enterprise Server since no installation was found.");
+			throw new Error("No installation found.");
 		}
+
+		req.log.info("Found GitHub server app for installation");
 
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
 		res.locals.gitHubAppId = gitHubServerApp.id;
@@ -43,7 +45,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		req.log.debug("Received request for GitHub Cloud");
 		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
-			uuid: undefined, //undefined for cloud
+			uuid,
 			hostname: GITHUB_CLOUD_HOSTNAME,
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
