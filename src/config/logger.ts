@@ -2,7 +2,7 @@ import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } f
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { createHashWithSharedSecret } from "utils/encryption";
 import bformat from "bunyan-format";
-import { isArray, isString, merge, omit } from "lodash";
+import { isArray, isString, merge } from "lodash";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -106,7 +106,7 @@ interface LoggerOptions {
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
-	const logger = createNewLogger(name, merge({
+	return createNewLogger(name, merge({
 		serializers: {
 			jiraHost: hashSerializer,
 			orgName: hashSerializer,
@@ -116,16 +116,12 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 			username: hashSerializer
 		}
 	}, options));
-	return options.fields ? logger.child({ ...options.fields }) : logger;
 };
 
 // This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
 export const getUnsafeLogger = (name: string, options: LoggerOptions = {}): Logger => {
-	const logger = createNewLogger(name, options);
-	return options.fields ? logger.child({ ...options.fields }) : logger;
+	return createNewLogger(name, options);
 };
-
-export const cloneAllowedLogFields = (fields?: Record<string, unknown>) => fields && omit(fields, ["name"]);
 
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch

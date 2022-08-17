@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
-import { cloneAllowedLogFields, defaultLogLevel, FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger } from "config/logger";
+import { defaultLogLevel, FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger } from "config/logger";
 import { getUnvalidatedJiraHost } from "middleware/jirahost-middleware";
+import { merge } from "lodash";
 
 /*
 
@@ -44,14 +45,12 @@ declare global {
 
 export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, {
-		fields: cloneAllowedLogFields(req.log?.fields),
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req))
 	});
 	req.addLogFields = (fields: Record<string, unknown>): void => {
-		if (!req.log) {
-			throw new Error(`No log found during request: ${req.method} ${req.path}`);
+		if (req.log) {
+			req.log.fields = merge(req.log.fields, fields);
 		}
-		req.log = req.log.child(fields);
 	};
 
 	res.once("finish", async () => {
