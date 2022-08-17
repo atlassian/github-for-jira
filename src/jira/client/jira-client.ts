@@ -197,7 +197,7 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, options?: JiraSubmitOptions) => {
+				update: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 
 					if (
@@ -213,7 +213,8 @@ export const getJiraClient = async (
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
-							gitHubInstallationId
+							gitHubInstallationId,
+							gitHubAppId
 						);
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
