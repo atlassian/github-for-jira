@@ -23,6 +23,7 @@ const getAppManifest = () => {
 			"url": `${appHost}/github/${uuid}/webhooks`
 		},
 		"setup_url": `${appHost}/github/${uuid}/setup`,
+		"callback_url": `${appHost}/github/${uuid}/callback`,
 		"public": true,
 		"default_permissions": {
 			"actions": "read",
