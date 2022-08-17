@@ -41,7 +41,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		return;
 	}
 
-	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, req.log);
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, req.log, gitHubAppId);
 	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 	await subscription.destroy();
 
