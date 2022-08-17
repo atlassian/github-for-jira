@@ -175,17 +175,18 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId,
+		gitHubInstallationId,
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
 	// TODO: should this reject instead? it's just ignoring an error
-	if (!subscription) return;
-
-	const gitHubInstallationId = subscription.gitHubInstallationId;
+	if (!subscription) {
+		logger.warn("No subscription found. Exiting backfill");
+		return;
+	}
 
 	const jiraClient = await getJiraClient(
 		subscription.jiraHost,
