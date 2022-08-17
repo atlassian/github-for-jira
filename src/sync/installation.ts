@@ -94,7 +94,8 @@ export const updateJobStatus = async (
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		installationId,
+		data.gitHubAppConfig?.gitHubAppId
 	);
 
 	// handle promise rejection when an org is removed during a sync
@@ -174,21 +175,26 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		gitHubInstallationId,
+		data.gitHubAppConfig?.gitHubAppId
 	);
+
 	// TODO: should this reject instead? it's just ignoring an error
-	if (!subscription) return;
+	if (!subscription) {
+		logger.warn("No subscription found. Exiting backfill");
+		return;
+	}
 
 	const jiraClient = await getJiraClient(
 		subscription.jiraHost,
-		installationId,
+		gitHubInstallationId,
 		logger
 	);
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -241,8 +247,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, installationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
-		throw new Error(`Error processing task: installationId=${installationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
+		logger.error({ jiraHost, gitHubInstallationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
+		throw new Error(`Error processing task: installationId=${gitHubInstallationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {
@@ -263,7 +269,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, data.gitHubAppConfig?.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
@@ -412,6 +418,7 @@ export const processInstallation = () => {
 
 	return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
 		const { installationId, jiraHost } = data;
+		const gitHubAppId: number | undefined = data.gitHubAppConfig?.gitHubAppId;
 
 		logger.child({ gitHubInstallationId: installationId, jiraHost });
 
@@ -429,7 +436,7 @@ export const processInstallation = () => {
 			const nextTaskDelaysMs: Array<number> = [];
 
 			const result = await deduplicator.executeWithDeduplication(
-				"i-" + installationId + "-" + jiraHost,
+				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
 				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
