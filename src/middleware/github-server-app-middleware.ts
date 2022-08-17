@@ -6,8 +6,9 @@ import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { jiraHost } = res.locals;
+	// const { jiraHost } = res.locals;
 	const { uuid } = req.params;
+	const jiraHost = "https://rachellerathbone.atlassian.net";
 
 	req.log = req.log.child({ uuid, jiraHost });
 
@@ -23,6 +24,8 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 
+		req.log.info("JIRA HOST 1: ", installation.jiraHost)
+		req.log.info("JIRA HOST 2: ", jiraHost)
 		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
 			throw new Error("Jira hosts do not match.");
