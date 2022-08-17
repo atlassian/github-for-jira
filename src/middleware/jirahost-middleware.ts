@@ -10,7 +10,7 @@ import { matchRouteWithPattern } from "utils/match-route-with-pattern";
  */
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
-const extractUnsafeJiraHost = (req: Request): string | null => {
+const extractUnsafeJiraHost = (req: Request): string | undefined => {
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
@@ -19,8 +19,11 @@ const extractUnsafeJiraHost = (req: Request): string | null => {
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
 	}
-	return null;
+	return undefined;
 };
+
+export const getUnvalidatedJiraHost = (req: Request): string | undefined =>
+	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 const detectJwtTokenType = (req: Request): TokenType => {
 	if (req.query.xdm_e) {
