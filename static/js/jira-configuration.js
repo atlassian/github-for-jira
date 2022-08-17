@@ -177,13 +177,11 @@ const mapDisconnectRequest = (disconnectType, data) => {
 				return;
 			case "app":
 				payload.uuid = data.disconnectData;
-				console.log("disconencting app: ", payload)
 				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload);
 				return;
 			default:
 				payload.gitHubInstallationId = data.disconnectData;
 				payload.appId = data.optionalDisconnectData;
-				console.log("disconencting org: ", payload)
 				handleDisconnectRequest("/jira/configuration", payload);
 				return;
 		}
@@ -197,7 +195,6 @@ if (genericModalAction != null) {
 		const disconnectData = $(event.target).data("modal-data");
 		const optionalDisconnectData = $(event.target).data("optional-modal-data");
 		const data = { disconnectData, optionalDisconnectData }
-		console.log("data", data)
 		mapDisconnectRequest(disconnectType, data);
 	});
 }

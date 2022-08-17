@@ -60,7 +60,7 @@ describe("DELETE /jira/configuration", () => {
 			}
 		};
 
-		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost, gitHubAppConfig } };
+		const res = { sendStatus: jest.fn(), locals: { installation, jiraHost } };
 		await JiraDelete(req as any, res as any);
 		expect(subscription.destroy).toHaveBeenCalled();
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
