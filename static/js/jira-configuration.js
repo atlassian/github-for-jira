@@ -163,26 +163,28 @@ const handleDisconnectRequest = (path, data) => {
 	});
 }
 
-const mapDisconnectRequest = (disconnectType, disconnectData, optionalDisconnectData) => {
+const mapDisconnectRequest = (disconnectType, data) => {
 	AP.context.getToken(function(token) {
-		let data = {
+		let payload = {
 			jwt: token,
 			jiraHost
 		}
 
 		switch (disconnectType) {
 			case "server":
-				data.serverUrl = disconnectData;
-				handleDisconnectRequest(`/jira/connect/enterprise`, data);
+				payload.serverUrl = data.disconnectData;
+				handleDisconnectRequest(`/jira/connect/enterprise`, payload);
 				return;
 			case "app":
-				data.uuid = disconnectData;
-				handleDisconnectRequest(`/jira/connect/enterprise/app/${disconnectData}`, data);
+				payload.uuid = data.disconnectData;
+				console.log("disconencting app: ", payload)
+				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload);
 				return;
 			default:
-				data.gitHubInstallationId = disconnectData;
-				data.appId = optionalDisconnectData;
-				handleDisconnectRequest("/jira/configuration", data);
+				payload.gitHubInstallationId = data.disconnectData;
+				payload.appId = data.optionalDisconnectData;
+				console.log("disconencting org: ", payload)
+				handleDisconnectRequest("/jira/configuration", payload);
 				return;
 		}
 	});
@@ -194,16 +196,23 @@ if (genericModalAction != null) {
 		const disconnectType = $(event.target).data("disconnect-type");
 		const disconnectData = $(event.target).data("modal-data");
 		const optionalDisconnectData = $(event.target).data("optional-modal-data");
-		mapDisconnectRequest(disconnectType, disconnectData, optionalDisconnectData);
+		const data = { disconnectData, optionalDisconnectData }
+		console.log("data", data)
+		mapDisconnectRequest(disconnectType, data);
 	});
 }
 
-const handleModalDisplay = (title, info, type, data, optionalData) => {
+const handleModalDisplay = (title, info, type, data) => {
 	$(genericModal).show();
 	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
 	$(".modal__header__title").empty().append(title);
 	$(".modal__information").empty().append(info);
-	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type).attr("data-modal-data", data).attr("data-optional-modal-data", optionalData);
+	$(".modal__footer__actionBtn")
+		.empty()
+		.append("Disconnect")
+		.attr("data-disconnect-type", type)
+		.attr("data-modal-data", data.modalData)
+		.attr("data-optional-modal-data", data.appId);
 }
 
 if (disconnectServerBtn != null) {
@@ -213,7 +222,8 @@ if (disconnectServerBtn != null) {
 		const modalTitle = "Disconnect server?";
 		const modalInfo = "Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect."
 		const disconnectType = "server";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType, serverUrl);
+		const data = { modalData: serverUrl }
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
 		$(".modal__additionalContent").append(serverUrl).css('font-weight', 'bold');
 	});
 }
@@ -226,7 +236,8 @@ if (disconnectAppBtn != null) {
 		const modalTitle = `Disconnect ${appName}?`;
 		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
 		const disconnectType = "app";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType, uuid);
+		const data = { modalData: uuid }
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
 	});
 }
 
@@ -239,7 +250,8 @@ if (disconnectOrgBtn != null) {
 		const modalTitle = `Disconnect ${orgName}?`;
 		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType, gitHubInstallationId, appId);
+		const data = { modalData: gitHubInstallationId, appId };
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
 	});
 }
 
