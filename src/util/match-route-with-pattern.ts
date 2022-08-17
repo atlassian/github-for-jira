@@ -12,7 +12,7 @@ export const matchRouteWithPattern = (pattern: string, route: string): boolean =
 	if (isEmpty(pattern) || isEmpty(route)) {
 		return false;
 	}
-	pattern = pattern.replace("ac.", ""); // Remove all the `ac.`
+	pattern = pattern.replace(/ac\./g, ""); // Remove all the `ac.`
 	pattern = pattern.split("?")[0]; // Removing the query parameters
 	route = route.split("?")[0]; // Removing the query parameters
 
