@@ -147,7 +147,8 @@ export const GithubWebhookMiddleware = (
 		}
 
 		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId
+			gitHubInstallationId,
+			context.gitHubAppConfig?.gitHubAppId
 		);
 
 		if (!subscriptions.length) {

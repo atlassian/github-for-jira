@@ -24,7 +24,8 @@ export const mockModels = {
 	Subscription: {
 		getAllForInstallation: [
 			{
-				jiraHost: process.env.ATLASSIAN_URL
+				jiraHost: process.env.ATLASSIAN_URL,
+				gitHubInstallationId: 52
 			}
 		] as any,
 		install: {} as any,
