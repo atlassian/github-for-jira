@@ -1,11 +1,10 @@
-import { MessageHandler } from "./sqs";
 import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
-import { BackfillMessagePayload  } from "./sqs.types";
+import { BackfillMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
 
-export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context) => {
+export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload> = async (context: SQSMessageContext<BackfillMessagePayload>) => {
 	const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 	sentry.configureScope((scope) =>
 		scope.addEventProcessor(AxiosErrorEventDecorator.decorate)

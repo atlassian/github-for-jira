@@ -9,7 +9,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
-	req.log = req.log.child({ uuid, jiraHost });
+	req.addLogFields({ uuid, jiraHost });
 
 	if (uuid) {
 		// uuid param exist, must be github server app

@@ -1,8 +1,7 @@
-import { Context, ErrorHandler, ErrorHandlingResult } from "./sqs";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
-import { PushQueueMessagePayload } from "./sqs.types";
+import { ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "./sqs.types";
 import { RateLimitingError } from "../github/client/github-client-errors";
 
 /**
@@ -20,8 +19,8 @@ const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
 
-export const jiraAndGitHubErrorsHandler: ErrorHandler<any> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
-	context: Context<any>): Promise<ErrorHandlingResult> => {
+export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
+	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
 		|| maybeHandleRateLimitingError(error)
@@ -53,7 +52,7 @@ export function webhookMetricWrapper(delegate: ErrorHandler<any>, webhookName: s
 	};
 }
 
-function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
+const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	if (error instanceof JiraClientError &&
 		error.status &&
 		UNRETRYABLE_STATUS_CODES.includes(error.status)) {
@@ -62,9 +61,9 @@ function maybeHandleNonFailureCase(error: Error, context: Context<PushQueueMessa
 	}
 
 	return undefined;
-}
+};
 
-function maybeHandleNonRetryableResponseCode(error: Error, context: Context<PushQueueMessagePayload>): ErrorHandlingResult | undefined {
+const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a calss, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
@@ -75,7 +74,7 @@ function maybeHandleNonRetryableResponseCode(error: Error, context: Context<Push
 		return { retryable: false, isFailure: false };
 	}
 	return undefined;
-}
+};
 
 function maybeHandleRateLimitingError(error: Error): ErrorHandlingResult | undefined {
 	if (error instanceof RateLimitingError) {
