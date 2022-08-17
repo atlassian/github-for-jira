@@ -1,67 +1,44 @@
-# GitHub IP Allow List Configuration
+# GitHub IP allow list configuration
 
-If your organization is using [GitHub's Organization IP Allow List](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization), it needs to
-be configured properly for this GitHub app to be able to communicate with your organization's GitHub API.
+If your organization is using [GitHub's organization IP allow list](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-allowed-ip-addresses-for-your-organization) feature, it needs to
+be configured properly for the GitHub for Jira app to be able to communicate with your organization's GitHub API.
 
-> :warning: **Issue with IP allowlists**! Currently, there is an issue with IP allowlists. GitHub blocks some requests to the API even if the correct IP addresses are listed in the IP allowlist. To work around this problem, you have to add the IP addresses `13.52.5.96` through `13.52.5.111` to your IP allowlist (each IP address individually, not as a CIDR range). This may stop to work, though, if our servers' IP address range changes. 
-> 
-> Please [raise an issue](https://github.com/atlassian/github-for-jira/issues) if you have trouble with IP allowlists so that we can investigate.
+> :warning: **Issue with IP allowlists**! Currently, there is an issue with IP allow lists where GitHub blocks some requests to the API even if the correct IP addresses are listed in the allow list. To work around this problem, please follow the steps in the section "[Manually setting the allowed IP addresses](#manually-setting-the-allowed-ip-addresses)". Make sure you add each IP address as an individual entry to the allow list (i.e. not as a CIDR range), because it will not work otherwise.
 
-There are 2 methods to make the GitHub for Jira integration work with an IP allowlist:
+## IP address range
 
-1.  a simple method which will enable _all_ GitHub apps with IPs specified in them to have access to your GitHub org's
-   APIs (_recommended_)
-2.  a manual way by adding each CIDR ranges possible for this app to communicate from.
+The servers of the GitHub for Jira app operate from IP addresses in the CIDR range `13.52.5.96/28` (i.e. from the IP addresses starting with `13.52.5.96` and ending with `13.52.5.111`).
 
-**We recommend using the first method** as you only have to set it once and never have to think about it again.  If there
-are any IP changes on our end in the future, we can just change the list on our end and it will automatically propagate
-to your organization.  But for this to happen, you must trust every GitHub app installed or else risk a potential
-security breach by an app adding an attacker's IP to your allow list.
+A machine-readable version of the IP addresses that stays up-to-date is available at [https://ip-ranges.atlassian.com/](https://ip-ranges.atlassian.com/) (filter for the product `github-for-jira`).
 
-If you'd like to have complete control over your IP Allow List, then you can enter the CIDR ranges manually in your
-GitHub organization.  But it does come with the drawback that if the CIDR ranges ever change or a new one needs to be
-added, you will have to manually update those as well.  Furthermore, we don't have a way to easily send a message to all
-GitHub org admins about a change like this and it could be possible that the integration might break because of the
-change.
+## Automatically load IP addresses from the GitHub for Jira app
 
-### Simple Method
+We maintain the list of IP addresses the GitHub for Jira app's servers operate from in the GitHub app itself. You can automatically use this list by enabling "IP allow list configuration for installed GitHub Apps" as follows:
 
-As an admin go to your GitHub org page `https://github.com/<your org>`, press on the `Settings` tab, then in the sidebar
-select the `Organization security` option.  Scroll down to the `IP allow list` section.  Both
-checkboxes `Enable IP allow list` and `Enable IP allow list configuration for installed GitHub Apps` should be selected
-and saved independently.
+- as an admin go to your GitHub org page at `https://github.com/<your org>`
+- go to the `Settings` tab 
+- in the sidebar, select `Organization security` 
+- scroll down to the `IP allow list` section
+- enable the checkbox `Enable IP allow list configuration for installed GitHub Apps`
+- don't forget to hit the save button under the checkbox.
 
 ![](images/github-ip-allowlist.png)
 
-That's it!
+Your GitHub organization is now accessible from the GitHub for Jira app's servers. If the IP addresses change, your IP allow list will be automatically updated.
 
-### Manual Method
+## Manually setting the allowed IP addresses
 
-As an admin your GitHub org page `https://github.com/<your org>`, press on the `Settings` tab, then in the sidebar
-select the `Organization security` option.  Scroll down to the `IP allow list` section until you can see the list of IP
-addresses with a `+ Add` button.  From here, you need
-to [add the whole list of CIDR ranges specified in this Atlassian document](https://support.atlassian.com/organization-administration/docs/ip-addresses-and-domains-for-atlassian-cloud
--products/#AtlassiancloudIPrangesanddomains-OutgoingConnections).
+If you don't want to automatically update your IP allowlist from the list we maintain, you can add the IP addresses manually like this:
 
-For simplicity, here's the list of CIDR ranges, but it might not be up to date:
+- as an admin go to your GitHub org page at `https://github.com/<your org>`, 
+- go to the `Settings` tab, 
+- then in the sidebar, select `Organization security`
+- scroll down to the `IP allow list` section
+- click the `+ Add` button to add an IP address
+- repeat this for all IP addresses in the range mentioned at the start of the page.
 
-```
-13.52.5.96/28
-13.236.8.224/28
-18.136.214.96/28
-18.184.99.224/28
-18.234.32.224/28
-18.246.31.224/28
-52.215.192.224/28
-104.192.137.240/28
-104.192.138.240/28
-104.192.140.240/28
-104.192.142.240/28
-104.192.143.240/28
-185.166.143.240/28
-185.166.142.240/28
-```
+Your GitHub organization is now accessible from the GitHub for Jira app's servers. Note that if the IP addresses change, you will have to update them manually.
 
 ## If problems persist
 
-Feel free to [contact Atlassian support](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.
+Feel free to [raise an issue](https://github.com/atlassian/github-for-jira/issues) [contact Atlassian support](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product) for guidance and extra help.
