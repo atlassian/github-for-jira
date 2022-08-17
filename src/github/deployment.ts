@@ -9,6 +9,7 @@ import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { Subscription } from "models/subscription";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -29,7 +30,9 @@ export const processDeployment = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
-	rootLogger: Logger) => {
+	rootLogger: Logger,
+	gitHubAppId?: number
+) => {
 
 	const logger = rootLogger.child({
 		webhookId: webhookId,
@@ -40,6 +43,17 @@ export const processDeployment = async (
 
 	if (await isBlocked(gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
+		return;
+	}
+
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId
+	);
+
+	if (!subscription) {
+		logger.warn("Halting further execution for createBranch since no subscription was found.");
 		return;
 	}
 
@@ -57,7 +71,7 @@ export const processDeployment = async (
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
-		gitHubInstallationId,
+		subscription.gitHubInstallationId,
 		logger
 	);
 
