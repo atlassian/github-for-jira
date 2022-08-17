@@ -116,6 +116,11 @@ $('.jiraConfiguration__option').click(function (event) {
 	}
 });
 
+$(".jiraConfiguration__connectNewApp").click((event) => {
+	event.preventDefault();
+	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
+});
+
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");
