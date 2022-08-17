@@ -184,7 +184,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 			log.info("Sending data to Jira");
 			try {
-				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, payload.gitHubAppConfig?.gitHubAppId);
+				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
