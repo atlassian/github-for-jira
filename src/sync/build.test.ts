@@ -145,7 +145,7 @@ describe("sync/builds", () => {
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
 			.reply(200, compareReferencesFixture);
 
-		const builds = [
+		createJiraNock([
 			{
 				"schemaVersion": "1.0",
 				"pipelineId": 2152266464,
@@ -196,9 +196,7 @@ describe("sync/builds", () => {
 					}
 				]
 			}
-		];
-
-		createJiraNock(builds);
+		]);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		await verifyMessageSent(data);

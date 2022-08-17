@@ -391,7 +391,7 @@ describe("Push Webhook", () => {
 
 	describe("end 2 end tests with queue", () => {
 		beforeAll(async () => {
-			await sqsQueues.branch.purgeQueue();
+			await sqsQueues.push.purgeQueue();
 		});
 
 		beforeEach(async () => {
