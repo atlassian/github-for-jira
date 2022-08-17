@@ -2,7 +2,7 @@ import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } f
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
 import { createHashWithSharedSecret } from "utils/encryption";
 import bformat from "bunyan-format";
-import { isArray, isString, merge } from "lodash";
+import { isArray, isString, merge, omit } from "lodash";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
@@ -63,7 +63,7 @@ const hashSerializer = (data?: string): string | undefined => {
 	return createHashWithSharedSecret(data);
 };
 
-export const defaultLogLevel:LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
+export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
@@ -92,8 +92,9 @@ const createNewLogger = (name: string, options: LoggerOptions = {}): Logger => {
 			response: responseSerializer,
 			req: requestSerializer,
 			request: requestSerializer
-		}
-	}, options));
+		},
+		...options.fields
+	}, omit(options, "fields")));
 };
 
 interface LoggerOptions {
@@ -116,6 +117,7 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 			username: hashSerializer
 		}
 	}, options));
+
 };
 
 // This will log data to a restricted environment [env]-unsafe and not serialize sensitive data

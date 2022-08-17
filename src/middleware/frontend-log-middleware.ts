@@ -45,6 +45,7 @@ declare global {
 
 export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, {
+		fields: req.log.fields,
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req))
 	});
 	req.addLogFields = (fields: Record<string, unknown>): void => {
