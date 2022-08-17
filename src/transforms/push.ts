@@ -115,7 +115,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		const jiraClient = await getJiraClient(
 			subscription.jiraHost,
-			gitHubInstallationId,
+			subscription.gitHubInstallationId,
 			log
 		);
 

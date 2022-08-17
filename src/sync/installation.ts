@@ -190,7 +190,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const jiraClient = await getJiraClient(
 		subscription.jiraHost,
-		gitHubInstallationId,
+		subscription.gitHubInstallationId,
 		logger
 	);
 
