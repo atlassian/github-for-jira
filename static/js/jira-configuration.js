@@ -81,7 +81,7 @@ $("#cancel-backfill").click(() => {
 $(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
-	const gitHubAppId = $(event.target).data("github-app-id");
+	const gitHubAppId = $(event.target).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById("restart-backfill-modal").style.display = "block";
