@@ -163,7 +163,7 @@ const handleDisconnectRequest = (path, data) => {
 	});
 }
 
-const mapDisconnectRequest = (disconnectType, disconnectData) => {
+const mapDisconnectRequest = (disconnectType, disconnectData, optionalDisconnectData) => {
 	AP.context.getToken(function(token) {
 		let data = {
 			jwt: token,
@@ -180,7 +180,8 @@ const mapDisconnectRequest = (disconnectType, disconnectData) => {
 				handleDisconnectRequest(`/jira/connect/enterprise/app/${disconnectData}`, data);
 				return;
 			default:
-				data.installationId = disconnectData;
+				data.gitHubInstallationId = disconnectData;
+				data.appId = optionalDisconnectData;
 				handleDisconnectRequest("/jira/configuration", data);
 				return;
 		}
@@ -192,16 +193,17 @@ if (genericModalAction != null) {
 		event.preventDefault();
 		const disconnectType = $(event.target).data("disconnect-type");
 		const disconnectData = $(event.target).data("modal-data");
-		mapDisconnectRequest(disconnectType, disconnectData);
+		const optionalDisconnectData = $(event.target).data("optional-modal-data");
+		mapDisconnectRequest(disconnectType, disconnectData, optionalDisconnectData);
 	});
 }
 
-const handleModalDisplay = (title, info, type, data) => {
+const handleModalDisplay = (title, info, type, data, optionalData) => {
 	$(genericModal).show();
 	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
 	$(".modal__header__title").empty().append(title);
 	$(".modal__information").empty().append(info);
-	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type).attr("data-modal-data", data);
+	$(".modal__footer__actionBtn").empty().append("Disconnect").attr("data-disconnect-type", type).attr("data-modal-data", data).attr("data-optional-modal-data", optionalData);
 }
 
 if (disconnectServerBtn != null) {
@@ -232,11 +234,12 @@ if (disconnectOrgBtn != null) {
 	$(disconnectOrgBtn).click((event) => {
 		event.preventDefault();
 		const orgName = $(event.target).data("org-name");
-		const installationId = $(event.target).data("installation-id");
+		const gitHubInstallationId = $(event.target).data("installation-id");
+		const appId = $(event.target).data("app-id");
 		const modalTitle = `Disconnect ${orgName}?`;
 		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
-		handleModalDisplay(modalTitle, modalInfo, disconnectType, installationId);
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, gitHubInstallationId, appId);
 	});
 }
 

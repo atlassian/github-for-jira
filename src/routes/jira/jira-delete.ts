@@ -1,15 +1,19 @@
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Request, Response } from "express";
+import { GitHubServerApp } from "~/src/models/github-server-app";
 
 /**
  * Handle the when a user deletes an entry in the UI
  *
  */
 export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost, gitHubAppConfig } = res.locals;
+	const { jiraHost } = res.locals;
 	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
-	const installationId = Number(req.params.installationId) || Number(req.body.installationId);
+	const gitHubInstallationId = Number(req.params.installationId) || Number(req.body.gitHubInstallationId);
+	const gitHubAppId = req.body.appId;
+
+	req.log.debug({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
 
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");
@@ -17,18 +21,20 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		return;
 	}
 
-	if (!installationId) {
+	if (!gitHubInstallationId) {
 		req.log.error("Missing Github Installation ID");
 		res.status(401).send("Missing Github Installation ID");
 		return;
 	}
 
-	req.log.info({ installationId }, "Received Jira DELETE request");
+	if (!gitHubAppId) {
+		req.log.debug("No gitHubAppId passed. Disconnecting cloud subscription.");
+	}
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId,
-		gitHubAppConfig.gitHubAppId
+		gitHubInstallationId,
+		gitHubAppId
 	);
 
 	if (!subscription) {
@@ -36,10 +42,8 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		return;
 	}
 
-	const gitHubInstallationId = subscription.gitHubInstallationId;
-
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, req.log);
-	await jiraClient.devinfo.installation.delete(installationId);
+	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 	await subscription.destroy();
 
 	res.sendStatus(204);
