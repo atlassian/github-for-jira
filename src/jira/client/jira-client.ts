@@ -237,7 +237,7 @@ export const getJiraClient = async (
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -277,7 +277,7 @@ export const getJiraClient = async (
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -313,7 +313,7 @@ export const getJiraClient = async (
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
