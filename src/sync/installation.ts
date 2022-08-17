@@ -268,7 +268,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 						break;
 					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
+						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, data.gitHubAppConfig?.gitHubAppId, {
 							preventTransitions: true,
 							operationType: "BACKFILL"
 						});
