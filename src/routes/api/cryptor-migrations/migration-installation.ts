@@ -12,7 +12,7 @@ export const CryptorMigrationInstallationPost = async (req: Request, res: Respon
 	const batchSize = getValidBatchSize(req);
 	const lastId = getValidLastId(req);
 
-	req.log = req.log.child({ operation: "migrate-installations-shared-secret", batchSize, lastId });
+	req.addLogFields({ operation: "migrate-installations-shared-secret", batchSize, lastId });
 
 	//--------- finding all in current batch to process --------------
 	req.log.info("About to start migrating installation sharedSecret");

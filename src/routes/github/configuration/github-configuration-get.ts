@@ -5,7 +5,6 @@ import { getInstallations, InstallationResults } from "routes/jira/jira-get";
 import { Octokit } from "@octokit/rest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
-import { Tracer } from "config/tracer";
 import Logger from "bunyan";
 import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
@@ -145,27 +144,25 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	});
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log, gitHubAppId);
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(log, "get-github-configuration", traceLogsEnabled);
 
-	tracer.trace("found github token");
+	req.log.debug("found github token");
 
 	if (!jiraHost) {
 		return next(new Error(Errors.MISSING_JIRA_HOST));
 	}
 
-	tracer.trace(`found jira host: ${jiraHost}`);
+	req.log.debug(`found jira host: ${jiraHost}`);
 
 	const { data: { login } } = await gitHubUserClient.getUser();
 
-	tracer.trace(`got login name: ${login}`);
+	req.log.debug(`got login name: ${login}`);
 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 
-	tracer.trace(`removed failed installations`);
+	req.log.debug(`removed failed installations`);
 
 	try {
 
@@ -173,7 +170,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		// so we'll decode the JWT here and verify it's the right key before continuing
 		const installation = await Installation.getForHost(jiraHost);
 		if (!installation) {
-			tracer.trace(`missing installation`);
+			req.log.debug(`missing installation`);
 			log.warn({ req, res }, "Missing installation");
 			res.status(404).send(`Missing installation for host '${jiraHost}'`);
 			return;
@@ -181,7 +178,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 
-		tracer.trace(`found installation in DB with id ${installation.id}`);
+		req.log.debug(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
 
@@ -189,7 +186,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
 		}
 
-		tracer.trace(`got user's installations from GitHub`);
+		req.log.debug(`got user's installations from GitHub`);
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
@@ -197,9 +194,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
-		tracer.trace(`got user's installations with admin status from GitHub`);
+		req.log.debug(`got user's installations with admin status from GitHub`);
 		const { data: info } = await gitHubAppClient.getApp(); //(client as GitHubAPI).apps.getAuthenticated();
-		tracer.trace(`got user's authenticated apps from GitHub`);
+		req.log.debug(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ info }, `verbose logging: getAuthenticated`);
@@ -220,7 +217,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
 
-		tracer.trace(`got connected installations`);
+		req.log.debug(`got connected installations`);
 
 		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
@@ -234,12 +231,12 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null
 		});
 
-		tracer.trace(`rendered page`);
+		req.log.debug(`rendered page`);
 
 	} catch (err) {
 		// If we get here, there was either a problem decoding the JWT
 		// or getting the data we need from GitHub, so we'll show the user an error.
-		tracer.trace(`Error while getting github configuration page`);
+		req.log.debug(`Error while getting github configuration page`);
 		log.error({ err, req, res }, "Error while getting github configuration page");
 		return next(err);
 	}
