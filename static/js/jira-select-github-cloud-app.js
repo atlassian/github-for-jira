@@ -1,3 +1,6 @@
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
+
 function openChildWindow(url) {
   const child = window.open(url);
   const interval = setInterval(function () {
