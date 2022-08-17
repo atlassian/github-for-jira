@@ -81,6 +81,7 @@ $("#cancel-backfill").click(() => {
 $(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
+	const gitHubAppId = $(event.target).data("github-app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById("restart-backfill-modal").style.display = "block";
@@ -89,7 +90,7 @@ $(".sync-connection-link").click(event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate});
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, gitHubAppId});
 		});
 	});
 });

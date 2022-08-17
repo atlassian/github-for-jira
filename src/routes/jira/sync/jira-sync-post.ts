@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { installationId: gitHubInstallationId, syncType } = req.body;
+	const { installationId: gitHubInstallationId, syncType, gitHubAppId } = req.body;
 
 	// A date to start fetching commit history(main and branch) from.
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
@@ -13,7 +13,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 	req.log.info({ syncType }, "Received sync request");
 
 	try {
-		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId);
+		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId, gitHubAppId);
 		if (!subscription) {
 			req.log.info({
 				jiraHost: res.locals.installation.jiraHost,
