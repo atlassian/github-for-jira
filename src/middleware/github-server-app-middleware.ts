@@ -20,11 +20,14 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			req.log.error("No GitHub app found for provided uuid.");
 			throw new Error("No GitHub app found for provided id.");
 		}
+
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
+
 		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
 			throw new Error("Jira hosts do not match.");
 		}
+
 		req.log.info("Found GitHub server app for installation");
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
 		res.locals.gitHubAppId = gitHubServerApp.id;
