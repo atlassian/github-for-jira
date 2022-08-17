@@ -12,7 +12,7 @@ import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } f
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { cloneAllowedLogFields, defaultLogLevel, getLogger } from "config/logger";
+import { defaultLogLevel, getLogger } from "config/logger";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -110,7 +110,7 @@ export const GithubWebhookMiddleware = (
 				webhookReceived,
 				repoName,
 				orgName,
-				...cloneAllowedLogFields(context.log.fields)
+				...context.log.fields
 			}
 		});
 
