@@ -1,7 +1,6 @@
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Request, Response } from "express";
-import { GitHubServerApp } from "~/src/models/github-server-app";
 
 /**
  * Handle the when a user deletes an entry in the UI
