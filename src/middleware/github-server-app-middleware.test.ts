@@ -136,6 +136,7 @@ describe("github-server-app-middleware", () => {
 			uuid: UUID,
 			clientId: "lvl.1234",
 			gitHubClientSecret: "gitHubClientSecret",
+			hostname: "http://myinternalserver.com",
 			privateKey: "privateKey",
 			webhookSecret: "webhookSecret"
 		});

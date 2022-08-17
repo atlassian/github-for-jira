@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
 import { keyLocator } from "../github/client/key-locator";
+import { GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
@@ -30,6 +31,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		res.locals.gitHubAppConfig = {
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
+			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId,
 			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
 			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
@@ -41,6 +43,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
 			uuid: undefined, //undefined for cloud
+			hostname: GITHUB_CLOUD_HOSTNAME,
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
 			webhookSecret: envVars.WEBHOOK_SECRET,
