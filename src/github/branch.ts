@@ -9,6 +9,7 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { Subscription } from "models/subscription";
 
 export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
@@ -48,15 +49,26 @@ export const processBranch = async (
 		return;
 	}
 
+	const subscription = await Subscription.getSingleInstallation(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId
+	);
+
+	if (!subscription) {
+		logger.warn("Halting further execution for createBranch since no subscription was found.");
+		return;
+	}
+
 	logger.info(`Sending jira update for create branch event`);
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
-		gitHubInstallationId,
+		subscription.gitHubInstallationId,
 		logger
 	);
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, gitHubAppId);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
