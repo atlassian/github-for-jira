@@ -203,7 +203,7 @@ export const GithubWebhookMiddleware = (
 
 			const jiraClient = await getJiraClient(
 				jiraHost,
-				gitHubInstallationId,
+				subscription.gitHubInstallationId,
 				context.log
 			);
 			if (!jiraClient) {
