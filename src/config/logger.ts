@@ -125,7 +125,7 @@ export const getUnsafeLogger = (name: string, options: LoggerOptions = {}): Logg
 	return options.fields ? logger.child({ ...options.fields }) : logger;
 };
 
-export const cloneAllowedLogFields = (fields: Record<string, unknown>) => omit(fields, ["name"]);
+export const cloneAllowedLogFields = (fields?: Record<string, unknown>) => fields && omit(fields, ["name"]);
 
 //Override console.log with bunyan logger.
 //we shouldn't use console.log in our code, but it is done to catch

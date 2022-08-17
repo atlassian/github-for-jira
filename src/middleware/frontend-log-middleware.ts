@@ -48,11 +48,10 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req))
 	});
 	req.addLogFields = (fields: Record<string, unknown>): void => {
-		if (req.log) {
-			req.log.fields = { ...req.log.fields, ...fields };
-		} else {
+		if (!req.log) {
 			throw new Error(`No log found during request: ${req.method} ${req.path}`);
 		}
+		req.log = req.log.child(fields);
 	};
 
 	res.once("finish", async () => {

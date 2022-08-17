@@ -37,14 +37,16 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
-		req.log = req.log.child({ slauth: {
-			mechanism,
-			issuer,
-			principal,
-			userGroup: req.get("X-Slauth-User-Groups"),
-			aaid: req.get("X-Slauth-User-Aaid"),
-			username: req.get("X-Slauth-User-Username")
-		} });
+		req.addLogFields({
+			slauth: {
+				mechanism,
+				issuer,
+				principal,
+				userGroup: req.get("X-Slauth-User-Groups"),
+				aaid: req.get("X-Slauth-User-Aaid"),
+				username: req.get("X-Slauth-User-Username")
+			}
+		});
 
 		if (!mechanism || mechanism === "open") {
 			req.log.warn("Attempt to access Admin API without authentication");
@@ -94,12 +96,12 @@ ApiRouter.post(
 		// restrict sync to a subset of tasks
 		const targetTasks = req.body.targetTasks as TaskType[];
 
-		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
+		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
-		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
