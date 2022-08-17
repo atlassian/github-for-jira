@@ -13,7 +13,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	LOG_UNSAFE_DATA = "log-unsafe-data",
@@ -29,7 +28,8 @@ export enum BooleanFlags {
 }
 
 export enum StringFlags {
-	BLOCKED_INSTALLATIONS = "blocked-installations"
+	BLOCKED_INSTALLATIONS = "blocked-installations",
+	LOG_LEVEL = "log-level"
 }
 
 export enum NumberFlags {
@@ -50,7 +50,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
+const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, jiraHost?: string): Promise<T> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
@@ -63,13 +63,13 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFla
 
 // Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
-	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
 
-export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
-	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, jiraHost?: string): Promise<T> =>
+	await getLaunchDarklyValue<T>(flag, defaultValue, jiraHost);
 
 export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
-	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
 
 export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
