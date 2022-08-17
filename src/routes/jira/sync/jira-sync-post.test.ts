@@ -75,7 +75,12 @@ describe("sync", () => {
 			})
 			.expect(202)
 			.then(() => {
-				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({ installationId: installationIdForCloud, jiraHost, startTime: expect.anything() }), expect.anything(), expect.anything());
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					installationId: installationIdForCloud,
+					jiraHost,
+					startTime: expect.anything(),
+					gitHubAppConfig: expect.objectContaining({ gitHubAppId: undefined, uuid: undefined })
+				}), expect.anything(), expect.anything());
 			});
 	});
 
@@ -89,11 +94,16 @@ describe("sync", () => {
 				installationId: installationIdForServer,
 				jiraHost,
 				syncType: "full",
-				gitHubAppId: gitHubServerApp.id
+				appId: gitHubServerApp.id
 			})
 			.expect(202)
 			.then(() => {
-				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({ installationId: installationIdForServer, jiraHost, startTime: expect.anything() }), expect.anything(), expect.anything());
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					installationId: installationIdForServer,
+					jiraHost,
+					startTime: expect.anything(),
+					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
+				}), expect.anything(), expect.anything());
 			});
 	});
 });
