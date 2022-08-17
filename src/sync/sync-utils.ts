@@ -60,7 +60,7 @@ export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags
 	return new Date(Date.now() - timeCutoffMsecs);
 };
 
-export const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): Promise<GitHubAppConfig> => {
+const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): Promise<GitHubAppConfig> => {
 
 	const gitHubAppId = subscription.gitHubAppId;
 
