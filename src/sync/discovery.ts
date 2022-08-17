@@ -5,6 +5,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
 import { TaskPayload } from "~/src/sync/sync.types";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 
 export const getRepositoryTask = async (
 	logger: Logger,
@@ -12,17 +13,21 @@ export const getRepositoryTask = async (
 	jiraHost: string,
 	_repository: Repository,
 	cursor?: string | number,
-	perPage?: number
+	perPage?: number,
+	messagePayload?: BackfillMessagePayload
 ): Promise<TaskPayload> => {
+
 	logger.debug("Repository Discovery: started");
 	const installationId = newGithub.githubInstallationId.installationId;
+	const gitHubAppId = messagePayload?.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		installationId,
+		gitHubAppId
 	);
 
 	if (!subscription) {
-		logger.warn({ jiraHost, installationId }, "Subscription has been removed, ignoring repository task.");
+		logger.warn({ jiraHost, installationId, gitHubAppId }, "Subscription has been removed, ignoring repository task.");
 		return { edges: [], jiraPayload: undefined };
 	}
 

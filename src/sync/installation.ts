@@ -177,7 +177,8 @@ export const isNotFoundError = (
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, installationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		installationId
+		installationId,
+		data.gitHubAppConfig?.gitHubAppId
 	);
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) return;
@@ -412,6 +413,7 @@ export const processInstallation = () => {
 
 	return async (data: BackfillMessagePayload, sentry: Hub, logger: Logger): Promise<void> => {
 		const { installationId, jiraHost } = data;
+		const gitHubAppId: number | undefined = data.gitHubAppConfig?.gitHubAppId;
 
 		logger.child({ gitHubInstallationId: installationId, jiraHost });
 
@@ -429,7 +431,7 @@ export const processInstallation = () => {
 			const nextTaskDelaysMs: Array<number> = [];
 
 			const result = await deduplicator.executeWithDeduplication(
-				"i-" + installationId + "-" + jiraHost,
+				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId}`,
 				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
