@@ -11,6 +11,8 @@ import { Repository, Subscription } from "models/subscription";
 
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 
+import { v4 as UUID } from "uuid";
+
 const TEST_LOGGER = getLogger("test");
 
 jest.mock("../sqs/queues");
@@ -25,6 +27,19 @@ jest.mock("~/src/sync/deduplicator", () => ({
 describe("sync/installation", () => {
 
 	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
+	const GITHUB_APP_ID = 123;
+	const JOB_DATA_GHES = {
+		installationId: 1,
+		jiraHost: "http://foo-ghes",
+		gitHubAppConfig: {
+			gitHubAppId: GITHUB_APP_ID,
+			appId: 2,
+			clientId: 'client_id',
+			gitHubBaseUrl: "http://ghes.server",
+			gitHubApiUrl: "http://ghes.server",
+			uuid: UUID()
+		}
+	};
 
 	const TEST_REPO: Repository = {
 		id: 123,
@@ -90,9 +105,16 @@ describe("sync/installation", () => {
 
 	describe("processInstallation", () => {
 
-		it("should process the installation with deduplication", async () => {
+		it("should process the installation with deduplication for cloud", async () => {
 			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-undefined`, expect.anything());
+		});
+
+		it("should process the installation with deduplication for GHES", async () => {
+			await processInstallation()(JOB_DATA_GHES, sentry, TEST_LOGGER);
+			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghes-ghaid-${GITHUB_APP_ID}`, expect.anything());
 		});
 
 		it("should reschedule the job if deduplicator is unsure", async () => {
