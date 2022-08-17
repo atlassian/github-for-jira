@@ -99,7 +99,7 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
-		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, context.gitHubAppConfig?.gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
 		context.log = getLogger("github.webhooks", {
 			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
