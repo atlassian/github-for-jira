@@ -24,5 +24,4 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		context.log,
 		messagePayload.gitHubAppConfig?.gitHubAppId
 	);
-
 };
