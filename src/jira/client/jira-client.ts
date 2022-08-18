@@ -32,7 +32,8 @@ export interface DeploymentsResult {
 export const getJiraClient = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
-	log: Logger = getLogger("jira-client")
+	log: Logger = getLogger("jira-client"),
+	gitHubAppId?: number
 ): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
@@ -197,7 +198,7 @@ export const getJiraClient = async (
 							repositoryId
 						}
 					}),
-				update: async (data, gitHubAppId?: number, options?: JiraSubmitOptions) => {
+				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 
 					if (
@@ -236,7 +237,7 @@ export const getJiraClient = async (
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -276,7 +277,7 @@ export const getJiraClient = async (
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -312,7 +313,7 @@ export const getJiraClient = async (
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
