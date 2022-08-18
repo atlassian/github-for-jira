@@ -117,12 +117,12 @@ export class GitHubServerApp extends EncryptedModel {
 
 		const [gitHubServerApp] = await this.findOrCreate({
 			where: {
-				gitHubClientId
+				gitHubClientId,
+				gitHubBaseUrl
 			},
 			defaults: {
 				uuid,
 				appId,
-				gitHubBaseUrl,
 				gitHubClientSecret,
 				webhookSecret,
 				privateKey,
