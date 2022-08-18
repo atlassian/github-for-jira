@@ -239,8 +239,9 @@ if (disconnectOrgBtn != null) {
 		const orgName = $(event.target).data("org-name");
 		const gitHubInstallationId = $(event.target).data("installation-id");
 		const appId = $(event.target).data("app-id");
-		const modalTitle = `Disconnect ${orgName}?`;
-		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
+		const displayName = orgName || `App ID: ${appId}`;
+		const modalTitle = `Disconnect ${displayName}?`;
+		const modalInfo = `Are you sure you want to disconnect your organization ${displayName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
 		const data = { modalData: gitHubInstallationId, appId };
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
