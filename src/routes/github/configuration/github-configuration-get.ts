@@ -56,7 +56,7 @@ const installationConnectedStatus = async (
 	reqLog: Logger,
 	gitHubAppId?: number
 ): Promise<MergedInstallation[]> => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
 	await removeFailedConnectionsFromDb(reqLog, installationsWithSubscriptions, jiraHost);
 	reqLog.debug(`Removed failed installations`);
