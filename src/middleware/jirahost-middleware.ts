@@ -43,7 +43,6 @@ const detectJwtTokenType = (req: Request): TokenType => {
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
-
 	req.addLogFields({ jiraHost: unsafeJiraHost });
 
 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
@@ -51,7 +50,7 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 	const takenFromCookies = unsafeJiraHost === req.cookies.jiraHost;
 	res.clearCookie("jiraHost");
 
-	if (unsafeJiraHost) {
+	if (unsafeJiraHost && isDifferentFromSession(unsafeJiraHost, req.session.jiraHost)) {
 		// Even though it is unsafe, we are verifying it straight away below (in "verifyJwtBlahBlah" call)
 		res.locals.jiraHost = unsafeJiraHost;
 		await verifyJiraJwtMiddleware(detectJwtTokenType(req))(req, res, () => {
@@ -71,4 +70,8 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 		res.locals.jiraHost = req.session.jiraHost;
 		next();
 	}
+};
+
+const isDifferentFromSession = (unsafeJiraHost: string | undefined, sessionJiraHost: string | undefined) => {
+	return unsafeJiraHost !== sessionJiraHost;
 };

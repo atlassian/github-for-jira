@@ -90,6 +90,36 @@ describe("await jirahostMiddleware", () => {
 			expect(next).toBeCalled();
 		});
 
+		it("should skip checking the jiraHost if same value present in the session cookie, and call next()", async () => {
+
+			req.session.jiraHost = LEGIT_JIRA_HOST;
+
+			mockJwtVerificationFn.mockImplementation(()=>{
+				//do not call next, is code shouldn't call this to verify jwt
+			});
+
+			await jirahostMiddleware(req, res, next);
+
+			expect(next).toBeCalled();
+
+		});
+
+		it("should NOT skip checking the jiraHost if DIFFERENT value present in the session cookie, and call next()", async () => {
+
+			req.session.jiraHost = LEGIT_JIRA_HOST + "_in_session";
+
+			mockJwtVerificationFn.mockImplementation((_req, res, next)=>{
+				if (res.locals.jiraHost === LEGIT_JIRA_HOST) {
+					next();
+				}
+			});
+
+			await jirahostMiddleware(req, res, next);
+
+			expect(next).toBeCalled();
+
+		});
+
 		it("should not call next() when invalid", async () => {
 
 			mockJwtVerificationFn.mockImplementation(() => {
