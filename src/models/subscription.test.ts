@@ -1,6 +1,6 @@
 import { Subscription } from "models/subscription";
 
-const GITHUHB_INSTALLATION_ID = 123;
+const GITHUB_INSTALLATION_ID = 123;
 
 // TODO: add rest of tests, use jira issue ARC-1580
 describe("Subscription", () => {
@@ -10,18 +10,18 @@ describe("Subscription", () => {
 		const GHES_GITHUB_SERVER_APP_PK_ID_2 = 10002;
 		beforeEach(async () => {
 			await Subscription.create({
-				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubInstallationId: GITHUB_INSTALLATION_ID,
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
 			await Subscription.create({
-				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubInstallationId: GITHUB_INSTALLATION_ID,
 				gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1,
 				jiraHost,
 				jiraClientKey: "myClientKey_ghe_1"
 			});
 			await Subscription.create({
-				gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+				gitHubInstallationId: GITHUB_INSTALLATION_ID,
 				gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_2,
 				jiraHost,
 				jiraClientKey: "myClientKey_ghe_2"
@@ -30,26 +30,26 @@ describe("Subscription", () => {
 		describe("getAllFiltered", () => {
 			it("should get for cloud record when gitHubAppId not present", async () => {
 				const records = await Subscription.getAllFiltered(
-					[GITHUHB_INSTALLATION_ID], []
+					[GITHUB_INSTALLATION_ID], []
 				);
 				expect(records.length).toBe(1);
 				expect(records[0]).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: null
 				}));
 			});
 			it("should get correct github server app", async () => {
 				const records = await Subscription.getAllFiltered(
-					[GITHUHB_INSTALLATION_ID], [], 0, undefined, undefined,
+					[GITHUB_INSTALLATION_ID], [], 0, undefined, undefined,
 					GHES_GITHUB_SERVER_APP_PK_ID_1
 				);
 				expect(records.length).toBe(1);
 				expect(records[0]).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey_ghe_1",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1
 				}));
 			});
@@ -58,25 +58,25 @@ describe("Subscription", () => {
 			it("should get for cloud record when gitHubAppId not present", async () => {
 				const record = await Subscription.getSingleInstallation(
 					jiraHost,
-					GITHUHB_INSTALLATION_ID
+					GITHUB_INSTALLATION_ID
 				);
 				expect(record).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: null
 				}));
 			});
 			it("should get correct github server app", async () => {
 				const record = await Subscription.getSingleInstallation(
 					jiraHost,
-					GITHUHB_INSTALLATION_ID,
+					GITHUB_INSTALLATION_ID,
 					GHES_GITHUB_SERVER_APP_PK_ID_1
 				);
 				expect(record).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey_ghe_1",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1
 				}));
 			});
@@ -84,24 +84,24 @@ describe("Subscription", () => {
 		describe("findOneForGitHubInstallationId", () => {
 			it("should get for cloud record when gitHubAppId not present", async () => {
 				const record = await Subscription.findOneForGitHubInstallationId(
-					GITHUHB_INSTALLATION_ID
+					GITHUB_INSTALLATION_ID
 				);
 				expect(record).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: null
 				}));
 			});
 			it("should get correct github server app", async () => {
 				const record = await Subscription.findOneForGitHubInstallationId(
-					GITHUHB_INSTALLATION_ID,
+					GITHUB_INSTALLATION_ID,
 					GHES_GITHUB_SERVER_APP_PK_ID_1
 				);
 				expect(record).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey_ghe_1",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1
 				}));
 			});
@@ -109,26 +109,26 @@ describe("Subscription", () => {
 		describe("getAllForInstallation", () => {
 			it("should only fetch cloud records when gitHubAppId not present", async () => {
 				const records = await Subscription.getAllForInstallation(
-					GITHUHB_INSTALLATION_ID
+					GITHUB_INSTALLATION_ID
 				);
 				expect(records.length).toBe(1);
 				expect(records[0]).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: null
 				}));
 			});
 			it("should fetch correct github server app", async () => {
 				const records = await Subscription.getAllForInstallation(
-					GITHUHB_INSTALLATION_ID,
+					GITHUB_INSTALLATION_ID,
 					GHES_GITHUB_SERVER_APP_PK_ID_1
 				);
 				expect(records.length).toBe(1);
 				expect(records[0]).toEqual(expect.objectContaining({
 					jiraHost,
 					jiraClientKey: "myClientKey_ghe_1",
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1
 				}));
 			});
@@ -137,7 +137,7 @@ describe("Subscription", () => {
 			it("should only uninstall cloud records when gitHubAppId not present", async () => {
 				await Subscription.uninstall({
 					host: jiraHost,
-					installationId: GITHUHB_INSTALLATION_ID
+					installationId: GITHUB_INSTALLATION_ID
 				});
 				const [results] = await Subscription.sequelize!.query("select * from \"Subscriptions\"");
 				expect(results).toEqual([expect.objectContaining({
@@ -149,7 +149,7 @@ describe("Subscription", () => {
 			it("should uninstall correct github server app", async () => {
 				await Subscription.uninstall({
 					host: jiraHost,
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID_1
 				});
 				const [results] = await Subscription.sequelize!.query("select * from \"Subscriptions\"");
@@ -199,7 +199,7 @@ describe("Subscription", () => {
 			let cloudSub =
 			beforeEach(async ()=>{
 				cloudSub = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
 					clientKey: "cloud_client_key"
@@ -208,7 +208,7 @@ describe("Subscription", () => {
 			it("should install subscription", async () => {
 				const found = await Subscription.findByPk(cloudSub.id);
 				expect(found).toEqual(expect.objectContaining({
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					jiraHost: "http://normal-cloud.atlassian.net",
 					gitHubAppId: null,
 					jiraClientKey: "cloud_client_key"
@@ -217,7 +217,7 @@ describe("Subscription", () => {
 			it("should override existing record if found", async () => {
 				//install another payload with same value
 				const cloudSub2 = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
 					clientKey: "cloud_client_key"
@@ -231,7 +231,7 @@ describe("Subscription", () => {
 			let cloudSub;
 			beforeEach(async ()=>{
 				cloudSub = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
 					clientKey: "cloud_client_key"
@@ -239,7 +239,7 @@ describe("Subscription", () => {
 			});
 			it("should install a new sub even with same gitHubInstallationId", async ()=>{
 				const ghesSub = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
 					clientKey: "cloud_client_key"
@@ -247,7 +247,7 @@ describe("Subscription", () => {
 				expect(cloudSub.id).not.toBe(ghesSub.id);
 				expect((await Subscription.findAll()).length).toBe(2);
 				expect(ghesSub).toEqual(expect.objectContaining({
-					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					jiraHost: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
 					jiraClientKey: "cloud_client_key"
@@ -255,13 +255,13 @@ describe("Subscription", () => {
 			});
 			it("should override existing ghes sub when found", async ()=>{
 				const ghesSub1 = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
 					clientKey: "cloud_client_key"
 				});
 				const ghesSub2 = await Subscription.install({
-					installationId: GITHUHB_INSTALLATION_ID,
+					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
 					clientKey: "cloud_client_key"
