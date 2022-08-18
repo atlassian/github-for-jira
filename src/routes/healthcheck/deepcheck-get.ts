@@ -22,7 +22,7 @@ export const DeepcheckGet = async (_: Request, res: Response): Promise<void> => 
 		logger.debug("Successfully called /deepcheck");
 		res.status(200).send("OK");
 	} catch (error) {
-		logger.error({ reason: error }, "Error during /deepcheck");
+		logger.warn({ reason: error }, "Error during /deepcheck");
 		res.status(500).send("NOT OK");
 	}
 };

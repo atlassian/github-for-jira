@@ -1,5 +1,6 @@
 import { Model } from "sequelize";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { getLogger } from "config/logger";
 
 type StringValues<Obj> = {
 	[Prop in keyof Obj]: Obj[Prop] extends string ? Prop : never
@@ -18,7 +19,12 @@ export abstract class EncryptedModel extends Model {
 		if (typeof value !== "string") {
 			throw new Error(`Cannot decrypt '${field}', it is not a string.`);
 		}
-		return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
+		try {
+			return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
+		} catch (e) {
+			getLogger("cryptor").error(`Fail to decrypt field ${field}`, { error: e });
+			throw e;
+		}
 	}
 
 	protected async encrypt(field: (keyof StringValues<this>)): Promise<string> {
@@ -26,7 +32,12 @@ export abstract class EncryptedModel extends Model {
 		if (typeof value !== "string") {
 			throw new Error(`Cannot encrypt '${field}', it is not a string.`);
 		}
-		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
+		try {
+			return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
+		} catch (e) {
+			getLogger("cryptor").error(`Fail to encrypt field ${field}`, { error: e });
+			throw e;
+		}
 	}
 
 	async encryptChangedSecretFields(fieldsChanged: string[] = []): Promise<void> {
