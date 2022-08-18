@@ -118,13 +118,7 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	AP.navigator.go(
-		"addonmodule",
-		{
-			moduleKey: "github-app-creation-page",
-			customData: { serverUrl: $(event.target).data("server-baseurl") }
-		}
-	)
+	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
