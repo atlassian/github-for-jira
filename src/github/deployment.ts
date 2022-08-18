@@ -29,7 +29,9 @@ export const processDeployment = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
-	rootLogger: Logger) => {
+	rootLogger: Logger,
+	gitHubAppId?: number
+) => {
 
 	const logger = rootLogger.child({
 		webhookId: webhookId,
@@ -58,7 +60,8 @@ export const processDeployment = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger
+		logger,
+		gitHubAppId
 	);
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);

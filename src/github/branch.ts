@@ -53,10 +53,11 @@ export const processBranch = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger
+		logger,
+		gitHubAppId
 	);
 
-	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload, gitHubAppId);
+	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
