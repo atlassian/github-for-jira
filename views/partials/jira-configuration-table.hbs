@@ -9,6 +9,7 @@
           <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled"
                 id="sync-status-modal-btn">
             Information
+
           </span>
         </th>
         <th class="jiraConfiguration__table__head__title">Settings</th>
@@ -20,7 +21,7 @@
         <tr class="jiraConfiguration__table__row">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
-            {{#unless hideAvatar}}
+            {{#unless ../hideAvatar}}
               <img
                   class="jiraConfiguration__table__cell__avatar"
                   src="{{connection.account.avatar_url}}"
@@ -100,6 +101,7 @@
                     class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
                     data-jira-host="{{ ../host }}"
                     data-installation-id="{{ id }}"
+                    data-app-id="{{ ../gitHubAppId }}"
                     id="restart-backfill"
                 >
                   &#x21bb;
@@ -137,6 +139,7 @@
                       class="sync-connection-link restart-backfill-button"
                       data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
+                      data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"
                   >
                     Restart backfill
@@ -183,6 +186,7 @@
       </p>
 
       <button class="jiraConfiguration__failedConnections__dismiss delete-connection-link"
+              data-app-id="{{../gitHubAppId}}"
               data-installation-id="{{ id }}">
         Dismiss
       </button>

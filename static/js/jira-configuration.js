@@ -81,6 +81,7 @@ $("#cancel-backfill").click(() => {
 $(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
+	const appId = $(event.target).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById("restart-backfill-modal").style.display = "block";
@@ -89,7 +90,7 @@ $(".sync-connection-link").click(event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate});
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
 		});
 	});
 });
@@ -118,13 +119,7 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	AP.navigator.go(
-		"addonmodule",
-		{
-			moduleKey: "github-app-creation-page",
-			customData: { serverUrl: $(event.target).data("server-baseurl") }
-		}
-	)
+	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
@@ -244,8 +239,9 @@ if (disconnectOrgBtn != null) {
 		const orgName = $(event.target).data("org-name");
 		const gitHubInstallationId = $(event.target).data("installation-id");
 		const appId = $(event.target).data("app-id");
-		const modalTitle = `Disconnect ${orgName}?`;
-		const modalInfo = `Are you sure you want to disconnect your organization ${orgName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
+		const displayName = orgName || `App ID: ${appId}`;
+		const modalTitle = `Disconnect ${displayName}?`;
+		const modalInfo = `Are you sure you want to disconnect your organization ${displayName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
 		const disconnectType = "org";
 		const data = { modalData: gitHubInstallationId, appId };
 		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);

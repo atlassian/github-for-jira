@@ -256,6 +256,7 @@
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
                                 csrfToken=csrfToken
+                                gitHubAppId=app.id
                                 successfulConnections=app.successfulConnections
                                 failedConnections=app.failedConnections
                                 gitHubAppId=app.id
@@ -265,7 +266,7 @@
                               <div class="jiraConfiguration__noOrgsTitle">Connected organizations</div>
                               <div class="jiraConfiguration__noOrgsBody">
                                 No connected organizations.
-                                <a href="#" class="jiraConfiguration__connectNewApp" data-server-baseurl="{{server.gitHubBaseUrl}}">Connect a GitHub organization.</a>
+                                <a href="#" class="jiraConfiguration__connectNewApp" data-app-uuid="{{app.uuid}}">Connect a GitHub organization.</a>
                               </div>
                             </div>
                           {{/if}}
