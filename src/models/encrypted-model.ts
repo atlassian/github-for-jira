@@ -6,6 +6,8 @@ type StringValues<Obj> = {
 	[Prop in keyof Obj]: Obj[Prop] extends string ? Prop : never
 };
 
+const logger = getLogger("encryption-model");
+
 export abstract class EncryptedModel extends Model {
 
 	abstract getEncryptContext(field: (keyof StringValues<this>)): Promise<Record<string, string | number>>;
@@ -22,7 +24,7 @@ export abstract class EncryptedModel extends Model {
 		try {
 			return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
 		} catch (e) {
-			getLogger("cryptor").error(`Fail to decrypt field ${field}`, { error: e });
+			logger.error(`Fail to decrypt field ${field}`, { error: e });
 			throw e;
 		}
 	}
@@ -35,7 +37,7 @@ export abstract class EncryptedModel extends Model {
 		try {
 			return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
 		} catch (e) {
-			getLogger("cryptor").error(`Fail to encrypt field ${field}`, { error: e });
+			logger.error(`Fail to encrypt field ${field}`, { error: e });
 			throw e;
 		}
 	}
