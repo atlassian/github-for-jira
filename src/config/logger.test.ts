@@ -1,4 +1,4 @@
-import { getLogger, getUnsafeLogger } from "config/logger";
+import { getLogger } from "config/logger";
 import { RingBuffer, Stream } from "bunyan";
 
 describe("logger behaviour", () => {
@@ -52,13 +52,6 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[1]).msg).toEqual("Info");
 			expect(JSON.parse(ringBuffer.records[2]).msg).toEqual("Error");
 			expect(JSON.parse(ringBuffer.records[3]).msg).toEqual("FATALALITY");
-		});
-	});
-
-	describe("unsafe logger", () => {
-		it("should not serialize sensitive data", () => {
-			const logger = getUnsafeLogger("name", { fields: { jiraHost: "CATS" } });
-			expect(logger.fields.jiraHost).toBe("CATS");
 		});
 	});
 
