@@ -204,8 +204,10 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
-				context.log
+				context.log,
+				context.gitHubAppConfig?.gitHubAppId
 			);
+
 			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
 				context.log.error(
