@@ -20,7 +20,11 @@ describe("Migrate Installations sharedSecret", () => {
 		//setup apps and route
 		app = express();
 		app.use(bodyParser.json());
-		app.use((req, _, next) => {req.log = getLogger("test"); next();});
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.addLogFields = jest.fn();
+			next();
+		});
 		app.post("/migrate", CryptorMigrationInstallationPost);
 
 		//setup db data
@@ -32,7 +36,8 @@ describe("Migrate Installations sharedSecret", () => {
 				sharedSecret: "plain-text"
 			});
 		}
-		await Installation.sequelize?.query(`update "Installations" set "encryptedSharedSecret" = NULL`);
+		await Installation.sequelize?.query(`update "Installations"
+																				 set "encryptedSharedSecret" = NULL`);
 	});
 
 	describe("apply migration", () => {
@@ -60,7 +65,9 @@ describe("Migrate Installations sharedSecret", () => {
 				sharedSecret: "plain-text"
 			});
 			//now this 1 record with new encryptedSharedSecret = "encrypted:deprecated-plain-text"
-			await Installation.sequelize!.query(`update "Installations" set "encryptedSharedSecret" = 'encrypted:deprecated-plain-text' where "clientKey" = '${getHashedKey(clientKey)}'`);
+			await Installation.sequelize!.query(`update "Installations"
+																					 set "encryptedSharedSecret" = 'encrypted:deprecated-plain-text'
+																					 where "clientKey" = '${getHashedKey(clientKey)}'`);
 			//get the lastId of previous record
 			//By calling the api with large batch size and lastId of the new record - 1
 			await supertest(app).post("/migrate").send({ batchSize: 1000, lastId: newInst.id - 1 }).expect(200);
@@ -68,7 +75,9 @@ describe("Migrate Installations sharedSecret", () => {
 			const shouldOnlyMigrate = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
 			expect(shouldOnlyMigrate.encryptedSharedSecret).toBe("encrypted:plain-text");
 			//and assert previous records are NOT migrated, encryptedSharedSecret column is null
-			const [rows]: [{encryptedSharedSecret: string}[]] = await Installation.sequelize!.query(`select "encryptedSharedSecret" from "Installations" where "id" < ${newInst.id}`);
+			const [rows]: [{ encryptedSharedSecret: string }[]] = await Installation.sequelize!.query(`select "encryptedSharedSecret"
+																																																 from "Installations"
+																																																 where "id" < ${newInst.id}`);
 			expect(rows.length).toBe(PRE_EXISTS_RECORDS);
 			expect(rows.every(r => r.encryptedSharedSecret === null)).toBe(true);
 		});

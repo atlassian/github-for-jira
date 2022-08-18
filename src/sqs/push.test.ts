@@ -8,8 +8,7 @@ import { Subscription } from "models/subscription";
 import { Application } from "probot";
 import { waitUntil } from "test/utils/wait-until";
 import { pushQueueMessageHandler } from "./push";
-import { PushQueueMessagePayload } from "./sqs.types";
-import { Context } from "./sqs";
+import { PushQueueMessagePayload, SQSMessageContext } from "./sqs.types";
 import { Message } from "aws-sdk/clients/sqs";
 import { sqsQueues } from "./queues";
 
@@ -24,7 +23,7 @@ import pushMergeCommit from "fixtures/push-merge-commit.json";
 import { shouldTagBackfillRequests } from "config/feature-flags";
 import { mocked } from "ts-jest/utils";
 
-const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
+const createMessageProcessingContext = (payload, jiraHost: string): SQSMessageContext<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
 	log: getLogger("test"),
 	message: {} as Message,

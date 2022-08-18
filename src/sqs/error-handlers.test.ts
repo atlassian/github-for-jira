@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { statsd }  from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
-import { Context, ErrorHandlingResult } from "./sqs";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "probot";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { AxiosResponse, AxiosResponseHeaders } from "axios";
+import { ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
 
 describe("error-handlers", () => {
 
@@ -38,7 +38,7 @@ describe("error-handlers", () => {
 		webhookId: "string"
 	};
 
-	const createContext = (receiveCount: number, lastAttempt: boolean): Context<any> =>
+	const createContext = (receiveCount: number, lastAttempt: boolean): SQSMessageContext<unknown> =>
 		({
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: mockPayload
 		});
