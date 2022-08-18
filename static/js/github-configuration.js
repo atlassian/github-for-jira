@@ -1,16 +1,16 @@
 /* globals $ */
 $('.install-link').click(function (event) {
-  event.preventDefault()
+  event.preventDefault();
 
-  $.post('/github/configuration', {
+  $.post(window.location.href, {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value,
     clientKey: document.getElementById('clientKey').value
   }, function (data) {
     if (data.err) {
-      return console.log(data.err)
+      console.log(data.err);
     }
-    window.close()
+    window.close();
   })
 })
 
