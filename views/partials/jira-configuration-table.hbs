@@ -9,6 +9,7 @@
           <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled"
                 id="sync-status-modal-btn">
             Information
+
           </span>
         </th>
         <th class="jiraConfiguration__table__head__title">Settings</th>
@@ -20,7 +21,7 @@
         <tr class="jiraConfiguration__table__row">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
-            {{#unless hideAvatar}}
+            {{#unless ../hideAvatar}}
               <img
                   class="jiraConfiguration__table__cell__avatar"
                   src="{{connection.account.avatar_url}}"
