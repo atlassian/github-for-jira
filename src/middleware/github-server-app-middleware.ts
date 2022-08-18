@@ -6,13 +6,14 @@ import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
+	req.addLogFields({ uuid, jiraHost });
 
 	if (uuid) {
-		req.addLogFields({ uuid });
-		req.log.debug("Received request for GitHub Enterprise Server");
-
+		// uuid param exist, must be github server app
+		req.log.debug(`Retrieving GitHub app with uuid ${uuid}`);
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 
 		if (!gitHubServerApp) {
@@ -22,13 +23,12 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 
-		if (!Object.keys(installation).length) {
-			req.log.error({ uuid }, "Halting further execution for GitHub Enterprise Server since no installation was found.");
-			throw new Error("No installation found.");
+		if (installation?.jiraHost !== jiraHost) {
+			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
+			throw new Error("Jira hosts do not match.");
 		}
 
 		req.log.info("Found GitHub server app for installation");
-
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
@@ -42,10 +42,10 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		};
 
 	} else {
-		req.log.debug("Received request for GitHub Cloud");
+		// is cloud app
 		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
-			uuid,
+			uuid: undefined, //undefined for cloud
 			hostname: GITHUB_CLOUD_HOSTNAME,
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -56,3 +56,4 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 	next();
 };
+

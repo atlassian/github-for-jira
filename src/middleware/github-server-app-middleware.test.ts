@@ -24,7 +24,9 @@ describe("github-server-app-middleware", () => {
 	beforeEach(async () => {
 		next = jest.fn();
 		res = {
-			locals: {}
+			locals: {
+				jiraHost: "https://testatlassian.net"
+			}
 		};
 
 		req = {
@@ -46,7 +48,7 @@ describe("github-server-app-middleware", () => {
 			.toThrow("No GitHub app found for provided id.");
 	});
 
-	it("should throw an error if no installation is found for GitHub Server App installation ID", async () => {
+	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match", async () => {
 		req.params.uuid = UUID;
 
 		payload = {
@@ -57,25 +59,24 @@ describe("github-server-app-middleware", () => {
 			gitHubClientSecret: "myghsecret",
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
-			installationId: JIRA_INSTALLATION_ID,
-			decrypt: async (s: any) => s
+			installationId: JIRA_INSTALLATION_ID
 		};
 
 		installation = {
-			jiraHost,
+			jiraHost: "https://testatlassian.com",
 			id: JIRA_INSTALLATION_ID + 1
 		};
 
 		when(Installation.findByPk)
 			.expectCalledWith(JIRA_INSTALLATION_ID as any)
-			.mockResolvedValue({});
+			.mockResolvedValue(installation);
 		when(GitHubServerApp.findForUuid)
 			.expectCalledWith(UUID)
 			.mockResolvedValue(payload);
 
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
-			.toThrow("No installation found.");
+			.toThrow("Jira hosts do not match");
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {
@@ -96,7 +97,7 @@ describe("github-server-app-middleware", () => {
 		};
 
 		installation = {
-			jiraHost,
+			jiraHost: "https://testatlassian.net",
 			id: JIRA_INSTALLATION_ID,
 			clientKey: "testkey"
 		};
