@@ -12,8 +12,8 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 	req.addLogFields({ uuid, jiraHost });
 
 	if (uuid) {
-		// uuid param exist, must be github server app
-		req.log.debug(`Retrieving GitHub app with uuid ${uuid}`);
+		req.log.debug(`Retrieving GitHub Enterprise Server app with uuid ${uuid}`);
+
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 
 		if (!gitHubServerApp) {
@@ -28,7 +28,8 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			throw new Error("Jira hosts do not match.");
 		}
 
-		req.log.info("Found GitHub server app for installation");
+		req.log.info("Found server app for installation. Defining GitHub app config for GitHub Enterprise Server.");
+
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
@@ -40,9 +41,8 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
 			privateKey: await gitHubServerApp.decrypt("privateKey")
 		};
-
 	} else {
-		// is cloud app
+		req.log.info("Defining GitHub app config for GitHub Cloud.");
 		res.locals.gitHubAppConfig = {
 			appId: envVars.APP_ID,
 			uuid: undefined, //undefined for cloud
