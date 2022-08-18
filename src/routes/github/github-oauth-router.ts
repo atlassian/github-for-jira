@@ -79,7 +79,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, gitHubClientSecret } = gitHubAppConfig;
+	const { hostname, clientId, gitHubClientSecret, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
@@ -106,6 +106,9 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		// Saving it to session be used later
 		req.session.githubToken = response.data.access_token;
 
+		// Saving UUID for each GitHubServerApp
+		req.session.githubUuid = uuid;
+
 		if (!req.session.githubToken) {
 			req.log.debug(`didn't get access token from GitHub`);
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
@@ -123,9 +126,15 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { githubToken } = req.session;
-		const { jiraHost, gitHubAppId } = res.locals;
-		if (!githubToken) {
+		const { githubToken, githubUuid } = req.session;
+		const { jiraHost, gitHubAppId, gitHubAppConfig } = res.locals;
+		/**
+		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
+		 * to trigger another GitHub Login and fetch new githubToken.
+		 * This is done because the `user/installations` endpoint is based upon the githubToken
+		 * and to fetch new list of installations we need separate githubTokens
+		 */
+		if (!githubToken || githubUuid !== gitHubAppConfig.uuid) {
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
