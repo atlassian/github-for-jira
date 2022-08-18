@@ -158,7 +158,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	req.log.debug(`got login name: ${login}`);
 
 	// Remove any failed installations before a user attempts to reconnect
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
 	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
 

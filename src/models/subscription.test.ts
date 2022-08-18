@@ -30,6 +30,49 @@ describe("Subscription", () => {
 				jiraClientKey: "myClientKey_ghe_2"
 			});
 		});
+		describe("getAllForHost", () => {
+			it("should get all cloud and server records when only jiraHost is passed", async () => {
+				const records = await Subscription.getAllForHost(jiraHost);
+				expect(records.length).toBe(3);
+				expect(records[0]).toEqual(expect.objectContaining({
+					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					jiraHost,
+					jiraClientKey: "myClientKey"
+				}));
+				expect(records[1]).toEqual(expect.objectContaining({
+					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_1,
+					jiraHost,
+					jiraClientKey: "myClientKey_ghe_1"
+				}));
+				expect(records[2]).toEqual(expect.objectContaining({
+					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_2,
+					jiraHost,
+					jiraClientKey: "myClientKey_ghe_2"
+				}));
+			});
+			it("should get all server records when jiraHost is passed with gitHubAppid", async () => {
+				const record1 = await Subscription.getAllForHost(jiraHost, GHEH_GITHUB_SERVER_APP_PK_ID_1);
+				expect(record1.length).toBe(1);
+				expect(record1[0]).toEqual(expect.objectContaining({
+					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_1,
+					jiraHost,
+					jiraClientKey: "myClientKey_ghe_1"
+				}));
+
+				const record2 = await Subscription.getAllForHost(jiraHost, GHEH_GITHUB_SERVER_APP_PK_ID_2);
+				expect(record2.length).toBe(1);
+				expect(record2[0]).toEqual(expect.objectContaining({
+					gitHubInstallationId: GITHUHB_INSTALLATION_ID,
+					gitHubAppId: GHEH_GITHUB_SERVER_APP_PK_ID_2,
+					jiraHost,
+					jiraClientKey: "myClientKey_ghe_2"
+				}));
+			});
+
+		});
 		describe("getAllFiltered", () => {
 			it("should get for cloud record when gitHubAppId not present", async () => {
 				const records = await Subscription.getAllFiltered(
@@ -166,10 +209,6 @@ describe("Subscription", () => {
 	});
 
 	it("should have tests in here", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("getAllForHost", () => {
 		// TODO: add tests
 	});
 
