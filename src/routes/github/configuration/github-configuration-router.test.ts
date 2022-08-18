@@ -6,7 +6,6 @@ import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
 
 jest.mock("config/feature-flags");
@@ -123,8 +122,6 @@ describe("Github Configuration", () => {
 				.get("/user")
 				.reply(200, { login: "test-user" });
 
-			githubUserTokenNock(sub.gitHubInstallationId);
-
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.twice()
@@ -165,19 +162,6 @@ describe("Github Configuration", () => {
 					html_url: "https://github.com/apps/jira"
 				});
 
-			githubNock
-				.post("/graphql", { query: ViewerRepositoryCountQuery })
-				.query(true)
-				.reply(200, {
-					data: {
-						viewer: {
-							repositories: {
-								totalCount: 1
-							}
-						}
-					}
-				});
-
 			await supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
@@ -199,8 +183,6 @@ describe("Github Configuration", () => {
 			githubNock
 				.get("/user")
 				.reply(200, { login: "test-user" });
-
-			githubUserTokenNock(sub.gitHubInstallationId);
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
@@ -231,13 +213,6 @@ describe("Github Configuration", () => {
 				.get("/app")
 				.reply(200, {
 					html_url: "https://github.com/apps/jira"
-				});
-
-			githubNock
-				.post("/graphql", { query: ViewerRepositoryCountQuery })
-				.query(true)
-				.reply(403, {
-					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
 				});
 
 			await supertest(frontendApp)
