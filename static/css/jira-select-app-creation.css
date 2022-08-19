@@ -6,7 +6,7 @@
 
 .jiraAppCreation__content__container > .jiraAppCreation__options__prompt {
     font-weight: 500;
-    margin: 2.5em auto;
+    margin: 2.5em 1em;
 }
 
 .jiraAppCreation__options__prompt,
@@ -72,7 +72,7 @@
 }
 
 .jiraAppCreation__versionDisclaimer__container {
-    margin: 2em auto;
+    margin: 2em 1em;
 }
 
 .jiraAppCreation__versionDisclaimer__version {
