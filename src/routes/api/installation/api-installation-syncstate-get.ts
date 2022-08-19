@@ -7,6 +7,10 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 	const githubInstallationId = Number(req.params.installationId);
 	const jiraHost = req.params.jiraHost;
 
+	//TODO: ARC-1619 Maybe need to fix this and put it into the path
+	//Not doing it now as it might break pollinator if it use this api
+	const { gitHubAppIdStr } = req.query;
+
 	if (!jiraHost || !githubInstallationId) {
 		const msg = "Missing Jira Host or Installation ID";
 		req.log.warn({ req, res }, msg);
@@ -17,7 +21,8 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			githubInstallationId
+			githubInstallationId,
+			parseInt(gitHubAppIdStr as string) || undefined
 		);
 
 		if (!subscription) {

@@ -130,6 +130,7 @@ beforeAll(async () => {
 });
 
 const globalGitHubAppConfig = {
+	gitHubAppId: -1, //TODO: ARC-1619, this value is not known yet.
 	appId: 1,
 	uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
 	hostname: "http://test-server.com",

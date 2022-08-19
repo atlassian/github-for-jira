@@ -46,7 +46,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 		};
 	}
 	// cloud config
-	const privateKey = await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)? await keyLocator(): PrivateKey.findPrivateKey();
+	const privateKey = await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)? await keyLocator(undefined): PrivateKey.findPrivateKey();
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
 	}

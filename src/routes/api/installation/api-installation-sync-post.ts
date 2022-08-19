@@ -7,11 +7,16 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 	req.log.debug({ body: req.body }, "Sync body");
 	const { jiraHost, resetType } = req.body;
 
+	//TODO: ARC-1619 Maybe need to fix this and put it into the path
+	//Not doing it now as it might break pollinator if it use this api
+	const { gitHubAppIdStr } = req.query;
+
 	try {
 		req.log.info(jiraHost, githubInstallationId);
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			githubInstallationId
+			githubInstallationId,
+			parseInt(gitHubAppIdStr as string) || undefined
 		);
 
 		if (!subscription) {

@@ -74,12 +74,12 @@ export class Subscription extends Model {
 	}
 
 	static getAllFiltered(
+		gitHubAppId: number | undefined,
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
 		limit?: number,
 		inactiveForSeconds?: number,
-		gitHubAppId: number | undefined
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];

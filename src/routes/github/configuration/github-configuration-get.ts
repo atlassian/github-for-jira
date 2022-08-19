@@ -103,7 +103,7 @@ const getInstallationsWithAdmin = async (
 	}));
 };
 
-const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string): Promise<void> => {
+const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	await Promise.all(installations.rejected
 		// Only uninstall deleted installations
 		.filter(failedInstallation => failedInstallation.deleted)
@@ -111,7 +111,8 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 			try {
 				await Subscription.uninstall({
 					installationId: failedInstallation.id,
-					host: jiraHost
+					host: jiraHost,
+					gitHubAppId
 				});
 			} catch (err) {
 				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
@@ -160,7 +161,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	// Remove any failed installations before a user attempts to reconnect
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
-	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost);
+	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost, gitHubAppId);
 
 	req.log.debug(`removed failed installations`);
 
