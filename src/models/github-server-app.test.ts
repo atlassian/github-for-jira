@@ -136,6 +136,69 @@ describe("GitHubServerApp", () => {
 				});
 			});
 
+			describe("GitHubServerApp creation", ()=>{
+				const GITHUHB_INSTALLATION_ID = 100001;
+				const UUID1 = newUUID();
+				const UUID2 = newUUID();
+				const GHES_URL = "http://private-ghes-server.com";
+				const ANOTHER_GHES_URL = "http://another-private-ghes-server.com";
+				const DEFAULT_INSTALL_PAYLOAD = {
+					uuid: UUID1,
+					appId: 123,
+					gitHubBaseUrl: GHES_URL,
+					gitHubClientId: "client_id",
+					gitHubClientSecret: "client_secret_1",
+					webhookSecret: "webhook_secret_1",
+					privateKey: "private_key_1",
+					gitHubAppName: "ghes_app_1",
+					installationId: GITHUHB_INSTALLATION_ID
+				};
+				it("should install new record Successfully", async ()=>{
+					const newApp = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD
+					});
+					const found = await GitHubServerApp.findByPk(newApp.id);
+					expect(found).toEqual(expect.objectContaining({
+						uuid: UUID1,
+						appId: 123,
+						gitHubBaseUrl: GHES_URL,
+						gitHubClientId: "client_id",
+						gitHubClientSecret: "encrypted:client_secret_1",
+						webhookSecret: "encrypted:webhook_secret_1",
+						privateKey: "encrypted:private_key_1",
+						gitHubAppName: "ghes_app_1",
+						installationId: GITHUHB_INSTALLATION_ID
+					}));
+				});
+				it("should return existing but NOT override existing record if found", async ()=>{
+					const existing = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						uuid: UUID1,
+						installationId: GITHUHB_INSTALLATION_ID
+					});
+					const found = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						uuid: UUID2, //this indicate even if it is a new uuid, it will override existing
+						installationId: GITHUHB_INSTALLATION_ID + 1
+					});
+					expect(found.id).toBe(existing.id);
+					expect(found.installationId).toBe(GITHUHB_INSTALLATION_ID);
+				});
+				it("should NOT match existing record if url not match", async ()=>{
+					const existing = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						uuid: UUID1,
+						gitHubBaseUrl: GHES_URL
+					});
+					const newApp = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						uuid: UUID2, //need this as the uuid is unique.
+						gitHubBaseUrl: ANOTHER_GHES_URL
+					});
+					expect(newApp.id).not.toBe(existing.id);
+				});
+			});
+
 			describe("GitHubServerApp update", () => {
 				const gitHubBaseUrl = "http://myinternalinstance.com";
 				const installationId = 42;
