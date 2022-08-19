@@ -50,10 +50,11 @@
 .jiraSelectAppCreation__options__card__iconContainer {
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .jiraSelectAppCreation__options__card__icon {
-    transform: scale(0.5);
+    height: 30px;
 }
 
 .jiraSelectAppCreation__options__card__contentContainer {
