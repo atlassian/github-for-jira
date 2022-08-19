@@ -56,8 +56,11 @@ const installationConnectedStatus = async (
 	reqLog: Logger,
 	gitHubAppId: number | undefined
 ): Promise<MergedInstallation[]> => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, log, gitHubAppId);
+	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost, gitHubAppId);
+	log.debug("Removed failed installations");
+
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
@@ -103,7 +106,7 @@ const getInstallationsWithAdmin = async (
 	}));
 };
 
-const removeFailedConnectionsFromDb = async (req: Request, installations: InstallationResults, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
+const removeFailedConnectionsFromDb = async (logger: Logger, installations: InstallationResults, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	await Promise.all(installations.rejected
 		// Only uninstall deleted installations
 		.filter(failedInstallation => failedInstallation.deleted)
@@ -116,7 +119,7 @@ const removeFailedConnectionsFromDb = async (req: Request, installations: Instal
 				});
 			} catch (err) {
 				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
-				req.log.error(deleteSubscriptionError);
+				logger.error(deleteSubscriptionError);
 			}
 		}));
 };
@@ -157,13 +160,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const { data: { login } } = await gitHubUserClient.getUser();
 
 	req.log.debug(`got login name: ${login}`);
-
-	// Remove any failed installations before a user attempts to reconnect
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const allInstallations = await getInstallations(subscriptions, log, gitHubAppId);
-	await removeFailedConnectionsFromDb(req, allInstallations, jiraHost, gitHubAppId);
-
-	req.log.debug(`removed failed installations`);
 
 	try {
 
