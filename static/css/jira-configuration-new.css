@@ -26,7 +26,11 @@
 }
 
 .jiraConfiguration_content {
-    margin-top: 2em;
+    line-height: 1.8rem;
+}
+
+.jiraConfiguration_content p {
+    margin-bottom: 1em;
 }
 
 .jiraConfiguration__syncRetryModal__headerContainer {
@@ -166,6 +170,13 @@
     padding: 0.3em;
     position: absolute;
     top: -2em;
+}
+
+.jiraConfiguration__infoContainer {
+    display: flex;
+}
+.jiraConfiguration__infoSpinner {
+    margin-left: 8px;
 }
 
 .jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
@@ -442,6 +453,7 @@
 .jiraConfiguration__empty__message {
     font-size: 0.9rem;
     margin: 2em auto;
+    width: 512px;
 }
 
 .jiraConfiguration__empty__image {
