@@ -7,19 +7,19 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
 import { Context } from "probot/lib/context";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { cloneAllowedLogFields, getLogger } from "config/logger";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { defaultLogLevel, getLogger } from "config/logger";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function (callback) {
+const withSentry = function(callback) {
 	return async (context: WebhookContext) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
@@ -61,13 +61,13 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: WebhookContext): string {
+const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
 	}
 	return webhookEvent;
-}
+};
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
@@ -99,14 +99,19 @@ export const GithubWebhookMiddleware = (
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
 
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, context.gitHubAppConfig?.gitHubAppId);
+		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
 		context.log = getLogger("github.webhooks", {
-			webhookId,
-			gitHubInstallationId,
-			event: webhookEvent,
-			webhookReceived,
-			repoName,
-			orgName,
-			...cloneAllowedLogFields(context.log.fields)
+			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
+			fields: {
+				webhookId,
+				gitHubInstallationId,
+				event: webhookEvent,
+				webhookReceived,
+				repoName,
+				orgName,
+				...context.log.fields
+			}
 		});
 
 		context.log.debug({ payload }, "Webhook payload");
@@ -145,11 +150,6 @@ export const GithubWebhookMiddleware = (
 			);
 			return;
 		}
-
-		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId,
-			context.gitHubAppConfig?.gitHubAppId
-		);
 
 		if (!subscriptions.length) {
 			context.log.info(
@@ -204,13 +204,15 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
-				context.log
+				context.log,
+				context.gitHubAppConfig?.gitHubAppId
 			);
+
 			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
-				context.log.error(
+				context.log.warn(
 					{ jiraHost },
-					`No enabled installation found.`
+					`No installations found.`
 				);
 				continue;
 			}

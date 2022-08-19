@@ -1,26 +1,27 @@
 /* globals $ */
 $('.install-link').click(function (event) {
-  event.preventDefault()
+  event.preventDefault();
 
-  $.post('/github/configuration', {
+  $.post(window.location.href, {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value,
     clientKey: document.getElementById('clientKey').value
   }, function (data) {
     if (data.err) {
-      return console.log(data.err)
+      console.log(data.err);
     }
-    window.close()
+    window.close();
   })
 })
 
 $('.delete-link').click(function (event) {
-  event.preventDefault()
+  event.preventDefault();
+	const gitHubInstallationId = $(event.target).data("github-installation-id");
+	const csrfToken = document.getElementById("_csrf").value;
 
   $.post('/github/subscription', {
-    installationId: $(event.target).data('installation-id'),
-    jiraHost: $(event.target).data('jira-host'),
-    _csrf: document.getElementById('_csrf').value
+		installationId: gitHubInstallationId,
+    _csrf: csrfToken
   }, function (data) {
     if (data.err) {
       return console.log(data.err)

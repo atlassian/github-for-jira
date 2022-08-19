@@ -1,8 +1,7 @@
 import { processInstallation } from "../sync/installation";
 import { mocked } from "ts-jest/utils";
 import { backfillQueueMessageHandler } from "./backfill";
-import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { Context } from "./sqs";
+import { BackfillMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { getLogger } from "config/logger";
 import * as Sentry from "@sentry/node";
 
@@ -27,7 +26,7 @@ mocked(Sentry.Hub).mockImplementation(() => ({
 } as Sentry.Hub));
 
 describe("backfill", () => {
-	const BACKFILL_MESSAGE_CONTEXT: Context<BackfillMessagePayload> = {
+	const BACKFILL_MESSAGE_CONTEXT: SQSMessageContext<BackfillMessagePayload> = {
 		payload: {
 			installationId: 123,
 			jiraHost: "https://test.atlassian.net"

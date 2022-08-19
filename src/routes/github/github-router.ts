@@ -15,18 +15,18 @@ export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
+// Webhook Route
+subRouter.post("/webhooks",
+	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+	returnOnValidationError,
+	WebhookReceiverPost);
+
 //Have an cover all middleware to extract the optional gitHubAppId
 //subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);
 subRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
 subRouter.use(GithubOAuthRouter);
-
-// Webhook Route
-subRouter.post("/webhooks",
-	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
-	returnOnValidationError,
-	WebhookReceiverPost);
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);

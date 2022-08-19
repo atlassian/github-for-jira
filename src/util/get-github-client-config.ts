@@ -14,6 +14,7 @@ export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
 export interface GitHubClientConfig {
+	serverId?: number;
 	hostname: string;
 	baseUrl: string;
 	apiUrl: string;
@@ -34,6 +35,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
 		return	{
+			serverId: gitHubServerApp.id,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			baseUrl: gitHubServerApp.gitHubBaseUrl,
 			apiUrl: `${gitHubServerApp.gitHubBaseUrl}/api/v3`,
@@ -85,7 +87,7 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
 
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 		const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl, gitHubClientConfig.serverId);
 	} else {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger);
 	}

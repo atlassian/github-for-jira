@@ -7,6 +7,7 @@ RUN apk add g++ make python3
 RUN apk add --update --upgrade busybox
 RUN apk add --update --upgrade libretls
 RUN apk add --update --upgrade openssl
+RUN apk add --update --upgrade zlib
 
 COPY . /app
 WORKDIR /app
