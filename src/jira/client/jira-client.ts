@@ -33,7 +33,7 @@ export const getJiraClient = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	log: Logger = getLogger("jira-client"),
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
