@@ -53,13 +53,13 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
-	reqLog: Logger,
+	log: Logger,
 	gitHubAppId?: number
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
-	const installationsWithSubscriptions = await getInstallations(subscriptions, reqLog, gitHubAppId);
-	await removeFailedConnectionsFromDb(reqLog, installationsWithSubscriptions, jiraHost);
-	reqLog.debug(`Removed failed installations`);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, log, gitHubAppId);
+	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost);
+	log.debug("Removed failed installations");
 
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
 

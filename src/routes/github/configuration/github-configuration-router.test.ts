@@ -126,6 +126,21 @@ describe("Github Configuration", () => {
 			githubUserTokenNock(sub.gitHubInstallationId);
 
 			githubNock
+				.get(`/app/installations/${sub.gitHubInstallationId}`)
+				.reply(200, {
+					"id": 1,
+					"account": {
+						"login": "octocat",
+						"id": 1,
+						"type": "User"
+					},
+					"html_url": "https://github.com/organizations/github/settings/installations/1",
+					"target_type": "Organization",
+					"created_at": "2017-07-08T16:18:44-04:00",
+					"updated_at": "2017-07-08T16:18:44-04:00"
+				});
+
+			githubNock
 				.get(`/user/installations`)
 				.reply(200, {
 					installations: [{
@@ -187,6 +202,12 @@ describe("Github Configuration", () => {
 			githubUserTokenNock(sub.gitHubInstallationId);
 
 			githubNock
+				.get(`/app/installations/${sub.gitHubInstallationId}`)
+				.reply(403, {
+					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
+				});
+
+			githubNock
 				.get("/user/installations")
 				.reply(200, {
 					installations: [{
@@ -223,7 +244,7 @@ describe("Github Configuration", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token"
+						githubToken: "token2"
 					})
 				)
 				.expect(200);
