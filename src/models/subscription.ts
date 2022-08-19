@@ -79,7 +79,7 @@ export class Subscription extends Model {
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
 		limit?: number,
-		inactiveForSeconds?: number,
+		inactiveForSeconds?: number
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];

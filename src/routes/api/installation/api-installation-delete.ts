@@ -9,7 +9,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	//TODO: ARC-1619 Maybe need to fix this and put it into the path
 	//Not doing it now as it might break pollinator if it use this api
 	const { gitHubAppIdStr } = req.query;
-	const gitHubAppId = parseInt(gitHubAppIdStr as string) || undefined
+	const gitHubAppId = parseInt(gitHubAppIdStr as string) || undefined;
 
 	if (!jiraHost || !githubInstallationId) {
 		const msg = "Missing Jira Host or Installation ID";

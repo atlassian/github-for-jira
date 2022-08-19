@@ -13,7 +13,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 	//TODO: ARC-1619 Maybe need to fix this and put it into the path
 	//Not doing it now as it might break pollinator if it use this api
 	const { gitHubAppIdStr } = req.query;
-	if(!gitHubAppId) {
+	if (!gitHubAppId) {
 		//TODO: ARC-1619: I don't think the gitHubAppId presents in the res.locals in this api router, but not fixing it in this PR
 		//so temporary patch it as to get it from query string
 		gitHubAppId = parseInt(gitHubAppIdStr as string) || undefined;

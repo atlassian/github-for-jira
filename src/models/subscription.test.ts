@@ -42,7 +42,7 @@ describe("Subscription", () => {
 			});
 			it("should get correct github server app", async () => {
 				const records = await Subscription.getAllFiltered(
-					GHES_GITHUB_SERVER_APP_PK_ID_1, [GITHUB_INSTALLATION_ID], [], 0, undefined, undefined,
+					GHES_GITHUB_SERVER_APP_PK_ID_1, [GITHUB_INSTALLATION_ID], [], 0, undefined, undefined
 				);
 				expect(records.length).toBe(1);
 				expect(records[0]).toEqual(expect.objectContaining({
