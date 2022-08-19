@@ -37,7 +37,7 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
-				githubUuid?: string;
+				gitHubUuid?: string;
 				temp?:  {
 					[key: string]: any;
 				}

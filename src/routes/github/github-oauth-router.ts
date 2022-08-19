@@ -107,7 +107,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		req.session.githubToken = response.data.access_token;
 
 		// Saving UUID for each GitHubServerApp
-		req.session.githubUuid = uuid;
+		req.session.gitHubUuid = uuid;
 
 		if (!req.session.githubToken) {
 			req.log.debug(`didn't get access token from GitHub`);
@@ -126,7 +126,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { githubToken, githubUuid } = req.session;
+		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppId, gitHubAppConfig } = res.locals;
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
@@ -134,7 +134,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		 * This is done because the `user/installations` endpoint is based upon the githubToken
 		 * and to fetch new list of installations we need separate githubTokens
 		 */
-		if (!githubToken || githubUuid !== gitHubAppConfig.uuid) {
+		if (!githubToken || gitHubUuid !== gitHubAppConfig.uuid) {
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
