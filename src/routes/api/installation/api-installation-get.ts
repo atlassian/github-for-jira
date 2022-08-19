@@ -7,17 +7,8 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
 	const { client, jiraHost } = res.locals;
-	let { gitHubAppId } = res.locals;
+	const { gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
-
-	//TODO: ARC-1619 Maybe need to fix this and put it into the path
-	//Not doing it now as it might break pollinator if it use this api
-	const { gitHubAppIdStr } = req.query;
-	if (!gitHubAppId) {
-		//TODO: ARC-1619: I don't think the gitHubAppId presents in the res.locals in this api router, but not fixing it in this PR
-		//so temporary patch it as to get it from query string
-		gitHubAppId = parseInt(gitHubAppIdStr as string) || undefined;
-	}
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId), gitHubAppId);

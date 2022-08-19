@@ -53,8 +53,8 @@ export const processBranch = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger,
-		gitHubAppId
+		gitHubAppId,
+		logger
 	);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);

@@ -60,8 +60,8 @@ export const processDeployment = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger,
-		gitHubAppId
+		gitHubAppId,
+		logger
 	);
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
