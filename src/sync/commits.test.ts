@@ -14,6 +14,7 @@ import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
+import { waitUntil } from "test/utils/wait-until";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -99,7 +100,11 @@ describe("sync/commits", () => {
 		githubUserTokenNock(installationId);
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
+	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
@@ -131,7 +136,7 @@ describe("sync/commits", () => {
 		createJiraNock(commits);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should send Jira all commits that have Issue Keys", async () => {
@@ -198,7 +203,7 @@ describe("sync/commits", () => {
 		createJiraNock(commits);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
@@ -267,7 +272,7 @@ describe("sync/commits", () => {
 			createJiraNock(commits);
 
 			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data);
+			await verifyMessageSent(data);
 		});
 
 
@@ -303,7 +308,7 @@ describe("sync/commits", () => {
 				createJiraNock(commits);
 
 				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-				verifyMessageSent(data);
+				await verifyMessageSent(data);
 			});
 		});
 	});

@@ -42,11 +42,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
+	public readonly gitHubServerAppId?: number;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		logger?: Logger,
 		baseUrl?: string,
+		gshaId?: number,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		super(logger, baseUrl);
@@ -65,6 +67,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
+		this.gitHubServerAppId = gshaId;
 	}
 
 	/**
@@ -303,7 +306,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId);
+		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId, this.gitHubServerAppId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,

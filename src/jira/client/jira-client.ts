@@ -32,10 +32,12 @@ export interface DeploymentsResult {
 export const getJiraClient = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
-	log: Logger = getLogger("jira-client")
+	log: Logger = getLogger("jira-client"),
+	gitHubAppId?: number
 ): Promise<any> => {
 	const logger = log.child({ jiraHost, gitHubInstallationId });
 	const installation = await Installation.getForHost(jiraHost);
+
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
@@ -78,13 +80,6 @@ export const getJiraClient = async (
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/{issue_id}/comment", {
-						urlParams: {
-							issue_id
-						}
-					}),
-				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
@@ -118,13 +113,6 @@ export const getJiraClient = async (
 			},
 			worklogs: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/{issue_id}/worklog", {
-						urlParams: {
-							issue_id
-						}
-					}),
-				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/worklog", payload, {
 						urlParams: {
@@ -151,15 +139,6 @@ export const getJiraClient = async (
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId: string | number) =>
-					instance.get(
-						`/rest/devinfo/0.10/existsByProperties`,
-						{
-							params: {
-								installationId: gitHubInstallationId
-							}
-						}
-					),
 				delete: async (gitHubInstallationId: string | number) =>
 					Promise.all([
 
@@ -210,10 +189,6 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				get: (repositoryId: string) =>
-					instance.get("/rest/devinfo/0.10/repository/{repositoryId}", {
-						urlParams: { repositoryId }
-					}),
 				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
 						params: {
@@ -239,7 +214,8 @@ export const getJiraClient = async (
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
-							gitHubInstallationId
+							gitHubInstallationId,
+							gitHubAppId
 						);
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
@@ -261,7 +237,7 @@ export const getJiraClient = async (
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -301,7 +277,7 @@ export const getJiraClient = async (
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;
@@ -337,7 +313,7 @@ export const getJiraClient = async (
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
 				let payload;

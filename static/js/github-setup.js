@@ -107,16 +107,17 @@ $('.install-link').click(function (event) {
 	const installationId = $(event.target).data('installation-id');
 	const csrfToken = document.getElementById('_csrf').value;
 	const clientKey = document.getElementById('clientKey').value;
+	const url = window.location.href.split("setup").join("configuration");
 
-  $.post('/github/configuration', {
+  $.post(url, {
     installationId,
     _csrf: csrfToken,
     clientKey
   }, function (data) {
     if (data.err) {
-      return console.log(data.err)
+      console.log(data.err);
     }
-    window.close()
+    window.close();
   });
 });
 

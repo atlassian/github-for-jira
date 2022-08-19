@@ -1,9 +1,8 @@
-import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
-import { PushQueueMessagePayload } from "./sqs.types";
+import { MessageHandler, PushQueueMessagePayload, SQSMessageContext } from "./sqs.types";
 
-export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
+export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: SQSMessageContext<PushQueueMessagePayload>) => {
 	const { payload, log } = context;
 	const { webhookId, installationId, jiraHost } = payload;
 	context.log = context.log.child({
@@ -12,6 +11,6 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 		gitHubInstallationId: installationId
 	});
 	context.log.info("Handling push message from the SQS queue");
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log);
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log, payload.gitHubAppConfig?.gitHubAppId);
 	await processPush(gitHubInstallationClient, payload, log);
 };

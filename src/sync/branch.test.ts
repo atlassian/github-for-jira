@@ -21,6 +21,7 @@ import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { when } from "jest-when";
 import { numberFlag, NumberFlags } from "config/feature-flags";
+import { waitUntil } from "test/utils/wait-until";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -154,7 +155,11 @@ describe("sync/branches", () => {
 
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
+	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec?: number) => {
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
@@ -172,7 +177,7 @@ describe("sync/branches", () => {
 			.reply(200);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should send data if issue keys are only present in commits", async () => {
@@ -187,7 +192,7 @@ describe("sync/branches", () => {
 			.reply(200);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should send data if issue keys are only present in an associated PR title", async () => {
@@ -239,7 +244,7 @@ describe("sync/branches", () => {
 			.reply(200);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are found", async () => {
@@ -249,18 +254,17 @@ describe("sync/branches", () => {
 		jiraNock.post(/.*/).reply(200);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
 		expect(jiraNock).not.toBeDone();
 		cleanAll();
+		await verifyMessageSent(data);
 	});
 
 	it("should reschedule message with delay if there is rate limit", async () => {
 		const data = { installationId, jiraHost };
 		nockGitHubGraphQlRateLimit("12360");
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data, 15);
+		await verifyMessageSent(data, 15);
 	});
-
 
 	describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
 		let dateCutoff: Date;
@@ -289,7 +293,7 @@ describe("sync/branches", () => {
 				.reply(200);
 
 			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-			verifyMessageSent(data);
+			await verifyMessageSent(data);
 		});
 
 		describe("Branch commit history value is passed", () => {
@@ -310,7 +314,7 @@ describe("sync/branches", () => {
 					.reply(200);
 
 				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-				verifyMessageSent(data);
+				await verifyMessageSent(data);
 			});
 		});
 	});

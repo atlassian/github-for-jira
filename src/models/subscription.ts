@@ -158,10 +158,8 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey
-			},
-			defaults: {
-				gitHubAppId: payload.gitHubAppId
+				jiraClientKey: payload.clientKey,
+				gitHubAppId: payload.gitHubAppId || null
 			}
 		});
 

@@ -78,12 +78,12 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		repository,
 		repository: { owner, name: repo },
 		shas,
-		installationId,
+		installationId: gitHubInstallationId,
 		jiraHost
 	} = payload;
 
-	if (await isBlocked(installationId, rootLogger)) {
-		rootLogger.warn({ installationId }, "blocking processing of push message because installationId is on the blocklist");
+	if (await isBlocked(gitHubInstallationId, rootLogger)) {
+		rootLogger.warn({ gitHubInstallationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
@@ -94,7 +94,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		webhookId: webhookId,
 		repoName: repo,
 		orgName: owner.name,
-		installationId,
+		gitHubInstallationId,
 		webhookReceived,
 		jiraHost
 	});
@@ -104,7 +104,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			installationId
+			gitHubInstallationId,
+			payload.gitHubAppConfig?.gitHubAppId
 		);
 
 		if (!subscription) {
@@ -114,8 +115,9 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		const jiraClient = await getJiraClient(
 			subscription.jiraHost,
-			installationId,
-			log
+			gitHubInstallationId,
+			log,
+			payload.gitHubAppConfig?.gitHubAppId
 		);
 
 		const commits: JiraCommit[] = await Promise.all(
