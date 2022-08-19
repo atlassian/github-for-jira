@@ -172,6 +172,13 @@
     top: -2em;
 }
 
+.jiraConfiguration__infoContainer {
+    display: flex;
+}
+.jiraConfiguration__infoSpinner {
+    margin-left: 8px;
+}
+
 .jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
     display: block;
 }
