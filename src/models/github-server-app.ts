@@ -175,7 +175,9 @@ export class GitHubServerApp extends EncryptedModel {
 
 	}
 
-	static async findForUuid(uuid: string): Promise<GitHubServerApp | null> {
+	static async findForUuid(uuid: string | undefined): Promise<GitHubServerApp | null> {
+		if (!uuid) return null;
+
 		return this.findOne({
 			where: {
 				uuid

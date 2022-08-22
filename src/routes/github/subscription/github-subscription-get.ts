@@ -2,20 +2,28 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { GitHubServerApp } from "~/src/models/github-server-app";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
-
+	const { githubToken, jiraHost } = res.locals;
 	const gitHubInstallationId = Number(req.params.installationId);
+	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
+	const gitHubAppId = gitHubApp?.id;
+	const gitHubAppUuid = gitHubApp?.uuid;
+
+	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	logger.debug("Received GitHub manage subscriptions request");
+
 	if (!githubToken) {
+		logger.debug("No GitHub token found.");
 		return next(new Error("Unauthorized"));
 	}
 
 	if (!gitHubInstallationId || !jiraHost) {
+		logger.debug("Missing Jira host and/or GitHub installation id.");
 		return next(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	}
 
-	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
 
@@ -41,7 +49,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 				installation,
 				host: res.locals.jiraHost,
 				subscriptions,
-				hasSubscriptions: subscriptions.length > 0
+				hasSubscriptions: subscriptions.length > 0,
+				gitHubAppUuid
 			});
 		} else {
 			return next(new Error("Unauthorized"));

@@ -8,6 +8,7 @@ import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { GitHubServerApp } from "~/src/models/github-server-app";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -79,7 +80,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, gitHubClientSecret, uuid } = gitHubAppConfig;
+	const { hostname, clientId, gitHubClientSecret } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
@@ -106,9 +107,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		// Saving it to session be used later
 		req.session.githubToken = response.data.access_token;
 
-		// Saving UUID for each GitHubServerApp
-		req.session.gitHubUuid = uuid;
-
 		if (!req.session.githubToken) {
 			req.log.debug(`didn't get access token from GitHub`);
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
@@ -127,7 +125,9 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { githubToken, gitHubUuid } = req.session;
-		const { jiraHost, gitHubAppId, gitHubAppConfig } = res.locals;
+		const { jiraHost, gitHubAppConfig } = res.locals;
+		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.id;
+
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
 		 * to trigger another GitHub Login and fetch new githubToken.
@@ -138,6 +138,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
+
 		req.log.debug("found github token in session. validating token with API.");
 
 		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
@@ -170,6 +171,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
-export const GithubOAuthRouter = Router();
+export const GithubOAuthRouter = Router({ mergeParams: true });
 GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
 GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);

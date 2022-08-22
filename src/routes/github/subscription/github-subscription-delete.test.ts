@@ -26,7 +26,7 @@ describe("delete-github-subscription", () => {
 		});
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn(), debug: jest.fn() }) },
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost

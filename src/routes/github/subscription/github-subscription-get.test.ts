@@ -22,7 +22,7 @@ describe("github-subscription-get", () => {
 		next = jest.fn();
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn(), debug: jest.fn() }) },
 			params: {
 				installationId: gitHubInstallationId
 			},

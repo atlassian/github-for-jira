@@ -2,25 +2,31 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { GitHubServerApp } from "models/github-server-app";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
+	const { githubToken, jiraHost } = res.locals;
+	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
+	const gitHubAppId = res.locals.gitHubAppId || gitHubApp?.id;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+
+	logger.debug("Received delete-subscription request");
+
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, gitHubAppId);
 
 	if (!githubToken) {
+		logger.debug("No GitHub token found when trying to delete subscription.");
 		res.sendStatus(401);
 		return;
 	}
 
 	if (!gitHubInstallationId || !jiraHost) {
+		logger.debug("Missing gitHubInstallationId and/or jiraHost. Unable to delete subscription.");
 		res.status(400).json({ err: "installationId and jiraHost must be provided to delete a subscription." });
 		return;
 	}
-
-	logger.info("Received delete-subscription request");
 
 	try {
 		// get the installation to see if the user is an admin of it
@@ -37,6 +43,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
+
+
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 			if (!subscription) {
