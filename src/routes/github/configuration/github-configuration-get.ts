@@ -74,7 +74,7 @@ const getInstallationsWithAdmin = async (
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
 
-		const numberOfReposPromise = await gitHubUserClient.getNumberOfReposForInstallation(installation.id)
+		const numberOfRepos = await gitHubUserClient.getNumberOfReposForInstallation(installation.id)
 			.then((response) => response.data.total_count).
 			catch((err) => {
 				errors.push(err);
@@ -83,7 +83,7 @@ const getInstallationsWithAdmin = async (
 
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-		const checkAdmin = isUserAdminOfOrganization(
+		const isAdmin = await isUserAdminOfOrganization(
 			gitHubUserClient,
 			installation.account.login,
 			login,
@@ -92,7 +92,6 @@ const getInstallationsWithAdmin = async (
 			errors.push(err);
 			return false;
 		});
-		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
 		return {
 			...installation,
