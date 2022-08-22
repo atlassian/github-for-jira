@@ -10,6 +10,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
+	logger.debug("Received GET subscription request");
+
 	if (gitHubApp?.id !== gitHubAppConfig?.gitHubAppId) {
 		logger.debug("GitHub app IDs do not match. Cannot GET subscription");
 		throw new Error("Cannot GET subscription.");
@@ -17,8 +19,6 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 
 	const gitHubAppId = gitHubApp?.id;
 	const gitHubAppUuid = gitHubApp?.uuid;
-
-	logger.debug("Received GitHub manage subscriptions request");
 
 	if (!githubToken) {
 		logger.debug("No GitHub token found.");

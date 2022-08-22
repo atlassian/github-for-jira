@@ -9,7 +9,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
-	logger.debug("Received delete-subscription request");
+	logger.debug("Received DELETE subscription request");
 
 	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
 
