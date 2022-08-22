@@ -40,7 +40,8 @@ describe("delete-github-subscription", () => {
 			json: jest.fn(),
 			locals: {
 				jiraHost,
-				githubToken: "abc-token"
+				githubToken: "abc-token",
+				gitHubAppConfig: {}
 			}
 		};
 
@@ -131,5 +132,13 @@ describe("delete-github-subscription", () => {
 				err: expect.any(String)
 			}
 		]);
+	});
+
+	it("Should throw an error when GitHub app IDs do not match", async () => {
+		res.locals.gitHubAppConfig.gitHubAppId = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+
+		await expect(GithubSubscriptionDelete(req as any, res as any))
+			.rejects
+			.toThrow("Cannot DELETE subscription.");
 	});
 });

@@ -5,14 +5,20 @@ import { createAppClient, createUserClient } from "~/src/util/get-github-client-
 import { GitHubServerApp } from "models/github-server-app";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
-	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
-	const gitHubAppId = res.locals.gitHubAppId || gitHubApp?.id;
+	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
 	logger.debug("Received delete-subscription request");
 
+	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
+
+	if (gitHubApp?.id !== gitHubAppConfig?.gitHubAppId) {
+		logger.debug("GitHub app IDs do not match. Cannot DELETE subscription.");
+		throw new Error("Cannot DELETE subscription.");
+	}
+
+	const gitHubAppId = gitHubApp?.id;
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, gitHubAppId);
 

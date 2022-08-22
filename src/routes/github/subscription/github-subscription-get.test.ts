@@ -26,7 +26,8 @@ describe("github-subscription-get", () => {
 			params: {
 				installationId: gitHubInstallationId
 			},
-			csrfToken: jest.fn()
+			csrfToken: jest.fn(),
+			body: {}
 		};
 
 		res = {
@@ -38,7 +39,8 @@ describe("github-subscription-get", () => {
 				jiraHost,
 				githubToken: "abc-token",
 				isAdmin: jest.fn().mockResolvedValue(true),
-				nonce: ""
+				nonce: "",
+				gitHubAppConfig: {}
 			}
 		};
 
@@ -126,5 +128,13 @@ describe("github-subscription-get", () => {
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
 		expect(next).toHaveBeenCalledWith(new Error("installationId and jiraHost must be provided to delete a subscription."));
+	});
+
+	it("Should throw an error when GitHub app IDs do not match", async () => {
+		res.locals.gitHubAppConfig.gitHubAppId = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
+
+		await expect(GithubSubscriptionGet(req as any, res as any, next as any))
+			.rejects
+			.toThrow("Cannot GET subscription.");
 	});
 });
