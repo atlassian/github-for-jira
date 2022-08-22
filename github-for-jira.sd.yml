@@ -311,6 +311,34 @@ workers:
 
 environmentOverrides:
 
+  dev:
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          domains:
+            - 'github-for-jira.dev.services.atlassian.com'
+            - 'github-for-jira-adev.dev.services.atlassian.com'
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
+            - match:
+                prefix: /
+                host: 'github-for-jira.dev.services.atlassian.com'
+              route:
+                cluster: github-for-jira_ddev_micros-elb
+            - match:
+                prefix: /
+                host: 'github-for-jira-adev.dev.services.atlassian.com'
+              route:
+                cluster: github-for-jira_adev_micros-elb
+
   ddev:
 #  Uncomment lines 140-149 if you want remote debugging in ddev
 #    loadBalancer:
@@ -348,17 +376,9 @@ environmentOverrides:
           metrics: *CpuMemAndQueuesScalingRules
     resources:
       - type: globaledge
-        name: proxy
+        name: ddev
         attributes:
-          ip_whitelist:
-            - public
-          routes: &blackholeSpammingIPs
-            - match: # Blackhole IP that keeps spamming us
-                prefix: /
-                external_address_header_match:
-                  - 94.156.174.137
-              route:
-                cluster: blackhole # Deny by sending traffic to blackhole
+          upstream_only: true
 
       - &cryptorGithubServerAppSecrets
         name: github-server-app-secrets
@@ -416,6 +436,11 @@ environmentOverrides:
           max: 2
           metrics: *CpuMemAndQueuesScalingRules
     resources:
+
+      - type: globaledge
+        name: adev
+        attributes:
+          upstream_only: true
 
       - *cryptorGithubServerAppSecrets
 
@@ -527,7 +552,13 @@ environmentOverrides:
             - github.stg.atlassian.com
           ip_whitelist:
             - public
-          routes: *blackholeSpammingIPs
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
 
       - *cryptorGithubServerAppSecrets
 
@@ -618,7 +649,13 @@ environmentOverrides:
             - github.atlassian.com
           ip_whitelist:
             - public
-          routes: *blackholeSpammingIPs
+          routes:
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
 
       - type: sqs
         name: backfill
