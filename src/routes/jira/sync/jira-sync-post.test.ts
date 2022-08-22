@@ -28,7 +28,8 @@ describe("sync", () => {
 		await Subscription.install({
 			installationId: installationIdForCloud,
 			host: jiraHost,
-			clientKey: installation.clientKey
+			clientKey: installation.clientKey,
+			gitHubAppId: undefined
 		});
 		gitHubServerApp = await GitHubServerApp.install({
 			uuid: newUUID(),

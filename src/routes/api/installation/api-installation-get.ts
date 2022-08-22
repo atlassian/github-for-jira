@@ -6,11 +6,12 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId } = req.params;
-	const { client, jiraHost, gitHubAppId } = res.locals;
+	const { client, jiraHost } = res.locals;
+	const { gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 	try {
-		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
+		const subscriptions = await Subscription.getAllForInstallation(Number(installationId), gitHubAppId);
 
 		if (!subscriptions.length) {
 			res.sendStatus(404);
