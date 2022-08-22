@@ -55,13 +55,7 @@ $(document).ready(function() {
 	$(".jiraAppCreation__actionBtn").click(function (event) {
 		event.preventDefault();
 
-		if (selectedVersion === "automatic") {
-			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session?ghRedirect=to&autoApp=1&baseUrl=" + gitHubServerBaseUrl);
-				child.window.jiraHost = jiraHost;
-				child.window.jwt = token;
-			});
-		} else {
+		if (selectedVersion === "manual") {
 			AP.navigator.go(
 				'addonmodule',
 				{
@@ -69,6 +63,12 @@ $(document).ready(function() {
 					customData: { serverUrl: gitHubServerBaseUrl }
 				}
 			);
+		} else {
+			AP.context.getToken(function(token) {
+				const child = openChildWindow("/session?ghRedirect=to&autoApp=1&baseUrl=" + gitHubServerBaseUrl);
+				child.window.jiraHost = jiraHost;
+				child.window.jwt = token;
+			});
 		}
 	});
 });
