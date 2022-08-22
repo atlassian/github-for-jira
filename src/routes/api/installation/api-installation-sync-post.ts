@@ -11,7 +11,8 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 		req.log.info(jiraHost, githubInstallationId);
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			githubInstallationId
+			githubInstallationId,
+			undefined
 		);
 
 		if (!subscription) {

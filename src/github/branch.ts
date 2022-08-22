@@ -32,7 +32,7 @@ export const processBranch = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	rootLogger: Logger,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ) => {
 	const logger = rootLogger.child({
 		webhookId: webhookId,
@@ -53,8 +53,8 @@ export const processBranch = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger,
-		gitHubAppId
+		gitHubAppId,
+		logger
 	);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
@@ -63,7 +63,8 @@ export const processBranch = async (
 		webhookReceivedDate.getTime(),
 		"create",
 		logger,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
 
@@ -83,11 +84,13 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };

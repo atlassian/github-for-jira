@@ -129,21 +129,8 @@ beforeAll(async () => {
 	redis.disconnect();
 });
 
-const globalGitHubAppConfig = {
-	appId: 1,
-	uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
-	hostname: "http://test-server.com",
-	gitHubBaseUrl: "http://test-server.com",
-	gitHubApiUrl: "https://api.test-server.com",
-	clientId: "lvl.128ejqe91n2e128",
-	gitHubClientSecret: "secretone",
-	webhookSecret: "secrettwo",
-	privateKey: "secretthree"
-};
-
 beforeEach(() => {
 	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
-	global.gitHubAppConfig = globalGitHubAppConfig;
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
