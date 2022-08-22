@@ -63,7 +63,8 @@ export const processBranch = async (
 		webhookReceivedDate.getTime(),
 		"create",
 		logger,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
 
@@ -83,11 +84,13 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
