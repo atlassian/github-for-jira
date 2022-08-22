@@ -159,7 +159,9 @@ describe("github-subscription-get", () => {
 
 		res = {
 			sendStatus: jest.fn(),
-			locals: {}
+			locals: {
+				gitHubAppConfig: {}
+			}
 		};
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);
