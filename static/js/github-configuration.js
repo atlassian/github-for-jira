@@ -10,7 +10,7 @@ $('.install-link').click(function (event) {
     if (data.err) {
       console.log(data.err);
     }
-		window.close();
+    window.close();
   })
 })
 
