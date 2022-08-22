@@ -12,7 +12,7 @@ import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as UUID } from "uuid";
 
-describe("Discovery Queue Test - GitHub Client", () => {
+describe.skip("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
 
 	let gitHubServerApp: GitHubServerApp;

@@ -13,7 +13,7 @@ const TEST_QUEUE_NAME = "test";
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
-describe("SQS", () => {
+describe.skip("SQS", () => {
 	let mockRequestHandler: jest.Mock;
 	let mockErrorHandler: jest.Mock;
 	let testMaxQueueAttempts = 3;
