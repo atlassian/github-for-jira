@@ -50,7 +50,6 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			return;
 		}
 
-
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 			if (!subscription) {
