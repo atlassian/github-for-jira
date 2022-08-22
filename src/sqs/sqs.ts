@@ -210,6 +210,7 @@ export class SqsQueue<MessagePayload> {
 			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
 			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
 		} finally {
+			// Don't add `await` here, we need to ignore this promise
 			this.listen(listenerContext);
 		}
 	}
