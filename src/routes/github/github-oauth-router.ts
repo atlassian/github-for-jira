@@ -8,7 +8,6 @@ import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { GitHubServerApp } from "~/src/models/github-server-app";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
