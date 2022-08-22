@@ -180,7 +180,8 @@ describe("GitHub router", () => {
 						"Cookie",
 						getSignedCookieHeader({
 							jiraHost,
-							githubToken: VALID_TOKEN
+							githubToken: VALID_TOKEN,
+							gitHubUuid: GITHUB_SERVER_APP_UUID
 						})
 					)
 					.expect(200);
