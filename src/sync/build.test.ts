@@ -116,7 +116,7 @@ describe("sync/builds", () => {
 		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
-	it("should sync multiple builds to Jira when they contain issue keys", async () => {
+	it.skip("should sync multiple builds to Jira when they contain issue keys", async () => {
 		const data: BackfillMessagePayload = { installationId, jiraHost };
 
 		githubUserTokenNock(installationId);
