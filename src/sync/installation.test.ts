@@ -123,8 +123,8 @@ describe("sync/installation", () => {
 	});
 
 	describe("maybeScheduleNextTask", () => {
-		it("does nothing if there is no next task", () => {
-			maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
+		it("does nothing if there is no next task", async () => {
+			await maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
 			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(0);
 		});
 
@@ -157,7 +157,7 @@ describe("sync/installation", () => {
 			mockSystemTime(12345678);
 		});
 
-		it("Rate limiting error will be retried with the correct delay", () => {
+		it("Rate limiting error will be retried with the correct delay", async () => {
 			const axiosResponse = {
 				data: "Rate Limit",
 				status: 403,
@@ -169,14 +169,14 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
-		it("No delay if rate limit already reset", () => {
+		it("No delay if rate limit already reset", async () => {
 			const axiosResponse = {
 				data: "Rate Limit",
 				status: 403,
@@ -188,14 +188,14 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
-		it("Error with headers indicating rate limit will be retryed with the appropriate delay", () => {
+		it("Error with headers indicating rate limit will be retryed with the appropriate delay", async () => {
 			const probablyRateLimitError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -214,15 +214,13 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
 		});
 
-
-		it("Repository ignored if not found error", () => {
+		it("Repository ignored if not found error", async () => {
 			const notFoundError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -241,30 +239,28 @@ describe("sync/installation", () => {
 				status: 404
 			};
 
-			handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository ignored if GraphQL not found error", () => {
+		it("Repository ignored if GraphQL not found error", async () => {
 
-			handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository failed if some kind of unknown error", () => {
-
-
-			handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+		it("Repository failed if some kind of unknown error", async () => {
+			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
 		});
 
-		it("60s delay if abuse detection triggered", () => {
+		it("60s delay if abuse detection triggered", async () => {
 			const abuseDetectionError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -284,16 +280,16 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("5s delay if connection timeout", () => {
+		it("5s delay if connection timeout", async () => {
 			const connectionTimeoutErr = "connect ETIMEDOUT";
 
-			handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
