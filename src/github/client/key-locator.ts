@@ -7,7 +7,7 @@ import isBase64 from "is-base64";
 /**
  * Look for a Github app's private key
  */
-export const keyLocator = async (gitHubAppId?: number) => {
+export const keyLocator = async (gitHubAppId: number | undefined) => {
 	if (gitHubAppId) {
 		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 		if (gitHubServerApp) {

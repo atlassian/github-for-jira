@@ -26,7 +26,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		// get all subscriptions from the database for this installation ID
-		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 
 		// Only show the page if the logged in user is an admin of this installation
 		if (await isUserAdminOfOrganization(

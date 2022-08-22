@@ -77,7 +77,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		mockGitHubReposResponses();
 		await sqsQueues.backfill.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
 		await waitUntil(async () => {
-			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, undefined);
 			expect(subscription).toBeTruthy();
 			const states = await RepoSyncState.findAllFromSubscription(subscription!);
 			expect(states?.length).toBe(2);
