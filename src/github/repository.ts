@@ -16,6 +16,7 @@ export const deleteRepository = async (context, jiraClient, _util, gitHubInstall
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		context.gitHubAppConfig?.gitHubAppId
 	);
 };

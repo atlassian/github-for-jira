@@ -76,6 +76,7 @@ export const processDeployment = async (
 		webhookReceivedDate.getTime(),
 		"deployment_status",
 		logger,
-		result?.status
+		result?.status,
+		gitHubAppId
 	);
 };

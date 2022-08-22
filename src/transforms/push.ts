@@ -101,6 +101,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 	log.info("Processing push");
 
+	const gitHubAppId = payload.gitHubAppConfig?.gitHubAppId;
+
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
@@ -117,7 +119,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			subscription.jiraHost,
 			gitHubInstallationId,
 			log,
-			payload.gitHubAppConfig?.gitHubAppId
+			gitHubAppId
 		);
 
 		const commits: JiraCommit[] = await Promise.all(
@@ -191,7 +193,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					webhookReceived,
 					"push",
 					log,
-					jiraResponse?.status
+					jiraResponse?.status,
+					gitHubAppId
 				);
 			} catch (err) {
 				log.warn({ err }, "Failed to send data to Jira");
