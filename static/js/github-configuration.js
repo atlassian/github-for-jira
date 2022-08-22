@@ -18,11 +18,13 @@ $('.delete-link').click(function (event) {
   event.preventDefault();
 	const gitHubInstallationId = $(event.target).data("github-installation-id");
 	const csrfToken = document.getElementById("_csrf").value;
+	const uuid = $(event.target).data("github-app-uuid");
+	const path = uuid ? `/github/${uuid}/subscription` : "/github/subscription"
 
-  $.post('/github/subscription', {
+	$.post(path, {
 		installationId: gitHubInstallationId,
-    _csrf: csrfToken
-  }, function (data) {
+		_csrf: csrfToken
+	}, function (data) {
     if (data.err) {
       return console.log(data.err)
     }

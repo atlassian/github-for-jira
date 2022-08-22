@@ -127,7 +127,9 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { githubToken, gitHubUuid } = req.session;
-		const { jiraHost, gitHubAppId, gitHubAppConfig } = res.locals;
+		const { jiraHost, gitHubAppConfig } = res.locals;
+		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
+
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
 		 * to trigger another GitHub Login and fetch new githubToken.
