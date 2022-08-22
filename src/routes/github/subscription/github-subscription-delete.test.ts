@@ -30,7 +30,8 @@ describe("delete-github-subscription", () => {
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
-			}
+			},
+			params: {}
 		};
 
 		res = {

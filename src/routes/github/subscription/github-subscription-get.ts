@@ -23,10 +23,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 		logger.debug("Missing Jira host and/or GitHub installation id.");
 		return next(new Error("installationId and jiraHost must be provided to delete a subscription."));
 	}
-
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
-
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();
 

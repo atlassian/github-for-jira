@@ -4,7 +4,7 @@ import { GithubSubscriptionDelete } from "./github-subscription-delete";
 import { param } from "express-validator";
 import { returnOnValidationError } from "../../api/api-utils";
 
-export const GithubSubscriptionRouter = Router();
+export const GithubSubscriptionRouter = Router({ mergeParams: true });
 
 GithubSubscriptionRouter.route("/:installationId")
 	.all(param("installationId").isInt(), returnOnValidationError)

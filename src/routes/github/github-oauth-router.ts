@@ -79,7 +79,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, gitHubClientSecret } = gitHubAppConfig;
+	const { hostname, clientId, gitHubClientSecret, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
@@ -105,6 +105,9 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 		// Saving it to session be used later
 		req.session.githubToken = response.data.access_token;
+
+		// Saving UUID for each GitHubServerApp
+		req.session.gitHubUuid = uuid;
 
 		if (!req.session.githubToken) {
 			req.log.debug(`didn't get access token from GitHub`);
@@ -137,7 +140,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
-
 		req.log.debug("found github token in session. validating token with API.");
 
 		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
