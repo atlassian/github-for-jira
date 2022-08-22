@@ -2,23 +2,15 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
-import { GitHubServerApp } from "~/src/models/github-server-app";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const gitHubInstallationId = Number(req.params.installationId);
-	const gitHubApp = await GitHubServerApp.findForUuid(req.params.uuid);
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
 	logger.debug("Received GET subscription request");
 
-	if (gitHubApp?.id !== gitHubAppConfig?.gitHubAppId) {
-		logger.debug("GitHub app IDs do not match. Cannot GET subscription");
-		throw new Error("Cannot GET subscription.");
-	}
-
-	const gitHubAppId = gitHubApp?.id;
-	const gitHubAppUuid = gitHubApp?.uuid;
+	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
 
 	if (!githubToken) {
 		logger.debug("No GitHub token found.");

@@ -69,7 +69,6 @@ describe("delete-github-subscription", () => {
 
 	it("Should delete GitHub Subscription as an Org admin - installation type Org | Server", async () => {
 		res.locals.gitHubAppConfig.gitHubAppId = gitHubAppId;
-		req.params.uuid = uuid;
 
 		gitHubApp = {
 			id: gitHubAppId,
@@ -220,13 +219,5 @@ describe("delete-github-subscription", () => {
 				err: expect.any(String)
 			}
 		]);
-	});
-
-	it("Should throw an error when GitHub app IDs do not match", async () => {
-		res.locals.gitHubAppConfig.gitHubAppId = 1;
-
-		await expect(GithubSubscriptionDelete(req as any, res as any))
-			.rejects
-			.toThrow("Cannot DELETE subscription.");
 	});
 });
