@@ -39,7 +39,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId?: number;
+	gitHubAppId: number | undefined;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -52,7 +52,7 @@ export class Subscription extends Model {
 
 	static getAllForInstallation(
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
@@ -64,7 +64,7 @@ export class Subscription extends Model {
 
 	static findOneForGitHubInstallationId(
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -75,12 +75,12 @@ export class Subscription extends Model {
 	}
 
 	static getAllFiltered(
+		gitHubAppId: number | undefined,
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
 		limit?: number,
-		inactiveForSeconds?: number,
-		gitHubAppId?: number
+		inactiveForSeconds?: number
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];
@@ -142,7 +142,7 @@ export class Subscription extends Model {
 	static getSingleInstallation(
 		jiraHost: string,
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -224,7 +224,7 @@ Subscription.init({
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
-	gitHubAppId?: number;
+	gitHubAppId: number | undefined;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

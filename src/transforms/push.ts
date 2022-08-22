@@ -118,8 +118,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		const jiraClient = await getJiraClient(
 			subscription.jiraHost,
 			gitHubInstallationId,
-			log,
-			gitHubAppId
+			gitHubAppId,
+			log
 		);
 
 		const commits: JiraCommit[] = await Promise.all(
