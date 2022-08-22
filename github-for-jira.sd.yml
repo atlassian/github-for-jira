@@ -310,6 +310,74 @@ workers:
 
 
 environmentOverrides:
+  adev:
+    config:
+      environmentVariables:
+        APP_URL: https://github-for-jira-adev.dev.services.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-for-jira-adev.dev.services.atlassian.com
+        INSTANCE_NAME: development-adev
+        NODE_OPTIONS: "--no-deprecation"
+        LOG_LEVEL: debug
+        SENTRY_ENVIRONMENT: adev
+        APP_ID: '124403'
+        GITHUB_CLIENT_ID: Iv1.600bf90a20f1ab18
+        PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-ddev
+        GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-ddev
+    scaling:
+      instance: t2.small
+      min: 1
+      max: 1
+      metrics: *CpuMemScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t2.small
+          min: 1
+          max: 5
+          metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes: &blackholeSpammingIPs
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
+
+      - &cryptorGithubServerAppSecrets
+        name: github-server-app-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+
+      - &cryptorJiraInstanceSecrets
+        name: jira-instance-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+    alarms:
+      overrides:
+        LatencyHigh: null
+        HealthyHostCount: null
+        UnHealthyHostCount: null
+        WebServerAlarmWhenLowCPUCredits: null
+        WebServerDiskSpaceUtilizationAlarmHigh: null
+        WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
+        WebServerMemoryAlarmHigh: null
+        WebServerServiceRespawnAlarm: null
   ddev:
 #  Uncomment lines 140-149 if you want remote debugging in ddev
 #    loadBalancer:
