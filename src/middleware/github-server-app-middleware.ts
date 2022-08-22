@@ -33,6 +33,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
+			gitHubAppId: gitHubServerApp.id,
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
@@ -44,13 +45,14 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
 		res.locals.gitHubAppConfig = {
+			gitHubAppId: undefined,
 			appId: envVars.APP_ID,
 			uuid: undefined, //undefined for cloud
 			hostname: GITHUB_CLOUD_HOSTNAME,
 			clientId: envVars.GITHUB_CLIENT_ID,
 			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
 			webhookSecret: envVars.WEBHOOK_SECRET,
-			privateKey: await keyLocator()
+			privateKey: await keyLocator(undefined)
 		};
 	}
 

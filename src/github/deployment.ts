@@ -30,7 +30,7 @@ export const processDeployment = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	rootLogger: Logger,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ) => {
 
 	const logger = rootLogger.child({
@@ -47,7 +47,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger);
+	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -60,8 +60,8 @@ export const processDeployment = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
-		logger,
-		gitHubAppId
+		gitHubAppId,
+		logger
 	);
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);

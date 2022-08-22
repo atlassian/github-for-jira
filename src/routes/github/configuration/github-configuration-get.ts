@@ -54,11 +54,11 @@ const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	log: Logger,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ): Promise<MergedInstallation[]> => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 	const installationsWithSubscriptions = await getInstallations(subscriptions, log, gitHubAppId);
-	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost);
+	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost, gitHubAppId);
 	log.debug("Removed failed installations");
 
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
@@ -72,7 +72,7 @@ const getInstallationsWithAdmin = async (
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string,
-	gitHubAppId?: number
+	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
@@ -106,7 +106,7 @@ const getInstallationsWithAdmin = async (
 	}));
 };
 
-const removeFailedConnectionsFromDb = async (logger: Logger, installations: InstallationResults, jiraHost: string): Promise<void> => {
+const removeFailedConnectionsFromDb = async (logger: Logger, installations: InstallationResults, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	await Promise.all(installations.rejected
 		// Only uninstall deleted installations
 		.filter(failedInstallation => failedInstallation.deleted)
@@ -114,7 +114,8 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 			try {
 				await Subscription.uninstall({
 					installationId: failedInstallation.id,
-					host: jiraHost
+					host: jiraHost,
+					gitHubAppId
 				});
 			} catch (err) {
 				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;

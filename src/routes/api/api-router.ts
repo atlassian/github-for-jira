@@ -114,7 +114,9 @@ ApiRouter.post(
 				return;
 			}
 		}
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds, gitHubServerApp?.id);
+
+		const gitHubAppId = gitHubServerApp?.id;
+		const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)

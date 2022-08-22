@@ -19,7 +19,8 @@ describe("findOrStartSync", () => {
 				subscription = await Subscription.install({
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
-					clientKey: JIRA_CLIENT_KEY
+					clientKey: JIRA_CLIENT_KEY,
+					gitHubAppId: undefined
 				});
 			});
 			it("should send cloud gitHubAppConfig to msg queue", async () => {
