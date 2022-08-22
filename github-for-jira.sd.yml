@@ -66,10 +66,6 @@ serviceProxy:
       authorization:
         plugins:
           - type: poco
-  dev:
-    default:
-      - type: Simple
-        env: ddev
 
 lifecycleEvents:
   source: queue
