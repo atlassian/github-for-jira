@@ -40,6 +40,13 @@ const errorSerializer = (err) => {
 
 export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
+const loggerStream = (): Logger.Stream => ({
+	type: "raw",
+	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	closeOnExit: false,
+	level: defaultLogLevel
+});
+
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	// Remove  Default Probot Logging Stream
@@ -47,12 +54,7 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	(probotLogger as any).streams.pop();
 
 	// Replace with formatOut stream
-	probotLogger.addStream({
-		type: "stream",
-		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
-		closeOnExit: false,
-		level: defaultLogLevel
-	});
+	probotLogger.addStream(loggerStream());
 };
 
 interface LoggerOptions {
@@ -67,7 +69,7 @@ interface LoggerOptions {
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
-		stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+		streams: [ loggerStream() ],
 		level: defaultLogLevel,
 		serializers: {
 			err: errorSerializer,
