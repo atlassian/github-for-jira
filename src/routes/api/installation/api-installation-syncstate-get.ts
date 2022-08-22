@@ -17,7 +17,8 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 	try {
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			githubInstallationId
+			githubInstallationId,
+			undefined
 		);
 
 		if (!subscription) {
