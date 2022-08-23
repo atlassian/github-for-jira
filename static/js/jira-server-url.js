@@ -108,6 +108,15 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 	});
 };
 
+$("#gheServerURL").on("keyup", event => {
+	const hasUrl = event.target.value.length > 0;
+	$("#gheServerBtn").attr({
+		"aria-disabled": !hasUrl,
+		"disabled": !hasUrl
+	});
+});
+
+
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
