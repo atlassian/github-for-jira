@@ -21,7 +21,14 @@ const openChildWindow = (url) => {
 
 const handleFormErrors = (isUpdate) => {
 	$(".jiraManualAppCreation__serverError").show();
-	$(".errorMessageBox__message").empty().append("Please make sure all the details you entered are correct.");
+	$(".errorMessageBox__message")
+		.empty()
+		.append("Please make sure all the details you entered are correct.")
+		.append(
+			'<div class="jiraManualAppCreation__serverError__linkContainer">' +
+			'	<a href="https://support.atlassian.com/jira-cloud-administration/docs/manually-create-a-github-app" target="_blank">Learn more</a>' +
+			'</div>'
+		);
 	const errorTitle = ".errorMessageBox__title";
 
 	isUpdate

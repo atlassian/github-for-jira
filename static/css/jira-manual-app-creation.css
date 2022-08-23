@@ -111,6 +111,10 @@ form#jiraManualAppCreation__form > div.field-group {
   margin-top: 2.5em;
 }
 
+.jiraManualAppCreation__serverError__linkContainer {
+  margin-top: 0.5em;
+}
+
 .jiraManualAppCreation__formFileErrorBorder {
   display: none;
 }
