@@ -11,23 +11,16 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		if (!/^https?:$/.test(protocol)) {
 			// TODO: add URL for this
 			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
-			$("#gheServerBtn").attr({
-				"aria-disabled": true,
-				"disabled": true
-			});
+			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
-			$("#gheServerBtn").attr({
-				"aria-disabled": true,
-				"disabled": true
-			});
+			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+
 		} else {
 			field.validate();
-			$("#gheServerBtn").attr({
-				"aria-disabled": false,
-				"disabled": false
-			});
+			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
+
 		}
 	} catch (e) {
     if (!inputURL.trim().length) {
@@ -35,10 +28,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
     } else {
       field.invalidate(AJS.format('The entered URL is not valid.'));
     }
-		$("#gheServerBtn").attr({
-			"aria-disabled": true,
-			"disabled": true
-		});
+		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 	}
 });
 
@@ -64,6 +54,10 @@ const gheServerUrlErrors = {
 	GHE_SERVER_BAD_GATEWAY: {
 		title: "Something went wrong",
 		message: "We weren't able to complete your request. Please try again."
+	},
+	GHE_ERROR_CONNECTION_TIMEDOUT: {
+		title: "Connection timed out",
+		message: "We weren't able to connect to the URL. Please make sure you've entered the correct URL or try again later."
 	},
 	GHE_ERROR_DEFAULT: {
 		title: "Something went wrong",
@@ -119,6 +113,8 @@ AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	activeRequest();
-	verifyGitHubServerUrl(gheServerURL, installationId);
+	if ($("#gheServerBtnSpinner").is(":hidden")) {
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL, installationId);
+	}
 });

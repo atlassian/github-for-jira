@@ -33,6 +33,10 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
 		message: "Bad gateway"
 	},
+	ETIMEDOUT: {
+		errorCode: "GHE_ERROR_CONNECTION_TIMEDOUT",
+		message: "Connection timed out"
+	},
 	default: {
 		errorCode: "GHE_ERROR_DEFAULT",
 		message: "Something went wrong"
