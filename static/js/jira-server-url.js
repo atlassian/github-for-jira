@@ -21,7 +21,8 @@ AJS.formValidation.register(['ghe-url'], (field) => {
     if (!inputURL.trim().length) {
       field.invalidate(AJS.format('This is a required field.'));
     } else {
-      field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
+			// TODO: add URL for this
+			field.invalidate(AJS.format('The entered URL is not valid. <a href="#" target="_blank">Learn more.</a>'));
     }
 	}
 });
