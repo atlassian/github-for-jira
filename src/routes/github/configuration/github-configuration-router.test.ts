@@ -231,6 +231,13 @@ describe("Github Configuration", () => {
 					html_url: "https://github.com/apps/jira"
 				});
 
+			githubNock
+				.post("/graphql", { query: ViewerRepositoryCountQuery })
+				.query(true)
+				.reply(403, {
+					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
+				});
+
 			await supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
