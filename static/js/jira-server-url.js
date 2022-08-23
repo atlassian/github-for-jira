@@ -4,8 +4,7 @@ const jiraHost = params.get("xdm_e");
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 
 const validateUrl = url => {
-	const pattern = /^((?:http:\/\/)|(?:https:\/\/))(www.)?((?:[a-zA-Z0-9]+\.[a-z]{3})|(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))([\/a-zA-Z0-9\.]*)$/gm;
-
+	const pattern = /^((?:http:\/\/)|(?:https:\/\/))(www.)?((?:[a-zA-Z0-9]+\.[a-z]{3})|(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))([/a-zA-Z0-9.]*)$/gm;
 	return url.match(pattern);
 }
 
@@ -25,7 +24,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
 			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
-
+-
 		} else {
 			field.validate();
 			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
