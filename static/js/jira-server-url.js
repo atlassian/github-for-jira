@@ -24,7 +24,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
 			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
--
+
 		} else {
 			field.validate();
 			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
