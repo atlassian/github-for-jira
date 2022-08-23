@@ -15,9 +15,12 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		const { hostname } = new URL(inputURL);
 
 		if (!validateUrl(inputURL)) {
-			// TODO: add URL for this
-			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
-			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+			field.invalidate(AJS.format(
+				'The entered URL is not valid. ' +
+				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
+				'Learn more' +
+				'</a>.'
+			));$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
@@ -109,7 +112,7 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 				} else {
 					mapErrorCode(data.errors[0].code);
 				}
-      }
+			}
 		);
 	});
 };
@@ -128,8 +131,6 @@ AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	if ($("#gheServerBtnSpinner").is(":hidden")) {
-		activeRequest();
-		verifyGitHubServerUrl(gheServerURL, installationId);
-	}
+	activeRequest();
+	verifyGitHubServerUrl(gheServerURL, installationId);
 });
