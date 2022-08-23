@@ -28,6 +28,7 @@ $('.delete-link').click(function (event) {
     if (data.err) {
       return console.log(data.err)
     }
+		window.opener.postMessage({moduleKey: "github-post-install-page"}, window.location.origin);
     window.close()
   })
 })

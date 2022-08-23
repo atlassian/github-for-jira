@@ -13,6 +13,17 @@ function openChildWindow(url) {
   return child;
 }
 
+window.addEventListener("message", event => {
+  if (event.origin === window.location.origin && event.data.moduleKey) {
+    AP.navigator.go(
+      'addonmodule',
+      {
+        moduleKey: event.data.moduleKey
+      }
+    );
+  }
+}, false);
+
 $('.select-server').click(function (event) {
   event.preventDefault();
   const uuid = $(this).data("identifier");
