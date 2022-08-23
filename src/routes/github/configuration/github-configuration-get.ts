@@ -13,6 +13,7 @@ import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
 import {
 	createAppClient,
+	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
@@ -69,21 +70,22 @@ const getInstallationsWithAdmin = async (
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,
 	login: string,
-	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = []
+	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
+	jiraHost: string,
+	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log, gitHubAppId);
 
-		const numberOfRepos = await gitHubUserClient.getNumberOfReposForInstallation(installation.id)
-			.then((response) => response.data.total_count).
-			catch((err) => {
-				errors.push(err);
-				return 0;
-			});
+		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
+			errors.push(err);
+			return 0;
+		});
 
 		// See if we can get the membership for this user
 		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
-		const isAdmin = await isUserAdminOfOrganization(
+		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
 			installation.account.login,
 			login,
@@ -92,7 +94,9 @@ const getInstallationsWithAdmin = async (
 			errors.push(err);
 			return false;
 		});
+		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
 		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+
 		return {
 			...installation,
 			numberOfRepos,
@@ -181,7 +185,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		req.log.debug(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations);
+		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
