@@ -9,8 +9,12 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		const { protocol, hostname } = new URL(inputURL);
 
 		if (!/^https?:$/.test(protocol)) {
-			// TODO: add URL for this
-			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
+			field.invalidate(AJS.format(
+				'The entered URL is not valid. ' +
+				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
+				'Learn more' +
+				'</a>.'
+			));
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
@@ -18,11 +22,11 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 			field.validate();
 		}
 	} catch (e) {
-    if (!inputURL.trim().length) {
-      field.invalidate(AJS.format('This is a required field.'));
-    } else {
-      field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
-    }
+		if (!inputURL.trim().length) {
+			field.invalidate(AJS.format('This is a required field.'));
+		} else {
+			field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
+		}
 	}
 });
 
@@ -93,7 +97,7 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 				} else {
 					mapErrorCode(data.errors[0].code);
 				}
-      }
+			}
 		);
 	});
 };
