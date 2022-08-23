@@ -222,8 +222,8 @@ config:
                       #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
                       # Normal business:
                       #   (5 web servers + 3 workers) * 15 pool size = 120 connections
-    PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
-    PGBOUNCER_MAX_CLIENT_CONN: "10000"
+    PGBOUNCER_SERVER_IDLE_TIMEOUT: "600"
+    PGBOUNCER_MAX_CLIENT_CONN: "1000"
 
 loadBalancer:
   type: ALB
