@@ -6,6 +6,9 @@ import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { envVars } from "config/env";
+import HttpsProxyAgent from "https-proxy-agent/dist/agent";
+import HttpProxyAgent from "http-proxy-agent/dist/agent";
 
 interface MessageAndCode {
 	errorCode: string;
@@ -68,7 +71,14 @@ export const JiraConnectEnterprisePost = async (
 		}
 
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
-		await axios.get(gheServerURL);
+		await axios.get(gheServerURL, {
+			// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
+			// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to
+			// create an Http(s)ProxyAgents and set the `proxy` option to false.
+			httpAgent: envVars.PROXY ? new HttpProxyAgent(envVars.PROXY) : undefined,
+			httpsAgent: envVars.PROXY ? new HttpsProxyAgent(envVars.PROXY) : undefined,
+			proxy: false
+		});
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
