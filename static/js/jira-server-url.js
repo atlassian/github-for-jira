@@ -3,30 +3,39 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 const GITHUB_CLOUD = ["github.com", "www.github.com"];
 
+const validateUrl = url => {
+	const pattern = /^((?:http:\/\/)|(?:https:\/\/))(www.)?((?:[a-zA-Z0-9]+\.[a-z]{3})|(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))([/a-zA-Z0-9.]*)$/gm;
+	return url.match(pattern);
+}
+
 AJS.formValidation.register(['ghe-url'], (field) => {
 	const inputURL = field.el.value;
 	try {
-		const { protocol, hostname } = new URL(inputURL);
+		const { hostname } = new URL(inputURL);
 
-		if (!/^https?:$/.test(protocol)) {
+		if (!validateUrl(inputURL)) {
 			field.invalidate(AJS.format(
 				'The entered URL is not valid. ' +
 				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
 				'Learn more' +
 				'</a>.'
 			));
+			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
+			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 		} else {
 			field.validate();
+			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
 		}
 	} catch (e) {
-		if (!inputURL.trim().length) {
-			field.invalidate(AJS.format('This is a required field.'));
-		} else {
-			field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
-		}
+    if (!inputURL.trim().length) {
+      field.invalidate(AJS.format('This is a required field.'));
+    } else {
+      field.invalidate(AJS.format('The entered URL is not valid.'));
+    }
+		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 	}
 });
 
@@ -40,24 +49,35 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const gheServerUrlErrors = {
-	GHE_ERROR_INVALID_URL: {
-		title: "Invalid URL",
-		message: "That URL doesn't look right. Please check and try again.",
-	},
-	GHE_ERROR_ENOTFOUND: {
-		title: "We couldn't verify this URL",
-		message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
-	},
-	GHE_SERVER_BAD_GATEWAY: {
-		title: "Something went wrong",
-		message: "We weren't able to complete your request. Please try again."
-	},
-	GHE_ERROR_DEFAULT: {
-		title: "Something went wrong",
-		message: "We ran into a hiccup while verifying your details. Please try again later."
+const getGHEServerError = (code, url) => {
+	switch (code) {
+		case "GHE_ERROR_INVALID_URL":
+			return {
+				title: "Invalid URL",
+				message: "<b>${url}</b> doesn't look right. Please check and try again.",
+			};
+		case "GHE_ERROR_ENOTFOUND":
+			return {
+				title: `We couldn't verify ${url}`,
+				message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+			};
+		case "GHE_SERVER_BAD_GATEWAY":
+			return {
+				title: "Bad Gateway",
+				message: "We weren't able to complete your request. Please try again."
+			};
+		case "GHE_ERROR_CONNECTION_TIMED_OUT":
+			return {
+				title: "Connection timed out",
+				message: `We couldn't connect to <b>${url}</b>. Please make sure GitHub for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
+			};
+		default:
+			return {
+				title: "Something went wrong",
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Trace ID: <b>${code}</b>`
+			};
 	}
-};
+}
 
 const handleGheUrlRequestErrors = (err) => {
 	requestFailed();
@@ -66,12 +86,6 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
 }
-
-const mapErrorCode = (errorCode) => {
-	const errorMessage = gheServerUrlErrors[errorCode]
-	handleGheUrlRequestErrors(errorMessage);
-}
-
 
 const verifyGitHubServerUrl = (gheServerURL) => {
 	const csrf = document.getElementById("_csrf").value
@@ -95,27 +109,21 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 						}
 					);
 				} else {
-					mapErrorCode(data.errors[0].code);
+					const errorMessage = getGHEServerError(data.errors[0].code, gheServerURL);
+					handleGheUrlRequestErrors(errorMessage);
 				}
 			}
 		);
 	});
 };
 
-$("#gheServerURL").on("keyup", event => {
-	const hasUrl = event.target.value.length > 0;
-	$("#gheServerBtn").attr({
-		"aria-disabled": !hasUrl,
-		"disabled": !hasUrl
-	});
-});
-
-
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	activeRequest();
-	verifyGitHubServerUrl(gheServerURL, installationId);
+	if ($("#gheServerBtnSpinner").is(":hidden")) {
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL, installationId);
+	}
 });
