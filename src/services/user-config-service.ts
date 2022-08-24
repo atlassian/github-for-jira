@@ -56,12 +56,26 @@ export const updateRepoConfig = async (
 /**
  * Returns the config for a given repo.
  */
-export const getRepoConfig = async (subscription: Subscription, repositoryId: number): Promise<Config | undefined> => {
+export const getRepoConfig = async (
+	subscription: Subscription,
+	installationId: InstallationId,
+	repositoryId: number,
+	repoOwner: string,
+	repoName: string
+): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
 	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
-	// TODO: if repoSyncState is not available, try to get the config file from GitHub!
-	return repoSyncState?.config;
+
+	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
+	// config directly from the config file in the GitHub repo.
+	if (!repoSyncState) {
+		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName);
+		return convertYamlToUserConfig(yamlConfig);
+	}
+
+	// Standard case: we return the config from our database.
+	return repoSyncState.config;
 };
 
 /**

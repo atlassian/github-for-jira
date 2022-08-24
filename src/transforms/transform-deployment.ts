@@ -2,7 +2,11 @@ import Logger from "bunyan";
 import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
-import { CommitSummary, extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
+import {
+	CommitSummary,
+	extractMessagesFromCommitSummaries,
+	getAllCommitsBetweenReferences
+} from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
 import _, { deburr } from "lodash";
@@ -145,7 +149,7 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	// if there is a user-defined config, we use that config for the mapping
 	if (config) {
 		const environmentType = mapEnvironmentWithConfig(environment, config);
-		if (environmentType){
+		if (environmentType) {
 			return environmentType;
 		}
 	}
@@ -235,10 +239,18 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 
 	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
 		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
-		if (subscription){
-			config = await getRepoConfig(subscription, payload.repository.id);
+		if (subscription) {
+			config = await getRepoConfig(
+				subscription,
+				githubInstallationClient.githubInstallationId,
+				payload.repository.id,
+				payload.repository.owner.login,
+				payload.repository.name);
 		} else {
-			logger.warn({ jiraHost, githubInstallationId: githubInstallationClient.githubInstallationId.installationId }, "could not find subscription - not using user config to map environments!");
+			logger.warn({
+				jiraHost,
+				githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+			}, "could not find subscription - not using user config to map environments!");
 		}
 	}
 
