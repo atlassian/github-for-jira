@@ -88,9 +88,9 @@ organizations in the Jira app.
 
 Select **Connect GitHub organization**, then select either **GitHub Cloud** or **GitHub Enterprise Server**.
 
-If you select **GitHub Cloud**, you’ll be redirected to a page where you can connect to organizations in GitHub.
+- If you select **GitHub Cloud**, you’ll be redirected to a page where you can connect to organizations in GitHub.
 
-If you select **GitHub Enterprise Server**, you’ll need to provide the URL for your server and create a GitHub app.
+- If you select **GitHub Enterprise Server**, you’ll need to provide the URL for your server and create a GitHub app.
 
 On the Connect a GitHub organization page, select the organization and repositories you'd like to connect.
 
