@@ -126,7 +126,7 @@ $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function ()
 			stored with the filename in the format of </br>
 			${appName}.private-key.pem</p>
 	`;
-	const pemFilePattern = "^\s*$|^.*\.(pem|PEM)$";
+	const pemFilePattern = "^.*\.(pem|PEM)$";
 
 	if (fileName !== "" && fileName.match(pemFilePattern)) {
 		AJS.flag({
