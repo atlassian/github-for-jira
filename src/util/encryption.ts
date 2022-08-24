@@ -1,8 +1,8 @@
 import { createHmac } from "crypto";
 import { envVars } from "../config/env";
 
-export const createHashWithSharedSecret = (data?: string | null): string => {
-	if (data === undefined || data == null) {
+export const createHashWithSharedSecret = (data?: string): string => {
+	if (!data) {
 		return "";
 	}
 	const cleanedData = removeNonAlphaNumericCharacters(data);

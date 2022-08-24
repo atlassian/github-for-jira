@@ -21,14 +21,13 @@ export class Installation extends EncryptedModel {
 	clientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
-	githubAppId?: number;
 
 	getEncryptionSecretKey() {
 		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;
 	}
 
 	async getEncryptContext() {
-		return { clientKey: this.clientKey };
+		return { };
 	}
 
 	getSecretFields() {
@@ -142,11 +141,7 @@ Installation.init({
 	},
 	enabled: BOOLEAN,
 	createdAt: DATE,
-	updatedAt: DATE,
-	githubAppId: {
-		type: DataTypes.INTEGER,
-		allowNull: true
-	}
+	updatedAt: DATE
 }, {
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {

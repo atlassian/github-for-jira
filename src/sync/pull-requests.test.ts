@@ -1,10 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { mocked } from "ts-jest/utils";
-import { Subscription, RepoSyncStateObject } from "models/subscription";
-import { Application } from "probot";
+import { Subscription } from "models/subscription";
 import { processInstallation } from "./installation";
 import nock from "nock";
-import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 
@@ -14,7 +11,6 @@ jest.mock("models/subscription");
 
 describe.skip("sync/pull-request", () => {
 	const installationId = 1234;
-	let app: Application;
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -22,39 +18,15 @@ describe.skip("sync/pull-request", () => {
 
 	beforeEach(async () => {
 		jest.setTimeout(10000);
-		const repoSyncStatus: RepoSyncStateObject = {
+		await Subscription.install({
 			installationId: 12345678,
-			jiraHost: "tcbyrd.atlassian.net",
-			repos: {
-				"test-repo-id": {
-					repository: {
-						name: "test-repo-name",
-						full_name: "test-repo-name",
-						owner: { login: "integrations" },
-						html_url: "test-repo-url",
-						id: 1234,
-						updated_at: "123456789"
-					},
-					pullStatus: "pending",
-					branchStatus: "complete",
-					commitStatus: "complete"
-				}
-			}
-		};
+			host: jiraHost,
+			clientKey: "client-key",
+			gitHubAppId: undefined
+		});
 
 		mockSystemTime(12345678);
 
-		mocked(Subscription.getSingleInstallation)
-			.mockResolvedValue({
-				jiraHost,
-				id: 1,
-				get: () => repoSyncStatus,
-				set: () => repoSyncStatus,
-				save: () => Promise.resolve({}),
-				update: () => Promise.resolve({})
-			} as any);
-
-		app = await createWebhookApp();
 	});
 
 	describe.each([
@@ -107,7 +79,7 @@ describe.skip("sync/pull-request", () => {
 				properties: { installationId: 1234 }
 			}).reply(200);
 
-			await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 
@@ -120,7 +92,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});
@@ -135,7 +107,7 @@ describe.skip("sync/pull-request", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(pullRequestList as any, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(pullRequestList as any, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		nock.removeInterceptor(interceptor);
 	});

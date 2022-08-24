@@ -31,7 +31,7 @@
   <body class="aui-page-hybrid">
     <div class="jiraServerUrl">
       <header class="jiraServerUrl__header">
-         {{> navigation previousPageName="Select GitHub Product" previousPagePath=previousPagePath }}
+         {{> navigation }}
       </header>
 
       <section class="jiraServerUrl__content">
@@ -46,8 +46,12 @@
         <div class="jiraServerUrl__prompt">
             Connecting GitHub Enterprise Server to Jira requires opening a hole in your firewall,
             as Atlassian’s IP addresses must be able to call your GitHub Enterprise Server.
-          <!--TODO: Add a link here-->
-          <a href="" target="_blank">Learn more about network configuration for GitHub for Jira.</a>
+            <a
+                href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data"
+                target="_blank"
+            >
+                Learn more about network configuration for GitHub for Jira.
+            </a>
         </div>
 
         <div>
@@ -87,7 +91,6 @@
 
     </div>
 
-    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
     <script
@@ -102,5 +105,6 @@
       nonce="{{nonce}}"
     ></script>
     <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>

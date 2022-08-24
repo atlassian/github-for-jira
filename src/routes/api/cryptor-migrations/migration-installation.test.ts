@@ -9,6 +9,7 @@ import { getHashedKey } from "models/sequelize";
 
 const DEFAULT_BATCH_SIZE = 10;
 const MAX_BATCH_SIZE = 10_000;
+const PRE_EXISTS_RECORDS = DEFAULT_BATCH_SIZE * 2;
 
 describe("Migrate Installations sharedSecret", () => {
 
@@ -19,19 +20,24 @@ describe("Migrate Installations sharedSecret", () => {
 		//setup apps and route
 		app = express();
 		app.use(bodyParser.json());
-		app.use((req, _, next) => {req.log = getLogger("test"); next();});
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.addLogFields = jest.fn();
+			next();
+		});
 		app.post("/migrate", CryptorMigrationInstallationPost);
 
 		//setup db data
 		await Installation.truncate();
-		for (let i = 0; i < DEFAULT_BATCH_SIZE * 2; i++) {
+		for (let i = 0; i < PRE_EXISTS_RECORDS; i++) {
 			await Installation.install({
 				host: "123",
 				clientKey: UUID(),
 				sharedSecret: "plain-text"
 			});
 		}
-		await Installation.sequelize?.query(`update "Installations" set "encryptedSharedSecret" = NULL`);
+		await Installation.sequelize?.query(`update "Installations"
+																				 set "encryptedSharedSecret" = NULL`);
 	});
 
 	describe("apply migration", () => {
@@ -48,23 +54,32 @@ describe("Migrate Installations sharedSecret", () => {
 			expect(await migrated[0].decrypt("encryptedSharedSecret")).toBe("plain-text");
 		});
 
-		it("should only migrated records that encryptedSharedSecret is null", async () => {
+		it("should only migrated records that provided id is greater than lastId", async () => {
 			//Via beforeEach, DB now has 20 (DEFAULT_BATCH_SIZE * 2) records, all of which has NULL encryptedSharedSecret column
 			const clientKey = UUID();
 			//Doing bellow, db will have 21 records,
-			//20 has encryptedSharedSecret NULL,
-			//1 record with encryptedSharedSecret = "do_not_migrate_this"
-			await Installation.install({
+			//1 record with encryptedSharedSecret = "encrypted:plain-text"
+			const newInst = await Installation.install({
 				host: "123",
 				clientKey,
 				sharedSecret: "plain-text"
 			});
-			await Installation.sequelize?.query(`update "Installations" set "encryptedSharedSecret" = 'do_not_migrate_this' where "clientKey" = '${getHashedKey(clientKey)}'`);
-			//By calling the api with large batch size
-			await supertest(app).post("/migrate").send({ batchSize: 1000 }).expect(200);
-			//now we can asserting that the api should NOT migrate that new record.
-			const shouldNotMigrate = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
-			expect(shouldNotMigrate.encryptedSharedSecret).toBe("do_not_migrate_this");
+			//now this 1 record with new encryptedSharedSecret = "encrypted:deprecated-plain-text"
+			await Installation.sequelize!.query(`update "Installations"
+																					 set "encryptedSharedSecret" = 'encrypted:deprecated-plain-text'
+																					 where "clientKey" = '${getHashedKey(clientKey)}'`);
+			//get the lastId of previous record
+			//By calling the api with large batch size and lastId of the new record - 1
+			await supertest(app).post("/migrate").send({ batchSize: 1000, lastId: newInst.id - 1 }).expect(200);
+			//now we can asserting that the api should ONLY migrate that new record, with origin sharedSecret
+			const shouldOnlyMigrate = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
+			expect(shouldOnlyMigrate.encryptedSharedSecret).toBe("encrypted:plain-text");
+			//and assert previous records are NOT migrated, encryptedSharedSecret column is null
+			const [rows]: [{ encryptedSharedSecret: string }[]] = await Installation.sequelize!.query(`select "encryptedSharedSecret"
+																																																 from "Installations"
+																																																 where "id" < ${newInst.id}`);
+			expect(rows.length).toBe(PRE_EXISTS_RECORDS);
+			expect(rows.every(r => r.encryptedSharedSecret === null)).toBe(true);
 		});
 
 	});

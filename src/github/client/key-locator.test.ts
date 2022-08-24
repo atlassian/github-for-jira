@@ -27,7 +27,7 @@ describe("key-locator", () => {
 
 	it("should return cloud app private key using PRIVATE_KEY_PATH", async () => {
 		const privateKeyContents = readFileSync(`${process.cwd()}/test/setup/test-key.pem`, "utf-8");
-		const privateKey = await keyLocator();
+		const privateKey = await keyLocator(undefined);
 		expect(privateKey).toBe(privateKeyContents);
 
 	});
@@ -36,7 +36,7 @@ describe("key-locator", () => {
 		const envPrivateKeyPath = envVars.PRIVATE_KEY_PATH;
 		envVars.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
 
-		await expect(keyLocator()).rejects.toThrow("Private key does not exists");
+		await expect(keyLocator(undefined)).rejects.toThrow("Private key does not exists");
 		envVars.PRIVATE_KEY_PATH = envPrivateKeyPath;
 
 	});
@@ -47,7 +47,7 @@ describe("key-locator", () => {
 		-----END RSA PRIVATE KEY-----`;
 		const envPrivateKey = envVars.PRIVATE_KEY;
 		envVars.PRIVATE_KEY = privateKetCert;
-		const privateKey = await keyLocator();
+		const privateKey = await keyLocator(undefined);
 		expect(privateKey).toBe(privateKetCert);
 		envVars.PRIVATE_KEY = envPrivateKey;
 	});
@@ -59,7 +59,7 @@ describe("key-locator", () => {
 		const encodedPrivateKey = Buffer.from(privateKetCert).toString("base64");
 		const envPrivateKey = envVars.PRIVATE_KEY;
 		envVars.PRIVATE_KEY = encodedPrivateKey;
-		const privateKey = await keyLocator();
+		const privateKey = await keyLocator(undefined);
 		expect(privateKey).toBe(privateKetCert);
 		envVars.PRIVATE_KEY = envPrivateKey;
 	});

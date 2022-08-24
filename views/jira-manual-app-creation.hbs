@@ -29,7 +29,7 @@
   </head>
 
   <body class="aui-page-hybrid">
-  {{> navigation previousPageName="Jira Select App Creation" }}
+  {{> navigation }}
 
   <div class="jiraManualAppCreation">
 
@@ -47,10 +47,21 @@
           {{else}}
             Enter all the fields to create your app.
         {{/if}}
-        <a href="#">Learn more about manual GitHub app creation.</a>
+        <a
+            href="https://support.atlassian.com/jira-cloud-administration/docs/manually-create-a-github-app/"
+            target="_blank"
+        >
+            Learn more about manual GitHub app creation.
+        </a>
       </div>
 
-      <form id="jiraManualAppCreation__form" class="aui top-label" enctype="multipart/form-data">
+      <form
+        id="jiraManualAppCreation__form"
+        class="aui top-label"
+        enctype="multipart/form-data"
+        data-app-uuid="{{app.uuid}}"
+        data-app-appname="{{app.gitHubAppName}}"
+    >
         <div class="jiraManualAppCreation__formTitle">
           Details
           <i class="aui-icon aui-iconfont-question-filled"></i>
@@ -58,10 +69,14 @@
 
         <div class="field-group">
           <label for="app-name">GitHub app name</label>
-          <input class="text full-width-field" type="text"
-                 data-aui-validation-field required
-                 value="{{app.gitHubAppName}}"
-                 id="app-name" name="app-name" />
+          <input
+             class="text full-width-field"
+             type="text"
+             data-aui-validation-field required
+             value="{{app.gitHubAppName}}"
+             name="gitHubAppName"
+             id="gitHubAppNameInput"
+           />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">URLs</div>
@@ -71,34 +86,34 @@
 
         <div class="field-group">
           <label for="callback-url">Callback URL</label>
-          <input class="text full-width-field" type="text" id="callback-url"
-                 name="callback-url" value="{{app.gitHubBaseUrl}}/github/callback/{{app.uuid}}"
+          <input class="text full-width-field" type="text"
+                 value="{{appUrl}}/github/{{uuid}}/callback"
                  readonly
           />
         </div>
 
         <div class="field-group">
           <label for="setup-url">Setup URL</label>
-          <input class="text full-width-field" type="text" id="setup-url"
-                 name="setup-url" value="{{app.gitHubBaseUrl}}/github/setup/{{app.uuid}}"
+          <input class="text full-width-field" type="text"
+                 value="{{appUrl}}/github/{{uuid}}/setup"
                  readonly
           />
         </div>
 
         <div class="field-group">
           <label for="webhook-url">Webhook URL</label>
-          <input class="text full-width-field" type="text" id="webhook-url"
-                 name="webhook-url" value="{{app.gitHubBaseUrl}}/github/webhook/{{app.uuid}}"
+          <input class="text full-width-field" type="text"
+                 value="{{appUrl}}/github/{{uuid}}/webhook"
                  readonly
           />
         </div>
 
         <div class="field-group">
           <label for="webhook-secret">Webhook secret</label>
-          <input class="text full-width-field" type="password"
+          <input class="text full-width-field" type="text"
                  data-aui-validation-field required
                  value="{{app.webhookSecret}}"
-                 id="webhook-secret" name="webhook-secret" />
+                 name="webhookSecret" />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">Secrets and IDs</div>
@@ -108,10 +123,10 @@
 
         <div class="field-group ">
           <label for="app-id">GitHub app ID</label>
-          <input class="text full-width-field" type="text"
+          <input class="text full-width-field" type="number"
                  data-aui-validation-field required
                  value="{{app.appId}}"
-                 id="app-id" name="app-id" />
+                 name="appId" />
         </div>
 
         <div class="field-group">
@@ -119,7 +134,7 @@
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
                  value="{{app.gitHubClientId}}"
-                 id="client-id" name="client-id" />
+                 name="gitHubClientId" />
         </div>
 
         <div class="field-group">
@@ -127,7 +142,7 @@
           <input class="text full-width-field" type="password"
                  data-aui-validation-field required
                  value="{{app.gitHubClientSecret}}"
-                 id="client-secret" name="client-secret" />
+                 name="gitHubClientSecret" />
         </div>
 
         <div class="field-group">
@@ -137,11 +152,14 @@
               Regex pattern for empty string or strings ending with .pem
               The empty string pattern is added to avoid showing validation pattern error message when this field is empty.
             -->
-            <input class="jiraManualAppCreation__formFileInput" id="private-key"
+            <input class="jiraManualAppCreation__formFileInput"
+                   id="privateKeyFile"
                    data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
                    data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
                    data-aui-validation-field
-                   required type="file">
+                   required
+                   type="file"
+            />
             <div class="jiraManualAppCreation__formNoFileUploaded">
               <img class="jiraManualAppCreation__formFileIcon" src="/public/assets/file-upload.svg" alt="Upload">
               <div>
@@ -151,21 +169,28 @@
               <div class="aui-button">Upload</div>
             </div>
             <div class="jiraManualAppCreation__formFileUploaded">
-              <div id="jiraManualAppCreation__uploadedFile"></div>
+              <div id="jiraManualAppCreation__uploadedFile" data-app-appname="{{app.gitHubAppName}}">{{app.gitHubAppName}}.private-key.pem</div>
               <span class="aui-icon aui-icon-small aui-iconfont-cross" id="jiraManualAppCreation__clearUploadedFile">Remove</span>
             </div>
           </div>
           <div class="jiraManualAppCreation__formFileErrorBorder"></div>
         </div>
 
+        <input type="hidden" id="_csrf" value="{{csrfToken}}">
+        <input type="hidden" name="uuid" value="{{uuid}}">
+        <input type="hidden" id="gitHubBaseUrl" name="gitHubBaseUrl" value="{{serverUrl}}">
+
         <div class="jiraManualAppCreation__serverError">
-          {{> server-error-message-box
-              title="We couldn't create your GitHub app"
-              message="Please make sure all the details you entered are correct."
-          }}
+          {{> server-error-message-box }}
         </div>
 
-        <input type="submit" value="{{#if app.id}}Update{{else}}Next{{/if}}" class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary" />
+        <button
+            type="submit"
+            class="jiraManualAppCreation_formSubmitBtn aui-button aui-button-primary"
+            id="{{#if app.id}}Update{{else}}Next{{/if}}"
+        >
+            {{#if app.id}}Update{{else}}Next{{/if}}
+        </button>
       </form>
     </div>
 
@@ -182,5 +207,6 @@
       nonce="{{nonce}}"
     ></script>
   <script src="/public/js/jira-manual-app-creation.js" nonce="{{nonce}}"></script>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>

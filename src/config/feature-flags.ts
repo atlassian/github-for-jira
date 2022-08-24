@@ -13,8 +13,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
-	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	LOG_UNSAFE_DATA = "log-unsafe-data",
@@ -25,11 +23,13 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor"
+	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor",
+	CONFIG_AS_CODE = "config-as-code"
 }
 
 export enum StringFlags {
-	BLOCKED_INSTALLATIONS = "blocked-installations"
+	BLOCKED_INSTALLATIONS = "blocked-installations",
+	LOG_LEVEL = "log-level"
 }
 
 export enum NumberFlags {
@@ -50,7 +50,7 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
+const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, jiraHost?: string): Promise<T> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
 		const user = createLaunchdarklyUser(jiraHost);
@@ -63,13 +63,13 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFla
 
 // Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
-	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
 
-export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
-	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, jiraHost?: string): Promise<T> =>
+	await getLaunchDarklyValue<T>(flag, defaultValue, jiraHost);
 
 export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
-	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
 
 export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
@@ -89,3 +89,5 @@ export const isBlocked = async (installationId: number, logger: Logger): Promise
 export const shouldTagBackfillRequests = async (): Promise<boolean> => {
 	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS, false);
 };
+
+export const GHE_SERVER_GLOBAL = false;

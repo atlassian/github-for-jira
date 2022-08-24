@@ -7,13 +7,19 @@ import { GithubConfigurationRouter } from "routes/github/configuration/github-co
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
+import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
-
-const UUID_REGEX = "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}";
+import { UUID_REGEX } from "~/src/util/regex";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+// Webhook Route
+subRouter.post("/webhooks",
+	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+	returnOnValidationError,
+	WebhookReceiverPost);
 
 //Have an cover all middleware to extract the optional gitHubAppId
 //subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);
@@ -22,16 +28,13 @@ subRouter.use(GithubServerAppMiddleware);
 // OAuth Routes
 subRouter.use(GithubOAuthRouter);
 
-// Webhook Route
-subRouter.post("/webhooks",
-	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
-	returnOnValidationError,
-	WebhookReceiverPost);
-
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
 
 subRouter.use("/setup", GithubSetupRouter);
+
+// App Manifest flow routes
+subRouter.use("/manifest", GithubManifestRouter);
 
 // All following routes need Github Auth
 subRouter.use(GithubAuthMiddleware);

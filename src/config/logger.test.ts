@@ -1,5 +1,6 @@
 import { getLogger, getUnsafeLogger } from "config/logger";
-import { Stream, RingBuffer } from "bunyan";
+import { RingBuffer, Stream } from "bunyan";
+
 describe("logger behaviour", () => {
 
 	describe("safe logger", () => {
@@ -10,14 +11,14 @@ describe("logger behaviour", () => {
 		});
 
 		it("should serialize sensitive data as part of getlogger", () => {
-			const logger = getLogger("name", { jiraHost: "CATS" });
+			const logger = getLogger("name", { fields: { jiraHost: "CATS" } });
 			expect(logger.fields.jiraHost).toBe("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
 		});
 
 		it("should serialize sensitive data as part of logging action", () => {
-			const logger = getLogger("name", { orgName: "CATS" });
+			const logger = getLogger("name", { fields: { orgName: "CATS" } });
 			logger.addStream({ stream: ringBuffer as Stream });
-			logger.info({ jiraHost: "CATS" },"Good day");
+			logger.info({ jiraHost: "CATS" }, "Good day");
 
 			expect(JSON.parse(ringBuffer.records[0]).jiraHost).toEqual("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
 		});
@@ -31,7 +32,7 @@ describe("logger behaviour", () => {
 		});
 
 		it("should keep parent fields on new child logger", () => {
-			const logger = getLogger("name", { foo: "bar" });
+			const logger = getLogger("name", { fields: { foo: "bar" } });
 			const childLogger = logger.child({ bingo: "buzz" });
 			logger.warn("Greetings");
 
@@ -56,8 +57,20 @@ describe("logger behaviour", () => {
 
 	describe("unsafe logger", () => {
 		it("should not serialize sensitive data", () => {
-			const logger = getUnsafeLogger("name", { jiraHost: "CATS" });
+			const logger = getUnsafeLogger("name", { fields: { jiraHost: "CATS" } });
 			expect(logger.fields.jiraHost).toBe("CATS");
+		});
+	});
+
+	describe("logger circular dependencies", () => {
+		const logger = getLogger("circular-logger");
+		it("should not throw when a circular dependency is passed to logger", () => {
+			const data = {
+				a: { foo: true },
+				b: { bar: "string" }
+			};
+			data.a = data as any;
+			expect(() => logger.warn(data, "log")).not.toThrow();
 		});
 	});
 

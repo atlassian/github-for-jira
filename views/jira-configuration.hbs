@@ -35,6 +35,7 @@
         {{#if hasConnections}}
           <button
             class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
+            data-gh-cloud="true"
           >Connect GitHub organization</button>
         {{/if}}
       </header>
@@ -104,6 +105,36 @@
             </div>
 
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
+          </div>
+
+          <!-- Restart backfill modal-->
+          <div class='jiraConfiguration__restartBackfillModal'  id="restart-backfill-modal">
+            <div class='jiraConfiguration__restartBackfillModalContent'>
+              <div class="jiraConfiguration__restartBackfillModal__header__container">
+                <h3>Backfill your data</h3>
+              </div>
+              <div class="jiraConfiguration__restartBackfillModal__header__content">
+                <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+              </div>
+              <form id="jiraConfiguration__restartBackfillModal__form" class="aui top-label">
+                <div class="field-group">
+                  <label for="backfill-date-picker">
+                    Backfill commits from <span class="jiraConfiguration__restartBackfillModal__required">*</span>
+                  </label>
+                  <input class="jiraConfiguration__restartBackfillModal__date text full-width-field"
+                         type="date"
+                         id="backfill-date-picker"
+                         data-aui-validation-field required
+                         name="backfill-date-picker"
+                  />
+                </div>
+                <div class="jiraConfiguration__restartBackfillModal__actions">
+                  <button class="aui-button aui-button-secondary" type="button" id="cancel-backfill">Cancel</button>
+                  <button type="submit" id="submit-backfill-data" class="aui-button aui-button-primary">Backfill data</button>
+                </div>
+              </form>
+            </div>
+            <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
 
           {{#if successfulConnections}}
@@ -255,7 +286,13 @@
                             </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
-                          <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
+                          <button
+                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                            data-installation-id="{{ id }}"
+                            data-org-name="{{account.login}}"
+                          >
+                            Disconnect
+                          </button>
                         </aui-section>
                       </aui-dropdown-menu>
                     </td>
@@ -321,10 +358,13 @@
             </a>
             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary add-organization-link".
+              data-gh-cloud="true"
             >Connect GitHub organization</button>
           </div>
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>
