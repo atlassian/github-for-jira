@@ -10,6 +10,7 @@ import { PushQueueMessagePayload, GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { isEmpty } from "lodash";
 import { GitHubPushData } from "../interfaces/github";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 // TODO: define better types for this file
 const mapFile = (
@@ -102,6 +103,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 	log.info("Processing push");
 
 	const gitHubAppId = payload.gitHubAppConfig?.gitHubAppId;
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(
@@ -124,7 +126,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		const commits: JiraCommit[] = await Promise.all(
 			shas.map(async (sha): Promise<JiraCommit> => {
-				log.info("Calling GitHub to fetch commit info " + sha.id);
+				log.info({ shaId: sha.id, gitHubProduct }, "Calling GitHub to fetch commit info ");
 				try {
 					const {
 						data: {
