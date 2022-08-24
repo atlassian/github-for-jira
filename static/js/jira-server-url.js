@@ -69,7 +69,7 @@ const getGHEServerError = (code, url) => {
 		case "GHE_ERROR_CONNECTION_TIMED_OUT":
 			return {
 				title: "Connection timed out",
-				message: `We couldn't connect to <b>${url}</b>. Please make sure Github for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
+				message: `We couldn't connect to <b>${url}</b>. Please make sure GitHub for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
 			};
 		default:
 			return {

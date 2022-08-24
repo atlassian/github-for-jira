@@ -7,7 +7,7 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
-const TIMEOUT_PERIOD = 30 * 1000;
+const TIMEOUT_PERIOD_MS = 30 * 1000;
 
 interface MessageAndCode {
 	errorCode: string;
@@ -71,7 +71,7 @@ export const JiraConnectEnterprisePost = async (
 
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
-		await axios.get(gheServerURL, { timeout: TIMEOUT_PERIOD });
+		await axios.get(gheServerURL, { timeout: TIMEOUT_PERIOD_MS });
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
