@@ -3,6 +3,7 @@ import { WebhookPayloadIssues } from "@octokit/webhooks";
 import { GitHubIssue, GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -36,7 +37,9 @@ export const issueWebhookHandler = async (context: WebhookContext<WebhookPayload
 		);
 	}
 
-	context.log.info(`Updating issue in GitHub with issueId: ${issue.id}`);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
+	context.log.info({ issueId: issue.id, gitHubProduct },"Updating issue in GitHub.");
 
 	const updatedIssue: GitHubIssueData = {
 		body: linkifiedBody,

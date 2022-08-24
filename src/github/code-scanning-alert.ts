@@ -2,6 +2,7 @@ import { transformCodeScanningAlert } from "../transforms/transform-code-scannin
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const codeScanningAlertWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
@@ -12,6 +13,7 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 		return;
 	}
 
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const jiraPayload = await transformCodeScanningAlert(context, gitHubInstallationId, jiraClient.baseUrl);
 
 	if (!jiraPayload) {
@@ -19,9 +21,11 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 		return;
 	}
 
-	context.log.info(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
+	context.log.info({ jiraHost: jiraClient.baseURL, gitHubProduct }, "Sending code scanning alert event as Remote Link to Jira.");
+
 	const result = await jiraClient.remoteLink.submit(jiraPayload);
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	const webhookReceived = context.payload.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
