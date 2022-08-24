@@ -45,8 +45,8 @@ describe("ApiInstallationSyncPost", ()=>{
 				...opts.body
 			},
 			get: jest.fn()
-		}
-	}
+		};
+	};
 	const getRes = (opts: any = {}): any => {
 		const ret = {
 			status: jest.fn(),
@@ -56,8 +56,8 @@ describe("ApiInstallationSyncPost", ()=>{
 			locals: {
 				...opts
 			}
-		}
+		};
 		ret.status.mockReturnValue(ret);
 		return ret;
-	}
+	};
 });

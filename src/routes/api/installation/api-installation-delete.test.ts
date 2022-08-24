@@ -25,7 +25,7 @@ describe("ApiInstallationDelete", ()=>{
 						delete: jest.fn()
 					}
 				}
-			}
+			};
 		});
 		it("should get subcription with gitHubAppid", async ()=>{
 			when(jest.mocked(getJiraClient))
@@ -57,8 +57,8 @@ describe("ApiInstallationDelete", ()=>{
 				...opts.body
 			},
 			get: jest.fn()
-		}
-	}
+		};
+	};
 	const getRes = (opts: any = {}): any => {
 		const ret = {
 			status: jest.fn(),
@@ -68,9 +68,9 @@ describe("ApiInstallationDelete", ()=>{
 			locals: {
 				...opts
 			}
-		}
+		};
 		ret.status.mockReturnValue(ret);
 		return ret;
-	}
+	};
 });
 

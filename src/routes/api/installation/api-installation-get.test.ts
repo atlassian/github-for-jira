@@ -1,4 +1,4 @@
-import {ApiInstallationGet} from "./api-installation-get";
+import { ApiInstallationGet } from "./api-installation-get";
 import { Subscription } from "models/subscription";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { when } from "jest-when";
@@ -22,7 +22,7 @@ describe("ApiInstallationGet", () => {
 
 			when(jest.mocked(createAppClient))
 				.calledWith(expect.anything(), jiraHost, GHES_GITHUB_APP_ID)
-				.mockResolvedValue({getInstallation: jest.fn()} as any);
+				.mockResolvedValue({ getInstallation: jest.fn() } as any);
 			const res = getRes();
 
 			await ApiInstallationGet(getReq({
@@ -43,8 +43,8 @@ describe("ApiInstallationGet", () => {
 				...opts.params
 			},
 			get: jest.fn()
-		}
-	}
+		};
+	};
 	const getRes = (opts: any = {}): any => {
 		const ret = {
 			status: jest.fn(),
@@ -53,8 +53,8 @@ describe("ApiInstallationGet", () => {
 			locals: {
 				...opts
 			}
-		}
+		};
 		ret.status.mockReturnValue(ret);
 		return ret;
-	}
+	};
 });
