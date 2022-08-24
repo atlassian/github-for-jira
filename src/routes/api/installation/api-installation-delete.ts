@@ -4,6 +4,7 @@ import { getJiraClient } from "~/src/jira/client/jira-client";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = req.params.installationId;
+	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
 	if (!jiraHost || !githubInstallationId) {
@@ -16,7 +17,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		Number(githubInstallationId),
-		undefined
+		gitHubAppId
 	);
 
 	if (!subscription) {
@@ -26,7 +27,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	}
 
 	try {
-		const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), undefined, req.log);
+		const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), gitHubAppId, req.log);
 		req.log.info({ jiraHost, githubInstallationId }, `Deleting DevInfo`);
 		await jiraClient.devinfo.installation.delete(githubInstallationId);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
