@@ -21,11 +21,15 @@
       "paths": [
         "/",
         "/github/**",
+        "/github-manifest",
         "/jira",
         "/jira/**",
         "/maintenance",
         "/public/**",
+        "/session",
         "/session/**",
+        "/error",
+        "/error/**",
         "/setup"
       ],
       "methods": [

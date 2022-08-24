@@ -35,6 +35,7 @@
         {{#if hasConnections}}
           <button
             class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
+            data-gh-cloud="true"
           >Connect GitHub organization</button>
         {{/if}}
       </header>
@@ -285,7 +286,13 @@
                             </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
-                          <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
+                          <button
+                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                            data-installation-id="{{ id }}"
+                            data-org-name="{{account.login}}"
+                          >
+                            Disconnect
+                          </button>
                         </aui-section>
                       </aui-dropdown-menu>
                     </td>
@@ -351,10 +358,13 @@
             </a>
             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary add-organization-link".
+              data-gh-cloud="true"
             >Connect GitHub organization</button>
           </div>
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>

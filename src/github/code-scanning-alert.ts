@@ -21,12 +21,14 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 
 	context.log.info(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`);
 	const result = await jiraClient.remoteLink.submit(jiraPayload);
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	const webhookReceived = context.payload.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
 		new Date(webhookReceived).getTime(),
 		"code_scanning_alert",
 		context.log,
-		result?.status
+		result?.status,
+		gitHubAppId
 	);
 };

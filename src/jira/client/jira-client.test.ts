@@ -23,7 +23,7 @@ describe("Test getting a jira client", () => {
 			jiraHost,
 			gitHubInstallationId
 		});
-		client = await getJiraClient(jiraHost, gitHubInstallationId);
+		client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
 	});
 
 	it("Installation exists", async () => {
@@ -31,7 +31,7 @@ describe("Test getting a jira client", () => {
 	});
 
 	it("Installation does not exist", async () => {
-		expect(await getJiraClient("https://non-existing-url.atlassian.net", gitHubInstallationId)).not.toBeDefined();
+		expect(await getJiraClient("https://non-existing-url.atlassian.net", gitHubInstallationId, undefined, undefined)).not.toBeDefined();
 	});
 
 	it("Should truncate issueKeys for commits if over the limit", async () => {
@@ -159,7 +159,7 @@ describe("Test getting a jira client", () => {
 				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
 				.mockResolvedValue(false);
 			jest.spyOn(Axios, "getAxiosInstance");
-			client = await getJiraClient(jiraHost, gitHubInstallationId);
+			client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
 			expect(Axios.getAxiosInstance).toHaveBeenCalledWith(
 				expect.anything(),
 				"shared-secret",
@@ -172,7 +172,7 @@ describe("Test getting a jira client", () => {
 				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 			jest.spyOn(Axios, "getAxiosInstance");
-			client = await getJiraClient(jiraHost, gitHubInstallationId);
+			client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
 			expect(Axios.getAxiosInstance).toHaveBeenCalledWith(
 				expect.anything(),
 				"new-encrypted-shared-secret",

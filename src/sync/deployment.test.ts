@@ -4,8 +4,6 @@ import { processInstallation } from "./installation";
 import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
-import { createWebhookApp } from "test/utils/probot";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -20,7 +18,6 @@ jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
-	let app: Application;
 	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
@@ -77,6 +74,8 @@ describe("sync/deployments", () => {
 			repoOwner: "integrations",
 			repoFullName: "test-repo-name",
 			repoUrl: "test-repo-url",
+			repoUpdatedAt: new Date(),
+			repoPushedAt: new Date(),
 			branchStatus: "complete",
 			commitStatus: "complete",
 			pullStatus: "complete",
@@ -86,14 +85,15 @@ describe("sync/deployments", () => {
 			createdAt: new Date()
 		});
 
-		app = await createWebhookApp();
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
-
 		githubUserTokenNock(installationId);
-
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
+	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
+		await waitUntil(async () => {
+			expect(githubNock).toBeDone();
+			expect(jiraNock).toBeDone();
+		});
 		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
@@ -217,14 +217,8 @@ describe("sync/deployments", () => {
 				}]
 		}]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-
-		await waitUntil(async () => {
-			expect(githubNock).toBeDone();
-			expect(jiraNock).toBeDone();
-		});
-
-		verifyMessageSent(data);
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await verifyMessageSent(data);
 	});
 
 	it("should send Jira all deployments that have Issue Keys", async () => {
@@ -390,13 +384,8 @@ describe("sync/deployments", () => {
 			}
 		]);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
-
-		await waitUntil(async () => {
-			expect(githubNock).toBeDone();
-			expect(jiraNock).toBeDone();
-		});
-		verifyMessageSent(data);
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await verifyMessageSent(data);
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
@@ -421,7 +410,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -433,7 +422,7 @@ describe("sync/deployments", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation(app)(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});

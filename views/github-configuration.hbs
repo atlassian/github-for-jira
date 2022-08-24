@@ -65,7 +65,7 @@
           <div class="githubOrgs__table__row clearfix">
             {{! Organizations }}
             <div class="gitHubConfiguration__orgContent__account col1">
-              {{#unless gitHubServerApp}}
+              {{#unless ../gitHubServerApp.id}}
                 <img
                     class="gitHubConfiguration__orgContent__avatar"
                     src="{{account.avatar_url}}"
@@ -136,7 +136,10 @@
                         Connected
                       </p>
                     {{/if}}
-                    <a class="gitHubConfiguration__orgContent__settingsContainer" href='/github/subscriptions/{{id}}'>
+                    <a
+                        class="gitHubConfiguration__orgContent__settingsContainer"
+                        href="{{setSubscriptionUrl ../gitHubServerApp.uuid id}}"
+                    >
                       <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
                         Manage Jira Subscriptions
                       </span>

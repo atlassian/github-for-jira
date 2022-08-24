@@ -27,6 +27,7 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 		message: "Invalid URL"
 	},
 	ENOTFOUND: GHE_ERROR_UNREACHABLE,
+	DEPTH_ZERO_SELF_SIGNED_CERT: GHE_ERROR_UNREACHABLE,
 	403: GHE_ERROR_UNREACHABLE,
 	502: {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
@@ -58,7 +59,7 @@ export const JiraConnectEnterprisePost = async (
 	const jiraHost = res.locals.jiraHost;
 
 	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrl(gheServerURL, installationId);
+		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
 		if (gitHubServerApps?.length) {
 			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
@@ -79,7 +80,7 @@ export const JiraConnectEnterprisePost = async (
 		const codeOrStatus = err.code || err.response.status;
 		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
-		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response.status	 });
+		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response?.status });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,

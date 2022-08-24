@@ -11,12 +11,12 @@ describe("logger behaviour", () => {
 		});
 
 		it("should serialize sensitive data as part of getlogger", () => {
-			const logger = getLogger("name", { jiraHost: "CATS" });
+			const logger = getLogger("name", { fields: { jiraHost: "CATS" } });
 			expect(logger.fields.jiraHost).toBe("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
 		});
 
 		it("should serialize sensitive data as part of logging action", () => {
-			const logger = getLogger("name", { orgName: "CATS" });
+			const logger = getLogger("name", { fields: { orgName: "CATS" } });
 			logger.addStream({ stream: ringBuffer as Stream });
 			logger.info({ jiraHost: "CATS" }, "Good day");
 
@@ -32,7 +32,7 @@ describe("logger behaviour", () => {
 		});
 
 		it("should keep parent fields on new child logger", () => {
-			const logger = getLogger("name", { foo: "bar" });
+			const logger = getLogger("name", { fields: { foo: "bar" } });
 			const childLogger = logger.child({ bingo: "buzz" });
 			logger.warn("Greetings");
 
@@ -57,7 +57,7 @@ describe("logger behaviour", () => {
 
 	describe("unsafe logger", () => {
 		it("should not serialize sensitive data", () => {
-			const logger = getUnsafeLogger("name", { jiraHost: "CATS" });
+			const logger = getUnsafeLogger("name", { fields: { jiraHost: "CATS" } });
 			expect(logger.fields.jiraHost).toBe("CATS");
 		});
 	});

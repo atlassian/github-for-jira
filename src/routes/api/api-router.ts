@@ -17,6 +17,9 @@ import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-clie
 import { ApiPingPost } from "routes/api/api-ping-post";
 import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
+import { GitHubServerApp } from "~/src/models/github-server-app";
+import { UUID_REGEX } from "~/src/util/regex";
+
 
 export const ApiRouter = Router();
 
@@ -34,14 +37,16 @@ ApiRouter.use(
 		const issuer = req.get("X-Slauth-Issuer");
 		const principal = req.get("X-Slauth-Principal");
 
-		req.log = req.log.child({ slauth: {
-			mechanism,
-			issuer,
-			principal,
-			userGroup: req.get("X-Slauth-User-Groups"),
-			aaid: req.get("X-Slauth-User-Aaid"),
-			username: req.get("X-Slauth-User-Username")
-		} });
+		req.addLogFields({
+			slauth: {
+				mechanism,
+				issuer,
+				principal,
+				userGroup: req.get("X-Slauth-User-Groups"),
+				aaid: req.get("X-Slauth-User-Aaid"),
+				username: req.get("X-Slauth-User-Username")
+			}
+		});
 
 		if (!mechanism || mechanism === "open") {
 			req.log.warn("Attempt to access Admin API without authentication");
@@ -69,7 +74,7 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 
 // RESYNC ALL INSTANCES
 ApiRouter.post(
-	"/resync",
+	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
 	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
@@ -91,17 +96,27 @@ ApiRouter.post(
 		// restrict sync to a subset of tasks
 		const targetTasks = req.body.targetTasks as TaskType[];
 
-		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds){
+		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
 			res.status(400).send("please provide at least one of the filter parameters!");
 			return;
 		}
 
-		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()){
+		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
+		const { uuid } = req.params;
+		let gitHubServerApp;
+		if (uuid) {
+			gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+			if (!gitHubServerApp) {
+				res.status(400).json("No GitHub app found for provided uuid");
+				return;
+			}
+		}
 
-		const subscriptions = await Subscription.getAllFiltered(installationIds, statusTypes, offset, limit, inactiveForSeconds);
+		const gitHubAppId = gitHubServerApp?.id;
+		const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 		await Promise.all(subscriptions.map((subscription) =>
 			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)

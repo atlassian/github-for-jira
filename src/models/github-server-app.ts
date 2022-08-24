@@ -7,7 +7,7 @@ import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
-interface GitHubServerAppPayload {
+export interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
 	gitHubBaseUrl: string;
@@ -50,12 +50,6 @@ export class GitHubServerApp extends EncryptedModel {
 		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
 	}
 
-	/**
-	 * Get GitHubServerApp
-	 *
-	 * @param {{gitHubServerAppId: number}} gitHubServerAppId
-	 * @returns {GitHubServerApp}
-	 */
 	static async getForGitHubServerAppId(
 		gitHubServerAppId: number
 	): Promise<GitHubServerApp | null> {
@@ -70,12 +64,6 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Get all GitHubServerApps with installationId
-	 *
-	 * @param {{installationId: number}} installationId
-	 * @returns {GitHubServerApp[]}
-	 */
 	static async findForInstallationId(
 		installationId: number
 	): Promise<GitHubServerApp[] | null> {
@@ -90,21 +78,10 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Get all GitHubServerApps for gitHubBaseUrl with installationId
-	 *
-	 * @param gitHubBaseUrl
-	 * @param installationId
-	 * @returns {GitHubServerApp[]}
-	 */
-	static async getAllForGitHubBaseUrl(
+	static async getAllForGitHubBaseUrlAndInstallationId(
 		gitHubBaseUrl: string,
 		installationId: number
-	): Promise<GitHubServerApp[] | null> {
-		if (!gitHubBaseUrl || !installationId) {
-			return null;
-		}
-
+	): Promise<GitHubServerApp[]> {
 		return this.findAll({
 			where: {
 				gitHubBaseUrl,
@@ -113,22 +90,18 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	/**
-	 * Create a new GitHubServerApp object
-	 *
-	 * @param {{
-	 * 		gitHubClientId: string,
-	 * 		uuid: string,
-	 * 		appId: number;
-	 * 		gitHubBaseUrl: string,
-	 * 		gitHubClientSecret: string,
-	 * 		webhookSecret: string,
-	 * 		privateKey: string,
-	 * 		gitHubAppName: string,
-	 * 		installationId: number
-	 * 	}} payload
-	 * @returns {GitHubServerApp}
-	 */
+	static async getForUuidAndInstallationId(
+		uuid: string,
+		installationId: number
+	): Promise<GitHubServerApp | null> {
+		return this.findOne({
+			where: {
+				uuid,
+				installationId
+			}
+		});
+	}
+
 	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
 		const {
 			uuid,
@@ -144,12 +117,12 @@ export class GitHubServerApp extends EncryptedModel {
 
 		const [gitHubServerApp] = await this.findOrCreate({
 			where: {
-				gitHubClientId
+				gitHubClientId,
+				gitHubBaseUrl
 			},
 			defaults: {
 				uuid,
 				appId,
-				gitHubBaseUrl,
 				gitHubClientSecret,
 				webhookSecret,
 				privateKey,
@@ -161,12 +134,47 @@ export class GitHubServerApp extends EncryptedModel {
 		return gitHubServerApp;
 	}
 
-	/**
-	 * Get GitHubServerApp
-	 *
-	 * @param {{uuid: string}} uuid
-	 * @returns {GitHubServerApp}
-	 */
+	static async uninstallApp(uuid: string): Promise<void> {
+		await this.destroy({
+			where: { uuid }
+		});
+	}
+
+	static async uninstallServer(gitHubBaseUrl: string): Promise<void> {
+		await this.destroy({
+			where: { gitHubBaseUrl }
+		});
+	}
+
+	static async updateGitHubAppByUUID(payload: GitHubServerAppPayload): Promise<void> {
+		const {
+			uuid,
+			appId,
+			gitHubAppName,
+			gitHubBaseUrl,
+			gitHubClientId,
+			gitHubClientSecret,
+			webhookSecret,
+			privateKey,
+			installationId
+		} = payload;
+
+		const existApp = await this.findForUuid(uuid);
+		if (existApp) {
+			await existApp.update({
+				appId,
+				gitHubClientId,
+				gitHubBaseUrl,
+				gitHubClientSecret,
+				webhookSecret,
+				privateKey,
+				gitHubAppName,
+				installationId
+			});
+		}
+
+	}
+
 	static async findForUuid(uuid: string): Promise<GitHubServerApp | null> {
 		return this.findOne({
 			where: {
@@ -174,7 +182,6 @@ export class GitHubServerApp extends EncryptedModel {
 			}
 		});
 	}
-
 }
 
 GitHubServerApp.init({

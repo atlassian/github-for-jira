@@ -4,8 +4,6 @@ import { AppTokenHolder } from "./app-token-holder";
 import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
 import { mocked } from "ts-jest/utils";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { Subscription } from "~/src/models/subscription";
 import * as PrivateKey from "probot/lib/private-key";
 
@@ -43,27 +41,25 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,
-			clientKey: "client-key"
+			clientKey: "client-key",
+			gitHubAppId: undefined
 		});
 
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 4711,
-			clientKey: "client-key"
+			clientKey: "client-key",
+			gitHubAppId: undefined
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 		const appTokenHolder = new AppTokenHolder();
-
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
 		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234));
 		expect(token1).toBeTruthy();
 		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711));
 		expect(token2).toBeTruthy();
-		expect(keyLocator).toHaveBeenCalledTimes(2);
+		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), 1);
+		expect(token3).toBeTruthy();
+		expect(keyLocator).toHaveBeenCalledTimes(1);
 	});
 });

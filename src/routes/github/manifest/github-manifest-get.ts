@@ -16,13 +16,14 @@ const getAppManifest = () => {
 	const appHost = envVars.APP_URL;
 	const uuid=  uuidv4();
 	return {
-		"name": "ghe-app-for-jira",
+		"name": "Jira",
 		"url": "https://github.com/marketplace/jira-software-github",
 		"redirect_url": `${appHost}/github/manifest/${uuid}/complete`,
 		"hook_attributes": {
 			"url": `${appHost}/github/${uuid}/webhooks`
 		},
 		"setup_url": `${appHost}/github/${uuid}/setup`,
+		"callback_url": `${appHost}/github/${uuid}/callback`,
 		"public": true,
 		"default_permissions": {
 			"actions": "read",

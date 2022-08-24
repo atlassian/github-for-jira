@@ -1,6 +1,5 @@
 import { envVars } from "config/env";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { getLogger } from "config/logger";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
@@ -8,7 +7,6 @@ export enum EncryptionSecretKeyEnum {
 }
 
 export type EncryptionContext = Record<string, string | number>;
-const logger = getLogger("encryption-client");
 
 interface EncryptResponse {
 	cipherText: string;
@@ -38,29 +36,19 @@ export class EncryptionClient {
 	});
 
 	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		try {
-			const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
-				plainText,
-				encryptionContext
-			});
-			return response.data.cipherText;
-		} catch (e) {
-			logger.error("Cryptor encrypt request failed");
-			throw e;
-		}
+		const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
+			plainText,
+			encryptionContext
+		});
+		return response.data.cipherText;
 	}
 
 	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		try {
-			const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
-				cipherText,
-				encryptionContext
-			});
-			return response.data.plainText;
-		} catch (e) {
-			logger.error("Cryptor decrypt request failed");
-			throw e;
-		}
+		const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
+			cipherText,
+			encryptionContext
+		});
+		return response.data.plainText;
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {

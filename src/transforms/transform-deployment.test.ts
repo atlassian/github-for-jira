@@ -5,10 +5,49 @@ import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId } from "../github/client/installation-id";
 import deployment_status from "fixtures/deployment_status-basic.json";
+import deployment_status_staging from "fixtures/deployment_status_staging.json";
+import { getRepoConfig } from "services/user-config-service";
+import { Subscription } from "models/subscription";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
+jest.mock("services/user-config-service");
+
+const mockConfig = {
+	deployments: {
+		environmentMapping: {
+			development: [
+				"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+			]
+		}
+	}
+};
 
 describe("deployment environment mapping", () => {
+
+	it("falls back to hardcoded config when user config doesn't match", () => {
+		const userConfig = {
+			deployments: {
+				environmentMapping: {
+					development: [
+						"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+					]
+				}
+			}
+		};
+
+		// match
+		expect(mapEnvironment("foo42", userConfig)).toBe("development");
+
+		// no match - fallback to hardcoded values
+		expect(mapEnvironment("dev", userConfig)).toBe("development");
+		expect(mapEnvironment("test", userConfig)).toBe("testing");
+		expect(mapEnvironment("stage", userConfig)).toBe("staging");
+		expect(mapEnvironment("prd", userConfig)).toBe("production");
+
+	});
+
 	it("classifies known environments correctly", () => {
 		// Development
 		expect(mapEnvironment("development")).toBe("development");
@@ -77,7 +116,6 @@ describe("deployment environment mapping", () => {
 
 const TEST_INSTALLATION_ID = 1234;
 describe("transform GitHub webhook payload to Jira payload", () => {
-
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
 	const githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
 
@@ -144,7 +182,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
@@ -249,7 +287,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 		// make expected issue id array
 		const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
@@ -283,4 +321,174 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}]
 		});
 	});
+
+	it(`uses user config to map environment`, async () => {
+
+		await Subscription.create({
+			gitHubInstallationId: TEST_INSTALLATION_ID,
+			jiraHost: "https://test-atlassian-instance.atlassian.net",
+			jiraClientKey: "client-key"
+		});
+
+		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+
+		// Mocking all GitHub API Calls
+		// Get commit
+		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+			.reply(200, {
+				...owner,
+				commit: {
+					message: "testing"
+				}
+			});
+
+		// List deployments
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+			.reply(200,
+				[
+					{
+						id: 1,
+						environment: "foo42",
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+					}
+				]
+			);
+
+		// List deployments statuses
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+			.reply(200, [
+				{
+					id: 1,
+					state: "pending"
+				},
+				{
+					id: 2,
+					state: "success"
+				}
+			]);
+
+		// Compare commits
+		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+			.reply(200, {
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+					}
+				]
+			}
+			);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.CONFIG_AS_CODE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(true);
+
+		when(getRepoConfig).calledWith(
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(mockConfig);
+
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+		expect(jiraPayload?.deployments[0].environment.type).toBe("development");
+	});
+
+	it(`does NOT use user config to map environment when FF is disabled`, async () => {
+
+		await Subscription.create({
+			gitHubInstallationId: TEST_INSTALLATION_ID,
+			jiraHost: "testing.atlassian.net",
+			jiraClientKey: "client-key"
+		});
+
+		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+
+		// Mocking all GitHub API Calls
+		// Get commit
+		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+			.reply(200, {
+				...owner,
+				commit: {
+					message: "testing"
+				}
+			});
+
+		// List deployments
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+			.reply(200,
+				[
+					{
+						id: 1,
+						environment: "foo42",
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+					}
+				]
+			);
+
+		// List deployments statuses
+		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+			.reply(200, [
+				{
+					id: 1,
+					state: "pending"
+				},
+				{
+					id: 2,
+					state: "success"
+				}
+			]);
+
+		// Compare commits
+		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+			.reply(200, {
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+					}
+				]
+			}
+			);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.CONFIG_AS_CODE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(false);
+
+		when(getRepoConfig).calledWith(
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(mockConfig);
+
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+		expect(jiraPayload?.deployments[0].environment.type).toBe("unmapped");
+	});
+
+
 });

@@ -4,7 +4,8 @@ const gheHost = params.get("baseUrl");
 $(document).ready(() => {
   $.ajax({
     type: "GET",
-    url: `/github/manifest?gheHost=${gheHost}`,
+    // This is a separate route for getting GitHub manifest, which does not require any authentication
+    url: `/github-manifest?gheHost=${gheHost}`,
     success: function (appManifest) {
       const newForm = jQuery("<form>", {
         "action": `${gheHost}/settings/apps/new`,
