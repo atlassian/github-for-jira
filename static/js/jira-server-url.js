@@ -50,28 +50,35 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const gheServerUrlErrors = {
-	GHE_ERROR_INVALID_URL: {
-		title: "Invalid URL",
-		message: "That URL doesn't look right. Please check and try again.",
-	},
-	GHE_ERROR_ENOTFOUND: {
-		title: "We couldn't verify this URL",
-		message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
-	},
-	GHE_SERVER_BAD_GATEWAY: {
-		title: "Something went wrong",
-		message: "We weren't able to complete your request. Please try again."
-	},
-	GHE_ERROR_CONNECTION_TIMED_OUT: {
-		title: "Connection timed out",
-		message: "We couldn't connect to this URL. Please make sure Github for Jira can connect to it and try again."
-	},
-	GHE_ERROR_DEFAULT: {
-		title: "Something went wrong",
-		message: "We ran into a hiccup while verifying your details. Please try again later."
+const getGHEServerError = (code, url) => {
+	switch (code) {
+		case "GHE_ERROR_INVALID_URL":
+			return {
+				title: "Invalid URL",
+				message: "<b>${url}</b> doesn't look right. Please check and try again.",
+			};
+		case "GHE_ERROR_ENOTFOUND":
+			return {
+				title: `We couldn't verify ${url}`,
+				message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+			};
+		case "GHE_SERVER_BAD_GATEWAY":
+			return {
+				title: "Bad Gateway",
+				message: "We weren't able to complete your request. Please try again."
+			};
+		case "GHE_ERROR_CONNECTION_TIMED_OUT":
+			return {
+				title: "Connection timed out",
+				message: `We couldn't connect to <b>${url}</b>. Please make sure Github for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
+			};
+		default:
+			return {
+				title: "Something went wrong",
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Code: ${code}`
+			};
 	}
-};
+}
 
 const handleGheUrlRequestErrors = (err) => {
 	requestFailed();
@@ -80,12 +87,6 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
 }
-
-const mapErrorCode = (errorCode) => {
-	const errorMessage = gheServerUrlErrors[errorCode]
-	handleGheUrlRequestErrors(errorMessage);
-}
-
 
 const verifyGitHubServerUrl = (gheServerURL) => {
 	const csrf = document.getElementById("_csrf").value
@@ -109,7 +110,8 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 						}
 					);
 				} else {
-					mapErrorCode(data.errors[0].code);
+					const errorMessage = getGHEServerError(data.errors[0].code, gheServerURL);
+					handleGheUrlRequestErrors(errorMessage);
 				}
 			}
 		);

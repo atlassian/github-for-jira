@@ -7,7 +7,7 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
-const TIMEOUT_PERIOD = 30 * 1000;
+const TIMEOUT_PERIOD = 15 * 1000;
 
 interface MessageAndCode {
 	errorCode: string;
@@ -38,10 +38,6 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 	CONNECTION_TIMED_OUT: {
 		errorCode: "GHE_ERROR_CONNECTION_TIMED_OUT",
 		message: "Connection timed out"
-	},
-	default: {
-		errorCode: "GHE_ERROR_DEFAULT",
-		message: "Something went wrong"
 	}
 };
 
@@ -93,7 +89,7 @@ export const JiraConnectEnterprisePost = async (
 	} catch (err) {
 		req.log.error({ err, gheServerURL }, `Something went wrong`);
 		const codeOrStatus = err.code || err.response.status;
-		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || gheServerUrlErrors.default;
+		const { errorCode, message } = gheServerUrlErrors[codeOrStatus] || codeOrStatus;
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response?.status });
 
