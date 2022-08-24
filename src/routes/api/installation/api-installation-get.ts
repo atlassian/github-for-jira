@@ -7,8 +7,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId, gitHubAppId: gitHubAppIdStr } = req.params;
 
-	const gitHubAppId = parseInt(gitHubAppIdStr);
-	if (isNaN(gitHubAppId)) throw new Error("gitHubAppId should be int, but found " + gitHubAppIdStr);
+	const gitHubAppId = parseInt(gitHubAppIdStr) || undefined;
 
 	const { client, jiraHost } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
