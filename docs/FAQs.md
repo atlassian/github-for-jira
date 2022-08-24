@@ -17,7 +17,7 @@ When an organization contains a small amount of data, the backfilling process is
 
 **A:** Commits, branches, and merges that occur in a connected GitHub repository will be seen on the dev panel in associated Jira issues. Whenever a commit message includes an issue key, it generates an event that is sent to Jira so the issue specified in the commit message can be updated. Our app needs code access to read commit messages and branch names to correctly link your data to your Jira issues. Our app simply sends data through to Jira, no code is stored during this process.
 
-<h3>**Q:** Why does the app need metadata access to my repositories?</h3>
+<h3>Q: Why does the app need metadata access to my repositories?</h3>
 
 **A:** [Read-only access to metadata](https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#metadata-permissions) is a mandatory requirement by GitHub for all GitHub apps. This access makes it possible for GitHub apps to access various read-only endpoints for a number of resources. Our app will be able to see the repository’s code, however, Atlassian takes the security of our software very seriously. We constantly monitor our code for vulnerabilities and have processes in place of making sure that it is safe to use. Additionally, GitHub documentation for metadata permissions states: “These endpoints do not leak sensitive private repository information.” If there are repositories you still don’t want our app to have access to, you have to option to select the repositories you want to grant access to when installing the app or by navigating to your GitHub settings page via the editing icon found on the GitHub configuration page or the connect an org page.
 
@@ -36,7 +36,7 @@ When an organization contains a small amount of data, the backfilling process is
 ### GitHub Enterprise Server
 <h3>Q: How do I set up a hole in my firewall?</h3>
 
-**A:** <TODO link to hole in firewall doc> -> [draft](https://hello.atlassian.net/wiki/spaces/PF/pages/1806044336/Draft+for+our+customers+regarding+their+Firewall). There is 1 pending tickets that need to be completed to finalise this.
+**A:** Refer to [How the GitHub for Jira app fetches data](https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data).
 
 <h3>Q: Why can’t I connect my GitHub Enterprise Server to the GitHub for Jira app?</h3>
 
@@ -44,11 +44,11 @@ When an organization contains a small amount of data, the backfilling process is
 
 - **Atlassian IP address ranges need whitelisting** - Please see the above FAQ  - <TODO - Link to above question>
 
-- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO.** Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
+- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
 
 - **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
 
-- **Self-signed certificate ** - There is a problem with your SSL certificate.
+- **Self-signed certificate** - There is a problem with your SSL certificate.
 
 <h3>Q: Can I connect multiple GitHub Enterprise Servers or GitHub Apps to Jira?</h3>
 
@@ -60,11 +60,11 @@ You can also add multiple GitHub Apps for a connected server to connect any GitH
 
 **A:** No. A GitHub App can only be connected to one Jira instance. This is to limit access and prevent data leaks.
 
-<h3>Q: What’s the difference between creating a GitHub App automatically vs manually? </h3>
+<h3>Q: What’s the difference between creating a GitHub App automatically vs manually?</h3>
 
 **A:** We recommend that you create a GitHub App automatically, as this process is relatively simple. All you need to do is enter an app name and make a few selections - we’ll use a combination of the GitHub API and a manifest file to pre-populate the app creation form for you.
 
-If you want to create a GitHub app manually, you can do so, but the process is less simple. You’ll need to create a GitHub App within your GitHub Enterprise Server account, copy several values from the new app into Jira, and copy several URLs from Jira into the app. Learn more about manually creating a GitHub App. <TODO link to new support doc>
+If you want to create a GitHub app manually, you can do so, but the process is less simple. You’ll need to create a GitHub App within your GitHub Enterprise Server account, copy several values from the new app into Jira, and copy several URLs from Jira into the app. [Learn more about manually creating a GitHub App](https://support.atlassian.com/jira-cloud-administration/docs/manually-create-a-github-app/).
 
 <h3>Q: I want to create a GitHub App automatically, but it says my GitHub Enterprise Server must be version 3.1 or higher. Why?</h3>
 
@@ -73,8 +73,6 @@ If you want to create a GitHub app manually, you can do so, but the process is l
 1. **Automatic GitHub App creation:** In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. Then, in version 3.1 support for callback_url was added, which is required by the GitHub for Jira app. You must be using version 3.1 or higher for the automatic app creation option to work.
 2. **Subscribe to GitHub action events:** The GitHub for Jira app subscribes to three events that are dependent upon GitHub Actions: workflow run, deployment status, and code scanning alert. GitHub Actions is available in GitHub Enterprise Server 3.0 or higher.
 3. **Stay up-to-date with GitHub releases:** GitHub routinely releases new versions and discontinues support for older versions. We recommend that you regularly update your server version for better performance, improved security, and new features. From September 28, 2022, version 3.2 will have discounted support, while versions 3.3 - 3.6 will have continued support and updates.
-
-In version 2.19.18, GitHub resolved an issue that impeded the manifest creation flow in some scenarios when a SameSite cookie policy was applied. You must be using this version or higher for the automatic app creation option to work.
 
 <h3>Q: How do I upgrade my GitHub Enterprise version?</h3>
 
