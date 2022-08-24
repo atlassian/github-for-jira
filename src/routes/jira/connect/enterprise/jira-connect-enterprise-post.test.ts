@@ -26,6 +26,7 @@ describe("POST /jira/connect/enterprise", () => {
 				installation,
 				jiraHost
 			},
+			setTimeout: jest.fn(),
 			render: jest.fn().mockReturnValue({}),
 			status: jest.fn(),
 			send: jest.fn().mockReturnValue({})
