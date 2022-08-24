@@ -130,6 +130,8 @@ AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	activeRequest();
-	verifyGitHubServerUrl(gheServerURL, installationId);
+	if ($("#gheServerBtnSpinner").is(":hidden")) {
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL, installationId);
+	}
 });
