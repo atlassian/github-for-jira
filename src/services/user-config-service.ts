@@ -34,7 +34,7 @@ export const updateRepoConfig = async (
 		try {
 			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 
-			if (!repoSyncState){
+			if (!repoSyncState) {
 				logger.error({
 					githubInstallationId,
 					repositoryId
@@ -42,7 +42,7 @@ export const updateRepoConfig = async (
 				return;
 			}
 
-			await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId);
+			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId);
 		} catch (err) {
 			logger.error({
 				err,
@@ -127,4 +127,22 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubIn
 	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName);
 	const config = convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
+};
+
+/**
+ * Checks for the user config file in the given repositories and stores the config in the database.
+ * If an error occurs for one of the repositories, we'll just log it and continue on with the
+ * other repositories.
+ * @param repoSyncStates the repositories in which to look for the config file
+ * @param githubInstallationId the GitHub installation ID the repositories belong to
+ */
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId): Promise<void> => {
+	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
+		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId)
+			.catch(err => logger.error({
+				err,
+				githubInstallationId,
+				repositoryId: repoSyncState.repoId
+			}, "error while updating a single repo config"));
+	}));
 };
