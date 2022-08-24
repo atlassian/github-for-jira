@@ -7,6 +7,8 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
+const TIMEOUT_PERIOD = 30 * 1000;
+
 interface MessageAndCode {
 	errorCode: string;
 	message: string;
@@ -33,8 +35,8 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
 		message: "Bad gateway"
 	},
-	ETIMEDOUT: {
-		errorCode: "GHE_ERROR_CONNECTION_TIMEDOUT",
+	CONNECTION_TIMED_OUT: {
+		errorCode: "GHE_ERROR_CONNECTION_TIMED_OUT",
 		message: "Connection timed out"
 	},
 	default: {
@@ -72,6 +74,15 @@ export const JiraConnectEnterprisePost = async (
 		}
 
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+
+		// Setting time out check
+		res.setTimeout(TIMEOUT_PERIOD, () => {
+			req.log.debug(`Request timeout out for GHE server url: ${gheServerURL}`);
+
+			const { errorCode: code, message } = gheServerUrlErrors.CONNECTION_TIMED_OUT;
+			res.status(200).send({ success: false, errors: [{ code, message }] });
+		});
+
 		await axios.get(gheServerURL);
 		res.status(200).send({ success: true, appExists: false });
 

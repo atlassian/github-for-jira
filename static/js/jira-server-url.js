@@ -63,9 +63,9 @@ const gheServerUrlErrors = {
 		title: "Something went wrong",
 		message: "We weren't able to complete your request. Please try again."
 	},
-	GHE_ERROR_CONNECTION_TIMEDOUT: {
+	GHE_ERROR_CONNECTION_TIMED_OUT: {
 		title: "Connection timed out",
-		message: "We weren't able to connect to the URL. Please make sure you've entered the correct URL or try again later."
+		message: "We couldn't connect to this URL. Please make sure Github for Jira can connect to it and try again."
 	},
 	GHE_ERROR_DEFAULT: {
 		title: "Something went wrong",
