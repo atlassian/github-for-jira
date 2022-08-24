@@ -5,27 +5,30 @@ import { ApiInstallationDelete } from "./api-installation-delete";
 import { ApiInstallationSyncstateGet } from "./api-installation-syncstate-get";
 import { ApiInstallationSyncPost } from "./api-installation-sync-post";
 import { ApiInstallationGet } from "./api-installation-get";
+import { UUID_REGEX } from "~/src/util/regex";
 
 export const ApiInstallationRouter = Router({ mergeParams: true });
+const subRouter = Router({ mergeParams: true });
+ApiInstallationRouter.use(`(/githubapp/:uuid(${UUID_REGEX}))?`, subRouter);
 
-ApiInstallationRouter.post(
+subRouter.post(
 	"/sync",
 	ApiInstallationSyncPost
 );
 
-ApiInstallationRouter.get(
+subRouter.get(
 	"/",
 	ApiInstallationGet
 );
 
-ApiInstallationRouter.get(
+subRouter.get(
 	"/:jiraHost/syncstate",
 	param("jiraHost").isString(),
 	returnOnValidationError,
 	ApiInstallationSyncstateGet
 );
 
-ApiInstallationRouter.delete(
+subRouter.delete(
 	"/:jiraHost",
 	param("jiraHost").isString(),
 	returnOnValidationError,
