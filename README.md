@@ -86,9 +86,17 @@ organizations in the Jira app.
 
 > :warning: If you are not directed, navigate to the Apps page of your Jira instance and click **Configure integration** under the ”GitHub” heading. If you do not see this, click on **Manage your apps** and **Get started** under GitHub for Jira (only visible for Jira admins). This will bring you to the app's configuration screen.
 
-Click **Connect GitHub organization** and select the organization and repositories that you would like to connect.
+Select **Connect GitHub organization**, then select either **GitHub Cloud** or **GitHub Enterprise Server**.
+
+- If you select **GitHub Cloud**, you’ll be redirected to a page where you can connect to organizations in GitHub.
+
+- If you select **GitHub Enterprise Server**, you’ll need to provide the URL for your server and create a GitHub app.
+
+On the Connect a GitHub organization page, select the organization and repositories you'd like to connect.
 
 > :warning: If you don’t see your organization click **Install Jira on a new organization** and follow the steps to [install the app on GitHub](#install-app) and allow it permission to view your repositories. You can also manage existing connections or add additional organizations at any time on this same screen.
+
+For detailed instructions on how to connect to Cloud or Server, read our [support documentation](https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/).
 
 ### Connect new GitHub repositories
 If you originally gave the GitHub for Jira app access to "All repositories", and you've created a new repository on GitHub after configuration, your new repository will automatically work with the integration. However, if you installed the app on a subset of repositories, you will need to manually edit your repository selection by:
