@@ -109,7 +109,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 const replaceSpacesAndChangeCasing = (str) => str.replace(/\s+/g, '-').toLowerCase();
 
 $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function () {
-	const hasFileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText !== "";
+	const fileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
 	// value used when user is updating up and app name already exists
 	const appNameFromData = $(this).data("app-appname");
 	// value used when creating an app and user has entered a value in gitHubAppName
@@ -125,9 +125,10 @@ $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function ()
 			<p>Your file has been uploaded and will be </br>
 			stored with the filename in the format of </br>
 			${appName}.private-key.pem</p>
-	`
+	`;
+	const pemFilePattern = "^.*\.(pem|PEM)$";
 
-	if (hasFileName) {
+	if (fileName !== "" && fileName.match(pemFilePattern)) {
 		AJS.flag({
 			type: "success",
 			body
