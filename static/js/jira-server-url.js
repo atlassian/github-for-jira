@@ -19,16 +19,15 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
 				'Learn more' +
 				'</a>.'
-			));$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+			));
+			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
 		}
 		else if (GITHUB_CLOUD.includes(hostname)) {
 			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
 			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
-
 		} else {
 			field.validate();
 			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
-
 		}
 	} catch (e) {
     if (!inputURL.trim().length) {
@@ -117,15 +116,6 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 		);
 	});
 };
-
-$("#gheServerURL").on("keyup", event => {
-	const hasUrl = event.target.value.length > 0;
-	$("#gheServerBtn").attr({
-		"aria-disabled": !hasUrl,
-		"disabled": !hasUrl
-	});
-});
-
 
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
