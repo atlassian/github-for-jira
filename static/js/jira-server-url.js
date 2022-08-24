@@ -74,7 +74,7 @@ const getGHEServerError = (code, url) => {
 		default:
 			return {
 				title: "Something went wrong",
-				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Code: ${code}`
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Trace ID: <b>${code}</b>`
 			};
 	}
 }
