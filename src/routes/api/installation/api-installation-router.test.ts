@@ -5,7 +5,6 @@ import { when } from "jest-when";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { ApiInstallationGet } from "./api-installation-get";
 import { ApiInstallationSyncstateGet } from "./api-installation-syncstate-get";
-import { v4 as UUID } from "uuid";
 
 jest.mock("config/feature-flags");
 jest.mock("./api-installation-get");
@@ -72,31 +71,31 @@ describe("Api Installation Routes", () => {
 		});
 		describe("Compatible with GHES", () => {
 			const GHES_GITHUB_INSTALLATION_ID = 5678;
-			const GHES_GITUUB_APP_UUID = UUID();
+			const GHES_GITUUB_APP_ID = 9001;
 			it("should call api installation get route correctly", async ()=>{
 				mockApiGetReturn200OK();
 				await supertest(app)
-					.get(`/api/${GHES_GITHUB_INSTALLATION_ID}/githubapp/${GHES_GITUUB_APP_UUID}/`)
+					.get(`/api/${GHES_GITHUB_INSTALLATION_ID}/githubapp/${GHES_GITUUB_APP_ID}/`)
 					.set("X-Slauth-Mechanism", "test")
 					.expect(200);
 				expect(ApiInstallationGet).toHaveBeenCalledWith(expect.objectContaining({
 					params: expect.objectContaining({
 						installationId: GHES_GITHUB_INSTALLATION_ID.toString(),
-						uuid: GHES_GITUUB_APP_UUID
+						gitHubAppId: GHES_GITUUB_APP_ID.toString()
 					})
 				}), expect.anything(), expect.anything());
 			});
 			it("should call api installation sync state get route correctly", async ()=>{
 				mockApiGetReturn200OK();
 				await supertest(app)
-					.get(`/api/${GHES_GITHUB_INSTALLATION_ID}/githubapp/${GHES_GITUUB_APP_UUID}/${encodeURIComponent(jiraHost)}/syncstate/`)
+					.get(`/api/${GHES_GITHUB_INSTALLATION_ID}/githubapp/${GHES_GITUUB_APP_ID}/${encodeURIComponent(jiraHost)}/syncstate/`)
 					.set("X-Slauth-Mechanism", "test")
 					.expect(200);
 				expect(ApiInstallationSyncstateGet).toHaveBeenCalledWith(expect.objectContaining({
 					params: expect.objectContaining({
 						installationId: GHES_GITHUB_INSTALLATION_ID.toString(),
 						jiraHost,
-						uuid: GHES_GITUUB_APP_UUID
+						gitHubAppId: GHES_GITUUB_APP_ID.toString()
 					})
 				}), expect.anything(), expect.anything());
 			});
