@@ -34,6 +34,7 @@ services:
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
       - ./lambdas:/tmp/lambdas
+      - ./stepfunctions:/tmp/stepfunctions
 
   cryptor:
     build: etc/cryptor-mock
