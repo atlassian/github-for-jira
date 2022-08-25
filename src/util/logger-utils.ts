@@ -1,15 +1,13 @@
 import { Writable } from "stream";
 import safeJsonStringify from "safe-json-stringify";
 import bformat from "bunyan-format";
-import Logger from "bunyan";
+import { DEBUG } from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username"];
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
-
-const DEBUG_LOG_LEVEL: Logger.LogLevel = 20;
 
 //TODO Remove this code when there will be convenient way to do it in Probot.
 //  See https://github.com/probot/probot/issues/1577
@@ -21,7 +19,7 @@ export const filterHttpRequests = (record: Record<string, any>, filteredLoggerNa
 	return !!msg.match(/(GET|POST|DELETE|PUT|PATCH)/);
 };
 
-export class RawLogStream extends Writable {
+class RawLogStream extends Writable {
 	private readonly  filteredHttpLoggerName: string;
 	private writeStream: NodeJS.WritableStream;
 
@@ -45,24 +43,16 @@ export class RawLogStream extends Writable {
 }
 
 export class SafeRawLogStream extends RawLogStream {
-
 	public constructor(filteredHttpLoggerName: string) {
 		super(filteredHttpLoggerName);
 	}
 
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
-
-		// Skip unwanted logs
-		if (filterHttpRequests(record, "CAT")) {
-			return next();
-		}
-
 		const hashedRecord = this.hashSensitiveData(record);
 		await super._write(hashedRecord, encoding, next);
 	}
 
-	// TODO TYPE THESE GENERICS YO!!
-	private hashSensitiveData(record: Record<string, any>): Record<string, any> {
+	private hashSensitiveData(record: Record<string, any>): Record<string, string | undefined> {
 		const recordClone = { ...record };
 		Object.keys(recordClone).forEach(key => {
 			if (SENSITIVE_DATA_FIELDS.includes(key)) {
@@ -71,7 +61,6 @@ export class SafeRawLogStream extends RawLogStream {
 		});
 		return recordClone;
 	}
-
 }
 
 export class UnsafeRawLogStream extends RawLogStream {
@@ -83,12 +72,11 @@ export class UnsafeRawLogStream extends RawLogStream {
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
 
 		// Skip any log above DEBUG level
-		if (record.level > DEBUG_LOG_LEVEL) {
+		if (!record.level || record.level > DEBUG) {
 			return next();
 		}
 		// Tag the record do it gets indexed to the _unsafe logging environment
 		record.env_suffix = "unsafe";
 		await super._write(record, encoding, next);
 	}
-
 }

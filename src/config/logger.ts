@@ -1,6 +1,6 @@
 import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit } from "lodash";
-import { RawLogStream } from "utils/logger-utils";
+import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 
 export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
 
@@ -40,11 +40,10 @@ const errorSerializer = (err) => {
 
 export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
-const loggerStream = (): Logger.Stream => ({
+const loggerStream = (safe = true): Logger.Stream => ({
 	type: "raw",
-	stream: new RawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
-	closeOnExit: false,
-	level: defaultLogLevel
+	stream: safe ? new SafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME) : new UnsafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	closeOnExit: false
 });
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
@@ -55,6 +54,7 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 
 	// Replace with formatOut stream
 	probotLogger.addStream(loggerStream());
+	probotLogger.addStream(loggerStream(false));
 };
 
 interface LoggerOptions {
@@ -69,7 +69,7 @@ interface LoggerOptions {
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
-		streams: [ loggerStream() ],
+		streams: [ loggerStream(), loggerStream(false) ],
 		level: defaultLogLevel,
 		serializers: {
 			err: errorSerializer,

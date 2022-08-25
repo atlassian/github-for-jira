@@ -1,8 +1,5 @@
-import { filterHttpRequests, RawLogStream } from "./logger-utils";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
+import { filterHttpRequests, SafeRawLogStream, UnsafeRawLogStream } from "./logger-utils";
+import { INFO, TRACE, DEBUG } from "bunyan";
 
 describe("Logger Utils", () => {
 
@@ -55,13 +52,7 @@ describe("Logger Utils", () => {
 
 			beforeEach(async() => {
 				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-
-				when(booleanFlag).calledWith(
-					BooleanFlags.LOG_UNSAFE_DATA,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue(true);
-				stream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
+				stream = new SafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
 			});
 
 			it("should write to stdout", async () => {
@@ -99,7 +90,7 @@ describe("Logger Utils", () => {
 
 			beforeEach(() => {
 				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
+				stream = new SafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
 			});
 
 			it("should serialize sensitive data", async () => {
@@ -115,72 +106,44 @@ describe("Logger Utils", () => {
 
 		describe("unsafe logger", () => {
 
-			describe("unsafe logging feature flag is true", () => {
-				let stdoutSpy;
-				let stream;
+			let stdoutSpy;
+			let stream;
 
-				beforeEach(() => {
-					stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-
-					when(booleanFlag).calledWith(
-						BooleanFlags.LOG_UNSAFE_DATA,
-						expect.anything(),
-						expect.anything()
-					).mockResolvedValue(true);
-					stream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
-				});
-
-
-				it("should skip logger if no jiraHost", async () => {
-					const testMessage = {
-						msg: "More messaging",
-						orgName: "ORG"
-					};
-					await stream._write(testMessage, encoding, next);
-					expect(process.stdout.write).not.toHaveBeenCalled();
-				});
-
-				it("should not serialize sensitive data", async () => {
-					const testMessage = {
-						msg: "MEOW",
-						orgName: "normy Org Name",
-						jiraHost: "test-host"
-					};
-					await stream._write(testMessage, encoding, next);
-					expect(getLogObject(stdoutSpy.mock).orgName).toContain("normy Org Name");
-				});
-
-				it("should tag unsafe", async () => {
-					const testMessage = {
-						msg: "Unsafe message",
-						jiraHost: "test-host"
-					};
-					await stream._write(testMessage, encoding, next);
-					expect(getLogObject(stdoutSpy.mock).env_suffix).toBe("unsafe");
-				});
+			beforeEach(() => {
+				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
+				stream = new UnsafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
 			});
 
-			describe("unsafe logging feature flag is false", () => {
-				let stream;
-				beforeEach(async() => {
-					jest.spyOn(process.stdout, "write").mockImplementation(next);
 
-					when(booleanFlag).calledWith(
-						BooleanFlags.LOG_UNSAFE_DATA,
-						expect.anything(),
-						expect.anything()
-					).mockResolvedValue(false);
-					stream = new RawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
-				});
+			it("should skip logger if higher than debug level", async () => {
+				const testMessage = {
+					msg: "More messaging",
+					orgName: "ORG",
+					level: INFO
+				};
+				await stream._write(testMessage, encoding, next);
+				expect(process.stdout.write).not.toHaveBeenCalled();
+			});
 
-				it("should skip logging if false feature flag", async () => {
-					const testMessage = {
-						msg: "Test Message",
-						jiraHost: "host"
-					};
-					await stream._write(testMessage, encoding, next);
-					expect(process.stdout.write).not.toHaveBeenCalled();
-				});
+			it("should not serialize sensitive data", async () => {
+				const testMessage = {
+					msg: "MEOW",
+					orgName: "normy Org Name",
+					jiraHost: "test-host",
+					level: TRACE
+				};
+				await stream._write(testMessage, encoding, next);
+				expect(getLogObject(stdoutSpy.mock).orgName).toContain("normy Org Name");
+			});
+
+			it("should tag unsafe", async () => {
+				const testMessage = {
+					msg: "Unsafe message",
+					jiraHost: "test-host",
+					level: DEBUG
+				};
+				await stream._write(testMessage, encoding, next);
+				expect(getLogObject(stdoutSpy.mock).env_suffix).toBe("unsafe");
 			});
 		});
 	});
