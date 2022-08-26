@@ -3,8 +3,6 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { keyLocator } from "~/src/github/client/key-locator";
-import { Subscription } from "~/src/models/subscription";
-import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "~/src/config/feature-flags";
 import * as PrivateKey from "probot/lib/private-key";
 
 
@@ -60,13 +58,8 @@ export class AppTokenHolder {
 	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const subscription = await Subscription.findOneForGitHubInstallationId(appId.installationId, ghsaId);
-			let key;
-			if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, subscription?.jiraHost)) {
-				key = await keyLocator(subscription?.gitHubAppId);
-			} else {
-				key = PrivateKey.findPrivateKey();
-			}
+			const key = ghsaId ? await keyLocator(ghsaId) : PrivateKey.findPrivateKey();
+
 			if (!key) {
 				throw new Error(`No private key found for GitHub app ${appId.toString}`);
 			}

@@ -21,7 +21,8 @@ describe.skip("sync/pull-request", () => {
 		await Subscription.install({
 			installationId: 12345678,
 			host: jiraHost,
-			clientKey: "client-key"
+			clientKey: "client-key",
+			gitHubAppId: undefined
 		});
 
 		mockSystemTime(12345678);

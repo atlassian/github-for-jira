@@ -13,6 +13,7 @@ import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { defaultLogLevel, getLogger } from "config/logger";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
@@ -98,8 +99,9 @@ export const GithubWebhookMiddleware = (
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
+		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
-		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, context.gitHubAppConfig?.gitHubAppId);
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
 		context.log = getLogger("github.webhooks", {
 			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
@@ -116,10 +118,13 @@ export const GithubWebhookMiddleware = (
 
 		context.log.debug({ payload }, "Webhook payload");
 
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
 		statsd.increment(metricWebhooks.webhookEvent, [
 			"name: webhooks",
 			`event: ${name}`,
-			`action: ${payload.action}`
+			`action: ${payload.action}`,
+			`gitHubProduct: ${gitHubProduct}`
 		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
@@ -204,15 +209,15 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
-				context.log,
-				context.gitHubAppConfig?.gitHubAppId
+				context.gitHubAppConfig?.gitHubAppId,
+				context.log
 			);
 
 			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
-				context.log.error(
+				context.log.warn(
 					{ jiraHost },
-					`No enabled installation found.`
+					`No installations found.`
 				);
 				continue;
 			}

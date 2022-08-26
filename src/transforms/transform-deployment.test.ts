@@ -182,7 +182,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
@@ -287,7 +287,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 		// make expected issue id array
 		const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
@@ -399,10 +399,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 		when(getRepoConfig).calledWith(
 			expect.anything(),
+			expect.anything(),
+			expect.anything(),
+			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(mockConfig);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 		expect(jiraPayload?.deployments[0].environment.type).toBe("development");
 	});
 
@@ -483,10 +486,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 		when(getRepoConfig).calledWith(
 			expect.anything(),
+			expect.anything(),
+			expect.anything(),
+			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(mockConfig);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"));
+		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 		expect(jiraPayload?.deployments[0].environment.type).toBe("unmapped");
 	});
 

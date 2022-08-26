@@ -26,6 +26,7 @@ declare global {
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
 	let gheUrl: string;
+	let uuid: string;
 	let gheNock: nock.Scope;
 	let gheApiUrl: string;
 	let gheApiNock: nock.Scope;
@@ -44,6 +45,7 @@ declare global {
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
 			gheUrl: string;
+			uuid: string;
 			gheNock: nock.Scope;
 			gheApiUrl: string;
 			gheApiNock: nock.Scope;
@@ -129,26 +131,14 @@ beforeAll(async () => {
 	redis.disconnect();
 });
 
-const globalGitHubAppConfig = {
-	appId: 1,
-	uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
-	hostname: "http://test-server.com",
-	gitHubBaseUrl: "http://test-server.com",
-	gitHubApiUrl: "https://api.test-server.com",
-	clientId: "lvl.128ejqe91n2e128",
-	gitHubClientSecret: "secretone",
-	webhookSecret: "secrettwo",
-	privateKey: "secretthree"
-};
-
 beforeEach(() => {
 	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
-	global.gitHubAppConfig = globalGitHubAppConfig;
 	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
+	global.uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
 	global.gheNock = nock(global.gheUrl);
 	global.gheApiUrl = `${global.gheUrl}/api/v3`;
 	global.gheApiNock = nock(global.gheApiUrl);
