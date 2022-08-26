@@ -111,6 +111,7 @@ export const transformPullRequest = async (github: GitHubAPI | GitHubInstallatio
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
 				reviewers: mapReviews(reviews),
+				draft: pullRequest.draft,
 				sourceBranch: pullRequest.head.ref,
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: pullRequestStatus,

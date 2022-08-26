@@ -31,7 +31,9 @@ export const setupGithubWebhooks = (robot: Application) => {
 			"pull_request.closed",
 			"pull_request.reopened",
 			"pull_request.edited",
-			"pull_request_review"
+			"pull_request_review",
+			"pull_request.converted_to_draft",
+			"pull_request.ready_for_review"
 		],
 		convertToWebhookContext(GithubWebhookMiddleware(pullRequestWebhookHandler))
 	);
