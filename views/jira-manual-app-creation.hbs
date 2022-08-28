@@ -47,7 +47,12 @@
           {{else}}
             Enter all the fields to create your app.
         {{/if}}
-        <a href="#">Learn more about manual GitHub app creation.</a>
+        <a
+            href="https://support.atlassian.com/jira-cloud-administration/docs/manually-create-a-github-app/"
+            target="_blank"
+        >
+            Learn more about manual GitHub app creation.
+        </a>
       </div>
 
       <form
@@ -59,7 +64,6 @@
     >
         <div class="jiraManualAppCreation__formTitle">
           Details
-          <i class="aui-icon aui-iconfont-question-filled"></i>
         </div>
 
         <div class="field-group">
@@ -70,7 +74,7 @@
              data-aui-validation-field required
              value="{{app.gitHubAppName}}"
              name="gitHubAppName"
-             id="gitHubAppNameInput
+             id="gitHubAppNameInput"
            />
         </div>
 
@@ -149,7 +153,7 @@
             -->
             <input class="jiraManualAppCreation__formFileInput"
                    id="privateKeyFile"
-                   data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
+                   data-aui-validation-pattern="^.*\.(pem|PEM)$"
                    data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
                    data-aui-validation-field
                    required

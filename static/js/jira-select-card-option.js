@@ -31,6 +31,7 @@ $(document).ready(function() {
 		$(".optionBtn").prop("disabled", false).attr("aria-disabled", "false").addClass("aui-button-primary");
 
 		selectedVersion = currentTarget.data('type');
+		$(".jiraAppCreation__versionDisclaimer__prompt").css("visibility", selectedVersion === "manual" ? "hidden" : "visible");
 	});
 
 	$(".jiraSelectGitHubProduct__actionBtn").click(function (event) {

@@ -136,7 +136,10 @@
                         Connected
                       </p>
                     {{/if}}
-                    <a class="gitHubConfiguration__orgContent__settingsContainer" href='/github/subscriptions/{{id}}'>
+                    <a
+                        class="gitHubConfiguration__orgContent__settingsContainer"
+                        href="{{setSubscriptionUrl ../gitHubServerApp.uuid id}}"
+                    >
                       <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
                         Manage Jira Subscriptions
                       </span>
