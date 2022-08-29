@@ -2,7 +2,6 @@ import { transformWorkflow } from "../transforms/transform-workflow";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
@@ -24,9 +23,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		return;
 	}
 
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-
-	logger.info({ jiraHost: jiraClient.baseURL, gitHubProduct }, "Sending workflow event to Jira.");
+	logger.info({ jiraHost: jiraClient.baseURL }, `Sending workflow event to Jira`);
 
 	const jiraResponse = await jiraClient.workflow.submit(jiraPayload);
 	const { webhookReceived, name, log } = context;

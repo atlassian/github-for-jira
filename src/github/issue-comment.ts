@@ -2,7 +2,6 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const issueCommentWebhookHandler = async (
 	context: WebhookContext,
@@ -41,9 +40,7 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-
-	context.log.info({ commentId: comment.id, gitHubProduct }, "Updating issue comment in GitHub.");
+	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
 	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
 		owner,

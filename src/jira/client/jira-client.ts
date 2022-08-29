@@ -36,9 +36,9 @@ export const getJiraClient = async (
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
-	const installation = await Installation.getForHost(jiraHost);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
+	const installation = await Installation.getForHost(jiraHost);
 
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
@@ -336,7 +336,7 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger.info({ gitHubProduct }, "Sending remoteLinks payload to jira.");
+				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
 		}

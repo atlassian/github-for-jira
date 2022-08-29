@@ -7,7 +7,6 @@ import { GitHubPushData } from "interfaces/github";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Subscription } from "models/subscription";
 import { getInstallationId } from "./client/installation-id";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
@@ -53,9 +52,6 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		return;
 	}
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-
-	context.log.info({ gitHubProduct }, "Enqueueing push event");
+	context.log.info("Enqueueing push event");
 	await enqueuePush(payload, jiraClient.baseURL, context.gitHubAppConfig);
 };

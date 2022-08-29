@@ -9,7 +9,6 @@ import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -46,6 +45,8 @@ export const processDeployment = async (
 		return;
 	}
 
+	logger.info("processing deployment message!");
+
 	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
 
 	if (!jiraPayload) {
@@ -62,9 +63,6 @@ export const processDeployment = async (
 		gitHubAppId,
 		logger
 	);
-
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-	logger.info({ gitHubProduct }, "Sending deployment event to Jira.");
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {

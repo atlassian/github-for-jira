@@ -9,7 +9,6 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchData } from "../interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
@@ -49,8 +48,7 @@ export const processBranch = async (
 		return;
 	}
 
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-	logger.info({ gitHubProduct },"Sending update for create branch event to Jira.");
+	logger.info(`Sending jira update for create branch event`);
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
@@ -79,23 +77,14 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		return;
 	}
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-
-	context.log.info(
-		{
-			repoId: context.payload.repository?.id,
-			ref: context.payload.ref,
-			gitHubProduct
-		},
-		"Sending delete branch event to Jira."
-	);
+	context.log.info(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,
 		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,

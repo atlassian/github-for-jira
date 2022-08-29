@@ -9,7 +9,6 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -85,9 +84,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		return;
 	}
 
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-
-	context.log.info({ jiraHost: baseUrl, gitHubProduct }, "Sending pull request update to Jira.");
+	context.log.info({ jiraHost : baseUrl }, `Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
