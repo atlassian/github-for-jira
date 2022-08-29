@@ -174,7 +174,9 @@
 
           {{#if hasCloudServers}}
             <div class="jiraConfiguration__cloudContainer">
-              <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
+              {{/if}}
               <div class="jiraConfiguration__cloudConnections">
                 {{> jira-configuration-table
                     id=id
@@ -190,7 +192,9 @@
 
           {{#if gheServers.length}}
             <div class="jiraConfiguration__enterpriseContainer">
-              <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
+              {{/if}}
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
                   <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
@@ -205,7 +209,7 @@
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
-                      <details>
+                      <details open>
                         <summary class="jiraConfiguration__collapsibleHeader jiraConfiguration__table__cell__settings">
                           <div>
                             <span class="aui-icon aui-iconfont-chevron-right"></span>

@@ -6,6 +6,7 @@ import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
 import { TaskPayload } from "~/src/sync/sync.types";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { updateRepoConfigsFromGitHub } from "services/user-config-service";
 
 export const getRepositoryTask = async (
 	logger: Logger,
@@ -59,7 +60,7 @@ export const getRepositoryTask = async (
 	}
 
 	await subscription.update({ totalNumberOfRepos: totalCount });
-	await RepoSyncState.bulkCreate(repositories.map(repo => ({
+	const createdRepoSyncStates = await RepoSyncState.bulkCreate(repositories.map(repo => ({
 		subscriptionId: subscription.id,
 		repoId: repo.id,
 		repoName: repo.name,
@@ -78,6 +79,10 @@ export const getRepositoryTask = async (
 	}, `Repository Discovery Page Information`);
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
+
+	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
+		await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId);
+	}
 
 	return {
 		edges,

@@ -24,6 +24,10 @@
   float: right;
 }
 
+#jiraServerUrl__form input {
+  height: 40px;
+}
+
 #gheServerBtnSpinner {
   display: none;
   color: #fff;

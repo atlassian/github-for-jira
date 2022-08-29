@@ -21,7 +21,14 @@ const openChildWindow = (url) => {
 
 const handleFormErrors = (isUpdate) => {
 	$(".jiraManualAppCreation__serverError").show();
-	$(".errorMessageBox__message").empty().append("Please make sure all the details you entered are correct.");
+	$(".errorMessageBox__message")
+		.empty()
+		.append("Please make sure all the details you entered are correct.")
+		.append(
+			'<div class="jiraManualAppCreation__serverError__linkContainer">' +
+			'	<a href="https://support.atlassian.com/jira-cloud-administration/docs/manually-create-a-github-app" target="_blank">Learn more</a>' +
+			'</div>'
+		);
 	const errorTitle = ".errorMessageBox__title";
 
 	isUpdate
@@ -102,7 +109,7 @@ AJS.$("#jiraManualAppCreation__form").on("aui-valid-submit", (event) => {
 const replaceSpacesAndChangeCasing = (str) => str.replace(/\s+/g, '-').toLowerCase();
 
 $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function () {
-	const hasFileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText !== "";
+	const fileName = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
 	// value used when user is updating up and app name already exists
 	const appNameFromData = $(this).data("app-appname");
 	// value used when creating an app and user has entered a value in gitHubAppName
@@ -118,9 +125,10 @@ $('#jiraManualAppCreation__uploadedFile').bind('DOMSubtreeModified', function ()
 			<p>Your file has been uploaded and will be </br>
 			stored with the filename in the format of </br>
 			${appName}.private-key.pem</p>
-	`
+	`;
+	const pemFilePattern = "^.*\.(pem|PEM)$";
 
-	if (hasFileName) {
+	if (fileName !== "" && fileName.match(pemFilePattern)) {
 		AJS.flag({
 			type: "success",
 			body
@@ -155,5 +163,3 @@ $("#jiraManualAppCreation__clearUploadedFile").click(() => {
 	$(".jiraManualAppCreation__formFileInput").attr("data-aui-validation-state", "unvalidated");
 	$(".jiraManualAppCreation__formFileDropArea .error").remove();
 });
-
-
