@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
@@ -21,7 +21,13 @@ import {
 	getDeploymentsResponse,
 	getDeploymentsQuery
 } from "./github-queries";
-import { ActionsListRepoWorkflowRunsResponseEnhanced, GetPullRequestParams, GraphQlQueryResponse, PaginatedAxiosResponse } from "./github-client.types";
+import {
+	ActionsListRepoWorkflowRunsResponseEnhanced,
+	GetPullRequestParams,
+	GraphQlQueryResponse,
+	PaginatedAxiosResponse,
+	ReposGetContentsResponse
+} from "./github-client.types";
 import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient } from "./github-client";
@@ -33,24 +39,19 @@ import { GitHubClient } from "./github-client";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export class GitHubInstallationClient extends GitHubClient {
-	private readonly axios: AxiosInstance;
 	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
+	public readonly gitHubServerAppId?: number;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		logger?: Logger,
 		baseUrl?: string,
+		gshaId?: number,
 		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
 	) {
 		super(logger, baseUrl);
-		this.axios = axios.create({
-			baseURL: this.restApiUrl,
-			transitional: {
-				clarifyTimeoutError: true
-			}
-		});
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -66,6 +67,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
+		this.gitHubServerAppId = gshaId;
 	}
 
 	/**
@@ -213,12 +215,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getBranchesPage(owner: string, repoName: string, perPage = 1, timeCutoffMsecs?: number, cursor?: string): Promise<getBranchesResponse> {
+	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
-			commitSince: timeCutoffMsecs ? new Date(Date.now() - timeCutoffMsecs).toISOString() : undefined,
+			commitSince: commitSince?.toISOString(),
 			cursor
 		};
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
@@ -247,13 +249,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, timeCutoffMsecs?: number, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: Date, cursor?: string | number): Promise<getCommitsResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
 			cursor,
-			commitSince: timeCutoffMsecs ? new Date(Date.now() - timeCutoffMsecs).toISOString() : undefined
+			commitSince: commitSince?.toISOString()
 		};
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
 			.catch((err) => {
@@ -279,10 +281,32 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	/**
+	 * Get a file at a given path from a repository.
+	 * Returns null if the file does not exist.
+	 */
+	public async getRepositoryFile(owner: string, repo: string, path: string): Promise<string | undefined> {
+		try {
+			// can't pass the path as a path param, because "/"s would be url encoded
+			const response = await this.get<ReposGetContentsResponse>(`/repos/{owner}/{repo}/contents/${path}`, {}, {
+				owner,
+				repo
+			});
+
+			return response.data.content;
+		} catch (err) {
+			if (err.status == 404) {
+				this.logger.warn({ err, owner, repo, path }, "could not find file in repo");
+				return undefined;
+			}
+			throw err;
+		}
+	}
+
+	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId);
+		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId, this.gitHubServerAppId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
@@ -310,7 +334,6 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Calls the GitHub API in the name of the GitHub app to generate a token that in turn can be used to call the GitHub
 	 * API in the name of an installation of that app (to access the users' data).
 	 */
-	// NEW APP CLient
 	private async createInstallationToken(githubInstallationId: number): Promise<AuthToken> {
 		const response = await this.axios.post<Octokit.AppsCreateInstallationTokenResponse>(`/app/installations/{githubInstallationId}/access_tokens`, {}, {
 			...await this.appAuthenticationHeaders(),

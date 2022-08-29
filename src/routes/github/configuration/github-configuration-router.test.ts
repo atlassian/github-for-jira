@@ -8,8 +8,6 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -114,16 +112,7 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
-
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
-		});
-
+	describe("#GET - GithubClient - %s", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
 			githubNock
 				.get("/")
@@ -138,7 +127,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(200, {
 					"id": 1,
 					"account": {
@@ -215,7 +203,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(403, {
 					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
 				});
@@ -257,23 +244,14 @@ describe("Github Configuration", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token"
+						githubToken: "token2"
 					})
 				)
 				.expect(200);
 		});
 	});
 
-	describe.each([true, false])("#POST - GitHub Client is %s", (useNewGithubClient) => {
-
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
-		});
-
+	describe("#POST - GitHub Client is %s", () => {
 		it("should return a 401 if no GitHub token present in session", async () => {
 			await supertest(frontendApp)
 				.post("/github/configuration")

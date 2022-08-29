@@ -6,6 +6,7 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
+import { toUpper } from "lodash";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -34,7 +35,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, gitHubVersion: string, response?: any, status?: string | number) => {
+const sendResponseMetrics = (metricName: string, gitHubProduct: string, response?: any, status?: string | number) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -43,7 +44,7 @@ const sendResponseMetrics = (metricName: string, gitHubVersion: string, response
 	// using client tag to separate GH client from Octokit
 	const tags = {
 		client: "axios",
-		gitHubVersion,
+		gitHubProduct,
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
 		status: status
@@ -61,8 +62,8 @@ export const instrumentRequest = (metricName, host) =>
 			return;
 		}
 
-		const gitHubVersion = getCloudOrServerFromHost(host);
-		return sendResponseMetrics(metricName, gitHubVersion, response);
+		const gitHubProduct = getCloudOrServerFromHost(host);
+		return sendResponseMetrics(metricName, gitHubProduct, response);
 	};
 
 /**
@@ -75,18 +76,18 @@ export const instrumentRequest = (metricName, host) =>
  */
 export const instrumentFailedRequest = (metricName: string, host: string) =>
 	(error) => {
-		const gitHubVersion = getCloudOrServerFromHost(host);
+		const gitHubProduct = getCloudOrServerFromHost(host);
 		if (error instanceof RateLimitingError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "rateLimiting");
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting");
 		} else if (error instanceof BlockedIpError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "blockedIp");
-			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubVersion });
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp");
+			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response, "timeout");
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "timeout");
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, gitHubVersion, error.cause?.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response);
 		} else {
-			sendResponseMetrics(metricName, gitHubVersion, error.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.response);
 		}
 		return Promise.reject(error);
 	};
@@ -104,7 +105,7 @@ export const handleFailedRequest = (logger: Logger) =>
 
 		if (response) {
 			const status = response?.status;
-			const errorMessage = `Error executing Axios Request ` + error.message;
+			const errorMessage = `Error executing Axios Request (${toUpper(config.method)} ${config.baseURL}${config.url}): ` + error.message;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
@@ -126,7 +127,12 @@ export const handleFailedRequest = (logger: Logger) =>
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			(isWarning ? logger.warn : logger.error)(errorMessage);
+			if (isWarning){
+				logger.warn(errorMessage);
+			} else {
+				logger.error(errorMessage);
+			}
+
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 

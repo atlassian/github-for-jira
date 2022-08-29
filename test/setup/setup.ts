@@ -5,9 +5,9 @@ import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
-import { mocked } from "ts-jest/utils";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -20,11 +20,13 @@ type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<nu
 
 declare global {
 	let jiraHost: string;
+	let gitHubAppConfig: GitHubAppConfig;
 	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
 	let githubNock: nock.Scope;
 	let gheUrl: string;
+	let uuid: string;
 	let gheNock: nock.Scope;
 	let gheApiUrl: string;
 	let gheApiNock: nock.Scope;
@@ -37,11 +39,13 @@ declare global {
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
+			gitHubAppConfig: GitHubAppConfig;
 			jiraStaginHost: string;
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
 			githubNock: nock.Scope;
 			gheUrl: string;
+			uuid: string;
 			gheNock: nock.Scope;
 			gheApiUrl: string;
 			gheApiNock: nock.Scope;
@@ -68,9 +72,9 @@ const clearState = async () => Promise.all([
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
-	(installationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
+	(githubInstallationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
 		scope
-			.post(`/app/installations/${installationId}/access_tokens`)
+			.post(`/app/installations/${githubInstallationId}/access_tokens`)
 			.matchHeader(
 				"Authorization",
 				expectedAuthToken ? `Bearer ${expectedAuthToken}` : /^(Bearer|token) .+$/i
@@ -134,6 +138,7 @@ beforeEach(() => {
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
 	global.gheUrl = "https://github.mydomain.com";
+	global.uuid = "c97806fc-c433-4ad5-b569-bf5191590be2";
 	global.gheNock = nock(global.gheUrl);
 	global.gheApiUrl = `${global.gheUrl}/api/v3`;
 	global.gheApiNock = nock(global.gheApiUrl);
@@ -142,7 +147,7 @@ beforeEach(() => {
 	global.gheUserTokenNock = githubUserToken(gheApiNock);
 	global.gheAppTokenNock = githubAppToken(gheApiNock);
 	global.mockSystemTime = (time: number | string | Date) => {
-		const mock = jest.isMockFunction(Date.now) ? mocked(Date.now) : jest.spyOn(Date, "now");
+		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
 	};

@@ -1,6 +1,5 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
@@ -60,10 +59,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log);
-	const githubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_PR_TITLE, false, jiraHost) ?
-		gitHubInstallationClient :
-		context.github;
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log, context.gitHubAppConfig?.gitHubAppId);
 
 	// Grab branch names or PR titles
 	const entityTitles: string[] = [];
@@ -74,11 +70,11 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 		// These are manual operations done by users and are not associated to a specific Issue.
 		// The webhook contains ALL instances of this alert, so we need to grab the ref from each instance.
 		entityTitles.push(...await Promise.all(alert.instances.map(
-			(instance) => getEntityTitle(instance.ref, repository.name, repository.owner.login, githubClient, context.log))
+			(instance) => getEntityTitle(instance.ref, repository.name, repository.owner.login, gitHubInstallationClient, context.log))
 		));
 	} else {
 		// The action is associated with a single branch/PR
-		entityTitles.push(await getEntityTitle(ref, repository.name, repository.owner.login, githubClient, context.log));
+		entityTitles.push(await getEntityTitle(ref, repository.name, repository.owner.login, gitHubInstallationClient, context.log));
 	}
 
 	const issueKeys = entityTitles.flatMap((entityTitle) => jiraIssueKeyParser(entityTitle) ?? []);

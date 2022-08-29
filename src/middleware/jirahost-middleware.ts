@@ -2,10 +2,16 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
-import { moduleUrls } from "routes/jira/jira-atlassian-connect-get";
+import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 
-const extractUnsafeJiraHost = (req: Request): string | null => {
-	if (moduleUrls.includes(req.path) && req.method == "GET") {
+/**
+ * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
+ */
+const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
+
+const extractUnsafeJiraHost = (req: Request): string | undefined => {
+	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
 	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
@@ -13,8 +19,11 @@ const extractUnsafeJiraHost = (req: Request): string | null => {
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
 	}
-	return null;
+	return undefined;
 };
+
+export const getUnvalidatedJiraHost = (req: Request): string | undefined =>
+	req.session?.jiraHost || extractUnsafeJiraHost(req);
 
 const detectJwtTokenType = (req: Request): TokenType => {
 	if (req.query.xdm_e) {

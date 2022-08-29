@@ -1,0 +1,48 @@
+.selectTable__content {
+  background-color: #F4F5F7;
+  padding: 1.5em;
+  width: 656px;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+
+.selectTable__contentHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5em;
+  margin-bottom: 1.2em;
+}
+
+.selectTable__contentHeadTitle {
+  display: flex;
+  align-items: center;
+}
+
+.selectTable__addNew {
+  color: #42526E;
+}
+
+.selectTable__contentImg {
+  margin-right: 0.8em;
+  height: 26px;
+}
+
+.selectTable__contentTitle {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.selectTable__list {
+  background-color: #fff;
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+  padding: 0.5em 0;
+}
+
+.selectTable__itemContainer {
+  display: flex;
+  padding: 0.5em 1.5em;
+  align-items: center;
+  justify-content: space-between;
+}

@@ -1,24 +1,17 @@
 import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import Logger from "bunyan";
+import { getLogger } from "config/logger";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const getCurrentTime = () => Date.now();
 
-/**
- * Emits metrics for successfully processed webhook. These metrics include:
- *  - Webhook processing duration histogram
- *  - Processed webhooks counter
- *
- * @param webhookReceivedTime time when GitHub for Jira app received a webhook from GitHub
- * @param webhookName name of the webhook (type)
- * @param contextLogger logger for the function logs
- * @param status http response code if applicable to this webhook type
- */
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
-	contextLogger: Logger,
-	status?: number
+	logger: Logger = getLogger("webhook-metrics"),
+	status?: number,
+	gitHubAppId?: number
 ): number | undefined | void => {
 	const currentTime = getCurrentTime();
 
@@ -28,14 +21,17 @@ export const emitWebhookProcessedMetrics = (
 		if (Number.isInteger(webhookReceivedTime) && webhookReceivedTime <= currentTime) {
 			const timeToProcessWebhookEvent = currentTime - webhookReceivedTime;
 
-			contextLogger.info(
+			logger.info(
 				{ webhookName },
 				`Webhook processed in ${timeToProcessWebhookEvent} milliseconds`
 			);
 
+			const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
 			const tags = {
 				name: webhookName,
-				status: status?.toString() || "none"
+				status: status?.toString() || "none",
+				gitHubProduct
 			};
 
 			statsd.increment(metricWebhooks.webhookProcessed, tags);
@@ -61,14 +57,14 @@ export const emitWebhookProcessedMetrics = (
 
 			return timeToProcessWebhookEvent;
 		} else {
-			contextLogger?.error(
+			logger.error(
 				{ webhookReceivedTime },
 				`Failed to send timeToProcessWebhookEvent metric. webhookReceivedTime: ${webhookReceivedTime}; current time: ${currentTime}.`
 			);
 			return undefined;
 		}
 	} catch (err) {
-		contextLogger?.error(
+		logger.error(
 			{ err },
 			"Failed to send webhook processing time metrics."
 		);

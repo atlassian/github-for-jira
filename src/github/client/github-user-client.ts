@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
@@ -11,19 +11,11 @@ import { GitHubClient } from "./github-client";
  * A GitHub client that supports authentication as a GitHub User.
  */
 export class GitHubUserClient extends GitHubClient {
-	private readonly axios: AxiosInstance;
 	private readonly userToken: string;
 
 	constructor(userToken: string, logger?: Logger, baseUrl?: string) {
 		super(logger, baseUrl);
 		this.userToken = userToken;
-
-		this.axios = axios.create({
-			baseURL: this.restApiUrl,
-			transitional: {
-				clarifyTimeoutError: true
-			}
-		});
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
 			return {

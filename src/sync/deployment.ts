@@ -1,9 +1,9 @@
-import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 	const deploymentData = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
@@ -16,7 +16,7 @@ const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClie
 	};
 };
 
-const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger) => {
+const getTransformedDeployments = async (deployments, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
 
 	const transformTasks = deployments.map((deployment) => {
 		const deploymentStatus = {
@@ -37,7 +37,7 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
@@ -47,8 +47,8 @@ const getTransformedDeployments = async (deployments, _github: GitHubAPI, gitHub
 		.flat();
 };
 
-export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number) => {
 
+export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number, data?: BackfillMessagePayload) => {
 	logger.info("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
@@ -58,8 +58,8 @@ export const getDeploymentTask = async (logger: Logger, _github: GitHubAPI, gitH
 			jiraPayload: undefined
 		};
 	}
-	const transformedDeployments = await getTransformedDeployments(deployments, _github, gitHubInstallationClient, jiraHost, logger);
 
+	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, data?.gitHubAppConfig?.gitHubAppId);
 	logger.info("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;

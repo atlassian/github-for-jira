@@ -7,25 +7,27 @@ import { ApiInstallationSyncPost } from "./api-installation-sync-post";
 import { ApiInstallationGet } from "./api-installation-get";
 
 export const ApiInstallationRouter = Router({ mergeParams: true });
+const subRouter = Router({ mergeParams: true });
+ApiInstallationRouter.use(`(/githubapp/:gitHubAppId(\\d+))?`, subRouter);
 
-ApiInstallationRouter.post(
+subRouter.post(
 	"/sync",
 	ApiInstallationSyncPost
 );
 
-ApiInstallationRouter.get(
+subRouter.get(
 	"/",
 	ApiInstallationGet
 );
 
-ApiInstallationRouter.get(
+subRouter.get(
 	"/:jiraHost/syncstate",
 	param("jiraHost").isString(),
 	returnOnValidationError,
 	ApiInstallationSyncstateGet
 );
 
-ApiInstallationRouter.delete(
+subRouter.delete(
 	"/:jiraHost",
 	param("jiraHost").isString(),
 	returnOnValidationError,

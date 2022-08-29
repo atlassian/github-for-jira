@@ -7,6 +7,7 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const ErrorRouter = Router();
 
@@ -65,13 +66,14 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 
 	const messages = {
 		[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",
-		[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`
+		[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`,
+		[Errors.MISSING_GITHUB_APP_NAME]: "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again."
 	};
 
 	const errorStatusCode = errorCodes[err.message] || 500;
 	const message = messages[err.message];
-	const gitHubVersion = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
-	const tags = [`status: ${errorStatusCode}`, `gitHubVersion: ${gitHubVersion}`];
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
+	const tags = [`status: ${errorStatusCode}`, `gitHubProduct: ${gitHubProduct}`];
 
 	statsd.increment(metricError.githubErrorRendered, tags);
 
@@ -79,6 +81,7 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 		title: "GitHub + Jira integration",
 		errorReference,
 		message,
+		ctaUrl: req.query.retryUrl ? createUrlWithQueryString(req, req.query.retryUrl as string) : null,
 		nonce: res.locals.nonce,
 		githubRepoUrl: envVars.GITHUB_REPO_URL
 	});

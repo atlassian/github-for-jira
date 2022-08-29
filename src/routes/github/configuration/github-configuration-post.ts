@@ -7,7 +7,6 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
@@ -28,7 +27,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitH
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, client, gitHubAppId } = res.locals;
+	const { githubToken, jiraHost, gitHubAppId } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken || !jiraHost) {
@@ -56,12 +55,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.log.debug("Received add subscription request");
 
 	try {
-		const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG_POST, false, jiraHost);
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
 		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
-		if (!await hasAdminAccess(useNewGithubClient ? gitHubAppClient : client, gitHubUserClient, gitHubInstallationId, req.log)) {
+		if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, req.log)) {
 			res.status(401).json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
 			return;
 		}
@@ -69,7 +67,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: gitHubInstallationId,
-			host: jiraHost
+			host: jiraHost,
+			gitHubAppId
 		});
 
 		await findOrStartSync(subscription, req.log);

@@ -1,13 +1,13 @@
-import Logger, { createLogger, INFO, levelFromName, stdSerializers } from "bunyan";
-import bformat from "bunyan-format";
+import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } from "bunyan";
 import { filteringHttpLogsStream } from "utils/filtering-http-logs-stream";
-import { Request } from "express";
-import { AxiosResponse } from "axios";
 import { createHashWithSharedSecret } from "utils/encryption";
+import bformat from "bunyan-format";
+import { isArray, isString, merge, omit } from "lodash";
 
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
-const outputMode = process.env.MICROS_ENV ? "json" : "short";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const outputMode: any = process.env.MICROS_ENV ? "json" : "short";
 
 // We cannot redefine the stream on middleware level (when we create the child logger),
 // therefore we have to do it here, on global level, for all loggers :(
@@ -17,50 +17,53 @@ const outputMode = process.env.MICROS_ENV ? "json" : "short";
 //
 export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
 // add levelInString to include DEBUG | ERROR | INFO | WARN
-const LOG_STREAM = filteringHttpLogsStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME,
+const LOG_STREAM = filteringHttpLogsStream(
+	FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME,
 	bformat({ outputMode, levelInString: true })
 );
 
-const responseSerializer = (res: AxiosResponse) => ({
+const responseSerializer = (res) => res && ({
 	...stdSerializers.res(res),
-	config: res?.config,
+	config: res.config,
 	request: requestSerializer(res.request)
 });
 
-const requestSerializer = (req: Request) => (!req || !req.socket) ? req : {
+const requestSerializer = (req) => req && ({
 	method: req.method,
 	url: req.originalUrl || req.url,
 	path: req.path,
 	headers: req.headers,
-	remoteAddress: req.socket.remoteAddress,
-	remotePort: req.socket.remotePort,
+	remoteAddress: req.socket?.remoteAddress,
+	remotePort: req.socket?.remotePort,
 	body: req.body
+});
+
+const errorSerializer = (err) => {
+	if (!err) {
+		return err;
+	}
+
+	if (isArray(err)) {
+		err = { data: err };
+	} else if (isString(err)) {
+		err = { message: err };
+	}
+
+	return {
+		...err,
+		response: responseSerializer(err.response),
+		request: requestSerializer(err.request)
+	};
 };
 
-const errorSerializer = (err) => err && {
-	...err,
-	response: stdSerializers.res(err.response),
-	request: requestSerializer(err.request)
-};
-
-const hashSerializer = (data: any): string | undefined => {
-	if (data === undefined || data == null) {
+const hashSerializer = (data?: string): string | undefined => {
+	if (!data || !isString(data)) {
 		return undefined;
 	}
 	return createHashWithSharedSecret(data);
 };
 
-const sensitiveDataSerializers = (): Logger.Serializers => ({
-	jiraHost: hashSerializer,
-	orgName: hashSerializer,
-	repoName: hashSerializer,
-	userGroup: hashSerializer,
-	aaid: hashSerializer,
-	username: hashSerializer
-});
-
-const logLevel = process.env.LOG_LEVEL || "info";
-const globalLoggingLevel = levelFromName[logLevel] || INFO;
+export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
 // TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
 export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
@@ -73,42 +76,53 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 		type: "stream",
 		stream: LOG_STREAM,
 		closeOnExit: false,
-		level: globalLoggingLevel
+		level: defaultLogLevel
 	});
 };
 
-const createNewLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	return createLogger(
-		{
-			name,
-			stream: LOG_STREAM,
-			level: globalLoggingLevel,
-			serializers: {
-				err: errorSerializer,
-				res: responseSerializer,
-				req: requestSerializer
-			},
-			...fields
-		});
+const createNewLogger = (name: string, options: LoggerOptions = {}): Logger => {
+	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
+		name,
+		stream: LOG_STREAM,
+		level: defaultLogLevel,
+		serializers: {
+			err: errorSerializer,
+			error: errorSerializer,
+			res: responseSerializer,
+			response: responseSerializer,
+			req: requestSerializer,
+			request: requestSerializer
+		},
+		...options.fields
+	}, omit(options, "fields")));
 };
 
-export const getLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	const logger = createNewLogger(name);
-	logger.addSerializers(sensitiveDataSerializers());
-	return logger.child({ ...fields });
+interface LoggerOptions {
+	fields?: Record<string, unknown>;
+	streams?: Stream[];
+	level?: LogLevel;
+	stream?: NodeJS.WritableStream;
+	serializers?: Serializers;
+	src?: boolean;
+}
+
+export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
+	return createNewLogger(name, merge({
+		serializers: {
+			jiraHost: hashSerializer,
+			orgName: hashSerializer,
+			repoName: hashSerializer,
+			userGroup: hashSerializer,
+			aaid: hashSerializer,
+			username: hashSerializer
+		}
+	}, options));
+
 };
 
 // This will log data to a restricted environment [env]-unsafe and not serialize sensitive data
-export const getUnsafeLogger = (name: string, fields?: Record<string, unknown>): Logger => {
-	const logger = createNewLogger(name, { env_suffix: "unsafe" });
-	return logger.child({ ...fields });
-};
-
-
-export const cloneAllowedLogFields = (fields: Record<string, any>) => {
-	const allowedFields = { ...fields };
-	delete allowedFields.name;
-	return allowedFields;
+export const getUnsafeLogger = (name: string, options: LoggerOptions = {}): Logger => {
+	return createNewLogger(name, options);
 };
 
 //Override console.log with bunyan logger.
