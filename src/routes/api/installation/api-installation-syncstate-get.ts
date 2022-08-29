@@ -5,6 +5,7 @@ import { pick } from "lodash";
 
 export const ApiInstallationSyncstateGet = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = Number(req.params.installationId);
+	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
 	if (!jiraHost || !githubInstallationId) {
@@ -18,9 +19,8 @@ export const ApiInstallationSyncstateGet = async (req: Request, res: Response): 
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
 			githubInstallationId,
-			undefined
+			gitHubAppId
 		);
-
 		if (!subscription) {
 			res.status(404).send(`No Subscription found for jiraHost "${jiraHost}" and installationId "${githubInstallationId}"`);
 			return;

@@ -5,9 +5,11 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
-	const { installationId } = req.params;
+	const { installationId, gitHubAppId: gitHubAppIdStr } = req.params;
+
+	const gitHubAppId = parseInt(gitHubAppIdStr) || undefined;
+
 	const { client, jiraHost } = res.locals;
-	const { gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 	try {
@@ -47,7 +49,6 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			req.log.error({ ...response }, "Failed installation");
 			return response.error;
 		});
-
 		res.json({
 			host: jiraHost,
 			installationId,
