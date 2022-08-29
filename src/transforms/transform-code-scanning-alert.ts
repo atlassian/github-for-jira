@@ -5,7 +5,6 @@ import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -52,13 +51,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 		case "dismissed":
 			return "moved"; // yellow
 		default:
-			context.log.info(
-				{
-					status,
-					gitHubProduct: getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId)
-				},
-				"Received unknown status from code_scanning_alert webhook."
-			);
+			context.log.info(`Received unknown status from code_scanning_alert webhook: ${status}`);
 			return "default";
 	}
 };
