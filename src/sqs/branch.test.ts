@@ -11,7 +11,7 @@ import branchBasic from "fixtures/branch-basic.json";
 import branchNoIssues from "fixtures/branch-no-issues.json";
 import branchDelete from "fixtures/branch-delete.json";
 
-describe.skip("Branch Webhook", () => {
+describe("Branch Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 

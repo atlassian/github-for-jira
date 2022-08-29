@@ -8,7 +8,7 @@ import { sqsQueues } from "../sqs/queues";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 
-describe.skip("Deployment Webhook", () => {
+describe("Deployment Webhook", () => {
 	let app: Application;
 	const gitHubInstallationId = 1234;
 

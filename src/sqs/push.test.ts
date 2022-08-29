@@ -388,7 +388,7 @@ describe("Push Webhook", () => {
 		});
 	});
 
-	describe.skip("end 2 end tests with queue", () => {
+	describe("end 2 end tests with queue", () => {
 		beforeAll(async () => {
 			await sqsQueues.push.purgeQueue();
 		});
