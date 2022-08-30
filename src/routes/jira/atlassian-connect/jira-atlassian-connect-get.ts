@@ -31,7 +31,9 @@ const modules = {
 		},
 		url: "https://github.com",
 		actions: {
-			"createBranch": `${envVars.APP_URL}/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+			createBranch: {
+				templateUrl: `${envVars.APP_URL}/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+			}
 		}
 	},
 	jiraDeploymentInfoProvider: {
