@@ -2,11 +2,7 @@
 
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		await queryInterface.changeColumn("Installations", "githubAppId", {
-			type: Sequelize.INTEGER,
-			allowNull: true,
-			defaultValue: null
-		});
+		await queryInterface.removeColumn("Installations", "githubAppId");
 
 		await queryInterface.changeColumn("Subscriptions", "gitHubAppId", {
 			type: Sequelize.INTEGER,
@@ -16,7 +12,7 @@ module.exports = {
 	},
 
 	down: async (queryInterface, Sequelize) => {
-		await queryInterface.changeColumn("Installations", "githubAppId", {
+		await queryInterface.addColumn("Installations", "githubAppId", {
 			type: Sequelize.INTEGER,
 			allowNull: true
 		});
