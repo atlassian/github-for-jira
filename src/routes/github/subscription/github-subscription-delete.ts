@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
@@ -13,6 +14,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const gitHubAppId = gitHubAppConfig?.gitHubAppId;
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, gitHubAppId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	if (!githubToken) {
 		logger.debug("No GitHub token found when trying to delete subscription.");
@@ -55,7 +57,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		}
 
 	} catch (err) {
-		logger.error({ err, req, res }, "Error while processing delete subscription request");
+		logger.error({ err, req, res, gitHubProduct }, "Error while processing delete subscription request");
 		res.sendStatus(500);
 	}
 };
