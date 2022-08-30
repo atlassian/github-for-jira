@@ -29,7 +29,10 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		url: "https://github.com"
+		url: "https://github.com",
+		actions: {
+			"createBranch": `${envVars.APP_URL}/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+		}
 	},
 	jiraDeploymentInfoProvider: {
 		key: "github-deployments",
