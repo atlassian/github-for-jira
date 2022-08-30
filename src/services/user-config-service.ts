@@ -137,7 +137,7 @@ const convertYamlToUserConfig = (input?: string): Config => {
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId?: number): Promise<void> => {
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
 	const config = convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
