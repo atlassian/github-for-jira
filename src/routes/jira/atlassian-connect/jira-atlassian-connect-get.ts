@@ -169,14 +169,9 @@ export const moduleUrls = compact(map([...modules.adminPages, ...modules.general
 
 // Remove this function when CREATE_BRANCH flag is complete
 const moduleModifier = async (modules) => {
-	console.log("MODIFY MEEEE");
-	console.log(await booleanFlag(BooleanFlags.CREATE_BRANCH, false, jiraHost));
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false, jiraHost)) {
-		console.log("BRANCH WAS TRUE");
-		console.log(modules);
 		return modules;
 	}
-	console.log("BRANCH WAS FALSE");
 	const noCreateBranchModule = { ...modules };
 	delete noCreateBranchModule.jiraDevelopmentTool.actions;
 	return noCreateBranchModule;
