@@ -70,7 +70,13 @@ export const getRepositoryTask = async (
 		repoUpdatedAt: new Date(repo.updated_at)
 	})), { updateOnDuplicate: ["subscriptionId", "repoId"] });
 
-	logger.debug({ repositories }, `Added ${repositories.length} Repositories to state`);
+	logger.debug({
+		repositories,
+		repositoriesAdded: repositories.length,
+		hasNextPage,
+		totalCount,
+		nextCursor
+	}, `Repository Discovery Page Information`);
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 

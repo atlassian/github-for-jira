@@ -86,7 +86,7 @@ describe("SQS", () => {
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 123423453);
 
-			expect(sendMessageSpy).toBeCalledWithDelaySec(899);
+			await expect(sendMessageSpy).toBeCalledWithDelaySec(899);
 		});
 
 		it("Message send with the specified delay", async () => {
@@ -96,7 +96,7 @@ describe("SQS", () => {
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 64);
 
-			expect(sendMessageSpy).toBeCalledWithDelaySec(64);
+			await expect(sendMessageSpy).toBeCalledWithDelaySec(64);
 		});
 
 		it("Message gets executed exactly once", async () => {

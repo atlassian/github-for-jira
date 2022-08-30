@@ -49,7 +49,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 
 
 export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number, data?: BackfillMessagePayload) => {
-	logger.info("Syncing Deployments: started");
+	logger.debug("Syncing Deployments: started");
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
 	if (!deployments?.length) {
@@ -60,7 +60,7 @@ export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient
 	}
 
 	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, data?.gitHubAppConfig?.gitHubAppId);
-	logger.info("Syncing Deployments: finished");
+	logger.debug("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
 
