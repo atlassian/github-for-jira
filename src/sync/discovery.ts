@@ -81,7 +81,7 @@ export const getRepositoryTask = async (
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
 	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId);
+		await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId, jiraHost, gitHubAppId);
 	}
 
 	return {
