@@ -105,6 +105,7 @@ export class SqsQueue<MessagePayload> {
 			queueRegion: this.queueRegion,
 			longPollingInterval: this.longPollingIntervalSec
 		}, "Starting the queue");
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.listen(this.listenerContext);
 	}
 
@@ -210,12 +211,13 @@ export class SqsQueue<MessagePayload> {
 			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
 			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
 		} finally {
+			// Don't add `await` here, we need to ignore this promise
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.listen(listenerContext);
 		}
 	}
 
 	private async deleteMessage(context: SQSMessageContext<MessagePayload>) {
-
 		context.log.debug({ context }, "deleting the message");
 
 		if (!context.message.ReceiptHandle) {

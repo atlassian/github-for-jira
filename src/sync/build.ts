@@ -6,6 +6,7 @@ import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
+// TODO: add types
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
 
 	const transformTasks = workflowRun.map(workflow => {
