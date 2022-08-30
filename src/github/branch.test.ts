@@ -2,7 +2,6 @@ import { createBranchWebhookHandler } from "./branch";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
-import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
 
 jest.mock("../sqs/queues");
@@ -26,8 +25,8 @@ describe("BranchhWebhookHandler", () => {
 				gitHubAppConfig: {
 					uuid: undefined,
 					gitHubAppId: undefined,
-					appId: parseInt(envVars.APP_ID),
-					clientId: envVars.GITHUB_CLIENT_ID,
+					appId: parseInt(process.env.APP_ID),
+					clientId: process.env.GITHUB_CLIENT_ID,
 					gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 				}
@@ -58,8 +57,8 @@ describe("BranchhWebhookHandler", () => {
 			gitHubAppConfig: cloud ? {
 				uuid: undefined,
 				gitHubAppId: undefined,
-				appId: parseInt(envVars.APP_ID),
-				clientId: envVars.GITHUB_CLIENT_ID,
+				appId: parseInt(process.env.APP_ID),
+				clientId: process.env.GITHUB_CLIENT_ID,
 				gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 			} : {

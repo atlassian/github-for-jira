@@ -1,6 +1,5 @@
 import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { envVars } from "~/src/config/env";
 import { readFileSync } from "fs";
 
 jest.mock("config/feature-flags");
@@ -33,11 +32,11 @@ describe("key-locator", () => {
 	});
 
 	it("should throw error on invalid private key path", async () => {
-		const envPrivateKeyPath = envVars.PRIVATE_KEY_PATH;
-		envVars.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
+		const envPrivateKeyPath = process.env.PRIVATE_KEY_PATH;
+		process.env.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
 
 		await expect(keyLocator(undefined)).rejects.toThrow("Private key does not exists");
-		envVars.PRIVATE_KEY_PATH = envPrivateKeyPath;
+		process.env.PRIVATE_KEY_PATH = envPrivateKeyPath;
 
 	});
 
@@ -45,11 +44,11 @@ describe("key-locator", () => {
 		const privateKetCert = `-----BEGIN RSA PRIVATE KEY-----
 		privatekeycertificate
 		-----END RSA PRIVATE KEY-----`;
-		const envPrivateKey = envVars.PRIVATE_KEY;
-		envVars.PRIVATE_KEY = privateKetCert;
+		const envPrivateKey = process.env.PRIVATE_KEY;
+		process.env.PRIVATE_KEY = privateKetCert;
 		const privateKey = await keyLocator(undefined);
 		expect(privateKey).toBe(privateKetCert);
-		envVars.PRIVATE_KEY = envPrivateKey;
+		process.env.PRIVATE_KEY = envPrivateKey;
 	});
 
 	it("should return cloud app private key using  Base64 encoded PRIVATE_KEY", async () => {
@@ -57,11 +56,11 @@ describe("key-locator", () => {
 		privatekeycertificate
 		-----END RSA PRIVATE KEY-----`;
 		const encodedPrivateKey = Buffer.from(privateKetCert).toString("base64");
-		const envPrivateKey = envVars.PRIVATE_KEY;
-		envVars.PRIVATE_KEY = encodedPrivateKey;
+		const envPrivateKey = process.env.PRIVATE_KEY;
+		process.env.PRIVATE_KEY = encodedPrivateKey;
 		const privateKey = await keyLocator(undefined);
 		expect(privateKey).toBe(privateKetCert);
-		envVars.PRIVATE_KEY = envPrivateKey;
+		process.env.PRIVATE_KEY = envPrivateKey;
 	});
 
 });

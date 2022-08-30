@@ -8,7 +8,6 @@ import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
 import { issueWebhookHandler } from "~/src/github/issue";
-import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
 import { deleteRepository } from "~/src/github/repository";
@@ -40,8 +39,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			gitHubAppConfig: {
 				...(!gitHubServerApp ? {
 					gitHubAppId: undefined,
-					appId: parseInt(envVars.APP_ID),
-					clientId: envVars.GITHUB_CLIENT_ID,
+					appId: parseInt(process.env.APP_ID),
+					clientId: process.env.GITHUB_CLIENT_ID,
 					gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 					uuid: undefined
@@ -126,8 +125,8 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		const webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
 		return { webhookSecret, gitHubServerApp };
 	}
-	if (!envVars.WEBHOOK_SECRET) {
+	if (!process.env.WEBHOOK_SECRET) {
 		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
 	}
-	return { webhookSecret: envVars.WEBHOOK_SECRET };
+	return { webhookSecret: process.env.WEBHOOK_SECRET };
 };

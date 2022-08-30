@@ -3,13 +3,12 @@
 // TODO: need some typing for jwt
 import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
-import { envVars }  from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
-const BASE_URL = envVars.APP_URL;
+const BASE_URL = process.env.APP_URL;
 
 /**
  * Atlassian Connect has 2 different types of JWT tokens.

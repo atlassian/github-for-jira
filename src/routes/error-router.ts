@@ -2,7 +2,6 @@ import { NextFunction, Request, Response, Router } from "express";
 import * as Sentry from "@sentry/node";
 import { isNodeProd } from "utils/is-node-env";
 import { Errors } from "config/errors";
-import { envVars }  from "config/env";
 import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
@@ -66,7 +65,7 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 
 	const messages = {
 		[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",
-		[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${envVars.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`,
+		[Errors.IP_ALLOWLIST_MISCONFIGURED]: `The GitHub org you are trying to connect is currently blocking our requests. To configure the GitHub IP Allow List correctly, <a href="${process.env.GITHUB_REPO_URL}/blob/main/docs/ip-allowlist.md">please follow these instructions</a>.`,
 		[Errors.MISSING_GITHUB_APP_NAME]: "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again."
 	};
 
@@ -83,6 +82,6 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 		message,
 		ctaUrl: req.query.retryUrl ? createUrlWithQueryString(req, req.query.retryUrl as string) : null,
 		nonce: res.locals.nonce,
-		githubRepoUrl: envVars.GITHUB_REPO_URL
+		githubRepoUrl: process.env.GITHUB_REPO_URL
 	});
 });

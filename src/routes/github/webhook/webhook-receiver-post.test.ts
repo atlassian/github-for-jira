@@ -10,14 +10,13 @@ import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
-import { envVars } from "config/env";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
 const GHES_WEBHOOK_SECRET = "webhookSecret";
-const CLOUD_WEBHOOK_SECRET = envVars.WEBHOOK_SECRET;
+const CLOUD_WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
 describe("webhook-receiver-post", () => {
 
@@ -28,8 +27,8 @@ describe("webhook-receiver-post", () => {
 	const gitHubAppConfigForCloud= () => {
 		return {
 			gitHubAppId: undefined,
-			appId: parseInt(envVars.APP_ID),
-			clientId: envVars.GITHUB_CLIENT_ID,
+			appId: parseInt(process.env.APP_ID),
+			clientId: process.env.GITHUB_CLIENT_ID,
 			gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 			uuid: undefined

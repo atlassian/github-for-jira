@@ -6,7 +6,6 @@ import { GithubConfigurationGet } from "./configuration/github-configuration-get
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { v4 as v4uuid } from "uuid";
-import { envVars } from "config/env";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
@@ -94,8 +93,8 @@ describe("GitHub router", () => {
 					.then((response) => {
 						const resultUrl = response.headers.location;
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
-						const redirectUrl = `${envVars.APP_URL}/github/callback`;
-						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						const redirectUrl = `${process.env.APP_URL}/github/callback`;
+						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${process.env.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});
 			});
@@ -118,9 +117,9 @@ describe("GitHub router", () => {
 							githubToken: VALID_TOKEN,
 							jiraHost,
 							gitHubAppConfig: expect.objectContaining({
-								appId: envVars.APP_ID,
-								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-								webhookSecret: envVars.WEBHOOK_SECRET
+								appId: process.env.APP_ID,
+								gitHubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+								webhookSecret: process.env.WEBHOOK_SECRET
 							})
 						})
 					}),
@@ -134,9 +133,9 @@ describe("GitHub router", () => {
 						githubToken: VALID_TOKEN,
 						jiraHost,
 						gitHubAppConfig: expect.objectContaining({
-							appId: envVars.APP_ID,
-							gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-							webhookSecret: envVars.WEBHOOK_SECRET
+							appId: process.env.APP_ID,
+							gitHubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+							webhookSecret: process.env.WEBHOOK_SECRET
 						})
 					}));
 			});
@@ -167,7 +166,7 @@ describe("GitHub router", () => {
 					.then((response) => {
 						const resultUrl = response.headers.location;
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
-						const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
+						const redirectUrl = `${process.env.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
 						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});

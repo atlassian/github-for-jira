@@ -7,7 +7,6 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Errors } from "config/errors";
 import Logger from "bunyan";
 import { AppInstallation } from "config/interfaces";
-import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { BlockedIpError } from "~/src/github/client/github-client-errors";
@@ -224,7 +223,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			info,
 			clientKey: installation.clientKey,
 			login,
-			repoUrl: envVars.GITHUB_REPO_URL,
+			repoUrl: process.env.GITHUB_REPO_URL,
 			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null
 		});
 

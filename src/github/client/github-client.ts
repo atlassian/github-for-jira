@@ -2,7 +2,6 @@ import Logger from "bunyan";
 import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import { envVars } from "config/env";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 /**
@@ -56,7 +55,7 @@ export class GitHubClient {
 	};
 
 	private outboundProxyConfig = (): Partial<AxiosRequestConfig> => {
-		const outboundProxyHttpsAgent = envVars.PROXY ? new HttpsProxyAgent(envVars.PROXY) : undefined;
+		const outboundProxyHttpsAgent = process.env.PROXY ? new HttpsProxyAgent(process.env.PROXY) : undefined;
 		return {
 			// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
 			// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to

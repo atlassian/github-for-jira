@@ -5,7 +5,6 @@ import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { envVars }  from "config/env";
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
@@ -100,7 +99,7 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain: process.env.INSTANCE_NAME
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
@@ -131,11 +130,11 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain: process.env.INSTANCE_NAME
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`);
+					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${process.env.INSTANCE_NAME}/github-post-install-page`);
 				});
 		});
 

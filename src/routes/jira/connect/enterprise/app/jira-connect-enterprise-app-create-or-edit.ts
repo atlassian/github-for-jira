@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
-import { envVars } from "config/env";
 
 export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	req: Request,
@@ -18,14 +17,14 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 			config = {
 				app,
 				serverUrl: app?.gitHubBaseUrl,
-				appUrl: envVars.APP_URL,
+				appUrl: process.env.APP_URL,
 				uuid,
 				csrfToken: req.csrfToken()
 			};
 		} else {
 			config = {
 				serverUrl: req.params.serverUrl,
-				appUrl: envVars.APP_URL,
+				appUrl: process.env.APP_URL,
 				uuid: newUUID(),
 				csrfToken: req.csrfToken()
 			};

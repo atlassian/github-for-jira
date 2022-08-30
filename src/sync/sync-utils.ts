@@ -5,7 +5,6 @@ import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { TaskType } from "~/src/sync/sync.types";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
-import { envVars } from "config/env";
 import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
 
@@ -80,8 +79,8 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 const cloudGitHubAppConfig = () => {
 	return {
 		gitHubAppId: undefined,
-		appId: parseInt(envVars.APP_ID),
-		clientId: envVars.GITHUB_CLIENT_ID,
+		appId: parseInt(process.env.APP_ID),
+		clientId: process.env.GITHUB_CLIENT_ID,
 		gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 		gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 		uuid: undefined

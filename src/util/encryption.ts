@@ -1,12 +1,11 @@
 import { createHmac } from "crypto";
-import { envVars } from "../config/env";
 
 export const createHashWithSharedSecret = (data?: string): string => {
 	if (!data) {
 		return "";
 	}
 	const cleanedData = removeNonAlphaNumericCharacters(data);
-	return createHmac("sha256", envVars.GLOBAL_HASH_SECRET)
+	return createHmac("sha256", process.env.GLOBAL_HASH_SECRET)
 		.update(cleanedData)
 		.digest("hex");
 };

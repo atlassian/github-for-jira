@@ -1,4 +1,3 @@
-import { envVars }  from "config/env";
 import { Consumer, SQSMessage } from "sqs-consumer";
 import EventEmitter from "events";
 import { getLogger } from "config/logger";
@@ -18,15 +17,15 @@ export const listenToMicrosLifecycle = (active: Callback, inactive: Callback): v
 	// unless a listener is actually added to prevent missing events at startup
 	if ((active || inactive) && !client) {
 		// Throw an error if missing the Environment Variable needed for SQS
-		if (!envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL) {
+		if (!process.env.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL) {
 			const msg = "Missing 'SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL' environment variable for Micros Lifecycle Events.";
 			logger.error(msg);
 			throw new Error(msg);
 		}
 		// Create SQS consumer which polls the queue for 1 message at a time and deletes it after handler is called
 		client = Consumer.create({
-			queueUrl: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
-			region: envVars.SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION,
+			queueUrl: process.env.SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL,
+			region: process.env.SNS_NOTIFICATION_LIFECYCLE_QUEUE_REGION,
 			handleMessage: async (data: SQSMessage) => {
 				logger.debug(data, "Received Micros event");
 				if (!data.Body) { // Just making sure SQS message has data

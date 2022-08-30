@@ -1,5 +1,4 @@
 /* eslint-disable */
-import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
@@ -7,7 +6,7 @@ import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
-	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
+	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${process.env.INSTANCE_NAME}/github-post-install-page` : "";
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/jira/marketplace/discover/app/com.github.integration.production` : "";

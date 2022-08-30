@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import { getLogger } from "config/logger";
-import { envVars } from "config/env";
 import { deepCheckCryptor } from "./deep-check-cryptor";
 
 const logger = getLogger("healthcheck");
 export const HealthcheckGet = async (_: Request, res: Response): Promise<void> => {
 
-	if (envVars.MICROS_GROUP === "Worker") {
+	if (process.env.MICROS_GROUP === "Worker") {
 		try {
 			await deepCheckCryptor();
 		} catch (e) {

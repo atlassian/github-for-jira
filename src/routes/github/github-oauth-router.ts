@@ -3,14 +3,13 @@ import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
-import { envVars } from "config/env";
 import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
-const appUrl = envVars.APP_URL;
+const appUrl = process.env.APP_URL;
 const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
