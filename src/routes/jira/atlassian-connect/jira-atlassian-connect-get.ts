@@ -32,7 +32,7 @@ const modules = {
 		url: "https://github.com",
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
 			}
 		}
 	},
