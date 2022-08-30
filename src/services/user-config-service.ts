@@ -152,7 +152,7 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubIn
  * @param jiraHost
  * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
  */
-export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId?: number): Promise<void> => {
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
 		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId)
 			.catch(err => logger.error({
