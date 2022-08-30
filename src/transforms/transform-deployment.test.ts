@@ -14,11 +14,23 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
 
+const turnFF_OnOff_service = (newStatus: boolean) => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
+		.mockResolvedValue(newStatus);
+};
+
 const mockConfig = {
 	deployments: {
 		environmentMapping: {
 			development: [
 				"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+			]
+		},
+		services: {
+			ids: [
+				"service-id-1",
+				"service-id-2"
 			]
 		}
 	}
@@ -158,7 +170,107 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			await new DatabaseStateCreator().create();
 		});
 
-		it(`supports branch and merge workflows, sending related commits in deployment for Cloud`, async () => {
+		it(`uses user config to associate services`, async () => {
+			turnFF_OnOff_service(true);
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "foo42",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]);
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				}
+				);
+
+			when(getRepoConfig).calledWith(
+				expect.anything(),
+				expect.anything(),
+				expect.anything(),
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(mockConfig);
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+
+			expect(jiraPayload?.deployments[0].associations).toStrictEqual(
+				[
+					{
+						associationType: "issueIdOrKeys",
+						values: ["ABC-123", "ABC-1", "ABC-2"]
+					},
+					{
+						associationType: "serviceIdOrKeys",
+						values: ["service-id-1", "service-id-2"]
+					},
+					{
+						associationType: "commit",
+						values: [
+							{
+								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+								repositoryId: "test-repo-id"
+							},
+							{
+								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+								repositoryId: "test-repo-id"
+							}
+						]
+					}]
+			);
+		});
+
+		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
