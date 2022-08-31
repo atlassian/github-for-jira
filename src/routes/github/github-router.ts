@@ -3,7 +3,7 @@ import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 import { GithubSetupRouter } from "routes/github/setup/github-setup-router";
-import { GithubConfigurationRouter } from "routes/github/configuration/github-configuration-router";
+import { GithubConfigurationRouter, GithubCreateBranchRouter } from "routes/github/configuration/github-configuration-router";
 import { returnOnValidationError } from "../api/api-utils";
 import { header } from "express-validator";
 import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
@@ -43,4 +43,7 @@ subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", GithubSubscriptionRouter);
+
+
+subRouter.use("/create-branch", GithubCreateBranchRouter);
 

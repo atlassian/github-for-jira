@@ -44,6 +44,14 @@ declare global {
 }
 
 export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+	console.log('LOG MIDDLEWARE');
+	console.log('LOG MIDDLEWARE');
+	console.log('LOG MIDDLEWARE');
+	console.log('LOG MIDDLEWARE');
+	console.log(req.headers);
+	console.log('RAW');
+	console.log(req.rawHeaders);
 	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, {
 		fields: req.log?.fields,
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req))

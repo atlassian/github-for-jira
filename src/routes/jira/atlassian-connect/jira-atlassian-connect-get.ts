@@ -5,7 +5,7 @@ import { compact, map } from "lodash";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const instance = envVars.INSTANCE_NAME;
-const jiraHost = `https://${instance}.atlassian.net`;
+
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
@@ -164,7 +164,7 @@ export const moduleUrls = compact(map([...modules.adminPages, ...modules.general
 
 // Remove this function when CREATE_BRANCH flag is complete
 const addCreateBranchAction = async (modules) => {
-	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false, jiraHost)) {
+	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`

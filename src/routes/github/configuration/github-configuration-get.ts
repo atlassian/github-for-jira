@@ -130,6 +130,14 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		githubToken,
 		gitHubAppId
 	} = res.locals;
+
+	console.log("jiraHost");
+	console.log("jiraHost");
+	console.log(jiraHost);
+	console.log(jiraHost);
+	console.log(jiraHost);
+	console.log(jiraHost);
+	console.log(jiraHost);
 	const log = req.log.child({ jiraHost });
 
 	if (!githubToken) {

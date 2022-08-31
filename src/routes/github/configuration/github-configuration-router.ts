@@ -6,3 +6,8 @@ export const GithubConfigurationRouter = Router();
 GithubConfigurationRouter.route("/")
 	.get(GithubConfigurationGet)
 	.post(GithubConfigurationPost);
+
+export const GithubCreateBranchRouter = Router();
+GithubCreateBranchRouter.route("/")
+	.get(GithubConfigurationGet)
+	.post(GithubConfigurationPost);
