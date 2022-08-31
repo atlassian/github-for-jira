@@ -10,6 +10,7 @@ import { WebhookReceiverPost } from "./webhook/webhook-receiver-post";
 import { GithubManifestRouter } from "~/src/routes/github/manifest/github-manifest-router";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { UUID_REGEX } from "~/src/util/regex";
+import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -43,4 +44,6 @@ subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", GithubSubscriptionRouter);
+
+subRouter.use("/create-branch", GithubCreateBranchRouter);
 
