@@ -1,21 +1,50 @@
 import express, { Application } from "express";
-import { GithubCreateBranchGet } from "./github-create-branch-get";
 import supertest from "supertest";
-
-jest.mock("./github-create-branch-get");
+import { getLogger } from "config/logger";
+import { getFrontendApp } from "~/src/app";
+import { getSignedCookieHeader } from "test/utils/cookies";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
 	beforeEach(() => {
 		app = express();
-		app.use("/create-branch", GithubCreateBranchGet);
-
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp({
+			getSignedJsonWebToken: () => "",
+			getInstallationAccessToken: async () => ""
+		}));
 	});
 	describe("Testing the GET route", () => {
-		it("should hit the create branch on GET", async () => {
-			jest.mocked(GithubCreateBranchGet).mockImplementation(async (_req, res) => {res.end("ok");});
-			await supertest(app).get("/create-branch");
-			expect(GithubCreateBranchGet).toHaveBeenCalled();
+		it("should redirect to Github login if unauthorized", async () => {
+			await supertest(app)
+				.get("/github/create-branch").set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost
+					})).expect(res => {
+					expect(res.status).toBe(302);
+					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
+				});
+		});
+
+		it("should hit the create branch on GET if authorized", async () => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+
+			const response = await supertest(app)
+				.get("/github/create-branch").set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}));
+			expect(response.text).toContain("<title>Create a Branch</title>");
 		});
 	});
 });
