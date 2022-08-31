@@ -21,7 +21,7 @@
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}"/>
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}"/>
 
-{{> navigation hideBackButton=true }}
+{{> navigation }}
 
 <section class="gitHubCreateBranch">
   <div class="headerImage">
@@ -48,12 +48,12 @@
     </button>
   </div>
 
-  <form class="aui top-label">
+  <form id="createBranchForm" class="aui top-label">
     <div class="field-group">
       <label for="repo">Repository</label>
       <select id="gitHubRepos" name="repo" data-aui-validation-field required>
         {{#each repos}}
-          <option value="{{id}}">{{name}}</option>
+          <option value="{{id}}">{{../gitHubAccount}}/{{name}}</option>
         {{/each}}
       </select>
     </div>
