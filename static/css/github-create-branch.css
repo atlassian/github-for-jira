@@ -8,7 +8,7 @@
   margin-bottom: 1em;
 }
 
-#createBranchForm .gitHubCreateBranch form input[type=text], .select2-choice {
+#createBranchForm input[type=text], #createBranchForm .select2-choice {
   height: 2.5em;
   line-height: 1.7rem;
 }
