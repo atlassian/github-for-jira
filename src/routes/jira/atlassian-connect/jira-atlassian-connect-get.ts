@@ -31,12 +31,7 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		url: "https://github.com",
-		actions: {
-			createBranch: {
-				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
-			}
-		}
+		url: "https://github.com"
 	},
 	jiraDeploymentInfoProvider: {
 		key: "github-deployments",
@@ -168,13 +163,15 @@ const modules = {
 export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 // Remove this function when CREATE_BRANCH flag is complete
-const moduleModifier = async (modules) => {
+const addCreateBranchAction = async (modules) => {
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false, jiraHost)) {
-		return modules;
+		modules.jiraDevelopmentTool.actions = {
+			createBranch: {
+				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+			}
+		};
 	}
-	const noCreateBranchModule = { ...modules };
-	delete noCreateBranchModule.jiraDevelopmentTool.actions;
-	return noCreateBranchModule;
+	return modules;
 };
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
@@ -207,6 +204,6 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: await moduleModifier(modules)
+		modules: await addCreateBranchAction(modules)
 	});
 };
