@@ -154,11 +154,6 @@ Object {
       },
     },
     "jiraDevelopmentTool": Object {
-      "actions": Object {
-        "createBranch": Object {
-          "templateUrl": "https://test-github-app-instance.com/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}",
-        },
-      },
       "application": Object {
         "value": "GitHub",
       },
@@ -370,11 +365,6 @@ Object {
       },
     },
     "jiraDevelopmentTool": Object {
-      "actions": Object {
-        "createBranch": Object {
-          "templateUrl": "https://test-github-app-instance.com/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}",
-        },
-      },
       "application": Object {
         "value": "GitHub",
       },
