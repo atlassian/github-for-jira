@@ -25,7 +25,8 @@ describe("GitHub Create Branch Get", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost
-					})).expect(res => {
+					}))
+				.expect(res => {
 					expect(res.status).toBe(302);
 					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
 				});
