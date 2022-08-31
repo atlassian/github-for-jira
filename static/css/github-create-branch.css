@@ -1,0 +1,52 @@
+.gitHubCreateBranch {
+  margin: auto;
+  max-width: 480px;
+  height: 100vh;
+}
+
+.gitHubCreateBranch__title {
+  color: #6B778C;
+  margin: 1.8em 0 4em;
+  text-align: center;
+}
+
+.gitHubCreateBranch__header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 0.5em;
+}
+
+.gitHubCreateBranch__subHeaderIcon {
+  height: 0.8em;
+}
+
+.gitHubCreateBranch__optionContainer {
+  display: flex;
+  margin-top: 1.5em;
+}
+
+.gitHubCreateBranch__option {
+  padding: 0.5em 1em;
+  height: 40px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gitHubCreateBranch__optionHeader {
+  font-size: 1.25rem;
+  margin: 1.5em 0;
+}
+
+.gitHubCreateBranch__selected {
+  background-color: #DEEBFF;
+  color: #0052CC;
+  font-weight: 600;
+}
+
+.gitHubCreateBranch__optionsIcon {
+  width: 24px;
+  height: 17px;
+  margin-right: 0.25em;
+}
