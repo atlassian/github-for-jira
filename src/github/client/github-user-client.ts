@@ -69,14 +69,6 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
 	}
 
-	public async createBranch(owner: string, repo: string, body: {ref: string, sha: string}): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
-		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, { body }, {},
-			{
-				owner,
-				repo
-			});
-	}
-
 	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
 		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/refs/heads/{branch}`, {
 			urlParams: {
@@ -85,6 +77,14 @@ export class GitHubUserClient extends GitHubClient {
 				branch
 			}
 		});
+	}
+
+	public async createBranch(owner: string, repo: string, body: {ref: string, sha: string}): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, { body }, {},
+			{
+				owner,
+				repo
+			});
 	}
 
 }
