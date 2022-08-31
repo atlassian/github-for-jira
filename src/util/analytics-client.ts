@@ -1,7 +1,7 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
-import { isNodeProd } from "utils/is-node-env";
-import { optionalRequire } from "optional-require/dist";
+import { getNodeEnv, isNodeProd } from "utils/is-node-env";
+import { optionalRequire } from "optional-require";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics");
@@ -14,8 +14,9 @@ export function sendAnalytics(eventType: "screen", attributes: { name: string } 
 export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
 export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
 	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
-
-	if (!analyticsClient || !isNodeProd()) {
+	logger.info(isNodeProd(), getNodeEnv());
+	if (!analyticsClient) {
+		// if (!analyticsClient || !isNodeProd()) {
 		return;
 	}
 
