@@ -50,20 +50,24 @@
 
   <form id="createBranchForm" class="aui top-label">
     <div class="field-group">
-      <label for="repo">Repository</label>
-      <select id="gitHubRepos" name="repo" data-aui-validation-field required>
-        {{#each repos}}
-          <option value="{{id}}">{{../gitHubAccount}}/{{name}}</option>
-        {{/each}}
-      </select>
+      <aui-label for="repo">Repository</aui-label>
+      <p>
+        <aui-select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
+          {{#each repos}}
+            <aui-option value="{{id}}">{{../gitHubAccount}}/{{name}}</aui-option>
+          {{/each}}
+        </aui-select>
+      </p>
     </div>
     <div class="field-group">
-      <label for="parent-branch">Branch from</label>
-      <select id="gitHubBranches" name="parent-branch" data-aui-validation-field required>
-        {{#each branches}}
-          <option value="{{id}}">{{name}}</option>
-        {{/each}}
-      </select>
+      <aui-label for="branch">Branch from</aui-label>
+      <p>
+        <aui-select id="ghParentBranch" class="full-width-field"  name="parentBranch" placeholder="Select a branch">
+          {{#each branches}}
+            <aui-option value="{{id}}">{{name}}</aui-option>
+          {{/each}}
+        </aui-select>
+      </p>
     </div>
     <div class="field-group">
       <label for="branch-name">Branch name</label>

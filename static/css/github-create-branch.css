@@ -8,7 +8,7 @@
   margin-bottom: 1em;
 }
 
-#createBranchForm input[type=text], #createBranchForm .select2-choice {
+#createBranchForm input[type=text] {
   height: 2.5em;
   line-height: 1.7rem;
 }
