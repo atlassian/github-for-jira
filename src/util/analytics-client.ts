@@ -1,9 +1,10 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 import { getNodeEnv, isNodeProd } from "utils/is-node-env";
-import { optionalRequire } from "optional-require";
+// import { optionalRequire } from "optional-require";
 
-const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
+// const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
+const { analyticsClient } = "@atlassiansox/analytics-node-client";
 const logger = getLogger("analytics");
 const instance = process.env.INSTANCE_NAME;
 const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
