@@ -4,6 +4,10 @@
   height: 100vh;
 }
 
+.gitHubCreateBranch form input[type=text] {
+  height: 2.5em!important;
+}
+
 .gitHubCreateBranch__title {
   color: #6B778C;
   margin: 1.8em 0 4em;
@@ -49,4 +53,9 @@
   width: 24px;
   height: 17px;
   margin-right: 0.25em;
+}
+
+.gitHubCreateBranch__actions {
+  text-align: right;
+  margin-top: 2.5em;
 }
