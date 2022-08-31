@@ -1,0 +1,12 @@
+
+.gitHubCreateBranch {
+    margin: auto;
+    max-width: 740px;
+    height: 100vh;
+}
+
+.gitHubCreateBranch__title {
+    color: #6B778C;
+    margin: 0.8em 0;
+    text-align: center;
+}
