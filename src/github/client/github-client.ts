@@ -37,8 +37,8 @@ export class GitHubClient {
 
 		// Cannot make ctor async
 		booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_SKIPLIST, false)
-			.then(value => useOutboundProxySkiplistFlagValue = value)
-			.catch((err) => {
+			?.then(value => useOutboundProxySkiplistFlagValue = value)
+			?.catch((err) => {
 				logger.warn({ err }, "Cannot evaluate FF");
 			});
 

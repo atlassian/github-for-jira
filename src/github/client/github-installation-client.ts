@@ -48,10 +48,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		logger?: Logger,
 		baseUrl?: string,
-		gshaId?: number,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		gshaId?: number
 	) {
 		super(logger, baseUrl);
+
+		this.appTokenHolder = AppTokenHolder.getInstance();
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -64,7 +65,6 @@ export class GitHubInstallationClient extends GitHubClient {
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
-		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;
