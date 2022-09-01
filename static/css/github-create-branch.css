@@ -67,3 +67,17 @@
   text-align: right;
   margin-top: 2.5em;
 }
+
+/** Customizing styling for Select2 **/
+.select2-drop {
+  /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
+  margin-top: -34px;
+}
+.aui-select2-drop.aui-dropdown2 .select2-search {
+  padding: 0;
+}
+.aui-select2-drop .select2-search:before {
+  content: "\f15b";
+  font-weight: 400;
+  right: 4px;
+}
