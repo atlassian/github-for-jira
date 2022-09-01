@@ -11,7 +11,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	if (!owner || !repo || !sourceBranchName || !newBranchName) {
-		res.status(400).json({ err: "An Installation ID must be provided to link an installation." });
+		res.status(400).json({ err: "Missing required data." });
 		return;
 	}
 
