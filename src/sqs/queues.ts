@@ -1,3 +1,4 @@
+import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
 import { backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler } from "./push";
@@ -14,8 +15,8 @@ const logger = getLogger("sqs-queues");
 export const sqsQueues = {
 	backfill: new SqsQueue<BackfillMessagePayload>({
 		queueName: "backfill",
-		queueUrl: process.env.SQS_BACKFILL_QUEUE_URL,
-		queueRegion: process.env.SQS_BACKFILL_QUEUE_REGION,
+		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
+		queueRegion: envVars.SQS_BACKFILL_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
@@ -26,8 +27,8 @@ export const sqsQueues = {
 
 	push: new SqsQueue<PushQueueMessagePayload>({
 		queueName: "push",
-		queueUrl: process.env.SQS_PUSH_QUEUE_URL,
-		queueRegion: process.env.SQS_PUSH_QUEUE_REGION,
+		queueUrl: envVars.SQS_PUSH_QUEUE_URL,
+		queueRegion: envVars.SQS_PUSH_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
@@ -35,8 +36,8 @@ export const sqsQueues = {
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({
 		queueName: "deployment",
-		queueUrl: process.env.SQS_DEPLOYMENT_QUEUE_URL,
-		queueRegion: process.env.SQS_DEPLOYMENT_QUEUE_REGION,
+		queueUrl: envVars.SQS_DEPLOYMENT_QUEUE_URL,
+		queueRegion: envVars.SQS_DEPLOYMENT_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
@@ -47,8 +48,8 @@ export const sqsQueues = {
 
 	branch: new SqsQueue<BranchMessagePayload>({
 		queueName: "branch",
-		queueUrl: process.env.SQS_BRANCH_QUEUE_URL,
-		queueRegion: process.env.SQS_BRANCH_QUEUE_REGION,
+		queueUrl: envVars.SQS_BRANCH_QUEUE_URL,
+		queueRegion: envVars.SQS_BRANCH_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5

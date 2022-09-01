@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
+import { envVars } from "config/env";
 import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
 jest.mock("../sqs/queues");
@@ -32,8 +33,8 @@ describe("findOrStartSync", () => {
 				);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
 					gitHubAppConfig: {
-						appId: parseInt(process.env.APP_ID),
-						clientId: process.env.GITHUB_CLIENT_ID,
+						appId: parseInt(envVars.APP_ID),
+						clientId: envVars.GITHUB_CLIENT_ID,
 						gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
 						gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 					}

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
+import { envVars } from "~/src/config/env";
 
 export const GithubManifestGet = async (req: Request, res: Response) => {
 	const gheHost = req.query.gheHost;
@@ -12,7 +13,7 @@ export const GithubManifestGet = async (req: Request, res: Response) => {
 };
 
 const getAppManifest = () => {
-	const appHost = process.env.APP_URL;
+	const appHost = envVars.APP_URL;
 	const uuid=  uuidv4();
 	return {
 		"name": "Jira",

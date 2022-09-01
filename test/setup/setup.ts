@@ -1,5 +1,5 @@
-import "config/env";
 import nock from "nock";
+import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
@@ -8,7 +8,6 @@ import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
-import { cloneDeep } from "lodash";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -59,11 +58,13 @@ declare global {
 	}
 }
 
-const originalEnvVars = cloneDeep(process.env);
 const resetEnvVars = () => {
 	// Assign defaults to process.env, but don't override existing values if they
 	// are already set in the environment.
-	process.env = originalEnvVars;
+	process.env = {
+		...process.env,
+		...envVars
+	};
 };
 
 const clearState = async () => Promise.all([

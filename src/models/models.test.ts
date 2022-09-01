@@ -45,7 +45,7 @@ describe("Models", () => {
 			eventType: "installed"
 		};
 
-		let storageSecret: string;
+		let storageSecret: string | undefined;
 
 		beforeEach(async () => {
 			storageSecret = process.env.STORAGE_SECRET;

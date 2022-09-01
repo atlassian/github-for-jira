@@ -16,7 +16,7 @@
   "production": {
     "dialect": "postgres",
     "use_env_variable": "DATABASE_URL",
-    "logging": true,
+    "disable_sql_logging": true,
     "ssl": false,
     "dialectOptions": {
       "ssl": false

@@ -1,3 +1,4 @@
+import { envVars }  from "config/env";
 import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 /**
  * An installation ID uniquely identifies an installation of a GitHub app across the (single) cloud instance
@@ -41,6 +42,6 @@ export class InstallationId {
 
 export const getInstallationId = (installationId: number, gitHubApiBaseUrl?: string | undefined, appId?: number): InstallationId => {
 	const baseUrl = gitHubApiBaseUrl ? gitHubApiBaseUrl : GITHUB_CLOUD_API_BASEURL;
-	const applicationId = appId ? appId: parseInt(process.env.APP_ID);
+	const applicationId = appId ? appId: parseInt(envVars.APP_ID);
 	return new InstallationId(baseUrl, applicationId, installationId);
 };

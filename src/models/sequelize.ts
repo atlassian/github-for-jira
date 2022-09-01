@@ -1,18 +1,13 @@
 import { getNodeEnv } from "utils/is-node-env";
-import { Options, Sequelize } from "sequelize";
+import { Sequelize } from "sequelize";
 import dbConfig from "db/config.json";
 import EncryptedField from "sequelize-encrypted";
 import crypto from "crypto";
 import { getLogger } from "config/logger";
 
-interface DBOptions extends Options {
-	disable_sql_logging?: boolean;
-	use_env_variable?: string;
-}
-
 const logger = getLogger("sequelize");
 // TODO: config misses timezone config to force to UTC, defaults to local timezone of PST
-const config = dbConfig[getNodeEnv()] as DBOptions;
+const config = dbConfig[getNodeEnv()];
 
 config.benchmark = true;
 config.logging = config.disable_sql_logging

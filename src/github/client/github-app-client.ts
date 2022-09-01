@@ -6,6 +6,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import * as PrivateKey from "probot/lib/private-key";
+import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient } from "./github-client";
@@ -23,7 +24,7 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		logger?: Logger,
 		baseUrl?: string,
-		appId = process.env.APP_ID,
+		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
 		super(logger, baseUrl);

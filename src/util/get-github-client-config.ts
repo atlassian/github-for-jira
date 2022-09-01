@@ -5,6 +5,7 @@ import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "config/feature-fla
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
+import { envVars } from "~/src/config/env";
 import * as PrivateKey from "probot/lib/private-key";
 import { keyLocator } from "~/src/github/client/key-locator";
 
@@ -53,9 +54,9 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL,
 		apiUrl: GITHUB_CLOUD_API_BASEURL,
-		appId: parseInt(process.env.APP_ID),
-		gitHubClientId: process.env.GITHUB_CLIENT_ID,
-		gitHubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+		appId: parseInt(envVars.APP_ID),
+		gitHubClientId: envVars.GITHUB_CLIENT_ID,
+		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
 		privateKey: privateKey
 	};
 };

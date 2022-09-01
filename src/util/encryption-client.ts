@@ -1,3 +1,4 @@
+import { envVars } from "config/env";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 
 export enum EncryptionSecretKeyEnum {
@@ -27,9 +28,9 @@ interface DecryptResponse {
 export class EncryptionClient {
 
 	protected static readonly axios: AxiosInstance = axios.create({
-		baseURL: process.env.CRYPTOR_URL,
+		baseURL: envVars.CRYPTOR_URL,
 		headers: {
-			"X-Cryptor-Client": process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
+			"X-Cryptor-Client": envVars.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE,
 			"Content-Type": "application/json; charset=utf-8"
 		}
 	});

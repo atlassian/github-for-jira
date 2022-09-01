@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { envVars } from "config/env";
 import {
 	getJiraAppUrl,
 	getJiraMarketplaceUrl,
@@ -13,8 +14,8 @@ jest.mock("models/github-server-app");
 describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
 		let instanceName: string;
-		beforeEach(() => instanceName = process.env.INSTANCE_NAME);
-		afterEach(() => process.env.INSTANCE_NAME = instanceName);
+		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
+		afterEach(() => envVars.INSTANCE_NAME = instanceName);
 
 		it("should return the correct default URL", () => {
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.test-atlassian-instance/github-post-install-page`);
@@ -22,7 +23,7 @@ describe("Jira Utils", () => {
 		});
 
 		it("should return the correct URL for different INSTANCE_NAME", () => {
-			process.env.INSTANCE_NAME = "foo";
+			envVars.INSTANCE_NAME = "foo";
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.foo/github-post-install-page`);
 		});
 

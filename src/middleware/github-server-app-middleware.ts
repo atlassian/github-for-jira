@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
+import { envVars } from "config/env";
 import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
 
@@ -45,12 +46,12 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: undefined,
-			appId: process.env.APP_ID,
+			appId: envVars.APP_ID,
 			uuid: undefined, //undefined for cloud
 			hostname: GITHUB_CLOUD_HOSTNAME,
-			clientId: process.env.GITHUB_CLIENT_ID,
-			gitHubClientSecret: process.env.GITHUB_CLIENT_SECRET,
-			webhookSecret: process.env.WEBHOOK_SECRET,
+			clientId: envVars.GITHUB_CLIENT_ID,
+			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
+			webhookSecret: envVars.WEBHOOK_SECRET,
 			privateKey: await keyLocator(undefined)
 		};
 	}

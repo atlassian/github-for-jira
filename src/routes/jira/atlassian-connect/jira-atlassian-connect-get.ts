@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
+import { envVars } from "config/env";
 import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
 
-const instance = process.env.INSTANCE_NAME;
+const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
@@ -171,7 +172,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		name: `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`,
 		description: "Connect your code and your project with ease.",
 		key,
-		baseUrl: process.env.APP_URL,
+		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",
 			uninstalled: "/jira/events/uninstalled"

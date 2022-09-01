@@ -1,3 +1,4 @@
+import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
 
@@ -54,7 +55,7 @@ export const getJiraUtil = (jiraClient) => {
 				continue;
 			}
 
-			const issueTrackingParam = process.env.JIRA_LINK_TRACKING_ID ? `?atlOrigin=${process.env.JIRA_LINK_TRACKING_ID}` : "";
+			const issueTrackingParam = envVars.JIRA_LINK_TRACKING_ID ? `?atlOrigin=${envVars.JIRA_LINK_TRACKING_ID}` : "";
 
 			const link = `${jiraClient.baseURL}/browse/${key}${issueTrackingParam}`;
 			const reference = `[${key}]: ${link}`;
