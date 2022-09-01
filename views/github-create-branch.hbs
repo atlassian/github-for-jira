@@ -26,7 +26,7 @@
     <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
   </div>
   <div class="gitHubCreateBranch__title">
-    <div class="gitHubCreateBranch__header">Create a Branch</div>
+    <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
     <div class="gitHubCreateBranch__subHeader">
       Creating a branch for
       <!--TODO: Need to add icons based on the type of issue(story/task/bug) -->
@@ -35,6 +35,15 @@
   </div>
 
   <form id="createBranchForm" class="aui top-label">
+    <!--TODO: Add condition to display this only for GHES -->
+    <div class="field-group">
+      <aui-label for="server">GitHub Enterprise Server instance</aui-label>
+      <select id="ghServers" name="server" class="full-width-field" placeholder="Select a repository">
+        {{#each servers}}
+          <option value="{{id}}">{{server}} / {{appName}}</option>
+        {{/each}}
+      </select>
+    </div>
     <div class="field-group">
       <aui-label for="repo">Repository</aui-label>
       <select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
