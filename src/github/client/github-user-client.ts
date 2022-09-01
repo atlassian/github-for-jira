@@ -6,6 +6,7 @@ import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient } from "./github-client";
+import { CreateBranchBody } from "~/src/github/client/github-client.types";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -79,8 +80,7 @@ export class GitHubUserClient extends GitHubClient {
 		});
 	}
 
-	// TODO CHANGE TYPING ON BODY PARAMS
-	public async createBranch(owner: string, repo: string, body: {owner: string, repo: string, ref: string, sha: string}): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+	public async createBranch(owner: string, repo: string, body: CreateBranchBody): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
 		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
 			{
 				owner,
