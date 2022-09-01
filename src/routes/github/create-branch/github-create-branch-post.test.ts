@@ -22,7 +22,13 @@ describe("delete-github-subscription", () => {
 
 		req = {
 			log: getLogger("request"),
-			params: {}
+			params: {},
+			body: {
+				owner: "ARC",
+				repo: "cat-photos",
+				sourceBranchName: "main",
+				newBranchName: "chesire"
+			}
 		};
 
 		res = {
@@ -37,13 +43,7 @@ describe("delete-github-subscription", () => {
 		};
 	});
 
-	it("Should delete GitHub Subscription as an Org admin - installation type Org | Cloud", async () => {
-		req.body = {
-			owner: "ARC",
-			repo: "cat-photos",
-			sourceBranchName: "main",
-			newBranchName: "chesire"
-		};
+	it("Should succussfully run through the create branch flow", async () => {
 
 		// Get reference
 		githubNock
@@ -63,5 +63,24 @@ describe("delete-github-subscription", () => {
 		await GithubCreateBranchPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(200);
 	});
+
+	it("Should 401 without githubToken", async () => {
+		delete res.locals.githubToken;
+		await GithubCreateBranchPost(req as any, res as any);
+		expect(res.sendStatus).toHaveBeenCalledWith(401);
+	});
+
+	it("Should 401 without jiraHost", async () => {
+		delete res.locals.githubToken;
+		await GithubCreateBranchPost(req as any, res as any);
+		expect(res.sendStatus).toHaveBeenCalledWith(401);
+	});
+
+	// TODO need to mock status().json
+	// it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
+	// 	delete req.body[attribute];
+	// 	await GithubCreateBranchPost(req as any, res as any);
+	// 	expect(res.status).toHaveBeenCalledWith(400);
+	// });
 
 });
