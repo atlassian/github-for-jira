@@ -19,7 +19,10 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
 		const { data: baseBranchRef } = await gitHubUserClient.getReference(owner, repo, sourceBranchName);
 		const sha = baseBranchRef.object.sha;
+
 		await gitHubUserClient.createBranch(owner, repo, {
+			owner,
+			repo,
 			ref: `refs/heads/${newBranchName}`,
 			sha
 		});

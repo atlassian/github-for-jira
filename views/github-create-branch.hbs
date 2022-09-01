@@ -41,6 +41,25 @@
   nonce="{{nonce}}"
 ></script>
 <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+<script>
+  window.onload = (event) => {
+    console.log('page is fully loaded');
+    console.log("ATTEMPTING CALL")
+    $.post('/github/create-branch', {
+      owner: "test-org-joshk",
+      repo: "integration-test-jira",
+      sourceBranchName: "main",
+      newBranchName: "more-cats",
+      // installationId: $(event.target).data('installation-id'),
+      _csrf: document.getElementById('_csrf').value,
+      // clientKey: document.getElementById('clientKey').value
+    }, function (data) {
+      if (data.err) {
+        return console.log(data.err)
+      }
+    })
+  };
+</script>
 </body>
 
 </html>

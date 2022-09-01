@@ -11,7 +11,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
 		jiraHost,

@@ -79,8 +79,9 @@ export class GitHubUserClient extends GitHubClient {
 		});
 	}
 
-	public async createBranch(owner: string, repo: string, body: {ref: string, sha: string}): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
-		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, { body }, {},
+	// TODO CHANGE TYPING ON BODY PARAMS
+	public async createBranch(owner: string, repo: string, body: {owner: string, repo: string, ref: string, sha: string}): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
 			{
 				owner,
 				repo

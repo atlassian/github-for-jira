@@ -4,7 +4,7 @@ import { Subscription } from "models/subscription";
 import { GithubCreateBranchPost } from "./github-create-branch-post";
 import { getLogger } from "config/logger";
 
-describe("delete-github-subscription", () => {
+describe("github-create-branch", () => {
 	const gitHubInstallationId = 15;
 	let req, res;
 
@@ -43,7 +43,7 @@ describe("delete-github-subscription", () => {
 		};
 	});
 
-	it("Should succussfully run through the create branch flow", async () => {
+	it("Should successfully run through the create branch flow", async () => {
 
 		// Get reference
 		githubNock
@@ -52,11 +52,11 @@ describe("delete-github-subscription", () => {
 
 		// Create Branch
 		githubNock
-			.post("/repos/ARC/cat-photos/git/refs",{ body:
-					{
-						ref: "refs/heads/chesire",
-						sha: "casd769adf"
-					}
+			.post("/repos/ARC/cat-photos/git/refs",{
+				owner: "ARC",
+				repo: "cat-photos",
+				ref: "refs/heads/chesire",
+				sha: "casd769adf"
 			})
 			.reply(200);
 
@@ -64,14 +64,8 @@ describe("delete-github-subscription", () => {
 		expect(res.sendStatus).toHaveBeenCalledWith(200);
 	});
 
-	it("Should 401 without githubToken", async () => {
-		delete res.locals.githubToken;
-		await GithubCreateBranchPost(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(401);
-	});
-
-	it("Should 401 without jiraHost", async () => {
-		delete res.locals.githubToken;
+	it.each(["githubToken", "jiraHost"])("Should 401 without permission attributes", async (attribute) => {
+		delete res.locals[attribute];
 		await GithubCreateBranchPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
