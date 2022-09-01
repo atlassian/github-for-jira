@@ -5,7 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
-import { GitHubClient } from "./github-client";
+import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -13,8 +13,8 @@ import { GitHubClient } from "./github-client";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, logger?: Logger, baseUrl?: string) {
-		super(logger, baseUrl);
+	constructor(userToken: string, githubConfig?: GitHubConfig, logger?: Logger, baseUrl?: string) {
+		super(githubConfig, logger, baseUrl);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {

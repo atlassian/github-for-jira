@@ -24,13 +24,12 @@ import {
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
 	GetPullRequestParams,
-	GraphQlQueryResponse,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
 } from "./github-client.types";
-import { GithubClientGraphQLError, isChangedFilesError, RateLimitingError } from "./github-client-errors";
+import { isChangedFilesError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
-import { GitHubClient } from "./github-client";
+import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -39,19 +38,18 @@ import { GitHubClient } from "./github-client";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export class GitHubInstallationClient extends GitHubClient {
-	private readonly appTokenHolder: AppTokenHolder;
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
 	public readonly gitHubServerAppId?: number;
 
 	constructor(
 		githubInstallationId: InstallationId,
+		githubConfig?: GitHubConfig, // will become mandatory once the FF is removed
 		logger?: Logger,
-		baseUrl?: string,
-		gshaId?: number,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		baseUrl?: string, // will go away once githubConfig is used
+		gshaId?: number
 	) {
-		super(logger, baseUrl);
+		super(githubConfig, logger, baseUrl);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -64,7 +62,6 @@ export class GitHubInstallationClient extends GitHubClient {
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
-		this.appTokenHolder = appTokenHolder;
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;
@@ -150,7 +147,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 */
 	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
 		try {
-			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, await this.installationAuthenticationHeaders(), {
 				per_page,
 				cursor
 			});
@@ -211,7 +208,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery);
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders());
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
@@ -223,20 +220,22 @@ export class GitHubInstallationClient extends GitHubClient {
 			commitSince: commitSince?.toISOString(),
 			cursor
 		};
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, variables)
+		const config = await this.installationAuthenticationHeaders();
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
 				if (!isChangedFilesError(err)) {
 					return Promise.reject(err);
 				}
 
 				this.logger.warn("retrying branch graphql query without changedFiles");
-				return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, variables);
+				return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
 			});
 		return response?.data?.data;
 	}
 
 	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
 		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+			await this.installationAuthenticationHeaders(),
 			{
 				owner,
 				repo: repoName,
@@ -257,13 +256,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			cursor,
 			commitSince: commitSince?.toISOString()
 		};
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, variables)
+		const config = await this.installationAuthenticationHeaders();
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
 				if (!isChangedFilesError(err)) {
 					return Promise.reject(err);
 				}
 				this.logger.warn("retrying commit graphql query without changedFiles");
-				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, variables);
+				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
 			});
 		return response?.data?.data;
 	}
@@ -306,7 +306,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const appToken = await this.appTokenHolder.getAppToken(this.githubInstallationId, this.gitHubServerAppId);
+		const appToken = await AppTokenHolder.getInstance().getAppToken(this.githubInstallationId, this.gitHubServerAppId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,
@@ -359,29 +359,5 @@ export class GitHubInstallationClient extends GitHubClient {
 			params,
 			urlParams
 		});
-	}
-
-	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
-			{
-				query,
-				variables
-			},
-			{
-				...await this.installationAuthenticationHeaders()
-			});
-
-		const graphqlErrors = response.data?.errors;
-		if (graphqlErrors?.length) {
-			this.logger.warn({ res: response }, "GraphQL errors");
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(response));
-			}
-
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
-		}
-
-		return response;
 	}
 }

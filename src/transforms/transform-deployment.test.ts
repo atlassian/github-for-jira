@@ -117,7 +117,7 @@ describe("deployment environment mapping", () => {
 const TEST_INSTALLATION_ID = 1234;
 describe("transform GitHub webhook payload to Jira payload", () => {
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), getLogger("test"));
+	const githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), undefined, getLogger("test"));
 
 	it(`supports branch and merge workflows, sending related commits in deployment`, async () => {
 
