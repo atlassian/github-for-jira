@@ -22,9 +22,9 @@ export class GitHubAppClient extends GitHubClient {
 	private readonly appToken: AuthToken;
 
 	constructor(
-		gitHubConfig?: GitHubConfig, // becomes mandatory once we remove the FF
+		gitHubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string, // will go away once gitHubConfig is mandatory
+		baseUrl?: string, // goes away once it goes away in the parent class
 		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {

@@ -4,13 +4,14 @@ import "config/env";
 
 import * as axios from "axios";
 import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
+import { booleanFlag } from "config/feature-flags";
 
 jest.mock("axios");
 
 jest.mock("config/feature-flags");
 
 class TestGitHubClient extends GitHubClient {
-	constructor(config?: GitHubConfig) {
+	constructor(config: GitHubConfig) {
 		super(config);
 	}
 	public doTestGraphqlCall() {
@@ -29,8 +30,15 @@ const TEST_GITHUB_CONFIG = {
 };
 
 describe("GitHub Client", () => {
-
 	const mockedAxiosPost = jest.fn();
+
+	const digestPendingEvents = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+	beforeAll(async () => {
+		(booleanFlag as jest.Mock).mockResolvedValue(true);
+		new TestGitHubClient(TEST_GITHUB_CONFIG);
+		await digestPendingEvents();
+	});
 
 	beforeEach(() => {
 		const mockedAxiosCreate = {
@@ -50,14 +58,14 @@ describe("GitHub Client", () => {
 	});
 
 	it("configures the proxy for outbound calls", async () => {
-		const client = new TestGitHubClient(undefined);
+		const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
 		const outboundProxyConfig = client.getProxyConfig("https://github.com");
 		expect(outboundProxyConfig.proxy).toBe(false);
 		expect(outboundProxyConfig.httpsAgent).toBeInstanceOf(HttpsProxyAgent);
 	});
 
 	it("configures no proxy for calls to the Atlassian network", async () => {
-		const client = new TestGitHubClient();
+		const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
 		const outboundProxyConfig = client.getProxyConfig("http://github.internal.atlassian.com/api");
 		expect(outboundProxyConfig.proxy).toBe(false);
 		expect(outboundProxyConfig.httpsAgent).toBeUndefined();

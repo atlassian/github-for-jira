@@ -44,9 +44,9 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	constructor(
 		githubInstallationId: InstallationId,
-		githubConfig?: GitHubConfig, // will become mandatory once the FF is removed
+		githubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string, // will go away once githubConfig is used
+		baseUrl?: string, // goes away once it goes away in the parent class
 		gshaId?: number
 	) {
 		super(githubConfig, logger, baseUrl);

@@ -5,6 +5,7 @@ import { envVars } from "config/env";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export interface GitHubConfig {
 	hostname: string;
@@ -14,6 +15,8 @@ export interface GitHubConfig {
 }
 
 const GITHUB_CLOUD_API_BASEURL = "https://api.github.com"; // will go away once we start using GitHubConfig without FF
+
+let useGitHubConfigInBaseClientFlagValue = false;
 
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
@@ -25,17 +28,27 @@ export class GitHubClient {
 	protected readonly axios: AxiosInstance;
 
 	constructor(
-		gitHubConfig?: GitHubConfig, // will become mandatory once we remove the FF
+		gitHubConfig: GitHubConfig,
 		logger: Logger = getLogger("gitHub-client"),
-		baseUrl?: string // will go away once we start using gitHubConfig
+		baseUrl?: string // goes away when we remove FF
 	) {
 		this.logger = logger;
+
+		// constructor cannot be async, therefore cannot use await
+		booleanFlag(BooleanFlags.USE_GITHUB_CONFIG_IN_BASE_CLIENT, false)
+			// "?." to avoid multiple tests that mock feature flags to go red
+			?.then(flagValue => {
+				useGitHubConfigInBaseClientFlagValue = flagValue;
+			})
+			?.catch((err) => {
+				logger.warn({ err }, "Cannot evaluate FF");
+			});
 
 		// baseUrl is undefined when FF is false
 		// if FF is true and the githubAppId field is empty, it is set to https://api.github.com
 		// TODO - clean this logic up once we remove the GHE_SERVER flag
 
-		if (gitHubConfig) {
+		if (useGitHubConfigInBaseClientFlagValue) {
 			this.restApiUrl = gitHubConfig.apiUrl;
 			this.graphqlUrl = gitHubConfig.graphqlUrl;
 		} else {

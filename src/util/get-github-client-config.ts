@@ -76,7 +76,7 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
 		? new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.baseUrl, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
-		: new GitHubAppClient(undefined, logger);
+		: new GitHubAppClient(gitHubClientConfig, logger);
 }
 
 /**
@@ -88,7 +88,7 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.baseUrl, gitHubClientConfig.serverId);
 	} else {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), undefined, logger);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, logger);
 	}
 }
 
@@ -99,5 +99,5 @@ export async function createUserClient(githubToken: string, jiraHost: string, lo
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
 		? new GitHubUserClient(githubToken, gitHubClientConfig, logger, gitHubClientConfig.baseUrl)
-		: new GitHubUserClient(githubToken, undefined, logger);
+		: new GitHubUserClient(githubToken, gitHubClientConfig, logger);
 }

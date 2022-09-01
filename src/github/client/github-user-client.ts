@@ -13,7 +13,7 @@ import { GitHubClient, GitHubConfig } from "./github-client";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, githubConfig?: GitHubConfig, logger?: Logger, baseUrl?: string) {
+	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger, baseUrl?: string) {
 		super(githubConfig, logger, baseUrl);
 		this.userToken = userToken;
 
