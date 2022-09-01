@@ -37,15 +37,6 @@ describe("GitHub Create Branch Get", () => {
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
-			githubNock
-				.get(`/app`)
-				.reply(200, {
-					html_url: "https://github.com/apps/jira",
-					owner: {
-						login: "random-user"
-					}
-				});
-
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
