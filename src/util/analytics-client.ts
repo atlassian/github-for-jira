@@ -1,9 +1,9 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
-// import { isNodeProd } from "utils/is-node-env";
+import { isNodeProd } from "utils/is-node-env";
 import { optionalRequire } from "optional-require";
 
-const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
+const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
 const instance = process.env.INSTANCE_NAME;
 const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
@@ -15,8 +15,7 @@ export function sendAnalytics(eventType: "ui" | "track" | "operational", attribu
 export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
 	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
-	if (!analyticsClient) {
-	// if (!analyticsClient || !isNodeProd()) {
+	if (!analyticsClient || !isNodeProd()) {
 		return;
 	}
 
