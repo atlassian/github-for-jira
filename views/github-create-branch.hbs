@@ -53,7 +53,7 @@
       </select>
     </div>
     <div class="field-group">
-      <aui-label for="branch">Repository</aui-label>
+      <aui-label for="branch">Branch from</aui-label>
       <select id="ghParentBranch" name="parentBranch" class="full-width-field" placeholder="Select a branch">
         {{#each branches}}
           <option value="{{id}}">{{name}}</option>
@@ -61,7 +61,7 @@
       </select>
     </div>
     <div class="field-group">
-      <label for="branch-name">Branch name</label>
+      <aui-label for="branch-name">Branch name</aui-label>
       <input class="text full-width-field" type="text" data-aui-validation-field required name="branch-name"
              placeholder="Enter branch name"/>
     </div>
