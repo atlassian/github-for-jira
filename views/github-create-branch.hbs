@@ -21,8 +21,6 @@
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
 
-{{> navigation }}
-
 <section class="gitHubCreateBranch">
   <div class="headerImage">
     <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
@@ -34,18 +32,6 @@
       <!--TODO: Need to add icons based on the type of issue(story/task/bug) -->
       <a href="#">KEY-1</a>
     </div>
-  </div>
-
-  <div class="gitHubCreateBranch__optionContainer">
-    <button class="aui-button gitHubCreateBranch__option gitHubCreateBranch__selected"
-            id="gitHubCreateBranch__optionCloud">
-      <img src="/public/assets/cloud.svg" class="gitHubCreateBranch__optionsIcon" alt="">
-      GitHub Cloud
-    </button>
-    <button class="aui-button gitHubCreateBranch__option" id="gitHubCreateBranch__optionEnterprise">
-      <img src="/public/assets/server.svg" class="gitHubCreateBranch__optionsIcon" alt="">
-      GitHub Enterprise Server
-    </button>
   </div>
 
   <form id="createBranchForm" class="aui top-label">

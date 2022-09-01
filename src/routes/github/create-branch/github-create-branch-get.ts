@@ -20,7 +20,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		csrfToken: req.csrfToken(),
 		jiraHost,
 		nonce: res.locals.nonce,
-		title: "Create a Branch",
 		repos,
 		branches
 	});

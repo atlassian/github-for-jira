@@ -33,36 +33,6 @@
   height: 0.8em;
 }
 
-.gitHubCreateBranch__optionContainer {
-  display: flex;
-  margin-top: 1.5em;
-}
-
-.gitHubCreateBranch__option {
-  padding: 0.5em 1em;
-  height: 40px;
-  border-radius: 100px;
-  display: inline-flex;
-  align-items: center;
-}
-
-.gitHubCreateBranch__optionHeader {
-  font-size: 1.25rem;
-  margin: 1.5em 0;
-}
-
-.gitHubCreateBranch__selected {
-  background-color: #DEEBFF;
-  color: #0052CC;
-  font-weight: 600;
-}
-
-.gitHubCreateBranch__optionsIcon {
-  width: 24px;
-  height: 17px;
-  margin-right: 0.25em;
-}
-
 .gitHubCreateBranch__actions {
   text-align: right;
   margin-top: 2.5em;

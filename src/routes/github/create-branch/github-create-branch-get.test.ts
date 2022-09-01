@@ -46,7 +46,7 @@ describe("GitHub Create Branch Get", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.text).toContain("<title>Create a Branch</title>");
+					expect(res.text).toContain("<div class=\"gitHubCreateBranch__header\">Create a Branch</div>");
 				});
 		});
 	});
