@@ -6,15 +6,8 @@
             />
         </button>
     {{/unless}}
-    {{#if gitHubAccount}}
-        <div class="text-right">
-          <div>GitHub Account: <span class="navigation__logout__name">{{gitHubAccount}}</span></div>
-          <a href="#">Change Account</a>
-        </div>
-      {{else}}
-          <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" class="navigation__help__container navigation__link">
-              <img class="navigation__icon" src="/public/assets/question.svg" alt="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" />
-              <p class="navigation__help__message">Help</p>
-          </a>
-      {{/if}}
+    <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" class="navigation__help__container navigation__link">
+        <img class="navigation__icon" src="/public/assets/question.svg" alt="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-jenkins" />
+        <p class="navigation__help__message">Help</p>
+    </a>
 </nav>
