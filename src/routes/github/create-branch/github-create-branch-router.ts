@@ -7,4 +7,3 @@ export const GithubCreateBranchRouter = Router();
 GithubCreateBranchRouter.route("/")
 	.get(GithubCreateBranchGet)
 	.post(GithubCreateBranchPost);
-
