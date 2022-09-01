@@ -1,5 +1,6 @@
 $(document).ready(() => {
   $("#ghRepo").auiSelect2();
+  $("#ghParentBranch").auiSelect2();
 
   $(".gitHubCreateBranch__option").on("click", event => {
     event.preventDefault();
