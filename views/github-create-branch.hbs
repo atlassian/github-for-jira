@@ -50,14 +50,12 @@
 
   <form id="createBranchForm" class="aui top-label">
     <div class="field-group">
-      <aui-label for="repo">Repository</aui-label>
-      <p>
-        <aui-select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
-          {{#each repos}}
-            <aui-option value="{{id}}">{{../gitHubAccount}}/{{name}}</aui-option>
-          {{/each}}
-        </aui-select>
-      </p>
+      <aui-label for="branch">Repository</aui-label>
+      <select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
+        {{#each repos}}
+          <option value="{{id}}">{{org}} / {{name}}</option>
+        {{/each}}
+      </select>
     </div>
     <div class="field-group">
       <aui-label for="branch">Branch from</aui-label>

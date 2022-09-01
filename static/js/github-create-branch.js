@@ -1,7 +1,11 @@
-$(".gitHubCreateBranch__option").click(function (event) {
-  event.preventDefault();
-  $(".gitHubCreateBranch__option").removeClass("gitHubCreateBranch__selected");
-  $(event.target).addClass("gitHubCreateBranch__selected");
+$(document).ready(() => {
+  $("#ghRepo").auiSelect2();
+
+  $(".gitHubCreateBranch__option").on("click", event => {
+    event.preventDefault();
+    $(".gitHubCreateBranch__option").removeClass("gitHubCreateBranch__selected");
+    $(event.target).addClass("gitHubCreateBranch__selected");
+  });
 });
 
 
