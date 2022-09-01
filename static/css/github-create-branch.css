@@ -12,6 +12,8 @@
 #createBranchForm .select2-choice  {
   height: 2.5em;
   line-height: 1.7rem;
+  background: #ebecf0;
+  color: #7a869a;
 }
 
 .gitHubCreateBranch__title {
