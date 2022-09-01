@@ -76,11 +76,11 @@ describe("delete-github-subscription", () => {
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
-	// TODO need to mock status().json
-	// it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
-	// 	delete req.body[attribute];
-	// 	await GithubCreateBranchPost(req as any, res as any);
-	// 	expect(res.status).toHaveBeenCalledWith(400);
-	// });
+	it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
+		res.status.mockReturnValue(res);
+		delete req.body[attribute];
+		await GithubCreateBranchPost(req as any, res as any);
+		expect(res.status).toHaveBeenCalledWith(400);
+	});
 
 });
