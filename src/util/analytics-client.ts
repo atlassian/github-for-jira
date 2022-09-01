@@ -1,7 +1,7 @@
 import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 // import { isNodeProd } from "utils/is-node-env";
-import { optionalRequire } from "optional-require/dist";
+import { optionalRequire } from "optional-require";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client") || {};
 const logger = getLogger("analytics");
