@@ -55,7 +55,7 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
-	public async getUserRepositories(per_page = 100, cursor?: string): Promise<GetRepositoriesResponse> {
+	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
 		try {
 			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
 				per_page,
