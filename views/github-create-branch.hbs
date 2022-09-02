@@ -48,7 +48,7 @@
       <aui-label for="repo">Repository</aui-label>
       <select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
         {{#each repos}}
-          <option value="{{id}}">{{owner.login}} / {{name}}</option>
+          <option value="{{node.id}}">{{node.owner.login}} / {{node.name}}</option>
         {{/each}}
       </select>
     </div>

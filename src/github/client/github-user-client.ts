@@ -6,6 +6,9 @@ import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient } from "./github-client";
+import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
+import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -22,8 +25,7 @@ export class GitHubUserClient extends GitHubClient {
 				...config,
 				headers: {
 					...config.headers,
-					Accept: GITHUB_ACCEPT_HEADER,
-					Authorization: `token ${this.userToken}`
+					...this.headerConfig()
 				}
 			};
 		});
@@ -42,18 +44,28 @@ export class GitHubUserClient extends GitHubClient {
 		);
 	}
 
+	private headerConfig() {
+		return {
+			Accept: GITHUB_ACCEPT_HEADER,
+			Authorization: `token ${this.userToken}`
+		};
+	}
+
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
-	public async getUserRepositories(page = 5): Promise<AxiosResponse<Array<Octokit.AppsListReposResponseRepositoriesItem>>> {
-		return await this.get<Array<Octokit.AppsListReposResponseRepositoriesItem>>("/user/repos?per_page={perPage}&page={page}&sort={sort}", {
-			urlParams: {
-				perPage: 100,
-				page,
-				sort: "updated"
-			}
-		});
+	public async getUserRepositories(per_page = 100, cursor?: string): Promise<GetRepositoriesResponse> {
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			err.isRetryable = true;
+			throw err;
+		}
 	}
 
 	public getMembershipForOrg = async (org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
@@ -70,5 +82,29 @@ export class GitHubUserClient extends GitHubClient {
 
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, config);
+	}
+
+	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
+			{
+				query,
+				variables
+			},
+			{
+				...this.headerConfig() as AxiosRequestConfig
+			});
+
+		const graphqlErrors = response.data?.errors;
+		if (graphqlErrors?.length) {
+			this.logger.warn({ res: response }, "GraphQL errors");
+			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
+				return Promise.reject(new RateLimitingError(response));
+			}
+
+			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
+			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
+		}
+
+		return response;
 	}
 }

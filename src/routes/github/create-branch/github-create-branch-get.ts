@@ -26,7 +26,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		servers,
-		repos: response.data,
+		repos: response.viewer.repositories.edges,
 		branches
 	});
 
