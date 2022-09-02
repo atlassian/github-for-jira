@@ -46,8 +46,8 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
-	public async getUserRepositories(page = 5): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
-		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user/repos?per_page={perPage}&page={page}&sort={sort}", {
+	public async getUserRepositories(page = 5): Promise<AxiosResponse<Array<Octokit.AppsListReposResponseRepositoriesItem>>> {
+		return await this.get<Array<Octokit.AppsListReposResponseRepositoriesItem>>("/user/repos?per_page={perPage}&page={page}&sort={sort}", {
 			urlParams: {
 				perPage: 100,
 				page,
