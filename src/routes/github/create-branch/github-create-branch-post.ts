@@ -16,6 +16,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
+		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
 		const { data: baseBranchRef } = await gitHubUserClient.getReference(owner, repo, sourceBranchName);
 		const sha = baseBranchRef.object.sha;
