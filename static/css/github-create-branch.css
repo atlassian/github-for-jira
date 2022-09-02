@@ -1,12 +1,53 @@
-
 .gitHubCreateBranch {
-    margin: auto;
-    max-width: 740px;
-    height: 100vh;
+  margin: auto;
+  max-width: 480px;
+  height: 100vh;
+}
+
+#createBranchForm .field-group {
+  margin-bottom: 1em;
+}
+
+#createBranchForm input[type=text],
+#createBranchForm .select2-choice  {
+  height: 2.5em;
+  line-height: 1.7rem;
+  background: #ebecf0;
+  color: #7a869a;
 }
 
 .gitHubCreateBranch__title {
-    color: #6B778C;
-    margin: 0.8em 0;
-    text-align: center;
+  color: #6B778C;
+  margin: 1.8em 0 4em;
+  text-align: center;
+}
+
+.gitHubCreateBranch__header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 0.5em;
+}
+
+.gitHubCreateBranch__subHeaderIcon {
+  height: 0.8em;
+}
+
+.gitHubCreateBranch__actions {
+  text-align: right;
+  margin-top: 2.5em;
+}
+
+/** Customizing styling for Select2 **/
+.select2-drop {
+  /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
+  margin-top: -34px;
+}
+.aui-select2-drop.aui-dropdown2 .select2-search {
+  padding: 0;
+}
+.aui-select2-drop .select2-search:before {
+  content: "\f15b";
+  font-weight: 400;
+  right: 4px;
 }
