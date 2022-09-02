@@ -1,5 +1,5 @@
 import nock from "nock";
-import { envVars } from "config/env";
+import { envVars, EnvVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
@@ -8,6 +8,7 @@ import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { cloneDeep, difference } from "lodash";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -18,6 +19,7 @@ type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: numb
 type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
+export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
 declare global {
 	let jiraHost: string;
 	let gitHubAppConfig: GitHubAppConfig;
@@ -35,6 +37,7 @@ declare global {
 	let gheUserTokenNock: GithubUserTokenNockFunc;
 	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
+	let testEnvVars: TestEnvVars;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -54,17 +57,29 @@ declare global {
 			gheUserTokenNock: GithubUserTokenNockFunc;
 			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
+			testEnvVars: TestEnvVars;
 		}
 	}
 }
 
+export interface TestEnvVars extends EnvVars {
+	// Test Vars
+	ATLASSIAN_SECRET?: string;
+	AWS_ACCESS_KEY_ID?: string;
+	AWS_SECRET_ACCESS_KEY?: string;
+	SQS_TEST_QUEUE_URL: string;
+	SQS_TEST_QUEUE_REGION: string;
+}
+
+// Save original env vars so we can reset between tests
+const originalEnvVars = cloneDeep(process.env);
 const resetEnvVars = () => {
-	// Assign defaults to process.env, but don't override existing values if they
-	// are already set in the environment.
-	process.env = {
-		...process.env,
-		...envVars
-	};
+	const originalKeys = Object.keys(originalEnvVars);
+	const newKeys = Object.keys(process.env);
+	// Reset original keys back to process.env
+	originalKeys.forEach(key => process.env[key] = originalEnvVars[key]);
+	// Removing keys that's been added during the test
+	difference(newKeys, originalKeys).forEach(key => delete process.env[key]);
 };
 
 const clearState = async () => Promise.all([
@@ -146,6 +161,7 @@ beforeEach(() => {
 	global.githubAppTokenNock = githubAppToken(githubNock);
 	global.gheUserTokenNock = githubUserToken(gheApiNock);
 	global.gheAppTokenNock = githubAppToken(gheApiNock);
+	global.testEnvVars = envVars as TestEnvVars;
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
