@@ -14,7 +14,7 @@ Input file format:
 
 Running the script:
 
-    $ ./resync-from-csv.py --env staging --sleep 1 --input installations.csv --output output.csv
+    $ python3 ./resync-from-csv.py --env staging --sleep 1 --input installations.csv --output output.csv
 
 First time setup:
 
@@ -83,11 +83,13 @@ def create_slauth(env: str) -> SLAuth:
 
 class Environment(NamedTuple):
     github_for_jira_url: str
-    secrets_auth: object
+    github_for_jira_auth: object
 
 
 def create_environment(env: str) -> Environment:
-    if env == 'dev'
+    print('env')
+    print(env)
+    if env == 'dev':
         return Environment(
             github_for_jira_url='https://github-for-jira.ap-southwest-2.dev.atl-paas.net',
             github_for_jira_auth=create_slauth(env))
@@ -113,26 +115,30 @@ class Installation:
 # #############################
 
 def process_installation(env: Environment, installation: Installation) -> bool:
+#  TESTING CALL WORKS
+#     url = '{}/healthcheck'.format(env.github_for_jira_url)
+#     response = session.get(url);
+
     url = '{}/api/resync'.format(env.github_for_jira_url)
+    print(url)
+    print(installation.installationId)
+    print(installation.installationId)
+    print(installation.installationId)
+    print(installation.installationId)
 
     LOG.debug('Starting rotation of %s with url: %s', installation, url)
     response = session.post(url,
       auth=env.github_for_jira_auth,
-      data={
-        "installationIds": "[1111,2222]", ## PASS INSTALLATION ID HERE
+      json={
+        "installationIds": [installation.installationId],
         "syncType": "full",
         "statusTypes": ["FAILED", "PENDING", "ACTIVE", "COMPLETE"],
-        "targetTasks": ["pull"] # Could pass this through as a arg????
-      })
-
-      atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
-      -v https://github-for-jira.us-west-1.staging.atl-paas.net/api/resync \
-      -H "Content-Type: application/json" \
-      -d '{"": "full", "": [1111,2222], "statusTypes": ["FAILED", "PENDING", "ACTIVE", "COMPLETE"]}'
-
+        "targetTasks": ["pull"]
+      },
+      headers = {"Content-Type": "application/json"})
 
     if response.ok:
-        LOG.info('Sync of %s successfulyl started: (%s).',
+        LOG.info('Sync of %s successfully started: (%s).',
                  installation, response.status_code)
         return 'success'
     else:
@@ -160,17 +166,17 @@ def main():
     processed = set()
     output_file.seek(0)
     ############################ TODO
-    output_reader = csv.DictReader(output_file, fieldnames=['cloud_id', 'workspace_uuid'])
+    output_reader = csv.DictReader(output_file, fieldnames=['installation_id'])
     for row in output_reader:
         processed.add(Installation.from_dict(row))
     ############################ TODO
-    output_writer = csv.DictWriter(output_file, fieldnames=['cloud_id', 'workspace_uuid', 'status'])
+    output_writer = csv.DictWriter(output_file, fieldnames=['installation_id', 'status'])
     ############################ TODO
-    input_reader = csv.DictReader(input_file, fieldnames=['cloud_id', 'workspace_uuid'])
+    input_reader = csv.DictReader(input_file, fieldnames=['installation_id'])
     ############################ TODO
     for row in input_reader:
         installation = Installation.from_dict(row)
-        if installation.cloud == 'cloud_id' and installation.workspace == 'workspace_uuid':
+        if installation.installationId == 'installation_id':
             # Skip header
             continue
 
