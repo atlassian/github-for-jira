@@ -16,7 +16,7 @@ AJS.formValidation.register(['ghe-url'], (field) => {
 		if (!validateUrl(inputURL)) {
 			field.invalidate(AJS.format(
 				'The entered URL is not valid. ' +
-				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
+				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
 				'Learn more' +
 				'</a>.'
 			));
