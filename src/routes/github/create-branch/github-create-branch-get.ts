@@ -30,6 +30,5 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		branches
 	});
 
-
 	req.log.debug(`Github Create Branch Page rendered page`);
 };
