@@ -4,4 +4,8 @@ $(document).ready(() => {
   $("#ghParentBranch").auiSelect2();
 });
 
+$('#cancelBtn').click(function (event) {
+	event.preventDefault();
 
+	window.close();
+});
