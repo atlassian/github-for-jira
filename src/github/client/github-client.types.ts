@@ -53,7 +53,7 @@ export interface ReposGetContentsResponse {
 export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string};
 
 
-export type CreateBranchBody = {
+export type CreateReferenceBody = {
 	owner: string,
 	repo: string,
 	ref: string,
