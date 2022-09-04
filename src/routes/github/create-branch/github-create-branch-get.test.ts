@@ -37,15 +37,17 @@ describe("GitHub Create Branch Get", () => {
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
-
-			const response = await supertest(app)
+			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
 						githubToken: "random-token"
-					}));
-			expect(response.text).toContain("<title>Create a Branch</title>");
+					}))
+				.expect(res => {
+					expect(res.status).toBe(200);
+					expect(res.text).toContain("<div class=\"gitHubCreateBranch__header\">Create GitHub Branch</div>");
+				});
 		});
 	});
 });
