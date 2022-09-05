@@ -5,6 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/client/github-queries";
 
@@ -43,6 +44,17 @@ export class GitHubUserClient extends GitHubClient {
 		);
 	}
 
+	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+		return this.axios.get<T>(url, config);
+	}
+
+	private async post<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.post<T>(url, body, {
+			params,
+			urlParams
+		});
+	}
+
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
@@ -72,7 +84,22 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
 	}
 
-	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
-		return this.axios.get<T>(url, config);
+	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
+		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/refs/heads/{branch}`, {
+			urlParams: {
+				owner,
+				repo,
+				branch
+			}
+		});
 	}
+
+	public async createReference(owner: string, repo: string, body: CreateReferenceBody): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
+			{
+				owner,
+				repo
+			});
+	}
+
 }
