@@ -114,17 +114,14 @@ describe("deployment environment mapping", () => {
 	});
 });
 
-const GITHUB_CLOUD_CONFIG = {
-	hostname: "https://github.com",
-	baseUrl: "https://github.com",
-	apiUrl: "https://api.github.com",
-	graphqlUrl: "https://api.github.com/graphql"
-};
-
 const TEST_INSTALLATION_ID = 1234;
 describe("transform GitHub webhook payload to Jira payload", () => {
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	const githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), GITHUB_CLOUD_CONFIG, getLogger("test"));
+	let githubClient: GitHubInstallationClient;
+
+	beforeEach(() => {
+		githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
+	});
 
 	it(`supports branch and merge workflows, sending related commits in deployment`, async () => {
 
