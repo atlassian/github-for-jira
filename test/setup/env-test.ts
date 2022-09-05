@@ -12,7 +12,6 @@ if (missingVars.length) {
 	throw new Error(`Missing required Test Environment Variables: ${missingVars.join(", ")}`);
 }
 
-
 export interface TestEnvVars extends EnvVars {
 	// Test Vars
 	ATLASSIAN_SECRET?: string;

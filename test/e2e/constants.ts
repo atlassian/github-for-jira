@@ -1,68 +1,35 @@
-import { EnvVars, envVars } from "config/env";
-import path from "path";
-import { config } from "dotenv";
-
-interface TestVars extends EnvVars {
-	JIRA_ADMIN_USERNAME: string;
-	JIRA_ADMIN_PASSWORD: string;
-	GITHUB_URL: string;
-	GITHUB_USERNAME: string;
-	GITHUB_PASSWORD: string;
-}
-
-const requiredEnvVars = [
-	"JIRA_ADMIN_USERNAME",
-	"JIRA_ADMIN_PASSWORD",
-	"GITHUB_URL",
-	"GITHUB_USERNAME",
-	"GITHUB_PASSWORD"
-];
-
-// Ignore errors if the file is missing
-const e2eVars = config({ path: path.resolve(process.cwd(), ".env.e2e") });
-
-const testVars = {
-	...process.env,
-	...envVars,
-	...e2eVars.parsed
-} as TestVars;
-
-// Check to see if all required environment variables are set
-const missingVars = requiredEnvVars.filter(key => testVars[key] === undefined);
-if (missingVars.length) {
-	throw new Error(`Missing required E2E Environment Variables: ${missingVars.join(", ")}`);
-}
+import { e2eEnvVars } from "test/e2e/env-e2e";
 
 export const testData: TestData = {
 	jira: {
 		urls: {
-			base: testVars.ATLASSIAN_URL,
-			login: `${testVars.ATLASSIAN_URL}/login`,
-			logout: `${testVars.ATLASSIAN_URL}/logout`,
-			dashboard: `${testVars.ATLASSIAN_URL}/jira/dashboards`,
-			yourWork: `${testVars.ATLASSIAN_URL}/jira/your-work`,
-			manageApps: `${testVars.ATLASSIAN_URL}/plugins/servlet/upm`,
-			connectJson: `${testVars.APP_URL}/jira/atlassian-connect.json`
+			base: e2eEnvVars.ATLASSIAN_URL,
+			login: `${e2eEnvVars.ATLASSIAN_URL}/login`,
+			logout: `${e2eEnvVars.ATLASSIAN_URL}/logout`,
+			dashboard: `${e2eEnvVars.ATLASSIAN_URL}/jira/dashboards`,
+			yourWork: `${e2eEnvVars.ATLASSIAN_URL}/jira/your-work`,
+			manageApps: `${e2eEnvVars.ATLASSIAN_URL}/plugins/servlet/upm`,
+			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`
 		},
 		roles: {
 			admin: {
-				username: testVars.JIRA_ADMIN_USERNAME,
-				password: testVars.JIRA_ADMIN_PASSWORD,
+				username: e2eEnvVars.JIRA_ADMIN_USERNAME,
+				password: e2eEnvVars.JIRA_ADMIN_PASSWORD,
 				storage: "./test/e2e/state/jira-admin.json"
 			}
 		}
 	},
 	github: {
 		urls: {
-			base: testVars.GITHUB_URL,
-			login: `${testVars.GITHUB_URL}/login`,
-			logout: `${testVars.GITHUB_URL}/logout`,
-			apps: `${testVars.GITHUB_URL}/user/settings/apps`
+			base: e2eEnvVars.GITHUB_URL,
+			login: `${e2eEnvVars.GITHUB_URL}/login`,
+			logout: `${e2eEnvVars.GITHUB_URL}/logout`,
+			apps: `${e2eEnvVars.GITHUB_URL}/user/settings/apps`
 		},
 		roles: {
 			admin: {
-				username: testVars.GITHUB_USERNAME,
-				password: testVars.GITHUB_PASSWORD,
+				username: e2eEnvVars.GITHUB_USERNAME,
+				password: e2eEnvVars.GITHUB_PASSWORD,
 				storage: "./test/e2e/state/github-admin.json"
 			}
 		}

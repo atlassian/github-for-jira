@@ -28,12 +28,11 @@ const requiredEnvVars = [
 ];
 
 // Load environment files
-const envFile = ".env";
 [
-	`${envFile}.${nodeEnv}.local`,
-	`${envFile}.local`,
-	`${envFile}.${nodeEnv}`,
-	envFile
+	`.env.${nodeEnv}.local`,
+	`.env.local`,
+	`.env.${nodeEnv}`,
+	".env"
 ].map((env) => expand(config({
 	path: path.resolve(__dirname, "../..", env)
 })));
