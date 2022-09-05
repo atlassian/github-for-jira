@@ -37,3 +37,9 @@ $(document).ready(() => {
 		createBranchPost();
 	});
 });
+
+$('#cancelBtn').click(function (event) {
+	event.preventDefault();
+
+	window.close();
+});
