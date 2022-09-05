@@ -15,8 +15,8 @@ import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/clie
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger, baseUrl?: string) {
-		super(githubConfig, logger, baseUrl);
+	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger) {
+		super(githubConfig, logger);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
