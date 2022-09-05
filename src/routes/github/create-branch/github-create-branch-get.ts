@@ -18,8 +18,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	}
 
 	const { issue_key: key, issue_summary: summary } = req.query;
-	if (!key ||!summary) {
-		return next(new Error(Errors.MISSING_ISSUE_DETAILS));
+	if (!key) {
+		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
 	res.render("github-create-branch.hbs", {
