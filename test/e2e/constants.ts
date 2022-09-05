@@ -34,7 +34,6 @@ if (missingVars.length) {
 }
 
 export const testData: TestData = {
-	env: testVars,
 	jira: {
 		urls: {
 			base: testVars.ATLASSIAN_URL,
@@ -71,7 +70,6 @@ export const testData: TestData = {
 };
 
 export interface TestData {
-	env: TestVars;
 	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
 	github: TestDataEntry<GithubTestDataURLs>;
 }

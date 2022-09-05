@@ -1,3 +1,4 @@
+/*
 import { Builder, Builder as HttpClient } from "httplease";
 
 interface ConstructorParameters {
@@ -231,3 +232,4 @@ export class GithubClient {
 		return response.content.sha;
 	}
 }
+*/

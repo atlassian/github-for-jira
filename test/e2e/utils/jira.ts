@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 import { JiraTestDataRoles, testData } from "test/e2e/constants";
-import { APP_KEY } from "routes/jira/jira-atlassian-connect-get";
+import { APP_KEY } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 
 const data = testData.jira;
 

@@ -2,24 +2,25 @@ import { envVars, EnvVars } from "config/env";
 import { cloneDeep, difference } from "lodash";
 
 const requiredEnvVars = [
-	"SQS_TEST_QUEUE_URL",
-	"SQS_TEST_QUEUE_REGION"
+	"ATLASSIAN_URL",
+	"JIRA_ADMIN_USERNAME",
+	"JIRA_ADMIN_PASSWORD",
+	"GITHUB_USERNAME",
+	"GITHUB_PASSWORD"
 ];
 
 // Check to see if all required environment variables are set
 const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
-	throw new Error(`Missing required Test Environment Variables: ${missingVars.join(", ")}`);
+	throw new Error(`Missing required E2E Environment Variables: ${missingVars.join(", ")}`);
 }
 
-
-export interface TestEnvVars extends EnvVars {
-	// Test Vars
-	ATLASSIAN_SECRET?: string;
-	AWS_ACCESS_KEY_ID?: string;
-	AWS_SECRET_ACCESS_KEY?: string;
-	SQS_TEST_QUEUE_URL: string;
-	SQS_TEST_QUEUE_REGION: string;
+export interface E2EEnvVars extends EnvVars {
+	ATLASSIAN_URL: string;
+	JIRA_ADMIN_USERNAME: string;
+	JIRA_ADMIN_PASSWORD: string;
+	GITHUB_USERNAME: string;
+	GITHUB_PASSWORD: string;
 }
 
 // Save original env vars so we can reset between tests
