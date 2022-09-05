@@ -1,5 +1,5 @@
 import nock from "nock";
-import { envVars, EnvVars } from "config/env";
+import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-have-sent-metrics";
@@ -8,7 +8,7 @@ import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
-import { cloneDeep, difference } from "lodash";
+import { resetEnvVars, TestEnvVars } from "test/setup/env-test";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -61,26 +61,6 @@ declare global {
 		}
 	}
 }
-
-export interface TestEnvVars extends EnvVars {
-	// Test Vars
-	ATLASSIAN_SECRET?: string;
-	AWS_ACCESS_KEY_ID?: string;
-	AWS_SECRET_ACCESS_KEY?: string;
-	SQS_TEST_QUEUE_URL: string;
-	SQS_TEST_QUEUE_REGION: string;
-}
-
-// Save original env vars so we can reset between tests
-const originalEnvVars = cloneDeep(process.env);
-const resetEnvVars = () => {
-	const originalKeys = Object.keys(originalEnvVars);
-	const newKeys = Object.keys(process.env);
-	// Reset original keys back to process.env
-	originalKeys.forEach(key => process.env[key] = originalEnvVars[key]);
-	// Removing keys that's been added during the test
-	difference(newKeys, originalKeys).forEach(key => delete process.env[key]);
-};
 
 const clearState = async () => Promise.all([
 	sequelize.truncate({ truncate: true })
