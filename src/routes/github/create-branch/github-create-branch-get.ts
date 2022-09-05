@@ -17,10 +17,16 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
+	const { issue_key: key, issue_summary: summary } = req.query;
+	if (!key ||!summary) {
+		return next(new Error(Errors.MISSING_ISSUE_DETAILS));
+	}
+
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
 		jiraHost,
 		nonce: res.locals.nonce,
+		issue: { key, summary },
 		servers,
 		repos,
 		branches
