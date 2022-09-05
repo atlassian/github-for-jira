@@ -52,4 +52,3 @@ describe("GitHub Create Branch Get", () => {
 		});
 	});
 });
-
