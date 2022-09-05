@@ -2,7 +2,6 @@ import { getAxiosInstance, JiraClientError } from "../jira/client/axios";
 import { AxiosInstance } from "axios";
 import { Installation } from "./installation";
 import Logger from "bunyan";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 // TODO: why are there 2 jira clients?
 export class JiraClient {
@@ -12,9 +11,7 @@ export class JiraClient {
 		const jiraClient = new JiraClient();
 		jiraClient.axios = getAxiosInstance(
 			installation.jiraHost,
-			await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)
-				? await installation.decrypt("encryptedSharedSecret")
-				: installation.sharedSecret,
+			await installation.decrypt("encryptedSharedSecret"),
 			log
 		);
 		return jiraClient;

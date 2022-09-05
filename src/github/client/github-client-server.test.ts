@@ -88,7 +88,7 @@ describe("GitHub Client", () => {
 				hostname: gheUrl,
 				baseUrl: gheUrl,
 				apiUrl: gheApiUrl,
-				graphqlUrl: gheApiUrl  + '/graphql'
+				graphqlUrl: gheApiUrl  + "/graphql"
 			},
 			getLogger("test"),
 			"https://github.mydomain.com"
