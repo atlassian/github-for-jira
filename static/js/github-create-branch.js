@@ -24,6 +24,10 @@ const createBranchPost = () => {
 			$("#createBranchBtn").prop("disabled", false);
 			$("#createBranchBtn").attr("aria-disabled", "false");
 			console.log(err);
+			$(".gitHubCreateBranch__serverError").show();
+			$(".errorMessageBox__message")
+				.empty()
+				.append("Please make sure all the details you entered are correct.")
 		});
 }
 
@@ -32,7 +36,7 @@ $(document).ready(() => {
   $("#ghRepo").auiSelect2();
   $("#ghParentBranch").auiSelect2();
 
-	$("#createBranchForm").on("submit", (event) => {
+	$("#createBranchForm").on("aui-valid-submit", (event) => {
 		event.preventDefault();
 		createBranchPost();
 	});
