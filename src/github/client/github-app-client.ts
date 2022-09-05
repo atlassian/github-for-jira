@@ -9,7 +9,7 @@ import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
-import { GitHubClient } from "./github-client";
+import { GitHubClient, GitHubConfig } from "./github-client";
 
 
 /**
@@ -22,12 +22,13 @@ export class GitHubAppClient extends GitHubClient {
 	private readonly appToken: AuthToken;
 
 	constructor(
+		gitHubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string,
+		baseUrl?: string, // goes away once it goes away in the parent class
 		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
-		super(logger, baseUrl);
+		super(gitHubConfig, logger, baseUrl);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);

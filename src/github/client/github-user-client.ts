@@ -5,9 +5,7 @@ import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setReq
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
-import { GitHubClient } from "./github-client";
-import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import { GitHubClient, GitHubConfig } from "./github-client";
 import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/client/github-queries";
 
 /**
@@ -16,8 +14,8 @@ import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/clie
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, logger?: Logger, baseUrl?: string) {
-		super(logger, baseUrl);
+	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger, baseUrl?: string) {
+		super(githubConfig, logger, baseUrl);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
@@ -58,6 +56,8 @@ export class GitHubUserClient extends GitHubClient {
 	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
 		try {
 			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
+				headers: this.headerConfig()
+			}, {
 				per_page,
 				cursor
 			});
@@ -82,29 +82,5 @@ export class GitHubUserClient extends GitHubClient {
 
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
 		return this.axios.get<T>(url, config);
-	}
-
-	private async graphql<T>(query: string, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
-		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
-			{
-				query,
-				variables
-			},
-			{
-				...this.headerConfig() as AxiosRequestConfig
-			});
-
-		const graphqlErrors = response.data?.errors;
-		if (graphqlErrors?.length) {
-			this.logger.warn({ res: response }, "GraphQL errors");
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(response));
-			}
-
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
-		}
-
-		return response;
 	}
 }
