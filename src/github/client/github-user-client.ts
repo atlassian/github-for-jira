@@ -63,7 +63,7 @@ export class GitHubUserClient extends GitHubClient {
 			});
 			return response.data.data;
 		} catch (err) {
-			err.isRetryable = true;
+			this.logger.error({ err }, "Could not fetch repositories");
 			throw err;
 		}
 	}

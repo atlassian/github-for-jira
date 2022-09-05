@@ -18,8 +18,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const gitHubAppClient = new GitHubUserClient(githubToken, req.log, hostname);
-	const response = await gitHubAppClient.getUserRepositories();
+	const gitHubUserClient = new GitHubUserClient(githubToken, req.log, hostname);
+	const response = await gitHubUserClient.getUserRepositories();
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
