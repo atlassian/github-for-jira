@@ -24,11 +24,10 @@ export class GitHubAppClient extends GitHubClient {
 	constructor(
 		gitHubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string, // goes away once it goes away in the parent class
 		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
-		super(gitHubConfig, logger, baseUrl);
+		super(gitHubConfig, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
