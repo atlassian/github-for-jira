@@ -73,6 +73,13 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			.reply(200, { data: getRepositories });
 	};
 
+	const mockGitHubEnterpriseReposResponses = () => {
+		gheUserTokenNock(TEST_INSTALLATION_ID);
+		gheNock
+			.post("/api/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
+			.reply(200, { data: getRepositories });
+	};
+
 	it("Discovery sqs queue processes the message for cloud", async () => {
 		mockGitHubReposResponses();
 		await sqsQueues.backfill.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
@@ -85,7 +92,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 	});
 
 	it("Discovery sqs queue processes the message for GHES", async () => {
-		mockGitHubReposResponses();
+		mockGitHubEnterpriseReposResponses();
 		await sqsQueues.backfill.sendMessage({
 			installationId: TEST_INSTALLATION_ID,
 			jiraHost,
