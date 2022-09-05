@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor",
 	CONFIG_AS_CODE = "config-as-code",
-	CREATE_BRANCH = "create-branch"
+	CREATE_BRANCH = "create-branch",
+	USE_GITHUB_CONFIG_IN_BASE_CLIENT = "use-githubconfig-in-base-client"
 }
 
 export enum StringFlags {
