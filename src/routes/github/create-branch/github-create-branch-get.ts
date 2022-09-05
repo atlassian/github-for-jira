@@ -11,14 +11,14 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const {
 		jiraHost,
 		githubToken,
-		gitHubAppId
+		gitHubAppConfig
 	} = res.locals;
 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const response = await gitHubUserClient.getUserRepositories();
 
 	res.render("github-create-branch.hbs", {
