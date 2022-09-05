@@ -23,7 +23,8 @@ export class GitHubUserClient extends GitHubClient {
 				...config,
 				headers: {
 					...config.headers,
-					...this.headerConfig()
+					Accept: GITHUB_ACCEPT_HEADER,
+					Authorization: `token ${this.userToken}`
 				}
 			};
 		});
@@ -42,22 +43,13 @@ export class GitHubUserClient extends GitHubClient {
 		);
 	}
 
-	private headerConfig() {
-		return {
-			Accept: GITHUB_ACCEPT_HEADER,
-			Authorization: `token ${this.userToken}`
-		};
-	}
-
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
 	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
 		try {
-			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {
-				headers: this.headerConfig()
-			}, {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {}, {
 				per_page,
 				cursor
 			});
