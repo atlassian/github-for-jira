@@ -2,18 +2,11 @@
 import { isUserAdminOfOrganization } from "./github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 
-const GITHUB_CLOUD_CONFIG = {
-	hostname: "https://github.com",
-	baseUrl: "https://github.com",
-	apiUrl: "https://api.github.com",
-	graphqlUrl: "https://api.github.com/graphql"
-};
-
 describe("GitHub Utils", () => {
 	describe("isUserAdminOfOrganization", () => {
 		let githubUserClient: GitHubUserClient;
 		beforeEach(() => {
-			githubUserClient = new GitHubUserClient("token", GITHUB_CLOUD_CONFIG);
+			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig);
 		});
 
 		it("should return true if user is admin of a given organization", async () => {
