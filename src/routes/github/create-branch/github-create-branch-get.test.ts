@@ -10,6 +10,7 @@ describe("GitHub Create Branch Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
+			req.query = { issue_key: "1", issue_summary: "random-string" };
 			req.csrfToken = jest.fn();
 			next();
 		});
