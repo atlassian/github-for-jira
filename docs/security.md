@@ -125,8 +125,8 @@ The database and the compute servers of the GitHub for Jira app are located in A
 | ----- |--------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Jira host | The hostname of your Jira site (i.e. *.atlassian.net). This is used as an identifier for your Jira site.                                                     
 | Connect client key | The client key that is generated during installation of the app into your Jira site. This key is used to authorize all calls to your Jira site’s API.        |
-| Connect shared secret | The client secret that is generated during installation of the app into your Jira site. This secret is used to authorize all calls to your Jira site’s API.  |
-| GitHub repository metadata | Metadata about the GitHub repositories in your connected GitHub organizations (name, URL, owner name, …). |
+| Connect shared secret | The client secret that is generated during installation of the app into your Jira site. This secret is used to authorize all calls to your Jira site’s API. This field is [additionally encrypted](https://www.atlassian.com/engineering/cloud-overview#Encryption-framework-for-transmission-or-storage-of-sensitive-data-(Cryptor)) in the database (on top of the normal “at rest” encryption). |
+| GitHub repository metadata | Metadata about the GitHub repositories in your connected GitHub organizations (name, URL, owner name, …).                                                    |
 
 **Only GitHub Server:**
 
@@ -160,11 +160,17 @@ Currently, you cannot control in which region this data is stored by Jira (see �
 
 ## How can I delete my data?
 
-All data concerning your GitHub organization that is stored by the GitHub for Jira app’s database is deleted when you uninstall the GitHub for Jira app from your Jira site.
+All metadata concerning your GitHub organization that is stored by the GitHub for Jira app’s database is deleted when you uninstall the GitHub for Jira app from your Jira site.
 
 ## How is the communication secured?
 
-All HTTP traffic is secured with TLS (HTTPS).
+> :cloud: **GitHub Cloud**
+> 
+> All HTTP traffic from github.com to the GitHub for Jira app and back is secured with TLS (HTTPS).
+
+> :office: **GitHub Server**
+>
+> If you're using GitHub Enterprise Server, we strongly recommend that you set up the server in a way so that it's only accessible via HTTPS. 
 
 GitHub digitally signs all webhooks using a shared webhook secret. The GitHub for Jira app only accepts webhooks with a valid signature. Webhooks with an invalid signature are discarded. As long as the webhook secret stays a secret just between your GitHub server (or GitHub cloud) and the GitHub for Jira app, webhook traffic is secure.
 
