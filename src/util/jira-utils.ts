@@ -97,7 +97,7 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
 	const regex = regexFixFeature ?
 		// Old regex which was working before trying to update it to the the "correct" one
-		/(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu :
+		/(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{1,255})/giu :
 		// Regex given to us by sayans
 		/(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
 
