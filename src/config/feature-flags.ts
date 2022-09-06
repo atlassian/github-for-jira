@@ -24,8 +24,7 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CONFIG_AS_CODE = "config-as-code",
-	CREATE_BRANCH = "create-branch",
-	USE_GITHUB_CONFIG_IN_BASE_CLIENT = "use-githubconfig-in-base-client"
+	CREATE_BRANCH = "create-branch"
 }
 
 export enum StringFlags {

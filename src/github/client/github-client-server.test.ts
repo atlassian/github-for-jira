@@ -90,8 +90,7 @@ describe("GitHub Client", () => {
 				apiUrl: gheApiUrl,
 				graphqlUrl: gheApiUrl  + "/graphql"
 			},
-			getLogger("test"),
-			"https://github.mydomain.com"
+			getLogger("test")
 		);
 
 		const pullrequests = await client.getPullRequests(owner, repo, {

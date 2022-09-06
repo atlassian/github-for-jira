@@ -46,10 +46,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string, // goes away once it goes away in the parent class
 		gshaId?: number
 	) {
-		super(gitHubConfig, logger, baseUrl);
+		super(gitHubConfig, logger);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
