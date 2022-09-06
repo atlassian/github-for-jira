@@ -30,7 +30,7 @@ To integrate with GitHub, the GitHub for Jira app makes use of the concept of a 
 > When setting up a connection between Jira and a github.com organization, you will be asked to install the GitHub app named “Jira” into your organization.
 
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 > 
 > When setting up a connection between Jira and an organization in a GitHub Server Enterprise instance, you will be asked to create a custom GitHub app on your GitHub Server instance.
 
@@ -60,7 +60,7 @@ The GitHub for Jira app has `READ`, `WRITE`, and `DELETE` permissions on the Jir
 
 
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 >
 > If you use the GitHub for Jira app with a GitHub Enterprise Server instance that you control yourself, you create your own GitHub app on that server instance which means that you can define which permissions you want to give to that app.
 >
@@ -91,7 +91,7 @@ Can I choose not to send certain webhooks to the GitHub for Jira app?
 
 
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 >
 > If you use the GitHub for Jira app with a GitHub Enterprise Server instance that you control yourself, you create your own GitHub app on that server instance which means that you can define which webhooks you want to send to the GitHub for Jira app.
 > 
@@ -107,7 +107,7 @@ Yes. The GitHub for Jira app operates from a [dedicated range of IP addresses](h
 > 
 > Make sure to read through our [docs on IP allowlists](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md).
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 > 
 > If you use a self-hosted GitHub Server instance, you can restrict access to your GitHub server via any networking rules, as long as the [GitHub for Jira app’s IP addresses](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md) are allowed to access the server.
 
@@ -150,7 +150,7 @@ Currently, you cannot control in which region this data is stored by Jira (see �
 
 ## Why do I have to upload a private key?
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 > 
 > If you use the GitHub for Jira app with a GitHub Enterprise Server instance that you control yourself, you are prompted to create a GitHub app on that server. This GitHub app has a private key that will be uploaded to the GitHub for Jira app and stored in its database (see “GitHub app private key” in the table above).
 > 
@@ -179,6 +179,6 @@ Note that the GitHub for Jira app won’t work anymore when you revoke the app�
 > To remove the GitHub for Jira app’s access to your GitHub org, navigate to your GitHub org in the GitHub UI (as an org admin) and then Settings > GitHub Apps > Click “Configure” next to the “Jira” app > Click the “uninstall” button at the bottom.
 
 
-> :lock: **GitHub Server**
+> :office: **GitHub Server**
 > 
 > To remove the GitHub for Jira app’s access to your GitHub org, navigate to your GitHub org in the GitHub UI (as an org admin) and then Settings > Installed GitHub Apps > Click “Configure” next to the  app you created during configuration > Click the “uninstall” button at the bottom.
