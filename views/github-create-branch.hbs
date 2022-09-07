@@ -29,8 +29,10 @@
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
     <div class="gitHubCreateBranch__subHeader">
       Creating a branch for
-      <!--TODO: Need to add icons based on the type of issue(story/task/bug), ARC-1598 -->
-      <a href="#">KEY-1</a>
+      <span class="issueTypeImage">
+        <img src="/public/assets/{{issue.type}}.png" alt="{{issue.type}}" />
+      </span>
+      <a href="{{jiraHost}}/browse/{{issue.key}}" target="_blank">KEY-1</a>
     </div>
   </div>
 

@@ -51,3 +51,7 @@
   font-weight: 400;
   right: 4px;
 }
+
+.gitHubCreateBranch__subHeader .issueTypeImage img {
+  height: 12px;
+}
