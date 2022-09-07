@@ -1,5 +1,4 @@
 const createBranchPost = () => {
-	// Todo disable submit button
 	const url = "/github/create-branch";
 	// Todo improve this select2 get and split once we have real data coming in
 	const repoWithOwner = $("#ghRepo").select2('data').text.split(' / ');
@@ -10,9 +9,7 @@ const createBranchPost = () => {
 		newBranchName: document.getElementById('branchNameText').value,
 		_csrf: document.getElementById('_csrf').value,
 	};
-
-	$("#createBranchBtn").prop("disabled", true);
-	$("#createBranchBtn").attr("aria-disabled", "true");
+	toggleSubmitDisabled(true);
 
 	$.post(url, data)
 		.done(() => {
@@ -20,15 +17,17 @@ const createBranchPost = () => {
 			window.close();
 		})
 		.fail((err) => {
-			// TODO - RESPOND WITH APPROPRIATE FAILURE MESSAGING!
-			$("#createBranchBtn").prop("disabled", false);
-			$("#createBranchBtn").attr("aria-disabled", "false");
-			console.log(err);
+			toggleSubmitDisabled(false);
 			$(".gitHubCreateBranch__serverError").show();
 			$(".errorMessageBox__message")
 				.empty()
 				.append("Please make sure all the details you entered are correct.")
 		});
+}
+
+const toggleSubmitDisabled = (bool) => {
+	$("#createBranchBtn").prop("disabled", bool);
+	$("#createBranchBtn").attr("aria-disabled", String(bool));
 }
 
 $(document).ready(() => {
@@ -44,6 +43,5 @@ $(document).ready(() => {
 
 $('#cancelBtn').click(function (event) {
 	event.preventDefault();
-
 	window.close();
 });
