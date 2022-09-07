@@ -127,7 +127,8 @@ describe("Jira Utils", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
 		});
 
-		it("should not extract issue keys longer than 256 characters for project key or number", () => {
+		// Remove skip once ISSUEKEY_REGEX_CHAR_LIMIT is removed
+		it.skip("should not extract issue keys longer than 256 characters for project key or number", () => {
 			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10)}-1234567890`)).toEqual([]);
 			// this is the exception since it'll cut off the end of the number
 			expect(jiraIssueKeyParser(`ABCDEFGHIJKLMNOPQRSTUVWXYZ-${"1234567890".repeat(26)}`)).toEqual(["ABCDEFGHIJKLMNOPQRSTUVWXYZ-123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"]);
