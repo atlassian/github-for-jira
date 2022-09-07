@@ -114,23 +114,20 @@ class Installation:
         return Installation(d['installation_id'])
 # #############################
 
-def process_installation(env: Environment, installation: Installation) -> bool:
+def process_installation(env: Environment, installations) -> bool:
 #  TESTING CALL WORKS
 #     url = '{}/healthcheck'.format(env.github_for_jira_url)
 #     response = session.get(url);
 
     url = '{}/api/resync'.format(env.github_for_jira_url)
     print(url)
-    print(installation.installationId)
-    print(installation.installationId)
-    print(installation.installationId)
-    print(installation.installationId)
+    print(installations)
 
-    LOG.debug('Starting rotation of %s with url: %s', installation, url)
+    LOG.debug('Starting rotation of %s with url: %s', installations, url)
     response = session.post(url,
       auth=env.github_for_jira_auth,
       json={
-        "installationIds": [installation.installationId],
+        "installationIds": [installations],
         "syncType": "full",
         "statusTypes": ["FAILED", "PENDING", "ACTIVE", "COMPLETE"],
         "targetTasks": ["pull"]
@@ -139,11 +136,11 @@ def process_installation(env: Environment, installation: Installation) -> bool:
 
     if response.ok:
         LOG.info('Sync of %s successfully started: (%s).',
-                 installation, response.status_code)
+                 installations, response.status_code)
         return 'success'
     else:
         LOG.error('Sync of %s failed (%s): %s',
-                  installation, response.status_code, response.text)
+                  installations, response.status_code, response.text)
         return 'error'
 
 
@@ -165,15 +162,16 @@ def main():
 
     processed = set()
     output_file.seek(0)
-    ############################ TODO
     output_reader = csv.DictReader(output_file, fieldnames=['installation_id'])
     for row in output_reader:
         processed.add(Installation.from_dict(row))
-    ############################ TODO
     output_writer = csv.DictWriter(output_file, fieldnames=['installation_id', 'status'])
-    ############################ TODO
     input_reader = csv.DictReader(input_file, fieldnames=['installation_id'])
-    ############################ TODO
+
+    batch = []
+    batchRow = ''
+    batchCount = 0
+
     for row in input_reader:
         installation = Installation.from_dict(row)
         if installation.installationId == 'installation_id':
@@ -184,17 +182,33 @@ def main():
             # Skip already processed
             continue
 
-# INSTALLATION PROCESS IS DONE HERE
-#  todo pass a fake installation id here as a test to do it without a csv
-        status = process_installation(env, installation)
-        if status == 'error':
-            LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
-            sys.exit(1)
+        if batchRow != '':
+          batchRow += ','
 
-        processed.add(installation)
-        output_writer.writerow({'installation_id': installation.installationId, 'status': status})
+        batchRow += installation.installationId
+        batchCount += 1
+        print("current batch row", batchRow)
 
-        time.sleep(args.sleep)
+        if batchCount > 2:
+          batch.append(batchRow)
+          batchRow = ''
+          batchCount = 0
+
+    if batchCount > 0:
+        batch.push(batchRow)
+
+    print('array contains', batch)
+
+    for row in batch:
+      status = process_installation(env, row)
+      if status == 'error':
+          LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
+          sys.exit(1)
+
+      processed.add(installation)
+      output_writer.writerow({'installation_id': row, 'status': status})
+
+      time.sleep(args.sleep)
 
 
 if __name__ == '__main__':
