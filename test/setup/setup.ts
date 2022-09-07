@@ -9,6 +9,7 @@ import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { resetEnvVars, TestEnvVars } from "test/setup/env-test";
+import { GitHubConfig } from "~/src/github/client/github-client";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -23,6 +24,7 @@ export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
 declare global {
 	let jiraHost: string;
 	let gitHubAppConfig: GitHubAppConfig;
+	let gitHubCloudConfig: GitHubConfig;
 	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
@@ -43,6 +45,7 @@ declare global {
 		interface Global {
 			jiraHost: string;
 			gitHubAppConfig: GitHubAppConfig;
+			gitHubCloudConfig: GitHubConfig;
 			jiraStaginHost: string;
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
@@ -146,6 +149,12 @@ beforeEach(() => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
+	};
+	global.gitHubCloudConfig = {
+		hostname: "https://github.com",
+		baseUrl: "https://github.com",
+		apiUrl: "https://api.github.com",
+		graphqlUrl: "https://api.github.com/graphql"
 	};
 });
 
