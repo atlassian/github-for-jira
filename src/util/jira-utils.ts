@@ -71,7 +71,7 @@ onFlagChange(BooleanFlags.REGEX_FIX, async () => {
 
 let issueKeyRegexCharLimitFeature = false;
 onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, false);
+	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, false);
 });
 /**
  * Parses strings for Jira issue keys for commit messages,
