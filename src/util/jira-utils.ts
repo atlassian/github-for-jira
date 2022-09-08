@@ -104,11 +104,11 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// Regex given to us by sayans
 	let regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
 
-	if (regexFixFeature) {
+	if (issueKeyRegexCharLimitFeature) {
+		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{1,255})/giu;
+	} else if (regexFixFeature) {
 		// Old regex which was working before trying to update it to the "correct" one
 		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
-	} else if (issueKeyRegexCharLimitFeature) {
-		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{1,255})/giu;
 	}
 
 	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
