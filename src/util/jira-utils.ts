@@ -101,12 +101,12 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter, then must be at least one more unicode-digit character up to 256 length to prefix the ID
 	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
 
-	// Old regex which was working before trying to update it to the "correct" one
-	let regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
+	// Regex given to us by sayans
+	let regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
 
 	if (regexFixFeature) {
-		// Regex given to us by sayans
-		regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+		// Old regex which was working before trying to update it to the "correct" one
+		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
 	} else if (issueKeyRegexCharLimitFeature) {
 		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{1,255})/giu;
 	}
