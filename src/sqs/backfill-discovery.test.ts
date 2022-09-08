@@ -11,6 +11,8 @@ import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as UUID } from "uuid";
+import fs from "fs";
+import path from "path";
 
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
@@ -22,6 +24,9 @@ describe("Discovery Queue Test - GitHub Client", () => {
 	});
 
 	beforeEach(async () => {
+		//
+		const GHE_PEM = fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" });
+
 		await createWebhookApp();
 		const clientKey = "client-key";
 		const installation = await Installation.create({
@@ -37,7 +42,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			gitHubClientId: "ghe_client_id",
 			gitHubClientSecret: "ghe_client_secret",
 			webhookSecret: "ghe_webhook_secret",
-			privateKey: "ghe_private_key",
+			privateKey: GHE_PEM,
 			gitHubAppName: "ghe_app_name",
 			installationId: installation.id
 		});
