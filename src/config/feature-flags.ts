@@ -25,12 +25,14 @@ export enum BooleanFlags {
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor",
 	CONFIG_AS_CODE = "config-as-code",
-	CREATE_BRANCH = "create-branch"
+	CREATE_BRANCH = "create-branch",
+	USE_OUTBOUND_PROXY_SKIPLIST = "use-skiplist"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
-	LOG_LEVEL = "log-level"
+	LOG_LEVEL = "log-level",
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
 }
 
 export enum NumberFlags {
