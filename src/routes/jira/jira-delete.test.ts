@@ -24,8 +24,7 @@ describe("DELETE /jira/configuration", () => {
 			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
+			decrypt: jest.fn(() => "ghi345"),
 			subscriptions: jest.fn().mockResolvedValue([])
 		};
 
