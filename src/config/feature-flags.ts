@@ -23,10 +23,10 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor",
 	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
-	USE_OUTBOUND_PROXY_SKIPLIST = "use-skiplist"
+	USE_GITHUB_CONFIG_IN_BASE_CLIENT = "use-githubconfig-in-base-client",
+	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
 }
 
 export enum StringFlags {
