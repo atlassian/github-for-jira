@@ -25,7 +25,6 @@ export enum BooleanFlags {
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
-	USE_GITHUB_CONFIG_IN_BASE_CLIENT = "use-githubconfig-in-base-client",
 	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
 }
 
