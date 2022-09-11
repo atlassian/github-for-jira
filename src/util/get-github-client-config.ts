@@ -10,7 +10,7 @@ import * as PrivateKey from "probot/lib/private-key";
 import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubConfig } from "~/src/github/client/github-client";
 
-export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
+export const GITHUB_CLOUD_BASEURL = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
@@ -41,9 +41,9 @@ async function setupProxyConfig<T extends GitHubConfig>(config: T, logger: Logge
 		return config;
 	}
 
-	const skipList = await stringFlag(StringFlags.OUTBOUND_PROXY_SKIPLIST, "", jiraHost);
-	let skipOutboundProxy = false;
-	if (gitHubBaseUrl) {
+	if (gitHubBaseUrl && gitHubBaseUrl != GITHUB_CLOUD_BASEURL) {
+		const skipList = await stringFlag(StringFlags.OUTBOUND_PROXY_SKIPLIST, "", jiraHost);
+		let skipOutboundProxy;
 		try {
 			skipOutboundProxy = skipList
 				.split(',')
@@ -56,9 +56,9 @@ async function setupProxyConfig<T extends GitHubConfig>(config: T, logger: Logge
 			logger.error({ err }, "Cannot evaluate skiplist because of a error, opting for outboundproxy for good");
 			skipOutboundProxy = false;
 		}
-	}
-	if (skipOutboundProxy) {
-		return config;
+		if (skipOutboundProxy) {
+			return config;
+		}
 	}
 	config.proxyBaseUrl = envVars.PROXY;
 	return config;
@@ -85,7 +85,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 		throw new Error("Private key not found for github cloud");
 	}
 	return setupProxyConfig({
-		hostname: GITHUB_CLOUD_HOSTNAME,
+		hostname: GITHUB_CLOUD_BASEURL,
 		baseUrl: GITHUB_CLOUD_API_BASEURL,
 		apiUrl: GITHUB_CLOUD_API_BASEURL,
 		graphqlUrl: `${GITHUB_CLOUD_API_BASEURL}/graphql`,
