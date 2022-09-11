@@ -165,6 +165,7 @@ export const GithubWebhookMiddleware = (
 		}
 
 		context.log.info(
+			{ gitHubProduct },
 			`Processing event for ${subscriptions.length} jira instances`
 		);
 

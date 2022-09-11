@@ -313,7 +313,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			scheduleNextTask
 		);
 
-
 		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
 
 	} catch (err) {

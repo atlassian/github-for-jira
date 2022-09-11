@@ -8,16 +8,14 @@ import { GitHubAppClient } from "../github/client/github-app-client";
 import { envVars } from "~/src/config/env";
 import * as PrivateKey from "probot/lib/private-key";
 import { keyLocator } from "~/src/github/client/key-locator";
+import { GitHubConfig } from "~/src/github/client/github-client";
 
 export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
-export interface GitHubClientConfig {
+interface GitHubClientConfig extends GitHubConfig {
 	serverId?: number;
-	hostname: string;
-	baseUrl: string;
-	apiUrl: string;
 	appId: number;
 	privateKey: string;
 	gitHubClientId: string;
@@ -39,6 +37,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			baseUrl: gitHubServerApp.gitHubBaseUrl,
 			apiUrl: `${gitHubServerApp.gitHubBaseUrl}/api/v3`,
+			graphqlUrl: `${gitHubServerApp.gitHubBaseUrl}/api/graphql`,
 			appId: gitHubServerApp.appId,
 			gitHubClientId: gitHubServerApp.gitHubClientId,
 			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
@@ -54,6 +53,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_API_BASEURL,
 		apiUrl: GITHUB_CLOUD_API_BASEURL,
+		graphqlUrl: `${GITHUB_CLOUD_API_BASEURL}/graphql`,
 		appId: parseInt(envVars.APP_ID),
 		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -75,8 +75,8 @@ export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
 export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
-		? new GitHubAppClient(logger, gitHubClientConfig.baseUrl, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
-		: new GitHubAppClient(logger);
+		? new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
+		: new GitHubAppClient(gitHubClientConfig, logger);
 }
 
 /**
@@ -84,12 +84,11 @@ export async function createAppClient(logger: Logger, jiraHost: string, gitHubAp
  * information specific to an organization.
  */
 export async function createInstallationClient(gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> {
-
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
-		const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), logger, gitHubClientConfig.baseUrl, gitHubClientConfig.serverId);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);
 	} else {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), logger);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, logger);
 	}
 }
 
@@ -98,7 +97,5 @@ export async function createInstallationClient(gitHubInstallationId: number, jir
  */
 export async function createUserClient(githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
-		? new GitHubUserClient(githubToken, logger, gitHubClientConfig.baseUrl)
-		: new GitHubUserClient(githubToken, logger);
+	return new GitHubUserClient(githubToken, gitHubClientConfig, logger);
 }

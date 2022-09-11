@@ -46,7 +46,7 @@ export const getPullRequestTask = async (
 	cursor: string | number = 1,
 	perPage?: number
 ) => {
-	logger.info("Syncing PRs: started");
+	logger.debug("Syncing PRs: started");
 
 	cursor = Number(cursor);
 	const startTime = Date.now();
@@ -98,7 +98,7 @@ export const getPullRequestTask = async (
 		)
 	).filter((value) => !!value);
 
-	logger.info("Syncing PRs: finished");
+	logger.debug("Syncing PRs: finished");
 
 	return {
 		edges: edgesWithCursor,

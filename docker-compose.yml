@@ -21,12 +21,14 @@ services:
     command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
-    image: localstack/localstack:0.14.2
+    image: localstack/localstack:1.0.4
     container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
-      - SERVICES=sqs
-#      - DEBUG=1 # Uncomment to debug SQS
+      - LAMBDA_REMOTE_DOCKER=false
+      - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
+      - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
+#      - DEBUG=1 # Uncomment to debug
     ports:
       - "4566:4566"
     volumes:

@@ -1,15 +1,10 @@
 /* eslint-disable jest/no-done-callback,@typescript-eslint/no-explicit-any */
 import { SqsQueue } from "./sqs";
 import { v4 as uuidv4 } from "uuid";
-import { envVars }  from "config/env";
 import { waitUntil } from "test/utils/wait-until";
 import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { Request as AwsRequest } from "aws-sdk";
-
-const TEST_QUEUE_URL = envVars.SQS_TEST_QUEUE_URL;
-const TEST_QUEUE_REGION = envVars.SQS_TEST_QUEUE_REGION;
-const TEST_QUEUE_NAME = "test";
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -20,9 +15,15 @@ describe("SQS", () => {
 	let queue: SqsQueue<unknown>;
 	let payload;
 
+	let TEST_QUEUE_URL:string;
+	let TEST_QUEUE_REGION:string;
+	const TEST_QUEUE_NAME = "test";
+
 	let createSqsQueue: (timeout: number, maxAttempts?: number) => SqsQueue<unknown>;
 
 	beforeEach(() => {
+		TEST_QUEUE_URL = testEnvVars.SQS_TEST_QUEUE_URL;
+		TEST_QUEUE_REGION = testEnvVars.SQS_TEST_QUEUE_REGION;
 		mockRequestHandler = jest.fn();
 		mockErrorHandler = jest.fn();
 		testMaxQueueAttempts = 3;
@@ -86,7 +87,7 @@ describe("SQS", () => {
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 123423453);
 
-			expect(sendMessageSpy).toBeCalledWithDelaySec(899);
+			await expect(sendMessageSpy).toBeCalledWithDelaySec(899);
 		});
 
 		it("Message send with the specified delay", async () => {
@@ -96,7 +97,7 @@ describe("SQS", () => {
 			sendMessageSpy.mockReturnValue(request);
 			await queue.sendMessage(payload, 64);
 
-			expect(sendMessageSpy).toBeCalledWithDelaySec(64);
+			await expect(sendMessageSpy).toBeCalledWithDelaySec(64);
 		});
 
 		it("Message gets executed exactly once", async () => {

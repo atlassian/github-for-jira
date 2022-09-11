@@ -15,7 +15,7 @@ describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
 		let instanceName: string;
 		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
-		afterEach(() => envVars.INSTANCE_NAME = instanceName);
+		afterEach(() => process.env.INSTANCE_NAME = instanceName);
 
 		it("should return the correct default URL", () => {
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.test-atlassian-instance/github-post-install-page`);
@@ -23,7 +23,7 @@ describe("Jira Utils", () => {
 		});
 
 		it("should return the correct URL for different INSTANCE_NAME", () => {
-			envVars.INSTANCE_NAME = "foo";
+			process.env.INSTANCE_NAME = "foo";
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.foo/github-post-install-page`);
 		});
 

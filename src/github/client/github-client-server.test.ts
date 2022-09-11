@@ -84,8 +84,13 @@ describe("GitHub Client", () => {
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),
-			getLogger("test"),
-			"https://github.mydomain.com"
+			{
+				hostname: gheUrl,
+				baseUrl: gheUrl,
+				apiUrl: gheApiUrl,
+				graphqlUrl: gheApiUrl  + "/graphql"
+			},
+			getLogger("test")
 		);
 
 		const pullrequests = await client.getPullRequests(owner, repo, {

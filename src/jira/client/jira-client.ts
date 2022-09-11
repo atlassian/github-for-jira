@@ -9,7 +9,8 @@ import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptio
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
+import { shouldTagBackfillRequests } from "config/feature-flags";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -35,7 +36,8 @@ export const getJiraClient = async (
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
 
 	if (!installation) {
@@ -44,9 +46,7 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, jiraHost)
-			? await installation.decrypt("encryptedSharedSecret")
-			: installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		logger
 	);
 
@@ -265,7 +265,7 @@ export const getJiraClient = async (
 					};
 				}
 				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
-				logger?.info("Sending builds payload to jira.");
+				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
@@ -299,7 +299,7 @@ export const getJiraClient = async (
 					};
 				}
 				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
-				logger?.info("Sending deployments payload to jira.");
+				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 				return {
 					status: response.status,

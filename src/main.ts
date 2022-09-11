@@ -34,5 +34,6 @@ if (isNodeProd()) {
 	});
 } else {
 	// Dev/test single process, don't need clustering
+	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	start();
 }
