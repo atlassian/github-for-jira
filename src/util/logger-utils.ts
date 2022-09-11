@@ -9,7 +9,6 @@ const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
 
-//TODO Remove this code when there will be convenient way to do it in Probot.
 //  See https://github.com/probot/probot/issues/1577
 export const filterHttpRequests = (record: Record<string, any>, filteredLoggerName: string) => {
 	const { msg, name } = record;
