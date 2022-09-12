@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { githubToken } = res.locals;
 
-	if (!githubToken || !jiraHost) {
+	if (!githubToken) {
 		res.sendStatus(401);
 		return;
 	}

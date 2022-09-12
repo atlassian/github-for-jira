@@ -379,3 +379,23 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
     }
   }
 }`;
+
+export const searchRepositoriesQuery = `query($query_string: String!, $number_of_repos: Int!) {
+  search(
+    type:REPOSITORY, 
+    query: $query_string,
+    first: $number_of_repos
+  ) {
+    repos: edges {
+      repo: node {
+        ... on Repository {
+          nameWithOwner
+          defaultBranchRef {
+          	name
+          }
+        }
+      }
+    }
+  }
+}
+`;
