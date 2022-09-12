@@ -13,8 +13,10 @@ Input file format:
     12345
 
 Running the script:
+    $ python3 ./resync-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ]--input [ input-file-name.csv ] --output [ output-file-name.csv ]
 
-    $ python3 ./resync-from-csv.py --env staging --sleep 1 --input installations.csv --output output.csv
+Example
+    $ python3 ./resync-from-csv.py --env staging --sleep 1 --input stg-installations.csv --output output.csv
 
 First time setup:
 
@@ -104,7 +106,6 @@ def create_environment(env: str) -> Environment:
     else:
         raise ValueError(f'Invalid environment {env}')
 
-#  PROBS REMOVE THIS
 @dataclass(frozen=True)
 class Installation:
     installationId: str
@@ -112,22 +113,18 @@ class Installation:
     @staticmethod
     def from_dict(d):
         return Installation(d['installation_id'])
-# #############################
 
-def process_installation(env: Environment, installations) -> bool:
-#  TESTING CALL WORKS
-#     url = '{}/healthcheck'.format(env.github_for_jira_url)
-#     response = session.get(url);
-
+def process_installation(env: Environment, installationsString) -> bool:
     url = '{}/api/resync'.format(env.github_for_jira_url)
-    print(url)
-    print(installations)
+
+#   Convert the string of ids to a actual integer list
+    installations = map(lambda x: int(x), installationsString.split(','))
 
     LOG.debug('Starting rotation of %s with url: %s', installations, url)
     response = session.post(url,
       auth=env.github_for_jira_auth,
       json={
-        "installationIds": [installations],
+        "installationIds": list(installations),
         "syncType": "full",
         "statusTypes": ["FAILED", "PENDING", "ACTIVE", "COMPLETE"],
         "targetTasks": ["pull"]
@@ -147,7 +144,7 @@ def process_installation(env: Environment, installations) -> bool:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', choices=('dev', 'staging', 'prod'), required=True)
-    parser.add_argument('--batch-size', default=10, type=float, help='How many installations to process each iteration')
+    parser.add_argument('--batchsize', default=10, type=float, help='How many installations to process each iteration')
     parser.add_argument('--input', type=argparse.FileType('r'), required=True)
     parser.add_argument('--output', type=argparse.FileType('a+'), required=True)
     parser.add_argument('--sleep', type=float, help='How long to wait between requests in seconds', required=True)
@@ -189,15 +186,13 @@ def main():
         batchCount += 1
         print("current batch row", batchRow)
 
-        if batchCount > 2:
+        if batchCount > args.batchsize:
           batch.append(batchRow)
           batchRow = ''
           batchCount = 0
 
     if batchCount > 0:
-        batch.push(batchRow)
-
-    print('array contains', batch)
+        batch.append(batchRow)
 
     for row in batch:
       status = process_installation(env, row)
