@@ -380,11 +380,13 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
   }
 }`;
 
-export const searchRepositoriesQuery = `query($query_string: String!, $number_of_repos: Int!) {
+export const SearchRepositoriesQuery = `query($query_string: String!, $per_page: Int!, $cursor: String) {
   search(
     type:REPOSITORY, 
+    in
     query: $query_string,
-    first: $number_of_repos
+    first: $per_page,
+    after: $cursor
   ) {
     repos: edges {
       repo: node {

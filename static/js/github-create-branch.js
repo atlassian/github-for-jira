@@ -55,7 +55,7 @@ $(document).ready(() => {
     } else if (parentContainer.hasClass("aui-select2-dropdown-repo")) {
 			$.ajax({
 				type: "GET",
-				url: "/github/repository",
+				url: "/github/repository?repoName=" + userInput,
 				success: (response) => {
 					console.log("Repositories: ", response);
 				}
