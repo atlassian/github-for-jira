@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper, concatStringHelper } from "./handlebar-helpers";
+import {
+	replaceSpaceWithHyphenHelper,
+	toLowercaseHelper,
+	concatStringHelper,
+	replaceNonAlphaNumericWithHyphenHelper
+} from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -50,6 +55,24 @@ describe("Handlebar Helpers", () => {
 			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
 			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
 			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
+		});
+	});
+
+	describe("replaceNonAlphaNumericWithHyphenHelper", () => {
+		it("should return empty string with no parameter", () => {
+			expect(replaceNonAlphaNumericWithHyphenHelper()).toEqual("");
+		});
+
+		it("should return empty string with non stringifyable or falsy parameter", () => {
+			expect(replaceNonAlphaNumericWithHyphenHelper(undefined)).toEqual("");
+			expect(replaceNonAlphaNumericWithHyphenHelper(null as any)).toEqual("");
+			expect(replaceNonAlphaNumericWithHyphenHelper({} as any)).toEqual("");
+		});
+
+		it("should return the string without any special characters", () => {
+			expect(replaceNonAlphaNumericWithHyphenHelper("all%!@star")).toEqual("allstar");
+			expect(replaceNonAlphaNumericWithHyphenHelper("!@#$%^&*()_+abcd")).toEqual("abcd");
+			expect(replaceNonAlphaNumericWithHyphenHelper("a!b@c#d$e%f^g&h*i(j)l_m+")).toEqual("abcdefghijlm");
 		});
 	});
 });
