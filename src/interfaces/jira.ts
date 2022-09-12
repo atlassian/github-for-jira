@@ -94,10 +94,19 @@ export interface JiraIssue {
 
 export interface JiraCommitFile {
 	path: string;
-	changeType: string;
-	linesAdded?: string[];
-	linesRemoved?: string[];
+	changeType: JiraCommitFileChangeTypeEnum;
+	linesAdded: number;
+	linesRemoved: number;
 	url: string;
+}
+
+export enum JiraCommitFileChangeTypeEnum {
+	ADDED,
+	COPIED,
+	DELETED,
+	MODIFIED,
+	MOVED,
+	UNKNOWN
 }
 
 export interface JiraAuthor {
