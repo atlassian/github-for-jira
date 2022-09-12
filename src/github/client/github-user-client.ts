@@ -7,6 +7,7 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
+import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -56,6 +57,19 @@ export class GitHubUserClient extends GitHubClient {
 
 	public async getUser(): Promise<AxiosResponse<Octokit.UsersGetAuthenticatedResponse>> {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
+	}
+
+	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {}, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch repositories");
+			throw err;
+		}
 	}
 
 	public getMembershipForOrg = async (org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
