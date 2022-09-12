@@ -24,12 +24,14 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CONFIG_AS_CODE = "config-as-code",
-	CREATE_BRANCH = "create-branch"
+	CREATE_BRANCH = "create-branch",
+	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
-	LOG_LEVEL = "log-level"
+	LOG_LEVEL = "log-level",
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
 }
 
 export enum NumberFlags {
