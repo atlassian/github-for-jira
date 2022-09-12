@@ -15,7 +15,6 @@ import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -237,21 +236,19 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 
 	let config: Config | undefined;
 
-	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
-		if (subscription) {
-			config = await getRepoConfig(
-				subscription,
-				githubInstallationClient.githubInstallationId,
-				payload.repository.id,
-				payload.repository.owner.login,
-				payload.repository.name);
-		} else {
-			logger.warn({
-				jiraHost,
-				githubInstallationId: githubInstallationClient.githubInstallationId.installationId
-			}, "could not find subscription - not using user config to map environments!");
-		}
+	const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
+	if (subscription) {
+		config = await getRepoConfig(
+			subscription,
+			githubInstallationClient.githubInstallationId,
+			payload.repository.id,
+			payload.repository.owner.login,
+			payload.repository.name);
+	} else {
+		logger.warn({
+			jiraHost,
+			githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+		}, "could not find subscription - not using user config to map environments!");
 	}
 
 	const environment = mapEnvironment(deployment_status.environment, config);
