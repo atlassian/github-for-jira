@@ -1,13 +1,13 @@
 const createBranchPost = () => {
 	const url = "/github/create-branch";
 	// Todo improve this select2 get and split once we have real data coming in
-	const repoWithOwner = $("#ghRepo").select2('data').text.split(' / ');
+	const repoWithOwner = $("#ghRepo").select2('data').text.split('/');
 	const data = {
 		owner: repoWithOwner[0],
 		repo: repoWithOwner[1],
-		sourceBranchName: document.getElementById('ghParentBranch').value,
-		newBranchName: document.getElementById('branchNameText').value,
-		_csrf: document.getElementById('_csrf').value,
+		sourceBranchName: $("#ghParentBranch").select2('data').text,
+		newBranchName: $('#branchNameText').val(),
+		_csrf: $('#_csrf').val(),
 	};
 	toggleSubmitDisabled(true);
 

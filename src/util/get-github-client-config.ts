@@ -29,7 +29,7 @@ export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number) {
 		: GITHUB_CLOUD_API_BASEURL;
 }
 
-export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost?: string): Promise<GitHubClientConfig> => {
+export const getGitHubClientConfigFromAppId = async (gitHubAppId?: number, jiraHost?: string): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
 		return	{
@@ -72,7 +72,7 @@ export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
+export async function createAppClient(logger: Logger, jiraHost?: string, gitHubAppId?: number): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
 		? new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
