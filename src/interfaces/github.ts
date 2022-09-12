@@ -231,6 +231,9 @@ interface GitHubInstallation {
 interface GitHubCommit {
 	id: string;
 	message: string;
+	added: string[];
+	modified: string[];
+	removed: string[];
 }
 
 export interface GitHubPushData {
