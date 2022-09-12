@@ -7,18 +7,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		githubToken
 	} = res.locals;
 
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log(req);
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log('res.locals');
-	console.log(res);
-
-
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
