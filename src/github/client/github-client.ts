@@ -2,6 +2,7 @@ import Logger from "bunyan";
 import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { envVars } from "config/env";
+import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
@@ -11,6 +12,7 @@ export interface GitHubConfig {
 	baseUrl: string;
 	apiUrl: string;
 	graphqlUrl: string;
+	proxyBaseUrl?: string;
 }
 
 /**
@@ -36,10 +38,11 @@ export class GitHubClient {
 			transitional: {
 				clarifyTimeoutError: true
 			},
-			... this.getProxyConfig(this.restApiUrl)
+			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : this.getProxyConfig(this.restApiUrl))
 		});
 	}
 
+	// will be removed once the FF is removed
 	public getProxyConfig = (baseUrl: string): Partial<AxiosRequestConfig> => {
 		if (new URL(baseUrl).host.endsWith("atlassian.com")) {
 			return this.noProxyConfig();
@@ -47,6 +50,7 @@ export class GitHubClient {
 		return this.outboundProxyConfig();
 	};
 
+	// will be removed once the FF is removed
 	private noProxyConfig = (): Partial<AxiosRequestConfig> => {
 		return {
 			// Not strictly necessary to set the agent to undefined, just to make it visible.
@@ -55,6 +59,7 @@ export class GitHubClient {
 		};
 	};
 
+	// will be removed once the FF is removed
 	private outboundProxyConfig = (): Partial<AxiosRequestConfig> => {
 		const outboundProxyHttpsAgent = envVars.PROXY ? new HttpsProxyAgent(envVars.PROXY) : undefined;
 		return {
@@ -86,5 +91,19 @@ export class GitHubClient {
 		}
 
 		return response;
+	}
+
+	private buildProxyConfig(proxyBaseUrl: string): Partial<AxiosRequestConfig> {
+		this.logger.info("Using outbound proxy"); // temp logging while FF is not removed to make sure this path is working
+		const proxyHttpAgent = new HttpProxyAgent(proxyBaseUrl);
+		const proxyHttpsAgent = new HttpsProxyAgent(proxyBaseUrl);
+		return {
+			// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
+			// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to
+			// create an Http(s?)ProxyAgent and set the `proxy` option to false.
+			httpAgent: proxyHttpAgent,
+			httpsAgent: proxyHttpsAgent,
+			proxy: false
+		};
 	}
 }

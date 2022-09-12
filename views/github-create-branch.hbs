@@ -61,7 +61,10 @@
     <div class="field-group">
       <aui-label for="branch-name">Branch name</aui-label>
       <input class="text full-width-field" type="text" data-aui-validation-field required name="branch-name"
-             value="{{issue.branchName}}" placeholder="Enter branch name"/>
+        placeholder="Enter branch name" data-aui-validation-pattern="\w*{{issue.key}}\w*"
+        data-aui-validation-required-msg="This field is required."
+        data-aui-validation-pattern-msg="The issue key does not match the selected issue." />
+        value="{{issue.branchName}}" placeholder="Enter branch name"/>
     </div>
 
     <div class="gitHubCreateBranch__actions">
