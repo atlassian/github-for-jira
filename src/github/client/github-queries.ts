@@ -382,8 +382,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
 
 export const SearchRepositoriesQuery = `query($query_string: String!, $per_page: Int!, $cursor: String) {
   search(
-    type:REPOSITORY, 
-    in
+    type: REPOSITORY, 
     query: $query_string,
     first: $per_page,
     after: $cursor
