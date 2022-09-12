@@ -19,8 +19,8 @@ export const filterHttpRequests = (record: Record<string, any>, filteredLoggerNa
 };
 
 class RawLogStream extends Writable {
-	private readonly  filteredHttpLoggerName: string;
-	private writeStream: NodeJS.WritableStream;
+	private readonly filteredHttpLoggerName: string;
+	private readonly writeStream: NodeJS.WritableStream;
 
 	public constructor(filteredHttpLoggerName: string) {
 		super({ objectMode: true });
@@ -53,11 +53,13 @@ export class SafeRawLogStream extends RawLogStream {
 
 	private hashSensitiveData(record: Record<string, any>): Record<string, string | undefined> {
 		const recordClone = { ...record };
+
 		Object.keys(recordClone).forEach(key => {
 			if (SENSITIVE_DATA_FIELDS.includes(key)) {
 				recordClone[key] = createHashWithSharedSecret(recordClone[key]);
 			}
 		});
+
 		return recordClone;
 	}
 }
