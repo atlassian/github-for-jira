@@ -13,7 +13,10 @@ describe("Enqueue push", () => {
 			repository: {} as GitHubRepository,
 			commits: [{
 				id: "c123",
-				message: "ARC-0001 some message"
+				message: "ARC-0001 some message",
+				added: [],
+				modified: [],
+				removed: []
 			}]
 		}, jiraHost, {
 			gitHubAppId: 1,
