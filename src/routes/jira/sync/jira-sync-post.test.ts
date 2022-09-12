@@ -60,7 +60,7 @@ describe("sync", () => {
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
 			iss: jiraHost
-		}, installation.sharedSecret);
+		}, await installation.decrypt("encryptedSharedSecret"));
 	});
 
 	it("should return 200 on correct post for /jira/sync for Cloud app", async () => {
