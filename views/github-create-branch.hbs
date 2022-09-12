@@ -30,7 +30,7 @@
     <div class="gitHubCreateBranch__subHeader">
       Creating a branch for
       <!--TODO: Need to add icons based on the type of issue(story/task/bug), ARC-1598 -->
-      <a href="#">KEY-1</a>
+      <a href="#">{{issue.key}}</a>
     </div>
   </div>
 
@@ -66,6 +66,7 @@
         placeholder="Enter branch name" data-aui-validation-pattern="\w*{{issue.key}}\w*"
         data-aui-validation-required-msg="This field is required."
         data-aui-validation-pattern-msg="The issue key does not match the selected issue." />
+        value="{{issue.branchName}}" placeholder="Enter branch name"/>
     </div>
 
     <div class="gitHubCreateBranch__actions">
