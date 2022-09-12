@@ -3,7 +3,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { GitHubPushData, GitHubRepository } from "../interfaces/github";
 import { enqueuePush } from "../transforms/push";
-import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
 import { Subscription } from "models/subscription";
 
@@ -36,7 +36,7 @@ describe("PushWebhookHandler", ()=>{
 				gitHubAppId: undefined,
 				appId: parseInt(envVars.APP_ID),
 				clientId: envVars.GITHUB_CLIENT_ID,
-				gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 			});
 		});
@@ -81,7 +81,7 @@ describe("PushWebhookHandler", ()=>{
 				gitHubAppId: undefined,
 				appId: parseInt(envVars.APP_ID),
 				clientId: envVars.GITHUB_CLIENT_ID,
-				gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 			} : {
 				uuid: GHES_GITHUB_UUID,
