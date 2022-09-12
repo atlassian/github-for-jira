@@ -168,21 +168,21 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-					commits: [
-						{
-							commit: {
-								message: "ABC-1"
-							},
-							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
 						},
-						{
-							commit: {
-								message: "ABC-2"
-							},
-							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
-						}
-					]
-				}
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+					}
+				]
+			}
 			);
 
 		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
@@ -279,15 +279,15 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-					commits: [
-						{
-							commit: {
-								message: commitMessage
-							},
-							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
-						}
-					]
-				}
+				commits: [
+					{
+						commit: {
+							message: commitMessage
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+					}
+				]
+			}
 			);
 
 		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
@@ -377,21 +377,21 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-					commits: [
-						{
-							commit: {
-								message: "ABC-1"
-							},
-							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+				commits: [
+					{
+						commit: {
+							message: "ABC-1"
 						},
-						{
-							commit: {
-								message: "ABC-2"
-							},
-							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
-						}
-					]
-				}
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+					},
+					{
+						commit: {
+							message: "ABC-2"
+						},
+						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+					}
+				]
+			}
 			);
 
 		when(getRepoConfig).calledWith(
