@@ -27,6 +27,12 @@ export interface GetRepositoriesResponse {
 	};
 }
 
+export interface SearchedRepositoriesResponse {
+	search: {
+		repos: RepositoryNode[]
+	};
+}
+
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
   viewer {
     repositories(first: $per_page, after: $cursor) {
@@ -391,9 +397,7 @@ export const SearchRepositoriesQuery = `query($query_string: String!, $per_page:
       repo: node {
         ... on Repository {
           nameWithOwner
-          defaultBranchRef {
-          	name
-          }
+          name
         }
       }
     }

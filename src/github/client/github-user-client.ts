@@ -9,7 +9,7 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesQuery,
-	GetRepositoriesResponse,
+	GetRepositoriesResponse, SearchedRepositoriesResponse,
 	SearchRepositoriesQuery
 } from "~/src/github/client/github-queries";
 
@@ -76,9 +76,9 @@ export class GitHubUserClient extends GitHubClient {
 		}
 	}
 
-	public async searchUserRepositories(query_string: string, per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
+	public async searchUserRepositories(query_string: string, per_page = 20, cursor?: string): Promise<SearchedRepositoriesResponse> {
 		try {
-			const response = await this.graphql<any>(SearchRepositoriesQuery, {}, {
+			const response = await this.graphql<SearchedRepositoriesResponse>(SearchRepositoriesQuery, {}, {
 				query_string,
 				per_page,
 				cursor

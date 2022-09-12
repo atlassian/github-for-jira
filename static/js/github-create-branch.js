@@ -57,7 +57,8 @@ $(document).ready(() => {
 				type: "GET",
 				url: "/github/repository?repoName=" + userInput,
 				success: (response) => {
-					console.log("Repositories: ", response);
+					const { respositories } = response;
+					console.log("respositories: ", respositories);
 				}
 			})
     } else {

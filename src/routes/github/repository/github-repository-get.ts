@@ -17,9 +17,9 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 
 	try {
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-
+		const searchedRepos = await gitHubUserClient.searchUserRepositories(repoName as string);
 		res.send({
-			repositories: await gitHubUserClient.searchUserRepositories(repoName as string)
+			repositories: searchedRepos.search.repos
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
