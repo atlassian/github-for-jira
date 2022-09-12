@@ -9,7 +9,6 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { Subscription } from "models/subscription";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
@@ -169,21 +168,21 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-				commits: [
-					{
-						commit: {
-							message: "ABC-1"
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
 						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
-					},
-					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
-					}
-				]
-			}
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				}
 			);
 
 		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
@@ -280,15 +279,15 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-				commits: [
-					{
-						commit: {
-							message: commitMessage
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
-					}
-				]
-			}
+					commits: [
+						{
+							commit: {
+								message: commitMessage
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						}
+					]
+				}
 			);
 
 		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
@@ -378,28 +377,22 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		// Compare commits
 		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
 			.reply(200, {
-				commits: [
-					{
-						commit: {
-							message: "ABC-1"
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
 						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
-					},
-					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
-					}
-				]
-			}
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				}
 			);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.CONFIG_AS_CODE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 		when(getRepoConfig).calledWith(
 			expect.anything(),
@@ -412,93 +405,5 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 		expect(jiraPayload?.deployments[0].environment.type).toBe("development");
 	});
-
-	it(`does NOT use user config to map environment when FF is disabled`, async () => {
-
-		await Subscription.create({
-			gitHubInstallationId: TEST_INSTALLATION_ID,
-			jiraHost: "testing.atlassian.net",
-			jiraClientKey: "client-key"
-		});
-
-		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-
-		// Mocking all GitHub API Calls
-		// Get commit
-		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				...owner,
-				commit: {
-					message: "testing"
-				}
-			});
-
-		// List deployments
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
-			.reply(200,
-				[
-					{
-						id: 1,
-						environment: "foo42",
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					}
-				]
-			);
-
-		// List deployments statuses
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
-			.reply(200, [
-				{
-					id: 1,
-					state: "pending"
-				},
-				{
-					id: 2,
-					state: "success"
-				}
-			]);
-
-		// Compare commits
-		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				commits: [
-					{
-						commit: {
-							message: "ABC-1"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
-					},
-					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
-					}
-				]
-			}
-			);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.CONFIG_AS_CODE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
-
-		when(getRepoConfig).calledWith(
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(mockConfig);
-
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
-		expect(jiraPayload?.deployments[0].environment.type).toBe("unmapped");
-	});
-
 
 });
