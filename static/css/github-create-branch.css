@@ -1,7 +1,6 @@
 .gitHubCreateBranch {
-  margin: auto;
+  margin: 10% auto;
   max-width: 480px;
-  height: 100vh;
 }
 
 #createBranchForm .field-group {
