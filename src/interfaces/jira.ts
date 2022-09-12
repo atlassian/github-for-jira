@@ -101,12 +101,12 @@ export interface JiraCommitFile {
 }
 
 export enum JiraCommitFileChangeTypeEnum {
-	ADDED,
-	COPIED,
-	DELETED,
-	MODIFIED,
-	MOVED,
-	UNKNOWN
+	ADDED = "ADDED",
+	COPIED = "COPIED",
+	DELETED = "DELETED",
+	MODIFIED = "MODIFIED",
+	MOVED = "MOVED",
+	UNKNOWN = "UNKNOWN"
 }
 
 export interface JiraAuthor {

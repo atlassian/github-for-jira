@@ -37,7 +37,7 @@ const mapFile = (
 	}
 
 	return {
-		path: githubFile.filename,
+		path: githubFile.filename.slice(0, 1024), // max length 1024
 		changeType: mapStatus[githubFile.status] || JiraCommitFileChangeTypeEnum.UNKNOWN,
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
