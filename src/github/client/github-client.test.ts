@@ -50,6 +50,17 @@ describe("GitHub Client", () => {
 		expect(outboundProxyConfig.httpsAgent).toBeUndefined();
 	});
 
+	it("uses proxy when provided", async () => {
+		new TestGitHubClient({
+			... gitHubCloudConfig,
+			proxyBaseUrl: 'http://proxy.com'
+		});
+		const calls = (axios.default.create as jest.Mock).mock.calls[0];
+		expect(calls[0].proxy).toBeFalsy();
+		expect(calls[0].httpAgent.proxy.host).toEqual('proxy.com');
+		expect(calls[0].httpsAgent.proxy.host).toEqual('proxy.com');
+	});
+
 	describe('config object', () => {
 		const TEST_API_URL = 'http://api.myBaseUrl.com';
 		const TEST_GRAPHQL_URL = 'http://graphql.myBaseUrl.com';
