@@ -55,3 +55,11 @@
 .gitHubCreateBranch__subHeader .issueTypeImage img {
   height: 12px;
 }
+.gitHubCreateBranch__serverError {
+  display: none;
+  margin-top: 2.5em;
+}
+
+.gitHubCreateBranch__serverError .errorMessageBox__container {
+  align-items: center;
+}

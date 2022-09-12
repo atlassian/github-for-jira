@@ -142,7 +142,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(jiraHost, gitHubAppId);
+		const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
 		await axios.get(url, {
 			headers: {
 				Authorization: `Bearer ${githubToken}`

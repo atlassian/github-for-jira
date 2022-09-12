@@ -3,6 +3,7 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
+import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -10,6 +11,7 @@ describe("GitHub Create Branch Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
+			req.query = { issue_key: "1", issue_summary: "random-string" };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -37,6 +39,10 @@ describe("GitHub Create Branch Get", () => {
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
+			githubNock
+				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
+				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",

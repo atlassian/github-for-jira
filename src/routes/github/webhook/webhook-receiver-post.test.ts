@@ -9,7 +9,7 @@ import { deleteRepository } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
 import { envVars } from "config/env";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
@@ -30,7 +30,7 @@ describe("webhook-receiver-post", () => {
 			gitHubAppId: undefined,
 			appId: parseInt(envVars.APP_ID),
 			clientId: envVars.GITHUB_CLIENT_ID,
-			gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 			uuid: undefined
 		};
