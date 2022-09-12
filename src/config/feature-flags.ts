@@ -16,7 +16,6 @@ export enum BooleanFlags {
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	LOG_UNSAFE_DATA = "log-unsafe-data",
-	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	RETRY_ALL_ERRORS = "retry-all-errors",
