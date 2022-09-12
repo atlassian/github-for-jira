@@ -82,13 +82,12 @@ export class Installation extends EncryptedModel {
 	 */
 	static async install(payload: InstallationPayload): Promise<Installation> {
 		const  ffWriteNewColOnly = await writeOnlyToNewSecretCol(payload.host);
-
 		try {
 			const [installation, created] = await this.findOrCreate({
 				where: {
 					clientKey: getHashedKey(payload.clientKey)
 				},
-				defaults: await writeOnlyToNewSecretCol(payload.host) ? {
+				defaults: ffWriteNewColOnly ? {
 					jiraHost: payload.host,
 					encryptedSharedSecret: payload.sharedSecret //write as plain text, hook will encrypt it
 				}: {
@@ -98,11 +97,11 @@ export class Installation extends EncryptedModel {
 			});
 			if (!created) {
 				await installation
-					.update(await writeOnlyToNewSecretCol(payload.host) ? {
-						sharedSecret: payload.sharedSecret,
+					.update(ffWriteNewColOnly ? {
+						encryptedSharedSecret: payload.sharedSecret,
 						jiraHost: payload.host
 					} : {
-						encryptedSharedSecret: payload.sharedSecret,  //write as plain text, hook will encrypt it
+						sharedSecret: payload.sharedSecret,  //write as plain text, hook will encrypt it
 						jiraHost: payload.host
 					})
 					.then(async (record) => {
@@ -118,10 +117,10 @@ export class Installation extends EncryptedModel {
 						return installation;
 					});
 			}
-			logger.info(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`) //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
+			logger.info(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`); //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
 			return installation;
 		} catch (e) {
-			logger.error(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`, e) //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
+			logger.error(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`, e); //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
 			throw e;
 		}
 	}
@@ -164,8 +163,8 @@ Installation.init({
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
 			const ffWriteNewColOnly = await writeOnlyToNewSecretCol();
-			if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret")) {
-				//Always cope the sharedSecret to encryptedSharedSecret
+			if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
+				//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
 				instance.encryptedSharedSecret = instance.sharedSecret;
 				if (!opts.fields.includes("encryptedSharedSecret")) {
 					opts.fields.push("encryptedSharedSecret");
@@ -183,8 +182,8 @@ Installation.init({
 			for (const instance of instances) {
 				if (!opts.fields) return;
 				const ffWriteNewColOnly = await writeOnlyToNewSecretCol();
-				if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret")) {
-					//Always cope the sharedSecret to encryptedSharedSecret
+				if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
+					//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
 					instance.encryptedSharedSecret = instance.sharedSecret;
 					if (!opts.fields.includes("encryptedSharedSecret")) {
 						opts.fields.push("encryptedSharedSecret");
