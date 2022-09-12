@@ -13,7 +13,7 @@ if (!process.env.STORAGE_SECRET) {
 
 const logger = getLogger("model-installations");
 
-const writeOnlyToNewSecretCol = async (jiraHost?: string | undefined) => booleanFlag(BooleanFlags.INSTALLATION_SHARED_SECRET_NEW_COL_WRITE, false, jiraHost);
+const writeOnlyToNewSecretCol = async (jiraHost: string | undefined) => booleanFlag(BooleanFlags.INSTALLATION_SHARED_SECRET_NEW_COL_WRITE, false, jiraHost);
 
 export class Installation extends EncryptedModel {
 	id: number;
@@ -162,7 +162,7 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			const ffWriteNewColOnly = await writeOnlyToNewSecretCol();
+			const ffWriteNewColOnly = await writeOnlyToNewSecretCol(instance.jiraHost);
 			if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
 				//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
 				instance.encryptedSharedSecret = instance.sharedSecret;
@@ -181,7 +181,7 @@ Installation.init({
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
 				if (!opts.fields) return;
-				const ffWriteNewColOnly = await writeOnlyToNewSecretCol();
+				const ffWriteNewColOnly = await writeOnlyToNewSecretCol(instance.jiraHost);
 				if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
 					//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
 					instance.encryptedSharedSecret = instance.sharedSecret;
