@@ -32,6 +32,7 @@ import requests
 import subprocess
 import sys
 import time
+import json
 from dataclasses import dataclass
 from requests import Request
 from requests.auth import AuthBase
@@ -114,11 +115,8 @@ class Installation:
     def from_dict(d):
         return Installation(d['installation_id'])
 
-def process_installation(env: Environment, installationsString) -> bool:
+def process_installation(env: Environment, installations) -> bool:
     url = '{}/api/resync'.format(env.github_for_jira_url)
-
-#   Convert the string of ids to a actual integer list
-    installations = map(lambda x: int(x), installationsString.split(','))
 
     LOG.debug('Starting rotation of %s with url: %s', installations, url)
     response = session.post(url,
@@ -166,7 +164,7 @@ def main():
     input_reader = csv.DictReader(input_file, fieldnames=['installation_id'])
 
     batch = []
-    batchRow = ''
+    batchRow = []
     batchCount = 0
 
     for row in input_reader:
@@ -179,29 +177,25 @@ def main():
             # Skip already processed
             continue
 
-        if batchRow != '':
-          batchRow += ','
+        batchRow.append(int(installation.installationId))
 
-        batchRow += installation.installationId
-        batchCount += 1
-        print("current batch row", batchRow)
-
-        if batchCount > args.batchsize:
+        if len(batchRow) > args.batchsize:
           batch.append(batchRow)
-          batchRow = ''
-          batchCount = 0
+          batchRow = []
 
-    if batchCount > 0:
+    if len(batchRow) > 0:
         batch.append(batchRow)
 
-    for row in batch:
-      status = process_installation(env, row)
+    for installations in batch:
+      print("BATCH: ", installations)
+      status = process_installation(env, installations)
       if status == 'error':
           LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
           sys.exit(1)
 
       processed.add(installation)
-      output_writer.writerow({'installation_id': row, 'status': status})
+      for installation in installations:
+          output_writer.writerow({'installation_id': installation, 'status': status})
 
       time.sleep(args.sleep)
 
