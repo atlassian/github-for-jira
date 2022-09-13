@@ -40,16 +40,12 @@ $(document).ready(() => {
   $("#ghServers").auiSelect2();
 
   $("#ghRepo").auiSelect2({
+		placeholder: "Select a repository",
 		data: defaultRepos,
 		query: options => {
-			let filteredRepos = defaultRepos;
 			const userInput = options.term;
-
-			if (options.element && options.matcher()) {
-				filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
-			} else {
-				// TODO: Ajax Request to pull new repos and add them to the list
-			}
+			let filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
+			// TODO: Ajax Request to pull new repos and add them to the list, ARC-1600
 			options.callback({ results: filteredRepos });
 		}
 	});
