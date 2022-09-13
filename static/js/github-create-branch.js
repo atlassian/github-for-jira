@@ -1,70 +1,3 @@
-$(document).ready(() => {
-  $("#ghServers").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-server"
-  });
-  $("#ghRepo").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-repo",
-		/**
-		 * On every key up event, an Ajax request is hit,
-		 * during which the dropdown shows the default message `No matches found`.
-		 * So, replaced the default message to Searching(loading),
-		 * and when the Ajax request is completed, replacing this Searching(loading) text back to the `No matches found` message
-		 */
-		formatNoMatches: () => "Searching..."
-  });
-  $("#ghParentBranch").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-parent-branch"
-  });
-
-	$("#createBranchForm").on("aui-valid-submit", (event) => {
-		event.preventDefault();
-		createBranchPost();
-	});
-}).on('keyup', '.select2-input', debounce(event => {
-  const parentContainer = $(event.target).parent().parent();
-  const userInput = event.target.value;
-
-  if (userInput) {
-    if (parentContainer.hasClass("aui-select2-dropdown-server")) {
-      // TODO: Query to search for the server instance based on the input
-    } else if (parentContainer.hasClass("aui-select2-dropdown-repo")) {
-			const auiSelect2 = $("#ghRepo");
-			$.ajax({
-				type: "GET",
-				url: "/github/repository?repoName=" + userInput,
-				success: (response) => {
-					const { repositories } = response;
-					const cachedRepos = $("#ghRepo option").map((_, option) => $(option).val()).toArray();
-
-					repositories.map( repository => {
-						const repo = repository.repo;
-						if (!cachedRepos.includes(repo.nameWithOwner)) {
-							// Adding the new repos into the list
-							auiSelect2.prepend(`<option value="${repo.nameWithOwner}">${repo.nameWithOwner}</option>`);
-							auiSelect2.trigger("change");
-							// Re-opening the select(it closes after triggering change), and adding the user's input back in the input
-							auiSelect2.auiSelect2("open");
-							auiSelect2.auiSelect2("search", userInput);
-						}
-					});
-				},
-				complete: () => {
-					updateMessageToNoResultsFound();
-				}
-			});
-    } else {
-      // TODO: Query to search for the parent branch based on the input
-    }
-  }
-}));
-
-/**
- * This method replaces the Searching(loading) text back to `No matches found`
- */
-const updateMessageToNoResultsFound = () => {
-	$(".select2-no-results").text("No matches found");
-};
-
 const createBranchPost = () => {
 	const url = "/github/create-branch";
 	// Todo improve this select2 get and split once we have real data coming in
@@ -97,7 +30,55 @@ const toggleSubmitDisabled = (bool) => {
 	$("#createBranchBtn").attr("aria-disabled", String(bool));
 }
 
+$(document).ready(() => {
+	// Fetching the list of default repos
+	const defaultRepos = $(".default-repos").map((_, option) => ({
+		id: $(option).html(),
+		text: $(option).html()
+	})).toArray();
+
+  $("#ghServers").auiSelect2();
+
+  $("#ghRepo").auiSelect2({
+		placeholder: "Select a repository",
+		data: defaultRepos,
+		_ajaxQuery: Select2.query.ajax({
+			dataType: "json",
+			quietMillis: 500,
+			url: "/github/repository",
+			data: term => ({
+				repoName: term
+			}),
+			results: (response) => {
+				const { repositories } = response;
+				return  {
+					results: repositories.map(repository => ({
+						id: repository.repo.nameWithOwner,
+						text: repository.repo.nameWithOwner
+					}))
+				}
+			},
+		}),
+		query: function(options) {
+			const userInput = options.term;
+			let filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
+			if (userInput.length) {
+				this._ajaxQuery.call(this, options);
+			}
+			options.callback({ results: filteredRepos });
+		}
+	});
+
+  $("#ghParentBranch").auiSelect2();
+
+  $("#createBranchForm").on("aui-valid-submit", (event) => {
+		event.preventDefault();
+		createBranchPost();
+	});
+});
+
 $('#cancelBtn').click(function (event) {
+
 	event.preventDefault();
 	window.close();
 });
