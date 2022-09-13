@@ -163,9 +163,7 @@ def main():
     output_writer = csv.DictWriter(output_file, fieldnames=['installation_id', 'status'])
     input_reader = csv.DictReader(input_file, fieldnames=['installation_id'])
 
-    batch = []
-    batchRow = []
-
+    installationIds = []
     for row in input_reader:
         installation = Installation.from_dict(row)
         if installation.installationId == 'installation_id':
@@ -176,28 +174,21 @@ def main():
             # Skip already processed
             continue
 
-        batchRow.append(int(installation.installationId))
+        installationIds.append(int(installation.installationId))
 
-        if len(batchRow) > args.batchsize:
-          batch.append(batchRow)
-          batchRow = []
+    for i in range(0, len(installationIds), args.batchsize):
+        installationBatch = installationIds[i:i+args.batchsize]
+        print("processing batch: ", installationBatch)
+        status = process_installation(env, installationBatch)
+        if status == 'error':
+            LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
+            sys.exit(1)
 
-    if len(batchRow) > 0:
-        batch.append(batchRow)
+        processed.add(installation)
+        for installationEntry in installationBatch:
+            output_writer.writerow({'installation_id': installationEntry, 'status': status})
 
-    for installations in batch:
-      print("BATCH: ", installations)
-      status = process_installation(env, installations)
-      if status == 'error':
-          LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
-          sys.exit(1)
-
-      processed.add(installation)
-      for installation in installations:
-          output_writer.writerow({'installation_id': installation, 'status': status})
-
-      time.sleep(args.sleep)
-
+        time.sleep(args.sleep)
 
 if __name__ == '__main__':
     main()
