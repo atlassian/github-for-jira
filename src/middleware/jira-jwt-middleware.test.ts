@@ -182,7 +182,6 @@ describe("#verifyJiraMiddleware", () => {
 				id: 19,
 				jiraHost,
 				clientKey: "abc123",
-				sharedSecret: "existing-shared-secret",
 				decrypt: async (f: string) => f === "encryptedSharedSecret" ? "new-cryptor-shared-secret" : null
 			} as any as Installation;
 		});
