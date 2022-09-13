@@ -21,7 +21,7 @@ services:
     command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:1.0.4
     container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
