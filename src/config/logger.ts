@@ -40,9 +40,15 @@ const errorSerializer = (err) => {
 
 export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
-const loggerStream = (safe = true): Logger.Stream => ({
+const loggerStreamSafe = (): Logger.Stream => ({
 	type: "raw",
-	stream: safe ? new SafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME) : new UnsafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	stream: new SafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	closeOnExit: false
+});
+
+const loggerStreamUnsafe = (): Logger.Stream => ({
+	type: "raw",
+	stream: new UnsafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
 	closeOnExit: false
 });
 
@@ -53,8 +59,8 @@ export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
 	(probotLogger as any).streams.pop();
 
 	// Replace with formatOut stream
-	probotLogger.addStream(loggerStream());
-	probotLogger.addStream(loggerStream(false));
+	probotLogger.addStream(loggerStreamSafe());
+	probotLogger.addStream(loggerStreamUnsafe());
 };
 
 interface LoggerOptions {
@@ -69,7 +75,10 @@ interface LoggerOptions {
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
-		streams: [ loggerStream(), loggerStream(false) ],
+		streams: [
+			loggerStreamSafe(),
+			loggerStreamUnsafe()
+		],
 		level: defaultLogLevel,
 		serializers: {
 			err: errorSerializer,
