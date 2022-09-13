@@ -11,7 +11,8 @@ import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
 
-export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
+export const GITHUB_CLOUD_HOSTNAME = "github.com";
+export const GITHUB_CLOUD_BASEURL = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
@@ -66,16 +67,17 @@ async function calculateProxyBaseUrl(jiraHost: string, gitHubBaseUrl: string | u
 	return envVars.PROXY;
 }
 
-async function buildGitHubConfig(githubServerBaseUrl: string | undefined, jiraHost: string, logger: Logger): Promise<GitHubConfig> {
-	if (githubServerBaseUrl && githubServerBaseUrl != GITHUB_CLOUD_BASEURL) {
-		return {
-			hostname: githubServerBaseUrl,
-			baseUrl: githubServerBaseUrl,
-			apiUrl: `${githubServerBaseUrl}/api/v3`,
-			graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
-			proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger)
-		};
-	}
+async function buildGitHubServerConfig(githubServerBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubConfig> {
+	return {
+		hostname: githubServerBaseUrl,
+		baseUrl: githubServerBaseUrl,
+		apiUrl: `${githubServerBaseUrl}/api/v3`,
+		graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
+		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger)
+	};
+}
+
+async function buildGitHubCloudConfig(jiraHost: string, logger: Logger): Promise<GitHubConfig> {
 	return {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_BASEURL,
@@ -87,7 +89,7 @@ async function buildGitHubConfig(githubServerBaseUrl: string | undefined, jiraHo
 
 const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => (
 	{
-		...(await buildGitHubConfig(gitHubServerApp.gitHubBaseUrl, jiraHost, logger)),
+		...(await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl, jiraHost, logger)),
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
@@ -105,7 +107,7 @@ const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): P
 		throw new Error("Private key not found for github cloud");
 	}
 	return {
-		...(await buildGitHubConfig(undefined, jiraHost, logger)),
+		...(await buildGitHubCloudConfig(jiraHost, logger)),
 		appId: parseInt(envVars.APP_ID),
 		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -163,13 +165,6 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 	return getGitHubClientConfigFromAppIdOld(gitHubAppId, logger, jiraHost);
 };
 
-export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
-	const gitHubClientConfig = gitHubAppId && await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
-		? gitHubClientConfig.hostname
-		: GITHUB_CLOUD_HOSTNAME;
-}
-
 /**
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
@@ -203,5 +198,5 @@ export async function createUserClient(githubToken: string, jiraHost: string, lo
 }
 
 export async function createAnonymousClient(gitHubBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> {
-	return new GitHubAnonymousClient(await buildGitHubConfig(gitHubBaseUrl, jiraHost, logger));
+	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
 }
