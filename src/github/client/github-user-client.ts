@@ -9,7 +9,8 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesQuery,
-	GetRepositoriesResponse, SearchedRepositoriesResponse,
+	GetRepositoriesResponse,
+	SearchedRepositoriesResponse,
 	SearchRepositoriesQuery
 } from "~/src/github/client/github-queries";
 
