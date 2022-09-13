@@ -12,6 +12,7 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 });
 
 export enum BooleanFlags {
+	INSTALLATION_SHARED_SECRET_NEW_COL_WRITE = "write-only-to-new-cryptor-shared-secret",
 	MAINTENANCE_MODE = "maintenance-mode",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
@@ -23,7 +24,6 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
 	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist",
 	USE_REFACTORED_CONFIG_BUILDER = "use-refactored-config-builder"

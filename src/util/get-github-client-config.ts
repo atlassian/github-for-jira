@@ -11,8 +11,7 @@ import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
 
-export const GITHUB_CLOUD_HOSTNAME = "github.com";
-export const GITHUB_CLOUD_BASEURL = "https://github.com";
+export const GITHUB_CLOUD_HOSTNAME = "https://github.com";
 export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
@@ -163,6 +162,13 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 	}
 	return getGitHubClientConfigFromAppIdOld(gitHubAppId, logger, jiraHost);
 };
+
+export async function getGitHubHostname(jiraHost: string, gitHubAppId: number) {
+	const gitHubClientConfig = gitHubAppId && await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
+		? gitHubClientConfig.hostname
+		: GITHUB_CLOUD_HOSTNAME;
+}
 
 /**
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to

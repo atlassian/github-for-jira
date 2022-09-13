@@ -5,7 +5,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	const { githubToken, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
-	if (!githubToken || !jiraHost) {
+	if (!githubToken) {
 		res.sendStatus(401);
 		return;
 	}

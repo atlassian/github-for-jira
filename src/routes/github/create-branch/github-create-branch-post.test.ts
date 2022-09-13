@@ -17,7 +17,7 @@ describe("github-create-branch", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			sharedSecret: "shared-secret"
+			encryptedSharedSecret: "shared-secret"
 		});
 
 		req = {
@@ -64,8 +64,8 @@ describe("github-create-branch", () => {
 		expect(res.sendStatus).toHaveBeenCalledWith(200);
 	});
 
-	it.each(["githubToken", "jiraHost"])("Should 401 without permission attributes", async (attribute) => {
-		delete res.locals[attribute];
+	it("Should 401 without permission attributes", async () => {
+		delete res.locals.githubToken;
 		await GithubCreateBranchPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
