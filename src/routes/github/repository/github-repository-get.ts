@@ -17,7 +17,9 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 
 	try {
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-		const searchedRepos = await gitHubUserClient.searchUserRepositories(repoName as string);
+		const gitHubUserDetails = await gitHubUserClient.getUser();
+		const gitHubSearchQueryString = `${repoName} user:${gitHubUserDetails.data.login} in:name sort:updated-desc`;
+		const searchedRepos = await gitHubUserClient.searchUserRepositories(gitHubSearchQueryString);
 		res.send({
 			repositories: searchedRepos.search.repos
 		});
