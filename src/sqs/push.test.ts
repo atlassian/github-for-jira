@@ -43,7 +43,7 @@ describe("Push Webhook", () => {
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({
