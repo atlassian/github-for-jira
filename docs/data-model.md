@@ -9,7 +9,7 @@ This model doesn't consider all data that's stored in each entity, only those re
 
 ### Installation
 
-Installations are only specific to the Jira app, 1 per Jira instance.  It holds the `clientKey`, `sharedSecret` and `jiraHost` given to us by the Connect install webhook - `clientKey` is the cloud id and can be used as an identifier for logs as the `jiraHost` is considered to be User Generated Content.
+Installations are only specific to the Jira app, 1 per Jira instance.  It holds the `clientKey`, `encryptedSharedSecret` and `jiraHost` given to us by the Connect install webhook - `clientKey` is the cloud id and can be used as an identifier for logs as the `jiraHost` is considered to be User Generated Content.
 
 ### GitHubServerApp
 

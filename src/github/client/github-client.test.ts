@@ -66,8 +66,8 @@ describe("GitHub Client", () => {
 		const TEST_GRAPHQL_URL = 'http://graphql.myBaseUrl.com';
 
 		const TEST_GITHUB_CONFIG = {
-			hostname: 'myHostname',
-			baseUrl: 'http://myBaseUrl.com',
+			hostname: "myHostname",
+			baseUrl: "http://myBaseUrl.com",
 			apiUrl: TEST_API_URL,
 			graphqlUrl: TEST_GRAPHQL_URL
 		};
