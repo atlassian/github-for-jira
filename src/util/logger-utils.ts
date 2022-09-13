@@ -46,7 +46,7 @@ export class SafeRawLogStream extends RawLogStream {
 		super(filteredHttpLoggerName);
 	}
 
-	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
 		const hashedRecord = this.hashSensitiveData(record);
 		await super._write(hashedRecord, encoding, next);
 	}
@@ -73,7 +73,7 @@ export class UnsafeRawLogStream extends RawLogStream {
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
 
 		// Skip any log above DEBUG level
-		if (!record.level || record.level > DEBUG) {
+		if (!record.level || isNaN(record.level) || record.level > DEBUG) {
 			return next();
 		}
 		// Tag the record do it gets indexed to the _unsafe logging environment
