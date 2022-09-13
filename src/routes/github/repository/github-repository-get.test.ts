@@ -41,8 +41,11 @@ describe("GitHub Repository Search", () => {
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
 			githubNock
+				.get("/user")
+				.reply(200, { data: { login: randomString } });
+			githubNock
 				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: randomString, per_page: 20 } })
-				.reply(200, { data: { search: { repos: [1, 2] } } });
+				.reply(200, { data: { search: { repos: [ 1, 2 ] } } });
 
 			await supertest(app)
 				.get("/github/repository").set(
