@@ -165,7 +165,6 @@ def main():
 
     batch = []
     batchRow = []
-    batchCount = 0
 
     for row in input_reader:
         installation = Installation.from_dict(row)
