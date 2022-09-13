@@ -31,34 +31,36 @@ const toggleSubmitDisabled = (bool) => {
 }
 
 $(document).ready(() => {
-  $("#ghServers").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-server"
-  });
+	// Fetching the list of default repos
+	const defaultRepos = $(".default-repos").map((_, option) => ({
+		id: $(option).html(),
+		text: $(option).html()
+	})).toArray();
+
+  $("#ghServers").auiSelect2();
+
   $("#ghRepo").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-repo"
-  });
-  $("#ghParentBranch").auiSelect2({
-    dropdownCssClass: "aui-select2-dropdown-parent-branch"
-  });
-  
+		data: defaultRepos,
+		query: options => {
+			let filteredRepos = defaultRepos;
+			const userInput = options.term;
+
+			if (options.element && options.matcher()) {
+				filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
+			} else {
+				// TODO: Ajax Request to pull new repos and add them to the list
+			}
+			options.callback({ results: filteredRepos });
+		}
+	});
+
+  $("#ghParentBranch").auiSelect2();
+
   $("#createBranchForm").on("aui-valid-submit", (event) => {
 		event.preventDefault();
 		createBranchPost();
 	});
-}).on('keyup', '.select2-input', debounce(event => {
-  const parentContainer = $(event.target).parent().parent();
-  const userInput = event.target.value;
-
-  if (userInput) {
-    if (parentContainer.hasClass("aui-select2-dropdown-server")) {
-      // TODO: Query to search for the server instance based on the input
-    } else if (parentContainer.hasClass("aui-select2-dropdown-repo")) {
-      // TODO: Query to search for the repo based on the input(ARC-1600)
-    } else {
-      // TODO: Query to search for the parent branch based on the input
-    }
-  }
-}));
+});
 
 $('#cancelBtn').click(function (event) {
 
