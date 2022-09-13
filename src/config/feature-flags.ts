@@ -12,18 +12,17 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 });
 
 export enum BooleanFlags {
+	INSTALLATION_SHARED_SECRET_NEW_COL_WRITE = "write-only-to-new-cryptor-shared-secret",
 	MAINTENANCE_MODE = "maintenance-mode",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
 	LOG_UNSAFE_DATA = "log-unsafe-data",
-	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
 	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
 }

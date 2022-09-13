@@ -65,7 +65,10 @@ describe("PushWebhookHandler", ()=>{
 			repository: {} as GitHubRepository, //force it as not required in test
 			commits: [{
 				id: "commit-1",
-				message: "ARC-0001 some commit message"
+				message: "ARC-0001 some commit message",
+				added: [],
+				modified: [],
+				removed: []
 			}]
 		};
 		return new WebhookContext({

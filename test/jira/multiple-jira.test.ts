@@ -208,7 +208,7 @@ describe("multiple Jira instances", () => {
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({
@@ -218,7 +218,7 @@ describe("multiple Jira instances", () => {
 		});
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost: jira2Host
 		});
 		await Subscription.create({

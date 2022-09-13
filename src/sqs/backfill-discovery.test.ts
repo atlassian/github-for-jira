@@ -31,7 +31,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		const clientKey = "client-key";
 		const installation = await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 
