@@ -42,9 +42,10 @@ describe("GitHub Repository Search", () => {
 				.reply(200);
 			githubNock
 				.get("/user")
-				.reply(200, { data: { login: randomString } });
+				.reply(200, { login: randomString });
+			const queryString = `${randomString} user:${randomString} in:name sort:updated-desc`;
 			githubNock
-				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: randomString, per_page: 20 } })
+				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: queryString, per_page: 20 } })
 				.reply(200, { data: { search: { repos: [ 1, 2 ] } } });
 
 			await supertest(app)
