@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
-	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
+	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist",
+	USE_REFACTORED_CONFIG_BUILDER = "use-refactored-config-builder"
 }
 
 export enum StringFlags {
