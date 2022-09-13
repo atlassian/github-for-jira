@@ -55,11 +55,7 @@
     </div>
     <div class="field-group">
       <aui-label for="branch">Branch from</aui-label>
-      <select id="ghParentBranch" name="parentBranch" class="full-width-field" placeholder="Select a branch">
-        {{#each branches}}
-          <option value="{{id}}">{{name}}</option>
-        {{/each}}
-      </select>
+      <input type="hidden" id="ghParentBranch" name="parentBranch"/>
     </div>
     <div class="field-group">
       <aui-label for="branch-name">Branch name</aui-label>
@@ -69,7 +65,7 @@
         type="text"
         placeholder="Enter branch name" 
         data-aui-validation-field required name="branch-name"
-        data-aui-validation-pattern="\w*{{issue.key}}\w*"
+        data-aui-validation-pattern=".*{{issue.key}}.*"
         data-aui-validation-required-msg="This field is required."
         data-aui-validation-pattern-msg="The issue key does not match the selected issue."/>
     </div>
