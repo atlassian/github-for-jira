@@ -90,8 +90,7 @@ class Environment(NamedTuple):
 
 
 def create_environment(env: str) -> Environment:
-    print('env')
-    print(env)
+    print("Running for env", env)
     if env == 'dev':
         return Environment(
             github_for_jira_url='https://github-for-jira.ap-southwest-2.dev.atl-paas.net',
