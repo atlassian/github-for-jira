@@ -141,7 +141,7 @@ describe("Test getting a jira client", () => {
 		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
 	});
 
-	describe("Reading encryptedSharedSecret", () => {
+	describe("Reading sharedSecret", () => {
 		beforeEach(async ()=>{
 			const inst: Installation = await Installation.findOne({
 				where: {

@@ -40,7 +40,7 @@ describe("API Router", () => {
 		installation = await Installation.create({
 			gitHubInstallationId,
 			jiraHost,
-			encryptedSharedSecret: "secret",
+			sharedSecret: "secret",
 			clientKey: "client-key"
 		});
 

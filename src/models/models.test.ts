@@ -144,7 +144,7 @@ describe("Models", () => {
 			it("getAllForHost should return a single installation if 1 host is installed", async () => {
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret",
+					sharedSecret: "badsecret",
 					clientKey
 				});
 
@@ -155,7 +155,7 @@ describe("Models", () => {
 			it("getForHost should return a single installation if 1 host is installed", async () => {
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret",
+					sharedSecret: "badsecret",
 					clientKey
 				});
 
@@ -167,7 +167,7 @@ describe("Models", () => {
 				// Install jira host
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret",
+					sharedSecret: "badsecret",
 					clientKey
 				});
 
@@ -177,7 +177,7 @@ describe("Models", () => {
 				// Install duplicate of jira host
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "goodsecret",
+					sharedSecret: "goodsecret",
 					clientKey
 				});
 
@@ -197,14 +197,14 @@ describe("Models", () => {
 				// Install jira host
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret",
+					sharedSecret: "badsecret",
 					clientKey
 				});
 
 				// Install duplicate of jira host
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "goodsecret",
+					sharedSecret: "goodsecret",
 					clientKey
 				});
 
@@ -216,31 +216,31 @@ describe("Models", () => {
 			it("getAllForHost should return multiple entries if there are duplicates", async () => {
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret1",
+					sharedSecret: "badsecret1",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret2",
+					sharedSecret: "badsecret2",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret3",
+					sharedSecret: "badsecret3",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret4",
+					sharedSecret: "badsecret4",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "goodsecret",
+					sharedSecret: "goodsecret",
 					clientKey
 				});
 
@@ -256,31 +256,31 @@ describe("Models", () => {
 			it("getForHost should return the most recent entry if there are more than 2 entries", async () => {
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret1",
+					sharedSecret: "badsecret1",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret2",
+					sharedSecret: "badsecret2",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret3",
+					sharedSecret: "badsecret3",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "badsecret4",
+					sharedSecret: "badsecret4",
 					clientKey
 				});
 
 				await Installation.create({
 					jiraHost,
-					encryptedSharedSecret: "goodsecret",
+					sharedSecret: "goodsecret",
 					clientKey
 				});
 

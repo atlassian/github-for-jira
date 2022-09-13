@@ -68,7 +68,7 @@ describe("sync/commits", () => {
 		await Installation.create({
 			gitHubInstallationId: installationId,
 			jiraHost,
-			encryptedSharedSecret: "secret",
+			sharedSecret: "secret",
 			clientKey: "client-key"
 		});
 

@@ -23,7 +23,7 @@ describe("Pull Request Webhook", () => {
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			encryptedSharedSecret: "shared-secret",
+			sharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({

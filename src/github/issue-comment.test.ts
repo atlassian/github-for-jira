@@ -21,7 +21,7 @@ describe("Issue Comment Webhook", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			encryptedSharedSecret: "shared-secret"
+			sharedSecret: "shared-secret"
 		});
 	});
 

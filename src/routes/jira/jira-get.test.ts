@@ -46,7 +46,7 @@ describe("Jira Configuration Suite", () => {
 			//TODO: why? Comment this out make test works?
 			//setting both fields make sequelize confused as it internally storage is just the "secrets"
 			//secrets: "def234",
-			encryptedSharedSecret: "ghi345"
+			sharedSecret: "ghi345"
 		});
 
 	});

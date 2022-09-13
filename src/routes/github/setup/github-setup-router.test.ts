@@ -34,7 +34,7 @@ describe("Github Setup", () => {
 				//setting both fields make sequelize confused as it internally storage is just the "secrets"
 				//secrets: "def234",
 				//secrets: "def234",
-				encryptedSharedSecret: "ghi345"
+				sharedSecret: "ghi345"
 			});
 
 		});
@@ -114,7 +114,7 @@ describe("Github Setup", () => {
 				//TODO: why? Comment this out make test works?
 				//setting both fields make sequelize confused as it internally storage is just the "secrets"
 				//secrets: "secret",
-				encryptedSharedSecret: "sharedSecret",
+				sharedSecret: "sharedSecret",
 				clientKey: "clientKey"
 			});
 

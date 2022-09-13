@@ -17,7 +17,7 @@ describe("sync/pull-request", () => {
 		await Installation.create({
 			gitHubInstallationId,
 			jiraHost,
-			encryptedSharedSecret: "secret",
+			sharedSecret: "secret",
 			clientKey: "client-key"
 		});
 		const subscription = await Subscription.create({

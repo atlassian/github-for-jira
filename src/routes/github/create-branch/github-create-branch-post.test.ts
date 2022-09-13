@@ -17,7 +17,7 @@ describe("github-create-branch", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			encryptedSharedSecret: "shared-secret"
+			sharedSecret: "shared-secret"
 		});
 
 		req = {

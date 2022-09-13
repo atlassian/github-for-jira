@@ -27,6 +27,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
+
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
 
 		res.sendStatus(202);

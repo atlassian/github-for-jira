@@ -33,7 +33,7 @@ describe("Installation", () => {
 			});
 			const installation = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
 			await installation.update({
-				encryptedSharedSecret: "new-shared-secret"
+				sharedSecret: "new-shared-secret"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:new-shared-secret");
@@ -43,7 +43,7 @@ describe("Installation", () => {
 			await Installation.create({
 				host: "whatever.abc",
 				clientKey: getHashedKey(clientKey),
-				encryptedSharedSecret: "some-plain-shared-secret-create"
+				sharedSecret: "some-plain-shared-secret-create"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-create");
@@ -53,10 +53,21 @@ describe("Installation", () => {
 			await Installation.build({
 				host: "whatever.abc",
 				clientKey: getHashedKey(clientKey),
-				encryptedSharedSecret: "some-plain-shared-secret-build"
+				sharedSecret: "some-plain-shared-secret-build"
 			}).save();
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-build");
+		});
+		it("should use the sharedSecret when both set", async () => {
+			const clientKey = UUID();
+			await Installation.create({
+				host: "whatever.abc",
+				clientKey: getHashedKey(clientKey), //TODO: indicate in-consistent usage of the model
+				sharedSecret: "secret-A",
+				encryptedSharedSecret: "secret-B"
+			});
+			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
+			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
 	const insertNewInstallation = async ({ clientKey }) => {

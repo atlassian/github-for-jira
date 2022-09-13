@@ -27,7 +27,7 @@ describe("delete-github-subscription", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			encryptedSharedSecret: "shared-secret"
+			sharedSecret: "shared-secret"
 		});
 
 		req = {

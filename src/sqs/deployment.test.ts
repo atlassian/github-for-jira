@@ -27,7 +27,7 @@ describe("Deployment Webhook", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			encryptedSharedSecret: "shared-secret"
+			sharedSecret: "shared-secret"
 		});
 
 		await sqsQueues.deployment.start();
