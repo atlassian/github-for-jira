@@ -12,10 +12,7 @@ const outputMode = process.env.MICROS_ENV ? "json" : "short";
 //  See https://github.com/probot/probot/issues/1577
 export const filterHttpRequests = (record: Record<string, any>, filteredLoggerName: string) => {
 	const { msg, name } = record;
-	if (name !== filteredLoggerName) {
-		return false;
-	}
-	return !!msg.match(/(GET|POST|DELETE|PUT|PATCH)/);
+	return name === filteredLoggerName && /(GET|POST|DELETE|PUT|PATCH)/.test(msg);
 };
 
 class RawLogStream extends Writable {
