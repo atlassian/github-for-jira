@@ -59,7 +59,6 @@ $(document).ready(() => {
 });
 
 $('#cancelBtn').click(function (event) {
-
 	event.preventDefault();
 	window.close();
 });
