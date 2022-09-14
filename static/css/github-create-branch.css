@@ -51,3 +51,12 @@
   font-weight: 400;
   right: 4px;
 }
+
+.gitHubCreateBranch__serverError {
+  display: none;
+  margin-top: 2.5em;
+}
+
+.gitHubCreateBranch__serverError .errorMessageBox__container {
+  align-items: center;
+}

@@ -4,11 +4,8 @@ import "config/env";
 
 import * as axios from "axios";
 import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
-import { booleanFlag } from "config/feature-flags";
 
 jest.mock("axios");
-
-jest.mock("config/feature-flags");
 
 class TestGitHubClient extends GitHubClient {
 	constructor(config: GitHubConfig) {
@@ -19,28 +16,10 @@ class TestGitHubClient extends GitHubClient {
 	}
 }
 
-const TEST_API_URL = 'http://api.myBaseUrl.com';
-const TEST_GRAPHQL_URL = 'http://graphql.myBaseUrl.com';
-
-const TEST_GITHUB_CONFIG = {
-	hostname: 'myHostname',
-	baseUrl: 'http://myBaseUrl.com',
-	apiUrl: TEST_API_URL,
-	graphqlUrl: TEST_GRAPHQL_URL
-};
-
 describe("GitHub Client", () => {
 	const mockedAxiosPost = jest.fn();
 
-	const digestPendingEvents = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
-
-	beforeAll(async () => {
-		(booleanFlag as jest.Mock).mockResolvedValue(true);
-		new TestGitHubClient(TEST_GITHUB_CONFIG);
-		await digestPendingEvents();
-	});
-
-	beforeEach(() => {
+	beforeEach(async () => {
 		const mockedAxiosCreate = {
 			interceptors: {
 				request: {
@@ -58,29 +37,52 @@ describe("GitHub Client", () => {
 	});
 
 	it("configures the proxy for outbound calls", async () => {
-		const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
+		const client = new TestGitHubClient(gitHubCloudConfig);
 		const outboundProxyConfig = client.getProxyConfig("https://github.com");
 		expect(outboundProxyConfig.proxy).toBe(false);
 		expect(outboundProxyConfig.httpsAgent).toBeInstanceOf(HttpsProxyAgent);
 	});
 
 	it("configures no proxy for calls to the Atlassian network", async () => {
-		const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
+		const client = new TestGitHubClient(gitHubCloudConfig);
 		const outboundProxyConfig = client.getProxyConfig("http://github.internal.atlassian.com/api");
 		expect(outboundProxyConfig.proxy).toBe(false);
 		expect(outboundProxyConfig.httpsAgent).toBeUndefined();
 	});
 
-	it("uses gitHubConfig.apiUrl, if provided", async () => {
-		new TestGitHubClient(TEST_GITHUB_CONFIG);
+	it("uses proxy when provided", async () => {
+		new TestGitHubClient({
+			... gitHubCloudConfig,
+			proxyBaseUrl: 'http://proxy.com'
+		});
 		const calls = (axios.default.create as jest.Mock).mock.calls[0];
-		expect(calls[0].baseURL).toEqual(TEST_API_URL);
+		expect(calls[0].proxy).toBeFalsy();
+		expect(calls[0].httpAgent.proxy.host).toEqual('proxy.com');
+		expect(calls[0].httpsAgent.proxy.host).toEqual('proxy.com');
 	});
 
-	it("uses gitHubConfig.graphqlUrl, if provided", async () => {
-		const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
-		await client.doTestGraphqlCall();
-		expect(mockedAxiosPost.mock.calls[0][0]).toEqual(TEST_GRAPHQL_URL);
-	});
+	describe('config object', () => {
+		const TEST_API_URL = 'http://api.myBaseUrl.com';
+		const TEST_GRAPHQL_URL = 'http://graphql.myBaseUrl.com';
 
+		const TEST_GITHUB_CONFIG = {
+			hostname: "myHostname",
+			baseUrl: "http://myBaseUrl.com",
+			apiUrl: TEST_API_URL,
+			graphqlUrl: TEST_GRAPHQL_URL
+		};
+
+		it("gitHubConfig.apiUrl is used", async () => {
+			new TestGitHubClient(TEST_GITHUB_CONFIG);
+			const calls = (axios.default.create as jest.Mock).mock.calls[0];
+			expect(calls[0].baseURL).toEqual(TEST_API_URL);
+		});
+
+		it("gitHubConfig.graphqlUrl is used", async () => {
+			const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
+			await client.doTestGraphqlCall();
+			expect(mockedAxiosPost.mock.calls[0][0]).toEqual(TEST_GRAPHQL_URL);
+		});
+
+	});
 });

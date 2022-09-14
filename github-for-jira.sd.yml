@@ -134,6 +134,10 @@ resources:
   - name: database
     type: postgres-db
     attributes:
+      connectionLimit: 150 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
+        # For ddev and staging we have scaling policy different from prod: up to 5 Worker and up to 5 WebServer nodes.
+        # Therefore, when all the nodes are running, we might have up to "PGBOUNCER_DEFAULT_POOL_SIZE * 10" number
+        # of connections.
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
@@ -222,7 +226,7 @@ config:
                       #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
                       # Normal business:
                       #   (5 web servers + 3 workers) * 15 pool size = 120 connections
-    PGBOUNCER_SERVER_IDLE_TIMEOUT: "600"
+    PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
     PGBOUNCER_MAX_CLIENT_CONN: "1000"
 
 loadBalancer:

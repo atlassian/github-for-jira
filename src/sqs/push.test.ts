@@ -17,11 +17,12 @@ import pushNoUsername from "fixtures/push-no-username.json";
 import commitNoUsername from "fixtures/api/commit-no-username.json";
 import pushMultiple from "fixtures/push-multiple.json";
 import moreThanTenFiles from "fixtures/more-than-10-files.json";
+import invalidFilePaths from "fixtures/invalid-file-paths.json";
+import longFilePaths from "fixtures/file-paths-too-long.json";
 import pushNoIssues from "fixtures/push-no-issues.json";
 import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
 import pushMergeCommit from "fixtures/push-merge-commit.json";
 import { shouldTagBackfillRequests } from "config/feature-flags";
-import { mocked } from "ts-jest/utils";
 
 const createMessageProcessingContext = (payload, jiraHost: string): SQSMessageContext<PushQueueMessagePayload> => ({
 	payload: createJobData(payload, jiraHost),
@@ -37,12 +38,12 @@ describe("Push Webhook", () => {
 
 	let app: Application;
 	beforeEach(async () => {
-		mocked(shouldTagBackfillRequests).mockResolvedValue(true);
+		jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 		app = await createWebhookApp();
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({
@@ -222,6 +223,118 @@ describe("Push Webhook", () => {
 										linesAdded: 4,
 										linesRemoved: 0,
 										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
+									}
+								],
+								id: "test-commit-id",
+								issueKeys: ["TEST-123", "TEST-246"],
+								updateSequenceId: 12345678
+							}
+						],
+						updateSequenceId: 12345678
+					}
+				],
+				properties: {
+					installationId: 1234
+				}
+			}).reply(200);
+
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload, jiraHost))).toResolve();
+		});
+
+		it("should only files with valid file paths (not empty or undefined)", async () => {
+			githubUserTokenNock(1234);
+			githubNock
+				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
+				.reply(200, invalidFilePaths);
+
+			jiraNock.post("/rest/devinfo/0.10/bulk", {
+				preventTransitions: false,
+				operationType: "NORMAL",
+				repositories: [
+					{
+						name: "test-repo-name",
+						url: "test-repo-url",
+						id: "test-repo-id",
+						commits: [
+							{
+								hash: "test-commit-id",
+								message: "TEST-123 TEST-246 #comment This is a comment",
+								author: {
+									email: "test-email@example.com",
+									name: "test-commit-name"
+								},
+								displayId: "test-c",
+								fileCount: 4,
+								files: [
+									{
+										path: "test-modified",
+										changeType: "MODIFIED",
+										linesAdded: 10,
+										linesRemoved: 2,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
+									},
+									{
+										path: "test-removal",
+										changeType: "DELETED",
+										linesAdded: 0,
+										linesRemoved: 4,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
+									}
+								],
+								id: "test-commit-id",
+								issueKeys: ["TEST-123", "TEST-246"],
+								updateSequenceId: 12345678
+							}
+						],
+						updateSequenceId: 12345678
+					}
+				],
+				properties: {
+					installationId: 1234
+				}
+			}).reply(200);
+
+			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload, jiraHost))).toResolve();
+		});
+
+		it("should truncate long file paths to 1024", async () => {
+			githubUserTokenNock(1234);
+			githubNock
+				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
+				.reply(200, longFilePaths);
+
+			jiraNock.post("/rest/devinfo/0.10/bulk", {
+				preventTransitions: false,
+				operationType: "NORMAL",
+				repositories: [
+					{
+						name: "test-repo-name",
+						url: "test-repo-url",
+						id: "test-repo-id",
+						commits: [
+							{
+								hash: "test-commit-id",
+								message: "TEST-123 TEST-246 #comment This is a comment",
+								author: {
+									email: "test-email@example.com",
+									name: "test-commit-name"
+								},
+								displayId: "test-c",
+								fileCount: 2,
+								files: [
+									{
+										path: "test-modified-vpB4yY6U99yDZUoFAC8KuY9MyYXXeiYPa2Ue0vm0jcYnHQP77hqH860X2av9UyUohtW9trl9DFfTMuxlMaeiM6o4AhPOmotZyGIyjzyN4zEvmZjyglMTcJXQWZsvA0SSn9oazE7nq8qIApultxsf3nEqlTBqS8AACG5GFR9uTwk9x7CWybm4MK2a35VRGTXlyv4U5NQcXA63M0o4Ag1g1jmZonJHQ3QHQuTWnu1uRv9yvIR5Q3uQgOAFywlzN1z172cvwZsYx4ysPAdkkt0SEKIJ7E0ihjWz1nnHRnCwmUasvxbd3ywHRPEV6VJJCcLZDbRBPXBALKJSx7xu34QoCpMEKfxJsxGbL7HfiY7Lhej2pkEFcwgKXnlIQJrJl1VxMYD6LhbBwKCkfV66F6DmNQKFfdBcVtpWQ8O2u0v0DmRiN5kcIgTBzmK1EZ1sw7cDFcCnq3n1p72JR3I8WVOHqcS3ufIn7dsGdHOXRZu8Fz3gxPYLLlO9qNhoUsgWXbn0EDN7cQ8k8Ty7L5nDyDsLiZvAOARcHyNQFhxS5uUWoZs6sdv9Tf9VUVdIsovkZLTegOqTntqk1ugLsgqeFOrPBPNdBuAtkUb7gUthV1d9wQ9CmQGUZ5ueOViSP5dHYOMvbKtbL9CM757TXXeZV2c3BE46xAuL2hYkXBbS6HpBdJ943NTN2Brf61dmAiT9swvxJkyVUXK4VHw0P7l37JsGG8Kdug99V4TH14xa9QNcKJ3jCe7JSlEgYXcFtmcUoQkr2h3LiTYvbLok8sEyO2633gXSc1YpWvIcCdBrdBE41ZOikj6NRnOhMSPP9ZQ9Qs7y482V12ZFf3W3qav7TqXYPpODwo8C4yjB0kWQdcIfMxWmFG3oKfVaqOuLi2auMB7LX2AEPmeckzWeow890zGPVzuBJFp892zpJZXHlPytOgcFWPW7cvahgpGLECzYNMmI4P1LDrKTIfTUFtRNhdLCAo6kQKMJA73Rk29EHNkn0R8ZCwTOJf",
+										changeType: "MODIFIED",
+										linesAdded: 10,
+										linesRemoved: 2,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
+									},
+									{
+										path: "test-removal-vpB4yY6U99yDZUoFAC8KuY9MyYXXeiYPa2Ue0vm0jcYnHQP77hqH860X2av9UyUohtW9trl9DFfTMuxlMaeiM6o4AhPOmotZyGIyjzyN4zEvmZjyglMTcJXQWZsvA0SSn9oazE7nq8qIApultxsf3nEqlTBqS8AACG5GFR9uTwk9x7CWybm4MK2a35VRGTXlyv4U5NQcXA63M0o4Ag1g1jmZonJHQ3QHQuTWnu1uRv9yvIR5Q3uQgOAFywlzN1z172cvwZsYx4ysPAdkkt0SEKIJ7E0ihjWz1nnHRnCwmUasvxbd3ywHRPEV6VJJCcLZDbRBPXBALKJSx7xu34QoCpMEKfxJsxGbL7HfiY7Lhej2pkEFcwgKXnlIQJrJl1VxMYD6LhbBwKCkfV66F6DmNQKFfdBcVtpWQ8O2u0v0DmRiN5kcIgTBzmK1EZ1sw7cDFcCnq3n1p72JR3I8WVOHqcS3ufIn7dsGdHOXRZu8Fz3gxPYLLlO9qNhoUsgWXbn0EDN7cQ8k8Ty7L5nDyDsLiZvAOARcHyNQFhxS5uUWoZs6sdv9Tf9VUVdIsovkZLTegOqTntqk1ugLsgqeFOrPBPNdBuAtkUb7gUthV1d9wQ9CmQGUZ5ueOViSP5dHYOMvbKtbL9CM757TXXeZV2c3BE46xAuL2hYkXBbS6HpBdJ943NTN2Brf61dmAiT9swvxJkyVUXK4VHw0P7l37JsGG8Kdug99V4TH14xa9QNcKJ3jCe7JSlEgYXcFtmcUoQkr2h3LiTYvbLok8sEyO2633gXSc1YpWvIcCdBrdBE41ZOikj6NRnOhMSPP9ZQ9Qs7y482V12ZFf3W3qav7TqXYPpODwo8C4yjB0kWQdcIfMxWmFG3oKfVaqOuLi2auMB7LX2AEPmeckzWeow890zGPVzuBJFp892zpJZXHlPytOgcFWPW7cvahgpGLECzYNMmI4P1LDrKTIfTUFtRNhdLCAo6kQKMJA73Rk29EHNkn0R8ZCwTOJfL",
+										changeType: "DELETED",
+										linesAdded: 0,
+										linesRemoved: 4,
+										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
 									}
 								],
 								id: "test-commit-id",
