@@ -10,25 +10,23 @@ const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
 
 //  See https://github.com/probot/probot/issues/1577
-export const filterHttpRequests = (record: Record<string, any>, filteredLoggerName: string) => {
-	const { msg, name } = record;
-	return name === filteredLoggerName && /(GET|POST|DELETE|PUT|PATCH)/.test(msg);
+export const filterHttpRequests = (record: Record<string, any>) => {
+	const { msg, filterHttpRequests } = record;
+	return !!filterHttpRequests && /(GET|POST|DELETE|PUT|PATCH)/.test(msg);
 };
 
 class RawLogStream extends Writable {
-	private readonly filteredHttpLoggerName: string;
 	private readonly writeStream: NodeJS.WritableStream;
 
-	public constructor(filteredHttpLoggerName: string) {
+	public constructor() {
 		super({ objectMode: true });
-		this.filteredHttpLoggerName = filteredHttpLoggerName;
 		this.writeStream = bformat({ outputMode, levelInString: true });
 	}
 
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
 
 		// Skip unwanted logs
-		if (filterHttpRequests(record, this.filteredHttpLoggerName)) {
+		if (filterHttpRequests(record)) {
 			return next();
 		}
 
@@ -39,9 +37,6 @@ class RawLogStream extends Writable {
 }
 
 export class SafeRawLogStream extends RawLogStream {
-	public constructor(filteredHttpLoggerName: string) {
-		super(filteredHttpLoggerName);
-	}
 
 	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
 		const hashedRecord = this.hashSensitiveData(record);
@@ -62,10 +57,6 @@ export class SafeRawLogStream extends RawLogStream {
 }
 
 export class UnsafeRawLogStream extends RawLogStream {
-
-	public constructor(filteredHttpLoggerName: string) {
-		super(filteredHttpLoggerName);
-	}
 
 	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
 

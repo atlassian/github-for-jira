@@ -3,38 +3,43 @@ import { INFO, TRACE, DEBUG } from "bunyan";
 
 describe("Logger Utils", () => {
 
-	describe("filterHttpRequests", () => {
+	describe("filterHttpRequests with Request keywords", () => {
 
-		it("should return false for msg with http request keyword and not targeted logger", () => {
+		it("should return false filterHttpRequests undefined", () => {
 			const record = {
 				msg: "GET - Im a filterable msg",
 				name: "NO-FILTEREDNAME"
 			};
-			expect(filterHttpRequests(record, "FILTEREDNAME")).toEqual(false);
+			expect(filterHttpRequests(record)).toEqual(false);
 		});
 
-		it("should return true for msg with http request keyword and targeted logger", () => {
+		it("should return true for msg with filterHttpRequests true", () => {
 			const record = {
 				msg: "GET - ima get filtered",
-				name: "FILTEREDNAME"
+				name: "FILTEREDNAME",
+				filterHttpRequests: true
 			};
-			expect(filterHttpRequests(record, "FILTEREDNAME")).toEqual(true);
+			expect(filterHttpRequests(record)).toEqual(true);
 		});
 
-		it("should return false for msg without http request keyword and targeted logger", () => {
-			const record = {
-				msg: "STUFF - Im a legit message",
-				name: "FILTEREDNAME"
-			};
-			expect(filterHttpRequests(record, "FILTEREDNAME")).toEqual(false);
-		});
-
-		it("should return false for msg with http request keyword and targeted logger", () => {
+		it("should return false for msg with filterHttpRequests false", () => {
 			const record = {
 				msg: "GET - Im a legit message",
-				name: "NO-FILTEREDNAME"
+				name: "NO-FILTEREDNAME",
+				filterHttpRequests: false
 			};
-			expect(filterHttpRequests(record, "FILTEREDNAME")).toEqual(false);
+			expect(filterHttpRequests(record)).toEqual(false);
+		});
+	});
+
+	describe.each([true, false, undefined])("filterHttpRequests without Request keywords", (filterRequests) => {
+		it("should return false for msg with filterHttpRequests as true and no valid request keywords", () => {
+			const record = {
+				msg: "STUFF - Im a legit message",
+				name: "FILTEREDNAME",
+				filterHttpRequests: filterRequests
+			};
+			expect(filterHttpRequests(record)).toEqual(false);
 		});
 	});
 
@@ -52,7 +57,7 @@ describe("Logger Utils", () => {
 
 			beforeEach(async() => {
 				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new SafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
+				stream = new SafeRawLogStream();
 			});
 
 			it("should write to stdout", async () => {
@@ -90,7 +95,7 @@ describe("Logger Utils", () => {
 
 			beforeEach(() => {
 				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new SafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
+				stream = new SafeRawLogStream();
 			});
 
 			it("should serialize sensitive data", async () => {
@@ -111,7 +116,7 @@ describe("Logger Utils", () => {
 
 			beforeEach(() => {
 				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new UnsafeRawLogStream("FRONT_END_MIDDLEWARE_LOGGER");
+				stream = new UnsafeRawLogStream();
 			});
 
 

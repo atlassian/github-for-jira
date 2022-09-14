@@ -2,8 +2,6 @@ import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } f
 import { isArray, isString, merge, omit } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 
-export const FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME = "frontend-log-middleware";
-
 const responseSerializer = (res) => res && ({
 	...stdSerializers.res(res),
 	config: res.config,
@@ -42,13 +40,13 @@ export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "i
 
 const loggerStreamSafe = (): Logger.Stream => ({
 	type: "raw",
-	stream: new SafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	stream: new SafeRawLogStream(),
 	closeOnExit: false
 });
 
 const loggerStreamUnsafe = (): Logger.Stream => ({
 	type: "raw",
-	stream: new UnsafeRawLogStream(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME),
+	stream: new UnsafeRawLogStream(),
 	closeOnExit: false
 });
 
@@ -70,6 +68,7 @@ interface LoggerOptions {
 	stream?: NodeJS.WritableStream;
 	serializers?: Serializers;
 	src?: boolean;
+	filterHttpRequests?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
