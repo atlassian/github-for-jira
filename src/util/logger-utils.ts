@@ -23,7 +23,7 @@ class RawLogStream extends Writable {
 		this.writeStream = bformat({ outputMode, levelInString: true });
 	}
 
-	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
 
 		// Skip unwanted logs
 		if (filterHttpRequests(record)) {
@@ -58,7 +58,7 @@ export class SafeRawLogStream extends RawLogStream {
 
 export class UnsafeRawLogStream extends RawLogStream {
 
-	public async _write(record: any, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
 
 		// Skip any log above DEBUG level
 		if (!record.level || isNaN(record.level) || record.level > DEBUG) {
