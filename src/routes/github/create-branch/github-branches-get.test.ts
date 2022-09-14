@@ -36,7 +36,7 @@ describe("GitHub Branches Get", () => {
 		expect(res.send).toBeCalledWith(allBranches);
 	});
 
-	it.each(["githubToken", "jiraHost", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
+	it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
 		delete res.locals[attribute];
 		await GithubBranchesGet(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
@@ -65,7 +65,7 @@ const setupNock = (req) => {
 			"data": {
 				"repository": {
 					"refs": {
-						"totalCount": 5,
+						"totalCount": 3,
 						"edges": [
 							{
 								"cursor": "MQ",
@@ -89,44 +89,11 @@ const setupNock = (req) => {
 				}
 			}
 		});
-
-	githubNock
-		.post("/graphql", {
-			query: getBranchesNameQuery,
-			variables: {
-				owner: req.params.owner,
-				repo: req.params.repo,
-				per_page: 100,
-				cursor: "Mw"
-			}
-		})
-		.reply(200, {
-			"data": {
-				"repository": {
-					"refs": {
-						"totalCount": 5,
-						"edges": [
-							{
-								"cursor": "Mk",
-								"node": {
-									"name": "sample-patch-4"
-								}
-							},
-							{
-								"cursor": "Mz",
-								"node": {
-									"name": "sample-patch-5"
-								}
-							}]
-					}
-				}
-			}
-		});
 };
 const allBranches = {
 	"repository": {
 		"refs": {
-			"totalCount": 5,
+			"totalCount": 3,
 			"edges": [
 				{
 					"cursor": "MQ",
@@ -144,17 +111,6 @@ const allBranches = {
 					"cursor": "Mw",
 					"node": {
 						"name": "sample-patch-3"
-					}
-				}, {
-					"cursor": "Mk",
-					"node": {
-						"name": "sample-patch-4"
-					}
-				},
-				{
-					"cursor": "Mz",
-					"node": {
-						"name": "sample-patch-5"
 					}
 				}]
 		}
