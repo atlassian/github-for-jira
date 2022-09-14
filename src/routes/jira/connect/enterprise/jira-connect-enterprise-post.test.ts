@@ -78,4 +78,18 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
 	});
+
+	it("POST Jira Connect Enterprise - URL timed out", async () => {
+		process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC = "100";
+		const response = mockResponse();
+		gheNock.get("/").delayConnection(2000).reply(200);
+		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false, errors: [{
+				code: "GHE_ERROR_CONNECTION_TIMED_OUT",
+				message: "Connection timed out"
+			}]
+		});
+	});
 });

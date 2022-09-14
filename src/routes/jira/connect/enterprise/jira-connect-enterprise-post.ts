@@ -7,8 +7,6 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
-const TIMEOUT_PERIOD_MS = 30 * 1000;
-
 interface MessageAndCode {
 	errorCode: string;
 	message: string;
@@ -23,6 +21,11 @@ const GHE_ERROR_UNREACHABLE = {
 	message: "Request to URL failed"
 };
 
+const GHE_ERROR_TIMEOUT = {
+	errorCode: "GHE_ERROR_CONNECTION_TIMED_OUT",
+	message: "Connection timed out"
+};
+
 export const gheServerUrlErrors: GheServerUrlErrors = {
 	invalidUrl: {
 		errorCode: "GHE_ERROR_INVALID_URL",
@@ -35,16 +38,19 @@ export const gheServerUrlErrors: GheServerUrlErrors = {
 		errorCode: "GHE_SERVER_BAD_GATEWAY",
 		message: "Bad gateway"
 	},
-	ECONNABORTED: {
-		errorCode: "GHE_ERROR_CONNECTION_TIMED_OUT",
-		message: "Connection timed out"
-	}
+	ECONNABORTED: GHE_ERROR_TIMEOUT,
+	ETIMEDOUT: GHE_ERROR_TIMEOUT
 };
 
 export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
+
+	// Must be configurable and re-evaluated on each execution for testing, therefore
+	// inside the handler
+	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
+
 	const { gheServerURL } = req.body;
 	const { id: installationId } = res.locals.installation;
 
