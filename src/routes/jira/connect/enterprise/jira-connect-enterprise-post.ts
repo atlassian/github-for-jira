@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import axios from "axios";
 import { GitHubServerApp } from "models/github-server-app";
-import { isValidUrl } from "utils/is-valid-url";
+import { validateUrl } from "utils/validate-url";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
@@ -55,10 +55,12 @@ export const JiraConnectEnterprisePost = async (
 	const { id: installationId } = res.locals.installation;
 
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
-	const isGheUrlValid = isValidUrl(gheServerURL);
+	const urlValidationResult = validateUrl(gheServerURL);
 
-	if (!isGheUrlValid) {
-		const { errorCode, message } = gheServerUrlErrors.invalidUrl;
+	if (!urlValidationResult.isValidUrl) {
+		const errorCode = gheServerUrlErrors.invalidUrl.errorCode;
+		const message = gheServerUrlErrors.invalidUrl.message +
+			(urlValidationResult.reason ? ` (${urlValidationResult.reason})` : '');
 		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 		return;

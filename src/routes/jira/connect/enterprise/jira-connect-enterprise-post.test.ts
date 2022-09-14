@@ -51,6 +51,20 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({ success: false, errors: [{ code: "GHE_ERROR_INVALID_URL", message: "Invalid URL" }] });
 	});
 
+	it("POST Jira Connect Enterprise - invalid URL (port)", async () => {
+		const response = mockResponse();
+		await JiraConnectEnterprisePost(mockRequest("http://foobar.com:12345"), response);
+
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false,
+			errors: [{
+				code: "GHE_ERROR_INVALID_URL",
+				message: "Invalid URL (only the following ports are allowed: 80, 8080, 443, 6017, 8443, 8444, 7990, 8090, 8085, 8060, 8900, 9900)"
+			}]
+		});
+	});
+
 	it("POST Jira Connect Enterprise - valid existing URL", async () => {
 		await GitHubServerApp.install({
 			uuid: newUUID(),
