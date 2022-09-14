@@ -48,9 +48,10 @@ $(document).ready(() => {
       }
       options.callback({ results: queriedRepos });
     }
-  }).on("select2-close", () => {
-    toggleLoaderInInput($(".ghRepo-dropdown"), false);
   })
+    .on("select2-close", () => {
+      toggleLoaderInInput($(".ghRepo-dropdown"), false);
+    });
 
   $("#ghParentBranch").auiSelect2();
 
