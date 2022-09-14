@@ -37,12 +37,12 @@ const loadBranches = () => {
             item.id = item.node.name;
           });
           return {
-            text: (item) => item.node.name,
+            text: item => item.node.name,
             results: data.repository.refs.edges
           }
         },
-        formatSelection: (item) => { return item.node.name; },
-        formatResult: (item) => { return item.node.name; }
+        formatSelection: item => item.node.name,
+        formatResult: item => item.node.name
       });
       $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
       toggleSubmitDisabled(false);
