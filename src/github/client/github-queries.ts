@@ -218,6 +218,20 @@ export type getBranchesResponse = {
 	}
 };
 
+export type getBranchesNameResponse = {
+	repository: {
+		refs: {
+      totalCount: number,
+			edges: {
+				cursor: string;
+				node: {
+					name: string;
+				}
+			}[]
+		}
+	}
+};
+
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
@@ -309,6 +323,23 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
             }
           }
         }
+      }
+    }
+  }`;
+
+export const  getBranchesNameQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo) {
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+        totalCount
+        edges {
+          cursor
+          node {
+            name
+          }
+        }
+      }
+      defaultBranchRef {
+        name
       }
     }
   }`;
