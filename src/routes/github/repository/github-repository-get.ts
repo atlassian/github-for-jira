@@ -17,8 +17,10 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 
 	try {
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-		const gitHubUserDetails = await gitHubUserClient.getUser();
-		const gitHubSearchQueryString = `${repoName} user:${gitHubUserDetails.data.login} in:name sort:updated-desc`;
+		const gitHubUserDetails = await gitHubUserClient.getUserOrganizations();
+		const usersOwnOrg = gitHubUserDetails.viewer.login;
+		const remainingOrgs = gitHubUserDetails.viewer.organizations.nodes.map(org => `org:${org.login}`);
+		const gitHubSearchQueryString = `${repoName} org:${usersOwnOrg} ${remainingOrgs} in:name sort:updated-desc`;
 		const searchedRepos = await gitHubUserClient.searchUserRepositories(gitHubSearchQueryString);
 		res.send({
 			repositories: searchedRepos.search.repos

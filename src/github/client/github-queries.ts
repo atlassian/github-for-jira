@@ -14,6 +14,10 @@ export interface RepositoryNode {
 	cursor?: string;
 }
 
+export interface OrgNode {
+	login: string;
+}
+
 export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
@@ -31,6 +35,15 @@ export interface SearchedRepositoriesResponse {
 	search: {
 		repos: RepositoryNode[]
 	};
+}
+
+export interface UserOrganizationsResponse {
+	viewer: {
+		login: string;
+		organizations: {
+			nodes: OrgNode[];
+		}
+	}
 }
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
@@ -404,3 +417,14 @@ export const SearchRepositoriesQuery = `query($query_string: String!, $per_page:
   }
 }
 `;
+
+export const UserOrganizationsQuery = `query($first: Int!) { 
+  viewer { 
+    login
+    organizations(first: $first) {
+      nodes {
+        name
+      }
+    }
+  }
+}`;

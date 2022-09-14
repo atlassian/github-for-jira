@@ -11,7 +11,9 @@ import {
 	GetRepositoriesQuery,
 	GetRepositoriesResponse,
 	SearchedRepositoriesResponse,
-	SearchRepositoriesQuery
+	SearchRepositoriesQuery,
+	UserOrganizationsQuery,
+	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
 
 /**
@@ -73,6 +75,18 @@ export class GitHubUserClient extends GitHubClient {
 			return response.data.data;
 		} catch (err) {
 			this.logger.error({ err }, "Could not fetch repositories");
+			throw err;
+		}
+	}
+
+	public async getUserOrganizations(first = 10): Promise<UserOrganizationsResponse> {
+		try {
+			const response = await this.graphql<UserOrganizationsResponse>(UserOrganizationsQuery, {}, {
+				first
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch organizations");
 			throw err;
 		}
 	}
