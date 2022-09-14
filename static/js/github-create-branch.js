@@ -18,8 +18,7 @@ $(document).ready(() => {
     window.close();
   });
 
-  // change event doesn't trigger for first time, so triggering it manually
-  $("#ghRepo").trigger("change");
+  loadBranches();
 });
 
 const loadBranches = () => {
