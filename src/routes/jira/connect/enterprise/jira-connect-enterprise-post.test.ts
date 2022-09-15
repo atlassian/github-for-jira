@@ -43,12 +43,43 @@ describe("POST /jira/connect/enterprise", () => {
 		});
 	});
 
+	afterEach(() => {
+		delete process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC;
+	});
+
 	it("POST Jira Connect Enterprise - invalid URL", async () => {
 		const response = mockResponse();
 		await JiraConnectEnterprisePost(mockRequest("Random string!!"), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: false, errors: [{ code: "GHE_ERROR_INVALID_URL", message: "Invalid URL" }] });
+		expect(response.send).toHaveBeenCalledWith({ success: false, errors: [{ code: "GHE_ERROR_INVALID_URL", reason: undefined }] });
+	});
+
+	it("POST Jira Connect Enterprise - invalid URL (port)", async () => {
+		const response = mockResponse();
+		await JiraConnectEnterprisePost(mockRequest("http://foobar.com:12345"), response);
+
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false,
+			errors: [{
+				code: "GHE_ERROR_INVALID_URL",
+				reason: "only the following ports are allowed: 80, 8080, 443, 6017, 8443, 8444, 7990, 8090, 8085, 8060, 8900, 9900"
+			}]
+		});
+	});
+
+	it("POST Jira Connect Enterprise - GitHub cloud", async () => {
+		const response = mockResponse();
+		await JiraConnectEnterprisePost(mockRequest("https://github.com:8090"), response);
+
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false,
+			errors: [{
+				code: "GHE_ERROR_GITHUB_CLOUD_HOST"
+			}]
+		});
 	});
 
 	it("POST Jira Connect Enterprise - valid existing URL", async () => {
@@ -77,5 +108,32 @@ describe("POST /jira/connect/enterprise", () => {
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
+	});
+
+	it("POST Jira Connect Enterprise - URL timed out", async () => {
+		process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC = "100";
+		const response = mockResponse();
+		gheNock.get("/").delayConnection(2000).reply(200);
+		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false, errors: [{
+				code: "GHE_ERROR_CANNOT_CONNECT",
+				reason: "ETIMEDOUT"
+			}]
+		});
+	});
+
+	it("POST Jira Connect Enterprise - invalid status code", async () => {
+		const response = mockResponse();
+		gheNock.get("/").reply(500);
+		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false, errors: [{
+				code: "GHE_ERROR_CANNOT_CONNECT",
+				reason: "received 500 response"
+			}]
+		});
 	});
 });
