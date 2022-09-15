@@ -24,7 +24,8 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CREATE_BRANCH = "create-branch",
-	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist"
+	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist",
+	USE_REFACTORED_CONFIG_BUILDER = "use-refactored-config-builder"
 }
 
 export enum StringFlags {

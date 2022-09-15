@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import axios from "axios";
 import { GitHubServerApp } from "models/github-server-app";
 import { isValidUrl } from "utils/is-valid-url";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { createAnonymousClient } from "utils/get-github-client-config";
 
 const TIMEOUT_PERIOD_MS = 30 * 1000;
 
@@ -71,7 +71,8 @@ export const JiraConnectEnterprisePost = async (
 
 		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
-		await axios.get(gheServerURL, { timeout: TIMEOUT_PERIOD_MS });
+		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
+		await client.getMainPage(TIMEOUT_PERIOD_MS);
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
