@@ -20,13 +20,13 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		const gitHubUserDetails = await gitHubUserClient.getUserOrganizations();
 		const userAccount = gitHubUserDetails.viewer.login;
 		const userOrgs = gitHubUserDetails.viewer.organizations.nodes.map(org => ` org:${org.login}`);
-		const gitHubSearchQueryString = `${repoName} org:${userAccount}${userOrgs} in:name sort:updated-desc`;
+		const gitHubSearchQueryString = `${repoName} org:${userAccount}${userOrgs} in:name`;
 		const searchedRepos = await gitHubUserClient.searchUserRepositories(gitHubSearchQueryString);
 		res.send({
 			repositories: searchedRepos.search.repos
 		});
 	} catch (err) {
-		req.log.error({ err }, "Error creating branch");
+		req.log.error({ err }, "Error searching repository");
 		res.sendStatus(500);
 	}
 };
