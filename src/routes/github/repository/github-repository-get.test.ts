@@ -43,7 +43,7 @@ describe("GitHub Repository Search", () => {
 			githubNock
 				.post("/graphql", { query: UserOrganizationsQuery, variables: { first: 10 } })
 				.reply(200, { data: { viewer: { login: randomString, organizations: { nodes: [] } } } });
-			const queryString = `${randomString} org:${randomString} in:name sort:updated-desc`;
+			const queryString = `${randomString} org:${randomString} in:name`;
 			githubNock
 				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: queryString, per_page: 20 } })
 				.reply(200, { data: { search: { repos: [ 1, 2 ] } } });
