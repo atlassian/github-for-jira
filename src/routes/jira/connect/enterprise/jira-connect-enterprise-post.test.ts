@@ -60,7 +60,8 @@ describe("POST /jira/connect/enterprise", () => {
 			success: false,
 			errors: [{
 				code: "GHE_ERROR_INVALID_URL",
-				message: "Invalid URL (only the following ports are allowed: 80, 8080, 443, 6017, 8443, 8444, 7990, 8090, 8085, 8060, 8900, 9900)"
+				message: "Invalid URL",
+				reason: "only the following ports are allowed: 80, 8080, 443, 6017, 8443, 8444, 7990, 8090, 8085, 8060, 8900, 9900"
 			}]
 		});
 	});
@@ -102,7 +103,8 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({
 			success: false, errors: [{
 				code: "GHE_ERROR_CONNECTION_TIMED_OUT",
-				message: "Connection timed out"
+				message: "Connection timed out",
+				reason: "ECONNABORTED"
 			}]
 		});
 	});

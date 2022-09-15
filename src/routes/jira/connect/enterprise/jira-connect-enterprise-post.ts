@@ -59,9 +59,8 @@ export const JiraConnectEnterprisePost = async (
 
 	if (!urlValidationResult.isValidUrl) {
 		const errorCode = gheServerUrlErrors.invalidUrl.errorCode;
-		const message = gheServerUrlErrors.invalidUrl.message +
-			(urlValidationResult.reason ? ` (${urlValidationResult.reason})` : '');
-		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
+		const message = gheServerUrlErrors.invalidUrl.message;
+		res.status(200).send({ success: false, errors: [{ code: errorCode, message, reason: urlValidationResult.reason }] });
 		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
 		return;
 	}
@@ -93,7 +92,7 @@ export const JiraConnectEnterprisePost = async (
 		const errorCode = serverError?.errorCode || codeOrStatus;
 		const message = serverError?.message;
 
-		res.status(200).send({ success: false, errors: [{ code: errorCode, message }] });
+		res.status(200).send({ success: false, errors: [{ code: errorCode, message, reason: codeOrStatus }] });
 		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response?.status });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
