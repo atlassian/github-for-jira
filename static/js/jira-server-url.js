@@ -26,7 +26,7 @@ const requestFailed = () => {
 const getGHEServerError = (error, url) => {
 	let reason = '';
 	if (error.reason) {
-		reason = `Reason: ${error.reason}. `;
+		reason = `<br />Reason: ${error.reason}.<br />`;
 	}
 	switch (error.code) {
 		case "GHE_ERROR_INVALID_URL":
