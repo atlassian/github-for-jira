@@ -348,7 +348,7 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
 
 export const  getBranchesNameQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
     repository(owner: $owner, name: $repo) {
-      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor, orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
         totalCount
         edges {
           cursor
