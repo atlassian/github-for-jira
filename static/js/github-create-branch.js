@@ -1,7 +1,24 @@
 
 $(document).ready(() => {
+  // Fetching the list of default repos
+  const defaultRepos = $(".default-repos").map((_, option) => ({
+    id: $(option).html(),
+    text: $(option).html()
+  })).toArray();
+
   $("#ghServers").auiSelect2();
-  $("#ghRepo").auiSelect2();
+
+  $("#ghRepo").auiSelect2({
+    placeholder: "Select a repository",
+    data: defaultRepos,
+    query: options => {
+      const userInput = options.term;
+      let filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
+      // TODO: Ajax Request to pull new repos and add them to the list, ARC-1600
+      options.callback({ results: filteredRepos });
+    }
+  });
+
   $("#ghParentBranch").auiSelect2({ data: [] });
 
   $("#ghRepo").on("change", () => {
@@ -97,7 +114,6 @@ const showErrorMessage = (msg) => {
     .empty()
     .append(msg);
 };
-
 const hideErrorMessage = (msg) => {
   $(".gitHubCreateBranch__serverError").hide();
 };
