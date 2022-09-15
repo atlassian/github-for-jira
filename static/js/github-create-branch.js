@@ -19,7 +19,10 @@ $(document).ready(() => {
     }
   });
 
-  $("#ghParentBranch").auiSelect2({ data: [] });
+  $("#ghParentBranch").auiSelect2({
+    placeholder: "Select a branch",
+    data: []
+  });
 
   $("#ghRepo").on("change", () => {
     loadBranches();
@@ -35,7 +38,6 @@ $(document).ready(() => {
     window.close();
   });
 
-  loadBranches();
 });
 
 const loadBranches = () => {
