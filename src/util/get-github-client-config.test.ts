@@ -26,6 +26,10 @@ describe('get-github-client-config', () => {
 		};
 
 		gitHubServerApp = await GitHubServerApp.install(payload);
+
+		when(booleanFlag)
+			.calledWith(BooleanFlags.USE_REFACTORED_CONFIG_BUILDER, expect.anything(), expect.anything())
+			.mockResolvedValue(true);
 	});
 
 	afterEach(async () => {

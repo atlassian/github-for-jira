@@ -20,6 +20,7 @@ export interface GitHubConfig {
  */
 export class GitHubClient {
 	protected readonly logger: Logger;
+	protected readonly baseUrl: string;
 	protected readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;
@@ -29,7 +30,7 @@ export class GitHubClient {
 		logger: Logger = getLogger("gitHub-client")
 	) {
 		this.logger = logger;
-
+		this.baseUrl = gitHubConfig.baseUrl;
 		this.restApiUrl = gitHubConfig.apiUrl;
 		this.graphqlUrl = gitHubConfig.graphqlUrl;
 

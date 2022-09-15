@@ -1,7 +1,7 @@
 import { pushWebhookHandler } from "./push";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { GitHubPushData, GitHubRepository } from "../interfaces/github";
+import { GitHubCommit, GitHubPushData, GitHubRepository } from "../interfaces/github";
 import { enqueuePush } from "../transforms/push";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
@@ -69,7 +69,7 @@ describe("PushWebhookHandler", ()=>{
 				added: [],
 				modified: [],
 				removed: []
-			}]
+			} as unknown as GitHubCommit]
 		};
 		return new WebhookContext({
 			id: "1",

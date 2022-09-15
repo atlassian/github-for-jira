@@ -29,9 +29,7 @@
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
     <div class="gitHubCreateBranch__subHeader">
-      Creating a branch for
-      <!--TODO: Need to add icons based on the type of issue(story/task/bug), ARC-1598 -->
-      <a href="#">{{issue.key}}</a>
+      Creating a branch for <b>{{issue.key}}</b>
     </div>
   </div>
 
@@ -47,11 +45,10 @@
     </div>
     <div class="field-group">
       <aui-label for="repo">Repository</aui-label>
-      <select id="ghRepo" name="repo" class="full-width-field" placeholder="Select a repository">
-        {{#each repos}}
-          <option value="{{node.full_name}}">{{node.full_name}}</option>
-        {{/each}}
-      </select>
+      <input type="hidden" id="ghRepo">
+      {{#each repos}}
+        <div class="hidden default-repos">{{node.full_name}}</div>
+      {{/each}}
     </div>
     <div class="field-group">
       <aui-label for="branch">Branch from</aui-label>
