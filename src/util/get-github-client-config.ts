@@ -54,8 +54,8 @@ async function calculateProxyBaseUrl(jiraHost: string, gitHubBaseUrl: string | u
 				.filter(hostname => !!hostname)
 				.map(hostname => hostname.trim())
 				.map(hostname => hostname.indexOf("://") >= 0 ? hostname : "http://" + hostname)
-				.map(hostname => new URL(hostname).host.toLowerCase())
-				.indexOf(new URL(gitHubBaseUrl).host.trim().toLowerCase()) >= 0;
+				.map(hostname => new URL(hostname).hostname.toLowerCase())
+				.indexOf(new URL(gitHubBaseUrl).hostname.trim().toLowerCase()) >= 0;
 		} catch (err) {
 			logger.error({ err }, "Cannot evaluate skiplist because of a error, opting for outboundproxy for good");
 			skipOutboundProxy = false;
