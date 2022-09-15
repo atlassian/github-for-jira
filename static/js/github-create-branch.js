@@ -105,7 +105,7 @@ const toggleSubmitDisabled = (bool) => {
   $("#createBranchBtn").attr("aria-disabled", String(bool));
 }
 
-$("#cancelBtn").click(function (event) {
-  event.preventDefault();
-  window.close();
+$('#cancelBtn').click(function (event) {
+	event.preventDefault();
+	window.close();
 });

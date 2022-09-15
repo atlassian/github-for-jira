@@ -59,6 +59,10 @@
   display: none;
 }
 
+.hidden {
+  display: none;
+}
+
 .gitHubCreateBranch__serverError {
   display: none;
   margin-top: 2.5em;

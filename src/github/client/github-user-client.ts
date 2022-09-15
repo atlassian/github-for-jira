@@ -13,7 +13,9 @@ import {
 	SearchedRepositoriesResponse,
 	SearchRepositoriesQuery,
 	UserOrganizationsQuery,
-	UserOrganizationsResponse
+	UserOrganizationsResponse,
+	getBranchesNameQuery,
+	getBranchesNameResponse
 } from "~/src/github/client/github-queries";
 
 /**
@@ -133,6 +135,21 @@ export class GitHubUserClient extends GitHubClient {
 				owner,
 				repo
 			});
+	}
+
+	public async getBranches(owner: string, repo: string, per_page = 20, cursor?: string): Promise<getBranchesNameResponse> {
+		try {
+			const response = await this.graphql<getBranchesNameResponse>(getBranchesNameQuery, {}, {
+				owner,
+				repo,
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch branches");
+			throw err;
+		}
 	}
 
 }
