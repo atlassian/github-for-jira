@@ -3,6 +3,7 @@ interface UrlValidationResult {
 	reason?: string
 }
 
+// See https://stash.atlassian.com/projects/EDGE/repos/edge-proxies/browse/sceptre/data/squid_outbound-proxy.conf.jinja2#43
 const ALLOWED_PORTS = [80, 8080, 443, 6017, 8443, 8444, 7990, 8090, 8085, 8060, 8900, 9900];
 
 export const validateUrl = (url: string): UrlValidationResult => {
