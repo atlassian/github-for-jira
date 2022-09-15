@@ -7,40 +7,17 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
-interface MessageAndCode {
-	errorCode: string;
-	message: string;
+const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
+
+enum ErrorResponseCode {
+	InvalidUrl = "GHE_ERROR_INVALID_URL",
+	CloudHost = "GHE_ERROR_GITHUB_CLOUD_HOST",
+	CannotConnect = "GHE_ERROR_CANNOT_CONNECT"
 }
 
-interface GheServerUrlErrors {
-	[key: string | number]: MessageAndCode;
+function isInteger(n: string) {
+	return !isNaN(Number(n));
 }
-
-const GHE_ERROR_UNREACHABLE = {
-	errorCode: "GHE_ERROR_ENOTFOUND",
-	message: "Request to URL failed"
-};
-
-const GHE_ERROR_TIMEOUT = {
-	errorCode: "GHE_ERROR_CONNECTION_TIMED_OUT",
-	message: "Connection timed out"
-};
-
-export const gheServerUrlErrors: GheServerUrlErrors = {
-	invalidUrl: {
-		errorCode: "GHE_ERROR_INVALID_URL",
-		message: "Invalid URL"
-	},
-	ENOTFOUND: GHE_ERROR_UNREACHABLE,
-	DEPTH_ZERO_SELF_SIGNED_CERT: GHE_ERROR_UNREACHABLE,
-	403: GHE_ERROR_UNREACHABLE,
-	502: {
-		errorCode: "GHE_SERVER_BAD_GATEWAY",
-		message: "Bad gateway"
-	},
-	ECONNABORTED: GHE_ERROR_TIMEOUT,
-	ETIMEDOUT: GHE_ERROR_TIMEOUT
-};
 
 export const JiraConnectEnterprisePost = async (
 	req: Request,
@@ -54,18 +31,41 @@ export const JiraConnectEnterprisePost = async (
 	const { gheServerURL } = req.body;
 	const { id: installationId } = res.locals.installation;
 
+	const jiraHost = res.locals.jiraHost;
+
+	function sendErrorMetricAndAnalytics(errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) {
+		const errorCodeAndStatusObj: { errorCode: string, status?: string } = { errorCode };
+		if (maybeStatus) {
+			errorCodeAndStatusObj.status = maybeStatus;
+		}
+		statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj);
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+			jiraHost,
+			...errorCodeAndStatusObj
+		});
+	}
+
 	req.log.debug(`Verifying provided GHE server url ${gheServerURL} is a valid URL`);
 	const urlValidationResult = validateUrl(gheServerURL);
 
 	if (!urlValidationResult.isValidUrl) {
-		const errorCode = gheServerUrlErrors.invalidUrl.errorCode;
-		const message = gheServerUrlErrors.invalidUrl.message;
-		res.status(200).send({ success: false, errors: [{ code: errorCode, message, reason: urlValidationResult.reason }] });
-		req.log.error(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
+		res.status(200).send({
+			success: false,
+			errors: [{ code: ErrorResponseCode.InvalidUrl, reason: urlValidationResult.reason }]
+		});
+		req.log.info(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
+		sendErrorMetricAndAnalytics(ErrorResponseCode.InvalidUrl);
 		return;
 	}
 
-	const jiraHost = res.locals.jiraHost;
+	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).host)) {
+		res.status(200).send({ success: false, errors: [ { code: ErrorResponseCode.CloudHost } ] });
+		req.log.info("The entered URL is GitHub cloud site, return error");
+		sendErrorMetricAndAnalytics(ErrorResponseCode.CloudHost);
+		return;
+	}
 
 	try {
 		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
@@ -86,20 +86,18 @@ export const JiraConnectEnterprisePost = async (
 			jiraHost: jiraHost
 		});
 	} catch (err) {
-		req.log.error({ err, gheServerURL }, `Something went wrong`);
-		const codeOrStatus = err.code || err.response.status;
-		const serverError = gheServerUrlErrors[codeOrStatus];
-		const errorCode = serverError?.errorCode || codeOrStatus;
-		const message = serverError?.message;
+		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
+		const codeOrStatus = "" + (err.code || err.response.status);
 
-		res.status(200).send({ success: false, errors: [{ code: errorCode, message, reason: codeOrStatus }] });
-		statsd.increment(metricError.gheServerUrlError, { errorCode, status: err.response?.status });
-
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
-			jiraHost,
-			errorCode,
-			errorMessage: message
+		res.status(200).send({
+			success: false, errors: [{
+				code: ErrorResponseCode.CannotConnect,
+				reason:
+					isInteger(codeOrStatus)
+						? `received ${codeOrStatus} response`
+						: codeOrStatus
+			}]
 		});
+		sendErrorMetricAndAnalytics(ErrorResponseCode.CannotConnect, codeOrStatus);
 	}
 };
