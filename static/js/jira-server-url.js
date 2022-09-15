@@ -51,7 +51,7 @@ const getGHEServerError = (error, url) => {
 		default:
 			return {
 				title: "Something went wrong",
-				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Error code: <b>${code}</b>. ${reason}`
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Error code: <b>${error.code}</b>. ${reason}`
 			};
 	}
 }
@@ -90,7 +90,13 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 					handleGheUrlRequestErrors(errorMessage);
 				}
 			}
-		);
+		).fail(function(xhr, status, error) {
+			console.error("Error while calling backend", status, error);
+			handleGheUrlRequestErrors(getGHEServerError({
+				code: status,
+				reason: xhr.responseText
+			}, gheServerURL));
+		});
 	});
 };
 

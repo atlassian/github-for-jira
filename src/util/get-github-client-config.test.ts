@@ -10,7 +10,7 @@ jest.mock("../config/feature-flags");
 describe('get-github-client-config', () => {
 	const uuid = newUUID();
 	const APP_ID = 123;
-	const GHES_HOSTNAME = "myinternalserver.com";
+	const GHES_HOSTNAME = "myinternalserver.com:8090";
 	let gitHubServerApp: GitHubServerApp;
 	beforeEach(async () => {
 		const payload = {
@@ -52,7 +52,16 @@ describe('get-github-client-config', () => {
 			expect(config.proxyBaseUrl).toBeUndefined();
 		});
 
-		it('skips proxy if GHES URL is in the skiplist', async () => {
+		it('skips proxy if GHES hostname is in the skiplist without port', async () => {
+			when(stringFlag)
+				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
+				.mockResolvedValue(new URL("http://" + GHES_HOSTNAME).hostname);
+
+			const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
+			expect(config.proxyBaseUrl).toBeUndefined();
+		});
+
+		it('skips proxy if GHES URL is in the skiplist with/without port', async () => {
 			when(stringFlag)
 				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 				.mockResolvedValue("http://" + GHES_HOSTNAME);

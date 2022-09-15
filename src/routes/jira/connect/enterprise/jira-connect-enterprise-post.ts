@@ -60,7 +60,7 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
-	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).host)) {
+	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).hostname)) {
 		res.status(200).send({ success: false, errors: [ { code: ErrorResponseCode.CloudHost } ] });
 		req.log.info("The entered URL is GitHub cloud site, return error");
 		sendErrorMetricAndAnalytics(ErrorResponseCode.CloudHost);

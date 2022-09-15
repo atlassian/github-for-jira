@@ -71,7 +71,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 	it("POST Jira Connect Enterprise - GitHub cloud", async () => {
 		const response = mockResponse();
-		await JiraConnectEnterprisePost(mockRequest("https://github.com"), response);
+		await JiraConnectEnterprisePost(mockRequest("https://github.com:8090"), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({
@@ -119,7 +119,7 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({
 			success: false, errors: [{
 				code: "GHE_ERROR_CANNOT_CONNECT",
-				reason: "ECONNABORTED"
+				reason: "ETIMEDOUT"
 			}]
 		});
 	});
