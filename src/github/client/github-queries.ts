@@ -454,7 +454,7 @@ export const UserOrganizationsQuery = `query($first: Int!) {
     login
     organizations(first: $first) {
       nodes {
-        name
+        login
       }
     }
   }
