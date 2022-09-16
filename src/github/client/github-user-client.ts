@@ -137,7 +137,7 @@ export class GitHubUserClient extends GitHubClient {
 			});
 	}
 
-	public async getBranches(owner: string, repo: string, per_page = 20, cursor?: string): Promise<getBranchesNameResponse> {
+	public async getReferences(owner: string, repo: string, per_page = 20, cursor?: string): Promise<getBranchesNameResponse> {
 		try {
 			const response = await this.graphql<getBranchesNameResponse>(getBranchesNameQuery, {}, {
 				owner,
