@@ -13,9 +13,7 @@ import {
 	SearchedRepositoriesResponse,
 	SearchRepositoriesQuery,
 	UserOrganizationsQuery,
-	UserOrganizationsResponse,
-	getBranchesNameQuery,
-	getBranchesNameResponse
+	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
 
 /**
@@ -137,19 +135,14 @@ export class GitHubUserClient extends GitHubClient {
 			});
 	}
 
-	public async getBranches(owner: string, repo: string, per_page = 20, cursor?: string): Promise<getBranchesNameResponse> {
-		try {
-			const response = await this.graphql<getBranchesNameResponse>(getBranchesNameQuery, {}, {
+	public async getBranches(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse>> {
+		return await this.get<Octokit.ReposGetBranchResponse>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {
+			urlParams: {
 				owner,
 				repo,
-				per_page,
-				cursor
-			});
-			return response.data.data;
-		} catch (err) {
-			this.logger.error({ err }, "Could not fetch branches");
-			throw err;
-		}
+				per_page
+			}
+		});
 	}
 
 }

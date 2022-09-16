@@ -85,18 +85,18 @@ const loadBranches = () => {
     success: (data) => {
       $("#ghParentBranch").auiSelect2({
         data: () => {
-          data.repository.refs.edges.forEach((item) => {
-            item.id = item.node.name;
+          data.forEach((item) => {
+            item.id = item.name;
           });
           return {
-            text: item => item.node.name,
-            results: data.repository.refs.edges
+            text: item => item.name,
+            results: data
           }
         },
-        formatSelection: item => item.node.name,
-        formatResult: item => item.node.name
+        formatSelection: item => item.name,
+        formatResult: item => item.name
       });
-      $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
+      $("#ghParentBranch").select2("val", data[0].name);
       toggleSubmitDisabled(false);
     },
     error: (error) => {
