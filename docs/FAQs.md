@@ -90,3 +90,15 @@ Enter a new GitHub client secret, or upload a new private key (or both).
 
 Select **Update**.
 
+
+<h3>Q: How can I create a new branch in a repository of a different organizations that I have access to? </h3>
+
+**A:** If you are trying to search for a repository of a different organization, then make sure that this specific organization is installed in GitHub for Jira App.
+Just check the **Connect a GitHub organization to your Jira site** (`/github/configuration`) page and check if that organization is installed or not.
+![Connect GitHub Organization to Jira](./images/connect-gh-org-to-jira.png)
+
+If its not there, make sure you install that organization.
+![Install GH4J app in GitHub](./images/install-app-in-github.png)
+
+Once you have installed it, then you will be able to search and create new branch on the repositories of that organization.
+

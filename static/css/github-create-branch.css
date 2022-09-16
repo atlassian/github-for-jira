@@ -50,6 +50,10 @@
   font-weight: 400;
   right: 4px;
 }
+.select2-loader {
+  position: absolute;
+  right: 20px;
+}
 
 .hidden {
   display: none;
