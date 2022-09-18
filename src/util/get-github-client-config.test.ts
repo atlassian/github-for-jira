@@ -1,4 +1,4 @@
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { v4 as newUUID } from "uuid";
 import { GitHubServerApp } from "models/github-server-app";
@@ -27,65 +27,50 @@ describe('get-github-client-config', () => {
 
 		gitHubServerApp = await GitHubServerApp.install(payload);
 
-		when(booleanFlag)
-			.calledWith(BooleanFlags.USE_REFACTORED_CONFIG_BUILDER, expect.anything(), expect.anything())
-			.mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
 		await GitHubServerApp.uninstallApp(uuid);
 	});
 
-	describe('when FF is ON', () => {
-		beforeEach(async () => {
-			when(booleanFlag)
-				.calledWith(BooleanFlags.USE_OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue(true);
-		});
+	it('skips proxy if GHES hostname is in the skiplist', async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
+			.mockResolvedValue(GHES_HOSTNAME);
 
-		it('skips proxy if GHES hostname is in the skiplist', async () => {
-			when(stringFlag)
-				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue(GHES_HOSTNAME);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
+		expect(config.proxyBaseUrl).toBeUndefined();
+	});
 
-			const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
-			expect(config.proxyBaseUrl).toBeUndefined();
-		});
+	it('skips proxy if GHES URL is in the skiplist', async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
+			.mockResolvedValue("http://" + GHES_HOSTNAME);
 
-		it('skips proxy if GHES URL is in the skiplist', async () => {
-			when(stringFlag)
-				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue("http://" + GHES_HOSTNAME);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
+		expect(config.proxyBaseUrl).toBeUndefined();
+	});
 
-			const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
-			expect(config.proxyBaseUrl).toBeUndefined();
-		});
+	it('does not skip proxy if GHES hostname is not in the skiplist', async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
+			.mockResolvedValue("some-other-instance.com");
 
-		it('does not skip proxy if GHES hostname is not in the skiplist', async () => {
-			when(stringFlag)
-				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue("some-other-instance.com");
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
+		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
+	});
 
-			const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger('test'), jiraHost);
-			expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
-		});
+	it('never skips proxy for GitHub cloud, even if the hostname is in the skiplist', async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
+			.mockResolvedValue("github.com,api.github.com");
 
-		it('never skips proxy for GitHub cloud, even if the hostname is in the skiplist', async () => {
-			when(stringFlag)
-				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue("github.com,api.github.com");
-
-			const config = await getGitHubClientConfigFromAppId(undefined, getLogger('test'), jiraHost);
-			expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
-		});
+		const config = await getGitHubClientConfigFromAppId(undefined, getLogger('test'), jiraHost);
+		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 
 	describe('when FF is off',  () => {
 		it('does not populate any value', async () => {
-			when(booleanFlag)
-				.calledWith(BooleanFlags.USE_OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
-				.mockResolvedValue(false);
-
 			when(stringFlag)
 				.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 				.mockResolvedValue(GHES_HOSTNAME);
