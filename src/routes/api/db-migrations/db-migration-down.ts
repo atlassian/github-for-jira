@@ -14,15 +14,15 @@ import path from "path";
 
 const logger = getLogger("DBMigrationUp");
 
-export const DBMigrationUp = async (req: Request, res: Response): Promise<void> => {
+export const DBMigrationDown = async (req: Request, res: Response): Promise<void> => {
 	try{
 
 		const targetScript = getTargetScript(req);
 
 		await validateScript(targetScript);
 
-		logger.info(`All validation pass, now executing db migration script ${targetScript}`);
-		const { stdout, stderr } = await exec(`npm run db:migrate:${mapEnv()}`);
+		logger.info(`All validation pass, now executing db migration rollback to ${targetScript}`);
+		const { stdout, stderr } = await exec(`./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${mapEnv()}`);
 
 		if (stderr) {
 			logger.error({stdout, stderr}, `DB migration UP FAILED!! -  ${targetScript}`);
@@ -53,7 +53,7 @@ const getTargetScript = (req: Request) => {
 			message: `"targetScript" is mandatory in the request body, but found none.`
 		}
 	}
-	logger.info(`Received DB target script to mgiration up: ${targetScript}`);
+	logger.info(`Received DB target script to mgiration DOWN: ${targetScript}`);
 	return targetScript;
 }
 
@@ -70,30 +70,32 @@ const validateScript = async (targetScript: string) => {
 	if(targetScript.toLowerCase() !== latestScriptsInRepo.toLowerCase()) {
 		throw {
 			statusCode: 400,
-			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
+			message: `Can ONLY undo most recent db migration script. "targetScript: ${targetScript}" doesn't match latest scripts in db/migrations folder ${latestScriptsInRepo}`
 		}
 	}
 
-	const result = await sequelize.query(`select "name" from "SequelizeMeta" where "name" = :name`, {
-		replacements: {name: targetScript},
-		type: QueryTypes.SELECT
-	});
-
-	if(result.length > 0) {
-		//throw {
-		//	statusCode: 400,
-		//	message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table`
-		//}
+	const [lastScript] = await sequelize.query(`select "name" from "SequelizeMeta" order by "name" desc limit 1`);
+	if(lastScript.length < 1) {
+		throw {
+			statusCode: 500,
+			message: `There're no scripts to rollback to, stop rolling back. \n ${lastScript}`
+		}
 	}
-
-	logger.info(`Target script match latest scripts in repo ${latestScriptsInRepo}, validation passed`);
+	const scriptInDB = lastScript[0].name;
+	if(scriptInDB.toLowerCase() !== targetScript) {
+		throw {
+			statusCode: 400,
+			message: `The script asked to rollback ${targetScript} DOES NOT match latest script in db ${scriptInDB}. Stop rolling back`
+		}
+	}
+	logger.info(`Target script match latest scripts in repo ${latestScriptsInRepo}, validation passed, can rollback to ${targetScript}`);
 
 }
 
 const mapEnv = () => {
-	if(isNodeDev()) return "dev";
+	if(isNodeDev()) return "development";
 	if(isNodeTest()) return "test";
-	if(isNodeProd()) return "prod";
+	if(isNodeProd()) return "production-migrate";
 	throw {
 		statusCode: 500,
 		message: `Cannot determin node env for [${getNodeEnv()}]`
