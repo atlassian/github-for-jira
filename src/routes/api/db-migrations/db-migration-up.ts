@@ -2,9 +2,9 @@ import { Request, Response } from "express";
 import { getLogger } from "config/logger";
 import safeJsonStringify from "safe-json-stringify";
 import { sequelize } from "models/sequelize";
-import { QueryTypes } from 'sequelize';
-import { exec as execOrigin } from 'child_process';
-import { promisify } from 'util';
+import { QueryTypes } from "sequelize";
+import { exec as execOrigin } from "child_process";
+import { promisify } from "util";
 import { isNodeDev, isNodeTest, isNodeProd, getNodeEnv } from "utils/is-node-env";
 
 const exec = promisify(execOrigin);
@@ -15,7 +15,7 @@ import path from "path";
 const logger = getLogger("DBMigrationUp");
 
 export const DBMigrationUp = async (req: Request, res: Response): Promise<void> => {
-	try{
+	try {
 
 		const targetScript = getTargetScript(req);
 
@@ -25,9 +25,9 @@ export const DBMigrationUp = async (req: Request, res: Response): Promise<void> 
 		const { stdout, stderr } = await exec(`npm run db:migrate:${mapEnv()}`);
 
 		if (stderr) {
-			logger.error({stdout, stderr}, `DB migration UP FAILED!! -  ${targetScript}`);
+			logger.error({ stdout, stderr }, `DB migration UP FAILED!! -  ${targetScript}`);
 		} else {
-			logger.info({stdout, stderr}, `DB migration UP SUCCESSS!! -  ${targetScript}`);
+			logger.info({ stdout, stderr }, `DB migration UP SUCCESSS!! -  ${targetScript}`);
 		}
 
 		res.status(stderr ? 500: 200).send(`
@@ -38,24 +38,24 @@ export const DBMigrationUp = async (req: Request, res: Response): Promise<void> 
 			${stderr}
 		`);
 
-	}catch(e){
+	} catch (e){
 		logger.error("Error doing db migration up", e);
 		res.status(e.statusCode || 500);
 		res.send(safeJsonStringify(e));
 	}
-}
+};
 
 const getTargetScript = (req: Request) => {
 	const targetScript = (req.body || {}).targetScript;
-	if(!targetScript) {
+	if (!targetScript) {
 		throw {
 			statusCode: 400,
 			message: `"targetScript" is mandatory in the request body, but found none.`
-		}
+		};
 	}
-	logger.info(`Received DB target script to mgiration UP: ${targetScript}`);
+	logger.info(`Received DB target script to mgiration up: ${targetScript}`);
 	return targetScript;
-}
+};
 
 const validateScript = async (targetScript: string) => {
 
@@ -63,39 +63,39 @@ const validateScript = async (targetScript: string) => {
 	scripts.sort(); //sort by name, asc, so filename order has to be in order now.
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
-	if(!targetScript.endsWith(".js")) {
+	if (!targetScript.endsWith(".js")) {
 		targetScript =  targetScript + ".js";
 	}
 
-	if(targetScript.toLowerCase() !== latestScriptsInRepo.toLowerCase()) {
+	if (targetScript.toLowerCase() !== latestScriptsInRepo.toLowerCase()) {
 		throw {
 			statusCode: 400,
-			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations folder ${latestScriptsInRepo}`
-		}
+			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
+		};
 	}
 
-	const [result] = await sequelize.query(`select "name" from "SequelizeMeta" where "name" = :name`, {
-		replacements: {name: targetScript},
+	const result = await sequelize.query(`select "name" from "SequelizeMeta" where "name" = :name`, {
+		replacements: { name: targetScript },
 		type: QueryTypes.SELECT
 	});
 
-	if(result.length > 0) {
+	if (result.length > 0) {
 		throw {
 			statusCode: 400,
-			message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table`
-		}
+			message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table. DB query result ${safeJsonStringify(result)}`
+		};
 	}
 
 	logger.info(`Target script match latest scripts in repo ${latestScriptsInRepo}, validation passed`);
 
-}
+};
 
 const mapEnv = () => {
-	if(isNodeDev()) return "dev";
-	if(isNodeTest()) return "test";
-	if(isNodeProd()) return "prod";
+	if (isNodeDev()) return "dev";
+	if (isNodeTest()) return "test";
+	if (isNodeProd()) return "prod";
 	throw {
 		statusCode: 500,
 		message: `Cannot determin node env for [${getNodeEnv()}]`
-	}
-}
+	};
+};
