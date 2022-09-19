@@ -124,11 +124,11 @@ const createBranchPost = () => {
       // On success, we close the tab so the user returns to original screen
       window.close();
     })
-    .fail((err) => {
+    .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage("Please make sure all the details you entered are correct.")
+      showErrorMessage(error.responseText);
     });
-}
+};
 
 const toggleSubmitDisabled = (bool) => {
   $("#createBranchBtn").prop("disabled", bool);

@@ -64,6 +64,6 @@
   margin-top: 2.5em;
 }
 
-.gitHubCreateBranch__serverError .errorMessageBox__container {
-  align-items: center;
+.aui-icon.aui-iconfont-error {
+  margin-top: 10px;
 }

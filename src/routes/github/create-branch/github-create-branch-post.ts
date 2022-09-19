@@ -30,6 +30,18 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
-		res.sendStatus(500);
+		res.status(500).send(verifyError(err));
+	}
+};
+
+const verifyError = (err: any): string => {
+	switch (err.status) {
+		case 403:
+			return "Please check if this repository is connected to GitHub for Jira app!";
+		case 422:
+			return "This branch already exists! Please use a different branch name.";
+		default: {
+			return "Oops, something went wrong!";
+		}
 	}
 };
