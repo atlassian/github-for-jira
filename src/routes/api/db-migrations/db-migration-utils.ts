@@ -26,12 +26,11 @@ export const getTargetScript = (req: Request) => {
 	return targetScript;
 };
 
-/**
- * Make sure the script to migrate up or rollback is the lastest scripts in this build.
- * So following scenarios will failed.
- * Person A merge script 1, person B merge scripts 2. Now we CANNOT migrate anymore. Need to revert one PR first inorder to migrate.
+/* Make sure the script to migrate up or rollback is the latest script in this build.
+ * So the following scenarios will fail.
+ * Person A merge script 1, person B merge scripts 2. Now we CAN NOT migrate anymore. Need to revert one PR first to migrate.
  *
- * In short, encourage ppl to over-communicate when it comes to db migrations.
+ * In short, encourage ppl to over-communicate when it comes to DB migrations.
  */
 export const validateScriptLocally = async (targetScript: string) => {
 
