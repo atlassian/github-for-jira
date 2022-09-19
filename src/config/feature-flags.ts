@@ -23,9 +23,7 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	CREATE_BRANCH = "create-branch",
-	USE_OUTBOUND_PROXY_SKIPLIST = "use-outbound-proxy-skiplist",
-	USE_REFACTORED_CONFIG_BUILDER = "use-refactored-config-builder"
+	CREATE_BRANCH = "create-branch"
 }
 
 export enum StringFlags {
