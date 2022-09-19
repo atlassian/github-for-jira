@@ -9,6 +9,10 @@ import { promisify } from "util";
 const exec = promisify(execOrigin);
 const logger = getLogger("DBMigration");
 
+/**
+ * Return the common param in req.body `targetScript` to migrate up or rollback
+ * Note: Intentially to make this param case sensitive to be more safe
+ */
 export const getTargetScript = (req: Request) => {
 	let targetScript = (req.body || {}).targetScript;
 	if (!targetScript) {
@@ -17,14 +21,24 @@ export const getTargetScript = (req: Request) => {
 			message: `"targetScript" is mandatory in the request body, but found none.`
 		};
 	}
+	//just make sure the script name matching the ones in db down the track.
 	if (!targetScript.endsWith(".js")) targetScript = targetScript + ".js";
 	return targetScript;
 };
 
+/**
+ * Make sure the script to migrate up or rollback is the lastest scripts in this build.
+ * So following scenarios will failed.
+ * Person A merge script 1, person B merge scripts 2. Now we CANNOT migrate anymore. Need to revert one PR first inorder to migrate.
+ *
+ * In short, encourage ppl to over-communicate when it comes to db migrations.
+ */
 export const validateScriptLocally = async (targetScript: string) => {
 
 	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), "db/migrations"));
-	scripts.sort(); //sort by name, asc, so filename order has to be in order now.
+	//Sort by name, asc, so filename order has to be in order now.
+	//So this now will be mandatory that, db migrtions scripts has to be alphabetically ordered.
+	scripts.sort();
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
 	if (targetScript.toLowerCase() !== latestScriptsInRepo.toLowerCase()) {
