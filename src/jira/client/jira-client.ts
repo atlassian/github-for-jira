@@ -206,7 +206,11 @@ export const getJiraClient = async (
 						!withinIssueKeyLimit(data.branches) ||
 						!withinIssueKeyLimit(data.pullRequests)
 					) {
-						logger.warn(issueKeyLimitWarning);
+						logger.warn({
+							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
+						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
