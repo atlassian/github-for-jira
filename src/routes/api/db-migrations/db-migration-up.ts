@@ -48,6 +48,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 		};
 	}
 
-	logger.info(`Target script match latest scripts in repo ${targetScript}, validation passed`);
+	logger.info(`Target scripts ${targetScript} has not been migrated in db yet, so all good`);
+
 
 };

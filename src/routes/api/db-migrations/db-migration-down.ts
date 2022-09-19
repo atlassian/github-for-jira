@@ -52,7 +52,8 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 			message: `The script asked to rollback ${targetScript} DOES NOT match latest script in db ${scriptInDB}. Stop rolling back`
 		};
 	}
-	logger.info(`Target script match latest scripts in repo ${targetScript}, validation passed, can rollback to ${targetScript}`);
+
+	logger.info(`Target script ${targetScript} is indeed the last script in db, validation against db pass`);
 
 };
 

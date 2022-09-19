@@ -33,6 +33,9 @@ export const validateScriptLocally = async (targetScript: string) => {
 			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
 		};
 	}
+
+	logger.info(`Target script match latest scripts in repo ${targetScript}, validation passed`);
+
 };
 
 export enum DBMigrationType {
