@@ -65,7 +65,6 @@ export class GitHubClient {
 	}
 
 	private buildProxyConfig(proxyBaseUrl: string): Partial<AxiosRequestConfig> {
-		this.logger.info("Using outbound proxy"); // temp logging while FF is not removed to make sure this path is working
 		const proxyHttpAgent = new HttpProxyAgent(proxyBaseUrl);
 		const proxyHttpsAgent = new HttpsProxyAgent(proxyBaseUrl);
 		return {
