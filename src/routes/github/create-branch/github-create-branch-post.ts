@@ -18,14 +18,24 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	try {
 		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
-		const { data: baseBranchRef } = await gitHubUserClient.getReference(owner, repo, sourceBranchName);
-		const sha = baseBranchRef.object.sha;
+		let baseBranchSha;
+		try {
+			baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
+		} catch (err) {
+			if (err.status === 404) {
+				res.status(400).json({ err: "Source branch not found" });
+				return;
+			} else {
+				res.status(400).json({ err: "Error while fetching source branch details" });
+				return;
+			}
+		}
 
 		await gitHubUserClient.createReference(owner, repo, {
 			owner,
 			repo,
 			ref: `refs/heads/${newBranchName}`,
-			sha
+			sha: baseBranchSha
 		});
 		res.sendStatus(200);
 	} catch (err) {
