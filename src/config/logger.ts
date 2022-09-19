@@ -1,21 +1,50 @@
-import Logger, { createLogger, LogLevel, Serializers, stdSerializers, Stream } from "bunyan";
+import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 
-const responseSerializer = (res) => res && ({
-	...stdSerializers.res(res),
-	config: res.config,
-	request: requestSerializer(res.request)
-});
+function censorUrl(url) {
+	if (!url) {
+		return url;
+	}
+	if (typeof url === "string" && url.includes("/repos") && url.includes(".jira/config.yml")) {
+		return "CENSORED-PATH-TO-JIRA-CONFIG-YML";
+	}
+	return url;
+}
+
+const responseConfigSerializer = (config) => {
+	if (!config) {
+		return config;
+	}
+	return {
+		url: censorUrl(config.url),
+		method: config.method,
+		status: config.status,
+		statusText: config.statusText,
+		headers: config.headers
+	};
+};
+
+const responseSerializer = (res) => {
+	if (!res) {
+		return res;
+	}
+	return {
+		status: res.status,
+		statusText: res.statusText,
+		headers: res.headers,
+		config: responseConfigSerializer(res.config),
+		request: requestSerializer(res.request)
+	};
+};
 
 const requestSerializer = (req) => req && ({
 	method: req.method,
-	url: req.originalUrl || req.url,
-	path: req.path,
+	url: censorUrl(req.originalUrl || req.url),
+	path: censorUrl(req.path),
 	headers: req.headers,
 	remoteAddress: req.socket?.remoteAddress,
-	remotePort: req.socket?.remotePort,
-	body: req.body
+	remotePort: req.socket?.remotePort
 });
 
 const errorSerializer = (err) => {
@@ -31,6 +60,7 @@ const errorSerializer = (err) => {
 
 	return {
 		...err,
+		config: responseConfigSerializer(err.config),
 		response: responseSerializer(err.response),
 		request: requestSerializer(err.request)
 	};
@@ -82,6 +112,7 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 		serializers: {
 			err: errorSerializer,
 			error: errorSerializer,
+			config: responseConfigSerializer,
 			res: responseSerializer,
 			response: responseSerializer,
 			req: requestSerializer,
