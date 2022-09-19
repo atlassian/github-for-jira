@@ -4,7 +4,7 @@ import bformat from "bunyan-format";
 import { DEBUG } from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
 
-const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username", "prTitle", "prRef", "owner", "description"];
+const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username", "prTitle", "prRef", "owner", "description", "repo"];
 // For any Micros env we want the logs to be in JSON format.
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
