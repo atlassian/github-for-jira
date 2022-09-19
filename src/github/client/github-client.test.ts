@@ -1,5 +1,4 @@
 /* eslint-disable jest/no-standalone-expect */
-import { HttpsProxyAgent } from "https-proxy-agent";
 import "config/env";
 
 import * as axios from "axios";
@@ -34,20 +33,6 @@ describe("GitHub Client", () => {
 		(axios.default.create as jest.Mock).mockReturnValue(mockedAxiosCreate);
 		mockedAxiosPost.mockReset();
 		mockedAxiosPost.mockResolvedValue({});
-	});
-
-	it("configures the proxy for outbound calls", async () => {
-		const client = new TestGitHubClient(gitHubCloudConfig);
-		const outboundProxyConfig = client.getProxyConfig("https://github.com");
-		expect(outboundProxyConfig.proxy).toBe(false);
-		expect(outboundProxyConfig.httpsAgent).toBeInstanceOf(HttpsProxyAgent);
-	});
-
-	it("configures no proxy for calls to the Atlassian network", async () => {
-		const client = new TestGitHubClient(gitHubCloudConfig);
-		const outboundProxyConfig = client.getProxyConfig("http://github.internal.atlassian.com/api");
-		expect(outboundProxyConfig.proxy).toBe(false);
-		expect(outboundProxyConfig.httpsAgent).toBeUndefined();
 	});
 
 	it("uses proxy when provided", async () => {

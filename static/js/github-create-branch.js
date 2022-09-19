@@ -83,6 +83,7 @@ const loadBranches = () => {
     type: "GET",
     url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
     success: (data) => {
+      const allBranchesfetched = data?.repository?.refs?.totalCount === data?.repository?.refs?.edges.length;
       $("#ghParentBranch").auiSelect2({
         data: () => {
           data.forEach((item) => {
@@ -94,7 +95,16 @@ const loadBranches = () => {
           }
         },
         formatSelection: item => item.name,
-        formatResult: item => item.name
+        formatResult: item => item.name,
+        createSearchChoice: (term) => {
+          if (allBranchesfetched) {
+            return null;
+          }
+          return {
+            node: { name: term },
+            id: term
+          }
+        }
       });
       $("#ghParentBranch").select2("val", data[0].name);
       toggleSubmitDisabled(false);

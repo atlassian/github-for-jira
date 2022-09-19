@@ -135,7 +135,7 @@ export class GitHubUserClient extends GitHubClient {
 			});
 	}
 
-	public async getBranches(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse>> {
+	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse>> {
 		return await this.get<Octokit.ReposGetBranchResponse>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {
 			urlParams: {
 				owner,
