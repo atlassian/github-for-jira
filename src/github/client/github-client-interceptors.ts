@@ -98,9 +98,9 @@ export const handleFailedRequest = (logger: Logger) =>
 		const requestId = response?.headers?.["x-github-request-id"];
 		logger = logger.child({
 			requestId, resStatus: response?.status,
-			reqMethod: request.method,
-			reqPath: request.path,
-			errorMessage: error.message
+			requestMethod: request?.method,
+			requestPath: request?.path,
+			errorMessage: error?.message
 		});
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
