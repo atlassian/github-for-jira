@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request } from "express";
 import fs from "fs";
 import path from "path";
 import { isNodeDev, isNodeTest, isNodeProd, getNodeEnv } from "utils/is-node-env";
@@ -17,9 +17,9 @@ export const getTargetScript = (req: Request) => {
 			message: `"targetScript" is mandatory in the request body, but found none.`
 		};
 	}
-	if(!targetScript.endsWith(".js")) targetScript = targetScript + ".js";
+	if (!targetScript.endsWith(".js")) targetScript = targetScript + ".js";
 	return targetScript;
-}
+};
 
 export const validateScriptLocally = async (targetScript: string) => {
 
@@ -33,12 +33,12 @@ export const validateScriptLocally = async (targetScript: string) => {
 			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
 		};
 	}
-}
+};
 
 export enum DBMigrationType {
 	UP = "UP",
 	DOWN = "DOWN"
-};
+}
 
 export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
 	logger.info(`All validation pass, now executing db migration script ${targetScript} for ${ops}`);
@@ -47,19 +47,19 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 		`./node_modules/.bin/sequelize db:migrate --env ${env}`
 		: `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
 
-	const {stdout, stderr} = await exec(cmd);
+	const { stdout, stderr } = await exec(cmd);
 	const isSuccess = stderr ? false : true;
 	if (isSuccess) {
-		logger.info({stdout, stderr}, `DB migration UP SUCCESSS!! -  ${targetScript}`);
+		logger.info({ stdout, stderr }, `DB migration UP SUCCESSS!! -  ${targetScript}`);
 	} else {
-		logger.error({stdout, stderr}, `DB migration UP FAILED!! -  ${targetScript}`);
+		logger.error({ stdout, stderr }, `DB migration UP FAILED!! -  ${targetScript}`);
 	}
 	return {
 		isSuccess,
 		stdout,
-		stderr,
-	}
-}
+		stderr
+	};
+};
 
 const getDBMigrateEnv = () => {
 	if (isNodeDev()) return "development";

@@ -16,7 +16,7 @@ export const DBMigrationUp = async (req: Request, res: Response): Promise<void> 
 
 		await validateScriptLocally(targetScript);
 		await validateScriptAgainstDB(targetScript);
-		const {isSuccess, stdout, stderr} = await startDBMigration(targetScript, DBMigrationType.UP);
+		const { isSuccess, stdout, stderr } = await startDBMigration(targetScript, DBMigrationType.UP);
 
 		res.status(isSuccess ? 200: 500).send(`
 			${isSuccess ? `SUCCESSS!!!` : `FAILED!!!`}
