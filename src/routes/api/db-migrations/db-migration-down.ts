@@ -16,7 +16,14 @@ export const DBMigrationDown = async (req: Request, res: Response): Promise<void
 
 		await validateScriptLocally(targetScript);
 		await validateScriptAgainstDB(targetScript);
+
+		logger.info(`All validation pass, now executing db migration down - script ${targetScript}`);
 		const { isSuccess, stdout, stderr } = await startDBMigration(targetScript, DBMigrationType.DOWN);
+		if (isSuccess) {
+			logger.info({ stdout, stderr }, `DB migration down SUCCESSS!! -  ${targetScript}`);
+		} else {
+			logger.error({ stdout, stderr }, `DB migration down FAILED!! -  ${targetScript}`);
+		}
 
 		res.status(isSuccess ? 200: 500).send(`
 			${isSuccess ? `SUCCESSS!!!` : `FAILED!!!`}

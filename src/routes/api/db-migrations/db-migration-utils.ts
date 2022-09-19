@@ -57,7 +57,6 @@ export enum DBMigrationType {
 }
 
 export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
-	logger.info(`All validation pass, now executing db migration script ${targetScript} for ${ops}`);
 	const env = getDBMigrateEnv();
 	if (ops !== DBMigrationType.UP && ops !== DBMigrationType.DOWN) {
 		throw {
@@ -71,11 +70,6 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 
 	const { stdout, stderr } = await exec(cmd);
 	const isSuccess = stderr ? false : true;
-	if (isSuccess) {
-		logger.info({ stdout, stderr }, `DB migration SUCCESSS!! -  ${targetScript}`);
-	} else {
-		logger.error({ stdout, stderr }, `DB migration FAILED!! -  ${targetScript}`);
-	}
 	return {
 		isSuccess,
 		stdout,
