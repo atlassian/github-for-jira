@@ -40,6 +40,18 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[2]).msg).toEqual("Error");
 			expect(JSON.parse(ringBuffer.records[3]).msg).toEqual("FATALALITY");
 		});
+
+		it("Should remove branch from URL", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				config: {
+					url: "/rest/devinfo/0.10/repository/448757705/branch/bugfix-installed-script?_updateSequenceId=1663617601470"
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).config.url).toEqual("/rest/devinfo/0.10/repository/448757705/branch/CENSORED");
+		});
 	});
 
 	describe("logger circular dependencies", () => {
