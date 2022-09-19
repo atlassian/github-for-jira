@@ -224,7 +224,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			} catch (err) {
 				const log = logger.child({
 					err,
-					payload: data,
 					repository,
 					cursor,
 					task
