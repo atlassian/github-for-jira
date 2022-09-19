@@ -83,6 +83,7 @@ const loadBranches = () => {
     type: "GET",
     url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
     success: (data) => {
+      const allBranchesfetched = data?.repository?.refs?.totalCount === data?.repository?.refs?.edges.length;
       $("#ghParentBranch").auiSelect2({
         data: () => {
           data.repository.refs.edges.forEach((item) => {
@@ -94,7 +95,16 @@ const loadBranches = () => {
           }
         },
         formatSelection: item => item.node.name,
-        formatResult: item => item.node.name
+        formatResult: item => item.node.name,
+        createSearchChoice: (term) => {
+          if (allBranchesfetched) {
+            return null;
+          }
+          return {
+            node: { name: term },
+            id: term
+          }
+        }
       });
       $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
       toggleSubmitDisabled(false);
@@ -124,9 +134,13 @@ const createBranchPost = () => {
       // On success, we close the tab so the user returns to original screen
       window.close();
     })
-    .fail((err) => {
+    .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage("Please make sure all the details you entered are correct.")
+      if (error.responseJSON && error.responseJSON.err) {
+        showErrorMessage(error.responseJSON.err);
+      } else {
+        showErrorMessage("Please make sure all the details you entered are correct.")
+      }
     });
 }
 
