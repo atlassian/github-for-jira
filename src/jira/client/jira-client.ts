@@ -439,21 +439,18 @@ interface IssueKeyObject {
 	associations?: JiraAssociation[];
 }
 
+// TODO: add unit tests
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		// Filter out anything that doesn't have issue keys or are not over the limit
 		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
 			});
 		}
 		const association = findIssueKeyAssociation(value);
 		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
+				// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
 				associations: [association]
 			});
 		}
