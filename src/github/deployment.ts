@@ -67,7 +67,6 @@ export const processDeployment = async (
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
 		logger.warn({
-			jiraPayload,
 			rejectedDeployments: result.rejectedDeployments
 		}, "Jira API rejected deployment!");
 	}

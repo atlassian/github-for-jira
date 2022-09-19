@@ -16,8 +16,8 @@ export const verifyJiraInstallation = (installation: Installation, log: Logger) 
 				log.info(`Installation id=${installation.id} enabled on Jira`);
 				return true;
 			} else {
-				const message = `Unable to verify Jira installation: ${installation.jiraHost} responded with ${result.status}`;
-				log.warn(message);
+				const message = `Unable to verify Jira installation: responded with ${result.status}`;
+				log.warn({ jiraHost: installation.jiraHost }, message);
 				Sentry.captureMessage(message);
 				return false;
 			}

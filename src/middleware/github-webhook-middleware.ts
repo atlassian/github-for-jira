@@ -116,6 +116,7 @@ export const GithubWebhookMiddleware = (
 			}
 		});
 
+		// todo jk - no payloads
 		context.log.debug({ payload }, "Webhook payload");
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);

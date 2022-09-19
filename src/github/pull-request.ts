@@ -40,8 +40,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	} catch (err) {
 		context.log.warn(
 			{
-				err,
-				pull_request
+				err
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"
 		);
