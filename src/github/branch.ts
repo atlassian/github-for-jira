@@ -77,7 +77,8 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		return;
 	}
 
-	context.log.info(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+
+	context.log.info({ prRef: context.payload.ref }, `Deleting branch for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,
