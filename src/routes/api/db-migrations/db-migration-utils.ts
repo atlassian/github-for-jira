@@ -60,6 +60,12 @@ export enum DBMigrationType {
 export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
 	logger.info(`All validation pass, now executing db migration script ${targetScript} for ${ops}`);
 	const env = getDBMigrateEnv();
+	if (ops !== DBMigrationType.UP && ops !== DBMigrationType.DOWN) {
+		throw {
+			statusCode: 500,
+			message: `Fail to execute db migration type ${ops}`
+		};
+	}
 	const cmd = ops === DBMigrationType.UP ?
 		`./node_modules/.bin/sequelize db:migrate --env ${env}`
 		: `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
@@ -67,9 +73,9 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 	const { stdout, stderr } = await exec(cmd);
 	const isSuccess = stderr ? false : true;
 	if (isSuccess) {
-		logger.info({ stdout, stderr }, `DB migration UP SUCCESSS!! -  ${targetScript}`);
+		logger.info({ stdout, stderr }, `DB migration SUCCESSS!! -  ${targetScript}`);
 	} else {
-		logger.error({ stdout, stderr }, `DB migration UP FAILED!! -  ${targetScript}`);
+		logger.error({ stdout, stderr }, `DB migration FAILED!! -  ${targetScript}`);
 	}
 	return {
 		isSuccess,
