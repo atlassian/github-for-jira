@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
 import { createUserClient } from "~/src/util/get-github-client-config";
 
+const errorMessages = {
+	// TODO: Fix the url later, once you figure out how to get the `installationId`
+	403: ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"],
+	422: ["This GitHub branch already exists. Please use a different branch name."],
+	404: ["This GitHub source branch does not exist. Please use a different branch."],
+	500: ["Oops, something unexpected happened."]
+};
+
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
@@ -40,20 +48,6 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
-		res.status(500).json(verifyError(err));
-	}
-};
-
-const verifyError = (error) => {
-	switch (error.status) {
-		case 403:
-			// TODO: Fix the url later, once you figure out how to get the `installationId`
-			return ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"];
-		case 422:
-			return ["This GitHub branch already exists. Please use a different branch name."];
-		case 404:
-			return ["This GitHub source branch does not exist. Please use a different branch."];
-		default:
-			return [error.message];
+		res.status(err.status).json(errorMessages[err?.status || 500]);
 	}
 };
