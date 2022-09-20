@@ -11,14 +11,14 @@ import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
-const scopes = ["user", "repo"];
+//const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
 	const { baseUrl } = req;
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
 	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
-	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	return `${hostname}/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
