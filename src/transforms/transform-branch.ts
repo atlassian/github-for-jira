@@ -36,22 +36,26 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 		return;
 	}
 
-	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
-	return {
-		id: repository.id.toString(),
-		name: repository.full_name,
-		url: repository.html_url,
-		branches: [
-			{
-				createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),
-				lastCommit,
-				id: getJiraId(ref),
-				issueKeys,
-				name: ref,
-				url: `${repository.html_url}/tree/${ref}`,
-				updateSequenceId: Date.now()
-			}
-		],
-		updateSequenceId: Date.now()
-	};
+	try {
+		const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
+		return {
+			id: repository.id.toString(),
+			name: repository.full_name,
+			url: repository.html_url,
+			branches: [
+				{
+					createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),
+					lastCommit,
+					id: getJiraId(ref),
+					issueKeys,
+					name: ref,
+					url: `${repository.html_url}/tree/${ref}`,
+					updateSequenceId: Date.now()
+				}
+			],
+			updateSequenceId: Date.now()
+		};
+	} catch (e) {
+		return;
+	}
 };
