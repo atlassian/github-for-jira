@@ -33,17 +33,10 @@ describe("DB migration", ()=>{
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => ""
 		}));
-		await sequelize.query('drop table if exists "UnitTestDBMigrationTable"', {
-			type: QueryTypes.RAW
-		});
-		for (const script of SEQUELISE_META_TO_REMOVE) {
-			await sequelize.query(`delete from "SequelizeMeta" where name = :name`, {
-				replacements: {
-					name: script
-				},
-				type: QueryTypes.RAW
-			});
-		}
+		await resetTestDB();
+	});
+	afterEach(async ()=> {
+		await resetTestDB();
 	});
 	afterAll(async ()=>{
 		fs.renameSync(DB_MIGRATION_FOLDER, TEST_DB_MIGRATION_FOLDER);
@@ -80,6 +73,19 @@ describe("DB migration", ()=>{
 			await triggerDBDown(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(400);
 		});
 	});
+	const resetTestDB = async () => {
+		await sequelize.query('drop table if exists "UnitTestDBMigrationTable"', {
+			type: QueryTypes.RAW
+		});
+		for (const script of SEQUELISE_META_TO_REMOVE) {
+			await sequelize.query(`delete from "SequelizeMeta" where name = :name`, {
+				replacements: {
+					name: script
+				},
+				type: QueryTypes.RAW
+			});
+		}
+	};
 	const triggerDBUp = (targetScript?: string): Test => {
 		return supertest(frontendApp)
 			.post(DB_MIGRATE_UP_URL)
