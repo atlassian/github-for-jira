@@ -28,17 +28,7 @@ describe("Healthcheck Router", () => {
 
 	describe("Cryptor checking during healthcheck", ()=>{
 
-		it("On WebServer: should NOT hit cryptor on healthcheck", async ()=>{
-			process.env.MICROS_GROUP = "WebServer";
-			await supertest(app)
-				.get(`/healthcheck`)
-				.expect(200);
-			expect(EncryptionClient.encrypt).not.toBeCalled();
-			expect(EncryptionClient.decrypt).not.toBeCalled();
-		});
-
-		it("On Worker: should hit cryptor to do a simple encrypt/decrypt on healthcheck", async ()=>{
-			process.env.MICROS_GROUP = "Worker";
+		it("should hit cryptor to do a simple encrypt/decrypt on healthcheck", async ()=>{
 			await supertest(app)
 				.get(`/healthcheck`)
 				.expect(200);
@@ -47,14 +37,11 @@ describe("Healthcheck Router", () => {
 		});
 
 		it("should hit cryptor to do a simple encrypt and decrypt on deepcheck", async ()=>{
-			process.env.MICROS_GROUP = "WebServer";
 			await supertest(app)
 				.get(`/deepcheck`)
 				.expect(200);
 			expect(EncryptionClient.encrypt).toBeCalled();
 			expect(EncryptionClient.decrypt).toBeCalled();
 		});
-
 	});
-
 });
