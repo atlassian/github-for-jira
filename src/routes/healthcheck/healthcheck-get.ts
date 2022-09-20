@@ -1,19 +1,16 @@
 import { Request, Response } from "express";
 import { getLogger } from "config/logger";
-import { envVars } from "config/env";
 import { deepCheckCryptor } from "./deep-check-cryptor";
 
 const logger = getLogger("healthcheck");
 export const HealthcheckGet = async (_: Request, res: Response): Promise<void> => {
 
-	if (envVars.MICROS_GROUP === "Worker") {
-		try {
-			await deepCheckCryptor();
-		} catch (e) {
-			logger.warn("Cryptor deepcheck failed in work. This happen during startup when Worker started by Cryptor sidecar is not ready.", { error: e });
-			res.status(500).send("NOT OK");
-			return;
-		}
+	try {
+		await deepCheckCryptor();
+	} catch (e) {
+		logger.warn("Cryptor deepcheck failed in work. This happen during startup when Worker started by Cryptor sidecar is not ready.", { error: e });
+		res.status(500).send("NOT OK");
+		return;
 	}
 
 	logger.debug("Successfully called /healthcheck.");
