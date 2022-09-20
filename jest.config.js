@@ -20,6 +20,9 @@ module.exports = {
 		"node"
 	],
 	"testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+	"watchPathIgnorePatterns": [
+		"<rootDir>/db"
+	],
 	"coverageDirectory": "coverage",
 	"collectCoverageFrom": [
 		"src/**/*.{ts,tsx}",
