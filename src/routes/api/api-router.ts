@@ -19,7 +19,7 @@ import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { UUID_REGEX } from "~/src/util/regex";
-import { DBMigrationsRouter } from "./db-migrations/db-migrations-router";
+import { DBMigrationsRouter } from "./db-migrations/db-migration-router";
 
 
 export const ApiRouter = Router();
@@ -169,7 +169,7 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 	}
 });
 ApiRouter.use("/migration", CryptorMigrationRouter);
-ApiRouter.use("/db-migrations", DBMigrationsRouter);
+ApiRouter.use("/db-migration", DBMigrationsRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

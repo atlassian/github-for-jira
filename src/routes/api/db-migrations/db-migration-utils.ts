@@ -59,7 +59,7 @@ export enum DBMigrationType {
 }
 
 export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
-	const env = getDBMigrateEnv();
+	const env = getDbConfigEnvForMigration();
 	if (ops !== DBMigrationType.UP && ops !== DBMigrationType.DOWN) {
 		throw {
 			statusCode: 500,
@@ -79,7 +79,7 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 	};
 };
 
-const getDBMigrateEnv = () => {
+const getDbConfigEnvForMigration = () => {
 	if (isNodeDev()) return "development";
 	if (isNodeTest()) return "test";
 	if (isNodeProd()) return "production-migrate";
