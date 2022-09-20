@@ -28,7 +28,7 @@ export const getTargetScript = (req: Request) => {
 	return targetScript;
 };
 
-/* Make sure the script to migrate up or down is the latest script in this build.
+/* Make sure the script to migrate up or down is the latest (alphabetically) script in this build.
  * So the following scenarios will fail.
  * Person A merge script 1, person B merge scripts 2. Now we CAN NOT migrate anymore. Need to revert one PR first to migrate.
  *
@@ -37,8 +37,6 @@ export const getTargetScript = (req: Request) => {
 export const validateScriptLocally = async (targetScript: string) => {
 
 	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), "db/migrations"));
-	//Sort by name, asc, so filename order has to be in order now.
-	//So this now will be mandatory that, db migrtions scripts has to be alphabetically ordered.
 	scripts.sort();
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
@@ -55,24 +53,28 @@ export const validateScriptLocally = async (targetScript: string) => {
 
 export enum DBMigrationType {
 	UP = "UP",
-	DOWN = "DOWN"
+	DOWN = "DOWN",
 }
 
 export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
 	const env = getDbConfigEnvForMigration();
-	if (ops !== DBMigrationType.UP && ops !== DBMigrationType.DOWN) {
-		throw {
-			statusCode: 500,
-			message: `Fail to execute db migration type ${ops}`
-		};
+	let cmd = "";
+	switch (ops) {
+		case DBMigrationType.UP:
+			cmd = `./node_modules/.bin/sequelize db:migrate --env ${env}`;
+			break;
+		case DBMigrationType.DOWN:
+			//Notes: `sequelize db:migrate:undo:all --to ${targetScript}` is inclusive, it means
+			//it will rollback db to the state before ${targetScript},
+			//so ${targetScript} will be rolled back as well.
+			cmd = `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
+			break;
+		default:
+			throw {
+				statusCode: 500,
+				message: `Fail to execute db migration type ${ops}`
+			};
 	}
-	//Notes: `sequelize db:migrate:undo:all --to ${targetScript}` is inclusive, it means
-	//it will rollback db to the state before ${targetScript},
-	//so ${targetScript} will be rolled back as well.
-	const cmd = ops === DBMigrationType.UP ?
-		`./node_modules/.bin/sequelize db:migrate --env ${env}`
-		: `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
-
 	const { stdout, stderr } = await exec(cmd, {
 		env: {
 			...process.env
