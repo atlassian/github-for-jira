@@ -14,15 +14,13 @@ const logger = getLogger("DBMigration");
  * Note: Intentially to make this param case sensitive to be more safe
  */
 export const getTargetScript = (req: Request) => {
-	let targetScript = (req.body || {}).targetScript;
+	const targetScript = (req.body || {}).targetScript;
 	if (!targetScript) {
 		throw {
 			statusCode: 400,
 			message: `"targetScript" is mandatory in the request body, but found none.`
 		};
 	}
-	//just make sure the script name matching the ones in db down the track.
-	if (!targetScript.endsWith(".js")) targetScript = targetScript + ".js";
 	return targetScript;
 };
 
@@ -40,7 +38,7 @@ export const validateScriptLocally = async (targetScript: string) => {
 	scripts.sort();
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
-	if (targetScript.toLowerCase() !== latestScriptsInRepo.toLowerCase()) {
+	if (targetScript !== latestScriptsInRepo) {
 		throw {
 			statusCode: 400,
 			message: `"targetScript: ${targetScript}" doesn't match latest scripts in db/migrations ${latestScriptsInRepo}`
