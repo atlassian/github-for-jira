@@ -67,3 +67,9 @@
 .gitHubCreateBranch__serverError .errorMessageBox__container {
   align-items: center;
 }
+.gitHubCreateBranch__userDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 16px 23px 0px 0px;
+}
