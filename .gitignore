@@ -51,3 +51,4 @@ test/**/*.js.map
 
 #Deployments
 .nebulae/
+db/migrations-temp

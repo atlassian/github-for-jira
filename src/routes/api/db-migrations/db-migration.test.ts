@@ -16,16 +16,16 @@ const TEMP_DB_MIGRATION_FOLDER = path.resolve(process.cwd(), "db/migrations-temp
 const PREVIOUS_TEST_DB_MIGRATION_SCRIPT = "20220920114600-create-sample-tables.js";
 const LASTEST_TEST_DB_MIGRATGION_SCRIPT = "20220920142800-mod-sample-tables.js";
 
+const SEQUELISE_META_TO_REMOVE = [
+	PREVIOUS_TEST_DB_MIGRATION_SCRIPT,
+	LASTEST_TEST_DB_MIGRATGION_SCRIPT
+];
 
 describe("DB migration", ()=>{
 	let frontendApp;
 	beforeAll(async ()=>{
 		fs.renameSync(DB_MIGRATION_FOLDER, TEMP_DB_MIGRATION_FOLDER);
 		fs.renameSync(TEST_DB_MIGRATION_FOLDER, DB_MIGRATION_FOLDER);
-	});
-	afterAll(async ()=>{
-		fs.renameSync(DB_MIGRATION_FOLDER, TEST_DB_MIGRATION_FOLDER);
-		fs.renameSync(TEMP_DB_MIGRATION_FOLDER, DB_MIGRATION_FOLDER);
 	});
 	beforeEach(async ()=>{
 		frontendApp = express();
@@ -36,6 +36,18 @@ describe("DB migration", ()=>{
 		await sequelize.query("drop table if exists TestDbMigrationTable1", {
 			type: QueryTypes.RAW
 		});
+		for(const script of SEQUELISE_META_TO_REMOVE) {
+			await sequelize.query(`delete from "SequelizeMeta" where name = :name`, {
+				replacements: {
+					name: script
+				},
+				type: QueryTypes.RAW
+			});
+		}
+	});
+	afterAll(async ()=>{
+		fs.renameSync(DB_MIGRATION_FOLDER, TEST_DB_MIGRATION_FOLDER);
+		fs.renameSync(TEMP_DB_MIGRATION_FOLDER, DB_MIGRATION_FOLDER);
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{
