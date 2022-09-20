@@ -53,17 +53,23 @@ const setupNock = () => {
 	githubNock
 		.get("/repos/ARC/repo-1/branches?per_page=100")
 		.reply(200, branchesResponse);
+	githubNock
+		.get("/repos/ARC/repo-1")
+		.reply(200, {
+			default_branch: "sample-patch-2"
+		});
 };
-const branchesResponse = {
-	data: [
-		{
-			"name": "sample-patch-1"
-		},
-		{
-			"name": "sample-patch-2"
-		},
-		{
-			"name": "sample-patch-3"
-		}
-	]
-};
+const branchesResponse = [
+	{
+		"name": "sample-patch-1",
+		"default": false
+	},
+	{
+		"name": "sample-patch-2",
+		"default": true
+	},
+	{
+		"name": "sample-patch-3",
+		"default": false
+	}
+];
