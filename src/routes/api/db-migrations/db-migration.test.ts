@@ -33,7 +33,7 @@ describe("DB migration", ()=>{
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => ""
 		}));
-		await sequelize.query("drop table if exists UnitTestDBMigrationTable", {
+		await sequelize.query('drop table if exists "UnitTestDBMigrationTable"', {
 			type: QueryTypes.RAW
 		});
 		for(const script of SEQUELISE_META_TO_REMOVE) {
@@ -61,7 +61,7 @@ describe("DB migration", ()=>{
 		});
 	});
 	describe("DB mgiration up", ()=> {
-		it.only("should successfully migration db up to latest scripts", async ()=> {
+		it("should successfully migration db up to latest scripts", async ()=> {
 			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
 		});
 	});
