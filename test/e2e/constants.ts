@@ -1,6 +1,9 @@
 import { e2eEnvVars } from "test/e2e/env-e2e";
 
+const STORAGE_PATH = "./test/e2e/state/";
+
 export const testData: TestData = {
+	storagePath: STORAGE_PATH,
 	jira: {
 		urls: {
 			base: e2eEnvVars.ATLASSIAN_URL,
@@ -15,7 +18,7 @@ export const testData: TestData = {
 			admin: {
 				username: e2eEnvVars.JIRA_ADMIN_USERNAME,
 				password: e2eEnvVars.JIRA_ADMIN_PASSWORD,
-				storage: "./test/e2e/state/jira-admin.json"
+				storage: `${STORAGE_PATH}/jira-admin.json`
 			}
 		}
 	},
@@ -30,13 +33,14 @@ export const testData: TestData = {
 			admin: {
 				username: e2eEnvVars.GITHUB_USERNAME,
 				password: e2eEnvVars.GITHUB_PASSWORD,
-				storage: "./test/e2e/state/github-admin.json"
+				storage: `${STORAGE_PATH}/github-admin.json`
 			}
 		}
 	}
 };
 
 export interface TestData {
+	storagePath: string;
 	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
 	github: TestDataEntry<GithubTestDataURLs>;
 }
