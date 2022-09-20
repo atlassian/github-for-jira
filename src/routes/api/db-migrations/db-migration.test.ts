@@ -33,7 +33,7 @@ describe("DB migration", ()=>{
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => ""
 		}));
-		await sequelize.query("drop table if exists TestDbMigrationTable1", {
+		await sequelize.query("drop table if exists UnitTestDBMigrationTable", {
 			type: QueryTypes.RAW
 		});
 		for(const script of SEQUELISE_META_TO_REMOVE) {

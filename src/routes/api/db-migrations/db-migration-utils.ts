@@ -73,7 +73,11 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 		`./node_modules/.bin/sequelize db:migrate --env ${env}`
 		: `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
 
-	const { stdout, stderr } = await exec(cmd);
+	const { stdout, stderr } = await exec(cmd, {
+		env: {
+			...process.env
+		}
+	});
 	const isSuccess = stderr ? false : true;
 	return {
 		isSuccess,
