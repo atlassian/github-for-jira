@@ -66,6 +66,9 @@ export const startDBMigration = async (targetScript: string, ops: DBMigrationTyp
 			message: `Fail to execute db migration type ${ops}`
 		};
 	}
+	//Notes: `sequelize db:migrate:undo:all --to ${targetScript}` is inclusive, it means
+	//it will rollback db to the state before ${targetScript},
+	//so ${targetScript} will be rolled back as well.
 	const cmd = ops === DBMigrationType.UP ?
 		`./node_modules/.bin/sequelize db:migrate --env ${env}`
 		: `./node_modules/.bin/sequelize db:migrate:undo:all --to ${targetScript} --env ${env}`;
