@@ -49,14 +49,14 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	if (lastScript.length < 1) {
 		throw {
 			statusCode: 500,
-			message: `There're no scripts in db to rollback, stop rolling back. \n ${lastScript}`
+			message: `There're no scripts in db to migration down, stop proceeding. \n ${lastScript}`
 		};
 	}
 	const scriptInDB = lastScript[0].name;
 	if (scriptInDB !== targetScript) {
 		throw {
 			statusCode: 400,
-			message: `The script asked to rollback ${targetScript} DOES NOT match latest script in db ${scriptInDB}. Stop rolling back`
+			message: `The script (${targetScript}) asked to migration down DOES NOT match latest script in db ${scriptInDB}. Stop rolling back`
 		};
 	}
 

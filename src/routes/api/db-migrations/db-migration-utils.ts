@@ -10,8 +10,12 @@ const exec = promisify(execOrigin);
 const logger = getLogger("DBMigration");
 
 /**
- * Return the common param in req.body `targetScript` to migrate up or rollback
- * Note: Intentially to make this param case sensitive to be more safe
+ *
+ * Functiont to get the parem for db migration.
+ *
+ * Intentially to NOT make this param case insensitive to be more safe
+ *
+ * @returns The common param in req.body `targetScript` to migrate up or down
  */
 export const getTargetScript = (req: Request) => {
 	const targetScript = (req.body || {}).targetScript;
@@ -24,7 +28,7 @@ export const getTargetScript = (req: Request) => {
 	return targetScript;
 };
 
-/* Make sure the script to migrate up or rollback is the latest script in this build.
+/* Make sure the script to migrate up or down is the latest script in this build.
  * So the following scenarios will fail.
  * Person A merge script 1, person B merge scripts 2. Now we CAN NOT migrate anymore. Need to revert one PR first to migrate.
  *
