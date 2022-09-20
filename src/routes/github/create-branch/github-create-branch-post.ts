@@ -40,6 +40,20 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
-		res.sendStatus(err.status);
+		res.status(500).json(verifyError(err));
+	}
+};
+
+const verifyError = (error) => {
+	switch (error.status) {
+		case 403:
+			// TODO: Fix the url later, once you figure out how to get the `installationId`
+			return ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"];
+		case 422:
+			return ["This GitHub branch already exists. Please use a different branch name."];
+		case 404:
+			return ["This GitHub source branch does not exist. Please use a different branch."];
+		default:
+			return [error.message];
 	}
 };

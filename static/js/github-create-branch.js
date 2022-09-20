@@ -99,8 +99,8 @@ const loadBranches = () => {
       $("#ghParentBranch").select2("val", data.filter(datum => datum.default)[0].name);
       toggleSubmitDisabled(false);
     },
-    error: (error) => {
-      showServerErrorMessage("Oops, failed to fetch branches!");
+    error: () => {
+      showErrorMessage(["Oops, failed to fetch branches!"]);
       toggleSubmitDisabled(false);
     }
   });
@@ -126,21 +126,7 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      switch (error.status) {
-        case 403:
-          // TODO: Fix the url later, once you figure out how to get the `installationId`
-          showValidationErrorMessage("s2id_ghRepo", "This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>");
-          break;
-        case 422:
-          showValidationErrorMessage("branchNameText", "This GitHub branch already exists. Please use a different branch name.");
-          break;
-        case 404:
-          showValidationErrorMessage("s2id_ghParentBranch", "This GitHub source branch does not exist. Please use a different branch.");
-          break;
-        default:
-          showServerErrorMessage("Oops, something went wrong!");
-          break;
-      }
+      showErrorMessage(error.responseJSON);
     });
 };
 
@@ -157,23 +143,12 @@ const getRepoDetails = () => {
   }
 };
 
-const showValidationErrorMessage = (id, message) => {
-  const DOM = $(`#${id}`);
-
-  if(id.indexOf("s2id_") >= 0) { // Check if its a select2 or not
-    DOM.find("a.select2-choice").addClass("has-errors");
-    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
-  } else {
-    DOM.addClass("has-errors");
-    DOM.parent().append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
-  }
-};
-
-const showServerErrorMessage = (msg) => {
+const showErrorMessage = (messages) => {
   $(".gitHubCreateBranch__serverError").show();
-  $(".errorMessageBox__message")
-    .empty()
-    .append(msg);
+  let errorList = '<ul class="m-1">';
+  messages.map(message => errorList +=  `<li>${message}</li>`);
+  errorList += '</ul>';
+  $(".errorMessageBox__message").empty().append(`<div>Oops, something went wrong!</div>${errorList}`);
 };
 
 const hideErrorMessage = () => {
