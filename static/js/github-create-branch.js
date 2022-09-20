@@ -138,6 +138,7 @@ const createBranchPost = () => {
       toggleSubmitDisabled(false);
       switch (error.status) {
         case 403:
+          // TODO: Fix the url later, once you figure out how to get the `installationId`
           showValidationErrorMessage("s2id_ghRepo", "This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>");
           break;
         case 422:
