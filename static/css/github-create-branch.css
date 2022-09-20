@@ -67,3 +67,12 @@
 .aui-icon.aui-iconfont-error {
   margin-top: 10px;
 }
+
+.has-errors {
+  border: 2px solid #DE350B!important;
+}
+
+.error-message {
+  color: #DE350B;
+  font-size: 0.9rem;
+}

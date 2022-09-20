@@ -136,7 +136,17 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage(error.responseText);
+      switch (error.status) {
+        case 403:
+          showValidationErrorMessage("s2id_ghRepo", "This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>");
+          break;
+        case 422:
+          showValidationErrorMessage("branchNameText", "This GitHub branch already exists. Please use a different branch name.");
+          break;
+        default:
+          showServerErrorMessage("Oops, something went wrong!");
+          break;
+      }
     });
 };
 
@@ -153,7 +163,19 @@ const getRepoDetails = () => {
   }
 };
 
-const showErrorMessage = (msg) => {
+const showValidationErrorMessage = (id, message) => {
+  const DOM = $(`#${id}`);
+
+  if(id.indexOf("s2id_") >= 0) { // Check if its a select2 or not
+    DOM.find("a.select2-choice").addClass("has-errors");
+    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+  } else {
+    DOM.addClass("has-errors");
+    DOM.parent().append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+  }
+};
+
+const showServerErrorMessage = (msg) => {
   $(".gitHubCreateBranch__serverError").show();
   $(".errorMessageBox__message")
     .empty()
@@ -161,6 +183,8 @@ const showErrorMessage = (msg) => {
 };
 
 const hideErrorMessage = () => {
+  $(".has-errors").removeClass("has-errors");
+  $(".error-message").remove();
   $(".gitHubCreateBranch__serverError").hide();
 };
 
