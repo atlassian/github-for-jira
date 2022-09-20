@@ -42,6 +42,9 @@ describe("GitHub Create Branch Get", () => {
 			githubNock
 				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
 				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+			githubNock
+				.get("/user")
+				.reply(200, { data: { login: "test-account" } });
 
 			await supertest(app)
 				.get("/github/create-branch").set(
