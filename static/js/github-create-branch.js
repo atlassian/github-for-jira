@@ -144,6 +144,9 @@ const createBranchPost = () => {
         case 422:
           showValidationErrorMessage("branchNameText", "This GitHub branch already exists. Please use a different branch name.");
           break;
+        case 404:
+          showValidationErrorMessage("s2id_ghParentBranch", "This GitHub source branch does not exist. Please use a different branch.");
+          break;
         default:
           showServerErrorMessage("Oops, something went wrong!");
           break;
