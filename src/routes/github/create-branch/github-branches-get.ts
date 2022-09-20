@@ -17,8 +17,10 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 
 	try {
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-		const branches = await gitHubUserClient.getReferences(owner, repo);
-		const repository = await gitHubUserClient.getRepository(owner, repo);
+		const [ branches, repository ] = await Promise.all([
+			gitHubUserClient.getReferences(owner, repo),
+			gitHubUserClient.getRepository(owner, repo)
+		]);
 
 		res.send(branches.data.map(branch => ({
 			...branch,
