@@ -6,8 +6,14 @@ function censorUrl(url) {
 	if (!url) {
 		return url;
 	}
-	if (typeof url === "string" && url.includes("/repos") && url.includes(".jira/config.yml")) {
-		return "CENSORED-PATH-TO-JIRA-CONFIG-YML";
+	if (typeof url === "string") {
+		if (url.includes("/repos") && url.includes(".jira/config.yml")) {
+			return "CENSORED-PATH-TO-JIRA-CONFIG-YML";
+		}
+		if (url.includes("/rest/devinfo/0.10/repository/") && url.includes("/branch/")) {
+			const splitUrl = url.split("/branch/", 2);
+			return `${splitUrl[0]}/branch/CENSORED`;
+		}
 	}
 	return url;
 }

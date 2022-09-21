@@ -63,6 +63,10 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 		Forbidden: 403,
 		"Not Found": 404
 	};
+	errorCodes[Errors.MISSING_JIRA_HOST] = 400;
+	errorCodes[Errors.MISSING_GITHUB_TOKEN] = 400;
+	errorCodes[Errors.MISSING_GITHUB_APP_NAME] = 400;
+	errorCodes[Errors.MISSING_ISSUE_KEY] = 400;
 
 	const messages = {
 		[Errors.MISSING_JIRA_HOST]: "Session information missing - please enable all cookies in your browser settings.",

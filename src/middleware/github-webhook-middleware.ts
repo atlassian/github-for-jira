@@ -116,8 +116,6 @@ export const GithubWebhookMiddleware = (
 			}
 		});
 
-		context.log.debug({ payload }, "Webhook payload");
-
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 		statsd.increment(metricWebhooks.webhookEvent, [
