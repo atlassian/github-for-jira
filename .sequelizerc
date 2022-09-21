@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 const path = require('path')
 
-const scriptDirSurfix = process.env.NODE_ENV === "test" ? "-test" : "";
+const migrationsDir =
+  process.env.IS_TESTING_DB_MIGRATION === "true" ?
+  "migrations-test" : "migrations";
 
 module.exports = {
   "config": path.resolve('./db/config.json'),
   "models-path": path.resolve('./src/models'),
   "seeders-path": path.resolve('./db/seeders'),
-  "migrations-path": path.resolve(`./db/migrations${scriptDirSurfix}`)
+  "migrations-path": path.resolve(`./db/${migrationsDir}`),
 }

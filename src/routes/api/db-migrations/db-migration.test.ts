@@ -18,6 +18,7 @@ const SEQUELISE_META_TO_REMOVE = [
 describe("DB migration", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
+		process.env.IS_TESTING_DB_MIGRATION = "true";
 		frontendApp = express();
 		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "",
@@ -27,6 +28,7 @@ describe("DB migration", ()=>{
 	});
 	afterEach(async ()=> {
 		await resetTestDB();
+		delete process.env.IS_TESTING_DB_MIGRATION;
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{
