@@ -134,7 +134,9 @@ const validateForm = () => {
 const showValidationErrorMessage = (id, message) => {
   const DOM = $(`#s2id_${id}`);
   DOM.find("a.select2-choice").addClass("has-errors");
-  DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+  if (DOM.find(".error-message").length < 1) {
+    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+  }
 };
 
 const createBranchPost = () => {
