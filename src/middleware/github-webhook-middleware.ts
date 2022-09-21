@@ -121,10 +121,10 @@ export const GithubWebhookMiddleware = (
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 		statsd.increment(metricWebhooks.webhookEvent, [
-			"name: webhooks",
-			`event: ${name}`,
-			`action: ${payload.action}`,
-			`gitHubProduct: ${gitHubProduct}`
+			"name:webhooks",
+			`event:${name}`,
+			`action:${payload.action}`,
+			`gitHubProduct:${gitHubProduct}`
 		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.

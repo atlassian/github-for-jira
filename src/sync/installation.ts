@@ -312,7 +312,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			scheduleNextTask
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
+		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
@@ -382,7 +382,7 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
+	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
