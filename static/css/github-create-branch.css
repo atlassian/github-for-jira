@@ -67,3 +67,12 @@
 .gitHubCreateBranch__serverError .errorMessageBox__container {
   align-items: center;
 }
+
+.has-errors {
+  border: 2px solid #DE350B!important;
+}
+
+.error-message {
+  color: #DE350B;
+  font-size: 0.9rem;
+}
