@@ -64,7 +64,9 @@ $(document).ready(() => {
 
   $("#createBranchForm").on("aui-valid-submit", (event) => {
     event.preventDefault();
-    createBranchPost();
+    if (validateForm()) {
+      createBranchPost();
+    }
   });
 
   $('#cancelBtn').click(function (event) {
@@ -121,6 +123,27 @@ const loadBranches = () => {
   });
 };
 
+const validateForm = () => {
+  let validated = true;
+  if (!$("#ghRepo").select2("val")) {
+    showValidationErrorMessage("ghRepo", "This field is required.");
+    validated = false;
+  }
+  if (!$("#ghParentBranch").select2("val")) {
+    showValidationErrorMessage("ghParentBranch", "This field is required.");
+    validated =  false;
+  }
+  return validated;
+};
+
+const showValidationErrorMessage = (id, message) => {
+  const DOM = $(`#s2id_${id}`);
+  DOM.find("a.select2-choice").addClass("has-errors");
+  if (DOM.find(".error-message").length < 1) {
+    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+  }
+};
+
 const createBranchPost = () => {
   const url = "/github/create-branch";
   const repo = getRepoDetails();
@@ -170,6 +193,8 @@ const showErrorMessage = (msg) => {
 };
 
 const hideErrorMessage = () => {
+  $(".has-errors").removeClass("has-errors");
+  $(".error-message").remove();
   $(".gitHubCreateBranch__serverError").hide();
 };
 
