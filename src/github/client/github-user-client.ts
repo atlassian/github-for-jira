@@ -8,8 +8,8 @@ import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
+	GetRepositoriesContributionsResponse,
 	GetRepositoriesQuery,
-	GetRepositoriesResponse,
 	SearchedRepositoriesResponse,
 	SearchRepositoriesQuery,
 	UserOrganizationsQuery,
@@ -68,11 +68,10 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
-	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
+	public async getUserRepositories(max_repos = 20): Promise<GetRepositoriesContributionsResponse> {
 		try {
-			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {}, {
-				per_page,
-				cursor
+			const response = await this.graphql<GetRepositoriesContributionsResponse>(GetRepositoriesQuery, {}, {
+				max_repos
 			});
 			return response.data.data;
 		} catch (err) {

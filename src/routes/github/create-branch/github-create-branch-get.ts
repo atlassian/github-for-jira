@@ -39,8 +39,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			key
 		},
 		servers,
-		repos: response.viewer.repositories.edges,
-		gitHubUser
+		gitHubUser,
+		repos: response.viewer.contributionsCollection.commitContributionsByRepository // todo-jk don;t love this
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);

@@ -31,6 +31,16 @@ export interface GetRepositoriesResponse {
 	};
 }
 
+export interface GetRepositoriesContributionsResponse {
+	viewer: {
+		contributionsCollection: {
+			commitContributionsByRepository: {
+				nameWithOwner: string
+			}[];
+		}
+	};
+}
+
 export interface SearchedRepositoriesResponse {
 	search: {
 		repos: RepositoryNode[]
@@ -46,24 +56,12 @@ export interface UserOrganizationsResponse {
 	}
 }
 
-export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
+export const GetRepositoriesQuery = `query ($max_repos: Int!) {
   viewer {
-    repositories(first: $per_page, after: $cursor) {
-      totalCount
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      edges {
-        node {
-          id: databaseId
-          name
-          full_name: nameWithOwner
-          owner {
-            login
-          }
-          html_url: url
-          updated_at: updatedAt
+    contributionsCollection {
+      commitContributionsByRepository(maxRepositories: $max_repos) {
+        repository {
+          nameWithOwner
         }
       }
     }
@@ -432,7 +430,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
 
 export const SearchRepositoriesQuery = `query($query_string: String!, $per_page: Int!, $cursor: String) {
   search(
-    type: REPOSITORY, 
+    type: REPOSITORY,
     query: $query_string,
     first: $per_page,
     after: $cursor
@@ -449,8 +447,8 @@ export const SearchRepositoriesQuery = `query($query_string: String!, $per_page:
 }
 `;
 
-export const UserOrganizationsQuery = `query($first: Int!) { 
-  viewer { 
+export const UserOrganizationsQuery = `query($first: Int!) {
+  viewer {
     login
     organizations(first: $first) {
       nodes {

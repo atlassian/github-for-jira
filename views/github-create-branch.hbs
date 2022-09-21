@@ -51,7 +51,7 @@
       <aui-label for="repo">Repository</aui-label>
       <input type="hidden" id="ghRepo">
       {{#each repos}}
-        <div class="hidden default-repos">{{node.full_name}}</div>
+        <div class="hidden default-repos">{{repository.nameWithOwner}}</div>
       {{/each}}
     </div>
     <div class="field-group">
@@ -60,11 +60,11 @@
     </div>
     <div class="field-group">
       <aui-label for="branch-name">Branch name</aui-label>
-      <input class="text full-width-field" 
+      <input class="text full-width-field"
         id="branchNameText"
         value="{{issue.branchName}}"
         type="text"
-        placeholder="Enter branch name" 
+        placeholder="Enter branch name"
         data-aui-validation-field required name="branch-name"
         data-aui-validation-pattern=".*{{issue.key}}.*"
         data-aui-validation-required-msg="This field is required."
