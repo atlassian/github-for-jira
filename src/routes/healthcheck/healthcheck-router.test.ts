@@ -10,8 +10,6 @@ describe("Healthcheck Router", () => {
 	beforeEach(async () => {
 		app = express();
 		app.use(HealthcheckRouter);
-		EncryptionClient.encrypt = jest.fn(()=> Promise.resolve("encrypted:xxx"));
-		EncryptionClient.decrypt = jest.fn(()=> Promise.resolve("xxx"));
 	});
 
 	it("should GET /healthcheck", async () => {
@@ -26,9 +24,13 @@ describe("Healthcheck Router", () => {
 			.expect(200);
 	});
 
-	describe("Cryptor checking during healthcheck", ()=>{
+	describe("Cryptor checking during healthcheck", () => {
+		beforeEach(() => {
+			jest.spyOn(EncryptionClient, "encrypt");
+			jest.spyOn(EncryptionClient, "decrypt");
+		});
 
-		it("should hit cryptor to do a simple encrypt/decrypt on healthcheck", async ()=>{
+		it("should hit cryptor to do a simple encrypt/decrypt on healthcheck", async () => {
 			await supertest(app)
 				.get(`/healthcheck`)
 				.expect(200);
@@ -36,7 +38,7 @@ describe("Healthcheck Router", () => {
 			expect(EncryptionClient.decrypt).toBeCalled();
 		});
 
-		it("should hit cryptor to do a simple encrypt and decrypt on deepcheck", async ()=>{
+		it("should hit cryptor to do a simple encrypt and decrypt on deepcheck", async () => {
 			await supertest(app)
 				.get(`/deepcheck`)
 				.expect(200);

@@ -12,8 +12,6 @@ export async function start() {
 		return;
 	}
 
-	await
-
 	logger.info("Micros Lifecycle: Starting queue processing");
 	sqsQueues.start();
 
