@@ -171,7 +171,7 @@ const showErrorMessage = (messages) => {
   let errorList = '<ul class="m-1">';
   messages.map(message => errorList +=  `<li>${message}</li>`);
   errorList += '</ul>';
-  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch.</div>${errorList}`);
+  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch. This can be caused by one of the following reasons:</div>${errorList}`);
 };
 
 const hideErrorMessage = () => {
