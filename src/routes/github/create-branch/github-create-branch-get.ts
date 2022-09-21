@@ -27,8 +27,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-	const response = await gitHubUserClient.getUserRepositories();
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
+	const repos = await gitHubUserClient.getRepositoriesByCommitContributions();
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -40,7 +40,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		},
 		servers,
 		gitHubUser,
-		repos: response.viewer.contributionsCollection.commitContributionsByRepository // todo-jk don;t love this
+		repos: repos.viewer.contributionsCollection.commitContributionsByRepository
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
