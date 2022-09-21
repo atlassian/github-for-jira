@@ -11,7 +11,7 @@ import { createHashWithSharedSecret } from "utils/encryption";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
-const scopes = ["repo"];
+const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
