@@ -1,7 +1,9 @@
+let queriedRepos = [];
+let totalRepos = [];
 
 $(document).ready(() => {
   // Fetching the list of default repos
-  const defaultRepos = $(".default-repos").map((_, option) => ({
+  totalRepos = $(".default-repos").map((_, option) => ({
     id: $(option).html(),
     text: $(option).html()
   })).toArray();
@@ -10,14 +12,46 @@ $(document).ready(() => {
 
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
-    data: defaultRepos,
-    query: options => {
+    data: totalRepos,
+    dropdownCssClass: "ghRepo-dropdown",
+    _ajaxQuery: Select2.query.ajax({
+      dataType: "json",
+      quietMillis: 500,
+      url: "/github/repository",
+      data: term => ({
+        repoName: term
+      }),
+      results: function (response) {
+        const { repositories } = response;
+        repositories.forEach(repository => {
+          if (queriedRepos.filter(repo => repo.id === repository.repo.nameWithOwner).length < 1) {
+            const additionalRepo = {
+              id: repository.repo.nameWithOwner,
+              text: repository.repo.nameWithOwner
+            };
+            queriedRepos.unshift(additionalRepo);
+            totalRepos.unshift(additionalRepo);
+          }
+        });
+        toggleLoaderInInput($(".ghRepo-dropdown"), false);
+        return {
+          results: queriedRepos
+        }
+      }
+    }),
+    query: function (options) {
       const userInput = options.term;
-      let filteredRepos = defaultRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
-      // TODO: Ajax Request to pull new repos and add them to the list, ARC-1600
-      options.callback({ results: filteredRepos });
+      queriedRepos = totalRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
+      if (userInput.length) {
+        toggleLoaderInInput($(".ghRepo-dropdown"), true);
+        this._ajaxQuery.call(this, options);
+      }
+      options.callback({ results: queriedRepos });
     }
-  });
+  })
+    .on("select2-close", () => {
+      toggleLoaderInInput($(".ghRepo-dropdown"), false);
+    });
 
   $("#ghParentBranch").auiSelect2({
     placeholder: "Select a branch",
@@ -49,6 +83,7 @@ const loadBranches = () => {
     type: "GET",
     url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
     success: (data) => {
+      const allBranchesfetched = data?.repository?.refs?.totalCount === data?.repository?.refs?.edges.length;
       $("#ghParentBranch").auiSelect2({
         data: () => {
           data.repository.refs.edges.forEach((item) => {
@@ -60,13 +95,21 @@ const loadBranches = () => {
           }
         },
         formatSelection: item => item.node.name,
-        formatResult: item => item.node.name
+        formatResult: item => item.node.name,
+        createSearchChoice: (term) => {
+          if (allBranchesfetched) {
+            return null;
+          }
+          return {
+            node: { name: term },
+            id: term
+          }
+        }
       });
       $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
       toggleSubmitDisabled(false);
     },
     error: (error) => {
-      console.log(error);
       showErrorMessage("Failed to fetch branches");
       toggleSubmitDisabled(false);
     }
@@ -91,9 +134,13 @@ const createBranchPost = () => {
       // On success, we close the tab so the user returns to original screen
       window.close();
     })
-    .fail((err) => {
+    .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage("Please make sure all the details you entered are correct.")
+      if (error.responseJSON && error.responseJSON.err) {
+        showErrorMessage(error.responseJSON.err);
+      } else {
+        showErrorMessage("Please make sure all the details you entered are correct.")
+      }
     });
 }
 
@@ -116,10 +163,23 @@ const showErrorMessage = (msg) => {
     .empty()
     .append(msg);
 };
-const hideErrorMessage = (msg) => {
+
+const hideErrorMessage = () => {
   $(".gitHubCreateBranch__serverError").hide();
 };
 
 const clearBranches = () => {
   $("#ghParentBranch").auiSelect2({ data: [] });
+};
+
+const toggleLoaderInInput = (inputDOM, state) => {
+  const container = inputDOM.find("div.select2-search");
+  const loader = ".select2-loader";
+  if (state) {
+    if (!container.find(loader).length) {
+      container.prepend(`<aui-spinner size="small" class="select2-loader"></aui-spinner>`);
+    }
+  } else {
+    container.find(loader).remove();
+  }
 };

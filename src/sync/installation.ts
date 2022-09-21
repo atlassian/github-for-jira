@@ -223,9 +223,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				const log = logger.child({
-					err,
-					payload: data,
-					repository,
+					errorStatus: err.status,
+					isRetryable: err.isRetryable,
+					rateLimitReset: err.rateLimitReset,
+					repositoryId: repository.id,
 					cursor,
 					task
 				});
