@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import express from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest, { Test } from "supertest";
@@ -8,10 +6,6 @@ import { QueryTypes } from "sequelize";
 
 const DB_MIGRATE_UP_URL = "/api/db-migration/up";
 const DB_MIGRATE_DOWN_URL = "/api/db-migration/down";
-
-const DB_MIGRATION_FOLDER = path.resolve(process.cwd(), "db/migrations");
-const TEST_DB_MIGRATION_FOLDER = path.resolve(process.cwd(), "db/migrations-test");
-const TEMP_DB_MIGRATION_FOLDER = path.resolve(process.cwd(), "db/migrations-temp");
 
 const PREVIOUS_TEST_DB_MIGRATION_SCRIPT = "20220920114600-create-sample-tables.js";
 const LASTEST_TEST_DB_MIGRATGION_SCRIPT = "20220920142800-mod-sample-tables.js";
@@ -23,10 +17,6 @@ const SEQUELISE_META_TO_REMOVE = [
 
 describe("DB migration", ()=>{
 	let frontendApp;
-	beforeAll(async ()=>{
-		fs.renameSync(DB_MIGRATION_FOLDER, TEMP_DB_MIGRATION_FOLDER);
-		fs.renameSync(TEST_DB_MIGRATION_FOLDER, DB_MIGRATION_FOLDER);
-	});
 	beforeEach(async ()=>{
 		frontendApp = express();
 		frontendApp.use(getFrontendApp({
@@ -37,10 +27,6 @@ describe("DB migration", ()=>{
 	});
 	afterEach(async ()=> {
 		await resetTestDB();
-	});
-	afterAll(async ()=>{
-		fs.renameSync(DB_MIGRATION_FOLDER, TEST_DB_MIGRATION_FOLDER);
-		fs.renameSync(TEMP_DB_MIGRATION_FOLDER, DB_MIGRATION_FOLDER);
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{

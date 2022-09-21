@@ -36,7 +36,8 @@ export const getTargetScript = (req: Request) => {
  */
 export const validateScriptLocally = async (targetScript: string) => {
 
-	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), "db/migrations"));
+	const checkDirSurFix = isNodeTest() ? "-test" : "";
+	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), `db/migrations${checkDirSurFix}`));
 	scripts.sort();
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
