@@ -207,9 +207,9 @@ export const getJiraClient = async (
 						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
-							truncatedCommits: getTruncatedIssuekeys(data.commits),
-							truncatedBranches: getTruncatedIssuekeys(data.branches),
-							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
+							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -264,7 +264,6 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
@@ -298,7 +297,6 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 				return {
