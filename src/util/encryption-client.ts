@@ -59,4 +59,11 @@ export class EncryptionClient {
 	static async healthcheck(): Promise<AxiosResponse> {
 		return await this.axios.get("/healthcheck");
 	}
+
+	static async deepcheck(): Promise<string[]> {
+		return await Promise.all([
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "healthcheck-test-github-server-app").then(EncryptionClient.decrypt),
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS, "healthcheck-test-jira-instance-secret").then(EncryptionClient.decrypt)
+		]);
+	}
 }
