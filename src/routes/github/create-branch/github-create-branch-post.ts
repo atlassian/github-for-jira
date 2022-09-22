@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { createUserClient } from "~/src/util/get-github-client-config";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
@@ -38,8 +40,17 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 			sha: baseBranchSha
 		});
 		res.sendStatus(200);
+		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
 		res.sendStatus(500);
+		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 	}
+};
+
+const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
+	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		name,
+		jiraHost
+	});
 };
