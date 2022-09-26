@@ -1,11 +1,12 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
 
-export const deleteRepository = async (context, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const deleteRepositoryWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId
 	});
-	context.log(`Deleting dev info for repo ${context.payload.repository?.id}`);
+	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.delete(
 		context.payload.repository?.id
