@@ -192,6 +192,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
+					// here
 					repositoryId: repositoryId
 				};
 			});

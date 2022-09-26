@@ -123,6 +123,7 @@ export const getJiraClient = async (
 		},
 		devinfo: {
 			branch: {
+				// here
 				delete: (repositoryId: string, branchRef: string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/{repositoryId}/branch/{branchJiraId}",
@@ -174,6 +175,7 @@ export const getJiraClient = async (
 					])
 			},
 			pullRequest: {
+				// here
 				delete: (repositoryId: string, pullRequestId: string) =>
 					instance.delete(
 						"/rest/devinfo/0.10/repository/{repositoryId}/pull_request/{pullRequestId}",
@@ -188,6 +190,7 @@ export const getJiraClient = async (
 						}
 					)
 			},
+			// here
 			repository: {
 				delete: (repositoryId: string) =>
 					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
