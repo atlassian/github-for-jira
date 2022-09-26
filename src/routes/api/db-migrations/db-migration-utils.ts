@@ -11,9 +11,9 @@ const logger = getLogger("DBMigration");
 
 /**
  *
- * Functiont to get the parem for db migration.
+ * Functiont to get the param for db migration.
  *
- * Intentially to NOT make this param case insensitive to be more safe
+ * Intentially to make this param case sensitive to be more safe
  *
  * @returns The common param in req.body `targetScript` to migrate up or down
  */
@@ -36,8 +36,8 @@ export const getTargetScript = (req: Request) => {
  */
 export const validateScriptLocally = async (targetScript: string) => {
 
-	const checkDirSurFix = isNodeTest() ? "-test" : "";
-	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), `db/migrations${checkDirSurFix}`));
+	const checkDirSurfix = isNodeTest() ? "-test" : "";
+	const scripts = await fs.promises.readdir(path.resolve(process.cwd(), `db/migrations${checkDirSurfix}`));
 	scripts.sort();
 	const latestScriptsInRepo = scripts[scripts.length-1];
 
