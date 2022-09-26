@@ -4,13 +4,11 @@ import { isPlainObject } from "lodash";
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
-export const replaceNonAlphaNumericWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/[^a-zA-Z\d\s:]/g, "") || "";
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);
 
 	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
-	hbs.registerHelper("replaceNonAlphaNumericWithHyphenHelper", replaceNonAlphaNumericWithHyphenHelper);
 	hbs.registerHelper("concat", concatStringHelper);
 
 	hbs.registerHelper(

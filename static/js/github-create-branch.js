@@ -74,6 +74,11 @@ $(document).ready(() => {
     window.close();
   });
 
+  $('#changeLogin').click(function (event) {
+    event.preventDefault();
+    changeGitHubLogin();
+  });
+
 });
 
 const loadBranches = () => {
@@ -194,4 +199,19 @@ const toggleLoaderInInput = (inputDOM, state) => {
   } else {
     container.find(loader).remove();
   }
+};
+
+const changeGitHubLogin = () => {
+  $.ajax({
+    type: "GET",
+    url: `/github/create-branch/change-github-login`,
+    success: (data) => {
+      window.open(data.baseUrl, "_blank"); 
+    },
+    error: (error) => {
+      console.log(error);
+    }
+
+  });
+
 };
