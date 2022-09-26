@@ -1,7 +1,6 @@
 .gitHubCreateBranch {
-  margin: auto;
+  margin: 10% auto;
   max-width: 480px;
-  height: 100vh;
 }
 
 #createBranchForm .field-group {
@@ -51,6 +50,14 @@
   font-weight: 400;
   right: 4px;
 }
+.select2-loader {
+  position: absolute;
+  right: 20px;
+}
+
+.hidden {
+  display: none;
+}
 
 .gitHubCreateBranch__serverError {
   display: none;
@@ -59,4 +66,20 @@
 
 .gitHubCreateBranch__serverError .errorMessageBox__container {
   align-items: center;
+}
+
+.gitHubCreateBranch__userDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 16px 23px 0px 0px;
+}
+
+.has-errors {
+  border: 2px solid #DE350B!important;
+}
+
+.error-message {
+  color: #DE350B;
+  font-size: 0.9rem;
 }

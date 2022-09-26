@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
-import { defaultLogLevel, FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger } from "config/logger";
+import { defaultLogLevel, getLogger } from "config/logger";
 import { getUnvalidatedJiraHost } from "middleware/jirahost-middleware";
 import { merge } from "lodash";
 
@@ -44,9 +44,10 @@ declare global {
 }
 
 export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, {
+	req.log = getLogger("frontend-log-middleware", {
 		fields: req.log?.fields,
-		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req))
+		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
+		filterHttpRequests: true
 	});
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {

@@ -3,15 +3,16 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
+import { SearchRepositoriesQuery, UserOrganizationsQuery } from "~/src/github/client/github-queries";
 
-describe("GitHub Create Branch Get", () => {
+const randomString = "random-string";
+describe("GitHub Repository Search", () => {
 	let app: Application;
 	beforeEach(() => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issue_key: "1", issue_summary: "random-string" };
+			req.query = { repoName: randomString };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -20,10 +21,10 @@ describe("GitHub Create Branch Get", () => {
 			getInstallationAccessToken: async () => ""
 		}));
 	});
-	describe("Testing the GET route", () => {
+	describe("Testing the Repository Search route", () => {
 		it("should redirect to Github login if unauthorized", async () => {
 			await supertest(app)
-				.get("/github/create-branch").set(
+				.get("/github/repository").set(
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost
@@ -40,14 +41,15 @@ describe("GitHub Create Branch Get", () => {
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
 			githubNock
-				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
-				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+				.post("/graphql", { query: UserOrganizationsQuery, variables: { first: 10 } })
+				.reply(200, { data: { viewer: { login: randomString, organizations: { nodes: [] } } } });
+			const queryString = `${randomString} org:${randomString} in:name`;
 			githubNock
-				.get("/user")
-				.reply(200, { data: { login: "test-account" } });
+				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: queryString, per_page: 20 } })
+				.reply(200, { data: { search: { repos: [ 1, 2 ] } } });
 
 			await supertest(app)
-				.get("/github/create-branch").set(
+				.get("/github/repository").set(
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
@@ -55,7 +57,7 @@ describe("GitHub Create Branch Get", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.text).toContain("<div class=\"gitHubCreateBranch__header\">Create GitHub Branch</div>");
+					expect(res.body?.repositories).toHaveLength(2);
 				});
 		});
 	});

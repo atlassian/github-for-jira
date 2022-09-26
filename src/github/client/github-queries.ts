@@ -14,6 +14,10 @@ export interface RepositoryNode {
 	cursor?: string;
 }
 
+export interface OrgNode {
+	login: string;
+}
+
 export interface GetRepositoriesResponse {
 	viewer: {
 		repositories: {
@@ -25,6 +29,21 @@ export interface GetRepositoriesResponse {
 			edges: RepositoryNode[];
 		}
 	};
+}
+
+export interface SearchedRepositoriesResponse {
+	search: {
+		repos: RepositoryNode[]
+	};
+}
+
+export interface UserOrganizationsResponse {
+	viewer: {
+		login: string;
+		organizations: {
+			nodes: OrgNode[];
+		}
+	}
 }
 
 export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
@@ -218,6 +237,20 @@ export type getBranchesResponse = {
 	}
 };
 
+export type getBranchesNameResponse = {
+	repository: {
+		refs: {
+      totalCount: number,
+			edges: {
+				cursor: string;
+				node: {
+					name: string;
+				}
+			}[]
+		}
+	}
+};
+
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
       refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
@@ -313,6 +346,23 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
     }
   }`;
 
+export const  getBranchesNameQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo) {
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor, orderBy: {field: TAG_COMMIT_DATE, direction: DESC}) {
+        totalCount
+        edges {
+          cursor
+          node {
+            name
+          }
+        }
+      }
+      defaultBranchRef {
+        name
+      }
+    }
+  }`;
+
 export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
@@ -375,6 +425,36 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             updatedAt
           }
         }
+      }
+    }
+  }
+}`;
+
+export const SearchRepositoriesQuery = `query($query_string: String!, $per_page: Int!, $cursor: String) {
+  search(
+    type: REPOSITORY, 
+    query: $query_string,
+    first: $per_page,
+    after: $cursor
+  ) {
+    repos: edges {
+      repo: node {
+        ... on Repository {
+          nameWithOwner
+          name
+        }
+      }
+    }
+  }
+}
+`;
+
+export const UserOrganizationsQuery = `query($first: Int!) { 
+  viewer { 
+    login
+    organizations(first: $first) {
+      nodes {
+        login
       }
     }
   }

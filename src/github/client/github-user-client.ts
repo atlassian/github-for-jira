@@ -7,7 +7,16 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
-import { GetRepositoriesQuery, GetRepositoriesResponse } from "~/src/github/client/github-queries";
+import {
+	GetRepositoriesQuery,
+	GetRepositoriesResponse,
+	SearchedRepositoriesResponse,
+	SearchRepositoriesQuery,
+	UserOrganizationsQuery,
+	UserOrganizationsResponse,
+	getBranchesNameQuery,
+	getBranchesNameResponse
+} from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -72,6 +81,32 @@ export class GitHubUserClient extends GitHubClient {
 		}
 	}
 
+	public async getUserOrganizations(first = 10): Promise<UserOrganizationsResponse> {
+		try {
+			const response = await this.graphql<UserOrganizationsResponse>(UserOrganizationsQuery, {}, {
+				first
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch organizations");
+			throw err;
+		}
+	}
+
+	public async searchUserRepositories(query_string: string, per_page = 20, cursor?: string): Promise<SearchedRepositoriesResponse> {
+		try {
+			const response = await this.graphql<SearchedRepositoriesResponse>(SearchRepositoriesQuery, {}, {
+				query_string,
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not find repositories");
+			throw err;
+		}
+	}
+
 	public getMembershipForOrg = async (org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
 		return await this.get<Octokit.OrgsGetMembershipResponse>(`/user/memberships/orgs/{org}`, {
 			urlParams: {
@@ -100,6 +135,21 @@ export class GitHubUserClient extends GitHubClient {
 				owner,
 				repo
 			});
+	}
+
+	public async getReferences(owner: string, repo: string, per_page = 20, cursor?: string): Promise<getBranchesNameResponse> {
+		try {
+			const response = await this.graphql<getBranchesNameResponse>(getBranchesNameQuery, {}, {
+				owner,
+				repo,
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch branches");
+			throw err;
+		}
 	}
 
 }
