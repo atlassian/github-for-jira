@@ -9,6 +9,7 @@ const errorMessages = {
 	500: ["Oops, something unexpected happened."]
 };
 
+// Errors need to be returned as an array
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
@@ -19,25 +20,14 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	if (!owner || !repo || !sourceBranchName || !newBranchName) {
-		res.status(400).json({ err: "Missing required data." });
+		res.status(400).json([ "Missing required data." ]);
 		return;
 	}
 
 	try {
 		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
-		let baseBranchSha;
-		try {
-			baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
-		} catch (err) {
-			if (err.status === 404) {
-				res.status(400).json({ err: "Source branch not found" });
-				return;
-			} else {
-				res.status(400).json({ err: "Error while fetching source branch details" });
-				return;
-			}
-		}
+		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 
 		await gitHubUserClient.createReference(owner, repo, {
 			owner,
