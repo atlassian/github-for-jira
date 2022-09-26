@@ -3,7 +3,7 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
+import { GetReposByCommitsContributionsQuery } from "~/src/github/client/github-queries";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -40,8 +40,8 @@ describe("GitHub Create Branch Get", () => {
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
 			githubNock
-				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20 } })
-				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+				.post("/graphql", { query: GetReposByCommitsContributionsQuery, variables: { max_repos: 20 } })
+				.reply(200, { data: { viewer: { contributionsCollection: { commitContributionsByRepository: [] } } } });
 			githubNock
 				.get("/user")
 				.reply(200, { data: { login: "test-account" } });

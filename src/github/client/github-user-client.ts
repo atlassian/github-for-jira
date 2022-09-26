@@ -9,7 +9,7 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesContributionsResponse,
-	GetRepositoriesQuery,
+	GetReposByCommitsContributionsQuery,
 	SearchedRepositoriesResponse,
 	SearchRepositoriesQuery,
 	UserOrganizationsQuery,
@@ -70,7 +70,7 @@ export class GitHubUserClient extends GitHubClient {
 
 	public async getRepositoriesByCommitContributions(max_repos = 20): Promise<GetRepositoriesContributionsResponse> {
 		try {
-			const response = await this.graphql<GetRepositoriesContributionsResponse>(GetRepositoriesQuery, {}, {
+			const response = await this.graphql<GetRepositoriesContributionsResponse>(GetReposByCommitsContributionsQuery, {}, {
 				max_repos
 			});
 			return response.data.data;
