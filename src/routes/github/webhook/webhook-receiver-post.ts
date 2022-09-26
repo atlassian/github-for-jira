@@ -11,7 +11,7 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepository } from "~/src/github/repository";
+import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
@@ -96,7 +96,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "repository":
 			if (context.action === "deleted") {
-				await GithubWebhookMiddleware(deleteRepository)(context);
+				await GithubWebhookMiddleware(deleteRepositoryWebhookHandler)(context);
 			}
 			break;
 		case "workflow_run":
