@@ -10,8 +10,6 @@ describe("Healthcheck Router", () => {
 	beforeEach(async () => {
 		app = express();
 		app.use(HealthcheckRouter);
-		EncryptionClient.encrypt = jest.fn(()=> Promise.resolve("encrypted:xxx"));
-		EncryptionClient.decrypt = jest.fn(()=> Promise.resolve("xxx"));
 	});
 
 	it("should GET /healthcheck", async () => {
@@ -26,19 +24,13 @@ describe("Healthcheck Router", () => {
 			.expect(200);
 	});
 
-	describe("Cryptor checking during healthcheck", ()=>{
-
-		it("On WebServer: should NOT hit cryptor on healthcheck", async ()=>{
-			process.env.MICROS_GROUP = "WebServer";
-			await supertest(app)
-				.get(`/healthcheck`)
-				.expect(200);
-			expect(EncryptionClient.encrypt).not.toBeCalled();
-			expect(EncryptionClient.decrypt).not.toBeCalled();
+	describe("Cryptor checking during healthcheck", () => {
+		beforeEach(() => {
+			jest.spyOn(EncryptionClient, "encrypt");
+			jest.spyOn(EncryptionClient, "decrypt");
 		});
 
-		it("On Worker: should hit cryptor to do a simple encrypt/decrypt on healthcheck", async ()=>{
-			process.env.MICROS_GROUP = "Worker";
+		it("should hit cryptor to do a simple encrypt/decrypt on healthcheck", async () => {
 			await supertest(app)
 				.get(`/healthcheck`)
 				.expect(200);
@@ -46,15 +38,12 @@ describe("Healthcheck Router", () => {
 			expect(EncryptionClient.decrypt).toBeCalled();
 		});
 
-		it("should hit cryptor to do a simple encrypt and decrypt on deepcheck", async ()=>{
-			process.env.MICROS_GROUP = "WebServer";
+		it("should hit cryptor to do a simple encrypt and decrypt on deepcheck", async () => {
 			await supertest(app)
 				.get(`/deepcheck`)
 				.expect(200);
 			expect(EncryptionClient.encrypt).toBeCalled();
 			expect(EncryptionClient.decrypt).toBeCalled();
 		});
-
 	});
-
 });
