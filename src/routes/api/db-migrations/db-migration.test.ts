@@ -76,8 +76,6 @@ describe("DB migration", ()=>{
 		it("should successfully migration db down from latest script", async () => {
 			sequelize.query = jest.fn(async () => [{
 				name: MIGRATION_SCRIPT_LAST
-			},{
-				name: MIGRATION_SCRIPT_FIRST
 			}]);
 			when(startDBMigration)
 				.calledWith(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN)
@@ -89,17 +87,12 @@ describe("DB migration", ()=>{
 			await triggerDBDown(MIGRATION_SCRIPT_LAST).expect(200);
 		});
 		it("should fail migration db down if target script is not latest in db", async () => {
+			jest.mocked(startDBMigration).mockRejectedValue("Shouldn't call this");
 			sequelize.query = jest.fn(async () => [{
 				name: MIGRATION_SCRIPT_FIRST
 			}]);
-			when(startDBMigration)
-				.calledWith(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN)
-				.mockResolvedValue({
-					isSuccess: true,
-					stdout: "success",
-					stderr: ""
-				});
 			await triggerDBDown(MIGRATION_SCRIPT_LAST).expect(400);
+			expect(startDBMigration).not.toBeCalled();
 		});
 	});
 	const triggerDBUp = (targetScript?: string): Test => {
