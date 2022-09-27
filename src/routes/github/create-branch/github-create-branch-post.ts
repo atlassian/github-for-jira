@@ -4,7 +4,7 @@ import { createUserClient } from "~/src/util/get-github-client-config";
 const errorMessages = {
 	// TODO: Fix the url later, once you figure out how to get the `installationId`
 	403: ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"],
-	400: ["Missing required data!"],
+	400: ["Missing information, please check if the values for owner, repository, source branch name and the new branch name are valid."],
 	422: ["This GitHub branch already exists. Please use a different branch name.", "The Github Branch name is not valid."],
 	404: ["This GitHub source branch does not exist. Please use a different branch."],
 	500: ["Oops, something unexpected happened."]
