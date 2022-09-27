@@ -4,7 +4,6 @@ import { encrypted, getHashedKey, sequelize } from "models/sequelize";
 import { EncryptedModel } from "models/encrypted-model";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { getLogger } from "config/logger";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 // TODO: this should not be there.  Should only check once a function is called
 if (!process.env.STORAGE_SECRET) {
@@ -12,8 +11,6 @@ if (!process.env.STORAGE_SECRET) {
 }
 
 const logger = getLogger("model-installations");
-
-const writeOnlyToNewSecretCol = async (jiraHost: string | undefined) => booleanFlag(BooleanFlags.INSTALLATION_SHARED_SECRET_NEW_COL_WRITE, false, jiraHost);
 
 export class Installation extends EncryptedModel {
 	id: number;
@@ -81,48 +78,35 @@ export class Installation extends EncryptedModel {
 	 * @returns {Installation}
 	 */
 	static async install(payload: InstallationPayload): Promise<Installation> {
-		const  ffWriteNewColOnly = await writeOnlyToNewSecretCol(payload.host);
-		try {
-			const [installation, created] = await this.findOrCreate({
-				where: {
-					clientKey: getHashedKey(payload.clientKey)
-				},
-				defaults: ffWriteNewColOnly ? {
-					jiraHost: payload.host,
-					encryptedSharedSecret: payload.sharedSecret //write as plain text, hook will encrypt it
-				}: {
-					jiraHost: payload.host,
-					sharedSecret: payload.sharedSecret
-				}
-			});
-			if (!created) {
-				await installation
-					.update(ffWriteNewColOnly ? {
-						encryptedSharedSecret: payload.sharedSecret,
-						jiraHost: payload.host
-					} : {
-						sharedSecret: payload.sharedSecret,  //write as plain text, hook will encrypt it
-						jiraHost: payload.host
-					})
-					.then(async (record) => {
-						const subscriptions = await Subscription.getAllForClientKey(
-							record.clientKey
-						);
-						await Promise.all(
-							subscriptions.map((subscription) =>
-								subscription.update({ jiraHost: record.jiraHost })
-							)
-						);
-
-						return installation;
-					});
+		const [installation, created] = await this.findOrCreate({
+			where: {
+				clientKey: getHashedKey(payload.clientKey)
+			},
+			defaults: {
+				jiraHost: payload.host,
+				encryptedSharedSecret: payload.sharedSecret //write as plain text, hook will encrypt it
 			}
-			logger.info(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`); //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
-			return installation;
-		} catch (e) {
-			logger.error(`FF for INSTALLATION_SHARED_SECRET_NEW_COL_WRITE is ${ffWriteNewColOnly} and tahe install is success`, e); //Will remove when FF cleaned up. Use log to determine whether to proceed FF to 100%
-			throw e;
+		});
+		if (!created) {
+			await installation
+				.update({
+					encryptedSharedSecret: payload.sharedSecret,
+					jiraHost: payload.host
+				})
+				.then(async (record) => {
+					const subscriptions = await Subscription.getAllForClientKey(
+						record.clientKey
+					);
+					await Promise.all(
+						subscriptions.map((subscription) =>
+							subscription.update({ jiraHost: record.jiraHost })
+						)
+					);
+
+					return installation;
+				});
 		}
+		return installation;
 	}
 
 	async uninstall(): Promise<void> {
@@ -162,14 +146,6 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			const ffWriteNewColOnly = await writeOnlyToNewSecretCol(instance.jiraHost);
-			if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
-				//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
-				instance.encryptedSharedSecret = instance.sharedSecret;
-				if (!opts.fields.includes("encryptedSharedSecret")) {
-					opts.fields.push("encryptedSharedSecret");
-				}
-			}
 			try {
 				await instance.encryptChangedSecretFields(opts.fields);
 			} catch (_) {
@@ -181,14 +157,6 @@ Installation.init({
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
 				if (!opts.fields) return;
-				const ffWriteNewColOnly = await writeOnlyToNewSecretCol(instance.jiraHost);
-				if (!ffWriteNewColOnly && opts.fields.includes("sharedSecret") && instance.sharedSecret) {
-					//Always cope the sharedSecret to encryptedSharedSecret if sharedSecret is not empty
-					instance.encryptedSharedSecret = instance.sharedSecret;
-					if (!opts.fields.includes("encryptedSharedSecret")) {
-						opts.fields.push("encryptedSharedSecret");
-					}
-				}
 				try {
 					await instance.encryptChangedSecretFields(opts.fields);
 				} catch (_) {
