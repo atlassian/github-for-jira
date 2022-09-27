@@ -1,13 +1,9 @@
 #!/usr/bin/env node
 const path = require('path')
 
-const migrationsDir =
-  process.env.IS_TESTING_DB_MIGRATION === "true" ?
-  "migrations-test" : "migrations";
-
 module.exports = {
   "config": path.resolve('./db/config.json'),
   "models-path": path.resolve('./src/models'),
   "seeders-path": path.resolve('./db/seeders'),
-  "migrations-path": path.resolve(`./db/${migrationsDir}`),
+  "migrations-path": path.resolve('./db/migrations')
 }
