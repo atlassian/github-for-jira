@@ -3,7 +3,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
 import { getInstallationId } from "~/src/github/client/installation-id";
-import { envVars } from "config/env";
 
 describe("User Config Service", () => {
 	const gitHubInstallationId = 1234;
@@ -37,7 +36,7 @@ describe("User Config Service", () => {
 			jiraClientKey: "client-key"
 		});
 
-		envVars.PROXY = undefined;
+		process.env.PROXY = undefined;
 
 		repoSyncState = await RepoSyncState.create({
 			subscriptionId: subscription.id,

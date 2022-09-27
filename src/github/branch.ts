@@ -6,9 +6,9 @@ import { sqsQueues } from "../sqs/queues";
 import Logger from "bunyan";
 import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { JiraBranchData } from "../interfaces/jira";
+import { JiraBranchData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
 
 export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
@@ -41,7 +41,7 @@ export const processBranch = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload);
+	const jiraPayload: JiraBranchData | undefined = await transformBranch(github, webhookPayload, logger);
 
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");
@@ -77,7 +77,7 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 		return;
 	}
 
-	context.log.info(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+	context.log.info({ prRef: context.payload.ref }, `Deleting branch for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
 		`${payload.repository?.id}`,

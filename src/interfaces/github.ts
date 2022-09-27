@@ -32,13 +32,13 @@ interface GitHubUser {
 export interface GitHubIssue {
 	status: number;
 	body?: string;
-  created_at?: string;
-  html_url?: string;
-  id?: number;
-  node_id?: string;
-  updated_at?: string;
-  url?: string;
-  user?: GitHubUser;
+	created_at?: string;
+	html_url?: string;
+	id?: number;
+	node_id?: string;
+	updated_at?: string;
+	url?: string;
+	user?: GitHubUser;
 }
 
 
@@ -60,7 +60,7 @@ interface GitHubWorkflowRunHeadCommit {
 interface GitHubWorkflowRunRepositoryOwner {
 	login: string;
 	id: number;
-	name: string | null;
+	name?: string;
 	node_id: string;
 	avatar_url: string;
 	gravatar_id: string;
@@ -227,10 +227,31 @@ interface GitHubInstallation {
 }
 
 //refer from here https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#push
-//TODO: tbh, I think we should use a better typing, something more official
-interface GitHubCommit {
+//TODO: tbh |  I think we should use a better typing |  something more official
+export interface GitHubCommit {
 	id: string;
 	message: string;
+	timestamp: string;
+	author: {
+		name: string;
+		email: string;
+	};
+	url: string;
+	distinct: boolean;
+	added: GithubCommitFile[];
+	modified: GithubCommitFile[];
+	removed: GithubCommitFile[];
+}
+
+export interface GithubCommitFile {
+	filename: string;
+	additions: number;
+	deletions: number;
+	changes: number;
+	status: "added" | "removed" | "modified" | "renamed" | "copied" | "changed" | "unchanged";
+	raw_url: string;
+	blob_url: string;
+	patch: string;
 }
 
 export interface GitHubPushData {

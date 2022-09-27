@@ -9,7 +9,7 @@ import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptio
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
+import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 // Max number of issue keys we can pass to the Jira API
@@ -46,9 +46,7 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, jiraHost)
-			? await installation.decrypt("encryptedSharedSecret")
-			: installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		logger
 	);
 
@@ -209,9 +207,9 @@ export const getJiraClient = async (
 						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
-							truncatedCommits: getTruncatedIssuekeys(data.commits),
-							truncatedBranches: getTruncatedIssuekeys(data.branches),
-							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
+							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -266,7 +264,6 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
 				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
@@ -300,7 +297,6 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
 				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 				return {
@@ -447,21 +443,18 @@ interface IssueKeyObject {
 	associations?: JiraAssociation[];
 }
 
+// TODO: add unit tests
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		// Filter out anything that doesn't have issue keys or are not over the limit
 		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
 			});
 		}
 		const association = findIssueKeyAssociation(value);
 		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
+				// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
 				associations: [association]
 			});
 		}

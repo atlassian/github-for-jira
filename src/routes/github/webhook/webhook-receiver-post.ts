@@ -11,11 +11,11 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepository } from "~/src/github/repository";
+import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_HOSTNAME } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const logger = getLogger("webhook.receiver");
@@ -42,7 +42,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 					gitHubAppId: undefined,
 					appId: parseInt(envVars.APP_ID),
 					clientId: envVars.GITHUB_CLIENT_ID,
-					gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 					uuid: undefined
 				} : {
@@ -96,7 +96,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "repository":
 			if (context.action === "deleted") {
-				await GithubWebhookMiddleware(deleteRepository)(context);
+				await GithubWebhookMiddleware(deleteRepositoryWebhookHandler)(context);
 			}
 			break;
 		case "workflow_run":

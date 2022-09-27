@@ -5,11 +5,11 @@ import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepository } from "~/src/github/repository";
+import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_HOSTNAME, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
 import { envVars } from "config/env";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
@@ -30,7 +30,7 @@ describe("webhook-receiver-post", () => {
 			gitHubAppId: undefined,
 			appId: parseInt(envVars.APP_ID),
 			clientId: envVars.GITHUB_CLIENT_ID,
-			gitHubBaseUrl: GITHUB_CLOUD_HOSTNAME,
+			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 			uuid: undefined
 		};
@@ -221,7 +221,7 @@ describe("webhook-receiver-post", () => {
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(req, res);
-		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepository);
+		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepositoryWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "repository",
