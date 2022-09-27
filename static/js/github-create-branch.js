@@ -33,7 +33,7 @@ $(document).ready(() => {
             totalRepos.unshift(additionalRepo);
           }
         });
-        toggleLoaderInInput($(".ghRepo-dropdown"), false);
+        // Remove the inside loader
         return {
           results: queriedRepos
         }
@@ -43,14 +43,14 @@ $(document).ready(() => {
       const userInput = options.term;
       queriedRepos = totalRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
       if (userInput.length) {
-        toggleLoaderInInput($(".ghRepo-dropdown"), true);
+        // Show the loader inside
         this._ajaxQuery.call(this, options);
       }
       options.callback({ results: queriedRepos });
     }
   })
     .on("select2-close", () => {
-      toggleLoaderInInput($(".ghRepo-dropdown"), false);
+      // Remove all loaders , inside and outside
     });
 
   $("#ghParentBranch").auiSelect2({
@@ -200,18 +200,6 @@ const hideErrorMessage = () => {
 
 const clearBranches = () => {
   $("#ghParentBranch").auiSelect2({ data: [] });
-};
-
-const toggleLoaderInInput = (inputDOM, state) => {
-  const container = inputDOM.find("div.select2-search");
-  const loader = ".select2-loader";
-  if (state) {
-    if (!container.find(loader).length) {
-      container.prepend(`<aui-spinner size="small" class="select2-loader"></aui-spinner>`);
-    }
-  } else {
-    container.find(loader).remove();
-  }
 };
 
 const changeGitHubLogin = () => {
