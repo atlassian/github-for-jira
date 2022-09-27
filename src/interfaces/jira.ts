@@ -1,3 +1,5 @@
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+
 interface JiraPullRequestCommit {
 	id: string;
 	repositoryUri: string;
@@ -121,7 +123,7 @@ export interface JiraReview extends JiraAuthor {
 
 export interface JiraCommitData {
 	commits: JiraCommit[];
-	id: string;
+	id: TransformedRepositoryId;
 	name: string;
 	url: string;
 	updateSequenceId: number;

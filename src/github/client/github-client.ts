@@ -19,7 +19,7 @@ export interface GitHubConfig {
  */
 export class GitHubClient {
 	protected readonly logger: Logger;
-	protected readonly baseUrl: string;
+	public readonly baseUrl: string;
 	protected readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;

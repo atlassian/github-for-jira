@@ -31,7 +31,10 @@ export const getCommitTask = async (
 
 	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
-	const jiraPayload = await transformCommit({ commits, repository });
+	const jiraPayload = await transformCommit(
+		{ commits, repository },
+		gitHubClient.gitHubServerAppId ? gitHubClient.baseUrl : undefined
+	);
 	logger.debug("Syncing commits: finished");
 
 	return {
