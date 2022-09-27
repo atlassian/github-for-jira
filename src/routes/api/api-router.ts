@@ -15,7 +15,6 @@ import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
-import { CryptorMigrationRouter } from "./cryptor-migrations/migration-router";
 import { TaskType } from "~/src/sync/sync.types";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { UUID_REGEX } from "~/src/util/regex";
@@ -168,7 +167,6 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 		resp.status(500).send("fail");
 	}
 });
-ApiRouter.use("/migration", CryptorMigrationRouter);
 ApiRouter.use("/db-migration", DBMigrationsRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
