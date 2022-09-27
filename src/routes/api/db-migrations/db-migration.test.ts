@@ -3,6 +3,11 @@ import { getFrontendApp } from "~/src/app";
 import supertest, { Test } from "supertest";
 import { sequelize } from "models/sequelize";
 import { QueryTypes } from "sequelize";
+import fs from "fs";
+
+jest.mock("fs", ()=>({
+	...jest.requireActual("fs")
+}));
 
 const DB_MIGRATE_UP_URL = "/api/db-migration/up";
 const DB_MIGRATE_DOWN_URL = "/api/db-migration/down";
@@ -19,6 +24,13 @@ describe("DB migration", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
 		process.env.IS_TESTING_DB_MIGRATION = "true";
+		fs.promises.readdir=jest.fn().mockImplementation(async (path: string)=>{
+			if (path.includes("db/migrations")) {
+				path = path.replace("db/migrations", "db/migrations-test");
+			}
+			const result =  fs.readdirSync(path);
+			return result;
+		});
 		frontendApp = express();
 		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "",
@@ -27,8 +39,8 @@ describe("DB migration", ()=>{
 		await resetTestDB();
 	});
 	afterEach(async ()=> {
-		await resetTestDB();
 		delete process.env.IS_TESTING_DB_MIGRATION;
+		await resetTestDB();
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{
