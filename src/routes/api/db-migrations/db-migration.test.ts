@@ -1,91 +1,107 @@
 import express from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest, { Test } from "supertest";
+import { startDBMigration, DBMigrationType, validateScriptLocally } from "./db-migration-utils";
 import { sequelize } from "models/sequelize";
-import { QueryTypes } from "sequelize";
-import fs from "fs";
+import { when } from "jest-when";
 
-jest.mock("fs", ()=>({
-	...jest.requireActual("fs")
+jest.mock("./db-migration-utils", ()=> ({
+	...jest.requireActual("./db-migration-utils"),
+	startDBMigration: jest.fn(),
+	validateScriptLocally: jest.fn()
+}));
+jest.mock("models/sequelize", ()=>({
+	...jest.requireActual("models/sequelize")
 }));
 
 const DB_MIGRATE_UP_URL = "/api/db-migration/up";
 const DB_MIGRATE_DOWN_URL = "/api/db-migration/down";
-
-const PREVIOUS_TEST_DB_MIGRATION_SCRIPT = "20220920114600-create-sample-tables.js";
-const LASTEST_TEST_DB_MIGRATGION_SCRIPT = "20220920142800-mod-sample-tables.js";
-
-const SEQUELISE_META_TO_REMOVE = [
-	PREVIOUS_TEST_DB_MIGRATION_SCRIPT,
-	LASTEST_TEST_DB_MIGRATGION_SCRIPT
-];
+const MIGRATION_SCRIPT_FIRST = "20220101000000-first-script.js";
+const MIGRATION_SCRIPT_LAST = "20220101000001-second-script.js";
 
 describe("DB migration", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
-		process.env.IS_TESTING_DB_MIGRATION = "true";
-		fs.promises.readdir=jest.fn().mockImplementation(async (path: string)=>{
-			if (path.includes("db/migrations")) {
-				path = path.replace("db/migrations", "db/migrations-test");
-			}
-			const result =  fs.readdirSync(path);
-			return result;
-		});
 		frontendApp = express();
 		frontendApp.use(getFrontendApp({
 			getSignedJsonWebToken: () => "",
 			getInstallationAccessToken: async () => ""
 		}));
-		await resetTestDB();
-	});
-	afterEach(async ()=> {
-		delete process.env.IS_TESTING_DB_MIGRATION;
-		await resetTestDB();
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{
 			await triggerDBUp().expect(400);
 		});
 		it("should fail when the targetScript is a random script", async ()=>{
+			when(jest.mocked(validateScriptLocally))
+				.calledWith("some-random-script.js")
+				.mockRejectedValue({ statusCode: 400 });
 			await triggerDBUp("some-random-script.js").expect(400);
 		});
 		it("should fail when the targetScript is not the last script in db/migration folder", async ()=>{
-			await triggerDBUp(PREVIOUS_TEST_DB_MIGRATION_SCRIPT).expect(400);
+			when(jest.mocked(validateScriptLocally))
+				.calledWith(MIGRATION_SCRIPT_FIRST)
+				.mockRejectedValue({ statusCode: 400 });
+			await triggerDBUp(MIGRATION_SCRIPT_FIRST).expect(400);
 		});
 	});
 	describe("DB mgiration up", ()=> {
+		beforeEach(()=>{
+			jest.mocked(validateScriptLocally).mockClear();
+			jest.mocked(startDBMigration).mockClear();
+		});
 		it("should successfully migration db up to latest script", async ()=> {
-			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
+			when(startDBMigration)
+				.calledWith(MIGRATION_SCRIPT_LAST, DBMigrationType.UP)
+				.mockResolvedValue({
+					isSuccess: true,
+					stdout: "success",
+					stderr: ""
+				});
+			sequelize.query = jest.fn(async () => []);
+			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(200);
 		});
 		it("should failed migration db up if target script is already in db", async () => {
-			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
-			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(400);
+			jest.mocked(startDBMigration).mockRejectedValue("Shouldn't call this");
+			sequelize.query = jest.fn(async () => [MIGRATION_SCRIPT_LAST]);
+			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(400);
+			expect(startDBMigration).not.toBeCalled();
 		});
 	});
 	describe("DB mgiration down", ()=> {
+		beforeEach(()=>{
+			jest.mocked(validateScriptLocally).mockClear();
+			jest.mocked(startDBMigration).mockClear();
+		});
 		it("should successfully migration db down from latest script", async () => {
-			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
-			await triggerDBDown(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
+			sequelize.query = jest.fn(async () => [{
+				name: MIGRATION_SCRIPT_LAST
+			},{
+				name: MIGRATION_SCRIPT_FIRST
+			}]);
+			when(startDBMigration)
+				.calledWith(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN)
+				.mockResolvedValue({
+					isSuccess: true,
+					stdout: "success",
+					stderr: ""
+				});
+			await triggerDBDown(MIGRATION_SCRIPT_LAST).expect(200);
 		});
 		it("should fail migration db down if target script is not latest in db", async () => {
-			await triggerDBUp(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
-			await triggerDBDown(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(200);
-			await triggerDBDown(LASTEST_TEST_DB_MIGRATGION_SCRIPT).expect(400);
+			sequelize.query = jest.fn(async () => [{
+				name: MIGRATION_SCRIPT_FIRST
+			}]);
+			when(startDBMigration)
+				.calledWith(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN)
+				.mockResolvedValue({
+					isSuccess: true,
+					stdout: "success",
+					stderr: ""
+				});
+			await triggerDBDown(MIGRATION_SCRIPT_LAST).expect(400);
 		});
 	});
-	const resetTestDB = async () => {
-		await sequelize.query('drop table if exists "UnitTestDBMigrationTable"', {
-			type: QueryTypes.RAW
-		});
-		for (const script of SEQUELISE_META_TO_REMOVE) {
-			await sequelize.query(`delete from "SequelizeMeta" where name = :name`, {
-				replacements: {
-					name: script
-				},
-				type: QueryTypes.RAW
-			});
-		}
-	};
 	const triggerDBUp = (targetScript?: string): Test => {
 		return supertest(frontendApp)
 			.post(DB_MIGRATE_UP_URL)
