@@ -20,30 +20,61 @@ import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-k
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { waitUntil } from "test/utils/wait-until";
+import { GitHubServerApp } from "models/github-server-app";
+import fs from "fs";
+import path from "path";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/branches", () => {
-	const installationId = 1234;
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
-	const makeExpectedResponse = (branchName) => ({
-		preventTransitions: true,
-		repositories: [
-			{
-				branches: [
-					{
-						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
-						id: branchName,
-						issueKeys: ["TES-123"]
-							.concat(jiraIssueKeyParser(branchName))
-							.reverse()
-							.filter((key) => !!key),
-						lastCommit: {
+	beforeEach(() => {
+		mockSystemTime(12345678);
+	});
+
+	describe("cloud", () => {
+		const installationId = 1234;
+
+		const makeExpectedResponse = (branchName) => ({
+			preventTransitions: true,
+			repositories: [
+				{
+					branches: [
+						{
+							createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
+							id: branchName,
+							issueKeys: ["TES-123"]
+								.concat(jiraIssueKeyParser(branchName))
+								.reverse()
+								.filter((key) => !!key),
+							lastCommit: {
+								author: {
+									avatar: "https://camo.githubusercontent.com/test-avatar",
+									email: "test-author-email@example.com",
+									name: "test-author-name"
+								},
+								authorTimestamp: "test-authored-date",
+								displayId: "test-o",
+								fileCount: 0,
+								hash: "test-oid",
+								id: "test-oid",
+								issueKeys: ["TES-123"],
+								message: "TES-123 test-commit-message",
+								url: "test-repo-url/commit/test-sha",
+								updateSequenceId: 12345678
+							},
+							name: branchName,
+							url: `test-repo-url/tree/${branchName}`,
+							updateSequenceId: 12345678
+						}
+					],
+					commits: [
+						{
 							author: {
 								avatar: "https://camo.githubusercontent.com/test-avatar",
 								email: "test-author-email@example.com",
@@ -56,234 +87,95 @@ describe("sync/branches", () => {
 							id: "test-oid",
 							issueKeys: ["TES-123"],
 							message: "TES-123 test-commit-message",
+							timestamp: "test-authored-date",
 							url: "test-repo-url/commit/test-sha",
 							updateSequenceId: 12345678
-						},
-						name: branchName,
-						url: `test-repo-url/tree/${branchName}`,
-						updateSequenceId: 12345678
-					}
-				],
-				commits: [
-					{
-						author: {
-							avatar: "https://camo.githubusercontent.com/test-avatar",
-							email: "test-author-email@example.com",
-							name: "test-author-name"
-						},
-						authorTimestamp: "test-authored-date",
-						displayId: "test-o",
-						fileCount: 0,
-						hash: "test-oid",
-						id: "test-oid",
-						issueKeys: ["TES-123"],
-						message: "TES-123 test-commit-message",
-						timestamp: "test-authored-date",
-						url: "test-repo-url/commit/test-sha",
-						updateSequenceId: 12345678
-					}
-				],
-				id: "1",
-				name: "test-repo-name",
-				url: "test-repo-url",
-				updateSequenceId: 12345678
-			}
-		],
-		properties: {
-			installationId: installationId
-		}
-	});
-
-	const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
-		githubNock
-			.post("/graphql", branchesNoLastCursor())
-			.query(true)
-			.reply(200, {
-				"errors": [
-					{
-						"type": "RATE_LIMITED",
-						"message": "API rate limit exceeded for user ID 42425541."
-					}
-				]
-			}, {
-				"X-RateLimit-Reset": rateLimitReset,
-				"X-RateLimit-Remaining": "10"
-			});
-	};
-
-	const nockBranchRequest = (response, variables?: Record<string, any>) =>
-		githubNock
-			.post("/graphql", branchesNoLastCursor(variables))
-			.query(true)
-			.reply(200, response);
-
-	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
-
-	beforeEach(async () => {
-		mockSystemTime(12345678);
-
-		await Installation.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			encryptedSharedSecret: "secret",
-			clientKey: "client-key"
-		});
-
-		const subscription = await Subscription.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			syncStatus: "ACTIVE",
-			repositoryStatus: "complete"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			branchStatus: "pending",
-			commitStatus: "complete",
-			pullStatus: "complete",
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
-
-		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-		githubUserTokenNock(installationId);
-
-	});
-
-	const verifyMessageSent = async (data: BackfillMessagePayload, delaySec?: number) => {
-		await waitUntil(async () => {
-			expect(githubNock).toBeDone();
-			expect(jiraNock).toBeDone();
-		});
-		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
-		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
-		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
-	};
-
-	it("should sync to Jira when branch refs have jira references", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
-		nockBranchRequest(branchNodesFixture);
-
-		jiraNock
-			.post(
-				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
-			)
-			.reply(200);
-
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		await verifyMessageSent(data);
-	});
-
-	it("should send data if issue keys are only present in commits", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(branchCommitsHaveKeys);
-
-		jiraNock
-			.post(
-				"/rest/devinfo/0.10/bulk",
-				makeExpectedResponse("dev")
-			)
-			.reply(200);
-
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		await verifyMessageSent(data);
-	});
-
-	it("should send data if issue keys are only present in an associated PR title", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(associatedPRhasKeys);
-
-		jiraNock
-			.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: true,
-				repositories: [
-					{
-						branches: [
-							{
-								createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123-dev&quick_pull=1",
-								id: "dev",
-								issueKeys: ["PULL-123"],
-								lastCommit: {
-									author: {
-										avatar: "https://camo.githubusercontent.com/test-avatar",
-										email: "test-author-email@example.com",
-										name: "test-author-name"
-									},
-									authorTimestamp: "test-authored-date",
-									displayId: "test-o",
-									fileCount: 0,
-									hash: "test-oid",
-									issueKeys: [],
-									id: "test-oid",
-									message: "test-commit-message",
-									url: "test-repo-url/commit/test-sha",
-									updateSequenceId: 12345678
-								},
-								name: "dev",
-								url: "test-repo-url/tree/dev",
-								updateSequenceId: 12345678
-							}
-						],
-						commits: [],
-						id: "1",
-						name: "test-repo-name",
-						url: "test-repo-url",
-						updateSequenceId: 12345678
-					}
-				],
-				properties: {
-					installationId: installationId
+						}
+					],
+					id: "1",
+					name: "test-repo-name",
+					url: "test-repo-url",
+					updateSequenceId: 12345678
 				}
-			})
-			.reply(200);
-
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		await verifyMessageSent(data);
-	});
-
-	it("should not call Jira if no issue keys are found", async () => {
-		const data = { installationId, jiraHost };
-		nockBranchRequest(branchNoIssueKeys);
-
-		jiraNock.post(/.*/).reply(200);
-
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		expect(jiraNock).not.toBeDone();
-		cleanAll();
-		await verifyMessageSent(data);
-	});
-
-	it("should reschedule message with delay if there is rate limit", async () => {
-		const data = { installationId, jiraHost };
-		nockGitHubGraphQlRateLimit("12360");
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		await verifyMessageSent(data, 15);
-	});
-
-	describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
-		let dateCutoff: Date;
-		beforeEach(() => {
-			const time = Date.now();
-			const cutoff = 1000 * 60 * 60 * 24;
-			mockSystemTime(time);
-			dateCutoff = new Date(time - cutoff);
-
-			when(numberFlag).calledWith(
-				NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(cutoff);
+			],
+			properties: {
+				installationId: installationId
+			}
 		});
+
+		const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, {
+					"errors": [
+						{
+							"type": "RATE_LIMITED",
+							"message": "API rate limit exceeded for user ID 42425541."
+						}
+					]
+				}, {
+					"X-RateLimit-Reset": rateLimitReset,
+					"X-RateLimit-Remaining": "10"
+				});
+		};
+
+		const nockBranchRequest = (response, variables?: Record<string, any>) =>
+			githubNock
+				.post("/graphql", branchesNoLastCursor(variables))
+				.query(true)
+				.reply(200, response);
+
+		const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+
+		beforeEach(async () => {
+
+			await Installation.create({
+				gitHubInstallationId: installationId,
+				jiraHost,
+				encryptedSharedSecret: "secret",
+				clientKey: "client-key"
+			});
+
+			const subscription = await Subscription.create({
+				gitHubInstallationId: installationId,
+				jiraHost,
+				syncStatus: "ACTIVE",
+				repositoryStatus: "complete"
+			});
+
+			await RepoSyncState.create({
+				subscriptionId: subscription.id,
+				repoId: 1,
+				repoName: "test-repo-name",
+				repoOwner: "integrations",
+				repoFullName: "test-repo-name",
+				repoUrl: "test-repo-url",
+				branchStatus: "pending",
+				commitStatus: "complete",
+				pullStatus: "complete",
+				updatedAt: new Date(),
+				createdAt: new Date()
+			});
+
+			mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
+			githubUserTokenNock(installationId);
+
+		});
+
+		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec?: number) => {
+			await waitUntil(async () => {
+				expect(githubNock).toBeDone();
+				expect(jiraNock).toBeDone();
+			});
+			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
+			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
+		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
-			nockBranchRequest(branchNodesFixture, { commitSince: dateCutoff.toISOString() });
+			nockBranchRequest(branchNodesFixture);
 
 			jiraNock
 				.post(
@@ -296,16 +188,111 @@ describe("sync/branches", () => {
 			await verifyMessageSent(data);
 		});
 
-		describe("Branch commit history value is passed", () => {
+		it("should send data if issue keys are only present in commits", async () => {
+			const data = { installationId, jiraHost };
+			nockBranchRequest(branchCommitsHaveKeys);
 
-			it("should use commit history depth parameter before feature flag time", async () => {
+			jiraNock
+				.post(
+					"/rest/devinfo/0.10/bulk",
+					makeExpectedResponse("dev")
+				)
+				.reply(200);
+
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should send data if issue keys are only present in an associated PR title", async () => {
+			const data = { installationId, jiraHost };
+			nockBranchRequest(associatedPRhasKeys);
+
+			jiraNock
+				.post("/rest/devinfo/0.10/bulk", {
+					preventTransitions: true,
+					repositories: [
+						{
+							branches: [
+								{
+									createPullRequestUrl: "test-repo-url/compare/dev?title=PULL-123-dev&quick_pull=1",
+									id: "dev",
+									issueKeys: ["PULL-123"],
+									lastCommit: {
+										author: {
+											avatar: "https://camo.githubusercontent.com/test-avatar",
+											email: "test-author-email@example.com",
+											name: "test-author-name"
+										},
+										authorTimestamp: "test-authored-date",
+										displayId: "test-o",
+										fileCount: 0,
+										hash: "test-oid",
+										issueKeys: [],
+										id: "test-oid",
+										message: "test-commit-message",
+										url: "test-repo-url/commit/test-sha",
+										updateSequenceId: 12345678
+									},
+									name: "dev",
+									url: "test-repo-url/tree/dev",
+									updateSequenceId: 12345678
+								}
+							],
+							commits: [],
+							id: "1",
+							name: "test-repo-name",
+							url: "test-repo-url",
+							updateSequenceId: 12345678
+						}
+					],
+					properties: {
+						installationId: installationId
+					}
+				})
+				.reply(200);
+
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data);
+		});
+
+		it("should not call Jira if no issue keys are found", async () => {
+			const data = { installationId, jiraHost };
+			nockBranchRequest(branchNoIssueKeys);
+
+			jiraNock.post(/.*/).reply(200);
+
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			expect(jiraNock).not.toBeDone();
+			cleanAll();
+			await verifyMessageSent(data);
+		});
+
+		it("should reschedule message with delay if there is rate limit", async () => {
+			const data = { installationId, jiraHost };
+			nockGitHubGraphQlRateLimit("12360");
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await verifyMessageSent(data, 15);
+		});
+
+		describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
+			let dateCutoff: Date;
+			beforeEach(() => {
 				const time = Date.now();
-				const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
+				const cutoff = 1000 * 60 * 60 * 24;
 				mockSystemTime(time);
-				const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-				const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+				dateCutoff = new Date(time - cutoff);
 
-				nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+				when(numberFlag).calledWith(
+					NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT,
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(cutoff);
+			});
+
+			it("should sync to Jira when branch refs have jira references", async () => {
+				const data: BackfillMessagePayload = { installationId, jiraHost };
+				nockBranchRequest(branchNodesFixture, { commitSince: dateCutoff.toISOString() });
+
 				jiraNock
 					.post(
 						"/rest/devinfo/0.10/bulk",
@@ -316,6 +303,185 @@ describe("sync/branches", () => {
 				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 				await verifyMessageSent(data);
 			});
+
+			describe("Branch commit history value is passed", () => {
+
+				it("should use commit history depth parameter before feature flag time", async () => {
+					const time = Date.now();
+					const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
+					mockSystemTime(time);
+					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+					const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+
+					nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+					jiraNock
+						.post(
+							"/rest/devinfo/0.10/bulk",
+							makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+						)
+						.reply(200);
+
+					await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+					await verifyMessageSent(data);
+				});
+			});
+		});
+	});
+
+	describe("server", () => {
+		const installationIdForGhes = 12345;
+
+		let subscriptionForGhe: Subscription;
+		let gitHubServerApp: GitHubServerApp;
+		let installationForGhes: Installation;
+
+		const nockBranchRequest = (response, variables?: Record<string, any>) =>
+			gheNock
+				.post("/api/graphql", branchesNoLastCursor(variables))
+				.query(true)
+				.reply(200, response);
+
+		const GHE_PEM = fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" });
+
+		beforeEach(async () => {
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+				.mockResolvedValue(true);
+
+			installationForGhes = await Installation.create({
+				gitHubInstallationId: installationIdForGhes,
+				jiraHost,
+				encryptedSharedSecret: "secret",
+				clientKey: "client-key"
+			});
+
+			gitHubServerApp = await GitHubServerApp.create({
+				uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
+				appId: 12321,
+				gitHubBaseUrl: gheUrl,
+				gitHubClientId: "client-id",
+				gitHubClientSecret: "client-secret",
+				webhookSecret: "webhook-secret",
+				privateKey: GHE_PEM,
+				gitHubAppName: "app-name",
+				installationId: installationForGhes.id
+			});
+
+			subscriptionForGhe = await Subscription.create({
+				gitHubInstallationId: installationIdForGhes,
+				jiraHost,
+				syncStatus: "ACTIVE",
+				repositoryStatus: "complete",
+				gitHubAppId: gitHubServerApp.id
+			});
+
+			await RepoSyncState.create({
+				subscriptionId: subscriptionForGhe.id,
+				repoId: 1,
+				repoName: "test-repo-name",
+				repoOwner: "integrations",
+				repoFullName: "test-repo-name",
+				repoUrl: "test-repo-url",
+				repoPushedAt: new Date(),
+				repoUpdatedAt: new Date(),
+				repoCreatedAt: new Date(),
+				branchStatus: "pending",
+				commitStatus: "complete",
+				pullStatus: "complete",
+				updatedAt: new Date(),
+				createdAt: new Date()
+			});
+
+			gheUserTokenNock(installationIdForGhes);
+		});
+
+		const makeExpectedResponse = (branchName) => ({
+			preventTransitions: true,
+			repositories: [
+				{
+					branches: [
+						{
+							createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
+							id: branchName,
+							issueKeys: ["TES-123"]
+								.concat(jiraIssueKeyParser(branchName))
+								.reverse()
+								.filter((key) => !!key),
+							lastCommit: {
+								author: {
+									avatar: "https://camo.githubusercontent.com/test-avatar",
+									email: "test-author-email@example.com",
+									name: "test-author-name"
+								},
+								authorTimestamp: "test-authored-date",
+								displayId: "test-o",
+								fileCount: 0,
+								hash: "test-oid",
+								id: "test-oid",
+								issueKeys: ["TES-123"],
+								message: "TES-123 test-commit-message",
+								url: "test-repo-url/commit/test-sha",
+								updateSequenceId: 12345678
+							},
+							name: branchName,
+							url: `test-repo-url/tree/${branchName}`,
+							updateSequenceId: 12345678
+						}
+					],
+					commits: [
+						{
+							author: {
+								avatar: "https://camo.githubusercontent.com/test-avatar",
+								email: "test-author-email@example.com",
+								name: "test-author-name"
+							},
+							authorTimestamp: "test-authored-date",
+							displayId: "test-o",
+							fileCount: 0,
+							hash: "test-oid",
+							id: "test-oid",
+							issueKeys: ["TES-123"],
+							message: "TES-123 test-commit-message",
+							timestamp: "test-authored-date",
+							url: "test-repo-url/commit/test-sha",
+							updateSequenceId: 12345678
+						}
+					],
+					id: Buffer.from(gheUrl).toString("hex") + "-1",
+					name: "test-repo-name",
+					url: "test-repo-url",
+					updateSequenceId: 12345678
+				}
+			],
+			properties: {
+				installationId: installationIdForGhes
+			}
+		});
+
+		it("should sync to Jira when branch refs have jira references", async () => {
+			const data: BackfillMessagePayload = {
+				installationId: installationIdForGhes,
+				jiraHost,
+				gitHubAppConfig: {
+					uuid: gitHubServerApp.uuid,
+					gitHubAppId: gitHubServerApp.id,
+					appId: gitHubServerApp.appId,
+					clientId: gitHubServerApp.gitHubClientId,
+					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+				}
+			};
+
+			nockBranchRequest(branchNodesFixture);
+
+			jiraNock
+				.post(
+					"/rest/devinfo/0.10/bulk",
+					makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+				)
+				.reply(200);
+
+			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 });

@@ -2,6 +2,7 @@ import { getJiraId } from "~/src/jira/util/id";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 // TODO: better typing in file
 /**
@@ -77,7 +78,11 @@ const mapCommit = (commit) => {
 };
 
 // TODO: add typings
-export const transformBranches = async (payload) => {
+/**
+ *
+ * @param payload.gitHubBaseUrl - must be defined for GHES and undefined for Cloud
+ */
+export const transformBranches = async (payload: { branches: any, repository: any, ghesBaseUrl: string | undefined }) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository))
@@ -97,7 +102,7 @@ export const transformBranches = async (payload) => {
 	return {
 		branches,
 		commits,
-		id: payload.repository.id.toString(),
+		id: transformRepositoryId(payload.repository.id, payload.ghesBaseUrl),
 		name: payload.repository.name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

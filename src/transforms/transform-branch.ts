@@ -8,6 +8,7 @@ import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 import { getLogger } from "config/logger";
 import Logger from "bunyan";
 import { retry } from "ts-retry-promise";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
 	// Even though webhook was triggered, it doesn't mean the reference to the branch is available in the API just yet.
@@ -45,8 +46,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 	try {
 		const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 		return {
-			// here
-			id: repository.id.toString(),
+			id: transformRepositoryId(repository.id, github.gitHubServerAppId ? github.baseUrl : undefined),
 			name: repository.full_name,
 			url: repository.html_url,
 			branches: [
