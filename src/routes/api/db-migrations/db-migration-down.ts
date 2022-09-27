@@ -3,7 +3,7 @@ import { getLogger } from "config/logger";
 import safeJsonStringify from "safe-json-stringify";
 import { sequelize } from "models/sequelize";
 import { QueryTypes } from "sequelize";
-import { getTargetScript, validateScriptLocally, startDBMigration, DBMigrationType } from "./db-migration-utils";
+import { getTargetScript, validateScriptLocally, runDbMigration, DBMigrationType } from "./db-migration-utils";
 
 const logger = getLogger("DBMigrationDown");
 
@@ -18,7 +18,7 @@ export const DBMigrationDown = async (req: Request, res: Response): Promise<void
 		await validateScriptAgainstDB(targetScript);
 
 		logger.info(`All validation pass, now executing db migration down - script ${targetScript}`);
-		const { isSuccess, stdout, stderr } = await startDBMigration(targetScript, DBMigrationType.DOWN);
+		const { isSuccess, stdout, stderr } = await runDbMigration(targetScript, DBMigrationType.DOWN);
 		if (isSuccess) {
 			logger.info({ stdout, stderr }, `DB migration down SUCCESSS!! -  ${targetScript}`);
 		} else {

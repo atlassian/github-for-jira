@@ -55,7 +55,7 @@ export enum DBMigrationType {
 	DOWN = "DOWN",
 }
 
-export const startDBMigration = async (targetScript: string, ops: DBMigrationType) => {
+export const runDbMigration = async (targetScript: string, ops: DBMigrationType) => {
 	const env = getDbConfigEnvForMigration();
 	let cmd = "";
 	switch (ops) {

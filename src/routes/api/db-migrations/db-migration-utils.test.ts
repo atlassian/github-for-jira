@@ -1,4 +1,4 @@
-import { getTargetScript, validateScriptLocally, startDBMigration, DBMigrationType } from "./db-migration-utils";
+import { getTargetScript, validateScriptLocally, runDbMigration, DBMigrationType } from "./db-migration-utils";
 import fs from "fs";
 import { Request } from "express";
 import { exec } from "child_process";
@@ -56,7 +56,7 @@ describe("DB migration utils", () => {
 			}));
 		});
 	});
-	describe("DB migration util", () => {
+	describe("runDbMigration", () => {
 		beforeEach(() => {
 			jest.mocked(exec).mockImplementation((_path, _opts, cb: any) => {
 				cb(undefined, "success", "");
@@ -64,11 +64,11 @@ describe("DB migration utils", () => {
 			});
 		});
 		it("should migrate db up and success", async () => {
-			await startDBMigration(MIGRATION_SCRIPT_LAST, DBMigrationType.UP);
+			await runDbMigration(MIGRATION_SCRIPT_LAST, DBMigrationType.UP);
 			expect(exec).toBeCalledWith(DB_MIGRATION_CLI_UP, expect.anything(), expect.anything());
 		});
 		it("should migrate db down", async () => {
-			await startDBMigration(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN);
+			await runDbMigration(MIGRATION_SCRIPT_LAST, DBMigrationType.DOWN);
 			expect(exec).toBeCalledWith(DB_MIGRATION_CLI_DOWN(MIGRATION_SCRIPT_LAST), expect.anything(), expect.anything());
 		});
 	});
