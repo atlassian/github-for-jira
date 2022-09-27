@@ -53,12 +53,14 @@
 .select2-loader {
   display: flex;
   justify-content: center;
+  padding: 8px 0;
 }
 .select2-loader-for-input {
   position: absolute;
   top: 37px;
   z-index: 2;
   left: 8px;
+  padding: 0;
 }
 
 .hidden {
