@@ -50,6 +50,16 @@
   font-weight: 400;
   right: 4px;
 }
+.select2-loader {
+  display: flex;
+  justify-content: center;
+}
+.select2-loader-for-input {
+  position: absolute;
+  top: 37px;
+  z-index: 2;
+  left: 8px;
+}
 
 .hidden {
   display: none;

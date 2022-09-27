@@ -13,7 +13,7 @@ $(document).ready(() => {
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
-    dropdownCssClass: "ghRepo-dropdown",
+    dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
@@ -33,7 +33,7 @@ $(document).ready(() => {
             totalRepos.unshift(additionalRepo);
           }
         });
-        // Remove the inside loader
+        showLoaderInsideSelect2Dropdown("ghRepo", false);
         return {
           results: queriedRepos
         }
@@ -43,14 +43,14 @@ $(document).ready(() => {
       const userInput = options.term;
       queriedRepos = totalRepos.filter(repo => repo.id.toUpperCase().indexOf(userInput.toUpperCase()) >= 0);
       if (userInput.length) {
-        // Show the loader inside
+        showLoaderInsideSelect2Dropdown("ghRepo", true);
         this._ajaxQuery.call(this, options);
       }
       options.callback({ results: queriedRepos });
     }
   })
     .on("select2-close", () => {
-      // Remove all loaders , inside and outside
+      showLoaderInsideSelect2Dropdown("ghRepo", false);
     });
 
   $("#ghParentBranch").auiSelect2({
@@ -69,12 +69,12 @@ $(document).ready(() => {
     }
   });
 
-  $('#cancelBtn').click(function (event) {
+  $("#cancelBtn").click(function (event) {
     event.preventDefault();
     window.close();
   });
 
-  $('#changeLogin').click(function (event) {
+  $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
   });
@@ -82,13 +82,14 @@ $(document).ready(() => {
 });
 
 const loadBranches = () => {
+  showLoaderOnSelect2Input("ghParentBranch", true);
   clearBranches();
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
   $.ajax({
     type: "GET",
-    url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
+    url: `/github/create-branch/owners/${ repo.owner }/repos/${ repo.name }/branches`,
     success: (data) => {
       const allBranchesfetched = data?.repository?.refs?.totalCount === data?.repository?.refs?.edges.length;
       $("#ghParentBranch").auiSelect2({
@@ -115,10 +116,12 @@ const loadBranches = () => {
       });
       $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
       toggleSubmitDisabled(false);
+      showLoaderOnSelect2Input("ghParentBranch", false);
     },
-    error: (error) => {
+    error: () => {
       showErrorMessage("Failed to fetch branches");
       toggleSubmitDisabled(false);
+      showLoaderOnSelect2Input("ghParentBranch", false);
     }
   });
 };
@@ -131,16 +134,16 @@ const validateForm = () => {
   }
   if (!$("#ghParentBranch").select2("val")) {
     showValidationErrorMessage("ghParentBranch", "This field is required.");
-    validated =  false;
+    validated = false;
   }
   return validated;
 };
 
 const showValidationErrorMessage = (id, message) => {
-  const DOM = $(`#s2id_${id}`);
+  const DOM = $(`#s2id_${ id }`);
   DOM.find("a.select2-choice").addClass("has-errors");
   if (DOM.find(".error-message").length < 1) {
-    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${message}</div>`);
+    DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${ message }</div>`);
   }
 };
 
@@ -150,9 +153,9 @@ const createBranchPost = () => {
   const data = {
     owner: repo.owner,
     repo: repo.name,
-    sourceBranchName: $("#ghParentBranch").select2('val'),
-    newBranchName: $('#branchNameText').val(),
-    _csrf: $('#_csrf').val(),
+    sourceBranchName: $("#ghParentBranch").select2("val"),
+    newBranchName: $("#branchNameText").val(),
+    _csrf: $("#_csrf").val(),
   };
   toggleSubmitDisabled(true);
   hideErrorMessage();
@@ -178,7 +181,7 @@ const toggleSubmitDisabled = (bool) => {
 }
 
 const getRepoDetails = () => {
-  const repoWithOwner = $("#ghRepo").select2('val').split('/');
+  const repoWithOwner = $("#ghRepo").select2("val").split("/");
   return {
     owner: repoWithOwner[0],
     name: repoWithOwner[1],
@@ -202,12 +205,43 @@ const clearBranches = () => {
   $("#ghParentBranch").auiSelect2({ data: [] });
 };
 
+const showLoaderInsideSelect2Dropdown = (inputDOM, isLoading) => {
+  const loader = ".select2-loader";
+  const container = $(`.${ inputDOM }-dropdown`);
+  const options = container.find(".select2-results");
+
+  if (isLoading) {
+    options.css("display", "none");
+    if (!container.find(loader).length) {
+      options.after(`<div class="select2-loader"><aui-spinner size="small"></aui-spinner></div>`);
+    }
+  } else {
+    options.css("display", "block");
+    container.find(loader).remove();
+  }
+};
+
+const showLoaderOnSelect2Input = (inputDOM, isLoading) => {
+  const loader = ".select2-loader";
+  const container = $(`#s2id_${ inputDOM }`).parent();
+
+  if (isLoading) {
+    if (!container.find(loader).length) {
+      container.prepend(`<div class="select2-loader select2-loader-for-input"><aui-spinner size="small"></aui-spinner></div>`);
+      $(`#${inputDOM}`).auiSelect2("enable", false);
+    }
+  } else {
+    container.find(loader).remove();
+    $(`#${inputDOM}`).auiSelect2("enable", true);
+  }
+}
+
 const changeGitHubLogin = () => {
   $.ajax({
     type: "GET",
     url: `/github/create-branch/change-github-login`,
     success: (data) => {
-      window.open(data.baseUrl, "_blank"); 
+      window.open(data.baseUrl, "_blank");
     },
     error: (error) => {
       console.log(error);
