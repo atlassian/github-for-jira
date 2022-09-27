@@ -27,9 +27,9 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 /**
  *
  * @param payload
- * @param gitHubBaseUrl - undefined for Cloud, defined for GHES
+ * @param ghesBaseUrl - must be undefined for Cloud and provided for GHES
  */
-export const transformCommit = (payload, gitHubBaseUrl?: string): JiraCommitData | undefined => {
+export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))
@@ -42,7 +42,7 @@ export const transformCommit = (payload, gitHubBaseUrl?: string): JiraCommitData
 	return {
 		commits: commits,
 		// here
-		id: transformRepositoryId(payload.repository.id, gitHubBaseUrl),
+		id: transformRepositoryId(payload.repository.id, ghesBaseUrl),
 		name: payload.repository.full_name,
 		url: payload.repository.html_url,
 		updateSequenceId: Date.now()

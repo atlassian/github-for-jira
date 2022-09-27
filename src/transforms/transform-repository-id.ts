@@ -3,12 +3,17 @@ declare const transformedRepositoryId: unique symbol;
 
 export type TransformedRepositoryId = string & { [transformedRepositoryId]: never };
 
-export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId {
-	if (!gitHubBaseUrl) {
+/**
+ *
+ * @param repositoryId
+ * @param ghesBaseUrl - the base URL of GitHub Enterprise server; must be empty for cloud
+ */
+export function transformRepositoryId(repositoryId: number, ghesBaseUrl?: string): TransformedRepositoryId {
+	if (!ghesBaseUrl) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
 
-	const parsedUrl = new URL(gitHubBaseUrl);
+	const parsedUrl = new URL(ghesBaseUrl);
 
 	// - "1024" is the limit for repo id in Jira API, see
 	// https://developer.atlassian.com/cloud/jira/software/rest/api-group-development-information/#api-group-development-information ,

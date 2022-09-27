@@ -23,4 +23,14 @@ describe("transform-repository-id", () => {
 		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
 			.toEqual(transformRepositoryId(123, "http://my-ghes.com/foo///"));
 	});
+
+	it("path matters", () => {
+		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
+			.not.toEqual(transformRepositoryId(123, "http://my-ghes.com/bar"));
+	});
+
+	it("port matters", () => {
+		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
+			.not.toEqual(transformRepositoryId(123, "http://my-ghes.com:1234/foo"));
+	});
 });
