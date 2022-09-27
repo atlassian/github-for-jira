@@ -18,7 +18,7 @@ const DB_MIGRATE_DOWN_URL = "/api/db-migration/down";
 const MIGRATION_SCRIPT_FIRST = "20220101000000-first-script.js";
 const MIGRATION_SCRIPT_LAST = "20220101000001-second-script.js";
 
-describe("DB migration", ()=>{
+describe("DB migration down", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
 		frontendApp = express();
