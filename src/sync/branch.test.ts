@@ -25,6 +25,7 @@ import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import fs from "fs";
 import path from "path";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -447,7 +448,7 @@ describe("sync/branches", () => {
 							updateSequenceId: 12345678
 						}
 					],
-					id: Buffer.from(gheUrl).toString("hex") + "-1",
+					id: transformRepositoryId(1, gheUrl),
 					name: "test-repo-name",
 					url: "test-repo-url",
 					updateSequenceId: 12345678

@@ -6,6 +6,21 @@ describe("transform-repository-id", () => {
 	});
 
 	it("adds prefix for GHES ids", () => {
-		expect(transformRepositoryId(123, "http://my-ghes.com/foo")).toEqual("687474703a2f2f6d792d676865732e636f6d2f666f6f-123");
+		expect(transformRepositoryId(123, "http://my-ghes.com/foo")).toEqual("6d7967686573636f6d666f6f-123");
+	});
+
+	it("protocol doesn't matter", () => {
+		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
+			.toEqual(transformRepositoryId(123, "https://my-ghes.com/foo"));
+	});
+
+	it("case doesn't matter", () => {
+		expect(transformRepositoryId(123, "http://my-ghEs.com/foO"))
+			.toEqual(transformRepositoryId(123, "http://my-ghes.com/foo"));
+	});
+
+	it("special chars doesn't matter", () => {
+		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
+			.toEqual(transformRepositoryId(123, "http://my-ghes.com/foo///"));
 	});
 });
