@@ -109,7 +109,7 @@ const loadBranches = () => {
         formatResult: item => item.name,
         createSearchChoice: (term) => {
           return {
-            node: { name: term },
+            name: term,
             id: term
           }
         }
