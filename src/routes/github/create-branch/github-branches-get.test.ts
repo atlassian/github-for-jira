@@ -1,6 +1,5 @@
 
 import { getLogger } from "config/logger";
-import { getBranchesNameQuery } from "~/src/github/client/github-queries";
 import { GithubBranchesGet } from "~/src/routes/github/create-branch/github-branches-get";
 
 describe("GitHub Branches Get", () => {
@@ -30,10 +29,9 @@ describe("GitHub Branches Get", () => {
 	});
 
 	it("Should fetch branches", async () => {
-
-		setupNock(req);
+		setupNock();
 		await GithubBranchesGet(req, res);
-		expect(res.send).toBeCalledWith(allBranches);
+		expect(res.send).toBeCalledWith(response);
 	});
 
 	it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
@@ -51,68 +49,33 @@ describe("GitHub Branches Get", () => {
 
 });
 
-const setupNock = (req) => {
+const defaultBranch = "sample-patch-2";
+const setupNock = () => {
 	githubNock
-		.post("/graphql", {
-			query: getBranchesNameQuery,
-			variables: {
-				owner: req.params.owner,
-				repo: req.params.repo,
-				per_page: 100
-			}
-		})
+		.get("/repos/ARC/repo-1/branches?per_page=100")
+		.reply(200, allBranches);
+	githubNock
+		.get("/repos/ARC/repo-1")
 		.reply(200, {
-			"data": {
-				"repository": {
-					"refs": {
-						"totalCount": 3,
-						"edges": [
-							{
-								"cursor": "MQ",
-								"node": {
-									"name": "sample-patch-1"
-								}
-							},
-							{
-								"cursor": "Mg",
-								"node": {
-									"name": "sample-patch-2"
-								}
-							},
-							{
-								"cursor": "Mw",
-								"node": {
-									"name": "sample-patch-3"
-								}
-							}]
-					}
-				}
-			}
+			default_branch: defaultBranch
 		});
 };
-const allBranches = {
-	"repository": {
-		"refs": {
-			"totalCount": 3,
-			"edges": [
-				{
-					"cursor": "MQ",
-					"node": {
-						"name": "sample-patch-1"
-					}
-				},
-				{
-					"cursor": "Mg",
-					"node": {
-						"name": "sample-patch-2"
-					}
-				},
-				{
-					"cursor": "Mw",
-					"node": {
-						"name": "sample-patch-3"
-					}
-				}]
-		}
+
+const allBranches = [
+	{
+		"name": "sample-patch-1",
+		"id": "sample-patch-1"
+	},
+	{
+		"name": "sample-patch-2",
+		"id": "sample-patch-2"
+	},
+	{
+		"name": "sample-patch-3",
+		"id": "sample-patch-3"
 	}
+];
+const response = {
+	branches: allBranches.filter(branch => branch.name !== defaultBranch),
+	defaultBranch: "sample-patch-2"
 };
