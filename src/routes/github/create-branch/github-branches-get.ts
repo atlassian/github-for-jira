@@ -22,10 +22,10 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 			gitHubUserClient.getRepository(owner, repo)
 		]);
 
-		res.send(branches.data.map(branch => ({
-			...branch,
-			default: branch.name === repository.data.default_branch
-		})));
+		res.send({
+			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch),
+			defaultBranch: repository.data.default_branch
+		});
 	} catch (err) {
 		req.log.error({ err }, "Error while fetching branches");
 		res.sendStatus(500);

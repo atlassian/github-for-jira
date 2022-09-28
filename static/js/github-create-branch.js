@@ -89,21 +89,25 @@ const loadBranches = () => {
   $.ajax({
     type: "GET",
     url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
-    success: (data) => {
+    success: (response) => {
+      const { branches, defaultBranch } = response;
+      const allBranches = branches.map((item) => ({
+        id: item.name,
+        name: item.name
+      }));
+      allBranches.unshift({ id: defaultBranch, name: defaultBranch });
+
       $("#ghParentBranch").auiSelect2({
         data: () => {
-          data.forEach((item) => {
-            item.id = item.name;
-          });
           return {
             text: item => item.name,
-            results: data
+            results: allBranches
           }
         },
         formatSelection: item => item.name,
         formatResult: item => item.name
       });
-      $("#ghParentBranch").select2("val", data.filter(datum => datum.default)[0].name);
+      $("#ghParentBranch").select2("val", defaultBranch);
       toggleSubmitDisabled(false);
     },
     error: () => {
