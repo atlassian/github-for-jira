@@ -19,12 +19,14 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 			try {
 				data = await github.getRefHead(webhookPayload.repository.owner.login, webhookPayload.repository.name, webhookPayload.ref);
 			} catch (err) {
-				getLogger("bgvozdev-testing").warn({
-					bgResponseHeaders: err?.cause?.response?.headers,
-					bgResponseStatus: err?.status,
-					bgResponseData: err?.cause?.response?.data,
-					bgRequestHeaders: err?.cause?.request?._header
-				}, "bgvozdev testing");
+				if (webhookPayload.repository.owner.login === "Fusion-Arc-Pollinator") {
+					getLogger("bgvozdev-testing").warn({
+						bgResponseHeaders: err?.cause?.response?.headers,
+						bgResponseStatus: err?.status,
+						bgResponseData: err?.cause?.response?.data,
+						bgRequestHeaders: err?.cause?.request?._header
+					}, "bgvozdev testing");
+				}
 				throw err;
 			}
 			return data;
