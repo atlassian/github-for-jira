@@ -105,7 +105,9 @@ describe("Pull Request Webhook", () => {
 			preventTransitions: false,
 			repositories: [
 				{
+					id:"321806393",
 					url: "test-pull-request-base-url",
+					name: "bgvozdev/day2-test-empy-repo-before-connect",
 					branches: [
 						{
 							createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-321-test-pull-request-head-ref&quick_pull=1",
@@ -379,6 +381,8 @@ describe("Pull Request Webhook", () => {
 				repositories:
 					[
 						{
+							id:"321806393",
+							name: "bgvozdev/day2-test-empy-repo-before-connect",
 							url: "test-pull-request-base-url",
 							branches:
 								[
@@ -532,6 +536,8 @@ describe("Pull Request Webhook", () => {
 				preventTransitions: false,
 				repositories: [
 					{
+						id:"321806393",
+						name: "bgvozdev/day2-test-empy-repo-before-connect",
 						url: "test-pull-request-base-url",
 						branches: [],
 						pullRequests: [
@@ -653,6 +659,8 @@ describe("Pull Request Webhook", () => {
 				repositories:
 					[
 						{
+							id:"321806393",
+							name: "bgvozdev/day2-test-empy-repo-before-connect",
 							url: "test-pull-request-base-url",
 							branches:
 								[
