@@ -7,34 +7,11 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 import { getLogger } from "config/logger";
 import Logger from "bunyan";
-import { retry } from "ts-retry-promise";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
-	// Even though webhook was triggered, it doesn't mean the reference to the branch is available in the API just yet.
-	// Retrying 5 times with a 1 second exponential backoff (1, 2, 4, 8, 16) before erroring out and retrying again later
-	const { data: { object: { sha } } } = await retry(async () => {
-		if (await booleanFlag(BooleanFlags.USE_FIXED_GET_REF, false)) {
-			let data;
-			try {
-				data = await github.getRefHead(webhookPayload.repository.owner.login, webhookPayload.repository.name, webhookPayload.ref);
-			} catch (err) {
-				if (webhookPayload.repository.owner.login === "Fusion-Arc-Pollinator") {
-					getLogger("bgvozdev-testing").warn({
-						bgResponseHeaders: err?.cause?.response?.headers,
-						bgResponseStatus: err?.status,
-						bgResponseData: err?.cause?.response?.data,
-						bgRequestHeaders: err?.cause?.request?._header
-					}, "bgvozdev testing");
-				}
-				throw err;
-			}
-			return data;
-		} else {
-			return await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
-		}
-	}, { retries: 5, delay: 1000, backoff: "EXPONENTIAL" });
+	const { data: { object: { sha } } } = await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
 	const { data: { commit, author, html_url: url } } = await github.getCommit(webhookPayload.repository.owner.login, webhookPayload.repository.name, sha);
+
 	return {
 		author: getJiraAuthor(author, commit.author),
 		authorTimestamp: commit.author.date,
