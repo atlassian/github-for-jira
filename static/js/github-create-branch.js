@@ -35,7 +35,10 @@ $(document).ready(() => {
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
         return {
-          results: queriedRepos
+          results: queriedRepos.length ? [{
+            text: "Repositories",
+            children: queriedRepos
+          }] : []
         }
       }
     }),
@@ -45,8 +48,14 @@ $(document).ready(() => {
       if (userInput.length) {
         showLoaderInsideSelect2Dropdown("ghRepo", true);
         this._ajaxQuery.call(this, options);
+      } else {
+        options.callback({
+          results: queriedRepos.length ? [{
+            text: "Recently Updated Repositories",
+            children: queriedRepos
+          }] : []
+        });
       }
-      options.callback({ results: queriedRepos });
     }
   })
     .on("select2-close", () => {
