@@ -31,7 +31,7 @@ describe("GitHub Branches Get", () => {
 	it("Should fetch branches", async () => {
 		setupNock();
 		await GithubBranchesGet(req, res);
-		expect(res.send).toBeCalledWith(branchesResponse);
+		expect(res.send).toBeCalledWith(response);
 	});
 
 	it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
@@ -49,27 +49,33 @@ describe("GitHub Branches Get", () => {
 
 });
 
+const defaultBranch = "sample-patch-2";
 const setupNock = () => {
 	githubNock
 		.get("/repos/ARC/repo-1/branches?per_page=100")
-		.reply(200, branchesResponse);
+		.reply(200, allBranches);
 	githubNock
 		.get("/repos/ARC/repo-1")
 		.reply(200, {
-			default_branch: "sample-patch-2"
+			default_branch: defaultBranch
 		});
 };
-const branchesResponse = [
+
+const allBranches = [
 	{
 		"name": "sample-patch-1",
-		"default": false
+		"id": "sample-patch-1"
 	},
 	{
 		"name": "sample-patch-2",
-		"default": true
+		"id": "sample-patch-2"
 	},
 	{
 		"name": "sample-patch-3",
-		"default": false
+		"id": "sample-patch-3"
 	}
 ];
+const response = {
+	branches: allBranches.filter(branch => branch.name !== defaultBranch),
+	defaultBranch: "sample-patch-2"
+};
