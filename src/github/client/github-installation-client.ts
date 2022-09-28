@@ -145,7 +145,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Returns a single head reference from Git.
 	 */
 	public getRefHead = async (owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> => {
-		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/ref/head/{branch}`, {}, {
+		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/ref/heads/{branch}`, {}, {
 			owner,
 			repo,
 			branch
