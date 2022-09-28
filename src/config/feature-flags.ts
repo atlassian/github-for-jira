@@ -12,7 +12,6 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 });
 
 export enum BooleanFlags {
-	INSTALLATION_SHARED_SECRET_NEW_COL_WRITE = "write-only-to-new-cryptor-shared-secret",
 	MAINTENANCE_MODE = "maintenance-mode",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
