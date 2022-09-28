@@ -15,7 +15,19 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 	// Retrying 5 times with a 1 second exponential backoff (1, 2, 4, 8, 16) before erroring out and retrying again later
 	const { data: { object: { sha } } } = await retry(async () => {
 		if (await booleanFlag(BooleanFlags.USE_FIXED_GET_REF, false)) {
-			return await github.getRefHead(webhookPayload.repository.owner.login, webhookPayload.repository.name, webhookPayload.ref);
+			let data;
+			try {
+				data = await github.getRefHead(webhookPayload.repository.owner.login, webhookPayload.repository.name, webhookPayload.ref);
+			} catch (err) {
+				getLogger("bgvozdev-testing").warn({
+					bgResponseHeaders: err?.cause?.response?.headers,
+					bgResponseStatus: err?.status,
+					bgResponseData: err?.cause?.response?.data,
+					bgRequestHeaders: err?.cause?.request?._header
+				}, "bgvozdev testing");
+				throw err;
+			}
+			return data;
 		} else {
 			return await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
 		}
