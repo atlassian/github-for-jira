@@ -106,7 +106,13 @@ const loadBranches = () => {
           }
         },
         formatSelection: item => item.name,
-        formatResult: item => item.name
+        formatResult: item => item.name,
+        createSearchChoice: (term) => {
+          return {
+            node: { name: term },
+            id: term
+          }
+        }
       });
       $("#ghParentBranch").select2("val", defaultBranch);
       toggleSubmitDisabled(false);
