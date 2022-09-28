@@ -89,37 +89,37 @@ const loadBranches = () => {
   const repo = getRepoDetails();
   $.ajax({
     type: "GET",
-    url: `/github/create-branch/owners/${ repo.owner }/repos/${ repo.name }/branches`,
-    success: (data) => {
-      const allBranchesfetched = data?.repository?.refs?.totalCount === data?.repository?.refs?.edges.length;
+    url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
+    success: (response) => {
+      const { branches, defaultBranch } = response;
+      const allBranches = branches.map((item) => ({
+        id: item.name,
+        name: item.name
+      }));
+      allBranches.unshift({ id: defaultBranch, name: defaultBranch });
+
       $("#ghParentBranch").auiSelect2({
         data: () => {
-          data.repository.refs.edges.forEach((item) => {
-            item.id = item.node.name;
-          });
           return {
-            text: item => item.node.name,
-            results: data.repository.refs.edges
+            text: item => item.name,
+            results: allBranches
           }
         },
-        formatSelection: item => item.node.name,
-        formatResult: item => item.node.name,
+        formatSelection: item => item.name,
+        formatResult: item => item.name,
         createSearchChoice: (term) => {
-          if (allBranchesfetched) {
-            return null;
-          }
           return {
-            node: { name: term },
+            name: term,
             id: term
           }
         }
       });
-      $("#ghParentBranch").select2("val", data.repository.defaultBranchRef.name);
+      $("#ghParentBranch").select2("val", defaultBranch);
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
     },
     error: () => {
-      showErrorMessage("Failed to fetch branches");
+      showErrorMessage(["Oops, failed to fetch branches!"]);
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
     }
@@ -167,13 +167,9 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      if (error.responseJSON && error.responseJSON.err) {
-        showErrorMessage(error.responseJSON.err);
-      } else {
-        showErrorMessage("Please make sure all the details you entered are correct.")
-      }
+      showErrorMessage(error.responseJSON);
     });
-}
+};
 
 const toggleSubmitDisabled = (bool) => {
   $("#createBranchBtn").prop("disabled", bool);
@@ -188,11 +184,12 @@ const getRepoDetails = () => {
   }
 };
 
-const showErrorMessage = (msg) => {
+const showErrorMessage = (messages) => {
   $(".gitHubCreateBranch__serverError").show();
-  $(".errorMessageBox__message")
-    .empty()
-    .append(msg);
+  let errorList = '<ul class="m-1">';
+  messages.map(message => errorList +=  `<li>${message}</li>`);
+  errorList += '</ul>';
+  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch. This can be caused by one of the following reasons:</div>${errorList}`);
 };
 
 const hideErrorMessage = () => {
