@@ -156,7 +156,7 @@ export interface JiraDeploymentData {
 }
 
 export interface JiraPullRequestData {
-	id: number;
+	id: string;
 	name: string;
 	url: string;
 	branches: JiraBranch[];

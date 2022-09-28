@@ -21,7 +21,7 @@ describe("transform-repository-id", () => {
 
 	it("special chars doesn't matter", () => {
 		expect(transformRepositoryId(123, "http://my-ghes.com/foo"))
-			.toEqual(transformRepositoryId(123, "http://my-ghes.com/foo///"));
+			.toEqual(transformRepositoryId(123, "http://my-ghes.com/foo/_+//"));
 	});
 
 	it("path matters", () => {

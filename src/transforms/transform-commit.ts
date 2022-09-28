@@ -1,7 +1,7 @@
 import { JiraCommit, JiraCommitData } from "interfaces/jira";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 export const mapCommit = (commit): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
@@ -40,11 +40,7 @@ export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitData |
 	}
 
 	return {
-		commits: commits,
-		// here
-		id: transformRepositoryId(payload.repository.id, ghesBaseUrl),
-		name: payload.repository.full_name,
-		url: payload.repository.html_url,
-		updateSequenceId: Date.now()
+		... transformRepositoryDevInfoBulk(payload.repository, ghesBaseUrl),
+		commits: commits
 	};
 };

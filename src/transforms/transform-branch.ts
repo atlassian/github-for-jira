@@ -8,7 +8,7 @@ import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
 import { getLogger } from "config/logger";
 import Logger from "bunyan";
 import { retry } from "ts-retry-promise";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
 	// Even though webhook was triggered, it doesn't mean the reference to the branch is available in the API just yet.
@@ -46,9 +46,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 	try {
 		const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
 		return {
-			id: transformRepositoryId(repository.id, github.gitHubServerAppId ? github.baseUrl : undefined),
-			name: repository.full_name,
-			url: repository.html_url,
+			... transformRepositoryDevInfoBulk(repository, github.gitHubServerAppId ? github.baseUrl : undefined),
 			branches: [
 				{
 					createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),
@@ -59,8 +57,7 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 					url: `${repository.html_url}/tree/${ref}`,
 					updateSequenceId: Date.now()
 				}
-			],
-			updateSequenceId: Date.now()
+			]
 		};
 	} catch (err) {
 		logger.warn(err, "Could not get latest commit from branch as the branch is not available yet on the API. Retrying later.");

@@ -2,7 +2,7 @@ import { getJiraId } from "~/src/jira/util/id";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: better typing in file
 /**
@@ -100,11 +100,8 @@ export const transformBranches = async (payload: { branches: any, repository: an
 	}
 
 	return {
+		... transformRepositoryDevInfoBulk(payload.repository, payload.ghesBaseUrl),
 		branches,
-		commits,
-		id: transformRepositoryId(payload.repository.id, payload.ghesBaseUrl),
-		name: payload.repository.name,
-		url: payload.repository.html_url,
-		updateSequenceId: Date.now()
+		commits
 	};
 };
