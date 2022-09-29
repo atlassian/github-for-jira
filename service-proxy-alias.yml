@@ -4,6 +4,9 @@ serviceProxy:
     default:
       - type: Simple
         env: ddev
+    adev:
+      - type: Simple
+        env: adev
   staging:
     default:
       - type: Simple
