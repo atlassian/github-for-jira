@@ -2,6 +2,9 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraClient } from "~/src/jira/client/jira-client";
 
 export const issueCommentWebhookHandler = async (
 	context: WebhookContext,
@@ -25,6 +28,8 @@ export const issueCommentWebhookHandler = async (
 	let linkifiedBody;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
+
+	await addIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -58,4 +63,45 @@ export const issueCommentWebhookHandler = async (
 		githubResponse?.status,
 		gitHubAppId
 	);
+};
+
+const addIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
+	const { comment, repository, issue } = context.payload;
+	const { body: gitHubMessage, id: gitHubId } = comment;
+	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
+	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
+	const jiraClient = await getJiraClient(
+		jiraHost,
+		gitHubInstallationClient.githubInstallationId.installationId,
+		context.gitHubAppConfig?.gitHubAppId,
+		context.log
+	);
+
+	switch (context.action) {
+		case "created": {
+			const comment = await jiraClient.issues.comments.addForIssue(issueKey, {
+				body: gitHubMessage,
+				properties: [
+					{
+						key: "id",
+						value:  {
+							value1: "GH-" + gitHubId
+						}
+					}
+				]
+			});
+			context.log.debug("New one ", comment.data);
+			break;
+		}
+		case "edited": {
+			await jiraClient.issues.comments.updateForIssue(issueKey, 10003, { body: gitHubMessage });
+			break;
+		}
+		case "deleted":
+			await jiraClient.issues.comments.deleteForIssue(issueKey, 10003);
+			break;
+		default:
+			context.log.error("This shouldn't happen", context);
+			break;
+	}
 };

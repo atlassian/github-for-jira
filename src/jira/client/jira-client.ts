@@ -85,6 +85,26 @@ export const getJiraClient = async (
 						urlParams: {
 							issue_id
 						}
+					}),
+				updateForIssue: (issue_id: string, comment_id: string, payload) =>
+					instance.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
+						urlParams: {
+							issue_id,
+							comment_id
+						}
+					}),
+				deleteForIssue: (issue_id: string, comment_id: string) =>
+					instance.delete("rest/api/latest/issue/{issue_id}/comment/{comment_id}", {
+						urlParams: {
+							issue_id,
+							comment_id
+						}
+					}),
+				getAllForIssue: (issue_id: string) =>
+					instance.get("rest/api/latest/issue/{issue_id}/comment", {
+						urlParams: {
+							issue_id
+						}
 					})
 			},
 			transitions: {
