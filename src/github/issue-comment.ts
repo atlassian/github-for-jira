@@ -29,7 +29,7 @@ export const issueCommentWebhookHandler = async (
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
-	await addIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
+	await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -65,7 +65,7 @@ export const issueCommentWebhookHandler = async (
 	);
 };
 
-const addIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
+const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
 	const { body: gitHubMessage, id: gitHubId } = comment;
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
@@ -77,10 +77,14 @@ const addIssueCommentsToJira = async (jiraHost: string, context: WebhookContext,
 		context.log
 	);
 
+	// TODO: Need to figure out a way to get this comment id
+	// Hard coding for now
+	const commentId = 10003;
 	switch (context.action) {
 		case "created": {
 			const comment = await jiraClient.issues.comments.addForIssue(issueKey, {
 				body: gitHubMessage,
+				// Adding custom Property
 				properties: [
 					{
 						key: "id",
@@ -94,11 +98,11 @@ const addIssueCommentsToJira = async (jiraHost: string, context: WebhookContext,
 			break;
 		}
 		case "edited": {
-			await jiraClient.issues.comments.updateForIssue(issueKey, 10003, { body: gitHubMessage });
+			await jiraClient.issues.comments.updateForIssue(issueKey, commentId, { body: gitHubMessage });
 			break;
 		}
 		case "deleted":
-			await jiraClient.issues.comments.deleteForIssue(issueKey, 10003);
+			await jiraClient.issues.comments.deleteForIssue(issueKey, commentId);
 			break;
 		default:
 			context.log.error("This shouldn't happen", context);
