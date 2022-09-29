@@ -392,6 +392,61 @@ environmentOverrides:
         WebServerMemoryAlarmHigh: null
         WebServerServiceRespawnAlarm: null
 
+  adev:
+    config:
+      environmentVariables:
+        APP_URL: https://github-for-jira-adev.dev.services.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-for-jira-adev.services.atlassian.com
+        INSTANCE_NAME: development-adev
+        NODE_OPTIONS: "--no-deprecation"
+        LOG_LEVEL: debug
+        SENTRY_ENVIRONMENT: adev
+        APP_ID: '230511'
+        GITHUB_CLIENT_ID: Iv1.c8dc0191cfafb711
+        PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-adev
+        GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-adev
+    scaling:
+      instance: t2.small
+      min: 1
+      max: 1
+      metrics: *CpuMemScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t2.small
+          min: 1
+          max: 2
+          metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          ip_whitelist:
+            - public
+          routes: &blackholeSpammingIPs
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
+
+
+      - *cryptorGithubServerAppSecrets
+
+      - *cryptorJiraInstanceSecrets
+
+    alarms:
+      overrides:
+        LatencyHigh: null
+        HealthyHostCount: null
+        UnHealthyHostCount: null
+        WebServerAlarmWhenLowCPUCredits: null
+        WebServerDiskSpaceUtilizationAlarmHigh: null
+        WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
+        WebServerMemoryAlarmHigh: null
+        WebServerServiceRespawnAlarm: null
+
   staging:
     config:
       environmentVariables:
