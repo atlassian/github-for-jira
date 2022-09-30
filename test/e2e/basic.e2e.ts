@@ -9,8 +9,8 @@ import { test } from "@playwright/test";
 // const deleteGitHubRepo = () => githubClient.deleteRepository(ORGANIZATION, REPO_NAME);
 
 test.describe("Basic", () => {
-	test("install", async ({ page }) => {
+	/*test("install", async ({ page }) => {
 
-	});
+	});*/
 });
 

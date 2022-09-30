@@ -1,5 +1,9 @@
 // global-setup.ts
 import { chromium } from "@playwright/test";
+import { jiraLogin } from "test/e2e/utils/jira";
+import { githubLogin } from "test/e2e/utils/github";
+import { clearState, stateExists } from "test/e2e/e2e-utils";
+import { testData } from "test/e2e/constants";
 // import { jiraAppInstall, jiraLogin } from "test/e2e/utils/jira";
 // import { githubLogin } from "test/e2e/utils/github";
 
@@ -20,12 +24,21 @@ export default async function setup(/*config: FullConfig*/) {
 	});*/
 	const browser = await chromium.launch();
 
-	/*await Promise.all([
-		// login to jira and save signed-in state
-		jiraLogin(await browser.newPage(), "admin").then(jiraAppInstall),
-		// login to github and save signed-in state
-		githubLogin(await browser.newPage(), "admin")/!*.then(githubAppInstall)*!/
-	]);*/
+	clearState();
+	// login and save state before tests
+	await Promise.all([
+		jiraLogin(await browser.newPage(), "admin", true),
+		githubLogin(await browser.newPage(), "admin", true)
+	]);
+	/*let page = await browser.newPage();
+	await jiraLogin(page, "admin", true);
+	await page.close();
 
+	page = await browser.newPage();
+	await githubLogin(page, "admin", true);
+	await page.close();*/
 	await browser.close();
+	if (!stateExists(testData.jira.roles.admin) || !stateExists(testData.github.roles.admin)) {
+		throw "Missing state";
+	}
 }

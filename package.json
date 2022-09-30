@@ -10,7 +10,7 @@
 	"main": "src/main",
 	"scripts": {
 		"prestart": "run-p setup clean db:dev",
-		"clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map test/**/*.js test/**/*.js.map test/e2e/state",
+		"clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map test/**/*.js test/**/*.js.map",
 		"init": "run-p db",
 		"start": "run-p start:main start:worker",
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
@@ -41,14 +41,14 @@
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
 		"precommit": "run-p lint build",
-		"test:e2e": "run-s clean test:e2e:install test:e2e:start",
-		"test:e2e:headed": "run-s clean test:e2e:install test:e2e:start:headed",
+		"test:e2e": "yarn test:e2e:install && yarn test:e2e:start",
+		"test:e2e:headed": "yarn test:e2e --headed",
 		"test:e2e:install": "playwright install",
 		"test:e2e:start": "NODE_ENV=e2e playwright test",
 		"test:e2e:start:headed": "yarn test:e2e:start --headed",
-		"test:e2e:debug": "PWDEBUG=1 yarn run test:e2e --headed",
-		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn run test:e2e'",
-		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn run test:e2e:headed'"
+		"test:e2e:debug": "PWDEBUG=1 yarn test:e2e:headed",
+		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
+		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",

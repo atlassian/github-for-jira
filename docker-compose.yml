@@ -28,7 +28,7 @@ services:
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
-#      - DEBUG=1 # Uncomment to debug
+      - LS_LOG=error # log level
     ports:
       - "4566:4566"
     volumes:

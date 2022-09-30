@@ -1,13 +1,14 @@
 import { e2eEnvVars } from "test/e2e/env-e2e";
 
-const STORAGE_PATH = "./test/e2e/state/";
+export const STATE_PATH = "./test/e2e/state";
 
 export const testData: TestData = {
-	storagePath: STORAGE_PATH,
+	storagePath: STATE_PATH,
 	jira: {
 		urls: {
 			base: e2eEnvVars.ATLASSIAN_URL,
 			login: `${e2eEnvVars.ATLASSIAN_URL}/login`,
+			auth: `https://id.atlassian.com/login`,
 			logout: `${e2eEnvVars.ATLASSIAN_URL}/logout`,
 			dashboard: `${e2eEnvVars.ATLASSIAN_URL}/jira/dashboards`,
 			yourWork: `${e2eEnvVars.ATLASSIAN_URL}/jira/your-work`,
@@ -18,7 +19,7 @@ export const testData: TestData = {
 			admin: {
 				username: e2eEnvVars.JIRA_ADMIN_USERNAME,
 				password: e2eEnvVars.JIRA_ADMIN_PASSWORD,
-				storage: `${STORAGE_PATH}/jira-admin.json`
+				storage: `${STATE_PATH}/jira-admin.json`
 			}
 		}
 	},
@@ -33,7 +34,7 @@ export const testData: TestData = {
 			admin: {
 				username: e2eEnvVars.GITHUB_USERNAME,
 				password: e2eEnvVars.GITHUB_PASSWORD,
-				storage: `${STORAGE_PATH}/github-admin.json`
+				storage: `${STATE_PATH}/github-admin.json`
 			}
 		}
 	}
@@ -59,6 +60,7 @@ export interface TestDataURLs {
 export interface JiraTestDataURLs extends TestDataURLs {
 	yourWork: string;
 	dashboard: string;
+	auth: string;
 	manageApps: string;
 	connectJson: string;
 }

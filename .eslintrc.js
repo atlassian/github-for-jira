@@ -58,10 +58,11 @@ module.exports = {
 		"comma-dangle": "error",
 		"keyword-spacing": "error",
 		"space-in-parens": ["error", "never"],
-		"func-style" : ["warn", "expression"],
+		"func-style": ["warn", "expression"],
 		"require-await": "off",
-		"@typescript-eslint/no-floating-promises": ["error"],
-		overrides: [
+		"@typescript-eslint/no-floating-promises": ["error"]
+	},
+	overrides: [
 		{
 			files: ["**/*.test.ts"],
 			plugins: [
@@ -72,5 +73,4 @@ module.exports = {
 			]
 		}
 	]
-	}
-}
+};

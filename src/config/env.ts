@@ -10,6 +10,7 @@ const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 const requiredEnvVars = [
 	"APP_ID",
 	"APP_URL",
+	"INSTANCE_NAME",
 	"WEBHOOK_SECRET",
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
