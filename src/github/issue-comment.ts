@@ -67,7 +67,7 @@ export const issueCommentWebhookHandler = async (
 
 const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
-	const { body: gitHubMessage, id: gitHubId } = comment;
+	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
 	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
 	const jiraClient = await getJiraClient(
@@ -83,7 +83,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 	switch (context.action) {
 		case "created": {
 			const comment = await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: gitHubMessage,
+				body: gitHubMessage + " - " + gitHubCommentUrl,
 				// Adding custom Property
 				properties: [
 					{
