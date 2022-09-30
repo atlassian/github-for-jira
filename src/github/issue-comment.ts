@@ -30,7 +30,6 @@ export const issueCommentWebhookHandler = async (
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
 	await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
-
 	// TODO: need to create reusable function for unfurling
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
@@ -77,19 +76,15 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log
 	);
 
-	// TODO: Need to figure out a way to get this comment id
-	// Hard coding for now
-	const commentId = 10003;
 	switch (context.action) {
 		case "created": {
 			const comment = await jiraClient.issues.comments.addForIssue(issueKey, {
 				body: gitHubMessage,
-				// Adding custom Property
 				properties: [
 					{
-						key: "id",
-						value:  {
-							value1: "GH-" + gitHubId
+						key: "gitHubId",
+						value: {
+							gitHubId
 						}
 					}
 				]
@@ -98,14 +93,35 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 			break;
 		}
 		case "edited": {
-			await jiraClient.issues.comments.updateForIssue(issueKey, commentId, { body: gitHubMessage });
+			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), { body: gitHubMessage });
 			break;
 		}
 		case "deleted":
-			await jiraClient.issues.comments.deleteForIssue(issueKey, commentId);
+			await jiraClient.issues.comments.deleteForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId));
 			break;
 		default:
 			context.log.error("This shouldn't happen", context);
 			break;
 	}
+
+};
+
+// TODO TYPINGS
+const getCommentId = async (jiraClient, issueKey, gitHubId) => {
+
+	const listOfComments = await jiraClient.issues.comments.list(issueKey);
+
+	// TODO Tidy up the getting of the githubid from comment props
+	const mappedResults = listOfComments.data.comments.map(comment => {
+		return {
+			commentId: comment.id,
+			gitHubId: comment.properties?.find(prop => {
+				return prop.key === "gitHubId";
+			})?.value?.gitHubId
+		};
+	});
+
+	return mappedResults.find(comment => {
+		return comment.gitHubId === gitHubId;
+	})?.commentId;
 };

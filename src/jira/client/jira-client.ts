@@ -80,6 +80,12 @@ export const getJiraClient = async (
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
+				list: (issue_id: string) =>
+					instance.get("/rest/api/latest/issue/{issue_id}/comment?expand=properties", {
+						urlParams: {
+							issue_id
+						}
+					}),
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
