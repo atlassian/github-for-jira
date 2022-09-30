@@ -78,7 +78,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 
 	switch (context.action) {
 		case "created": {
-			const comment = await jiraClient.issues.comments.addForIssue(issueKey, {
+			await jiraClient.issues.comments.addForIssue(issueKey, {
 				body: gitHubMessage,
 				properties: [
 					{
@@ -89,7 +89,6 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 					}
 				]
 			});
-			context.log.debug("New one ", comment.data);
 			break;
 		}
 		case "edited": {
@@ -109,6 +108,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 // TODO TYPINGS
 const getCommentId = async (jiraClient, issueKey, gitHubId) => {
 
+	// TODO - this will only fetch 50, do we want to loop de loop and find everything!?!?!?
 	const listOfComments = await jiraClient.issues.comments.list(issueKey);
 
 	// TODO Tidy up the getting of the githubid from comment props
