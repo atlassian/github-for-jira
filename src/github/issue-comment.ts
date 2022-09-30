@@ -92,7 +92,9 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 			break;
 		}
 		case "edited": {
-			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), { body: gitHubMessage });
+			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
+				body: gitHubMessage + " - " + gitHubCommentUrl
+			});
 			break;
 		}
 		case "deleted":
