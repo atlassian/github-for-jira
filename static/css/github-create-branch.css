@@ -51,8 +51,16 @@
   right: 4px;
 }
 .select2-loader {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+.select2-loader-for-input {
   position: absolute;
-  right: 20px;
+  top: 37px;
+  z-index: 2;
+  left: 8px;
+  padding: 0;
 }
 
 .hidden {
@@ -64,8 +72,8 @@
   margin-top: 2.5em;
 }
 
-.gitHubCreateBranch__serverError .errorMessageBox__container {
-  align-items: center;
+.aui-icon.aui-iconfont-error {
+  margin-top: 10px;
 }
 
 .gitHubCreateBranch__userDetails {

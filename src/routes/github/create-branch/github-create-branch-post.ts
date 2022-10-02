@@ -1,6 +1,16 @@
 import { Request, Response } from "express";
 import { createUserClient } from "~/src/util/get-github-client-config";
 
+const errorMessages = {
+	// TODO: Fix the url later, once you figure out how to get the `installationId`
+	403: ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"],
+	400: ["Missing information, please check if the values for owner, repository, source branch name and the new branch name are valid."],
+	422: ["This GitHub branch already exists. Please use a different branch name.", "The Github Branch name is not valid."],
+	404: ["This GitHub source branch does not exist. Please use a different branch."],
+	500: ["Oops, something unexpected happened."]
+};
+
+// Errors need to be returned as an array
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
@@ -11,25 +21,14 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	if (!owner || !repo || !sourceBranchName || !newBranchName) {
-		res.status(400).json({ err: "Missing required data." });
+		res.status(400).json(errorMessages[400]);
 		return;
 	}
 
 	try {
 		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
-		let baseBranchSha;
-		try {
-			baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
-		} catch (err) {
-			if (err.status === 404) {
-				res.status(400).json({ err: "Source branch not found" });
-				return;
-			} else {
-				res.status(400).json({ err: "Error while fetching source branch details" });
-				return;
-			}
-		}
+		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 
 		await gitHubUserClient.createReference(owner, repo, {
 			owner,
@@ -40,6 +39,6 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
-		res.sendStatus(500);
+		res.status(err.status).json(errorMessages[err?.status || 500]);
 	}
 };
