@@ -4,29 +4,9 @@ import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv } from "utils/is-node-env";
 import { EnvironmentEnum } from "interfaces/common";
+import { envCheck } from "utils/env-utils";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
-
-const requiredEnvVars = [
-	"APP_ID",
-	"APP_URL",
-	"INSTANCE_NAME",
-	"WEBHOOK_SECRET",
-	"GITHUB_CLIENT_ID",
-	"GITHUB_CLIENT_SECRET",
-	"SQS_BACKFILL_QUEUE_URL",
-	"SQS_BACKFILL_QUEUE_REGION",
-	"SQS_PUSH_QUEUE_URL",
-	"SQS_PUSH_QUEUE_REGION",
-	"SQS_DEPLOYMENT_QUEUE_URL",
-	"SQS_DEPLOYMENT_QUEUE_REGION",
-	"SQS_BRANCH_QUEUE_URL",
-	"SQS_BRANCH_QUEUE_REGION",
-	"MICROS_AWS_REGION",
-	"GLOBAL_HASH_SECRET",
-	"CRYPTOR_URL",
-	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
-];
 
 // Load environment files
 [
@@ -63,11 +43,26 @@ export const envVars: EnvVars = new Proxy<object>({}, {
 	}
 }) as EnvVars;
 
-// Check to see if all required environment variables are set
-const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
-if (missingVars.length) {
-	throw new Error(`Missing required Environment Variables: ${missingVars.join(", ")}`);
-}
+envCheck(
+	"APP_ID",
+	"APP_URL",
+	"INSTANCE_NAME",
+	"WEBHOOK_SECRET",
+	"GITHUB_CLIENT_ID",
+	"GITHUB_CLIENT_SECRET",
+	"SQS_BACKFILL_QUEUE_URL",
+	"SQS_BACKFILL_QUEUE_REGION",
+	"SQS_PUSH_QUEUE_URL",
+	"SQS_PUSH_QUEUE_REGION",
+	"SQS_DEPLOYMENT_QUEUE_URL",
+	"SQS_DEPLOYMENT_QUEUE_REGION",
+	"SQS_BRANCH_QUEUE_URL",
+	"SQS_BRANCH_QUEUE_REGION",
+	"MICROS_AWS_REGION",
+	"GLOBAL_HASH_SECRET",
+	"CRYPTOR_URL",
+	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
+);
 
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,

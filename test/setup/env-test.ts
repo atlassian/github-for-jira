@@ -1,16 +1,11 @@
-import { envVars, EnvVars } from "config/env";
+import {  EnvVars } from "config/env";
 import { cloneDeep, difference } from "lodash";
+import { envCheck } from "utils/env-utils";
 
-const requiredEnvVars = [
+envCheck(
 	"SQS_TEST_QUEUE_URL",
 	"SQS_TEST_QUEUE_REGION"
-];
-
-// Check to see if all required environment variables are set
-const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
-if (missingVars.length) {
-	throw new Error(`Missing required Test Environment Variables: ${missingVars.join(", ")}`);
-}
+);
 
 export interface TestEnvVars extends EnvVars {
 	// Test Vars

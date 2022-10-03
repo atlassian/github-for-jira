@@ -1,19 +1,14 @@
 import { envVars, EnvVars } from "config/env";
+import { envCheck } from "utils/env-utils";
 
-const requiredEnvVars = [
+envCheck(
 	"ATLASSIAN_URL",
 	"JIRA_ADMIN_USERNAME",
 	"JIRA_ADMIN_PASSWORD",
 	"GITHUB_USERNAME",
 	"GITHUB_PASSWORD",
-	"GITHUB_URL",
-];
-
-// Check to see if all required environment variables are set
-const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
-if (missingVars.length) {
-	throw new Error(`Missing required E2E Environment Variables: ${missingVars.join(", ")}`);
-}
+	"GITHUB_URL"
+);
 
 export interface E2EEnvVars extends EnvVars {
 	ATLASSIAN_URL: string;

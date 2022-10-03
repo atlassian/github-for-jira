@@ -7,6 +7,9 @@ db/config.json
 .env.local.*
 .env.*.local
 .env.*.local.*
+!.env.example
+!.env.local.example
+!.env.*.local.example
 
 # DB Secret File
 *.pem

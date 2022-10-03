@@ -16,7 +16,7 @@ export const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTen
 		: CONNECT_INSTALL_KEYS_CDN_URL_STAGING;
 
 	const result = await axios.get(`${keyServerUrl}/${keyId}`, {
-		timeout: 30000
+		timeout: 10000
 	});
 
 	if (result.status !== 200) {
