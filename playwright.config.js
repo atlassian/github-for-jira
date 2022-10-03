@@ -6,7 +6,7 @@ module.exports = {
 	use: {
 		trace: "on-first-retry",
 	},
-	// timeout: 60000,
+	timeout: 90000,
 	globalSetup: './test/e2e/setup.ts',
 	globalTeardown: './test/e2e/teardown.ts',
 	projects: [
