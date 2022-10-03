@@ -17,8 +17,15 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 
 	try {
 		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-		const branches = await gitHubUserClient.getReferences(owner, repo, 100);
-		res.send(branches);
+		const [ branches, repository ] = await Promise.all([
+			gitHubUserClient.getReferences(owner, repo),
+			gitHubUserClient.getRepository(owner, repo)
+		]);
+
+		res.send({
+			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch),
+			defaultBranch: repository.data.default_branch
+		});
 	} catch (err) {
 		req.log.error({ err }, "Error while fetching branches");
 		res.sendStatus(500);

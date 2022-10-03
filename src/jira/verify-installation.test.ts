@@ -16,10 +16,6 @@ describe("verify-installation", () => {
 			sharedSecret: "new-encrypted-shared-secret",
 			clientKey: "client-key"
 		});
-		//doing bellow so that the sharedSecret is "shared-secret",
-		//while the encryptedSharedSecret will be "new-encrypted-shared-secret"
-		//so that we can test the FF
-		installation.sharedSecret = "shared-secret";
 	});
 
 	function mockJiraResponse(status: number) {
