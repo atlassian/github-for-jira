@@ -9,11 +9,7 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesQuery,
-	GetRepositoriesResponse,
-	SearchedRepositoriesResponse,
-	SearchRepositoriesQuery,
-	UserOrganizationsQuery,
-	UserOrganizationsResponse
+	GetRepositoriesResponse
 } from "~/src/github/client/github-queries";
 
 /**
@@ -75,32 +71,6 @@ export class GitHubUserClient extends GitHubClient {
 			return response.data.data;
 		} catch (err) {
 			this.logger.error({ err }, "Could not fetch repositories");
-			throw err;
-		}
-	}
-
-	public async getUserOrganizations(first = 10): Promise<UserOrganizationsResponse> {
-		try {
-			const response = await this.graphql<UserOrganizationsResponse>(UserOrganizationsQuery, {}, {
-				first
-			});
-			return response.data.data;
-		} catch (err) {
-			this.logger.error({ err }, "Could not fetch organizations");
-			throw err;
-		}
-	}
-
-	public async searchUserRepositories(query_string: string, per_page = 20, cursor?: string): Promise<SearchedRepositoriesResponse> {
-		try {
-			const response = await this.graphql<SearchedRepositoriesResponse>(SearchRepositoriesQuery, {}, {
-				query_string,
-				per_page,
-				cursor
-			});
-			return response.data.data;
-		} catch (err) {
-			this.logger.error({ err }, "Could not find repositories");
 			throw err;
 		}
 	}
