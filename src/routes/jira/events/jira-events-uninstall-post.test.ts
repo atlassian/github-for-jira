@@ -24,8 +24,6 @@ describe("Webhook: /events/uninstalled", () => {
 			jiraHost: "https://test-host.jira.com",
 			clientKey: getHashedKey("abc123"),
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
 			uninstall: jest
 				.fn()
 				.mockName("uninstall")
