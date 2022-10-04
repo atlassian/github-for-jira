@@ -8,8 +8,6 @@ $(document).ready(() => {
     text: $(option).html()
   })).toArray();
 
-  $("#ghServers").auiSelect2();
-
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
