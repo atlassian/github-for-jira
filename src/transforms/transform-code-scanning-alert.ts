@@ -5,6 +5,7 @@ import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -85,8 +86,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			// here
-			id: `${repository.id}-${alert.number}`,
+			id: `${transformRepositoryId(repository.id, gitHubInstallationClient.gitHubServerAppId ? gitHubInstallationClient.baseUrl : undefined)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			displayName: `Alert #${alert.number}`,
 			description: alert.rule.description.substring(0, MAX_STRING_LENGTH) || undefined,

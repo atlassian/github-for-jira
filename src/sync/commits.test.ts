@@ -343,8 +343,6 @@ describe("sync/commits", () => {
 				.reply(200, commitsResponse);
 		};
 
-		const GHE_PEM = fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" });
-
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
@@ -364,7 +362,7 @@ describe("sync/commits", () => {
 				gitHubClientId: "client-id",
 				gitHubClientSecret: "client-secret",
 				webhookSecret: "webhook-secret",
-				privateKey: GHE_PEM,
+				privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
 				gitHubAppName: "app-name",
 				installationId: installationForGhes.id
 			});
