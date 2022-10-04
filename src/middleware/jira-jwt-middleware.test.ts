@@ -175,7 +175,7 @@ describe("#verifyJiraMiddleware", () => {
 
 	});
 
-	describe("decyrpting installation sharedSecret", ()=>{
+	describe("decyrpting installation encryptedSharedSecret", ()=>{
 		let installation: Installation;
 		beforeEach(()=>{
 			installation = {
