@@ -50,26 +50,35 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
 
+    env:
+      APP_NAME: jira-e2e
+      APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
+      WEBHOOK_SECRET: ${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}
+      GITHUB_CLIENT_ID: ${{ secrets.E2E_GITHUB_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.E2E_GITHUB_CLIENT_SECRET }}
+      PRIVATE_KEY: ${{ secrets.E2E_GITHUB_PRIVATE_KEY }}
+      ATLASSIAN_URL: ${{ secrets.E2E_ATLASSIAN_URL }}
+      JIRA_ADMIN_USERNAME: ${{ secrets.E2E_JIRA_USERNAME }}
+      JIRA_ADMIN_PASSWORD: ${{ secrets.E2E_JIRA_PASSWORD }}
+      GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
+      GITHUB_PASSWORD: ${{ secrets.E2E_GITHUB_PASSWORD }}
+      GITHUB_URL: https://github.com
+      INSTANCE_NAME: fusion-arc-e2e
+      NGROK_AUTHTOKEN: ${{ secrets.E2E_NGROK_AUTHTOKEN }}
+
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v3
         with:
           node-version: 14
+      - run: docker-compose up -d app
       - uses: volta-cli/action@v1
       - uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
-      - name: Run tests
-        env:
-          ATLASSIAN_URL: ${{ secrets.E2E_ATLASSIAN_URL }}
-          JIRA_ADMIN_USERNAME: ${{ secrets.E2E_JIRA_USERNAME }}
-          JIRA_ADMIN_PASSWORD: ${{ secrets.E2E_JIRA_PASSWORD }}
-          GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
-          GITHUB_PASSWORD: ${{ secrets.E2E_GITHUB_PASSWORD }}
-          GITHUB_URL: https://github.com
-        run: yarn run test:e2e
+      - run: yarn run test:e2e
 
   docker:
     runs-on: ubuntu-latest

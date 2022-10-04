@@ -1,5 +1,6 @@
 import { Page } from "@playwright/test";
 import { GithubTestDataRoles, testData } from "test/e2e/constants";
+import { e2eEnvVars } from "test/e2e/env-e2e";
 
 const data = testData.github;
 export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRoles, saveState = false) => {
@@ -24,6 +25,17 @@ export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRole
 	}
 
 	return page;
+};
+
+// Updates ngrok URLs in github app
+export const githubAppUpdateURLs = async (page: Page) => {
+	await page.goto(data.urls.appSettings);
+	await page.waitForLoadState();
+	await page.fill("#integration_application_callback_urls_attributes_0_url", `${e2eEnvVars.APP_URL}/github/callback`);
+	await page.fill("#integration_setup_url", `${e2eEnvVars.APP_URL}/github/callback`);
+	await page.fill("#integration_hook_attributes_url", `${e2eEnvVars.APP_URL}/github/events`);
+	await page.click(`input[name="commit"]`);
+	await page.waitForLoadState();
 };
 
 export const githubAppInstall = async (page: Page) => {

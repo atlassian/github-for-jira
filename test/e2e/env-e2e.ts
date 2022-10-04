@@ -2,6 +2,7 @@ import { envVars, EnvVars } from "config/env";
 import { envCheck } from "utils/env-utils";
 
 envCheck(
+	"APP_NAME",
 	"ATLASSIAN_URL",
 	"JIRA_ADMIN_USERNAME",
 	"JIRA_ADMIN_PASSWORD",
@@ -11,6 +12,7 @@ envCheck(
 );
 
 export interface E2EEnvVars extends EnvVars {
+	APP_NAME: string;
 	ATLASSIAN_URL: string;
 	JIRA_ADMIN_USERNAME: string;
 	JIRA_ADMIN_PASSWORD: string;

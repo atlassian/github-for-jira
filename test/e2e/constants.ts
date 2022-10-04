@@ -28,6 +28,7 @@ export const testData: TestData = {
 			base: e2eEnvVars.GITHUB_URL,
 			login: `${e2eEnvVars.GITHUB_URL}/login`,
 			logout: `${e2eEnvVars.GITHUB_URL}/logout`,
+			appSettings: `${e2eEnvVars.GITHUB_URL}/settings/apps/${e2eEnvVars.APP_NAME}`,
 			apps: `${e2eEnvVars.GITHUB_URL}/user/settings/apps`
 		},
 		roles: {
@@ -66,6 +67,7 @@ export interface JiraTestDataURLs extends TestDataURLs {
 }
 
 export interface GithubTestDataURLs extends TestDataURLs {
+	appSettings: string;
 	apps: string;
 }
 
