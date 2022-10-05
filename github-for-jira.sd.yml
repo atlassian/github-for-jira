@@ -350,7 +350,7 @@ environmentOverrides:
           metrics: *CpuMemAndQueuesScalingRules
     resources:
       - type: globaledge
-        name: ddev
+        name: proxy
         attributes:
           ip_whitelist:
             - public
