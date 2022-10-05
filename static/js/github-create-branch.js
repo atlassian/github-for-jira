@@ -79,9 +79,10 @@ $(document).ready(() => {
 
   $("#ghRepo").on("change", () => {
     if(queriedRepos.length) {
+      $(".no-repo-container").hide();
       loadBranches();
     } else {
-      showNoReposMessage();
+      $(".no-repo-container").show();
     }
   });
 
@@ -103,10 +104,6 @@ $(document).ready(() => {
   });
 
 });
-
-const showNoReposMessage = () => {
-  $(".no-repo-container").show();
-};
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);
