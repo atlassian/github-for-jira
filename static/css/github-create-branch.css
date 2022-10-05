@@ -96,9 +96,11 @@
   display: none;
   margin: 4px 0 0;
 }
+
 .no-repo-link:hover {
   text-decoration: underline;
 }
+
 .configure-link {
   margin: 8px 0;
   display: inline-block;
