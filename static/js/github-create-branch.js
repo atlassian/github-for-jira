@@ -14,6 +14,16 @@ $(document).ready(() => {
     placeholder: "Select a repository",
     data: totalRepos,
     dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
+    createSearchChoice: (term) => {
+      const exists = queriedRepos.find(repo => repo.id.indexOf(term) > 1);
+
+      if (!exists) {
+        return {
+          text: term,
+          id: term
+        }
+      }
+    },
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
@@ -68,7 +78,11 @@ $(document).ready(() => {
   });
 
   $("#ghRepo").on("change", () => {
-    loadBranches();
+    if(queriedRepos.length) {
+      loadBranches();
+    } else {
+      showNoReposMessage();
+    }
   });
 
   $("#createBranchForm").on("aui-valid-submit", (event) => {
@@ -89,6 +103,10 @@ $(document).ready(() => {
   });
 
 });
+
+const showNoReposMessage = () => {
+  $(".no-repo-container").show();
+};
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);

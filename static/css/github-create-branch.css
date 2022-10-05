@@ -91,3 +91,11 @@
   color: #DE350B;
   font-size: 0.9rem;
 }
+
+.no-repo-container {
+  display: none;
+  margin: 4px 0 0;
+}
+.no-repo-link:hover {
+  text-decoration: underline;
+}
