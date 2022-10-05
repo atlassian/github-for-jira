@@ -1,7 +1,7 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { getJiraClient } from "~/src/jira/client/jira-client";
@@ -30,6 +30,7 @@ export const issueCommentWebhookHandler = async (
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
 	await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
+
 	// TODO: need to create reusable function for unfurling
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
@@ -68,6 +69,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 	const { comment, repository, issue } = context.payload;
 	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
+	// Note: we are only considering the branch name here. Should we also check for pr titles?
 	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
 	const jiraClient = await getJiraClient(
 		jiraHost,
@@ -104,7 +106,6 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 			context.log.error("This shouldn't happen", context);
 			break;
 	}
-
 };
 
 // TODO TYPINGS

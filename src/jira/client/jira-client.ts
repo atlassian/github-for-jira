@@ -105,12 +105,6 @@ export const getJiraClient = async (
 							issue_id,
 							comment_id
 						}
-					}),
-				getAllForIssue: (issue_id: string) =>
-					instance.get("rest/api/latest/issue/{issue_id}/comment", {
-						urlParams: {
-							issue_id
-						}
 					})
 			},
 			transitions: {
