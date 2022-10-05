@@ -15,6 +15,7 @@ import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -170,7 +171,7 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 // Returns undefined when there are no issue ids to map.
 const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	issueIds: string[],
-	repositoryId: string,
+	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
@@ -192,8 +193,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
-					// here
-					repositoryId: repositoryId
+					repositoryId: transformedRepositoryId
 				};
 			});
 		if (commitKeys.length) {
@@ -227,7 +227,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
 	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		payload.repository.id.toString(),
+		transformRepositoryId(payload.repository.id, githubInstallationClient.gitHubServerAppId ? githubInstallationClient.baseUrl : undefined),
 		commitSummaries
 	);
 
