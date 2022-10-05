@@ -1,5 +1,6 @@
 let queriedRepos = [];
 let totalRepos = [];
+let uuid;
 
 $(document).ready(() => {
   // Fetching the list of default repos
@@ -8,6 +9,11 @@ $(document).ready(() => {
     text: $(option).html()
   })).toArray();
 
+  uuid = $("#createBranchForm").attr("data-ghe-uuid");
+  let url = "/github/repository";
+  if(uuid) {
+    url = `/github/${uuid}/repository`;
+  } 
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
@@ -15,7 +21,7 @@ $(document).ready(() => {
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
-      url: "/github/repository",
+      url,
       data: term => ({
         repoName: term
       }),
@@ -94,9 +100,13 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+  if(uuid) {
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+  }
   $.ajax({
     type: "GET",
-    url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
+    url,
     success: (response) => {
       const { branches, defaultBranch } = response;
       const allBranches = branches.map((item) => ({
@@ -155,7 +165,10 @@ const showValidationErrorMessage = (id, message) => {
 };
 
 const createBranchPost = () => {
-  const url = "/github/create-branch";
+  let url = "/github/create-branch";
+  if(uuid) {
+    url = `/github/${uuid}/create-branch`;
+  }
   const repo = getRepoDetails();
   const data = {
     owner: repo.owner,
