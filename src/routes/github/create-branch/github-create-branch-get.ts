@@ -7,9 +7,6 @@ import { createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
-// TODO: need to update this later with actual data later on
-const servers = [{ id: 1, server: "http://github.internal.atlassian.com", appName: "ghe-app" }, { id: 2, server: "http://github.external.atlassian.com", appName: "ghe-app-2" }];
-
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
 		jiraHost,
@@ -40,7 +37,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			branchName: `${key}-${branchSuffix}`,
 			key
 		},
-		servers,
+		uuid: gitHubAppConfig.uuid,
 		repos: response.viewer.repositories.edges,
 		gitHubUser
 	});
