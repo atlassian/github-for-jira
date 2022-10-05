@@ -4,6 +4,8 @@ import {
 	replaceSpaceWithHyphenHelper
 } from "utils/handlebars/handlebar-helpers";
 import { createUserClient } from "utils/get-github-client-config";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
@@ -40,4 +42,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
+
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
+		jiraHost
+	});
 };
