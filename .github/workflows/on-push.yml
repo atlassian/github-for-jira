@@ -68,14 +68,18 @@ jobs:
       GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
       GITHUB_PASSWORD: ${{ secrets.E2E_GITHUB_PASSWORD }}
       GITHUB_URL: https://github.com
-      INSTANCE_NAME: fusion-arc-e2e
-      NGROK_AUTHTOKEN: ${{ secrets.E2E_NGROK_AUTHTOKEN }}
 
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v3
         with:
           node-version: 14
+      - name: create .env file
+        run: |
+          echo "APP_URL=http://localhost" > .env
+          echo "WEBHOOK_PROXY_URL=http://localhost" >> .env
+          echo "NGROK_AUTHTOKEN=${{ secrets.E2E_NGROK_AUTHTOKEN }}" >> .env
+          echo "INSTANCE_NAME=fusion-arc-e2e" >> .env
       - run: docker-compose up -d app
       - uses: volta-cli/action@v1
       - uses: actions/cache@v2
