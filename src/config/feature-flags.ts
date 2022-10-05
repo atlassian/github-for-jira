@@ -1,10 +1,10 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
-import { envVars }  from "./env";
+import { envVars } from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
 import Logger from "bunyan";
 
-const logger = getLogger("feature-flags");
+const logger = getLogger("feature-flags", { level: "warn" });
 
 const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 	offline: !envVars.LAUNCHDARKLY_KEY,
@@ -35,7 +35,7 @@ export enum StringFlags {
 export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
-	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
+	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 }
 
 const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
@@ -71,7 +71,7 @@ export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T,
 export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
 	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
 
-export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
+export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 

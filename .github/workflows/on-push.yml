@@ -49,11 +49,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
         run: yarn test
+      - run: docker-compose down app
 
   e2e-test:
     runs-on: ubuntu-latest
 
     env:
+      NODE_ENV: e2e
       APP_NAME: jira-e2e
       APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
       WEBHOOK_SECRET: ${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}
@@ -82,6 +84,7 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
       - run: yarn run test:e2e
+      - run: docker-compose down app
 
   docker:
     runs-on: ubuntu-latest
