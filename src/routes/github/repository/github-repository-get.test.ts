@@ -39,11 +39,15 @@ describe("GitHub Repository Search", () => {
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
+
 			githubNock
 				.get("/app/installations")
 				.reply(200,  [ { account: { login: randomString } } ]);
+
+			const queryString = decodeURIComponent(`${randomString} org:${randomString}`);
+
 			githubNock
-				.get(`/search/repositories?q=${randomString}%20org%3A${randomString}`)
+				.get(`/search/repositories?q=${queryString}`)
 				.reply(200, {
 					items: [ { full_name: "first" }, { full_name: "second" } ]
 				});
