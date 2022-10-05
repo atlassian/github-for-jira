@@ -99,3 +99,7 @@
 .no-repo-link:hover {
   text-decoration: underline;
 }
+.configure-link {
+  margin: 8px 0;
+  display: inline-block;
+}
