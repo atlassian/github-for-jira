@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { createUserClient } from "~/src/util/get-github-client-config";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 const errorMessages = {
 	// TODO: Fix the url later, once you figure out how to get the `installationId`
@@ -37,8 +39,17 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 			sha: baseBranchSha
 		});
 		res.sendStatus(200);
+		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
 	} catch (err) {
 		req.log.error({ err }, "Error creating branch");
 		res.status(err.status).json(errorMessages[err?.status || 500]);
+		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 	}
+};
+
+const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
+	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		name,
+		jiraHost
+	});
 };
