@@ -45,9 +45,9 @@
       </div>
       <div class="field-group gitHubCreateBranchOptions__serversContainer">
         <aui-label for="server">GitHub Enterprise Server instance</aui-label>
-        <select id="ghServers" name="server" class="full-width-field" placeholder="Select a server ">
+        <select id="ghServers" name="server" class="full-width-field" placeholder="Select a server">
           {{#each servers.gheServerInfos}}
-          <option value="{{uuid}}">{{baseUrl}} / {{appName}}</option>
+          <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
           {{/each}}
         </select>
       </div>

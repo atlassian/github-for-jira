@@ -50,7 +50,7 @@ const getGitHubServers = async (jiraHost: string) => {
 	}
 
 	return {
-		hasCloudServer: ghCloudSubscriptions.length > 0,
+		hasCloudServer: ghCloudSubscriptions.length,
 		gheServerInfos
 	};
 };
