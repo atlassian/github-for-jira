@@ -19,7 +19,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppConfig.gitHubAppId);
 		const installations = await gitHubAppClient.getInstallations();
 		const orgString = installations.data?.map(installation => ` org:${installation.account.login}`).join(" ");
-		const searchedRepos = await gitHubAppClient.searchUserRepositoriesRest(`${repoName} ${orgString}`);
+		const searchedRepos = await gitHubAppClient.searchUserRepositoriesRest(`${repoName}${orgString}`);
 		res.send({
 			repositories: searchedRepos.data?.items
 		});
