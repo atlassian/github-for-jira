@@ -1,4 +1,4 @@
-import { JiraCommit, JiraCommitData } from "interfaces/jira";
+import { JiraCommit, JiraCommitBulkSubmitData } from "interfaces/jira";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
@@ -29,7 +29,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
  * @param payload
  * @param ghesBaseUrl - must be undefined for Cloud and provided for GHES
  */
-export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitData | undefined => {
+export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitBulkSubmitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))

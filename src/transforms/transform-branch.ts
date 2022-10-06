@@ -4,7 +4,7 @@ import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
+import { JiraBranchBulkSubmitData, JiraCommit } from "src/interfaces/jira";
 import { getLogger } from "config/logger";
 import Logger from "bunyan";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
@@ -27,7 +27,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 	};
 };
 
-export const transformBranch = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchData | undefined> => {
+export const transformBranch = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}

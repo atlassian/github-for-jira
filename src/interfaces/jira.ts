@@ -10,6 +10,13 @@ interface JiraPullRequestRef {
 	uri: string;
 }
 
+export interface BulkSubmitRepositoryInfo {
+	id: TransformedRepositoryId;
+	name: string;
+	url: string;
+	updateSequenceId: number;
+}
+
 export interface JiraPullRequestHead {
 	commit: JiraPullRequestCommit;
 	ref: JiraPullRequestRef;
@@ -61,12 +68,8 @@ export interface JiraBranch {
 	updateSequenceId: number;
 }
 
-export interface JiraBranchData {
-	id: string;
-	name: string;
-	url: string;
+export interface JiraBranchBulkSubmitData {
 	branches: JiraBranch[];
-	updateSequenceId: number;
 }
 
 export interface JiraCommit {
@@ -121,12 +124,8 @@ export interface JiraReview extends JiraAuthor {
 	approvalStatus: string;
 }
 
-export interface JiraCommitData {
+export interface JiraCommitBulkSubmitData extends BulkSubmitRepositoryInfo {
 	commits: JiraCommit[];
-	id: TransformedRepositoryId;
-	name: string;
-	url: string;
-	updateSequenceId: number;
 }
 
 export interface JiraDeployment {
@@ -155,13 +154,9 @@ export interface JiraDeploymentData {
 	deployments: JiraDeployment[];
 }
 
-export interface JiraPullRequestData {
-	id: string;
-	name: string;
-	url: string;
+export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo {
 	branches: JiraBranch[];
 	pullRequests: JiraPullRequest[];
-	updateSequenceId: number;
 }
 
 export interface JiraAssociation {
@@ -171,7 +166,7 @@ export interface JiraAssociation {
 
 export interface JiraCommitKey {
 	commitHash: string;
-	repositoryId: string;
+	repositoryId: TransformedRepositoryId;
 }
 
 export interface JiraRemoteLinkData {

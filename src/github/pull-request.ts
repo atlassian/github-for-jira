@@ -4,7 +4,7 @@ import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { JiraPullRequestData } from "interfaces/jira";
+import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
@@ -50,7 +50,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 
