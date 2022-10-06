@@ -25,6 +25,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppConfig.gitHubAppId);
 
 		const searchedRepos = await gitHubAppClient.searchRepositories(gitHubSearchQueryString);
+
 		res.send({
 			repositories: searchedRepos.data?.items
 		});
