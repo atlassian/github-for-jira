@@ -3,8 +3,17 @@ import { createWebhookApp } from "test/utils/probot";
 import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("config/feature-flags");
+
+const turnFF_OnOff = (newStatus: boolean) => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, expect.anything(), expect.anything())
+		.mockResolvedValue(newStatus);
+};
 
 describe("Issue Comment Webhook", () => {
 	let app: Application;
@@ -27,7 +36,8 @@ describe("Issue Comment Webhook", () => {
 
 	describe("issue_comment", () => {
 		describe("created", () => {
-			it("should update the GitHub issue with a linked Jira ticket", async () => {
+			it("FF ON - should update the GitHub issue with a linked Jira ticket and add PR comment as comment in Jira issue", async () => {
+				turnFF_OnOff(true);
 				githubUserTokenNock(gitHubInstallationId);
 
 				// Mocks for updating Jira with GitHub comment
@@ -53,6 +63,28 @@ describe("Issue Comment Webhook", () => {
 						]
 					})
 					.reply(201);
+
+				// Mocks for updating GitHub with a linked Jira ticket
+				jiraNock
+					.get("/rest/api/latest/issue/TEST-123?fields=summary")
+					.reply(200, {
+						key: "TEST-123",
+						fields: {
+							summary: "Example Issue"
+						}
+					});
+
+				// githubNock
+				// 	.patch("/repos/test-repo-owner/test-repo-name/issues/comments/5678", {
+				// 		body: `Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
+				// 	})
+				// 	.reply(200);
+
+				await expect(app.receive(issueCommentBasic as any)).toResolve();
+			});
+
+			it("FF OFF - should update the GitHub issue with a linked Jira ticket", async () => {
+				githubUserTokenNock(gitHubInstallationId);
 
 				// Mocks for updating GitHub with a linked Jira ticket
 				jiraNock
