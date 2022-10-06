@@ -256,7 +256,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			}
 			);
 
-		const jiraPayload = await transformDeployment(gitHubServerClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+		const jiraPayload = await transformDeployment(gitHubCloudClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 		expect(jiraPayload).toMatchObject({
 			deployments: [{
