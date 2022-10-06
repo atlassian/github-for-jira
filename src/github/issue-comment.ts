@@ -5,6 +5,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const issueCommentWebhookHandler = async (
 	context: WebhookContext,
@@ -29,7 +30,9 @@ export const issueCommentWebhookHandler = async (
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
-	await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
+	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, false, jiraHost)){
+		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
+	}
 
 	// TODO: need to create reusable function for unfurling
 	try {
