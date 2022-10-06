@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createUserClient } from "utils/get-github-client-config";
+import { createAppClient, createUserClient } from "utils/get-github-client-config";
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
@@ -21,9 +21,13 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		const userAccount = gitHubUserDetails.viewer.login;
 		const userOrgs = gitHubUserDetails.viewer.organizations.nodes.map(org => ` org:${org.login}`);
 		const gitHubSearchQueryString = `${repoName} org:${userAccount}${userOrgs} in:name`;
-		const searchedRepos = await gitHubUserClient.searchUserRepositories(gitHubSearchQueryString);
+
+		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppConfig.gitHubAppId);
+
+		const searchedRepos = await gitHubAppClient.searchRepositories(gitHubSearchQueryString);
+
 		res.send({
-			repositories: searchedRepos.search.repos
+			repositories: searchedRepos.data?.items
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error searching repository");
