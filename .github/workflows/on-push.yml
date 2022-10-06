@@ -38,8 +38,10 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
       - run: docker-compose up -d app
+      - name: update curl
+        run: sudo apt-get update && sudo apt-get install curl && curl --version
       - name: wait for app to be ready
-        run: sudo apt install curl && curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
+        run: curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
       - run: yarn run db:test
       - name: Run tests
         env:
@@ -89,8 +91,10 @@ jobs:
           echo "NGROK_AUTHTOKEN=${{ secrets.E2E_NGROK_AUTHTOKEN }}" >> .env
           echo "INSTANCE_NAME=fusion-arc-e2e" >> .env
       - run: docker-compose up -d
+      - name: update curl
+        run: sudo apt-get update && sudo apt-get install curl && curl --version
       - name: wait for app to be ready
-        run: sudo apt install curl && curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
+        run: curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
       - run: yarn run test:e2e
       - run: docker-compose down
 
