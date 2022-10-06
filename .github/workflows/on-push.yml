@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v1
@@ -24,7 +24,7 @@ jobs:
       - run: yarn run build:release
 
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v1
@@ -38,10 +38,8 @@ jobs:
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
       - run: docker-compose up -d app
-      - name: update curl
-        run: sudo apt-get update && sudo apt-get install curl && curl --version
       - name: wait for app to be ready
-        run: curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
+        run: curl --version && curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
       - run: yarn run db:test
       - name: Run tests
         env:
@@ -56,7 +54,7 @@ jobs:
       - run: docker-compose down
 
   e2e-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     env:
       NODE_ENV: e2e
@@ -91,15 +89,13 @@ jobs:
           echo "NGROK_AUTHTOKEN=${{ secrets.E2E_NGROK_AUTHTOKEN }}" >> .env
           echo "INSTANCE_NAME=fusion-arc-e2e" >> .env
       - run: docker-compose up -d
-      - name: update curl
-        run: sudo apt-get update && sudo apt-get install curl && curl --version
       - name: wait for app to be ready
-        run: curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
+        run: curl --version && curl --head -X GET --retry 90 --retry-all-errors --retry-delay 1 http://localhost:8080/version
       - run: yarn run test:e2e
       - run: docker-compose down
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - name: Build Docker image
