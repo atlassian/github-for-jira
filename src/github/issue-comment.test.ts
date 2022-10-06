@@ -74,12 +74,6 @@ describe("Issue Comment Webhook", () => {
 						}
 					});
 
-				// githubNock
-				// 	.patch("/repos/test-repo-owner/test-repo-name/issues/comments/5678", {
-				// 		body: `Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
-				// 	})
-				// 	.reply(200);
-
 				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});
 
@@ -95,12 +89,6 @@ describe("Issue Comment Webhook", () => {
 							summary: "Example Issue"
 						}
 					});
-
-				// githubNock
-				// 	.patch("/repos/test-repo-owner/test-repo-name/issues/comments/5678", {
-				// 		body: `Test example comment with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
-				// 	})
-				// 	.reply(200);
 
 				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});

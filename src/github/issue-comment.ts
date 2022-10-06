@@ -21,9 +21,11 @@ export const issueCommentWebhookHandler = async (
 		}
 	} = context.payload;
 
+	const jiraHost = jiraClient.baseURL;
+
 	context.log = context.log.child({
 		gitHubInstallationId,
-		jiraHost: jiraClient.baseURL
+		jiraHost
 	});
 
 	let linkifiedBody;
