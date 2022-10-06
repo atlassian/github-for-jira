@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createAppClient } from "utils/get-github-client-config";
+import { createAppClient, createUserClient } from "utils/get-github-client-config";
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
@@ -16,10 +16,15 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
+		const gitHubUserDetails = await gitHubUserClient.getUserOrganizations();
+		const userAccount = gitHubUserDetails.viewer.login;
+		const userOrgs = gitHubUserDetails.viewer.organizations.nodes.map(org => ` org:${org.login}`);
+		const gitHubSearchQueryString = `${repoName} org:${userAccount}${userOrgs} in:name`;
+
 		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppConfig.gitHubAppId);
-		const installations = await gitHubAppClient.getInstallations();
-		const orgString = installations.data?.map(installation => ` org:${installation.account.login}`).join(" ");
-		const searchedRepos = await gitHubAppClient.searchUserRepositoriesRest(`${repoName}${orgString}`);
+
+		const searchedRepos = await gitHubAppClient.searchRepositories(gitHubSearchQueryString);
 		res.send({
 			repositories: searchedRepos.data?.items
 		});

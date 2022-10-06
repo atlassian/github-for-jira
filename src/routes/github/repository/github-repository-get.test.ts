@@ -3,6 +3,7 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
+import { UserOrganizationsQuery } from "~/src/github/client/github-queries";
 
 const randomString = "random-string";
 describe("GitHub Repository Search", () => {
@@ -41,10 +42,9 @@ describe("GitHub Repository Search", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations")
-				.reply(200,  [ { account: { login: randomString } } ]);
-
-			const queryString = decodeURIComponent(`${randomString} org:${randomString}`);
+				.post("/graphql", { query: UserOrganizationsQuery, variables: { first: 10 } })
+				.reply(200, { data: { viewer: { login: randomString, organizations: { nodes: [] } } } });
+			const queryString = `${randomString} org:${randomString} in:name`;
 
 			githubNock
 				.get(`/search/repositories?q=${queryString}`)
