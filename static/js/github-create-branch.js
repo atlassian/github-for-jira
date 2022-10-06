@@ -24,10 +24,10 @@ $(document).ready(() => {
       results: function (response) {
         const { repositories } = response;
         repositories.forEach(repository => {
-          if (queriedRepos.filter(repo => repo.id === repository.repo.nameWithOwner).length < 1) {
+          if (queriedRepos.filter(repo => repo.id === repository?.full_name).length < 1) {
             const additionalRepo = {
-              id: repository.repo.nameWithOwner,
-              text: repository.repo.nameWithOwner
+              id: repository.full_name,
+              text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
             totalRepos.unshift(additionalRepo);
