@@ -113,10 +113,9 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 	}
 };
 
-// TODO TYPINGS
-const getCommentId = async (jiraClient, issueKey, gitHubId) => {
+const getCommentId = async (jiraClient, issueKey: string, gitHubId: string) => {
 
-	// TODO - this will only fetch 50, do we want to loop de loop and find everything!?!?!?
+	// TODO - this currently only fetchs 50, do we want to loop de loop and find everything!?!?!?
 	const listOfComments = await jiraClient.issues.comments.list(issueKey);
 
 	// TODO Tidy up the getting of the githubid from comment props
