@@ -34,7 +34,17 @@ export async function findOrStartSync(
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
 		fullSyncStartTime = new Date().toISOString();
+		// if (targetTasks) {
+		//
+		// }
 	}
+	//
+	// const resetTasks = (targetTasks) => {
+	// 	if (!targetTasks) {
+	// 		return;
+	// 	}
+	// 	// loop through task types and resest each one..... cursor and status to null????
+	// }
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
