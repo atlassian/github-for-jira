@@ -186,9 +186,8 @@ const createBranchPost = () => {
   hideErrorMessage();
 
   showLoading();
-  setTimeout(() => showSuccessScreen(repo, newBranchName), 2000);
   $.post(url, data)
-    .done(() => {
+    .done((response) => {
       showSuccessScreen(repo, newBranchName);
     })
     .fail((error) => {
@@ -200,7 +199,7 @@ const createBranchPost = () => {
 
 const showLoading = () => {
   $("#createBranchForm").hide();
-  $(".headerImageLogo").addClass("animate-to-big");
+  $(".headerImageLogo").addClass("headerImageLogo-lg");
   $(".gitHubCreateBranch__spinner").show();
 };
 
@@ -214,7 +213,7 @@ const showSuccessScreen = (repo, newBranchName) => {
 
 const hideLoading = () => {
   $("#createBranchForm").show();
-  $(".headerImageLogo").removeClass("animate-to-big");
+  $(".headerImageLogo").removeClass("headerImageLogo-lg");
   $(".gitHubCreateBranch__spinner").hide();
 };
 
