@@ -15,6 +15,27 @@
   color: #7a869a;
 }
 
+.headerImage {
+  position: relative;
+}
+
+.headerImageLogo {
+  height: 40px;
+  transition: all 1.5s ease;
+}
+
+.animate-to-big {
+  height: 146px;
+}
+
+.gitHubCreateBranch__spinner {
+  display: none;
+  position: absolute;
+  top: 62px;
+  left: 230px;
+  color: #fff;
+}
+
 .gitHubCreateBranch__title {
   color: #6B778C;
   margin: 1.8em 0 4em;

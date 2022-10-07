@@ -184,6 +184,7 @@ const createBranchPost = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
 
+  showLoading();
   $.post(url, data)
     .done(() => {
       // On success, we close the tab so the user returns to original screen
@@ -192,7 +193,24 @@ const createBranchPost = () => {
     .fail((error) => {
       toggleSubmitDisabled(false);
       showErrorMessage(error.responseJSON);
+      hideLoading();
     });
+};
+
+const showLoading = () => {
+  $("#createBranchForm").hide();
+  $(".headerImageLogo").addClass("animate-to-big");
+  $(".gitHubCreateBranch__spinner").show();
+};
+
+const showSuccessScreen = () => {
+  console.log("Show successful screen!");
+};
+
+const hideLoading = () => {
+  $("#createBranchForm").show();
+  $(".headerImageLogo").removeClass("animate-to-big");
+  $(".gitHubCreateBranch__spinner").hide();
 };
 
 const toggleSubmitDisabled = (bool) => {
