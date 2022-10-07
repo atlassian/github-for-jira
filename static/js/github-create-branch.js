@@ -187,7 +187,7 @@ const createBranchPost = () => {
 
   showLoading();
   $.post(url, data)
-    .done((response) => {
+    .done(() => {
       showSuccessScreen(repo, newBranchName);
     })
     .fail((error) => {
