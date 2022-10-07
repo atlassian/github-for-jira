@@ -15,7 +15,6 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	LOG_UNSAFE_DATA = "log-unsafe-data",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	RETRY_ALL_ERRORS = "retry-all-errors",
@@ -23,7 +22,7 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CREATE_BRANCH = "create-branch",
-	USE_FIXED_GET_REF = "use-fixed-get-ref"
+	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib"
 }
 
 export enum StringFlags {
