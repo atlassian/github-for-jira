@@ -37,16 +37,7 @@
     </div>
   </div>
 
-  <form id="createBranchForm" class="aui top-label">
-    <!--TODO: Add condition to display this only for GHES -->
-    <div class="field-group">
-      <aui-label for="server">GitHub Enterprise Server instance</aui-label>
-      <select id="ghServers" name="server" class="full-width-field" placeholder="Select a repository">
-        {{#each servers}}
-          <option value="{{id}}">{{server}} / {{appName}}</option>
-        {{/each}}
-      </select>
-    </div>
+  <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
     <div class="field-group">
       <aui-label for="repo">Repository</aui-label>
       <input type="hidden" id="ghRepo">
