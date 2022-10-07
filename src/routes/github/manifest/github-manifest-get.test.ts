@@ -38,7 +38,7 @@ describe("github-manifest-complete-get", () => {
 			default_permissions: expect.objectContaining({
 				"actions": "read",
 				"security_events": "read",
-				"contents": "read",
+				"contents": "write",
 				"deployments": "read",
 				"issues": "write",
 				"metadata": "read",

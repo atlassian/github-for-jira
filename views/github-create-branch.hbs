@@ -28,7 +28,8 @@
 </div>
 <section class="gitHubCreateBranch">
   <div class="headerImage">
-    <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
+    <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
+    <aui-spinner class="gitHubCreateBranch__spinner" size="small"></aui-spinner>
   </div>
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
@@ -37,13 +38,24 @@
     </div>
   </div>
 
-  <form id="createBranchForm" class="aui top-label">
+  <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
     <div class="field-group">
       <aui-label for="repo">Repository</aui-label>
       <input type="hidden" id="ghRepo">
       {{#each repos}}
         <div class="hidden default-repos">{{node.full_name}}</div>
       {{/each}}
+
+      <div class="no-repo-container">
+        <a data-aui-trigger aria-controls="show-no-repo-popup" href="#show-no-repo-popup" class="no-repo-link">
+          Can't find the repository you're looking for?
+        </a>
+        <aui-inline-dialog id="show-no-repo-popup" alignment="bottom left" responds-to="hover">
+          <div>You need to configure your GitHub repositories to your Jira site to see them here.</div>
+          <!--TODO: Add URL after confirmation-->
+          <a href="#" class="configure-link">Configure GitHub Integration</a>
+        </aui-inline-dialog>
+      </div>
     </div>
     <div class="field-group">
       <aui-label for="branch">Branch from</aui-label>

@@ -37,6 +37,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			branchName: `${key}-${branchSuffix}`,
 			key
 		},
+		uuid: gitHubAppConfig.uuid,
 		repos: response.viewer.repositories.edges,
 		gitHubUser
 	});
