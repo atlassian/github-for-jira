@@ -43,6 +43,7 @@ services:
       - "26272:26272"
 
   app:
+    container_name: app
     depends_on:
       - redis
       - postgres
