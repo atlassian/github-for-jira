@@ -3,6 +3,7 @@ import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
+import { TaskType } from "~/src/sync/sync.types";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -134,6 +135,44 @@ export class RepoSyncState extends Model {
 				subscriptionId: subscription.id
 			}
 		}));
+	}
+
+	static async resetTasksSyncFromSubscription(targetTasks: TaskType[], subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+		const tasks = {
+			branch: {
+				branchStatus: null,
+				branchCursor: null
+			},
+			pull: {
+				pullStatus: null,
+				pullCursor: null
+			},
+			commit: {
+				commitStatus: null,
+				commitCursor: null
+			},
+			build: {
+				buildStatus: null,
+				buildCursor: null
+			},
+			deployment: {
+				deploymentStatus: null,
+				deploymentCursor: null
+			}
+		};
+		const updateTasks = {};
+		targetTasks.forEach(task => {
+			updateTasks[task] = tasks[task];
+		});
+
+		return RepoSyncState.update({
+			repoUpdatedAt: null,
+			...updateTasks
+		}, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		});
 	}
 
 	// Nullify statuses and cursors to start anew

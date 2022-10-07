@@ -18,33 +18,28 @@ export async function findOrStartSync(
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
-	// Set sync status to PENDING, reset number of synced repos, remove repository cursor and status
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
 		numberOfSyncedRepos: 0,
-		totalNumberOfRepos: null,
-		repositoryCursor: null,
-		repositoryStatus: null,
 		syncWarning: null
 	});
 
 	logger.info({ subscription, syncType }, "Starting sync");
 
 	if (syncType === "full") {
+		fullSyncStartTime = new Date().toISOString();
+		if (targetTasks && targetTasks.length > 0) {
+			await RepoSyncState.resetTasksSyncFromSubscription(targetTasks, subscription);
+			return;
+		}
+		await subscription.update({
+			totalNumberOfRepos: null,
+			repositoryCursor: null,
+			repositoryStatus: null
+		});
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
-		fullSyncStartTime = new Date().toISOString();
-		// if (targetTasks) {
-		//
-		// }
 	}
-	//
-	// const resetTasks = (targetTasks) => {
-	// 	if (!targetTasks) {
-	// 		return;
-	// 	}
-	// 	// loop through task types and resest each one..... cursor and status to null????
-	// }
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
