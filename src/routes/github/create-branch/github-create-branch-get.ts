@@ -4,6 +4,8 @@ import {
 	replaceSpaceWithHyphenHelper
 } from "utils/handlebars/handlebar-helpers";
 import { createUserClient } from "utils/get-github-client-config";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 // TODO: need to update this later with actual data later on
 const servers = [{ id: 1, server: "http://github.internal.atlassian.com", appName: "ghe-app" }, { id: 2, server: "http://github.external.atlassian.com", appName: "ghe-app-2" }];
@@ -44,4 +46,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
+
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
+		jiraHost
+	});
 };

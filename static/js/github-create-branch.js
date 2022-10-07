@@ -14,6 +14,16 @@ $(document).ready(() => {
     placeholder: "Select a repository",
     data: totalRepos,
     dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
+    createSearchChoice: (term) => {
+      const exists = queriedRepos.find(repo => repo.id.indexOf(term) > 1);
+
+      if (!exists) {
+        return {
+          text: term,
+          id: term
+        }
+      }
+    },
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
@@ -24,10 +34,10 @@ $(document).ready(() => {
       results: function (response) {
         const { repositories } = response;
         repositories.forEach(repository => {
-          if (queriedRepos.filter(repo => repo.id === repository.repo.nameWithOwner).length < 1) {
+          if (queriedRepos.filter(repo => repo.id === repository?.full_name).length < 1) {
             const additionalRepo = {
-              id: repository.repo.nameWithOwner,
-              text: repository.repo.nameWithOwner
+              id: repository.full_name,
+              text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
             totalRepos.unshift(additionalRepo);
@@ -68,7 +78,12 @@ $(document).ready(() => {
   });
 
   $("#ghRepo").on("change", () => {
-    loadBranches();
+    if(queriedRepos.length) {
+      $(".no-repo-container").hide();
+      loadBranches();
+    } else {
+      $(".no-repo-container").show();
+    }
   });
 
   $("#createBranchForm").on("aui-valid-submit", (event) => {

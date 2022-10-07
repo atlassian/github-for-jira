@@ -3,7 +3,7 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { SearchRepositoriesQuery, UserOrganizationsQuery } from "~/src/github/client/github-queries";
+import { UserOrganizationsQuery } from "~/src/github/client/github-queries";
 
 const randomString = "random-string";
 describe("GitHub Repository Search", () => {
@@ -40,13 +40,17 @@ describe("GitHub Repository Search", () => {
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
+
 			githubNock
 				.post("/graphql", { query: UserOrganizationsQuery, variables: { first: 10 } })
 				.reply(200, { data: { viewer: { login: randomString, organizations: { nodes: [] } } } });
 			const queryString = `${randomString} org:${randomString} in:name`;
+
 			githubNock
-				.post("/graphql", { query: SearchRepositoriesQuery, variables: { query_string: queryString, per_page: 20 } })
-				.reply(200, { data: { search: { repos: [ 1, 2 ] } } });
+				.get(`/search/repositories?q=${queryString}`)
+				.reply(200, {
+					items: [ { full_name: "first" }, { full_name: "second" } ]
+				});
 
 			await supertest(app)
 				.get("/github/repository").set(
