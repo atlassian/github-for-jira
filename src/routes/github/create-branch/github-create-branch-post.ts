@@ -14,7 +14,7 @@ const errorMessages = {
 
 // Errors need to be returned as an array
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
 	if (!githubToken) {
@@ -28,8 +28,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
-		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 
 		await gitHubUserClient.createReference(owner, repo, {
