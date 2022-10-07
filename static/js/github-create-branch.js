@@ -174,21 +174,22 @@ const showValidationErrorMessage = (id, message) => {
 const createBranchPost = () => {
   const url = "/github/create-branch";
   const repo = getRepoDetails();
+  const newBranchName = $("#branchNameText").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
     sourceBranchName: $("#ghParentBranch").select2("val"),
-    newBranchName: $("#branchNameText").val(),
+    newBranchName,
     _csrf: $("#_csrf").val(),
   };
   toggleSubmitDisabled(true);
   hideErrorMessage();
 
   showLoading();
+  setTimeout(() => showSuccessScreen(repo, newBranchName), 2000);
   $.post(url, data)
     .done(() => {
-      // On success, we close the tab so the user returns to original screen
-      window.close();
+      showSuccessScreen(repo, newBranchName);
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
@@ -203,8 +204,12 @@ const showLoading = () => {
   $(".gitHubCreateBranch__spinner").show();
 };
 
-const showSuccessScreen = () => {
-  console.log("Show successful screen!");
+const showSuccessScreen = (repo, newBranchName) => {
+  $(".gitHubCreateBranch__spinner").hide();
+  $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
+  $(".gitHubCreateBranch__header").html("GitHub branch created");
+  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
+  // TODO: Redirect to the success screen with options, needs to be done after ARC-1727[https://softwareteams.atlassian.net/browse/ARC-1727]
 };
 
 const hideLoading = () => {
