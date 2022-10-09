@@ -3,9 +3,12 @@ import { Errors } from "config/errors";
 import {
 	replaceSpaceWithHyphenHelper
 } from "utils/handlebars/handlebar-helpers";
-import { createUserClient } from "utils/get-github-client-config";
+import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { Subscription } from "models/subscription";
+import Logger from "bunyan";
+const MAX_REPOS_RETURNED = 20;
 
 // TODO: need to update this later with actual data later on
 const servers = [{ id: 1, server: "http://github.internal.atlassian.com", appName: "ghe-app" }, { id: 2, server: "http://github.external.atlassian.com", appName: "ghe-app-2" }];
@@ -26,11 +29,18 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
+	// TODO - this should redirect to a you are not configured page instead.
+	if (!subscriptions) {
+		return next(new Error(Errors.MISSING_CONFIGURAITON));
+	}
+
+	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
-	const response = await gitHubUserClient.getUserRepositories();
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
+	const orgs = (await Subscription.getorgsish(jiraHost)).map(sub => sub.repoOwner);
+	const repos = await getReposBySubscriptions(subscriptions, jiraHost, gitHubAppConfig.gitHubAppId, req.log);
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -41,7 +51,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			key
 		},
 		servers,
-		repos: response.viewer.repositories.edges,
+		orgs,
+		repos,
 		gitHubUser
 	});
 
@@ -52,3 +63,25 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost
 	});
 };
+
+const getEpochFromDateString = (d: string): number => {
+	return new Date(d).valueOf();
+};
+
+// todo add return type
+const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
+	const repoTasks = subscriptions.map(async (subscription) => {
+		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
+		const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED,undefined,  'UPDATED_AT');
+		return response.viewer.repositories.edges;
+	});
+
+	const repos = (await Promise.all(repoTasks))
+		.flat()
+		.sort((a, b) => {
+			return getEpochFromDateString(b.node.updated_at) - getEpochFromDateString(a.node.updated_at);
+		});
+
+	return repos.slice(0, MAX_REPOS_RETURNED);
+};
+
