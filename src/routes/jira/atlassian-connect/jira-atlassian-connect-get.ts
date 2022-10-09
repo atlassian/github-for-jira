@@ -164,7 +164,7 @@ export const moduleUrls = compact(map([...modules.adminPages, ...modules.general
 
 // Remove this function when CREATE_BRANCH flag is complete
 const addCreateBranchAction = async (modules) => {
-	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
+	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, true)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
