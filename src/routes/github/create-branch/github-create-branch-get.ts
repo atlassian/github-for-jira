@@ -65,8 +65,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	});
 };
 
-const getEpochFromDateString = (d: string): number => {
-	return new Date(d).valueOf();
+const sortByDateString = (a, b) => {
+	return new Date(b).valueOf() - new Date(a).valueOf();
 };
 
 const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: string, gitHubAppId: number | undefined, logger: Logger): Promise<RepositoryNode[]> => {
@@ -78,9 +78,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: 
 
 	const repos = (await Promise.all(repoTasks))
 		.flat()
-		.sort((a, b) => {
-			return getEpochFromDateString(b.node.updated_at) - getEpochFromDateString(a.node.updated_at);
-		});
+		.sort(sortByDateString);
 
 	return repos.slice(0, MAX_REPOS_RETURNED);
 };
