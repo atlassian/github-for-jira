@@ -197,7 +197,7 @@ export class Subscription extends Model {
 	/*
 	 * Returns array or orgs that have connected repos
 	 */
-	static async getorgsish(jiraHost: string): Promise<RepoOwner[]> {
+	static async getConnectedOrgs(jiraHost: string): Promise<RepoOwner[]> {
 		const query = `SELECT distinct "repoOwner"
 									 FROM "RepoSyncStates"
 								   INNER JOIN "Subscriptions"
