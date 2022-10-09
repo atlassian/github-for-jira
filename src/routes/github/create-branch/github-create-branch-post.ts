@@ -5,16 +5,19 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common
 
 const errorMessages = {
 	// TODO: Fix the url later, once you figure out how to get the `installationId`
-	403: ["This GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>"],
-	400: ["Missing information, please check if the values for owner, repository, source branch name and the new branch name are valid."],
-	422: ["This GitHub branch already exists. Please use a different branch name.", "The Github Branch name is not valid."],
-	404: ["This GitHub source branch does not exist. Please use a different branch."],
-	500: ["Oops, something unexpected happened."]
+	403: "We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href='#'>Allow access to this repository.</a>",
+	400: "We couldn’t create this branch. Check that you’ve entered valid values for repository, source branch name, and new branch name.",
+	422: "We couldn’t create this branch, possibly because:<ul>" +
+		"<li>This GitHub branch already exists. Please try a different branch name.</li>" +
+		"<li>The GitHub branch name is not valid.</li>" +
+		"</ul>",
+	404: "We couldn’t create this branch, possibly because the GitHub source branch you entered doesn't exist. Please try a different branch.",
+	500: "We couldn’t create this branch because something went wrong. Please try again."
 };
 
 // Errors need to be returned as an array
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost } = res.locals;
+	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
 	if (!githubToken) {
@@ -28,8 +31,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
-		// TODO - pass in the gitHubAppId when we start supporting GHES, instead of undefined
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, undefined);
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 
 		await gitHubUserClient.createReference(owner, repo, {
