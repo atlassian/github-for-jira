@@ -33,13 +33,13 @@
 
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
-    <div class="gitHubCreateBranch__subHeader skeleton skeleton-text">Creating a branch for <b>{{issue.key}}</b></div>
+    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">Creating a branch for <b>{{issue.key}}</b></div>
   </div>
 
   <form id="createBranchForm" class="aui top-label">
     <!--TODO: Add condition to display this only for GHES -->
     <div class="field-group">
-      <aui-label for="server" class="skeleton skeleton-text">GitHub Enterprise Server instance</aui-label>
+      <aui-label for="server" class="skeleton skeleton-element">GitHub Enterprise Server instance</aui-label>
        <div class="skeleton skeleton-input"></div>
        <select id="ghServers" name="server" class="full-width-field loaded" placeholder="Select a repository">
           {{#each servers}}
@@ -49,7 +49,7 @@
     </div>
 
     <div class="field-group">
-      <aui-label for="repo" class="skeleton skeleton-text">Repository</aui-label>
+      <aui-label for="repo" class="skeleton skeleton-element">Repository</aui-label>
       <div class="skeleton skeleton-input"></div>
       <input type="hidden" id="ghRepo" class="loaded">
       {{#each repos}}
@@ -69,13 +69,13 @@
     </div>
 
     <div class="field-group">
-      <aui-label for="branch" class="skeleton skeleton-text">Branch from</aui-label>
+      <aui-label for="branch" class="skeleton skeleton-element">Branch from</aui-label>
       <div class="skeleton skeleton-input"></div>
       <input type="hidden" id="ghParentBranch" name="parentBranch" class="loaded"/>
     </div>
 
     <div class="field-group">
-      <aui-label for="branch-name" class="skeleton skeleton-text">Branch name</aui-label>
+      <aui-label for="branch-name" class="skeleton skeleton-element">Branch name</aui-label>
          <div class="skeleton skeleton-input"></div>
          <input
             class="text full-width-field loaded"
