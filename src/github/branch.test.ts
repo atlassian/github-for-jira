@@ -1,4 +1,4 @@
-import { createBranchWebhookHandler } from "./branch";
+import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "./branch";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
@@ -48,13 +48,32 @@ describe("BranchhWebhookHandler", () => {
 				}
 			}));
 		});
+
+		describe('deleteBranchWebhookHandler', () => {
+			it('should transform repo id', async () => {
+				const jiraClient = {
+					devinfo: {
+						branch: {
+							delete: jest.fn()
+						}
+					}
+				};
+				await deleteBranchWebhookHandler(getWebhookContext({ cloud: false }), jiraClient);
+				expect(jiraClient.devinfo.branch.delete.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-1");
+			});
+		});
 	});
 	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
 		return new WebhookContext({
 			id: "1",
 			name: "create",
 			log: getLogger("test"),
-			payload: {},
+			payload: {
+				repository: {
+					id: 1
+				},
+				ref: 'TEST-1'
+			},
 			gitHubAppConfig: cloud ? {
 				uuid: undefined,
 				gitHubAppId: undefined,

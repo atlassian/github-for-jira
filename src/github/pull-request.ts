@@ -9,6 +9,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -65,7 +66,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				repositoryId,
+				transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 

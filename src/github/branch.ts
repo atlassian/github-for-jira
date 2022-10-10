@@ -9,6 +9,7 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
@@ -80,7 +81,7 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 	context.log.info({ prRef: context.payload.ref }, `Deleting branch for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
-		`${payload.repository?.id}`,
+		transformRepositoryId(payload.repository?.id, context.gitHubAppConfig?.gitHubBaseUrl),
 		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
