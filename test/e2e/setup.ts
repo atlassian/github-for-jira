@@ -20,7 +20,7 @@ export default async function setup() {
 	await browser.close();
 
 	// Check to make sure state exists before continuing
-	if (!stateExists(testData.jira.roles.admin) || !stateExists(testData.github.roles.admin)) {
+	if (!stateExists(testData.jira.roles.admin) /*|| !stateExists(testData.github.roles.admin)*/) {
 		throw "Missing state";
 	}
 }
