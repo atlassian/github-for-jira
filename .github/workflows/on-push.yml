@@ -39,13 +39,13 @@ jobs:
       - run: yarn install --frozen-lockfile
       - run: docker-compose up -d app
       - name: wait for app to be ready
-        run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
+        run: docker run --network container:app curlimages/curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://app:8080/healthcheck
       - run: yarn run db:test
       - name: Run tests
         env:
           REDISX_CACHE_HOST: localhost
-          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
-          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          REDISX_CACHE_PORT: 6379
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/jira-test
           AWS_DEFAULT_REGION: us-west-1
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
@@ -90,7 +90,7 @@ jobs:
           echo "INSTANCE_NAME=fusion-arc-e2e" >> .env
       - run: docker-compose up -d
       - name: wait for app to be ready
-        run: docker run --network container:app curlimages/curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
+        run: docker run --network container:app curlimages/curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://app:8080/healthcheck
       - run: yarn run test:e2e
       - run: docker-compose down
 
