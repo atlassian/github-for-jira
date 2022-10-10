@@ -8,11 +8,8 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import Logger from "bunyan";
-import { RepositoryNode } from "../../../github/client/github-queries";
+import { RepositoryNode } from "~/src/github/client/github-queries";
 const MAX_REPOS_RETURNED = 20;
-
-// TODO: need to update this later with actual data later on
-const servers = [{ id: 1, server: "http://github.internal.atlassian.com", appName: "ghe-app" }, { id: 2, server: "http://github.external.atlassian.com", appName: "ghe-app-2" }];
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
@@ -50,8 +47,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			branchName: `${key}-${branchSuffix}`,
 			key
 		},
-		servers,
 		repos,
+		uuid: gitHubAppConfig.uuid,
 		gitHubUser
 	});
 
@@ -71,7 +68,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
-			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined,  'UPDATED_AT');
+			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined,  "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {
 			logger.error("Create branch - Failed to fetch repos for installation");
