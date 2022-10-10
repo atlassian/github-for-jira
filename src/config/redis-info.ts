@@ -12,6 +12,6 @@ export const getRedisInfo = (connectionName: string): IORedis.RedisOptions => ({
 	maxRetriesPerRequest: null,
 	enableReadyCheck: false,
 
-	tls: isNodeProd() ? { checkServerIdentity: () => undefined } : undefined,
+	tls: isNodeProd() || envVars.REDISX_CACHE_TLS_ENABLED ? { checkServerIdentity: () => undefined } : undefined,
 	connectionName
 });

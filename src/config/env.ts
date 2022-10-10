@@ -121,4 +121,5 @@ export interface EnvVars {
 
 	REDISX_CACHE_PORT: string;
 	REDISX_CACHE_HOST: string;
+	REDISX_CACHE_TLS_ENABLED?: string;
 }
