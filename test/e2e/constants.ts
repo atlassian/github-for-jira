@@ -34,8 +34,8 @@ export const testData: TestData = {
 		roles: {
 			admin: {
 				username: e2eEnvVars.GITHUB_USERNAME,
-				password: e2eEnvVars.GITHUB_PASSWORD,
-				storage: `${STATE_PATH}/github-admin.json`
+				password: e2eEnvVars.GITHUB_PASSWORD
+				// storage: `${STATE_PATH}/github-admin.json`
 			}
 		}
 	}
