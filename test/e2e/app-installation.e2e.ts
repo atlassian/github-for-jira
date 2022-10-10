@@ -2,7 +2,6 @@ import { expect, Page, test } from "@playwright/test";
 import { jiraAppInstall, jiraAppUninstall, jiraLogin } from "test/e2e/utils/jira";
 import { githubLogin } from "test/e2e/utils/github";
 import { testData } from "test/e2e/constants";
-// import { eachContextPage } from "test/e2e/e2e-utils";
 
 test.describe("setup functions", () => {
 
@@ -39,7 +38,7 @@ test.describe("setup functions", () => {
 			});
 		});
 
-		test.describe("github", () => {
+		test.describe.skip("github", () => {
 			test.describe(useState ? "with state" : "without state", () => {
 				if (useState) {
 					test.use({

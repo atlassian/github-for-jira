@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
 import { jiraLogin } from "test/e2e/utils/jira";
-import { githubAppUpdateURLs, githubLogin } from "test/e2e/utils/github";
+// import { githubAppUpdateURLs, githubLogin } from "test/e2e/utils/github";
 import { clearState, stateExists } from "test/e2e/e2e-utils";
 import { testData } from "test/e2e/constants";
 
@@ -12,8 +12,8 @@ export default async function setup() {
 
 	// login and save state before tests
 	await Promise.all([
-		jiraLogin(await browser.newPage(), "admin", true),
-		githubLogin(await browser.newPage(), "admin", true).then(githubAppUpdateURLs)
+		jiraLogin(await browser.newPage(), "admin", true)
+		// githubLogin(await browser.newPage(), "admin", true).then(githubAppUpdateURLs)
 	]);
 
 	// Close the browser
