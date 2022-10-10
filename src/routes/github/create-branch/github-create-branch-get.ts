@@ -37,11 +37,16 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_CONFIGURAITON));
 	}
 
+	console.log("GOT HERE");
+	console.log("GOT HERE 2a");
 	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
+	console.log("GOT HERE 2b");
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
+	console.log("GOT HERE 2c");
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-	const orgs = (await Subscription.getConnectedOrgs(jiraHost)).map(sub => sub.repoOwner);
+	console.log("GOT HERE 2d");
 	const repos = await getReposBySubscriptions(subscriptions, jiraHost, gitHubAppConfig.gitHubAppId, req.log);
+	console.log("GOT HERE 2e");
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -52,7 +57,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			key
 		},
 		servers,
-		orgs,
 		repos,
 		gitHubUser
 	});
@@ -71,9 +75,19 @@ const sortByDateString = (a, b) => {
 
 const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: string, gitHubAppId: number | undefined, logger: Logger): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
-		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
-		const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED,undefined,  'UPDATED_AT');
-		return response.viewer.repositories.edges;
+		try {
+			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
+			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined,  'UPDATED_AT');
+			return response.viewer.repositories.edges;
+		} catch (err) {
+			console.log('err');
+			console.log('err');
+			console.log('err');
+			console.log('err');
+			console.log(err);
+			return [];
+		}
+
 	});
 
 	const repos = (await Promise.all(repoTasks))
