@@ -1,3 +1,4 @@
+import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
 declare const transformedRepositoryId: unique symbol;
 
@@ -5,10 +6,10 @@ export type TransformedRepositoryId = string & { [transformedRepositoryId]: neve
 
 /**
  * @param repositoryId
- * @param ghesBaseUrl - the base URL of GitHub Enterprise server; must be empty for cloud
+ * @param ghesBaseUrl - the base URL of GitHub Enterprise server; should be empty for cloud
  */
 export function transformRepositoryId(repositoryId: number, ghesBaseUrl?: string): TransformedRepositoryId {
-	if (!ghesBaseUrl) {
+	if (!ghesBaseUrl || ghesBaseUrl === GITHUB_CLOUD_BASEURL) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
 

@@ -1,8 +1,13 @@
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
 describe("transform-repository-id", () => {
 	it("does nothing for GitHub cloud", () => {
 		expect(transformRepositoryId(123)).toEqual("123");
+	});
+
+	it("does nothing for GitHub cloud when cloud URL is provided", () => {
+		expect(transformRepositoryId(123, GITHUB_CLOUD_BASEURL)).toEqual("123");
 	});
 
 	it("adds prefix for GHES ids", () => {
