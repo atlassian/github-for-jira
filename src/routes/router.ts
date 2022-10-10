@@ -16,6 +16,7 @@ import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
+import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 
 export const RootRouter = Router();
 
@@ -55,6 +56,8 @@ RootRouter.use(jirahostMiddleware);
 
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
+
+RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
