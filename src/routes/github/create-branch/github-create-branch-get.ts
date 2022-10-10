@@ -40,7 +40,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-	const repos = await getReposBySubscriptions(subscriptions, jiraHost, gitHubAppConfig.gitHubAppId, req.log);
+	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost, gitHubAppConfig.gitHubAppId);
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -67,7 +67,7 @@ const sortByDateString = (a, b) => {
 	return new Date(b).valueOf() - new Date(a).valueOf();
 };
 
-const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: string, gitHubAppId: number | undefined, logger: Logger): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string, gitHubAppId?: number): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
@@ -77,7 +77,6 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: 
 			logger.error("Create branch - Failed to fetch repos for installation");
 			throw err;
 		}
-
 	});
 
 	const repos = (await Promise.all(repoTasks))
