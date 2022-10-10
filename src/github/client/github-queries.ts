@@ -32,9 +32,7 @@ export interface GetRepositoriesResponse {
 }
 
 export interface SearchedRepositoriesResponse {
-	search: {
-		repos: RepositoryNode[]
-	};
+	items: RepositoryNode[]
 }
 
 export interface UserOrganizationsResponse {

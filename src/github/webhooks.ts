@@ -16,7 +16,8 @@ export const setupGithubWebhooks = (robot: Application) => {
 	robot.on(
 		[
 			"issue_comment.created",
-			"issue_comment.edited"
+			"issue_comment.edited",
+			"issue_comment.deleted"
 		],
 		convertToWebhookContext(webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler)))
 	);

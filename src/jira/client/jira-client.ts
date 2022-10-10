@@ -81,10 +81,30 @@ export const getJiraClient = async (
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
+				list: (issue_id: string) =>
+					instance.get("/rest/api/latest/issue/{issue_id}/comment?expand=properties", {
+						urlParams: {
+							issue_id
+						}
+					}),
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
 							issue_id
+						}
+					}),
+				updateForIssue: (issue_id: string, comment_id: string, payload) =>
+					instance.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
+						urlParams: {
+							issue_id,
+							comment_id
+						}
+					}),
+				deleteForIssue: (issue_id: string, comment_id: string) =>
+					instance.delete("rest/api/latest/issue/{issue_id}/comment/{comment_id}", {
+						urlParams: {
+							issue_id,
+							comment_id
 						}
 					})
 			},
