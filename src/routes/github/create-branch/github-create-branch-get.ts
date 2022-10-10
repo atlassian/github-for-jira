@@ -74,8 +74,8 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], jiraHost: 
 			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined,  'UPDATED_AT');
 			return response.viewer.repositories.edges;
 		} catch (err) {
-			console.log(err);
-			return [];
+			logger.error("Create branch - Failed to fetch repos for installation");
+			throw err;
 		}
 
 	});
