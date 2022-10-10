@@ -151,7 +151,7 @@ const loadBranches = () => {
       showLoaderOnSelect2Input("ghParentBranch", false);
     },
     error: () => {
-      showErrorMessage(["Oops, failed to fetch branches!"]);
+      showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
     }
@@ -243,10 +243,7 @@ const getRepoDetails = () => {
 
 const showErrorMessage = (messages) => {
   $(".gitHubCreateBranch__serverError").show();
-  let errorList = '<ul class="m-1">';
-  messages.map(message => errorList +=  `<li>${message}</li>`);
-  errorList += '</ul>';
-  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch. This can be caused by one of the following reasons:</div>${errorList}`);
+  $(".errorMessageBox__message").empty().append(`${messages}`);
 };
 
 const hideErrorMessage = () => {
