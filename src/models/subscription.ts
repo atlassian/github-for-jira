@@ -14,10 +14,6 @@ interface SyncStatusCount {
 	count: number;
 }
 
-interface RepoOwner {
-	repoOwner: string;
-}
-
 export type TaskStatus = "pending" | "complete" | "failed";
 
 export interface Repository {
@@ -192,19 +188,6 @@ export class Subscription extends Model {
 			 GROUP BY "syncStatus"`
 		);
 		return results[0] as SyncStatusCount[];
-	}
-
-	/*
-	 * Returns array or orgs that have connected repos
-	 */
-	static async getConnectedOrgs(jiraHost: string): Promise<RepoOwner[]> {
-		const query = `SELECT distinct "repoOwner"
-									 FROM "RepoSyncStates"
-								   INNER JOIN "Subscriptions"
-								   ON "RepoSyncStates"."subscriptionId" = "Subscriptions"."id"
-									 WHERE "Subscriptions"."jiraHost" = '${jiraHost}'`;
-		const results = await this.sequelize?.query(query);
-		return results[0];
 	}
 
 	// TODO: remove this, not necessary - just use destroy directly

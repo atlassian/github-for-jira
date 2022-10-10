@@ -61,7 +61,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 };
 
 const sortByDateString = (a, b) => {
-	return new Date(b).valueOf() - new Date(a).valueOf();
+	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
 };
 
 const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string, gitHubAppId?: number): Promise<RepositoryNode[]> => {
