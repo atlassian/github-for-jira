@@ -30,15 +30,15 @@ export async function findOrStartSync(
 		fullSyncStartTime = new Date().toISOString();
 		if (targetTasks && targetTasks.length > 0) {
 			await RepoSyncState.resetTasksSyncFromSubscription(targetTasks, subscription);
-			return;
+		} else {
+			await subscription.update({
+				totalNumberOfRepos: null,
+				repositoryCursor: null,
+				repositoryStatus: null
+			});
+			// Remove all state as we're starting anew
+			await RepoSyncState.deleteFromSubscription(subscription);
 		}
-		await subscription.update({
-			totalNumberOfRepos: null,
-			repositoryCursor: null,
-			repositoryStatus: null
-		});
-		// Remove all state as we're starting anew
-		await RepoSyncState.deleteFromSubscription(subscription);
 	}
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);

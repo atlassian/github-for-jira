@@ -38,6 +38,7 @@ export class RepoSyncState extends Model {
 
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
+		console.log(statuses);
 		if (statuses.some(s => s === "failed")) {
 			return "failed";
 		}
@@ -138,7 +139,7 @@ export class RepoSyncState extends Model {
 	}
 
 	static async resetTasksSyncFromSubscription(targetTasks: TaskType[], subscription: Subscription): Promise<[number, RepoSyncState[]]> {
-		const tasks = {
+		const resetTasks = {
 			branch: {
 				branchStatus: null,
 				branchCursor: null
@@ -160,11 +161,11 @@ export class RepoSyncState extends Model {
 				deploymentCursor: null
 			}
 		};
+
 		const updateTasks = {};
 		targetTasks.forEach(task => {
-			updateTasks[task] = tasks[task];
+			Object.assign(updateTasks, resetTasks[task]);
 		});
-
 		return RepoSyncState.update({
 			repoUpdatedAt: null,
 			...updateTasks
