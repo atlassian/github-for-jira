@@ -4,16 +4,8 @@ declare const transformedRepositoryId: unique symbol;
 
 export type TransformedRepositoryId = string & { [transformedRepositoryId]: never };
 
-/**
- * @param repositoryId
- * @param gitHubBaseUrl - can be undefined for Cloud
- */
-export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId {
-	if (!gitHubBaseUrl || gitHubBaseUrl === GITHUB_CLOUD_BASEURL) {
-		return ("" + repositoryId) as TransformedRepositoryId;
-	}
-
-	const parsedUrl = new URL(gitHubBaseUrl);
+function calculatePrefix(url: string) {
+	const parsedUrl = new URL(url);
 
 	// - "1024" is the limit for repo id in Jira API, see
 	// https://developer.atlassian.com/cloud/jira/software/rest/api-group-development-information/#api-group-development-information ,
@@ -27,5 +19,17 @@ export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: stri
 		(parsedUrl.host + parsedUrl.pathname).toLowerCase().replace(/[\W_]/g, '')
 	).toString('hex').substring(0, 512);
 
-	return `${prefix}-${repositoryId}` as TransformedRepositoryId;
+	return prefix;
+}
+
+/**
+ * @param repositoryId
+ * @param gitHubBaseUrl - can be undefined for Cloud
+ */
+export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId {
+	if (!gitHubBaseUrl || calculatePrefix(gitHubBaseUrl) === calculatePrefix(GITHUB_CLOUD_BASEURL)) {
+		return ("" + repositoryId) as TransformedRepositoryId;
+	}
+
+	return `${calculatePrefix(gitHubBaseUrl)}-${repositoryId}` as TransformedRepositoryId;
 }
