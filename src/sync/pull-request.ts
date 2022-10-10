@@ -81,8 +81,6 @@ export const getPullRequestTask = async (
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
 	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPage }));
 
-	const ghesServerUrl = gitHubInstallationClient.gitHubServerAppId ? gitHubInstallationClient.baseUrl : undefined;
-
 	// TODO: change this to reduce
 	const pullRequests = (
 		await Promise.all(
@@ -94,7 +92,7 @@ export const getPullRequestTask = async (
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,
-					ghesServerUrl,
+					gitHubInstallationClient.baseUrl,
 					ghUser
 				);
 				return data?.pullRequests[0];
@@ -109,7 +107,7 @@ export const getPullRequestTask = async (
 		jiraPayload:
 			pullRequests?.length
 				? {
-					... transformRepositoryDevInfoBulk(repository, ghesServerUrl),
+					... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 					pullRequests
 				}
 				: undefined

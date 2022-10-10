@@ -26,7 +26,7 @@ export const getBranchTask = async (
 
 	logger.debug("Syncing branches: finished");
 
-	const jiraPayload = await transformBranches({ branches, repository, ghesBaseUrl: gitHubClient.gitHubServerAppId ? gitHubClient.baseUrl : undefined });
+	const jiraPayload = await transformBranches({ branches, repository }, gitHubClient.baseUrl);
 
 	return {
 		edges,

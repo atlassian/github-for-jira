@@ -22,10 +22,10 @@ interface Payload {
  *
  * @param payload
  * @param prDetails
- * @param ghesBaseUrl - must be provided for Server and be undefined for Cloud
+ * @param gitHubBaseUrl - can be undefined for Cloud
  * @param ghUser
  */
-export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghesBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
+export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
@@ -35,7 +35,7 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 	}
 
 	return {
-		... transformRepositoryDevInfoBulk(repository, ghesBaseUrl),
+		... transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it

@@ -6,14 +6,14 @@ export type TransformedRepositoryId = string & { [transformedRepositoryId]: neve
 
 /**
  * @param repositoryId
- * @param ghesBaseUrl - the base URL of GitHub Enterprise server; should be empty for cloud
+ * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export function transformRepositoryId(repositoryId: number, ghesBaseUrl?: string): TransformedRepositoryId {
-	if (!ghesBaseUrl || ghesBaseUrl === GITHUB_CLOUD_BASEURL) {
+export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId {
+	if (!gitHubBaseUrl || gitHubBaseUrl === GITHUB_CLOUD_BASEURL) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
 
-	const parsedUrl = new URL(ghesBaseUrl);
+	const parsedUrl = new URL(gitHubBaseUrl);
 
 	// - "1024" is the limit for repo id in Jira API, see
 	// https://developer.atlassian.com/cloud/jira/software/rest/api-group-development-information/#api-group-development-information ,

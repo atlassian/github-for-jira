@@ -80,9 +80,10 @@ const mapCommit = (commit) => {
 // TODO: add typings
 /**
  *
- * @param payload.gitHubBaseUrl - must be defined for GHES and undefined for Cloud
+ * @param payload
+ * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformBranches = async (payload: { branches: any, repository: any, ghesBaseUrl: string | undefined }) => {
+export const transformBranches = async (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository))
@@ -100,7 +101,7 @@ export const transformBranches = async (payload: { branches: any, repository: an
 	}
 
 	return {
-		... transformRepositoryDevInfoBulk(payload.repository, payload.ghesBaseUrl),
+		... transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		branches,
 		commits
 	};

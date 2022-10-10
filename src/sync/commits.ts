@@ -33,7 +33,7 @@ export const getCommitTask = async (
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = await transformCommit(
 		{ commits, repository },
-		gitHubClient.gitHubServerAppId ? gitHubClient.baseUrl : undefined
+		gitHubClient.baseUrl
 	);
 	logger.debug("Syncing commits: finished");
 

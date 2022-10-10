@@ -86,7 +86,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			id: `${transformRepositoryId(repository.id, gitHubInstallationClient.gitHubServerAppId ? gitHubInstallationClient.baseUrl : undefined)}-${alert.number}`,
+			id: `${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			displayName: `Alert #${alert.number}`,
 			description: alert.rule.description.substring(0, MAX_STRING_LENGTH) || undefined,

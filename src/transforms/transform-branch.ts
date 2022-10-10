@@ -27,7 +27,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 	};
 };
 
-export const transformBranch = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
+export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}
@@ -40,9 +40,9 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 	}
 
 	try {
-		const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
+		const lastCommit = await getLastCommit(gitHubInstallationClient, webhookPayload, issueKeys);
 		return {
-			... transformRepositoryDevInfoBulk(repository, github.gitHubServerAppId ? github.baseUrl : undefined),
+			... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 			branches: [
 				{
 					createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),

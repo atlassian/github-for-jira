@@ -27,9 +27,9 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 /**
  *
  * @param payload
- * @param ghesBaseUrl - must be undefined for Cloud and provided for GHES
+ * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitBulkSubmitData | undefined => {
+export const transformCommit = (payload, gitHubBaseUrl?: string): JiraCommitBulkSubmitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))
@@ -40,7 +40,7 @@ export const transformCommit = (payload, ghesBaseUrl?: string): JiraCommitBulkSu
 	}
 
 	return {
-		... transformRepositoryDevInfoBulk(payload.repository, ghesBaseUrl),
+		... transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		commits: commits
 	};
 };

@@ -68,7 +68,7 @@ export const transformPullRequest = async (github: GitHubInstallationClient, pul
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
-		...transformRepositoryDevInfoBulk(pullRequest.base.repo, github.gitHubServerAppId ? github.baseUrl : undefined),
+		...transformRepositoryDevInfoBulk(pullRequest.base.repo, github.baseUrl),
 		// Do not send the branch on the payload when the Pull Request Merged event is called.
 		// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 		branches:

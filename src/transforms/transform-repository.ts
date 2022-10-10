@@ -4,11 +4,11 @@ import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 
 /**
  * @param repository
- * @param ghesBaseUrl - must be defined for Server and undefined for Cloud
+ * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformRepositoryDevInfoBulk = (repository: Repository, ghesBaseUrl?: string): BulkSubmitRepositoryInfo => {
+export const transformRepositoryDevInfoBulk = (repository: Repository, gitHubBaseUrl?: string): BulkSubmitRepositoryInfo => {
 	return {
-		id: transformRepositoryId(repository.id, ghesBaseUrl),
+		id: transformRepositoryId(repository.id, gitHubBaseUrl),
 		name: repository.full_name,
 		url: repository.html_url,
 		updateSequenceId: Date.now()
