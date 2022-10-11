@@ -32,7 +32,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		servers,
-		issueKey,
 		githubToken
 	});
 

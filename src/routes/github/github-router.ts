@@ -43,11 +43,8 @@ subRouter.use("/manifest", GithubManifestRouter);
 // All following routes need Github Auth
 subRouter.use(GithubAuthMiddleware);
 
-subRouter.use("/success", (req, res) => {
-	res.render("github-success.hbs", {
-		csrfToken: req.csrfToken(),
-		nonce: res.locals.nonce
-	});
+subRouter.use("/success", (_, res) => {
+	res.render("github-success.hbs", { nonce: res.locals.nonce });
 });
 
 subRouter.use("/configuration", GithubConfigurationRouter);

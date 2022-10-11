@@ -23,6 +23,7 @@ const getCreateBranchTargetUrl = () => {
 
 $(document).ready(() => {
 
+
   $("#ghServers").auiSelect2();
 
   $(".gitHubCreateBranchOptions__option").click((event) => {
@@ -32,22 +33,24 @@ $(document).ready(() => {
 
   $("#createBranchOptionsForm").submit((event) => {
     event.preventDefault();
-
-		const gitHubToken = $("#_csrf").val();
-		// If we don't have a GitHub token we need to go get one
-		if (!gitHubToken) {
-			AP.context.getToken(function(token) {
-				const child = openChildWindow("/github/success", getCreateBranchTargetUrl());
-				child.window.jiraHost = jiraHost;
-				child.window.jwt = token;
-			});
-			return;
-		}
-		window.location.href = getCreateBranchTargetUrl();
-  });
-
+		doTheThing();
+	});
 
 });
+
+const doTheThing = () => {
+	const gitHubToken = $("gitHubToken").val();
+	// If we don't have a GitHub token we need to go get one
+	if (!gitHubToken) {
+		AP.context.getToken(function(token) {
+			const child = openChildWindow("/github/success", getCreateBranchTargetUrl());
+			child.window.jiraHost = jiraHost;
+			child.window.jwt = token;
+		});
+		return;
+	}
+	window.location.href = getCreateBranchTargetUrl();
+}
 
 const ghServerOptionHandler = (event) => {
   event.preventDefault();
