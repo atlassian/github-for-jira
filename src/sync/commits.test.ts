@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { Installation } from "models/installation";
-import { RepoSyncState } from "models/reposyncstate";
-import { Subscription } from "models/subscription";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -16,9 +13,8 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import fs from "fs";
-import path from "path";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { DatabaseStateBuilder } from "test/utils/database-state-builder";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -31,7 +27,6 @@ describe("sync/commits", () => {
 	});
 
 	describe("for cloud", () => {
-		const installationId = 1234;
 		const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 
 		const makeExpectedJiraResponse = (commits) => ({
@@ -46,7 +41,7 @@ describe("sync/commits", () => {
 				}
 			],
 			properties: {
-				"installationId": 1234
+				"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
 			}
 		});
 
@@ -72,39 +67,10 @@ describe("sync/commits", () => {
 		};
 
 		beforeEach(async () => {
-			await Installation.create({
-				gitHubInstallationId: installationId,
-				jiraHost,
-				encryptedSharedSecret: "secret",
-				clientKey: "client-key"
-			});
-
-			const subscription = await Subscription.create({
-				gitHubInstallationId: installationId,
-				jiraHost,
-				syncStatus: "ACTIVE",
-				repositoryStatus: "complete"
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: subscription.id,
-				repoId: 1,
-				repoName: "test-repo-name",
-				repoOwner: "integrations",
-				repoFullName: "test-repo-name",
-				repoUrl: "test-repo-url",
-				repoPushedAt: new Date(),
-				repoUpdatedAt: new Date(),
-				repoCreatedAt: new Date(),
-				branchStatus: "complete",
-				commitStatus: "pending", // We want the next process to be commits
-				pullStatus: "complete",
-				updatedAt: new Date(),
-				createdAt: new Date()
-			});
+			await new DatabaseStateBuilder().withActiveRepoSyncState().repoSyncStatePendingForCommits().build();
 
 			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-			githubUserTokenNock(installationId);
+			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -118,7 +84,7 @@ describe("sync/commits", () => {
 		};
 
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
-			const data: BackfillMessagePayload = { installationId, jiraHost };
+			const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitNodesFixture);
 			const commits = [
@@ -147,7 +113,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should send Jira all commits that have Issue Keys", async () => {
-			const data = { installationId, jiraHost };
+			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(mixedCommitNodes);
 
@@ -214,7 +180,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should not call Jira if no issue keys are present", async () => {
-			const data = { installationId, jiraHost };
+			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitsNoKeys);
 
@@ -227,7 +193,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should not call Jira if no data is returned", async () => {
-			const data = { installationId, jiraHost };
+			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
 			createGitHubNock(commitsNoKeys);
 
 			const interceptor = jiraNock.post(/.*/);
@@ -254,7 +220,7 @@ describe("sync/commits", () => {
 			});
 
 			it("should only get commits since date specified", async () => {
-				const data: BackfillMessagePayload = { installationId, jiraHost };
+				const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
 
 				createGitHubNock(commitNodesFixture, { commitSince: dateCutoff.toISOString() });
 				const commits = [
@@ -290,7 +256,7 @@ describe("sync/commits", () => {
 					const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
 					mockSystemTime(time);
 					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId, jiraHost, commitsFromDate };
+					const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
 
 					createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate });
 					const commits = [
@@ -322,11 +288,6 @@ describe("sync/commits", () => {
 	});
 
 	describe("for server",  () => {
-		const installationIdForGhes = 12345;
-
-		let subscriptionForGhe: Subscription;
-		let gitHubServerApp: GitHubServerApp;
-		let installationForGhes: Installation;
 
 		const createGitHubENock = (commitsResponse, variables?: Record<string, any>) => {
 			gheNock
@@ -343,56 +304,21 @@ describe("sync/commits", () => {
 				.reply(200, commitsResponse);
 		};
 
+		let gitHubServerApp: GitHubServerApp;
+
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
-			installationForGhes = await Installation.create({
-				gitHubInstallationId: installationIdForGhes,
-				jiraHost,
-				encryptedSharedSecret: "secret",
-				clientKey: "client-key"
-			});
+			const builderResult = await new DatabaseStateBuilder()
+				.forServer()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForCommits()
+				.build();
+			gitHubServerApp = builderResult.gitHubServerApp!;
 
-			gitHubServerApp = await GitHubServerApp.create({
-				uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
-				appId: 12321,
-				gitHubBaseUrl: gheUrl,
-				gitHubClientId: "client-id",
-				gitHubClientSecret: "client-secret",
-				webhookSecret: "webhook-secret",
-				privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
-				gitHubAppName: "app-name",
-				installationId: installationForGhes.id
-			});
-
-			subscriptionForGhe = await Subscription.create({
-				gitHubInstallationId: installationIdForGhes,
-				jiraHost,
-				syncStatus: "ACTIVE",
-				repositoryStatus: "complete",
-				gitHubAppId: gitHubServerApp.id
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: subscriptionForGhe.id,
-				repoId: 1,
-				repoName: "test-repo-name",
-				repoOwner: "integrations",
-				repoFullName: "test-repo-name",
-				repoUrl: "test-repo-url",
-				repoPushedAt: new Date(),
-				repoUpdatedAt: new Date(),
-				repoCreatedAt: new Date(),
-				branchStatus: "complete",
-				commitStatus: "pending", // We want the next process to be commits
-				pullStatus: "complete",
-				updatedAt: new Date(),
-				createdAt: new Date()
-			});
-
-			gheUserTokenNock(installationIdForGhes);
+			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 		});
 
 		const makeExpectedJiraResponse = (commits) => ({
@@ -407,7 +333,7 @@ describe("sync/commits", () => {
 				}
 			],
 			properties: {
-				"installationId": 12345
+				"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
 			}
 		});
 
@@ -420,7 +346,7 @@ describe("sync/commits", () => {
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
 
 			const data: BackfillMessagePayload = {
-				installationId: installationIdForGhes,
+				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
 				jiraHost,
 				gitHubAppConfig: {
 					uuid: gitHubServerApp.uuid,

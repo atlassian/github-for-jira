@@ -7,7 +7,6 @@ import { sqsQueues } from "../sqs/queues";
 
 jest.mock("../sqs/queues");
 
-
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
 const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";

@@ -12,13 +12,10 @@ import pullRequestChangesWithBranch from "fixtures/pull-request-test-changes-wit
 import pullRequestTriggeredByBot from "fixtures/pull-request-triggered-by-bot.json";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { GitHubServerApp } from "models/github-server-app";
-import { v4 as uuid } from "uuid";
 import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import fs from "fs";
-import path from "path";
+import { DatabaseStateBuilder } from "test/utils/database-state-builder";
 
 jest.mock("config/feature-flags");
 
@@ -210,35 +207,10 @@ describe("Pull Request Webhook", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
-		const GHES_GITHUB_UUID = uuid();
-		const GHES_GITHUB_APP_ID = 1234;
-		const GHES_GITHUB_APP_NAME = "test_app";
-		const GHES_GITHUB_APP_CLIENT_ID = "client_id";
-		const GHES_GITHUB_APP_CLIENT_SECRET = "client_secret";
-		const GHES_GITHUB_APP_WEBHOOK_SECRET = "webhook_secret";
-		const JIRA_INSTALLATION_ID = 111;
-		const JIRA_CLIENT_KEY = "jira-key";
-
-		const gitHubServerApp = await GitHubServerApp.install({
-			uuid: GHES_GITHUB_UUID,
-			appId: GHES_GITHUB_APP_ID,
-			gitHubBaseUrl: gheUrl,
-			gitHubClientId: GHES_GITHUB_APP_CLIENT_ID,
-			gitHubClientSecret: GHES_GITHUB_APP_CLIENT_SECRET,
-			webhookSecret: GHES_GITHUB_APP_WEBHOOK_SECRET,
-			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
-			gitHubAppName: GHES_GITHUB_APP_NAME,
-			installationId: JIRA_INSTALLATION_ID
-		});
-
-		await Subscription.install({
-			installationId: gitHubInstallationId,
-			host: jiraHost,
-			gitHubAppId: gitHubServerApp.id,
-			clientKey: JIRA_CLIENT_KEY
-		});
-
 		mockSystemTime(12345678);
+
+		const { gitHubServerApp } = await new DatabaseStateBuilder().forServer().build();
+
 		const jiraClientDevinfoPullRequestDeleteMock = jest.fn();
 
 		await pullRequestWebhookHandler(new WebhookContext({
@@ -247,12 +219,12 @@ describe("Pull Request Webhook", () => {
 			payload: pullRequestRemoveKeys.payload,
 			log: getLogger("test"),
 			gitHubAppConfig: {
-				gitHubAppId: gitHubServerApp.id,
-				appId: gitHubServerApp.appId,
-				clientId: gitHubServerApp.gitHubClientId,
-				gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+				gitHubAppId: gitHubServerApp!.id,
+				appId: gitHubServerApp!.appId,
+				clientId: gitHubServerApp!.gitHubClientId,
+				gitHubBaseUrl: gitHubServerApp!.gitHubBaseUrl,
 				gitHubApiUrl: gheApiUrl,
-				uuid: gitHubServerApp.uuid
+				uuid: gitHubServerApp!.uuid
 			}
 		}), {
 			baseURL: jiraHost,

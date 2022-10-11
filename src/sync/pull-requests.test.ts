@@ -1,20 +1,16 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { Subscription } from "models/subscription";
 import { processInstallation } from "./installation";
 import nock from "nock";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import pullRequestList from "fixtures/api/pull-request-list.json";
 import pullRequest from "fixtures/api/pull-request.json";
-import { RepoSyncState } from "models/reposyncstate";
-import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
-import fs from "fs";
-import path from "path";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { DatabaseStateBuilder } from "test/utils/database-state-builder";
 
 jest.mock("config/feature-flags");
 
@@ -26,40 +22,12 @@ describe("sync/pull-request", () => {
 	});
 
 	describe('cloud', () => {
-		const gitHubInstallationId = 1234;
 
 		beforeEach(async () => {
-			await Installation.create({
-				gitHubInstallationId,
-				jiraHost,
-				encryptedSharedSecret: "secret",
-				clientKey: "client-key"
-			});
-			const subscription = await Subscription.create({
-				gitHubInstallationId,
-				jiraHost,
-				syncStatus: "ACTIVE",
-				repositoryStatus: "complete",
-				gitHubAppId: null
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: subscription.id,
-				repoId: 1,
-				repoName: "test-repo-name",
-				repoOwner: "integrations",
-				repoFullName: "test-repo-name",
-				repoUrl: "test-repo-url",
-				repoUpdatedAt: new Date(),
-				repoPushedAt: new Date(),
-				branchStatus: "complete",
-				commitStatus: "complete",
-				pullStatus: "pending", // We want the next process to be pulls
-				deploymentStatus: "complete",
-				buildStatus: "complete",
-				updatedAt: new Date(),
-				createdAt: new Date()
-			});
+			await new DatabaseStateBuilder()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForPrs()
+				.build();
 		});
 
 		describe.each([
@@ -69,9 +37,9 @@ describe("sync/pull-request", () => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 				pullRequestList[0].title = title;
 				pullRequestList[0].head.ref = head;
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
-				githubUserTokenNock(gitHubInstallationId);
+				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls")
 					.query(true)
@@ -127,19 +95,19 @@ describe("sync/pull-request", () => {
 						],
 					"properties":
 						{
-							"installationId": 1234
+							"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
 						}
 				}).reply(200);
 
 				await expect(processInstallation()({
-					installationId: gitHubInstallationId,
+					installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
 			});
 		});
 
 		it("should not sync if nodes are empty", async () => {
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 			githubNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -149,7 +117,7 @@ describe("sync/pull-request", () => {
 			const scope = interceptor.reply(200);
 
 			await expect(processInstallation()({
-				installationId: gitHubInstallationId,
+				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
@@ -157,7 +125,7 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 			githubNock.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
 				.reply(200, pullRequestList);
@@ -166,7 +134,7 @@ describe("sync/pull-request", () => {
 			const scope = interceptor.reply(200);
 
 			await expect(processInstallation()({
-				installationId: gitHubInstallationId,
+				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
@@ -175,71 +143,23 @@ describe("sync/pull-request", () => {
 	});
 
 	describe('server', () => {
-		const gitHubInstallationIdForGhes = 12345;
-
-		let subscriptionForGhe: Subscription;
 		let gitHubServerApp: GitHubServerApp;
-		let installationForGhes: Installation;
-
-		const GHE_PEM = fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" });
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
-			installationForGhes = await Installation.create({
-				gitHubInstallationId: gitHubInstallationIdForGhes,
-				jiraHost,
-				encryptedSharedSecret: "secret",
-				clientKey: "client-key"
-			});
-
-			gitHubServerApp = await GitHubServerApp.create({
-				uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
-				appId: 12321,
-				gitHubBaseUrl: gheUrl,
-				gitHubClientId: "client-id",
-				gitHubClientSecret: "client-secret",
-				webhookSecret: "webhook-secret",
-				privateKey: GHE_PEM,
-				gitHubAppName: "app-name",
-				installationId: installationForGhes.id
-			});
-
-			subscriptionForGhe = await Subscription.create({
-				gitHubInstallationId: gitHubInstallationIdForGhes,
-				jiraHost,
-				syncStatus: "ACTIVE",
-				repositoryStatus: "complete",
-				gitHubAppId: gitHubServerApp.id
-			});
-
-			await RepoSyncState.create({
-				subscriptionId: subscriptionForGhe.id,
-				repoId: 1,
-				repoName: "test-repo-name",
-				repoOwner: "integrations",
-				repoFullName: "test-repo-name",
-				repoUrl: "test-repo-url",
-				repoUpdatedAt: new Date(),
-				repoPushedAt: new Date(),
-				branchStatus: "complete",
-				commitStatus: "complete",
-				pullStatus: "pending", // We want the next process to be pulls
-				deploymentStatus: "complete",
-				buildStatus: "complete",
-				updatedAt: new Date(),
-				createdAt: new Date()
-			});
+			const buildResult = await new DatabaseStateBuilder().forServer().withActiveRepoSyncState().repoSyncStatePendingForPrs().build();
+			gitHubServerApp = buildResult.gitHubServerApp!;
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			pullRequestList[0].title = "[TES-15] Evernote Test";
 			pullRequestList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(gitHubInstallationIdForGhes);
-			gheUserTokenNock(gitHubInstallationIdForGhes);
-			gheUserTokenNock(gitHubInstallationIdForGhes);
+			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -295,12 +215,12 @@ describe("sync/pull-request", () => {
 					],
 				"properties":
 					{
-						"installationId": gitHubInstallationIdForGhes
+						"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
 					}
 			}).reply(200);
 
 			const data: BackfillMessagePayload = {
-				installationId: gitHubInstallationIdForGhes,
+				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
 				jiraHost,
 				gitHubAppConfig: {
 					uuid: gitHubServerApp.uuid,
