@@ -1,5 +1,6 @@
 let queriedRepos = [];
 let totalRepos = [];
+let uuid;
 
 $(document).ready(() => {
   // Fetching the list of default repos
@@ -8,8 +9,11 @@ $(document).ready(() => {
     text: $(option).html()
   })).toArray();
 
-  $("#ghServers").auiSelect2();
-
+  uuid = $("#createBranchForm").attr("data-ghe-uuid");
+  let url = "/github/repository";
+  if(uuid) {
+    url = `/github/${uuid}/repository`;
+  } 
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
@@ -27,7 +31,7 @@ $(document).ready(() => {
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
-      url: "/github/repository",
+      url,
       data: term => ({
         repoName: term
       }),
@@ -111,9 +115,13 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+  if(uuid) {
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+  }
   $.ajax({
     type: "GET",
-    url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
+    url,
     success: (response) => {
       const { branches, defaultBranch } = response;
       const allBranches = branches.map((item) => ({
@@ -143,7 +151,7 @@ const loadBranches = () => {
       showLoaderOnSelect2Input("ghParentBranch", false);
     },
     error: () => {
-      showErrorMessage(["Oops, failed to fetch branches!"]);
+      showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
     }
@@ -172,27 +180,52 @@ const showValidationErrorMessage = (id, message) => {
 };
 
 const createBranchPost = () => {
-  const url = "/github/create-branch";
+  let url = "/github/create-branch";
+  if(uuid) {
+    url = `/github/${uuid}/create-branch`;
+  }
   const repo = getRepoDetails();
+  const newBranchName = $("#branchNameText").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
     sourceBranchName: $("#ghParentBranch").select2("val"),
-    newBranchName: $("#branchNameText").val(),
+    newBranchName,
     _csrf: $("#_csrf").val(),
   };
   toggleSubmitDisabled(true);
   hideErrorMessage();
 
+  showLoading();
   $.post(url, data)
     .done(() => {
-      // On success, we close the tab so the user returns to original screen
-      window.close();
+      showSuccessScreen(repo, newBranchName);
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
       showErrorMessage(error.responseJSON);
+      hideLoading();
     });
+};
+
+const showLoading = () => {
+  $("#createBranchForm").hide();
+  $(".headerImageLogo").addClass("headerImageLogo-lg");
+  $(".gitHubCreateBranch__spinner").show();
+};
+
+const showSuccessScreen = (repo, newBranchName) => {
+  $(".gitHubCreateBranch__spinner").hide();
+  $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
+  $(".gitHubCreateBranch__header").html("GitHub branch created");
+  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
+  // TODO: Redirect to the success screen with options, needs to be done after ARC-1727[https://softwareteams.atlassian.net/browse/ARC-1727]
+};
+
+const hideLoading = () => {
+  $("#createBranchForm").show();
+  $(".headerImageLogo").removeClass("headerImageLogo-lg");
+  $(".gitHubCreateBranch__spinner").hide();
 };
 
 const toggleSubmitDisabled = (bool) => {
@@ -210,10 +243,7 @@ const getRepoDetails = () => {
 
 const showErrorMessage = (messages) => {
   $(".gitHubCreateBranch__serverError").show();
-  let errorList = '<ul class="m-1">';
-  messages.map(message => errorList +=  `<li>${message}</li>`);
-  errorList += '</ul>';
-  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch. This can be caused by one of the following reasons:</div>${errorList}`);
+  $(".errorMessageBox__message").empty().append(`${messages}`);
 };
 
 const hideErrorMessage = () => {
