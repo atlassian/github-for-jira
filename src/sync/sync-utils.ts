@@ -9,10 +9,12 @@ import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
 
+type SyncType = "full" | "partial";
+
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: "full" | "partial",
+	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
 ): Promise<void> {
@@ -26,11 +28,10 @@ export async function findOrStartSync(
 
 	logger.info({ subscription, syncType }, "Starting sync");
 
-	// await resetTasksSyncFromSubscription(targetTasks, subscription, syncType);
+	await resetRepoSyncStateTasksFromSubscription(subscription, targetTasks, syncType);
 
 	if (syncType === "full" && !targetTasks?.length) {
 		fullSyncStartTime = new Date().toISOString();
-
 		await subscription.update({
 			totalNumberOfRepos: null,
 			repositoryCursor: null,
@@ -52,44 +53,30 @@ export async function findOrStartSync(
 		gitHubAppConfig
 	}, 0, logger);
 }
-//
-// static async resetTasksSyncFromSubscription(targetTasks: TaskType[], subscription: Subscription): Promise<[number, RepoSyncState[]]> {
-// 	const resetTasks = {
-// 		branch: {
-// 			branchStatus: null,
-// 			branchCursor: null
-// 		},
-// 		pull: {
-// 			pullStatus: null,
-// 			pullCursor: null
-// 		},
-// 		commit: {
-// 			commitStatus: null,
-// 			commitCursor: null
-// 		},
-// 		build: {
-// 			buildStatus: null,
-// 			buildCursor: null
-// 		},
-// 		deployment: {
-// 			deploymentStatus: null,
-// 			deploymentCursor: null
-// 		}
-// 	};
-//
-// 	const updateTasks = {};
-// 	targetTasks.forEach(task => {
-// 		Object.assign(updateTasks, resetTasks[task]);
-// 	});
-// 	return RepoSyncState.update({
-// 		repoUpdatedAt: null,
-// 		...updateTasks
-// 	}, {
-// 		where: {
-// 			subscriptionId: subscription.id
-// 		}
-// 	});
-// }
+
+const resetRepoSyncStateTasksFromSubscription = async (subscription: Subscription, targetTasks?: TaskType[], syncType?: SyncType): Promise<[number, RepoSyncState[]] | undefined> => {
+
+	if (!targetTasks?.length) {
+		return;
+	}
+
+	const updateTasks = {};
+	targetTasks.forEach(task => {
+		if (syncType === "full") {
+			updateTasks[`${task}Cursor`] = null;
+		}
+		updateTasks[`${task}Status`] = null;
+	});
+
+	return RepoSyncState.update({
+		repoUpdatedAt: null,
+		...updateTasks
+	}, {
+		where: {
+			subscriptionId: subscription.id
+		}
+	});
+};
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
@@ -106,10 +93,10 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 
 	const gitHubAppId = subscription.gitHubAppId;
 
-	//cloud
+	// cloud
 	if (!gitHubAppId) return cloudGitHubAppConfig();
 
-	//ghes
+	// ghes
 	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
 	if (!gitHubServerApp) {
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
