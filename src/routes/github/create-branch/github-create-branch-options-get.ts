@@ -14,6 +14,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	}
 
 	if (!issueKey) {
+
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
@@ -28,7 +29,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
 		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 	}
-
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		servers,

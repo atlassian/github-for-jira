@@ -10,7 +10,7 @@ describe("GitHub Create Branch Options Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issue_key: "1", issue_summary: "random-string" };
+			req.query = { issueKey: "1", issueSummary: "random-string" };
 			req.csrfToken = jest.fn();
 			next();
 		});
