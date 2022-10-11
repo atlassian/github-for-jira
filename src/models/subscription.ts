@@ -50,6 +50,15 @@ export class Subscription extends Model {
 		});
 	}
 
+	static async getAllForHostAndCloud(jiraHost: string): Promise<Subscription[]> {
+		return this.findAll({
+			where: {
+				gitHubAppId: null,
+				jiraHost
+			}
+		});
+	}
+
 	static getAllForInstallation(
 		gitHubInstallationId: number,
 		gitHubAppId: number | undefined
