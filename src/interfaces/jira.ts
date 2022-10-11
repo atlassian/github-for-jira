@@ -53,8 +53,8 @@ export interface JiraBuild {
 	references?: JiraPullRequestHead[];
 }
 
-export interface JiraBuildData {
-	product: string;
+export interface JiraBuildBulkSubmitData {
+	product: string; // TODO: doesn't match with data depot API docs (must be under providerMetadata), check with Saiyans
 	builds: JiraBuild[];
 }
 
@@ -150,7 +150,7 @@ export interface JiraDeployment {
 	associations: JiraAssociation[];
 }
 
-export interface JiraDeploymentData {
+export interface JiraDeploymentBulkSubmitData {
 	deployments: JiraDeployment[];
 }
 
@@ -169,7 +169,7 @@ export interface JiraCommitKey {
 	repositoryId: TransformedRepositoryId;
 }
 
-export interface JiraRemoteLinkData {
+export interface JiraRemoteLinkBulkSubmitData {
 	remoteLinks: JiraRemoteLink[];
 }
 

@@ -1,5 +1,5 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
+import { JiraRemoteLinkBulkSubmitData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
@@ -57,7 +57,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 	}
 };
 
-export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
+export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkBulkSubmitData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log, context.gitHubAppConfig?.gitHubAppId);
