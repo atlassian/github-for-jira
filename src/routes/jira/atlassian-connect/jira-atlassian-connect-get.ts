@@ -71,7 +71,7 @@ const modules = {
 			name: {
 				value: "GitHub Create Branch"
 			},
-			url: `/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}&cat={ac.cat}`,
+			url: `/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}`,
 			location: "none"
 		},
 		{
@@ -175,7 +175,7 @@ const addCreateBranchAction = async (modules) => {
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
-				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary=JOSHKAYTEST&cat=dog`
+				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
 			}
 		};
 	}

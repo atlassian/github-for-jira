@@ -38,8 +38,17 @@ subRouter.use("/setup", GithubSetupRouter);
 // App Manifest flow routes
 subRouter.use("/manifest", GithubManifestRouter);
 
+
+
 // All following routes need Github Auth
 subRouter.use(GithubAuthMiddleware);
+
+subRouter.use("/success", (req, res) => {
+	res.render("github-success.hbs", {
+		csrfToken: req.csrfToken(),
+		nonce: res.locals.nonce
+	});
+});
 
 subRouter.use("/configuration", GithubConfigurationRouter);
 

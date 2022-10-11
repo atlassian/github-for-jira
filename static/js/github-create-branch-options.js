@@ -37,7 +37,7 @@ $(document).ready(() => {
 		// If we don't have a GitHub token we need to go get one
 		if (!gitHubToken) {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session/github/success", getCreateBranchTargetUrl());
+				const child = openChildWindow("/github/success", getCreateBranchTargetUrl());
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
