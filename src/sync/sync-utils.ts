@@ -26,19 +26,18 @@ export async function findOrStartSync(
 
 	logger.info({ subscription, syncType }, "Starting sync");
 
-	if (syncType === "full") {
+	// await resetTasksSyncFromSubscription(targetTasks, subscription, syncType);
+
+	if (syncType === "full" && !targetTasks?.length) {
 		fullSyncStartTime = new Date().toISOString();
-		if (targetTasks && targetTasks.length > 0) {
-			await RepoSyncState.resetTasksSyncFromSubscription(targetTasks, subscription);
-		} else {
-			await subscription.update({
-				totalNumberOfRepos: null,
-				repositoryCursor: null,
-				repositoryStatus: null
-			});
-			// Remove all state as we're starting anew
-			await RepoSyncState.deleteFromSubscription(subscription);
-		}
+
+		await subscription.update({
+			totalNumberOfRepos: null,
+			repositoryCursor: null,
+			repositoryStatus: null
+		});
+		// Remove all state as we're starting anew
+		await RepoSyncState.deleteFromSubscription(subscription);
 	}
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
@@ -53,6 +52,44 @@ export async function findOrStartSync(
 		gitHubAppConfig
 	}, 0, logger);
 }
+//
+// static async resetTasksSyncFromSubscription(targetTasks: TaskType[], subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+// 	const resetTasks = {
+// 		branch: {
+// 			branchStatus: null,
+// 			branchCursor: null
+// 		},
+// 		pull: {
+// 			pullStatus: null,
+// 			pullCursor: null
+// 		},
+// 		commit: {
+// 			commitStatus: null,
+// 			commitCursor: null
+// 		},
+// 		build: {
+// 			buildStatus: null,
+// 			buildCursor: null
+// 		},
+// 		deployment: {
+// 			deploymentStatus: null,
+// 			deploymentCursor: null
+// 		}
+// 	};
+//
+// 	const updateTasks = {};
+// 	targetTasks.forEach(task => {
+// 		Object.assign(updateTasks, resetTasks[task]);
+// 	});
+// 	return RepoSyncState.update({
+// 		repoUpdatedAt: null,
+// 		...updateTasks
+// 	}, {
+// 		where: {
+// 			subscriptionId: subscription.id
+// 		}
+// 	});
+// }
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
