@@ -6,31 +6,34 @@ import { GitHubServerApp } from "~/src/models/github-server-app";
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { jiraHost } = res.locals;
-	const { issue_key: key } = req.query;
+	const { issueKey } = req.query;
+	const { githubToken } = req.session;
 
 	if (!jiraHost) {
 		return next(new Error(Errors.MISSING_JIRA_HOST));
 	}
 
-	if (!key) {
+	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
+
 	const servers = await getGitHubServers(jiraHost);
 	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 
 	// Only GitHub cloud server connected
-	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
+	if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 		res.redirect(`/github/create-branch${url.search}`);
 	}
 	// Only single GitHub Enterprise connected
-	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
+	if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
 		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 	}
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
-		issueKey: key,
-		servers
+		servers,
+		issueKey,
+		githubToken
 	});
 
 };

@@ -1,8 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import {
-	replaceSpaceWithHyphenHelper
-} from "utils/handlebars/handlebar-helpers";
+import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -18,12 +16,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const { issue_key: key, issue_summary: summary } = req.query;
-	if (!key) {
+	const { issueKey, issueSummary } = req.query;
+	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
+	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const response = await gitHubUserClient.getUserRepositories();
@@ -34,8 +32,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		issue: {
-			branchName: `${key}-${branchSuffix}`,
-			key
+			branchName: `${issueKey}-${branchSuffix}`,
+			key: issueKey
 		},
 		uuid: gitHubAppConfig.uuid,
 		repos: response.viewer.repositories.edges,

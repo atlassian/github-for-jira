@@ -1,3 +1,26 @@
+const params = new URLSearchParams(window.location.search.substring(1));
+const jiraHost = params.get("xdm_e");
+
+function openChildWindow(url, redirectUrl) {
+	const child = window.open(url);
+	const interval = setInterval(function () {
+		if (child.closed) {
+			clearInterval(interval);
+			window.location.href = redirectUrl;
+		}
+	}, 500);
+
+	return child;
+}
+
+const getCreateBranchTargetUrl = () => {
+	if ($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
+		return`/github/create-branch?${window.location.search.substring(1)}`;
+	}
+	const uuid = $("#ghServers").select2("val");
+	return `/github/${uuid}/create-branch?${window.location.search.substring(1)}`;
+}
+
 $(document).ready(() => {
 
   $("#ghServers").auiSelect2();
@@ -9,13 +32,20 @@ $(document).ready(() => {
 
   $("#createBranchOptionsForm").submit((event) => {
     event.preventDefault();
-     if($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
-      window.location.href = `/github/create-branch?${window.location.search.substring(1)}`;
-    } else {
-      const uuid = $("#ghServers").select2("val");
-      window.location.href = `/github/${uuid}/create-branch?${window.location.search.substring(1)}`;
-    } 
+
+		const gitHubToken = $("#_csrf").val();
+		// If we don't have a GitHub token we need to go get one
+		if (!gitHubToken) {
+			AP.context.getToken(function(token) {
+				const child = openChildWindow("/session/github/success", getCreateBranchTargetUrl());
+				child.window.jiraHost = jiraHost;
+				child.window.jwt = token;
+			});
+			return;
+		}
+		window.location.href = getCreateBranchTargetUrl();
   });
+
 
 });
 
