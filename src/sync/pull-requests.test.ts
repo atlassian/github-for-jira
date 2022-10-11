@@ -21,6 +21,54 @@ describe("sync/pull-request", () => {
 		mockSystemTime(12345678);
 	});
 
+	const buildJiraPayload = (repoId: string) => {
+		return {
+			"preventTransitions": true,
+			"repositories":
+				[
+					{
+						"id": repoId,
+						"name": "test-repo-name",
+						"pullRequests":
+							[
+								{
+									"author":
+										{
+											"avatar": "test-pull-request-author-avatar",
+											"name": "test-pull-request-author-login",
+											"email": "test-pull-request-author-login@noreply.user.github.com",
+											"url": "test-pull-request-author-url"
+										},
+									"commentCount": 10,
+									"destinationBranch": "devel",
+									"destinationBranchUrl": "test-repo-url/tree/devel",
+									"displayId": "#51",
+									"id": 51,
+									"issueKeys":
+										[
+											"TES-15"
+										],
+									"lastUpdate": "2018-05-04T14:06:56Z",
+									"sourceBranch": "use-the-force",
+									"sourceBranchUrl": "test-repo-url/tree/use-the-force",
+									"status": "DECLINED",
+									"timestamp": "2018-05-04T14:06:56Z",
+									"title": "Testing force pushes",
+									"url": "https://github.com/integrations/test/pull/51",
+									"updateSequenceId": 12345678
+								}
+							],
+						"url": "test-repo-url",
+						"updateSequenceId": 12345678
+					}
+				],
+			"properties":
+				{
+					"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+				}
+		};
+	};
+
 	describe('cloud', () => {
 
 		beforeEach(async () => {
@@ -53,51 +101,7 @@ describe("sync/pull-request", () => {
 						html_url: "test-pull-request-author-url"
 					});
 
-				jiraNock.post("/rest/devinfo/0.10/bulk", {
-					"preventTransitions": true,
-					"repositories":
-						[
-							{
-								"id": "1",
-								"name": "test-repo-name",
-								"pullRequests":
-									[
-										{
-											"author":
-												{
-													"avatar": "test-pull-request-author-avatar",
-													"name": "test-pull-request-author-login",
-													"email": "test-pull-request-author-login@noreply.user.github.com",
-													"url": "test-pull-request-author-url"
-												},
-											"commentCount": 10,
-											"destinationBranch": "devel",
-											"destinationBranchUrl": "test-repo-url/tree/devel",
-											"displayId": "#51",
-											"id": 51,
-											"issueKeys":
-												[
-													"TES-15"
-												],
-											"lastUpdate": "2018-05-04T14:06:56Z",
-											"sourceBranch": "use-the-force",
-											"sourceBranchUrl": "test-repo-url/tree/use-the-force",
-											"status": "DECLINED",
-											"timestamp": "2018-05-04T14:06:56Z",
-											"title": "Testing force pushes",
-											"url": "https://github.com/integrations/test/pull/51",
-											"updateSequenceId": 12345678
-										}
-									],
-								"url": "test-repo-url",
-								"updateSequenceId": 12345678
-							}
-						],
-					"properties":
-						{
-							"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
-						}
-				}).reply(200);
+				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
 
 				await expect(processInstallation()({
 					installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
@@ -173,51 +177,7 @@ describe("sync/pull-request", () => {
 					html_url: "test-pull-request-author-url"
 				});
 
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				"preventTransitions": true,
-				"repositories":
-					[
-						{
-							"id": transformRepositoryId(1, gheUrl),
-							"name": "test-repo-name",
-							"pullRequests":
-								[
-									{
-										"author":
-											{
-												"avatar": "test-pull-request-author-avatar",
-												"name": "test-pull-request-author-login",
-												"email": "test-pull-request-author-login@noreply.user.github.com",
-												"url": "test-pull-request-author-url"
-											},
-										"commentCount": 10,
-										"destinationBranch": "devel",
-										"destinationBranchUrl": "test-repo-url/tree/devel",
-										"displayId": "#51",
-										"id": 51,
-										"issueKeys":
-											[
-												"TES-15"
-											],
-										"lastUpdate": "2018-05-04T14:06:56Z",
-										"sourceBranch": "use-the-force",
-										"sourceBranchUrl": "test-repo-url/tree/use-the-force",
-										"status": "DECLINED",
-										"timestamp": "2018-05-04T14:06:56Z",
-										"title": "Testing force pushes",
-										"url": "https://github.com/integrations/test/pull/51",
-										"updateSequenceId": 12345678
-									}
-								],
-							"url": "test-repo-url",
-							"updateSequenceId": 12345678
-						}
-					],
-				"properties":
-					{
-						"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
-					}
-			}).reply(200);
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload(transformRepositoryId(1, gheUrl))).reply(200);
 
 			const data: BackfillMessagePayload = {
 				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,

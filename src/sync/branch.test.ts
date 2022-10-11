@@ -34,43 +34,19 @@ describe("sync/branches", () => {
 		mockSystemTime(12345678);
 	});
 
-	describe("cloud", () => {
-
-		const makeExpectedResponse = (branchName) => ({
-			preventTransitions: true,
-			repositories: [
-				{
-					branches: [
-						{
-							createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
-							id: branchName,
-							issueKeys: ["TES-123"]
-								.concat(jiraIssueKeyParser(branchName))
-								.reverse()
-								.filter((key) => !!key),
-							lastCommit: {
-								author: {
-									avatar: "https://camo.githubusercontent.com/test-avatar",
-									email: "test-author-email@example.com",
-									name: "test-author-name"
-								},
-								authorTimestamp: "test-authored-date",
-								displayId: "test-o",
-								fileCount: 0,
-								hash: "test-oid",
-								id: "test-oid",
-								issueKeys: ["TES-123"],
-								message: "TES-123 test-commit-message",
-								url: "test-repo-url/commit/test-sha",
-								updateSequenceId: 12345678
-							},
-							name: branchName,
-							url: `test-repo-url/tree/${branchName}`,
-							updateSequenceId: 12345678
-						}
-					],
-					commits: [
-						{
+	const makeExpectedResponseCloudServer = (branchName: string, repoId: string) => ({
+		preventTransitions: true,
+		repositories: [
+			{
+				branches: [
+					{
+						createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
+						id: branchName,
+						issueKeys: ["TES-123"]
+							.concat(jiraIssueKeyParser(branchName))
+							.reverse()
+							.filter((key) => !!key),
+						lastCommit: {
 							author: {
 								avatar: "https://camo.githubusercontent.com/test-avatar",
 								email: "test-author-email@example.com",
@@ -83,21 +59,49 @@ describe("sync/branches", () => {
 							id: "test-oid",
 							issueKeys: ["TES-123"],
 							message: "TES-123 test-commit-message",
-							timestamp: "test-authored-date",
 							url: "test-repo-url/commit/test-sha",
 							updateSequenceId: 12345678
-						}
-					],
-					id: "1",
-					name: "test-repo-name",
-					url: "test-repo-url",
-					updateSequenceId: 12345678
-				}
-			],
-			properties: {
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+						},
+						name: branchName,
+						url: `test-repo-url/tree/${branchName}`,
+						updateSequenceId: 12345678
+					}
+				],
+				commits: [
+					{
+						author: {
+							avatar: "https://camo.githubusercontent.com/test-avatar",
+							email: "test-author-email@example.com",
+							name: "test-author-name"
+						},
+						authorTimestamp: "test-authored-date",
+						displayId: "test-o",
+						fileCount: 0,
+						hash: "test-oid",
+						id: "test-oid",
+						issueKeys: ["TES-123"],
+						message: "TES-123 test-commit-message",
+						timestamp: "test-authored-date",
+						url: "test-repo-url/commit/test-sha",
+						updateSequenceId: 12345678
+					}
+				],
+				id: repoId,
+				name: "test-repo-name",
+				url: "test-repo-url",
+				updateSequenceId: 12345678
 			}
-		});
+		],
+		properties: {
+			installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+		}
+	});
+
+	describe("cloud", () => {
+
+		const makeExpectedResponse = (branchName: string) => {
+			return makeExpectedResponseCloudServer(branchName, "1");
+		};
 
 		const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
 			githubNock
@@ -325,68 +329,9 @@ describe("sync/branches", () => {
 			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 		});
 
-		const makeExpectedResponse = (branchName) => ({
-			preventTransitions: true,
-			repositories: [
-				{
-					branches: [
-						{
-							createPullRequestUrl: `test-repo-url/compare/${branchName}?title=TES-123-${branchName}&quick_pull=1`,
-							id: branchName,
-							issueKeys: ["TES-123"]
-								.concat(jiraIssueKeyParser(branchName))
-								.reverse()
-								.filter((key) => !!key),
-							lastCommit: {
-								author: {
-									avatar: "https://camo.githubusercontent.com/test-avatar",
-									email: "test-author-email@example.com",
-									name: "test-author-name"
-								},
-								authorTimestamp: "test-authored-date",
-								displayId: "test-o",
-								fileCount: 0,
-								hash: "test-oid",
-								id: "test-oid",
-								issueKeys: ["TES-123"],
-								message: "TES-123 test-commit-message",
-								url: "test-repo-url/commit/test-sha",
-								updateSequenceId: 12345678
-							},
-							name: branchName,
-							url: `test-repo-url/tree/${branchName}`,
-							updateSequenceId: 12345678
-						}
-					],
-					commits: [
-						{
-							author: {
-								avatar: "https://camo.githubusercontent.com/test-avatar",
-								email: "test-author-email@example.com",
-								name: "test-author-name"
-							},
-							authorTimestamp: "test-authored-date",
-							displayId: "test-o",
-							fileCount: 0,
-							hash: "test-oid",
-							id: "test-oid",
-							issueKeys: ["TES-123"],
-							message: "TES-123 test-commit-message",
-							timestamp: "test-authored-date",
-							url: "test-repo-url/commit/test-sha",
-							updateSequenceId: 12345678
-						}
-					],
-					id: transformRepositoryId(1, gheUrl),
-					name: "test-repo-name",
-					url: "test-repo-url",
-					updateSequenceId: 12345678
-				}
-			],
-			properties: {
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID
-			}
-		});
+		const makeExpectedResponse = (branchName: string) => {
+			return makeExpectedResponseCloudServer(branchName, transformRepositoryId(1, gheUrl));
+		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
 			const data: BackfillMessagePayload = {

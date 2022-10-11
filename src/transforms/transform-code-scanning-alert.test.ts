@@ -4,13 +4,8 @@ import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { Installation } from "models/installation";
-import { GitHubServerApp } from "models/github-server-app";
-import fs from "fs";
-import path from "path";
-import { Subscription } from "models/subscription";
-import { RepoSyncState } from "models/reposyncstate";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { DatabaseStateBuilder } from "test/utils/database-state-builder";
 
 jest.mock("config/feature-flags");
 
@@ -64,54 +59,13 @@ describe("code_scanning_alert transform", () => {
 	it("code_scanning_alert is transformed into a remote link for server", async () => {
 		turnOnGHESFF();
 
-		const installationForGhes = await Installation.create({
-			gitHubInstallationId: gitHubInstallationId,
-			jiraHost,
-			encryptedSharedSecret: "secret",
-			clientKey: "client-key"
-		});
-
-		const gitHubServerApp = await GitHubServerApp.create({
-			uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
-			appId: 12321,
-			gitHubBaseUrl: gheUrl,
-			gitHubClientId: "client-id",
-			gitHubClientSecret: "client-secret",
-			webhookSecret: "webhook-secret",
-			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
-			gitHubAppName: "app-name",
-			installationId: installationForGhes.id
-		});
-
-		const subscriptionForGhe = await Subscription.create({
-			gitHubInstallationId: gitHubInstallationId,
-			jiraHost,
-			syncStatus: "ACTIVE",
-			repositoryStatus: "complete",
-			gitHubAppId: gitHubServerApp.id
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptionForGhe.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			repoPushedAt: new Date(),
-			repoUpdatedAt: new Date(),
-			repoCreatedAt: new Date(),
-			branchStatus: "complete",
-			commitStatus: "pending", // We want the next process to be commits
-			pullStatus: "complete",
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
+		const builderOutput = await new DatabaseStateBuilder().forServer().build();
+		const gitHubServerApp = builderOutput.gitHubServerApp!;
 
 		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload, {
 			gitHubAppId: gitHubServerApp.id,
 			appId: gitHubServerApp.appId,
-			clientId: gitHubServerApp.gitHubClilentId,
+			clientId: gitHubServerApp.gitHubClientId,
 			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/api",
 			uuid: gitHubServerApp.uuid
