@@ -33,12 +33,12 @@ $(document).ready(() => {
 
   $("#createBranchOptionsForm").submit((event) => {
     event.preventDefault();
-		doTheThing();
+		getGitHubToken();
 	});
 
 });
 
-const doTheThing = () => {
+const getGitHubToken = () => {
 	const gitHubToken = $("gitHubToken").val();
 	// If we don't have a GitHub token we need to go get one
 	if (!gitHubToken) {
