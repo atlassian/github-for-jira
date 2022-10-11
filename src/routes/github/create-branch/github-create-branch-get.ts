@@ -6,6 +6,7 @@ import {
 import { createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
@@ -28,6 +29,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const response = await gitHubUserClient.getUserRepositories();
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
+	const featureFlagEnabled = await booleanFlag(BooleanFlags.CREATE_BRANCH, false);
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -39,7 +41,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		},
 		uuid: gitHubAppConfig.uuid,
 		repos: response.viewer.repositories.edges,
-		gitHubUser
+		gitHubUser,
+		featureFlagEnabled
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
