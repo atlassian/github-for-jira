@@ -9,7 +9,8 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const { issue_key: key } = req.query;
 
 	if (!jiraHost) {
-		return next(new Error(Errors.MISSING_JIRA_HOST));
+		res.status(404).send(Errors.MISSING_JIRA_HOST);
+		return;
 	}
 
 	if (!key) {
