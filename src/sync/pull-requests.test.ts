@@ -177,7 +177,7 @@ describe("sync/pull-request", () => {
 					html_url: "test-pull-request-author-url"
 				});
 
-			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload(transformRepositoryId(1, gheUrl))).reply(200);
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload(await transformRepositoryId(1, gheUrl))).reply(200);
 
 			const data: BackfillMessagePayload = {
 				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,

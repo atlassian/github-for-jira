@@ -35,7 +35,7 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 	}
 
 	return {
-		... transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
+		... await transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it

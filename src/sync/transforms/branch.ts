@@ -101,7 +101,7 @@ export const transformBranches = async (payload: { branches: any, repository: an
 	}
 
 	return {
-		... transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
+		... await transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		branches,
 		commits
 	};

@@ -4,8 +4,11 @@ import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
+jest.mock("config/feature-flags");
 
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -34,6 +37,14 @@ describe("BranchhWebhookHandler", () => {
 		});
 	});
 	describe("GitHub Enterprise Server", () => {
+
+		beforeEach(() => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_REPO_ID_TRANSFORMER,
+				expect.anything()
+			).mockResolvedValue(true);
+		});
+
 		it("should be called with GHES GitHubAppConfig", async () => {
 			await createBranchWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, undefined, GITHUB_INSTALLATION_ID);
 			expect(sqsQueues.branch.sendMessage).toBeCalledWith(expect.objectContaining({

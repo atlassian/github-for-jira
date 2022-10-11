@@ -1,4 +1,5 @@
 import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 declare const transformedRepositoryId: unique symbol;
 
@@ -26,7 +27,11 @@ function calculatePrefix(url: string) {
  * @param repositoryId
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): TransformedRepositoryId {
+export async function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): Promise<TransformedRepositoryId> {
+	if (!await booleanFlag(BooleanFlags.USE_REPO_ID_TRANSFORMER, false)) {
+		return ("" + repositoryId) as TransformedRepositoryId;
+	}
+
 	if (!gitHubBaseUrl || calculatePrefix(gitHubBaseUrl) === calculatePrefix(GITHUB_CLOUD_BASEURL)) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}

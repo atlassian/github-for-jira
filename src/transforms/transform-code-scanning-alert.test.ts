@@ -28,6 +28,11 @@ const turnOnGHESFF = () => {
 describe("code_scanning_alert transform", () => {
 	beforeEach(() => {
 		Date.now = jest.fn(() => 12345678);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_REPO_ID_TRANSFORMER,
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 	const gitHubInstallationId = 1234;
 	const jiraHost = "testHost";

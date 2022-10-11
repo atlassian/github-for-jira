@@ -107,7 +107,7 @@ export const getPullRequestTask = async (
 		jiraPayload:
 			pullRequests?.length
 				? {
-					... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+					... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 					pullRequests
 				}
 				: undefined

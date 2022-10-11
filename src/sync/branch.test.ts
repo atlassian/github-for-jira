@@ -329,8 +329,8 @@ describe("sync/branches", () => {
 			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 		});
 
-		const makeExpectedResponse = (branchName: string) => {
-			return makeExpectedResponseCloudServer(branchName, transformRepositoryId(1, gheUrl));
+		const makeExpectedResponse = async (branchName: string) => {
+			return makeExpectedResponseCloudServer(branchName, await transformRepositoryId(1, gheUrl));
 		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
@@ -352,7 +352,7 @@ describe("sync/branches", () => {
 			jiraNock
 				.post(
 					"/rest/devinfo/0.10/bulk",
-					makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
+					await makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
 				)
 				.reply(200);
 

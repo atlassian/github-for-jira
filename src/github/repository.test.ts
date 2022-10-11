@@ -16,6 +16,11 @@ describe('deleteRepositoryWebhookHandler', () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_REPO_ID_TRANSFORMER,
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 
 	it('should call delete repository endpoint for server', async () => {

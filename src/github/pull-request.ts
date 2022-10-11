@@ -66,7 +66,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
+				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 

@@ -321,12 +321,12 @@ describe("sync/commits", () => {
 			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 		});
 
-		const makeExpectedJiraResponse = (commits) => ({
+		const makeExpectedJiraResponse = async (commits) => ({
 			preventTransitions: true,
 			repositories: [
 				{
 					commits,
-					"id": transformRepositoryId(1, gheUrl),
+					"id": await transformRepositoryId(1, gheUrl),
 					"name": "test-repo-name",
 					"url": "test-repo-url",
 					"updateSequenceId": 12345678
@@ -337,9 +337,9 @@ describe("sync/commits", () => {
 			}
 		});
 
-		const createJiraNock = (commits) => {
+		const createJiraNock = async (commits) => {
 			jiraNock
-				.post("/rest/devinfo/0.10/bulk", makeExpectedJiraResponse(commits))
+				.post("/rest/devinfo/0.10/bulk", await makeExpectedJiraResponse(commits))
 				.reply(200);
 		};
 
@@ -378,7 +378,7 @@ describe("sync/commits", () => {
 					"updateSequenceId": 12345678
 				}
 			];
-			createJiraNock(commits);
+			await createJiraNock(commits);
 
 			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		});

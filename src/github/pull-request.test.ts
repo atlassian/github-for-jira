@@ -207,6 +207,11 @@ describe("Pull Request Webhook", () => {
 			expect.anything()
 		).mockResolvedValue(true);
 
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_REPO_ID_TRANSFORMER,
+			expect.anything()
+		).mockResolvedValue(true);
+
 		mockSystemTime(12345678);
 
 		const { gitHubServerApp } = await new DatabaseStateBuilder().forServer().build();

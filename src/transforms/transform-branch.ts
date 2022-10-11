@@ -42,7 +42,7 @@ export const transformBranch = async (gitHubInstallationClient: GitHubInstallati
 	try {
 		const lastCommit = await getLastCommit(gitHubInstallationClient, webhookPayload, issueKeys);
 		return {
-			... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+			... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 			branches: [
 				{
 					createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),

@@ -415,6 +415,11 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			turnOnGHESFF();
 
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_REPO_ID_TRANSFORMER,
+				expect.anything()
+			).mockResolvedValue(true);
+
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
