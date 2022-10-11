@@ -25,7 +25,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	// TODO - this should redirect to a you are not configured page instead.
