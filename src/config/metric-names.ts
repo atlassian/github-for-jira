@@ -51,3 +51,8 @@ export const metricWebhooks = {
 	webhookLatency: `${server}.webhooks.processing-time.latency`
 };
 
+export const metricCreateBranch = {
+	created: `${server}.create-branch.created`,
+	failed: `${server}.create-branch.failed`
+};
+
