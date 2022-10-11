@@ -5,7 +5,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
@@ -64,7 +64,9 @@ describe("code_scanning_alert transform", () => {
 	it("code_scanning_alert is transformed into a remote link for server", async () => {
 		turnOnGHESFF();
 
-		const builderOutput = await new DatabaseStateBuilder().forServer().build();
+		const builderOutput = await new DatabaseStateCreator()
+			.forServer()
+			.create();
 		const gitHubServerApp = builderOutput.gitHubServerApp!;
 
 		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload, {

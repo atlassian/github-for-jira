@@ -15,7 +15,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
@@ -214,7 +214,9 @@ describe("Pull Request Webhook", () => {
 
 		mockSystemTime(12345678);
 
-		const { gitHubServerApp } = await new DatabaseStateBuilder().forServer().build();
+		const { gitHubServerApp } = await new DatabaseStateCreator()
+			.forServer()
+			.create();
 
 		const jiraClientDevinfoPullRequestDeleteMock = jest.fn();
 

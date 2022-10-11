@@ -14,7 +14,7 @@ import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-quer
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -41,7 +41,7 @@ describe("sync/commits", () => {
 				}
 			],
 			properties: {
-				"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+				"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
 			}
 		});
 
@@ -67,10 +67,13 @@ describe("sync/commits", () => {
 		};
 
 		beforeEach(async () => {
-			await new DatabaseStateBuilder().withActiveRepoSyncState().repoSyncStatePendingForCommits().build();
+			await new DatabaseStateCreator()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForCommits()
+				.create();
 
 			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -84,7 +87,7 @@ describe("sync/commits", () => {
 		};
 
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
-			const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitNodesFixture);
 			const commits = [
@@ -113,7 +116,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should send Jira all commits that have Issue Keys", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(mixedCommitNodes);
 
@@ -180,7 +183,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should not call Jira if no issue keys are present", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitsNoKeys);
 
@@ -193,7 +196,7 @@ describe("sync/commits", () => {
 		});
 
 		it("should not call Jira if no data is returned", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			createGitHubNock(commitsNoKeys);
 
 			const interceptor = jiraNock.post(/.*/);
@@ -220,7 +223,7 @@ describe("sync/commits", () => {
 			});
 
 			it("should only get commits since date specified", async () => {
-				const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 				createGitHubNock(commitNodesFixture, { commitSince: dateCutoff.toISOString() });
 				const commits = [
@@ -256,7 +259,7 @@ describe("sync/commits", () => {
 					const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
 					mockSystemTime(time);
 					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
+					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
 
 					createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate });
 					const commits = [
@@ -311,14 +314,14 @@ describe("sync/commits", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
-			const builderResult = await new DatabaseStateBuilder()
+			const builderResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForCommits()
-				.build();
+				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
 
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
 		const makeExpectedJiraResponse = async (commits) => ({
@@ -333,7 +336,7 @@ describe("sync/commits", () => {
 				}
 			],
 			properties: {
-				"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+				"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
 			}
 		});
 
@@ -346,7 +349,7 @@ describe("sync/commits", () => {
 		it("should sync to Jira when Commit Nodes have jira references", async () => {
 
 			const data: BackfillMessagePayload = {
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost,
 				gitHubAppConfig: {
 					uuid: gitHubServerApp.uuid,

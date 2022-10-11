@@ -9,7 +9,7 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
@@ -153,18 +153,18 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	describe('cloud', () => {
 
 		beforeEach(async () => {
-			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateBuilder.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
+			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
 
-			await new DatabaseStateBuilder().build();
+			await new DatabaseStateCreator().create();
 		});
 
 		it(`supports branch and merge workflows, sending related commits in deployment for Cloud`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -246,10 +246,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`supports branch and merge workflows, sending zero commits in deployment when 500 issues`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -318,10 +318,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`uses user config to map environment`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit
@@ -396,10 +396,12 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		let gitHubClient: GitHubInstallationClient;
 
 		beforeEach(async () => {
-			const builderOutput = await new DatabaseStateBuilder().forServer().build();
+			const builderOutput = await new DatabaseStateCreator()
+				.forServer()
+				.create();
 
 			gitHubClient = new GitHubInstallationClient(
-				new InstallationId(gheUrl, builderOutput.gitHubServerApp!.appId, DatabaseStateBuilder.GITHUB_INSTALLATION_ID),
+				new InstallationId(gheUrl, builderOutput.gitHubServerApp!.appId, DatabaseStateCreator.GITHUB_INSTALLATION_ID),
 				{
 					hostname: gheUrl,
 					baseUrl: gheUrl,
@@ -421,10 +423,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			).mockResolvedValue(true);
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			// Mocking all GitHub API Calls
 			// Get commit

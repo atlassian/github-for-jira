@@ -21,7 +21,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -93,7 +93,7 @@ describe("sync/branches", () => {
 			}
 		],
 		properties: {
-			installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID
 		}
 	});
 
@@ -130,13 +130,13 @@ describe("sync/branches", () => {
 
 		beforeEach(async () => {
 
-			await new DatabaseStateBuilder()
+			await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForBranches()
-				.build();
+				.create();
 
 			mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		});
 
@@ -151,7 +151,7 @@ describe("sync/branches", () => {
 		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {
-			const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(branchNodesFixture);
 
 			jiraNock
@@ -166,7 +166,7 @@ describe("sync/branches", () => {
 		});
 
 		it("should send data if issue keys are only present in commits", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(branchCommitsHaveKeys);
 
 			jiraNock
@@ -181,7 +181,7 @@ describe("sync/branches", () => {
 		});
 
 		it("should send data if issue keys are only present in an associated PR title", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(associatedPRhasKeys);
 
 			jiraNock
@@ -223,7 +223,7 @@ describe("sync/branches", () => {
 						}
 					],
 					properties: {
-						installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+						installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID
 					}
 				})
 				.reply(200);
@@ -233,7 +233,7 @@ describe("sync/branches", () => {
 		});
 
 		it("should not call Jira if no issue keys are found", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockBranchRequest(branchNoIssueKeys);
 
 			jiraNock.post(/.*/).reply(200);
@@ -245,7 +245,7 @@ describe("sync/branches", () => {
 		});
 
 		it("should reschedule message with delay if there is rate limit", async () => {
-			const data = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockGitHubGraphQlRateLimit("12360");
 			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data, 15);
@@ -267,7 +267,7 @@ describe("sync/branches", () => {
 			});
 
 			it("should sync to Jira when branch refs have jira references", async () => {
-				const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost };
+				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 				nockBranchRequest(branchNodesFixture, { commitSince: dateCutoff.toISOString() });
 
 				jiraNock
@@ -288,7 +288,7 @@ describe("sync/branches", () => {
 					const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
 					mockSystemTime(time);
 					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
+					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
 
 					nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
 					jiraNock
@@ -319,14 +319,14 @@ describe("sync/branches", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
-			const builderResult = await new DatabaseStateBuilder()
+			const builderResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForBranches()
-				.build();
+				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
 
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
 		const makeExpectedResponse = async (branchName: string) => {
@@ -335,7 +335,7 @@ describe("sync/branches", () => {
 
 		it("should sync to Jira when branch refs have jira references", async () => {
 			const data: BackfillMessagePayload = {
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost,
 				gitHubAppConfig: {
 					uuid: gitHubServerApp.uuid,

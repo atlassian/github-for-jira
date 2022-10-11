@@ -5,14 +5,14 @@ import { GitHubServerApp } from "models/github-server-app";
 import fs from "fs";
 import path from "path";
 
-interface DatabaseStateBuilderResult {
+interface CreatorResult {
 	installation: Installation,
 	subscription: Subscription,
 	gitHubServerApp?: GitHubServerApp,
 	repoSyncState?: RepoSyncState
 }
 
-export class DatabaseStateBuilder {
+export class DatabaseStateCreator {
 
 	private forServerFlag: boolean;
 	private withActiveRepoSyncStateFlag: boolean;
@@ -52,7 +52,7 @@ export class DatabaseStateBuilder {
 		return this;
 	}
 
-	public async build(): Promise<DatabaseStateBuilderResult> {
+	public async create(): Promise<CreatorResult> {
 		const installation  = await Installation.create({
 			jiraHost,
 			encryptedSharedSecret: "secret",
@@ -72,7 +72,7 @@ export class DatabaseStateBuilder {
 		}) : undefined;
 
 		const subscription = await Subscription.create({
-			gitHubInstallationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 			jiraHost,
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",

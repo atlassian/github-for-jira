@@ -10,7 +10,7 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { DatabaseStateBuilder } from "test/utils/database-state-builder";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
@@ -64,7 +64,7 @@ describe("sync/pull-request", () => {
 				],
 			"properties":
 				{
-					"installationId": DatabaseStateBuilder.GITHUB_INSTALLATION_ID
+					"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
 				}
 		};
 	};
@@ -72,10 +72,10 @@ describe("sync/pull-request", () => {
 	describe('cloud', () => {
 
 		beforeEach(async () => {
-			await new DatabaseStateBuilder()
+			await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForPrs()
-				.build();
+				.create();
 		});
 
 		describe.each([
@@ -85,9 +85,9 @@ describe("sync/pull-request", () => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 				pullRequestList[0].title = title;
 				pullRequestList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls")
 					.query(true)
@@ -104,14 +104,14 @@ describe("sync/pull-request", () => {
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
 
 				await expect(processInstallation()({
-					installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
 			});
 		});
 
 		it("should not sync if nodes are empty", async () => {
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -121,7 +121,7 @@ describe("sync/pull-request", () => {
 			const scope = interceptor.reply(200);
 
 			await expect(processInstallation()({
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
@@ -129,7 +129,7 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
 				.reply(200, pullRequestList);
@@ -138,7 +138,7 @@ describe("sync/pull-request", () => {
 			const scope = interceptor.reply(200);
 
 			await expect(processInstallation()({
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
@@ -154,16 +154,20 @@ describe("sync/pull-request", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
-			const buildResult = await new DatabaseStateBuilder().forServer().withActiveRepoSyncState().repoSyncStatePendingForPrs().build();
+			const buildResult = await new DatabaseStateCreator()
+				.forServer()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForPrs()
+				.create();
 			gitHubServerApp = buildResult.gitHubServerApp!;
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
 			pullRequestList[0].title = "[TES-15] Evernote Test";
 			pullRequestList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateBuilder.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -180,7 +184,7 @@ describe("sync/pull-request", () => {
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload(await transformRepositoryId(1, gheUrl))).reply(200);
 
 			const data: BackfillMessagePayload = {
-				installationId: DatabaseStateBuilder.GITHUB_INSTALLATION_ID,
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost,
 				gitHubAppConfig: {
 					uuid: gitHubServerApp.uuid,
