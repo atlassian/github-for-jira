@@ -153,7 +153,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	req.log.debug("found github token");
 
 	if (!jiraHost) {
-		return next(new Error(Errors.MISSING_JIRA_HOST));
+		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return next();
 	}
 
 	req.log.debug(`found jira host: ${jiraHost}`);
