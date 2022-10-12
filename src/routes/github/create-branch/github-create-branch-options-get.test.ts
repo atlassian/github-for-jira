@@ -30,7 +30,7 @@ describe("GitHub Create Branch Options Get", () => {
 		}));
 	});
 
-	it("should hit the create branch option and render coming soon if ff if off", async () => {
+	it("should hit the create branch option and render coming soon if ff is off", async () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
