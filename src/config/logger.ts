@@ -1,6 +1,7 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
+import { v4 as newUUID } from "uuid";
 
 function censorUrl(url) {
 	if (!url) {
@@ -110,6 +111,7 @@ interface LoggerOptions {
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
+		id: newUUID(),
 		streams: [
 			loggerStreamSafe(),
 			loggerStreamUnsafe()
