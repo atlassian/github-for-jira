@@ -108,7 +108,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: e2e-screenshots
-          path: test/e2e/screenshots/
+          path: test/e2e/test-results/
 
   docker:
     runs-on: ubuntu-22.04

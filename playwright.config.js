@@ -1,19 +1,22 @@
 const { devices } = require("@playwright/test");
 
 module.exports = {
-	testDir: './test/e2e',
+	testDir: "./test/e2e",
 	testMatch: /.*\.e2e\.ts/,
+	outputDir: "./test/e2e/test-results",
 	use: {
-		trace: "on-first-retry",
+		trace: "retain-on-failure",
+		video: "retain-on-failure",
+		screenshot: 'only-on-failure',
 	},
 	timeout: 90000,
-	globalSetup: './test/e2e/setup.ts',
-	globalTeardown: './test/e2e/teardown.ts',
+	globalSetup: "./test/e2e/setup.ts",
+	globalTeardown: "./test/e2e/teardown.ts",
 	projects: [
 		{
 			name: "chromium",
 			use: { ...devices["Desktop Chrome"] }
-		},
+		}
 		/*{
 			name: "firefox",
 			use: { ...devices["Desktop Firefox"] }

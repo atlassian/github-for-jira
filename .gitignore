@@ -56,5 +56,4 @@ test/**/*.js.map
 .nebulae/
 
 # e2e tests
-test/e2e/states/
-test/e2e/screenshots/
+test/e2e/test-results/

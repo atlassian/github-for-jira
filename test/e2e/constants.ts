@@ -1,7 +1,7 @@
 import { e2eEnvVars } from "test/e2e/env-e2e";
 
-export const STATE_PATH = "./test/e2e/states";
-export const SCREENSHOT_PATH = "./test/e2e/screenshots";
+export const STATE_PATH = "./test/e2e/test-results/states";
+export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 
 export const testData: TestData = {
 	storagePath: STATE_PATH,
