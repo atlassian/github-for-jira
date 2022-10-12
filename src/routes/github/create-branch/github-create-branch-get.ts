@@ -32,6 +32,17 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_CONFIGURAITON));
 	}
 
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log('jiraHost');
+	console.log(jiraHost);
+
 	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;

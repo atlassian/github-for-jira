@@ -1,16 +1,8 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
-function openChildWindow(url, redirectUrl) {
-	const child = window.open(url);
-	const interval = setInterval(function () {
-		if (child.closed) {
-			clearInterval(interval);
-			window.location.href = redirectUrl;
-		}
-	}, 500);
-
-	return child;
+function goToCreateBranch() {
+	window.open(getCreateBranchTargetUrl(), "_blank")
 }
 
 const getCreateBranchTargetUrl = () => {
@@ -23,7 +15,6 @@ const getCreateBranchTargetUrl = () => {
 
 $(document).ready(() => {
 
-
   $("#ghServers").auiSelect2();
 
   $(".gitHubCreateBranchOptions__option").click((event) => {
@@ -33,24 +24,14 @@ $(document).ready(() => {
 
   $("#createBranchOptionsForm").submit((event) => {
     event.preventDefault();
-		getGitHubToken();
+		goToCreateBranch();
 	});
 
-});
-
-const getGitHubToken = () => {
-	const gitHubToken = $("gitHubToken").val();
-	// If we don't have a GitHub token we need to go get one
-	if (!gitHubToken) {
-		AP.context.getToken(function(token) {
-			const child = openChildWindow("/github/success", getCreateBranchTargetUrl());
-			child.window.jiraHost = jiraHost;
-			child.window.jwt = token;
-		});
-		return;
+  const autoRedirect = $("#autoRedirect").val();
+	if (autoRedirect) {
+		goToCreateBranch();
 	}
-	window.location.href = getCreateBranchTargetUrl();
-}
+});
 
 const ghServerOptionHandler = (event) => {
   event.preventDefault();
