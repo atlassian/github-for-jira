@@ -1,5 +1,6 @@
 import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
 declare const transformedRepositoryId: unique symbol;
 
@@ -33,8 +34,11 @@ export async function transformRepositoryId(repositoryId: number, gitHubBaseUrl?
 	}
 
 	if (!gitHubBaseUrl || calculatePrefix(gitHubBaseUrl) === calculatePrefix(GITHUB_CLOUD_BASEURL)) {
+		getLogger('bgvozdev-testing').info("Not prefixing");
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
+
+	getLogger('bgvozdev-testing').info("Do prefix");
 
 	return `${calculatePrefix(gitHubBaseUrl)}-${repositoryId}` as TransformedRepositoryId;
 }
