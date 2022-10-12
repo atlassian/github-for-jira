@@ -101,14 +101,19 @@ jobs:
           echo "GITHUB_PASSWORD=${{ secrets.E2E_GITHUB_PASSWORD }}" >> .env
           echo "GITHUB_URL=https://github.com" >> .env
       - run: docker-compose up -d
-      - run: sleep 30 && docker logs app
       - name: wait for app to be ready
         run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
-      - run: yarn run test:e2e || exit 0
+      - run: yarn run test:e2e
+      - name: export logs
+        if: always()
+        run: docker-compose logs --no-color > docker-compose.log
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
-          name: e2e-screenshots
-          path: test/e2e/test-results/
+          name: e2e-output
+          path: |
+            test/e2e/test-results/
+            docker-compose.log
 
   docker:
     runs-on: ubuntu-22.04

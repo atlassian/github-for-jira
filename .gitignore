@@ -26,8 +26,7 @@ coverage
 
 # log
 log/
-npm-debug.log
-yarn-error.log
+*.log
 
 # new relic
 newrelic_agent.log
