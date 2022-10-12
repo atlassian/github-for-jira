@@ -37,7 +37,6 @@ export class RepoSyncState extends Model {
 
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
-		console.log(statuses);
 		if (statuses.some(s => s === "failed")) {
 			return "failed";
 		}
