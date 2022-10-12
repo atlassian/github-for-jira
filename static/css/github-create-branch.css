@@ -121,3 +121,8 @@
   margin: 8px 0;
   display: inline-block;
 }
+
+.gitHubCreateBranch__createdLinks {
+  display: none;
+  justify-content: space-evenly;
+}

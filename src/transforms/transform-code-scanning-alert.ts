@@ -1,10 +1,11 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { JiraRemoteLinkData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
+import { JiraRemoteLinkBulkSubmitData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -56,7 +57,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 	}
 };
 
-export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkData | undefined> => {
+export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkBulkSubmitData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log, context.gitHubAppConfig?.gitHubAppId);
@@ -85,7 +86,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			id: `${repository.id}-${alert.number}`,
+			id: `${await transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			displayName: `Alert #${alert.number}`,
 			description: alert.rule.description.substring(0, MAX_STRING_LENGTH) || undefined,

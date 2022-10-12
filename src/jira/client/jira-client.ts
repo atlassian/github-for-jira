@@ -11,6 +11,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -143,15 +144,15 @@ export const getJiraClient = async (
 		},
 		devinfo: {
 			branch: {
-				delete: (repositoryId: string, branchRef: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, branchRef: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/branch/{branchJiraId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/branch/{branchJiraId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								branchJiraId: getJiraId(branchRef)
 							}
 						}
@@ -194,28 +195,28 @@ export const getJiraClient = async (
 					])
 			},
 			pullRequest: {
-				delete: (repositoryId: string, pullRequestId: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/pull_request/{pullRequestId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/pull_request/{pullRequestId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								pullRequestId
 							}
 						}
 					)
 			},
 			repository: {
-				delete: (repositoryId: string) =>
-					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
+				delete: (transformedRepositoryId: TransformedRepositoryId) =>
+					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
 						params: {
 							_updateSequenceId: Date.now()
 						},
 						urlParams: {
-							repositoryId
+							transformedRepositoryId
 						}
 					}),
 				update: async (data, options?: JiraSubmitOptions) => {
