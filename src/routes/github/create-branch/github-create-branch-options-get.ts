@@ -23,22 +23,9 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
-		autoRedirect: shouldRedirect(servers),
 		servers
 	});
 
-};
-
-const shouldRedirect = (servers) => {
-	// Only GitHub cloud server connected
-	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		return true;
-	}
-	// Only single GitHub Enterprise connected
-	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		return true;
-	}
-	return false;
 };
 
 const getGitHubServers = async (jiraHost: string) => {
