@@ -44,16 +44,7 @@ export class Subscription extends Model {
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				...(gitHubAppId && { gitHubAppId }), // Add gitHubAppId only if passed
-				jiraHost
-			}
-		});
-	}
-
-	static async getAllForHostAndCloud(jiraHost: string): Promise<Subscription[]> {
-		return this.findAll({
-			where: {
-				gitHubAppId: null,
+				...(gitHubAppId !== undefined && { gitHubAppId }), // Add gitHubAppId only if passed
 				jiraHost
 			}
 		});

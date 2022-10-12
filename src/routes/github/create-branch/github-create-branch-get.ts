@@ -26,13 +26,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!key) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
-
-	let subscriptions;
-	if (gitHubAppConfig.gitHubAppId) {
-		subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId);
-	} else {
-		subscriptions = await Subscription.getAllForHostAndCloud(jiraHost);
-	}
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
 	// TODO - this should redirect to a you are not configured page instead.
 	if (!subscriptions) {
