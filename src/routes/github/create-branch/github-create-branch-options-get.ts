@@ -34,7 +34,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		issueKey: key,
 		servers
 	});
-
 };
 
 const getGitHubServers = async (jiraHost: string) => {

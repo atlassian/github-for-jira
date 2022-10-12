@@ -30,7 +30,7 @@
                 <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
             </div>
             <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
-            <div class="jiraSelectGitHubProduct__options__container temp-class">
+            <div class="jiraSelectGitHubProduct__options__container">
                 <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub product would you like to use?</h2>
 
                 <div class="jiraSelectGitHubProduct__options__cardsContainer">
@@ -55,11 +55,14 @@
 
             <div class="jiraSelectGitHubProduct__selectServerInstance">
                  <form class="aui jiraSelectGitHubProduct__selectServerInstance__form">
-                    <div class="field-group">
-                      <aui-label for="serverInstance">Select GitHub Enterprise Server instance</aui-label>
-                      <input type="hidden" id="serverInstance">
-                    </div>
-                    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+                     <div class="field-group" id="serverInstance__fieldGroup">
+                        <aui-label for="serverInstance" id="serverInstance__label">GitHub Enterprise Server instance</aui-label>
+                        <select id="ghServers" name="serverInstance" class="full-width-field" placeholder="Select a server">
+                          {{#each servers.gheServerInfos}}
+                            <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
+                          {{/each}}
+                        </select>
+                     </div>
                  </form>
             </div>
 

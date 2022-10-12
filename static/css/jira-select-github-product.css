@@ -1,6 +1,6 @@
 .jiraSelectGitHubProduct__content {
     margin: auto;
-    max-width: 840px;
+    max-width: 725px;
 }
 
 .jiraSelectGitHubProduct__content {
@@ -127,11 +127,15 @@
     display: none;
 }
 
-.jiraSelectGitHubProduct__selectServerInstance__form > .field-group {
-
+.jiraSelectGitHubProduct__selectServerInstance__form > #serverInstance__fieldGroup {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
 }
 
-.temp-class {
-    margin: auto;
-    max-width: 725px;
+.jiraSelectGitHubProduct__selectServerInstance__form > .field-group > #serverInstance__label {
+    margin: 0 auto 0.3em;
+    text-align: left;
+    width: 100%;
 }
+
