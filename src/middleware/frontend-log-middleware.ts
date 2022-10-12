@@ -4,6 +4,7 @@ import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/featu
 import { defaultLogLevel, getLogger } from "config/logger";
 import { getUnvalidatedJiraHost } from "middleware/jirahost-middleware";
 import { merge } from "lodash";
+import { v4 as newUUID } from "uuid";
 
 /*
 
@@ -54,6 +55,8 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 			req.log.fields = merge(req.log.fields, fields);
 		}
 	};
+
+	req.addLogFields({ id: newUUID() });
 
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
