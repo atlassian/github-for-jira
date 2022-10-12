@@ -68,7 +68,7 @@ jobs:
 
   e2e-test:
     runs-on: ubuntu-22.04
-
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v3
@@ -106,11 +106,12 @@ jobs:
       - run: yarn run test:e2e
       - name: export logs
         if: always()
-        run: docker-compose logs --no-color > docker-compose.log
+        run: docker-compose down && docker-compose logs --no-color > docker-compose.log
       - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: e2e-output
+          retention-days: 14
           path: |
             test/e2e/test-results/
             docker-compose.log

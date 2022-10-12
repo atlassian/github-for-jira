@@ -20,7 +20,7 @@ class RawLogStream extends Writable {
 
 	public constructor() {
 		super({ objectMode: true });
-		this.writeStream = bformat({ outputMode, levelInString: true });
+		this.writeStream = bformat({ outputMode, levelInString: true, color: !process.env.CI });
 	}
 
 	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
