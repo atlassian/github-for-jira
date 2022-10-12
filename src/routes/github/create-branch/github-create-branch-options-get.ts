@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
@@ -29,12 +30,14 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 	}
 
+	const featureFlagEnabled = await booleanFlag(BooleanFlags.CREATE_BRANCH, false);
+
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		issueKey: key,
-		servers
+		servers,
+		featureFlagEnabled
 	});
-
 };
 
 const getGitHubServers = async (jiraHost: string) => {

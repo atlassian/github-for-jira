@@ -14,9 +14,12 @@ $(document).ready(() => {
     } else {
       const uuid = $("#ghServers").select2("val");
       window.location.href = `/github/${uuid}/create-branch?${window.location.search.substring(1)}`;
-    } 
+    }
   });
 
+	$('.go-back').click(function () {
+		window.close();
+	});
 });
 
 const ghServerOptionHandler = (event) => {

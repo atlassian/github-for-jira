@@ -1,0 +1,37 @@
+.comingSoon {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    margin: 5em auto auto;
+    max-width: 840px;
+}
+
+.comingSoon__contentContainer {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.comingSoon__contentContainer__header {
+    font-size: 1.3rem;
+}
+
+.comingSoon__contentContainer__info {
+    margin: 1em auto;
+}
+
+.comingSoon__contentContainer__button {
+    font-weight: normal;
+    width: 11em;
+}
+
+.comingSoon__imgContainer {
+    flex: 1;
+    text-align: center;
+}
+
+.comingSoon__imgContainer__img {
+    width: 300px;
+}
+
+

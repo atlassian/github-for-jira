@@ -6,7 +6,6 @@ import {
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { RepositoryNode } from "~/src/github/client/github-queries";
@@ -27,8 +26,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!key) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
-
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
 	// TODO - this should redirect to a you are not configured page instead.
 	if (!subscriptions) {
@@ -38,8 +36,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-	const featureFlagEnabled = await booleanFlag(BooleanFlags.CREATE_BRANCH, false);
-	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost, gitHubAppConfig.gitHubAppId);
+	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -51,9 +48,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		},
 		repos,
 		uuid: gitHubAppConfig.uuid,
-		repos: response.viewer.repositories.edges,
-		gitHubUser,
-		featureFlagEnabled
+		gitHubUser
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
@@ -68,11 +63,11 @@ const sortByDateString = (a, b) => {
 	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
 };
 
-const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string, gitHubAppId?: number): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
-			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, gitHubAppId);
-			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined,  "UPDATED_AT");
+			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
+			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {
 			logger.error("Create branch - Failed to fetch repos for installation");
@@ -86,4 +81,3 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 
 	return repos.slice(0, MAX_REPOS_RETURNED);
 };
->>>>>>> main
