@@ -47,6 +47,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			key
 		},
 		repos,
+		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
 		gitHubUser
 	});
