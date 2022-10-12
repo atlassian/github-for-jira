@@ -28,7 +28,7 @@ export async function findOrStartSync(
 
 	logger.info({ subscription, syncType }, "Starting sync");
 
-	await resetRepoSyncStateTasksFromSubscription(subscription, targetTasks, syncType);
+	await resetTargetedTasks(subscription, syncType, targetTasks);
 
 	if (syncType === "full" && !targetTasks?.length) {
 		fullSyncStartTime = new Date().toISOString();
@@ -54,11 +54,35 @@ export async function findOrStartSync(
 	}, 0, logger);
 }
 
-const resetRepoSyncStateTasksFromSubscription = async (subscription: Subscription, targetTasks?: TaskType[], syncType?: SyncType): Promise<[number, RepoSyncState[]] | undefined> => {
-
-	if (!targetTasks?.length) {
+const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
+	if (!syncType || !targetTasks?.length) {
 		return;
 	}
+	await resetRepoSyncStateTasksFromSubscription(subscription, syncType, targetTasks);
+	await resetRepositoryTasks(subscription, syncType, targetTasks);
+};
+
+const resetRepositoryTasks = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<void> => {
+	if (!targetTasks.find(task => task === "repository")) {
+		return;
+	}
+
+	if (syncType === "full") {
+		await subscription.update({
+			totalNumberOfRepos: null,
+			repositoryCursor: null,
+			repositoryStatus: null
+		});
+		return;
+	}
+
+	await subscription.update({
+		repositoryStatus: null
+	});
+};
+
+const resetRepoSyncStateTasksFromSubscription = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<[number, RepoSyncState[]] | undefined> => {
+	targetTasks = targetTasks.filter(task => task !== "repository");
 
 	const updateTasks = {};
 	targetTasks.forEach(task => {
