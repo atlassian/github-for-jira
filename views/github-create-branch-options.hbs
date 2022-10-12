@@ -53,19 +53,31 @@
                 </div>
             </div>
 
-            <div class="jiraSelectGitHubProduct__actionBtn__container">
+            <div class="jiraSelectGitHubProduct__selectServerInstance">
+                 <form class="aui jiraSelectGitHubProduct__selectServerInstance__form">
+                    <div class="field-group">
+                      <aui-label for="serverInstance">Select GitHub Enterprise Server instance</aui-label>
+                      <input type="hidden" id="serverInstance">
+                    </div>
+                    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+                 </form>
+            </div>
+
+            <div class="jiraSelectGitHubProduct__actionBtn__container left-aligned">
+                <button class="aui-button aui-button-light" id="cancelBtn" type="button">Cancel</button>
                 <button
                     class="aui-button jiraSelectGitHubProduct__actionBtn optionBtn"
                     aria-disabled="true"
                     disabled
                 >
-                    Continue
+                    Next
                 </button>
             </div>
           </section>
       </div>
 
   <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" nonce="{{nonce}}"></script>

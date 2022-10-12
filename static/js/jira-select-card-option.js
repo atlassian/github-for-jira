@@ -72,4 +72,16 @@ $(document).ready(function() {
 			});
 		}
 	});
+
+	$(".jiraSelectGitHubProduct__options__card.horizontal.server").click(function (event) {
+		event.preventDefault();
+
+		$(".jiraSelectGitHubProduct__selectServerInstance").css("display", "block");
+	});
+
+	$(".jiraSelectGitHubProduct__options__card.horizontal.cloud").click(function (event) {
+		event.preventDefault();
+
+		$(".jiraSelectGitHubProduct__selectServerInstance").css("display", "none");
+	});
 });
