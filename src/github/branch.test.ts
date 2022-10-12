@@ -69,7 +69,8 @@ describe("BranchhWebhookHandler", () => {
 					}
 				};
 				await deleteBranchWebhookHandler(getWebhookContext({ cloud: false }), jiraClient);
-				expect(jiraClient.devinfo.branch.delete.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-1");
+				const caughtTransformedRepositoryId = jiraClient.devinfo.branch.delete.mock.calls[0][0];
+				expect(caughtTransformedRepositoryId).toEqual("6769746875626d79646f6d61696e636f6d-1");
 			});
 		});
 	});
