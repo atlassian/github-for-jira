@@ -1,6 +1,12 @@
-import { Repository } from "models/subscription";
 import { transformRepositoryId } from "./transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
+
+interface Repository {
+	id: number;
+	full_name: string;
+	html_url: string;
+}
+
 
 /**
  * @param repository

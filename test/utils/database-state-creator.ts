@@ -19,6 +19,7 @@ export class DatabaseStateCreator {
 	private pendingForPrs: boolean;
 	private pendingForBranches: boolean;
 	private pendingForCommits: boolean;
+	private pendingForBuilds: boolean;
 
 	public static GITHUB_INSTALLATION_ID = 111222;
 
@@ -44,6 +45,11 @@ export class DatabaseStateCreator {
 
 	public repoSyncStatePendingForCommits() {
 		this.pendingForCommits = true;
+		return this;
+	}
+
+	public repoSyncStatePendingForBuilds() {
+		this.pendingForBuilds = true;
 		return this;
 	}
 
@@ -92,6 +98,7 @@ export class DatabaseStateCreator {
 			branchStatus: this.pendingForBranches ? "pending" : "complete",
 			commitStatus: this.pendingForCommits ? "pending" : "complete",
 			pullStatus: this.pendingForPrs ? "pending" : "complete",
+			buildStatus: this.pendingForBuilds ? "pending" : "complete",
 			updatedAt: new Date(),
 			createdAt: new Date()
 		}) : undefined;

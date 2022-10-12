@@ -24,6 +24,9 @@ function calculatePrefix(url: string) {
 }
 
 /**
+ * This is a temporary solution until we have a globally unique UUIDs across the globe (cloud repos, GHE server
+ * repos etc.). Once we have it, we should rather use it instead.
+ *
  * @param repositoryId
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
