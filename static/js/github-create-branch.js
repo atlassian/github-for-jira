@@ -13,7 +13,7 @@ $(document).ready(() => {
   let url = "/github/repository";
   if(uuid) {
     url = `/github/${uuid}/repository`;
-  } 
+  }
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
@@ -108,7 +108,7 @@ $(document).ready(() => {
   });
 
   $("#copyGitCheckout").click(function () {
-    navigator.clipboard.writeText("git checkout -b " + $("#branchNameText").val());
+    navigator.clipboard.writeText("git checkout " + $("#branchNameText").val());
   });
 
   $("#openGitBranch").click(function () {
