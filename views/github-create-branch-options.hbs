@@ -20,40 +20,50 @@
 </head>
 
 <body class="aui-page-hybrid">
+    <div class="jiraSelectGitHubProduct">
+        <header class="jiraSelectGitHubProduct__header">
+           {{> navigation }}
+        </header>
 
- <section class="selectGitHubProduct__content">
-    <h2 class="selectGitHubProduct__content__title">Select your GitHub product</h2>
-    <div class="selectGitHubProduct__options__container">
-        <p class="selectGitHubProduct__options__prompt">Which GitHub version do you want to connect?</h2>
+         <section class="jiraSelectGitHubProduct__content">
+            <div class="headerImage">
+                <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
+            </div>
+            <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
+            <div class="jiraSelectGitHubProduct__options__container temp-class">
+                <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub product would you like to use?</h2>
 
-        <div class="selectGitHubProduct__options__cardsContainer">
-            {{> select-github-product-card
-                cardTitle='GitHub Cloud'
-                cardContent='Choose this if the URL of your GitHub organization contains the domain name "github.com". This encompasses “Free”, “Team” and “GitHub Cloud Enterprise” accounts.'
-                cardImagePath='/public/assets/cloud.svg'
-                cardImageAlt='Cloud'
-                gitHubProduct='cloud'
-            }}
-            {{> select-github-product-card
-                cardTitle='GitHub Enterprise Server'
-                cardContent='Choose this if the URL of your GitHub organization does not contain the domain name "github.com". It instead points to a GitHub Enterprise Server installed into your own infrastructure.'
-                cardImagePath='/public/assets/server.svg'
-                cardImageAlt='Server'
-                gitHubProduct='server'
-            }}
-        </div>
-    </div>
+                <div class="jiraSelectGitHubProduct__options__cardsContainer">
+                    {{> select-github-product-card
+                        cardTitle='GitHub Cloud'
+                        cardContent='Select this option if the URL of your GitHub organization starts with "http://github.com".'
+                        cardImagePath='/public/assets/cloud.svg'
+                        cardImageAlt='Cloud'
+                        gitHubProduct='cloud'
+                        verticalLayout=false
+                    }}
+                    {{> select-github-product-card
+                        cardTitle='GitHub Enterprise Server'
+                        cardContent='Select this option if you use the on-premise version of GitHub installed into your own infrastructure.'
+                        cardImagePath='/public/assets/server.svg'
+                        cardImageAlt='Server'
+                        gitHubProduct='server'
+                        verticalLayout=false
+                    }}
+                </div>
+            </div>
 
-    <div class="selectGitHubProduct__actionBtn__container">
-        <button
-            class="aui-button selectGitHubProduct__actionBtn optionBtn"
-            aria-disabled="true"
-            disabled
-        >
-            Continue
-        </button>
-    </div>
-  </section>
+            <div class="jiraSelectGitHubProduct__actionBtn__container">
+                <button
+                    class="aui-button jiraSelectGitHubProduct__actionBtn optionBtn"
+                    aria-disabled="true"
+                    disabled
+                >
+                    Continue
+                </button>
+            </div>
+          </section>
+      </div>
 
   <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"

@@ -19,11 +19,6 @@
   position: relative;
 }
 
-.headerImageLogo {
-  height: 40px;
-  transition: all 1.5s ease;
-}
-
 .headerImageLogo-lg {
   height: 146px;
 }

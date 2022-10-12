@@ -33,18 +33,19 @@
          {{> navigation }}
       </header>
 
-      <section class="selectGitHubProduct__content">
-        <h2 class="selectGitHubProduct__content__title">Select your GitHub product</h2>
-        <div class="selectGitHubProduct__options__container">
-            <p class="selectGitHubProduct__options__prompt">Which GitHub version do you want to connect?</h2>
+      <section class="jiraSelectGitHubProduct__content">
+        <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
+        <div class="jiraSelectGitHubProduct__options__container">
+            <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub version do you want to connect?</h2>
 
-            <div class="selectGitHubProduct__options__cardsContainer">
+            <div class="jiraSelectGitHubProduct__options__cardsContainer">
                 {{> select-github-product-card
                     cardTitle='GitHub Cloud'
                     cardContent='Choose this if the URL of your GitHub organization contains the domain name "github.com". This encompasses “Free”, “Team” and “GitHub Cloud Enterprise” accounts.'
                     cardImagePath='/public/assets/cloud.svg'
                     cardImageAlt='Cloud'
                     gitHubProduct='cloud'
+                    verticalLayout=true
                 }}
                 {{> select-github-product-card
                     cardTitle='GitHub Enterprise Server'
@@ -52,6 +53,7 @@
                     cardImagePath='/public/assets/server.svg'
                     cardImageAlt='Server'
                     gitHubProduct='server'
+                    verticalLayout=true
                 }}
             </div>
         </div>

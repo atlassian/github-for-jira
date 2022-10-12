@@ -320,6 +320,11 @@ a:focus {
   color: #FFAB00;
 }
 
+.headerImageLogo {
+  height: 40px;
+  transition: all 1.5s ease;
+}
+
 /******************************
 Skeleton element styling
 *******************************/
