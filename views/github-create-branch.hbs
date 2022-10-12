@@ -18,7 +18,7 @@
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
 
-<body>
+<body id="bodyId" style="display:none">
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
 
@@ -90,7 +90,7 @@
   </form>
 </section>
 
-<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+<script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
 <script
   src="/public/aui/aui-prototyping.js"
   integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="

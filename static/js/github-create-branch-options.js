@@ -2,7 +2,32 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
 function goToCreateBranch() {
-	window.open(getCreateBranchTargetUrl(), "_blank")
+
+		// const child = openChildWindow("/session/github/configuration" + queryParameter);
+
+
+	AP.context.getToken(function(token) {
+		const child = window.open("/session/github/configuration", '_blank');
+		console.log('jiraHost');
+		console.log('jiraHost');
+		console.log('jiraHost');
+		console.log('jiraHost');
+		console.log('jiraHost');
+		console.log('jiraHost');
+		console.log(jiraHost);
+		child.window.jiraHost = jiraHost;
+		child.window.jwt = token;
+		$("#loadingScreen").css('display', 'block');
+		const interval = setInterval(function () {
+			if (child.closed) {
+				clearInterval(interval);
+				window.location.href = getCreateBranchTargetUrl();
+			}
+		}, 100);
+	});
+
+
+	return child;
 }
 
 const getCreateBranchTargetUrl = () => {
@@ -55,7 +80,7 @@ const isAutoRedirect = () => {
 	if (!hasCloudServer && gheServersCount == 1) {
 		return true;
 	}
-  
+
   return false;
 
 };

@@ -9,13 +9,16 @@
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
-
 <body>
-  <section class="gitHubCreateBranchOptions">
+  <div id="loadingScreen" style="display:none">
+      {{> loading-screen title="Connecting to GitHub" }}
+  </div>
+  <section class="gitHubCreateBranchOptions" style="display:none">
     <div class="headerImage">
       <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
     </div>
@@ -57,7 +60,7 @@
     </form>
   </section>
 
-  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" nonce="{{nonce}}"></script>
