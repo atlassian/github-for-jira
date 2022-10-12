@@ -10,6 +10,7 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
+import { v4 as newUUID } from "uuid";
 
 export const getFrontendApp = (octokitApp: App): Express => {
 	const app = express();
@@ -26,6 +27,15 @@ export const getFrontendApp = (octokitApp: App): Express => {
 
 	// Add github client middleware which uses the octokit app
 	app.use(getGithubClientMiddleware(octokitApp));
+
+	//Error handling
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	app.use((err, req, res, _next) => {
+		const traceId = newUUID();
+		req.log.error({ err }, "Failed: " + err.message);
+		res.status(500).send("Failed: ", traceId);
+	});
+
 
 	// Add all routes
 	app.use(RootRouter);
