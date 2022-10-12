@@ -4,6 +4,7 @@ import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
@@ -56,11 +57,8 @@ export const getBuildTask = async (
 	}
 
 	const jiraPayload = {
-		id: repository.id,
-		name: repository.full_name,
-		builds,
-		url: repository.html_url,
-		updateSequenceId: Date.now()
+		... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+		builds
 	};
 
 	return {

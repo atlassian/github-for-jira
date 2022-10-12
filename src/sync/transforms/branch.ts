@@ -2,6 +2,7 @@ import { getJiraId } from "~/src/jira/util/id";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: better typing in file
 /**
@@ -77,7 +78,12 @@ const mapCommit = (commit) => {
 };
 
 // TODO: add typings
-export const transformBranches = async (payload) => {
+/**
+ *
+ * @param payload
+ * @param gitHubBaseUrl - can be undefined for Cloud
+ */
+export const transformBranches = async (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository))
@@ -95,11 +101,8 @@ export const transformBranches = async (payload) => {
 	}
 
 	return {
+		... await transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		branches,
-		commits,
-		id: payload.repository.id.toString(),
-		name: payload.repository.name,
-		url: payload.repository.html_url,
-		updateSequenceId: Date.now()
+		commits
 	};
 };

@@ -7,7 +7,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { JiraDeploymentData } from "interfaces/jira";
+import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
@@ -47,7 +47,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
 
 	if (!jiraPayload) {
 		logger.info(

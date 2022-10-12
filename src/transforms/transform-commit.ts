@@ -1,6 +1,7 @@
-import { JiraCommit, JiraCommitData } from "interfaces/jira";
+import { JiraCommit, JiraCommitBulkSubmitData } from "interfaces/jira";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 export const mapCommit = (commit): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
@@ -23,7 +24,12 @@ export const mapCommit = (commit): JiraCommit | undefined => {
 };
 
 // TODO: type payload and return better
-export const transformCommit = (payload): JiraCommitData | undefined => {
+/**
+ *
+ * @param payload
+ * @param gitHubBaseUrl - can be undefined for Cloud
+ */
+export const transformCommit = async (payload, gitHubBaseUrl?: string): Promise<JiraCommitBulkSubmitData | undefined> => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))
@@ -34,10 +40,7 @@ export const transformCommit = (payload): JiraCommitData | undefined => {
 	}
 
 	return {
-		commits: commits,
-		id: payload.repository.id.toString(),
-		name: payload.repository.full_name,
-		url: payload.repository.html_url,
-		updateSequenceId: Date.now()
+		... await transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
+		commits: commits
 	};
 };
