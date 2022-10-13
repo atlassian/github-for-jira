@@ -30,7 +30,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 	}
 
-	const featureFlagEnabled = await booleanFlag(BooleanFlags.CREATE_BRANCH, false);
+	const featureFlagEnabled = await booleanFlag(BooleanFlags.CREATE_BRANCH, false, jiraHost);
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
