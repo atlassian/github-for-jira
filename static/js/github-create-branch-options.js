@@ -2,19 +2,8 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
 function goToCreateBranch() {
-
-		// const child = openChildWindow("/session/github/configuration" + queryParameter);
-
-
 	AP.context.getToken(function(token) {
-		const child = window.open("/session/github/configuration", '_blank');
-		console.log('jiraHost');
-		console.log('jiraHost');
-		console.log('jiraHost');
-		console.log('jiraHost');
-		console.log('jiraHost');
-		console.log('jiraHost');
-		console.log(jiraHost);
+		const child = window.open("/session/github/configuration");
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 		$("#loadingScreen").css('display', 'block');
@@ -25,9 +14,6 @@ function goToCreateBranch() {
 			}
 		}, 100);
 	});
-
-
-	return child;
 }
 
 const getCreateBranchTargetUrl = () => {

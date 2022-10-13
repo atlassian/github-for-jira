@@ -2,11 +2,16 @@ import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { getGitHubApiUrl } from "utils/get-github-client-config";
+import axios from "axios";
+import Logger from "bunyan";
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { jiraHost } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals;
 	const { issueKey } = req.query;
+	const { githubToken } = req.session;
+	const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig?.gitHubAppId;
 
 	if (!jiraHost) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
@@ -20,12 +25,37 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	const servers = await getGitHubServers(jiraHost);
 
+	try {
+		await validateGitHubToken(jiraHost, githubToken, gitHubAppId, req.log);
+
+		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
+			res.redirect(`/github/create-branch${url.search}/create`);
+			return;
+		}
+		// Only single GitHub Enterprise connected
+		if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
+			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}/create`);
+			return;
+		}
+	} catch (err) {
+		req.log.error("Invalid githoub token");
+	}
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		servers
 	});
 
+};
+
+const validateGitHubToken = async (jiraHost, githubToken, gitHubAppId, logger: Logger) => {
+	const githubUrl = await getGitHubApiUrl(jiraHost, gitHubAppId, logger);
+	await axios.get(githubUrl, {
+		headers: {
+			Authorization: `Bearer ${githubToken}`
+		}
+	});
 };
 
 const getGitHubServers = async (jiraHost: string) => {
@@ -52,3 +82,5 @@ const getGitHubServers = async (jiraHost: string) => {
 		gheServerInfos
 	};
 };
+
+

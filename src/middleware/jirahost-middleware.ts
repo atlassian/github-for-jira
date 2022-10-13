@@ -12,10 +12,14 @@ const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRou
 
 const extractUnsafeJiraHost = (req: Request): string | undefined => {
 	console.log("I WATN JIRAHOST");
+	console.log("I WATN JIRAHOST");
+	console.log("I WATN JIRAHOST");
+	console.log("I WATN JIRAHOST");
+	console.log("I WATN JIRAHOST");
+	console.log("I WATN JIRAHOST");
 	console.log(req.query.xdm_e);
 	console.log(req.body?.jiraHost);
 	console.log(req.cookies.jiraHost);
-	console.log(req);
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
@@ -47,13 +51,6 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
-	console.log('req');
-	console.log('req');
-	console.log('req');
-	console.log('req');
-	console.log('req');
-	console.log('req');
-	console.log(req);
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
 
 	req.addLogFields({ jiraHost: unsafeJiraHost });
