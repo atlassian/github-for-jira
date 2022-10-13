@@ -50,7 +50,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 };
 
-const validateGitHubToken = async (jiraHost, githubToken, logger: Logger, gitHubAppId?) => {
+const validateGitHubToken = async (jiraHost: string, githubToken: string, logger: Logger, gitHubAppId?: number) => {
 	const githubUrl = await getGitHubApiUrl(jiraHost, gitHubAppId, logger);
 	await axios.get(githubUrl, {
 		headers: {
