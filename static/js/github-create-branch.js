@@ -2,19 +2,7 @@ let queriedRepos = [];
 let totalRepos = [];
 let uuid;
 
-//todo add comments here for this strange code
-if(window.location.search.indexOf('close') > 0) {
-	window.close();
-} else {
-	$("#bodyId").css('display', 'block');
-}
-
 $(document).ready(() => {
-	if(window.location.search.indexOf('close') > 0) {
-		window.close();
-	} else {
-		$("#bodyId").css('display', 'block');
-	}
 
 	// Fetching the list of default repos
   totalRepos = $(".default-repos").map((_, option) => ({

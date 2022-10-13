@@ -39,7 +39,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 			return;
 		}
 	} catch (err) {
-		req.log.error("Invalid githoub token");
+		req.log.error("Invalid github token");
 	}
 
 	res.render("github-create-branch-options.hbs", {
