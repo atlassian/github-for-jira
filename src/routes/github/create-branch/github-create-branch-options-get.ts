@@ -30,12 +30,12 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-			res.redirect(`/github/create-branch${url.search}/create`);
+			res.redirect(`/github/create-branch${url.search}`);
 			return;
 		}
 		// Only single GitHub Enterprise connected
 		if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}/create`);
+			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 			return;
 		}
 	} catch (err) {

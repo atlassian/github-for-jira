@@ -11,15 +11,6 @@ import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
 const extractUnsafeJiraHost = (req: Request): string | undefined => {
-	console.log("I WATN JIRAHOST");
-	console.log("I WATN JIRAHOST");
-	console.log("I WATN JIRAHOST");
-	console.log("I WATN JIRAHOST");
-	console.log("I WATN JIRAHOST");
-	console.log("I WATN JIRAHOST");
-	console.log(req.query.xdm_e);
-	console.log(req.body?.jiraHost);
-	console.log(req.cookies.jiraHost);
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		return req.query.xdm_e as string;
