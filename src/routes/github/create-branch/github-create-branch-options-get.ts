@@ -8,10 +8,9 @@ import Logger from "bunyan";
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { jiraHost, gitHubAppConfig } = res.locals;
+	const { jiraHost } = res.locals;
 	const { issueKey } = req.query;
-	const { githubToken } = req.session;
-	const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig?.gitHubAppId;
+	const { githubToken, gitHubUuid } = req.session;
 
 	if (!jiraHost) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
@@ -26,15 +25,15 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const servers = await getGitHubServers(jiraHost);
 
 	try {
-		await validateGitHubToken(jiraHost, githubToken, gitHubAppId, req.log);
-
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
+			await validateGitHubToken(jiraHost, githubToken, gitHubUuid, req.log);
 			res.redirect(`/github/create-branch${url.search}`);
 			return;
 		}
 		// Only single GitHub Enterprise connected
 		if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
+			await validateGitHubToken(jiraHost, githubToken, gitHubUuid, req.log);
 			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 			return;
 		}
@@ -49,7 +48,9 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 };
 
-const validateGitHubToken = async (jiraHost, githubToken, gitHubAppId, logger: Logger) => {
+const validateGitHubToken = async (jiraHost, githubToken, gitHubUuid, logger: Logger) => {
+	const gitHubServerApp = gitHubUuid && await GitHubServerApp.findForUuid(gitHubUuid);
+	const gitHubAppId = gitHubServerApp?.id || undefined;
 	const githubUrl = await getGitHubApiUrl(jiraHost, gitHubAppId, logger);
 	await axios.get(githubUrl, {
 		headers: {
