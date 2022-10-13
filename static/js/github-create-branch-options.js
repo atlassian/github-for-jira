@@ -3,22 +3,21 @@ const jiraHost = params.get("xdm_e");
 
 function goToCreateBranch() {
 	AP.context.getToken(function(token) {
-		console.log('getCreateBranchTargetUrl()');
-		console.log(getCreateBranchTargetUrl());
-		console.log("OTHER()");
-		console.log();
-		const child = window.open("session/github/create-branch?issueKey=DEP-19&issueSummary=test");
+		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 	});
 }
 
 const getCreateBranchTargetUrl = () => {
+	const searchParams = new URLSearchParams(window.location.search.substring(1));
+	const issueKey = searchParams.get("issueKey");
+	const issueSummary = searchParams.get("issueSummary");
 	if ($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
-		return`session/github/create-branch?${window.location.search.substring(1)}`;
+		return`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
 	}
 	const uuid = $("#ghServers").select2("val");
-	return `session/github/${uuid}/create-branch?${window.location.search.substring(1)}`;
+	return `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
 }
 
 $(document).ready(() => {
