@@ -63,11 +63,12 @@ const getGitHubServers = async (jiraHost: string) => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const ghCloudSubscriptions = subscriptions.filter(subscription => !subscription.gitHubAppId);
 	const gheServerSubscriptions = subscriptions.filter(subscription => subscription.gitHubAppId);
+	const uniqueGithubAppIds = new Set(gheServerSubscriptions.map(gheServerSubscription => gheServerSubscription.gitHubAppId));
 
 	const gheServerInfos = new Array<{ uuid: string, baseUrl: string, appName: string }>();
-	for (const subscription of gheServerSubscriptions) {
-		if (subscription.gitHubAppId) {
-			const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(subscription.gitHubAppId);
+	for (const gitHubAppId of uniqueGithubAppIds) {
+		if (gitHubAppId) {
+			const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 			if (gitHubServerApp) {
 				gheServerInfos.push({
 					"uuid": gitHubServerApp.uuid,

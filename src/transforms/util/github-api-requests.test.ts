@@ -1,4 +1,3 @@
-import { GithubAPI } from "config/github-api";
 import {
 	extractMessagesFromCommitSummaries,
 	getAllCommitMessagesBetweenReferences,
@@ -8,8 +7,18 @@ import { getLogger } from "config/logger";
 import workflowBasic from "fixtures/workflow-basic.json";
 import pullRequestMultipleCommits from "fixtures/api/pull-request-multiple-commits-diff.json";
 import pullRequestSingleCommit from "fixtures/api/pull-request-single-commit-diff.json";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { getInstallationId } from "~/src/github/client/installation-id";
 
 describe("GitHub API Request Suite", () => {
+
+	let gitHubInstallationClient: GitHubInstallationClient;
+
+	const gitHubInstallationId = 123;
+	beforeEach(() => {
+		gitHubInstallationClient = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, getLogger("test"));
+	});
+
 	describe("compareCommitsBetweenBaseAndHeadBranches", () => {
 		it("should return message from multiple commits containing multiple issue keys", async () => {
 			const workflowRunPayload = Object.assign(
@@ -34,6 +43,7 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -44,7 +54,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GithubAPI(),
+				gitHubInstallationClient,
 				getLogger("test")
 			);
 
@@ -74,6 +84,7 @@ describe("GitHub API Request Suite", () => {
 
 			const data = pullRequestCommits.data;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -84,7 +95,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitMessagesBetweenReferences(
 				payload,
-				GithubAPI(),
+				gitHubInstallationClient,
 				getLogger("test")
 			);
 
@@ -116,6 +127,7 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -126,7 +138,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitsBetweenReferences(
 				payload,
-				GithubAPI(),
+				gitHubInstallationClient,
 				getLogger("test")
 			);
 
@@ -169,6 +181,7 @@ describe("GitHub API Request Suite", () => {
 
 			const data = pullRequestCommits.data;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -179,7 +192,7 @@ describe("GitHub API Request Suite", () => {
 
 			const bob = await getAllCommitsBetweenReferences(
 				payload,
-				GithubAPI(),
+				gitHubInstallationClient,
 				getLogger("test")
 			);
 
