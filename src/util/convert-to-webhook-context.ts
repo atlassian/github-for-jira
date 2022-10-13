@@ -10,7 +10,5 @@ export const convertToWebhookContext = (callback: (webhookContext: WebhookContex
 			action: context.payload.action,
 			log: context.log
 		});
-		// Todo: optional field, will remove once all references which are behind FF will be removed.
-		webhookContext.github = context.github;
 		await callback(webhookContext);
 	};

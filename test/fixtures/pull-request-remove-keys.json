@@ -33,6 +33,11 @@
       },
       "base": {
         "repo": {
+					"id": 321806393,
+					"node_id": "MDEwOlJlcG9zaXRvcnkzMjE4MDYzOTM=",
+					"name": "day2-test-empy-repo-before-connect",
+					"full_name": "bgvozdev/day2-test-empy-repo-before-connect",
+					"private": false,
           "html_url": "test-pull-request-base-url"
         },
         "ref": "test-pull-request-base-ref"
