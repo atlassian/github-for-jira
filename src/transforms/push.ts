@@ -10,6 +10,7 @@ import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: define better types for this file
 const mapFile = (
@@ -186,11 +187,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		for (const chunk of chunks) {
 			const jiraPayload = {
-				name: repository.name,
-				url: repository.html_url,
-				id: repository.id,
-				commits: chunk,
-				updateSequenceId: Date.now()
+				... await transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
+				commits: chunk
 			};
 
 			log.info("Sending data to Jira");
