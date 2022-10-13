@@ -108,6 +108,14 @@ $(document).ready(() => {
     changeGitHubLogin();
   });
 
+  $("#copyGitCheckout").click(function () {
+    navigator.clipboard.writeText("git checkout " + $("#branchNameText").val());
+  });
+
+  $("#openGitBranch").click(function () {
+    const repo = getRepoDetails();
+    window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
+  });
 });
 
 const loadBranches = () => {
@@ -200,7 +208,7 @@ const createBranchPost = () => {
   showLoading();
   $.post(url, data)
     .done(() => {
-      showSuccessScreen(repo, newBranchName);
+      showSuccessScreen(repo);
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
@@ -215,12 +223,18 @@ const showLoading = () => {
   $(".gitHubCreateBranch__spinner").show();
 };
 
-const showSuccessScreen = (repo, newBranchName) => {
+const showSuccessScreen = (repo) => {
   $(".gitHubCreateBranch__spinner").hide();
   $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
   $(".gitHubCreateBranch__header").html("GitHub branch created");
   $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
-  // TODO: Redirect to the success screen with options, needs to be done after ARC-1727[https://softwareteams.atlassian.net/browse/ARC-1727]
+  setTimeout(showSuccessWithActions, 1500);
+};
+
+const showSuccessWithActions = () => {
+  $(".headerImageLogo").removeClass("headerImageLogo-lg");
+  $(".headerImageLogo").attr("src", "/public/assets/jira-and-github.png");
+  $(".gitHubCreateBranch__createdLinks").css("display", "flex");
 };
 
 const hideLoading = () => {

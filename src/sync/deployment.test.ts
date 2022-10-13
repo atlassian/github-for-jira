@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { Installation } from "models/installation";
-import { RepoSyncState } from "models/reposyncstate";
-import { Subscription } from "models/subscription";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -13,19 +10,20 @@ import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
 import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
-	const installationId = 1234;
+	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
 
 	const makeExpectedJiraResponse = (deployments) => ({
 		deployments,
 		properties: {
-			"gitHubInstallationId": 1234
+			"gitHubInstallationId": installationId
 		}
 	});
 
@@ -53,37 +51,10 @@ describe("sync/deployments", () => {
 
 		mockSystemTime(12345678);
 
-		await Installation.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			encryptedSharedSecret: "secret",
-			clientKey: "client-key"
-		});
-
-		const subscription = await Subscription.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			syncStatus: "ACTIVE",
-			repositoryStatus: "complete"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			repoUpdatedAt: new Date(),
-			repoPushedAt: new Date(),
-			branchStatus: "complete",
-			commitStatus: "complete",
-			pullStatus: "complete",
-			deploymentStatus: "pending", // We want the next process to be deployment
-			buildStatus: "complete",
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
+		await new DatabaseStateCreator()
+			.withActiveRepoSyncState()
+			.repoSyncStatePendingForDeployments()
+			.create();
 
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 		githubUserTokenNock(installationId);

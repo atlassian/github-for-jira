@@ -23,6 +23,7 @@
 {{> navigation hideBackButton=false }}
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
+<input type="hidden" id="gitHubHostname" name="hostname" value="{{hostname}}" />
 
 <div class="gitHubCreateBranch__userDetails">
   <div>GitHub account: <b>{{gitHubUser}}</b></div>
@@ -37,6 +38,11 @@
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
     <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">Creating a branch for <b>{{issue.key}}</b></div>
+  </div>
+
+  <div class="gitHubCreateBranch__createdLinks">
+    <div class="aui-button aui-button-light" id="copyGitCheckout">Copy git checkout</div>
+    <a class="aui-button aui-button-light" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
   </div>
 
   <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
