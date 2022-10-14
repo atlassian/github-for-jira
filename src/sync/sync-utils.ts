@@ -54,51 +54,54 @@ export async function findOrStartSync(
 	}, 0, logger);
 }
 
+type subscriptionUpdateTasks = {
+	totalNumberOfRepos?: number | null;
+	repositoryCursor?: string | null;
+	repositoryStatus?: string | null;
+}
+
 const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
 	if (!syncType || !targetTasks?.length) {
 		return;
 	}
-	await resetRepoSyncStateTasksFromSubscription(subscription, syncType, targetTasks);
-	await resetRepositoryTasks(subscription, syncType, targetTasks);
-};
 
-const resetRepositoryTasks = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<void> => {
-	if (!targetTasks.find(task => task === "repository")) {
-		return;
-	}
+	const subscriptionTasks = targetTasks.find(task => task === "repository");
+	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
+	const updateRepoSyncTasks = {};
+	const updateSubscriptionTasks: subscriptionUpdateTasks = {};
 
-	if (syncType === "full") {
-		await subscription.update({
-			totalNumberOfRepos: null,
-			repositoryCursor: null,
-			repositoryStatus: null
-		});
-		return;
-	}
-
-	await subscription.update({
-		repositoryStatus: null
-	});
-};
-
-const resetRepoSyncStateTasksFromSubscription = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<[number, RepoSyncState[]] | undefined> => {
-	targetTasks = targetTasks.filter(task => task !== "repository");
-
-	const updateTasks = {};
-	targetTasks.forEach(task => {
+	// Reset RepoSync states - target tasks: ("pull" | "commit" | "branch" | "build" | "deployment")
+	// Full sync resets cursor and status
+	// Partial sync only resets status (continues from existing cursor)
+	repoSyncTasks.forEach(task => {
 		if (syncType === "full") {
-			updateTasks[`${task}Cursor`] = null;
+			updateRepoSyncTasks[`${task}Cursor`] = null;
 		}
-		updateTasks[`${task}Status`] = null;
+		updateRepoSyncTasks[`${task}Status`] = null;
 	});
 
-	return RepoSyncState.update({
+	await RepoSyncState.update({
 		repoUpdatedAt: null,
-		...updateTasks
+		...updateRepoSyncTasks
 	}, {
 		where: {
 			subscriptionId: subscription.id
 		}
+	});
+
+	// Reset Subscription Repo state -  target tasks: ("repository")
+	// Full sync resets cursor and status and totalNumberOfRepos
+	// Partial sync only resets status (continues from existing cursor)
+	if (subscriptionTasks) {
+		if (syncType === "full") {
+			updateSubscriptionTasks.totalNumberOfRepos = null;
+			updateSubscriptionTasks.repositoryCursor = null;
+		}
+		updateSubscriptionTasks.repositoryStatus = null;
+	}
+
+	await subscription.update({
+		...updateSubscriptionTasks
 	});
 };
 
