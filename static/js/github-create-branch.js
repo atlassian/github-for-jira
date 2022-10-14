@@ -82,6 +82,10 @@ $(document).ready(() => {
     data: []
   });
 
+	$("#ghParentBranch").on("change", function (e) {
+		validateSourceBranch(e.val);
+	});
+
   $("#ghRepo").on("change", () => {
     if(queriedRepos.length) {
       $(".no-repo-container").hide();
@@ -117,6 +121,27 @@ $(document).ready(() => {
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
   });
 });
+
+const validateSourceBranch = (branchName) => {
+	// TODO - check that the value is part of the original list, so we only test manual evtries
+	const url = "/github/create-branch/validate-source-branch"; // TODO - move route up a level!!
+	const data = {
+		branchName,
+		_csrf: $("#_csrf").val(),
+	};
+	$.post(url, data)
+		.done(() => {
+			console.log('SUCCESSS');
+			// just log it out that we have verified it
+		})
+		.fail((error) => {
+			console.log('error');
+			console.log(error);
+			showValidationErrorMessage("ghParentBranch", "This Branch does not exist on GitHub.");
+		});
+
+	// TODO - clear error message when you sstart typing again!!
+}
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);
@@ -158,6 +183,10 @@ const loadBranches = () => {
       $("#ghParentBranch").select2("val", defaultBranch);
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
+
+
+
+
     },
     error: () => {
       showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
@@ -301,6 +330,7 @@ const showLoaderOnSelect2Input = (inputDOM, isLoading) => {
     $(`#${inputDOM}`).auiSelect2("enable", true);
   }
 }
+
 
 const changeGitHubLogin = () => {
   $.ajax({
