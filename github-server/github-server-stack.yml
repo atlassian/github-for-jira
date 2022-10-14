@@ -363,6 +363,50 @@ Resources:
         Fn::Join:
           - ''
           - - "#!/bin/bash\n"
+            # USER DATA TO CONFIGURE OSQUERY
+            - "sudo yum install -y yum-utils unzip jq\n"
+            - 'curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip\n'
+            - "unzip awscliv2.zip\n"
+            - "./aws/install\n"
+            - ""
+            - "curl -L https://pkg.osquery.io/rpm/GPG | sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-osquery\n"
+            - "sudo yum-config-manager --add-repo https://pkg.osquery.io/rpm/osquery-s3-rpm.repo\n"
+            - "sudo yum-config-manager --enable osquery-s3-rpm\n"
+            - "sudo yum install -y osquery-4.9.0\n"
+            - !Sub "cat <<'EOF' >> /etc/osquery/osquery.flags
+--force=true
+--host_identifier=hostname
+--tls_hostname=fleet-server.services.atlassian.com
+--config_plugin=tls
+--config_tls_refresh=300
+--enroll_tls_endpoint=/api/v1/osquery/enroll
+--config_tls_endpoint=/api/v1/osquery/config
+--enroll_secret_path=/etc/osquery/fleet.enrollment_secret
+--logger_min_status=2
+--aws_kinesis_stream=prod-logs
+--aws_sts_arn_role=arn:aws:iam::915926889391:role/pipeline-prod-log-producers-all
+--aws_region=${AWS::Region}
+--aws_sts_region=${AWS::Region}
+--aws_sts_session_name=osquery
+--disable_audit=false
+--audit_allow_config=true
+--audit_persist=true
+--audit_allow_process_events=true
+EOF\n"
+            - !Sub "cat <<'EOF' >> /etc/defaults/osqueryd
+OSQUERY_ENV=${BusinessUnit}
+OSQUERY_SERVICE=fusion-ghe-testing-instance
+OSQUERY_SERVICE_ENV=${Environment}
+OSQUERY_SERVICE_VERSION=0.1.0
+OSQUERY_DEPLOYMENT_ID=1
+OSQUERY_REGION=${AWS::Region}
+EOF\n"
+            - "/usr/local/bin/aws --region ${AWS::Region} secretsmanager get-secret-value --secret-id FleetEnrollmentSecret | jq -r '.SecretString' > /etc/osquery/fleet.enrollment_secret\n"
+            - "systemctl start osqueryd\n"
+            - "systemctl enable osqueryd\n"
+
+
+            # USER DATA TO CONFIGURE GITHUB ENTERPRISE
             - "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\
               \ \n"
             - "wget https://bootstrap.pypa.io/get-pip.py\n"
@@ -426,6 +470,22 @@ Resources:
             Principal:
               Service:
                 - ec2.amazonaws.com
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Resource:
+              - "arn:aws:iam::915926889391:role/pipeline-prod-log-producers-all"
+              - "arn:aws:iam::672543177425:role/pipeline-prod-log-producers-all"
+          - Action:
+              - ec2:DescribeTags
+            Effect: Allow
+            Resource:
+              - "*"
+          - Action:
+            - secretsmanager:GetSecretValue
+            Effect: Allow
+            Resource:
+              - "arn:aws:secretsmanager:ap-southeast-2:988304025201:secret:FleetEnrollmentSecret-jwZqaI"
         Version: '2012-10-17'
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
