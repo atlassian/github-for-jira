@@ -54,7 +54,7 @@ export async function findOrStartSync(
 	}, 0, logger);
 }
 
-type subscriptionUpdateTasks = {
+type SubscriptionUpdateTasks = {
 	totalNumberOfRepos?: number | null;
 	repositoryCursor?: string | null;
 	repositoryStatus?: string | null;
@@ -65,10 +65,17 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 		return;
 	}
 
-	const subscriptionTasks = targetTasks.find(task => task === "repository");
+	const updateRepository = targetTasks.includes("repository");
 	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = {};
-	const updateSubscriptionTasks: subscriptionUpdateTasks = {};
+	const updateSubscriptionTasks: SubscriptionUpdateTasks = {};
+
+	console.log("updateRepository");
+	console.log("updateRepository");
+	console.log("updateRepository");
+	console.log("updateRepository");
+	console.log("updateRepository");
+	console.log(updateRepository);
 
 	// Reset RepoSync states - target tasks: ("pull" | "commit" | "branch" | "build" | "deployment")
 	// Full sync resets cursor and status
@@ -92,17 +99,15 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Reset Subscription Repo state -  target tasks: ("repository")
 	// Full sync resets cursor and status and totalNumberOfRepos
 	// Partial sync only resets status (continues from existing cursor)
-	if (subscriptionTasks) {
+	if (updateRepository) {
 		if (syncType === "full") {
 			updateSubscriptionTasks.totalNumberOfRepos = null;
 			updateSubscriptionTasks.repositoryCursor = null;
 		}
 		updateSubscriptionTasks.repositoryStatus = null;
+		await subscription.update(updateSubscriptionTasks);
 	}
 
-	await subscription.update({
-		...updateSubscriptionTasks
-	});
 };
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
