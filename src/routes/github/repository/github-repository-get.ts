@@ -5,7 +5,6 @@ import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 const MAX_REPOS_RETURNED = 20;
 
-
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const repoName = req.query?.repoName as string;
