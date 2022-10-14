@@ -109,7 +109,9 @@ jobs:
         run: free -h > memory.log
       - name: export docker logs
         if: always()
-        run: docker stats > docker-stats.log && docker-compose logs --no-color > docker-compose.log
+        run: |
+          docker stats > docker-stats.log
+          docker-compose logs --no-color > docker-compose.log
       - uses: actions/upload-artifact@v3
         if: always()
         with:
