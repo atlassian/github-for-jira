@@ -122,25 +122,23 @@ $(document).ready(() => {
   });
 });
 
+
 const validateSourceBranch = (branchName) => {
-	// TODO - check that the value is part of the original list, so we only test manual evtries
-	const url = "/github/create-branch/validate-source-branch"; // TODO - move route up a level!!
+	hideValidationErrorMessage("ghParentBranch");
+	const url = "/github/create-branch/validate-source-branch";
+	const repo = getRepoDetails();
 	const data = {
+		owner: repo.owner,
+		repo: repo.name,
 		branchName,
 		_csrf: $("#_csrf").val(),
 	};
 	$.post(url, data)
-		.done(() => {
-			console.log('SUCCESSS');
-			// just log it out that we have verified it
-		})
 		.fail((error) => {
-			console.log('error');
-			console.log(error);
-			showValidationErrorMessage("ghParentBranch", "This Branch does not exist on GitHub.");
+			if (error.status = 404) {
+				showValidationErrorMessage("ghParentBranch", "This Branch does not exist on GitHub.");
+			}
 		});
-
-	// TODO - clear error message when you sstart typing again!!
 }
 
 const loadBranches = () => {
@@ -215,6 +213,12 @@ const showValidationErrorMessage = (id, message) => {
   if (DOM.find(".error-message").length < 1) {
     DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${ message }</div>`);
   }
+};
+
+const hideValidationErrorMessage = (id) => {
+  const DOM = $(`#s2id_${ id }`);
+  DOM.find("a.select2-choice").removeClass("has-errors");
+	DOM.find(".error-message").remove();
 };
 
 const createBranchPost = () => {
@@ -330,7 +334,6 @@ const showLoaderOnSelect2Input = (inputDOM, isLoading) => {
     $(`#${inputDOM}`).auiSelect2("enable", true);
   }
 }
-
 
 const changeGitHubLogin = () => {
   $.ajax({

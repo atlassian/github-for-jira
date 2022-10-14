@@ -3,7 +3,7 @@ import { GithubCreateBranchGet } from "routes/github/create-branch/github-create
 import { GithubCreateBranchPost } from "routes/github/create-branch/github-create-branch-post";
 import { GithubBranchesGet } from "~/src/routes/github/create-branch/github-branches-get";
 import { GithubRemoveSession } from "~/src/routes/github/create-branch/github-remove-session";
-import { GithubValidateSourceBranchPost } from "~/src/routes/github/create-branch/github-validate-source-branch-post";
+import { GithubValidateBranchPost } from "~/src/routes/github/create-branch/github-validate-branch-post";
 
 export const GithubCreateBranchRouter = Router();
 
@@ -15,4 +15,4 @@ GithubCreateBranchRouter.get("/owners/:owner/repos/:repo/branches", GithubBranch
 
 GithubCreateBranchRouter.get("/change-github-login", GithubRemoveSession);
 
-GithubCreateBranchRouter.post("/validate-source-branch", GithubValidateSourceBranchPost);
+GithubCreateBranchRouter.post("/validate-source-branch", GithubValidateBranchPost);
