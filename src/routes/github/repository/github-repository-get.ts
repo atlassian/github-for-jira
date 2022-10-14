@@ -46,11 +46,14 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 	});
 	const repos = (await Promise.all(repoTasks))
 		.flat()
-		.sort(sortByDateString);
+		.sort(sortByScoreAndUpdatedAt);
 	return repos.slice(0, MAX_REPOS_RETURNED);
 };
 
-const sortByDateString = (a, b) => {
+const sortByScoreAndUpdatedAt = (a, b) => {
+	if (a.score != b.score) {
+		return a.score - b.score;
+	}
 	return new Date(b.updated_at).valueOf() - new Date(a.updated_at).valueOf();
 };
 
