@@ -8,7 +8,6 @@ import pullRequest from "fixtures/api/pull-request.json";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
@@ -154,6 +153,10 @@ describe("sync/pull-request", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.mockResolvedValue(true);
+
 			const buildResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -181,7 +184,7 @@ describe("sync/pull-request", () => {
 					html_url: "test-pull-request-author-url"
 				});
 
-			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload(await transformRepositoryId(1, gheUrl))).reply(200);
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("6769746875626d79646f6d61696e636f6d-1")).reply(200);
 
 			const data: BackfillMessagePayload = {
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,

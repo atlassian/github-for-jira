@@ -24,7 +24,7 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number, logger: Logger) {
+export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number | undefined, logger: Logger) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.apiUrl}`

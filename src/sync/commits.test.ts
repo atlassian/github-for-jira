@@ -13,7 +13,6 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
@@ -314,6 +313,10 @@ describe("sync/commits", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.mockResolvedValue(true);
+
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -329,7 +332,7 @@ describe("sync/commits", () => {
 			repositories: [
 				{
 					commits,
-					"id": await transformRepositoryId(1, gheUrl),
+					"id": "6769746875626d79646f6d61696e636f6d-1",
 					"name": "test-repo-name",
 					"url": "test-repo-url",
 					"updateSequenceId": 12345678

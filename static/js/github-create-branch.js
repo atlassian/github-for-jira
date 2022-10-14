@@ -3,7 +3,8 @@ let totalRepos = [];
 let uuid;
 
 $(document).ready(() => {
-  // Fetching the list of default repos
+
+	// Fetching the list of default repos
   totalRepos = $(".default-repos").map((_, option) => ({
     id: $(option).html(),
     text: $(option).html()

@@ -22,6 +22,7 @@
         "/",
         "/github/**",
         "/github-manifest",
+        "/create-branch-options",
         "/jira",
         "/jira/**",
         "/maintenance",
