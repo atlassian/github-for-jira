@@ -45,6 +45,16 @@ const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
 		};
 	}
 
+
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log("THE HASHED KEY LOOKED LIKE");
+	console.log(createHashWithSharedSecret(jiraHost));
+
 	return {
 		key: createHashWithSharedSecret(jiraHost)
 	};

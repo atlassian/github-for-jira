@@ -171,8 +171,8 @@ const modules = {
 export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 // Remove this function when CREATE_BRANCH flag is complete
-const addCreateBranchAction = async (modules) => {
-	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
+const addCreateBranchAction = async (modules, cloudId) => {
+	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false, cloudId)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
 				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
@@ -182,7 +182,13 @@ const addCreateBranchAction = async (modules) => {
 	return modules;
 };
 
-export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
+export const JiraAtlassianConnectGet = async (req: Request, res: Response): Promise<void> => {
+	const clientInfo = req.headers["x-pac-client-info"] as string;
+	const cloudInfo = clientInfo?.split(",");
+	const cloudIdValue = cloudInfo.find((r) => { console.log(r); return r.indexOf("cloudId") >= 0; });
+	const cloudId = cloudIdValue?.substring(cloudIdValue?.indexOf("=") + 1);
+	console.log("cloudId");
+	console.log(cloudId);
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
 		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
@@ -212,6 +218,6 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: await addCreateBranchAction(modules)
+		modules: await addCreateBranchAction(modules, cloudId)
 	});
 };
