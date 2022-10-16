@@ -125,15 +125,12 @@ $(document).ready(() => {
 
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
-	const url = "/github/create-branch/validate-source-branch";
 	const repo = getRepoDetails();
-	const data = {
-		owner: repo.owner,
-		repo: repo.name,
-		branchName,
-		_csrf: $("#_csrf").val(),
-	};
-	$.post(url, data)
+	const url = `/github/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+	// const data = {
+	// 	_csrf: $("#_csrf").val(),
+	// };
+	$.get(url)
 		.fail((error) => {
 			if (error.status = 404) {
 				showValidationErrorMessage("ghParentBranch", "This Branch does not exist on GitHub.");
