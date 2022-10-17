@@ -18,17 +18,8 @@ $(document).ready(() => {
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
+    formatNoMatches: () => "No search results",
     dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
-    createSearchChoice: (term) => {
-      const exists = queriedRepos.find(repo => repo.id.indexOf(term) > 1);
-
-      if (!exists) {
-        return {
-          text: term,
-          id: term
-        }
-      }
-    },
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
@@ -73,6 +64,11 @@ $(document).ready(() => {
     }
   })
     .on("select2-close", () => {
+      if ($("#ghRepo").val().length) {
+        $(".no-repo-container").hide();
+      } else {
+        $(".no-repo-container").show();
+      }
       showLoaderInsideSelect2Dropdown("ghRepo", false);
     });
 
@@ -86,12 +82,7 @@ $(document).ready(() => {
 	});
 
   $("#ghRepo").on("change", () => {
-    if(queriedRepos.length) {
-      $(".no-repo-container").hide();
-      loadBranches();
-    } else {
-      $(".no-repo-container").show();
-    }
+    loadBranches();
   });
 
   $("#createBranchForm").on("aui-valid-submit", (event) => {
@@ -104,10 +95,6 @@ $(document).ready(() => {
   $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
-  });
-
-  $("#copyGitCheckout").click(function () {
-    navigator.clipboard.writeText("git checkout " + $("#branchNameText").val());
   });
 
   $("#openGitBranch").click(function () {
@@ -247,13 +234,7 @@ const showSuccessScreen = (repo) => {
   $(".gitHubCreateBranch__spinner").hide();
   $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
   $(".gitHubCreateBranch__header").html("GitHub branch created");
-  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
-  setTimeout(showSuccessWithActions, 1500);
-};
-
-const showSuccessWithActions = () => {
-  $(".headerImageLogo").removeClass("headerImageLogo-lg");
-  $(".headerImageLogo").attr("src", "/public/assets/jira-and-github.png");
+  $(".gitHubCreateBranch__subHeader").html(`Branch <b>${$("#branchNameText").val()}</b> created in ${repo.owner}/${repo.name}`);
   $(".gitHubCreateBranch__createdLinks").css("display", "flex");
 };
 

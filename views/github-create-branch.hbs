@@ -42,8 +42,7 @@
   </div>
 
   <div class="gitHubCreateBranch__createdLinks">
-    <div class="aui-button aui-button-light" id="copyGitCheckout">Copy git checkout</div>
-    <a class="aui-button aui-button-light" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
+    <a class="aui-button aui-button-label" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
   </div>
 
   <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
@@ -61,8 +60,7 @@
         </a>
         <aui-inline-dialog id="show-no-repo-popup" alignment="bottom left" responds-to="hover">
           <div>You need to configure your GitHub repositories to your Jira site to see them here.</div>
-          <!--TODO: Add URL after confirmation-->
-          <a href="#" class="configure-link">Configure GitHub Integration</a>
+          <a href="{{jiraHost}}/plugins/servlet/ac/com.github.integration.production/github-post-install-page" target="_blank" class="configure-link">Configure GitHub integration</a>
         </aui-inline-dialog>
       </div>
     </div>
