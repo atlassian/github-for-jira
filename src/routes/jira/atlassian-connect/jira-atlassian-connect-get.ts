@@ -218,11 +218,15 @@ export const JiraAtlassianConnectGet = async (req: Request, res: Response): Prom
 	});
 };
 
-const getCloudIdFromClientInfo = (clientInfo: string): string | undefined => {
+export const getCloudIdFromClientInfo = (clientInfo?: string): string | undefined => {
 	if (!clientInfo) {
 		return;
 	}
 
 	const cloudIdIndex = clientInfo.search(`cloudId=${UUID_REGEX}`);
-	return clientInfo.substring(cloudIdIndex + "cloudId=".length);
+	if (cloudIdIndex < 0) {
+		return;
+	}
+
+	return clientInfo?.substring(cloudIdIndex + "cloudId=".length);
 };
