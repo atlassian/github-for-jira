@@ -286,7 +286,13 @@
                             </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
-                          <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
+                          <button
+                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                            data-installation-id="{{ id }}"
+                            data-org-name="{{account.login}}"
+                          >
+                            Disconnect
+                          </button>
                         </aui-section>
                       </aui-dropdown-menu>
                     </td>
@@ -357,6 +363,8 @@
             >Connect GitHub organization</button>
           </div>
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>

@@ -1,0 +1,115 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+  <title>{{title}}</title>
+  <link
+    rel="stylesheet"
+    href="/public/aui/aui-prototyping.css"
+    integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+  <link rel="stylesheet" href="/public/css/github-create-branch.css" media="all" />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
+  <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+</head>
+
+<body>
+
+<input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
+<input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
+<input type="hidden" id="gitHubHostname" name="hostname" value="{{hostname}}" />
+
+<div class="gitHubCreateBranch__userDetails">
+  <div>GitHub account: <b>{{gitHubUser}}</b></div>
+  <div><a href="#" id="changeLogin">Change GitHub login</a></div>
+</div>
+<section class="gitHubCreateBranch">
+  <div class="headerImage">
+    <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
+    <aui-spinner class="gitHubCreateBranch__spinner" size="small"></aui-spinner>
+  </div>
+
+  <div class="gitHubCreateBranch__title">
+    <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
+    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">
+      Creating a branch for <a href="{{issueUrl}}" target="_blank" class="gitHubCreateBranch__issueLink">{{issue.key}}</a>
+    </div>
+  </div>
+
+  <div class="gitHubCreateBranch__createdLinks">
+    <div class="aui-button aui-button-light" id="copyGitCheckout">Copy git checkout</div>
+    <a class="aui-button aui-button-light" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
+  </div>
+
+  <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
+    <div class="field-group">
+      <aui-label for="repo" class="skeleton skeleton-element">Repository</aui-label>
+      <div class="skeleton skeleton-input"></div>
+      <input type="hidden" id="ghRepo" class="loaded">
+      {{#each repos}}
+        <div class="hidden default-repos">{{node.full_name}}</div>
+      {{/each}}
+
+      <div class="no-repo-container">
+        <a data-aui-trigger aria-controls="show-no-repo-popup" href="#show-no-repo-popup" class="no-repo-link">
+          Can't find the repository you're looking for?
+        </a>
+        <aui-inline-dialog id="show-no-repo-popup" alignment="bottom left" responds-to="hover">
+          <div>You need to configure your GitHub repositories to your Jira site to see them here.</div>
+          <!--TODO: Add URL after confirmation-->
+          <a href="#" class="configure-link">Configure GitHub Integration</a>
+        </aui-inline-dialog>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <aui-label for="branch" class="skeleton skeleton-element">Branch from</aui-label>
+      <div class="skeleton skeleton-input"></div>
+      <input type="hidden" id="ghParentBranch" name="parentBranch" class="loaded"/>
+    </div>
+
+    <div class="field-group">
+      <aui-label for="branch-name" class="skeleton skeleton-element">Branch name</aui-label>
+         <div class="skeleton skeleton-input"></div>
+         <input
+            class="text full-width-field loaded"
+            id="branchNameText"
+            value="{{issue.branchName}}"
+            type="text"
+            placeholder="Enter branch name"
+            data-aui-validation-field required name="branch-name"
+            data-aui-validation-pattern=".*{{issue.key}}.*"
+            data-aui-validation-required-msg="This field is required."
+            data-aui-validation-pattern-msg="The issue key does not match the selected issue."
+          />
+    </div>
+
+        <div class="gitHubCreateBranch__serverError">
+          {{> server-error-message-box }}
+        </div>
+    <div class="gitHubCreateBranch__actions">
+      <button class="aui-button aui-button-light skeleton" id="cancelBtn" type="button">Cancel</button>
+      <button class="aui-button aui-button-primary skeleton" id="createBranchBtn" type="submit">Create branch</button>
+    </div>
+  </form>
+</section>
+
+<script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
+<script
+  src="/public/aui/aui-prototyping.js"
+  integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+  nonce="{{nonce}}"
+></script>
+<script src="/public/js/github-create-branch.js" nonce="{{nonce}}"></script>
+<script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+<script src="/public/js/skeleton.js" nonce="{{nonce}}"></script>
+</body>
+
+</html>

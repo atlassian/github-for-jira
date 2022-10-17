@@ -3,19 +3,20 @@ export const mockModels = {
 	Installation: {
 		getForHost: {
 			jiraHost: process.env.ATLASSIAN_URL,
-			sharedSecret: process.env.ATLASSIAN_SECRET,
+			decrypt: jest.fn(() => process.env.ATLASSIAN_SECRET),
 			enabled: true
 		} as any,
 		findByPk: {
 			gitHubInstallationId: 1234,
 			enabled: true,
 			id: 1234,
-			jiraHost: process.env.ATLASSIAN_URL
+			jiraHost: process.env.ATLASSIAN_URL,
+			decrypt: jest.fn(() => process.env.ATLASSIAN_SECRET)
 		} as any,
 		install: {
 			id: 1234,
 			jiraHost: process.env.ATLASSIAN_URL,
-			sharedSecret: process.env.ATLASSIAN_SECRET,
+			decrypt: jest.fn(() => process.env.ATLASSIAN_SECRET),
 			enabled: true,
 			secrets: "secrets",
 			clientKey: "client-key"
@@ -24,7 +25,8 @@ export const mockModels = {
 	Subscription: {
 		getAllForInstallation: [
 			{
-				jiraHost: process.env.ATLASSIAN_URL
+				jiraHost: process.env.ATLASSIAN_URL,
+				gitHubInstallationId: 52
 			}
 		] as any,
 		install: {} as any,

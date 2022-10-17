@@ -3,8 +3,6 @@ import { verifyJiraInstallation } from "./verify-installation";
 import { getLogger } from "config/logger";
 import { Installation } from "models/installation";
 import { getAxiosInstance } from "./client/axios";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("./client/axios");
 jest.mock("config/feature-flags");
@@ -18,10 +16,6 @@ describe("verify-installation", () => {
 			sharedSecret: "new-encrypted-shared-secret",
 			clientKey: "client-key"
 		});
-		//doing bellow so that the sharedSecret is "shared-secret",
-		//while the encryptedSharedSecret will be "new-encrypted-shared-secret"
-		//so that we can test the FF
-		installation.sharedSecret = "shared-secret";
 	});
 
 	function mockJiraResponse(status: number) {
@@ -57,19 +51,7 @@ describe("verify-installation", () => {
 		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeFalsy();
 	});
 
-	it("should use existing sharedSecret when read from cryptor FF is Off", async ()=>{
-		when(jest.mocked(booleanFlag))
-			.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
-			.mockResolvedValueOnce(false);
-		mockJiraResponse(200);
-		await verifyJiraInstallation(installation, getLogger("test"))();
-		expect(getAxiosInstance).toHaveBeenCalledWith(expect.anything(), "shared-secret", expect.anything());
-	});
-
-	it("should use new encryptedSharedSecret when read from cryptor FF is ON", async ()=>{
-		when(jest.mocked(booleanFlag))
-			.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
-			.mockResolvedValueOnce(true);
+	it("should use new encryptedSharedSecret", async ()=>{
 		mockJiraResponse(200);
 		await verifyJiraInstallation(installation, getLogger("test"))();
 		expect(getAxiosInstance).toHaveBeenCalledWith(expect.anything(), "new-encrypted-shared-secret", expect.anything());

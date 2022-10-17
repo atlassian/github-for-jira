@@ -81,6 +81,11 @@ const testData = [
 		pattern: "/jira/connect/enterprise/app/{ac.uuid}",
 		route: "/jira/connect/enterprise/app/123",
 		match: true
+	},
+	{
+		pattern: "/jira/connect/enterprise/{ac.serverUrl}/app/{ac.uuid}",
+		route: "/jira/connect/enterprise/http%3A%2F%2FmyRandomsite.com/app/123",
+		match: true
 	}
 ];
 

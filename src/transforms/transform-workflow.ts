@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { GitHubPullRequest , GitHubWorkflowPayload } from "interfaces/github";
-import { JiraBuildData, JiraPullRequestHead } from "interfaces/jira";
+import { JiraBuildBulkSubmitData, JiraPullRequestHead } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
@@ -54,7 +54,7 @@ export const transformWorkflow = async (
 	githubClient: GitHubInstallationClient,
 	payload: GitHubWorkflowPayload,
 	logger: Logger
-): Promise<JiraBuildData | undefined> => {
+): Promise<JiraBuildBulkSubmitData | undefined> => {
 	const {
 		workflow_run: {
 			conclusion,

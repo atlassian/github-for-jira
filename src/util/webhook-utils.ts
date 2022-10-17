@@ -2,24 +2,16 @@ import { statsd }  from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const getCurrentTime = () => Date.now();
 
-/**
- * Emits metrics for successfully processed webhook. These metrics include:
- *  - Webhook processing duration histogram
- *  - Processed webhooks counter
- *
- * @param webhookReceivedTime time when GitHub for Jira app received a webhook from GitHub
- * @param webhookName name of the webhook (type)
- * @param logger logger for the function logs
- * @param status http response code if applicable to this webhook type
- */
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
 	logger: Logger = getLogger("webhook-metrics"),
-	status?: number
+	status?: number,
+	gitHubAppId?: number
 ): number | undefined | void => {
 	const currentTime = getCurrentTime();
 
@@ -34,9 +26,12 @@ export const emitWebhookProcessedMetrics = (
 				`Webhook processed in ${timeToProcessWebhookEvent} milliseconds`
 			);
 
+			const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
 			const tags = {
 				name: webhookName,
-				status: status?.toString() || "none"
+				status: status?.toString() || "none",
+				gitHubProduct
 			};
 
 			statsd.increment(metricWebhooks.webhookProcessed, tags);

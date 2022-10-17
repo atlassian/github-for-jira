@@ -32,7 +32,7 @@ describe("Github Configuration", () => {
 			//TODO: why? Comment this out make test works?
 			//setting both fields make sequelize confused as it internally storage is just the "secrets"
 			//secrets: "def234",
-			sharedSecret: "ghi345"
+			encryptedSharedSecret: "ghi345"
 		});
 
 		frontendApp = express();
@@ -124,7 +124,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(200, {
 					"id": 1,
 					"account": {
@@ -201,7 +200,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(403, {
 					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
 				});
@@ -243,7 +241,7 @@ describe("Github Configuration", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token"
+						githubToken: "token2"
 					})
 				)
 				.expect(200);

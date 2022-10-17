@@ -6,7 +6,7 @@ import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
 import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { JiraDeploymentData } from "interfaces/jira";
+import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
@@ -15,7 +15,8 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 		installationId: gitHubInstallationId,
 		webhookPayload: context.payload,
 		webhookReceived: Date.now(),
-		webhookId: context.id
+		webhookId: context.id,
+		gitHubAppConfig: context.gitHubAppConfig
 	});
 };
 
@@ -26,7 +27,9 @@ export const processDeployment = async (
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
-	rootLogger: Logger) => {
+	rootLogger: Logger,
+	gitHubAppId: number | undefined
+) => {
 
 	const logger = rootLogger.child({
 		webhookId: webhookId,
@@ -42,7 +45,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentData | undefined = await transformDeployment(newGitHubClient, webhookPayload, logger);
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -55,13 +58,13 @@ export const processDeployment = async (
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
+		gitHubAppId,
 		logger
 	);
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
 		logger.warn({
-			jiraPayload,
 			rejectedDeployments: result.rejectedDeployments
 		}, "Jira API rejected deployment!");
 	}
@@ -70,6 +73,7 @@ export const processDeployment = async (
 		webhookReceivedDate.getTime(),
 		"deployment_status",
 		logger,
-		result?.status
+		result?.status,
+		gitHubAppId
 	);
 };

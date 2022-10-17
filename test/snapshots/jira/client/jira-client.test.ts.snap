@@ -12,21 +12,21 @@ Object {
     },
     "installation": Object {
       "delete": [Function],
-      "exists": [Function],
     },
     "pullRequest": Object {
       "delete": [Function],
     },
     "repository": Object {
       "delete": [Function],
-      "get": [Function],
       "update": [Function],
     },
   },
   "issues": Object {
     "comments": Object {
       "addForIssue": [Function],
-      "getForIssue": [Function],
+      "deleteForIssue": [Function],
+      "list": [Function],
+      "updateForIssue": [Function],
     },
     "get": [Function],
     "getAll": [Function],
@@ -37,7 +37,6 @@ Object {
     },
     "worklogs": Object {
       "addForIssue": [Function],
-      "getForIssue": [Function],
     },
   },
   "remoteLink": Object {

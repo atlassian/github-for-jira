@@ -25,6 +25,11 @@ export const registerHandlebarsHelpers = () => {
 
 	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
 
+	hbs.registerHelper("setSubscriptionUrl", (uuid, installationId) => uuid
+		? `/github/${uuid}/subscriptions/${installationId}`
+		: `/github/subscriptions/${installationId}`
+	);
+
 	hbs.registerHelper(
 		"inProgressOrPendingSync",
 		(syncStatus) => syncStatus === "IN PROGRESS" || syncStatus === "PENDING"

@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { Installation } from "models/installation";
-import { RepoSyncState } from "models/reposyncstate";
-import { Subscription } from "models/subscription";
-import { mocked } from "ts-jest/utils";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -14,18 +10,17 @@ import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
 import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
 
 describe("sync/builds", () => {
-	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
-	const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
 
 	const makeExpectedJiraResponse = (builds) => ({
 		builds,
 		properties: {
-			"gitHubInstallationId": 1234
+			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
 		},
 		providerMetadata: {}
 	});
@@ -40,52 +35,19 @@ describe("sync/builds", () => {
 
 		mockSystemTime(12345678);
 
-		await Installation.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			sharedSecret: "secret",
-			clientKey: "client-key"
-		});
+		await new DatabaseStateCreator()
+			.withActiveRepoSyncState()
+			.repoSyncStatePendingForBuilds()
+			.create();
 
-		const subscription = await Subscription.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			syncStatus: "ACTIVE",
-			repositoryStatus: "complete"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			branchStatus: "complete",
-			commitStatus: "complete",
-			pullStatus: "complete",
-			deploymentStatus: "complete",
-			buildStatus: "pending", // We want the next process to be build
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
-
-		mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
-
-		githubUserTokenNock(installationId);
-
+		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 	});
 
-	const verifyMessageSent = (data: BackfillMessagePayload, delaySec ?: number) => {
-		expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
-		expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
-		expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
-	};
-
 	it("should sync builds to Jira when build message contains issue key", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -94,7 +56,7 @@ describe("sync/builds", () => {
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
 			.reply(200, compareReferencesFixture);
 
-		const builds = [
+		createJiraNock([
 			{
 				"schemaVersion": "1.0",
 				"pipelineId": 2152266464,
@@ -120,18 +82,17 @@ describe("sync/builds", () => {
 					}
 				]
 			}
-		];
-
-		createJiraNock(builds);
+		]);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -140,7 +101,7 @@ describe("sync/builds", () => {
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
 			.reply(200, compareReferencesFixture);
 
-		const builds = [
+		createJiraNock([
 			{
 				"schemaVersion": "1.0",
 				"pipelineId": 2152266464,
@@ -191,18 +152,17 @@ describe("sync/builds", () => {
 					}
 				]
 			}
-		];
-
-		createJiraNock(builds);
+		]);
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		verifyMessageSent(data);
+		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -222,8 +182,9 @@ describe("sync/builds", () => {
 	});
 
 	it("should not call Jira if no data is returned", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
 			.reply(200, {});

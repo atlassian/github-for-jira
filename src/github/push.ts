@@ -1,10 +1,14 @@
 import { enqueuePush } from "../transforms/push";
 import { getCurrentTime } from "utils/webhook-utils";
 import { hasJiraIssueKey } from "utils/jira-utils";
-import { GitHubPushData } from "../interfaces/github";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { updateRepoConfig } from "services/user-config-service";
+import { GitHubPushData } from "interfaces/github";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { Subscription } from "models/subscription";
+import { getInstallationId } from "./client/installation-id";
 
-export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+
+export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing
@@ -28,6 +32,15 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		gitHubInstallationId
 	});
 
+	if (subscription) {
+		const modifiedFiles = context.payload?.commits?.reduce((acc, commit) =>
+			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
+		// TODO: this call must be updated to support GitHub Server events
+		await updateRepoConfig(subscription, payload.repository.id, getInstallationId(gitHubInstallationId), modifiedFiles);
+	} else {
+		context.log.warn("could not load user config because subscription does not exist");
+	}
+
 	if (!payload.commits?.length) {
 		context.log.info(
 			{ noop: "no_commits" },
@@ -37,5 +50,5 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	}
 
 	context.log.info("Enqueueing push event");
-	await enqueuePush(payload, jiraClient.baseURL);
+	await enqueuePush(payload, jiraClient.baseURL, context.gitHubAppConfig);
 };

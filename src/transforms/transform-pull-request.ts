@@ -8,6 +8,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 function mapStatus(status: string, merged_at?: string) {
 	if (status === "merged") return "MERGED";
@@ -67,9 +68,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
-		id: pullRequest.base.repo.id,
-		name: pullRequest.base.repo.full_name,
-		url: pullRequest.base.repo.html_url,
+		...await transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
 		// Do not send the branch on the payload when the Pull Request Merged event is called.
 		// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 		branches:
@@ -118,7 +117,6 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				url: pullRequest.html_url,
 				updateSequenceId: Date.now()
 			}
-		],
-		updateSequenceId: Date.now()
+		]
 	};
 };

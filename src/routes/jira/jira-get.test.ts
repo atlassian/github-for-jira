@@ -46,7 +46,7 @@ describe("Jira Configuration Suite", () => {
 			//TODO: why? Comment this out make test works?
 			//setting both fields make sequelize confused as it internally storage is just the "secrets"
 			//secrets: "def234",
-			sharedSecret: "ghi345"
+			encryptedSharedSecret: "ghi345"
 		});
 
 	});
@@ -104,7 +104,7 @@ describe("Jira Configuration Suite", () => {
 		});
 
 		it("should return no success or failed connections if no subscriptions given", async () => {
-			expect(await getInstallations([], logger)).toEqual({
+			expect(await getInstallations([], logger, undefined)).toEqual({
 				fulfilled: [],
 				rejected: [],
 				total: 0
@@ -116,7 +116,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations([sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger, undefined)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -134,7 +134,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations([sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger, undefined)).toMatchObject({
 				fulfilled: [],
 				rejected: [{
 					error: {
@@ -161,7 +161,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations([sub, failedSub], logger)).toMatchObject({
+			expect(await getInstallations([sub, failedSub], logger, undefined)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,
@@ -196,7 +196,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${failedSub.gitHubInstallationId}`)
 				.reply(404, failedInstallation);
 
-			expect(await getInstallations([sub, failedSub], logger)).toMatchObject({
+			expect(await getInstallations([sub, failedSub], logger, undefined)).toMatchObject({
 				fulfilled: [],
 				rejected: [
 					{
@@ -252,7 +252,7 @@ describe("Jira Configuration Suite", () => {
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
 				.reply(200, singleInstallation);
 
-			expect(await getInstallations([sub], logger)).toMatchObject({
+			expect(await getInstallations([sub], logger, undefined)).toMatchObject({
 				fulfilled: [{
 					id: sub.gitHubInstallationId,
 					syncStatus: null,

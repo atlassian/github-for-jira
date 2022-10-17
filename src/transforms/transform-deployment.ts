@@ -1,12 +1,21 @@
 import Logger from "bunyan";
-import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
-import { CommitSummary, extractMessagesFromCommitSummaries, getAllCommitsBetweenReferences } from "./util/github-api-requests";
+import {
+	CommitSummary,
+	extractMessagesFromCommitSummaries,
+	getAllCommitsBetweenReferences
+} from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
-import { deburr } from "lodash";
+import _, { deburr } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { Config } from "interfaces/common";
+import { Subscription } from "models/subscription";
+import minimatch from "minimatch";
+import { getRepoConfig } from "services/user-config-service";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -101,11 +110,28 @@ const mapState = (state: string | undefined): string => {
 	}
 };
 
+const matchesEnvironment = (environment: string, globPatterns: string[] = []): boolean => {
+	for (const glob of globPatterns) {
+		if (minimatch(environment, glob)) {
+			return true;
+		}
+	}
+	return false;
+};
+
+/**
+ * Maps a given environment name to a Jira environment name using the custom mapping defined in a Config.
+ */
+export const mapEnvironmentWithConfig = (environment: string, config: Config): string | undefined => {
+	return _.keys(config?.deployments?.environmentMapping)
+		.find(jiraEnvironmentType => matchesEnvironment(environment, config.deployments?.environmentMapping?.[jiraEnvironmentType]));
+};
+
 // We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export const mapEnvironment = (environment: string): string => {
+export const mapEnvironment = (environment: string, config?: Config): string => {
 	const isEnvironment = (envNames: string[]): boolean => {
 		// Matches any of the input names exactly
 		const exactMatch = envNames.join("|");
@@ -119,6 +145,17 @@ export const mapEnvironment = (environment: string): string => {
 		);
 		return envNamesPattern.test(deburr(environment));
 	};
+
+	// if there is a user-defined config, we use that config for the mapping
+	if (config) {
+		const environmentType = mapEnvironmentWithConfig(environment, config);
+		if (environmentType) {
+			return environmentType;
+		}
+	}
+
+	// if there is no user-defined config (or the user-defined config didn't match anything),
+	// we fall back to hardcoded mapping
 
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
@@ -134,7 +171,7 @@ export const mapEnvironment = (environment: string): string => {
 // Returns undefined when there are no issue ids to map.
 const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	issueIds: string[],
-	repositoryId: string,
+	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
@@ -156,7 +193,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
-					repositoryId: repositoryId
+					repositoryId: transformedRepositoryId
 				};
 			});
 		if (commitKeys.length) {
@@ -172,7 +209,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, logger: Logger): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
@@ -190,7 +227,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
 	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		payload.repository.id.toString(),
+		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries
 	);
 
@@ -198,7 +235,24 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		return undefined;
 	}
 
-	const environment = mapEnvironment(deployment_status.environment);
+	let config: Config | undefined;
+
+	const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
+	if (subscription) {
+		config = await getRepoConfig(
+			subscription,
+			githubInstallationClient.githubInstallationId,
+			payload.repository.id,
+			payload.repository.owner.login,
+			payload.repository.name);
+	} else {
+		logger.warn({
+			jiraHost,
+			githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+		}, "could not find subscription - not using user config to map environments!");
+	}
+
+	const environment = mapEnvironment(deployment_status.environment, config);
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,

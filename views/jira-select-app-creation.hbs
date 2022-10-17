@@ -37,10 +37,10 @@
         {{> jira-and-github-header title="GitHub Enterprise Server app creation" }}
 
         <div class="jiraAppCreation__content__container">
-            <p class="jiraAppCreation__options__prompt">Connecting GitHub Enterprise Server to Jira requires an app to be created in your instance.</p>
+            <p class="jiraAppCreation__options__prompt">To connect GitHub Enterprise Server to Jira, you must create an app in your GitHub instance.</p>
 
             <div class="jiraAppCreation__options__container">
-                <p class="jiraAppCreation__options__cardPrompt">Select how you’d like to connect your GitHub organization</p>
+                <p class="jiraAppCreation__options__cardPrompt">How would you like to connect your GitHub organization?</p>
 
                 <div class="jiraAppCreation__options__cardsContainer">
                     {{> select-app-creation-card
@@ -66,9 +66,13 @@
         <div class="jiraAppCreation__versionDisclaimer__container">
             <p class="jiraAppCreation__versionDisclaimer__prompt">
                 To automatically connect your Github Enterprise Server to Jira, your GitHub Enterprise Server must be
-                <span class="jiraAppCreation__versionDisclaimer__version">Version 2.19.18</span> or higher.
-                <!-- TODO - add link to documentation once it's been written-->
-                <a href="" target="_blank">Learn more</a>
+                <span class="jiraAppCreation__versionDisclaimer__version">Version 3.1.x</span> or higher.
+                <a
+                    href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#FAQs"
+                    target="_blank"
+                >
+                    Learn more
+                </a>
             </p>
         </div>
 
@@ -76,10 +80,8 @@
 
         <div class="jiraAppCreation__actionBtn__container">
             <button
-                class="aui-button jiraAppCreation__actionBtn optionBtn"
+                class="aui-button aui-button-primary jiraAppCreation__actionBtn optionBtn"
                 id="jiraAppCreation__actionBtn"
-                aria-disabled="true"
-                disabled
             >
                 Create
             </button>

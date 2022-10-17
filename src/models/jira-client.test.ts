@@ -9,7 +9,7 @@ describe("JiraClient", () => {
 		beforeEach(async () => {
 			const installation: any = {
 				jiraHost,
-				sharedSecret: "secret"
+				decrypt: jest.fn(()=> "secret")
 			};
 
 			jiraClient = await JiraClient.getNewClient(installation, logger);

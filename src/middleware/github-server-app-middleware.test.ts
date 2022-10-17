@@ -28,40 +28,28 @@ describe("github-server-app-middleware", () => {
 				jiraHost: "https://testatlassian.net"
 			}
 		};
-	});
 
-	it("should call next() when no uuid is provided",  async() => {
 		req = {
 			log: getLogger("request"),
-			params: {
-				uuid: undefined
-			}
+			addLogFields: jest.fn(),
+			params: {}
 		};
+	});
 
+	it("should call next() when no uuid is provided", async () => {
 		await GithubServerAppMiddleware(req, res, next);
 		expect(next).toBeCalledTimes(1);
 	});
 
 	it("should throw an error if an uuid is provided but no GitHub server app is found", async () => {
-		req = {
-			log: getLogger("request"),
-			params: {
-				uuid: UUID
-			}
-		};
-
+		req.params.uuid = UUID;
 		await expect(GithubServerAppMiddleware(req, res, next))
 			.rejects
 			.toThrow("No GitHub app found for provided id.");
 	});
 
-	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match",  async() => {
-		req = {
-			log: getLogger("request"),
-			params: {
-				uuid: UUID
-			}
-		};
+	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match", async () => {
+		req.params.uuid = UUID;
 
 		payload = {
 			uuid: UUID,
@@ -92,12 +80,7 @@ describe("github-server-app-middleware", () => {
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {
-		req = {
-			log: getLogger("request"),
-			params: {
-				uuid: UUID
-			}
-		};
+		req.params.uuid = UUID;
 
 		payload = {
 			id: GIT_HUB_SERVER_APP_ID,
@@ -132,10 +115,12 @@ describe("github-server-app-middleware", () => {
 
 		expect(res.locals.gitHubAppId).toBe(GIT_HUB_SERVER_APP_ID);
 		expect(res.locals.gitHubAppConfig).toEqual({
+			gitHubAppId: GIT_HUB_SERVER_APP_ID,
 			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
 			gitHubClientSecret: "gitHubClientSecret",
+			hostname: "http://myinternalserver.com",
 			privateKey: "privateKey",
 			webhookSecret: "webhookSecret"
 		});

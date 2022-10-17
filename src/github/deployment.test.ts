@@ -1,177 +1,78 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
-import { Installation } from "models/installation";
-import { Subscription } from "models/subscription";
-import { waitUntil } from "test/utils/wait-until";
+import { deploymentWebhookHandler } from "./deployment";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { getLogger } from "config/logger";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
 
-import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
+jest.mock("../sqs/queues");
 
-describe("Deployment Webhook", () => {
-	let app: Application;
-	const gitHubInstallationId = 1234;
 
-	beforeAll(async () => {
-		await sqsQueues.deployment.purgeQueue();
+const GITHUB_INSTALLATION_ID = 1234;
+const GHES_GITHUB_APP_ID = 111;
+const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";
+const GHES_GITHUB_APP_APP_ID = 1;
+const GHES_GITHUB_APP_CLIENT_ID = "client-id";
+
+describe("DeploymentWebhookHandler", () => {
+	let jiraClient: any;
+	let util: any;
+	beforeEach(() => {
+		jiraClient = { baseURL: jiraHost };
+		util = null;
 	});
-
-	beforeEach(async () => {
-		app = await createWebhookApp();
-
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
-		});
-
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
-
-		await sqsQueues.deployment.start();
-	});
-
-	afterEach(async () => {
-		await sqsQueues.deployment.stop();
-		await sqsQueues.deployment.purgeQueue();
-	});
-
-	describe("deployment_status", () => {
-
-		it("should queue and process a deployment event", async () => {
-			const sha = deploymentStatusBasic.payload.deployment.sha;
-
-			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
-			githubUserTokenNock(1234);
-
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${sha}`)
-				.reply(200, {
-					commit: {
-						author: {
-							name: "test-branch-author-name",
-							email: "test-branch-author-name@github.com",
-							date: "test-branch-author-date"
-						},
-						message: "[TEST-123] test-commit-message"
-					},
-					html_url: `test-repo-url/commits/${sha}`
-				});
-
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
-				.query(true)
-				.reply(200, [
-					{
-						"id": 1,
-						"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-						"ref": "topic-branch",
-						"task": "deploy",
-						"payload": {},
-						"original_environment": "staging",
-						"environment": "production",
-						"description": "Deploy request from hubot",
-						"creator": {
-							"login": "test-repo-owner",
-							"id": 1,
-							"type": "User"
-						},
-						"created_at": "2012-07-20T01:19:13Z",
-						"updated_at": "2012-07-20T01:19:13Z",
-						"statuses_url": "https://api.github.com/repos/octocat/example/deployments/1/statuses",
-						"repository_url": "https://api.github.com/repos/octocat/example",
-						"transient_environment": false,
-						"production_environment": true
-					}
-				]);
-
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d...f95f852bd8fca8fcc58a9a2d6c842781e32a215e`)
-				.reply(200, {
-					"total_commits": 2,
-					"commits": [
-						{
-							"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-							"commit": {
-								"message": "base commit"
-							}
-						},
-						{
-							"sha": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-							"commit": {
-								"message": "head commit"
-							}
-						}
-					]
-				});
-
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/1/statuses`)
-				.query(true)
-				.reply(200, [
-					{
-						"id": 1,
-						"state": "success",
-						"description": "Deployment finished successfully.",
-						"environment": "production"
-					}
-				]);
-
-			jiraNock.post("/rest/deployments/0.1/bulk", {
-				deployments:
-					[
-						{
-							"schemaVersion": "1.0",
-							"deploymentSequenceNumber": 1234,
-							"updateSequenceNumber": 123456,
-							"displayName": "deploy",
-							"url": "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-							"description": "deploy",
-							"lastUpdated": "2021-06-28T12:15:18.000Z",
-							"state": "successful",
-							"pipeline": {
-								"id": "deploy",
-								"displayName": "deploy",
-								"url": "test-repo-url/commit/885bee1-commit-id-1c458/checks"
-							},
-							"environment": {
-								"id": "Production",
-								"displayName": "Production",
-								"type": "production"
-							},
-							"associations": [
-								{
-									"associationType": "issueIdOrKeys",
-									"values": ["TEST-123"]
-								},
-								{
-									"associationType": "commit",
-									"values": [
-										{
-											"commitHash": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
-											"repositoryId": "65"
-										},
-										{
-											"commitHash": "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-											"repositoryId": "65"
-										}
-									]
-								}
-							]
-						}
-					],
-				properties:
-					{
-						gitHubInstallationId: 1234
-					}
-			}).reply(200);
-
-			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
-
-			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
-				expect(jiraNock).toBeDone();
-			});
+	describe("GitHub Cloud", () => {
+		it("should be called with cloud GitHubAppConfig", async () => {
+			await deploymentWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
+				gitHubAppConfig: {
+					uuid: undefined,
+					gitHubAppId: undefined,
+					appId: parseInt(envVars.APP_ID),
+					clientId: envVars.GITHUB_CLIENT_ID,
+					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
+				}
+			}));
 		});
 	});
+	describe("GitHub Enterprise Server", () => {
+		it("should be called with GHES GitHubAppConfig", async () => {
+			await deploymentWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
+				gitHubAppConfig: {
+					uuid: GHES_GITHUB_UUID,
+					gitHubAppId: GHES_GITHUB_APP_ID,
+					appId: GHES_GITHUB_APP_APP_ID,
+					clientId: GHES_GITHUB_APP_CLIENT_ID,
+					gitHubBaseUrl: gheUrl,
+					gitHubApiUrl: gheUrl
+				}
+			}));
+		});
+	});
+	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
+		return new WebhookContext({
+			id: "1",
+			name: "created",
+			log: getLogger("test"),
+			payload: {},
+			gitHubAppConfig: cloud ? {
+				uuid: undefined,
+				gitHubAppId: undefined,
+				appId: parseInt(envVars.APP_ID),
+				clientId: envVars.GITHUB_CLIENT_ID,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
+			} : {
+				uuid: GHES_GITHUB_UUID,
+				gitHubAppId: GHES_GITHUB_APP_ID,
+				appId: GHES_GITHUB_APP_APP_ID,
+				clientId: GHES_GITHUB_APP_CLIENT_ID,
+				gitHubBaseUrl: gheUrl,
+				gitHubApiUrl: gheUrl
+			}
+		});
+	};
 });
+

@@ -8,10 +8,8 @@ import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
 import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
-
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
-
-const TEST_LOGGER = getLogger("test");
+import { v4 as UUID } from "uuid";
 
 jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
@@ -24,7 +22,21 @@ jest.mock("~/src/sync/deduplicator", () => ({
 
 describe("sync/installation", () => {
 
+	const TEST_LOGGER = getLogger("test");
 	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
+	const GITHUB_APP_ID = 123;
+	const JOB_DATA_GHES = {
+		installationId: 1,
+		jiraHost: "http://foo-ghes",
+		gitHubAppConfig: {
+			gitHubAppId: GITHUB_APP_ID,
+			appId: 2,
+			clientId: "client_id",
+			gitHubBaseUrl: "http://ghes.server",
+			gitHubApiUrl: "http://ghes.server",
+			uuid: UUID()
+		}
+	};
 
 	const TEST_REPO: Repository = {
 		id: 123,
@@ -42,12 +54,6 @@ describe("sync/installation", () => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
-
-	let mockBackfillQueueSendMessage;
-
-	beforeEach(() => {
-		mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
-	});
 
 	describe("isRetryableWithSmallerRequest()", () => {
 
@@ -90,41 +96,47 @@ describe("sync/installation", () => {
 
 	describe("processInstallation", () => {
 
-		it("should process the installation with deduplication", async () => {
+		it("should process the installation with deduplication for cloud", async () => {
 			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-cloud`, expect.anything());
+		});
+
+		it("should process the installation with deduplication for GHES", async () => {
+			await processInstallation()(JOB_DATA_GHES, sentry, TEST_LOGGER);
+			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghes-ghaid-${GITHUB_APP_ID}`, expect.anything());
 		});
 
 		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
 			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(1);
-			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(JOB_DATA);
-			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(60);
-			expect(mockBackfillQueueSendMessage.mock.calls[0][2].warn).toBeDefined();
+			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
 		});
 
 		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
 			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(mockBackfillQueueSendMessage.mock.calls.length).toEqual(1);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
 		});
 	});
 
 	describe("maybeScheduleNextTask", () => {
-		it("does nothing if there is no next task", () => {
-			maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
-			expect(mockBackfillQueueSendMessage.mock.calls).toHaveLength(0);
+		it("does nothing if there is no next task", async () => {
+			await maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(0);
 		});
 
 		it("when multiple tasks, picks the one with the highest delay", async () => {
 			await maybeScheduleNextTask(JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
-			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 60, TEST_LOGGER]]);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
 		});
 
 		it("not passing delay to queue when not provided", async () => {
 			await maybeScheduleNextTask(JOB_DATA, [0], TEST_LOGGER);
-			expect(mockBackfillQueueSendMessage.mock.calls).toEqual([[JOB_DATA, 0, TEST_LOGGER]]);
+			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 0, expect.anything());
 		});
 	});
 
@@ -145,7 +157,7 @@ describe("sync/installation", () => {
 			mockSystemTime(12345678);
 		});
 
-		it("Rate limiting error will be retried with the correct delay", () => {
+		it("Rate limiting error will be retried with the correct delay", async () => {
 			const axiosResponse = {
 				data: "Rate Limit",
 				status: 403,
@@ -157,14 +169,14 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
-		it("No delay if rate limit already reset", () => {
+		it("No delay if rate limit already reset", async () => {
 			const axiosResponse = {
 				data: "Rate Limit",
 				status: 403,
@@ -176,14 +188,14 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 
 		});
 
-		it("Error with headers indicating rate limit will be retryed with the appropriate delay", () => {
+		it("Error with headers indicating rate limit will be retryed with the appropriate delay", async () => {
 			const probablyRateLimitError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -202,15 +214,13 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
 		});
 
-
-		it("Repository ignored if not found error", () => {
+		it("Repository ignored if not found error", async () => {
 			const notFoundError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -229,30 +239,28 @@ describe("sync/installation", () => {
 				status: 404
 			};
 
-			handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository ignored if GraphQL not found error", () => {
+		it("Repository ignored if GraphQL not found error", async () => {
 
-			handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository failed if some kind of unknown error", () => {
-
-
-			handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+		it("Repository failed if some kind of unknown error", async () => {
+			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
 		});
 
-		it("60s delay if abuse detection triggered", () => {
+		it("60s delay if abuse detection triggered", async () => {
 			const abuseDetectionError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -272,16 +280,16 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("5s delay if connection timeout", () => {
+		it("5s delay if connection timeout", async () => {
 			const connectionTimeoutErr = "connect ETIMEDOUT";
 
-			handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);

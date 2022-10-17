@@ -66,16 +66,12 @@
       <section class="jiraConfiguration_content">
         {{#if hasConnections}}
           <p>
-            After you connect your GitHub account or organization to Jira and include issue keys in branch names, commit
-            messages, and pull requests titles, you will be able to:
-          </p>
-          <ul class="jiraConfiguration__content__list">
-            <li>Create branches and pull requests from your Jira project.</li>
-            <li>View development information within your linked Jira issue.</li>
-            <li>View deployment pipelines over a timeline in your insights.</li>
-          </ul>
-          <p>Even if your organization is still backfilling historical data, you can start linking issue keys in your
-            development work immediately.</p>
+            Connecting GitHub to Jira allows you to view development activity in the context of your Jira project and
+            issues. To send development data from GitHub to Jira, your team must include issue keys in branch names,
+            commit messages, and pull request titles. <br/>
+            Even if your organization is still backfilling historical data, you can start using issue keys in your
+            development work immediately.
+        </p>
 
           {{!-- Backfill Status Info Modal --}}
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
@@ -178,7 +174,9 @@
 
           {{#if hasCloudServers}}
             <div class="jiraConfiguration__cloudContainer">
-              <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
+              {{/if}}
               <div class="jiraConfiguration__cloudConnections">
                 {{> jira-configuration-table
                     id=id
@@ -194,7 +192,9 @@
 
           {{#if gheServers.length}}
             <div class="jiraConfiguration__enterpriseContainer">
-              <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
+              {{/if}}
               {{#each gheServers as |server|}}
                 <div class="jiraConfiguration__enterpriseServer">
                   <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
@@ -209,7 +209,7 @@
                   <div class="jiraConfiguration__enterpriseConnections">
                     <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
                     {{#each server.applications as |app|}}
-                      <details>
+                      <details open>
                         <summary class="jiraConfiguration__collapsibleHeader jiraConfiguration__table__cell__settings">
                           <div>
                             <span class="aui-icon aui-iconfont-chevron-right"></span>
@@ -242,7 +242,7 @@
                                    data-app-uuid="{{app.uuid}}"
                                    data-app-name="{{app.gitHubAppName}}"
                                >
-                                 Delete
+                                 Disconnect
                                </button>
                              </div>
                            </aui-section>
@@ -256,15 +256,17 @@
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
                                 csrfToken=csrfToken
+                                gitHubAppId=app.id
                                 successfulConnections=app.successfulConnections
                                 failedConnections=app.failedConnections
+                                gitHubAppId=app.id
                             }}
                           {{else}}
                             <div class="jiraConfiguration__collapsibleBody">
                               <div class="jiraConfiguration__noOrgsTitle">Connected organizations</div>
                               <div class="jiraConfiguration__noOrgsBody">
                                 No connected organizations.
-                                <a href="#" class="jiraConfiguration__connectNewApp" data-server-baseurl="{{server.gitHubBaseUrl}}">Connect a GitHub organization.</a>
+                                <a href="#" class="jiraConfiguration__connectNewApp" data-app-uuid="{{app.uuid}}">Connect a GitHub organization.</a>
                               </div>
                             </div>
                           {{/if}}

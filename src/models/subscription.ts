@@ -39,11 +39,12 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId?: number;
+	gitHubAppId: number | undefined;
 
-	static async getAllForHost(jiraHost: string): Promise<Subscription[]> {
+	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
+				...(gitHubAppId !== undefined && { gitHubAppId }), // Add gitHubAppId only if passed
 				jiraHost
 			}
 		});
@@ -51,7 +52,7 @@ export class Subscription extends Model {
 
 	static getAllForInstallation(
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
@@ -63,7 +64,7 @@ export class Subscription extends Model {
 
 	static findOneForGitHubInstallationId(
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -74,12 +75,12 @@ export class Subscription extends Model {
 	}
 
 	static getAllFiltered(
+		gitHubAppId: number | undefined,
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
 		limit?: number,
-		inactiveForSeconds?: number,
-		gitHubAppId?: number
+		inactiveForSeconds?: number
 	): Promise<Subscription[]> {
 
 		const andFilter: WhereOptions[] = [];
@@ -133,10 +134,15 @@ export class Subscription extends Model {
 		});
 	}
 
+	// TODO: currently, this function returns the first subscription that matches the jiraHost
+	// and installationId. Theoretically, the same Jira instance can have two subscriptions
+	// with the same installation ID (for example, when they have multiple GitHub Enterprise Servers
+	// connected). All calls of this function must be changed to pass in an additional appId parameter
+	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
 		gitHubInstallationId: number,
-		gitHubAppId?: number
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -153,10 +159,8 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey
-			},
-			defaults: {
-				gitHubAppId: payload.gitHubAppId
+				jiraClientKey: payload.clientKey,
+				gitHubAppId: payload.gitHubAppId || null
 			}
 		});
 
@@ -220,7 +224,7 @@ Subscription.init({
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
-	gitHubAppId?: number;
+	gitHubAppId: number | undefined;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

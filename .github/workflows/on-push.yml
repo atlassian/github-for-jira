@@ -1,6 +1,9 @@
 name: Push
 
-on: [ push, pull_request ]
+on:
+  push:
+  pull_request:
+    types: [ opened ]
 
 jobs:
   build:

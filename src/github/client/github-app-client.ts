@@ -9,8 +9,8 @@ import * as PrivateKey from "probot/lib/private-key";
 import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
-import { GitHubClient } from "./github-client";
-
+import { GitHubClient, GitHubConfig } from "./github-client";
+import { SearchedRepositoriesResponse } from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -22,12 +22,12 @@ export class GitHubAppClient extends GitHubClient {
 	private readonly appToken: AuthToken;
 
 	constructor(
+		gitHubConfig: GitHubConfig,
 		logger?: Logger,
-		baseUrl?: string,
 		appId = envVars.APP_ID,
 		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
-		super(logger, baseUrl);
+		super(gitHubConfig, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
@@ -84,8 +84,16 @@ export class GitHubAppClient extends GitHubClient {
 		});
 	};
 
-	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations`, {});
+	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse[]>> => {
+		return await this.axios.get<Octokit.AppsGetInstallationResponse[]>(`/app/installations`, {});
 	};
 
+	// TODO - move to githubinstallationClient
+	public async searchRepositories(queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
+		return await this.axios.get<SearchedRepositoriesResponse>("search/repositories?q={q}", {
+			urlParams: {
+				q: queryString
+			}
+		});
+	}
 }

@@ -7,6 +7,7 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -26,6 +27,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppId } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
@@ -64,14 +66,15 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
 			installationId: gitHubInstallationId,
-			host: jiraHost
+			host: jiraHost,
+			gitHubAppId
 		});
 
 		await findOrStartSync(subscription, req.log);
 
 		res.sendStatus(200);
 	} catch (err) {
-		req.log.error(err, "Error processing subscription add request");
+		req.log.error({ err, gitHubProduct }, "Error processing subscription add request");
 		res.sendStatus(500);
 	}
 };

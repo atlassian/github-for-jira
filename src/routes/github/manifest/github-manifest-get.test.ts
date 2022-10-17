@@ -34,10 +34,11 @@ describe("github-manifest-complete-get", () => {
 				url: expect.any(String)
 			}),
 			setup_url: expect.any(String),
+			callback_url: expect.any(String),
 			default_permissions: expect.objectContaining({
 				"actions": "read",
 				"security_events": "read",
-				"contents": "read",
+				"contents": "write",
 				"deployments": "read",
 				"issues": "write",
 				"metadata": "read",

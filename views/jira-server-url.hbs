@@ -46,8 +46,12 @@
         <div class="jiraServerUrl__prompt">
             Connecting GitHub Enterprise Server to Jira requires opening a hole in your firewall,
             as Atlassian’s IP addresses must be able to call your GitHub Enterprise Server.
-          <!--TODO: Add a link here-->
-          <a href="" target="_blank">Learn more about network configuration for GitHub for Jira.</a>
+            <a
+                href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data"
+                target="_blank"
+            >
+                Learn more about network configuration for GitHub for Jira.
+            </a>
         </div>
 
         <div>
@@ -63,6 +67,7 @@
               <input class="text full-width-field" type="text"
                      data-aui-validation-field
                      data-aui-validation-ghe-url
+                     data-aui-validation-when="keyup"
                      placeholder="https://example.com"
                      id="gheServerURL" name="gheServerURL" />
             </div>

@@ -8,7 +8,7 @@ import { pushWebhookHandler } from "./push";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "./branch";
 import { webhookTimeout } from "utils/webhook-timeout";
 import { Application } from "probot";
-import { deleteRepository } from "./repository";
+import { deleteRepositoryWebhookHandler } from "./repository";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { convertToWebhookContext } from "../util/convert-to-webhook-context";
 
@@ -16,7 +16,8 @@ export const setupGithubWebhooks = (robot: Application) => {
 	robot.on(
 		[
 			"issue_comment.created",
-			"issue_comment.edited"
+			"issue_comment.edited",
+			"issue_comment.deleted"
 		],
 		convertToWebhookContext(webhookTimeout(GithubWebhookMiddleware(issueCommentWebhookHandler)))
 	);
@@ -43,7 +44,7 @@ export const setupGithubWebhooks = (robot: Application) => {
 	robot.on("create", convertToWebhookContext(GithubWebhookMiddleware(createBranchWebhookHandler)));
 	robot.on("delete", convertToWebhookContext(GithubWebhookMiddleware(deleteBranchWebhookHandler)));
 
-	robot.on("repository.deleted", convertToWebhookContext(GithubWebhookMiddleware(deleteRepository)));
+	robot.on("repository.deleted", convertToWebhookContext(GithubWebhookMiddleware(deleteRepositoryWebhookHandler)));
 
 	robot.on("code_scanning_alert", convertToWebhookContext(GithubWebhookMiddleware(codeScanningAlertWebhookHandler)));
 };

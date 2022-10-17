@@ -1,6 +1,6 @@
 import { envVars } from "config/env";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { getLogger } from "config/logger";
+import { retry } from "ts-retry-promise";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
@@ -8,7 +8,6 @@ export enum EncryptionSecretKeyEnum {
 }
 
 export type EncryptionContext = Record<string, string | number>;
-const logger = getLogger("encryption-client");
 
 interface EncryptResponse {
 	cipherText: string;
@@ -38,32 +37,35 @@ export class EncryptionClient {
 	});
 
 	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		try {
+		return await retry(async () => {
 			const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
 				plainText,
 				encryptionContext
 			});
 			return response.data.cipherText;
-		} catch (e) {
-			logger.error("Cryptor encrypt request failed");
-			throw e;
-		}
+		}, { retries: 5, delay: 500 });
 	}
 
 	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		try {
+		return await retry(async () => {
 			const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
 				cipherText,
 				encryptionContext
 			});
 			return response.data.plainText;
-		} catch (e) {
-			logger.error("Cryptor decrypt request failed");
-			throw e;
-		}
+		}, { retries: 5, delay: 500 });
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {
 		return await this.axios.get("/healthcheck");
+	}
+
+	static async deepcheck(): Promise<string[]> {
+		return await Promise.all([
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "healthcheck-test-github-server-app")
+				.then(value => EncryptionClient.decrypt(value)),
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS, "healthcheck-test-jira-instance-secret")
+				.then(value => EncryptionClient.decrypt(value))
+		]);
 	}
 }

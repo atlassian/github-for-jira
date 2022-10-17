@@ -2,6 +2,7 @@ import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "models/subscription";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: better typings in file
 function mapStatus({ state, merged_at }): string {
@@ -17,7 +18,14 @@ interface Payload {
 	repository: Repository;
 }
 
-export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, ghUser?: Octokit.UsersGetByUsernameResponse) => {
+/**
+ *
+ * @param payload
+ * @param prDetails
+ * @param gitHubBaseUrl - can be undefined for Cloud
+ * @param ghUser
+ */
+export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
 	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
@@ -27,8 +35,7 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 	}
 
 	return {
-		id: repository.id.toString(),
-		name: repository.full_name,
+		... await transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it
@@ -48,8 +55,6 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 				url: prDetails.html_url,
 				updateSequenceId: Date.now()
 			}
-		],
-		url: repository.html_url,
-		updateSequenceId: Date.now()
+		]
 	};
 };

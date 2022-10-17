@@ -2,6 +2,10 @@ import supertest from "supertest";
 import express, { Express } from "express";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Atlassian Connect", () => {
 	let app: Express;
@@ -20,7 +24,16 @@ describe("Atlassian Connect", () => {
 			app.use(getFrontendApp());
 		});
 
-		describe("Atlassian Connect", () => {
+		describe.each([true, false])("Atlassian Connect", (createBranch) => {
+
+			beforeEach(() => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.CREATE_BRANCH,
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(createBranch);
+			});
+
 			it("should return correct connect app descriptor", () => {
 
 				return supertest(app)

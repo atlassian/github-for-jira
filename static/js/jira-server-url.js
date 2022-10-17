@@ -1,28 +1,15 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
-const GITHUB_CLOUD = ["github.com", "www.github.com"];
 
 AJS.formValidation.register(['ghe-url'], (field) => {
 	const inputURL = field.el.value;
-	try {
-		const { protocol, hostname } = new URL(inputURL);
-
-		if (!/^https?:$/.test(protocol)) {
-			// TODO: add URL for this
-			field.invalidate(AJS.format('The entered URL is not valid. <a href="#">Learn more</a>.'));
-		}
-		else if (GITHUB_CLOUD.includes(hostname)) {
-			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
-		} else {
-			field.validate();
-		}
-	} catch (e) {
-    if (!inputURL.trim().length) {
-      field.invalidate(AJS.format('This is a required field.'));
-    } else {
-      field.invalidate(AJS.format('The entered URL is not valid. Learn more.'));
-    }
+	if (!inputURL.trim().length) {
+		field.invalidate(AJS.format('This is a required field.'));
+		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+	} else {
+		field.validate();
+		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
 	}
 });
 
@@ -36,24 +23,38 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const gheServerUrlErrors = {
-	GHE_ERROR_INVALID_URL: {
-		title: "Invalid URL",
-		message: "That URL doesn't look right. Please check and try again.",
-	},
-	GHE_ERROR_ENOTFOUND: {
-		title: "We couldn't verify this URL",
-		message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
-	},
-	GHE_SERVER_BAD_GATEWAY: {
-		title: "Something went wrong",
-		message: "We weren't able to complete your request. Please try again."
-	},
-	GHE_ERROR_DEFAULT: {
-		title: "Something went wrong",
-		message: "We ran into a hiccup while verifying your details. Please try again later."
+const getGHEServerError = (error, url) => {
+	let reason = '';
+	if (error.reason) {
+		reason = `<br />Reason: ${error.reason}.<br />`;
 	}
-};
+	switch (error.code) {
+		case "GHE_ERROR_INVALID_URL":
+			return {
+				title: "Invalid URL",
+				message: 'The entered URL is not valid. ' +
+					reason +
+					'<a href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
+					'Learn more' +
+					'</a>.',
+			};
+		case "GHE_ERROR_GITHUB_CLOUD_HOST":
+			return {
+				title: "GitHub Cloud site",
+				message: `The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.`,
+			};
+		case "GHE_ERROR_CANNOT_CONNECT":
+			return {
+				title: "Connection failed",
+				message: `We couldn't connect to <b>${url}</b>. ${reason}Please make sure GitHub for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
+			};
+		default:
+			return {
+				title: "Something went wrong",
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Error code: <b>${error.code}</b>. ${reason}`
+			};
+	}
+}
 
 const handleGheUrlRequestErrors = (err) => {
 	requestFailed();
@@ -62,12 +63,6 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".errorMessageBox__title").empty().append(title);
 	$(".errorMessageBox__message").empty().append(message);
 }
-
-const mapErrorCode = (errorCode) => {
-	const errorMessage = gheServerUrlErrors[errorCode]
-	handleGheUrlRequestErrors(errorMessage);
-}
-
 
 const verifyGitHubServerUrl = (gheServerURL) => {
 	const csrf = document.getElementById("_csrf").value
@@ -91,27 +86,27 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 						}
 					);
 				} else {
-					mapErrorCode(data.errors[0].code);
+					const errorMessage = getGHEServerError(data.errors[0], gheServerURL);
+					handleGheUrlRequestErrors(errorMessage);
 				}
-      }
-		);
+			}
+		).fail(function(xhr, status, error) {
+			console.error("Error while calling backend", status, error);
+			handleGheUrlRequestErrors(getGHEServerError({
+				code: status,
+				reason: xhr.responseText
+			}, gheServerURL));
+		});
 	});
 };
-
-$("#gheServerURL").on("keyup", event => {
-	const hasUrl = event.target.value.length > 0;
-	$("#gheServerBtn").attr({
-		"aria-disabled": !hasUrl,
-		"disabled": !hasUrl
-	});
-});
-
 
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
 	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
 	const installationId = $(event.currentTarget).data("installation-id");
 
-	activeRequest();
-	verifyGitHubServerUrl(gheServerURL, installationId);
+	if ($("#gheServerBtnSpinner").is(":hidden")) {
+		activeRequest();
+		verifyGitHubServerUrl(gheServerURL, installationId);
+	}
 });

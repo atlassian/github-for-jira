@@ -1,7 +1,8 @@
-import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions } from "sequelize";
+import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions, JSON } from "sequelize";
 import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
+import { Config } from "interfaces/common";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -30,6 +31,7 @@ export class RepoSyncState extends Model {
 	repoCreatedAt: Date;
 	syncUpdatedAt?: Date;
 	syncCompletedAt?: Date;
+	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
 
@@ -82,6 +84,14 @@ export class RepoSyncState extends Model {
 				subscriptionId: subscription.id
 			}
 		}));
+	}
+
+	static async findByRepoId(subscription: Subscription, repoId: number): Promise<RepoSyncState | null> {
+		return RepoSyncState.findOneFromSubscription(subscription, {
+			where: {
+				repoId
+			}
+		});
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
@@ -198,6 +208,7 @@ RepoSyncState.init({
 	repoCreatedAt: DATE,
 	syncUpdatedAt: DATE,
 	syncCompletedAt: DATE,
+	config: JSON,
 	createdAt: DATE,
 	updatedAt: DATE
 }, { sequelize });

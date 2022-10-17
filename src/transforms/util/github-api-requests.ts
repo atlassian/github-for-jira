@@ -17,10 +17,10 @@ export type CommitSummary = {
 // obtain all issue keys referenced in commit messages.
 export const getAllCommitMessagesBetweenReferences = async (
 	payload: CompareCommitsPayload,
-	github: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	logger: Logger
 ): Promise<string> => {
-	const commitSummaries = await getAllCommitsBetweenReferences(payload, github, logger);
+	const commitSummaries = await getAllCommitsBetweenReferences(payload, gitHubInstallationClient, logger);
 	return extractMessagesFromCommitSummaries(commitSummaries);
 };
 
@@ -28,12 +28,12 @@ export const getAllCommitMessagesBetweenReferences = async (
 // obtain commit hashes and messages.
 export const getAllCommitsBetweenReferences = async (
 	payload: CompareCommitsPayload,
-	github: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 	let commitSummaries;
 	try {
-		const commitsDiff = await github.compareReferences(payload.owner, payload.repo, payload.base, payload.head);
+		const commitsDiff = await gitHubInstallationClient.compareReferences(payload.owner, payload.repo, payload.base, payload.head);
 		commitSummaries = commitsDiff.data?.commits
 			?.map((c) => { return { sha: c.sha, message: c.commit.message }; });
 	} catch (err) {

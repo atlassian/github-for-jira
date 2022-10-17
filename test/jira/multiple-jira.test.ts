@@ -59,6 +59,8 @@ const jiraMatchingIssuesKeysBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{
@@ -130,6 +132,8 @@ const jiraMultipleJiraBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{
@@ -208,7 +212,7 @@ describe("multiple Jira instances", () => {
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({
@@ -218,7 +222,7 @@ describe("multiple Jira instances", () => {
 		});
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost: jira2Host
 		});
 		await Subscription.create({

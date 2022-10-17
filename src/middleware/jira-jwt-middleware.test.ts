@@ -3,8 +3,6 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { Installation } from "models/installation";
 import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
 import { getLogger } from "config/logger";
-import { BooleanFlags, booleanFlag }  from "config/feature-flags";
-import { when } from "jest-when";
 
 const logger = getLogger("jwt-middleware.test");
 jest.mock("models/installation");
@@ -38,8 +36,7 @@ describe("#verifyJiraMiddleware", () => {
 			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: testSharedSecret,
+			decrypt: jest.fn(() => testSharedSecret),
 			subscriptions: jest.fn().mockResolvedValue([])
 		};
 	});
@@ -178,31 +175,17 @@ describe("#verifyJiraMiddleware", () => {
 
 	});
 
-	describe("decyrpting installation sharedSecret", ()=>{
-		const turnFFOnOff = (status: boolean) =>{
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
-				.mockResolvedValue(status);
-		};
+	describe("decyrpting installation encryptedSharedSecret", ()=>{
 		let installation: Installation;
 		beforeEach(()=>{
 			installation = {
 				id: 19,
 				jiraHost,
 				clientKey: "abc123",
-				sharedSecret: "existing-shared-secret",
 				decrypt: async (f: string) => f === "encryptedSharedSecret" ? "new-cryptor-shared-secret" : null
 			} as any as Installation;
 		});
-		it("should read existing field (sharedSecret) directly when FF is OFF", async () => {
-			turnFFOnOff(false);
-			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
-			const req = buildRequest(jiraHost, "existing-shared-secret");
-			await JiraContextJwtTokenMiddleware(req, res, next);
-			expect(next).toBeCalled();
-		});
-		it("should read new field (encryptedSharedSecret) via decrypt method when FF is ON", async () => {
-			turnFFOnOff(true);
+		it("should read new field (encryptedSharedSecret) via decrypt method", async () => {
 			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest(jiraHost, "new-cryptor-shared-secret");
 			await JiraContextJwtTokenMiddleware(req, res, next);

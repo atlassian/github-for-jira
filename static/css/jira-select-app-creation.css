@@ -6,7 +6,7 @@
 
 .jiraAppCreation__content__container > .jiraAppCreation__options__prompt {
     font-weight: 500;
-    margin: 2.5em auto;
+    margin: 2.5em 1em;
 }
 
 .jiraAppCreation__options__prompt,
@@ -50,10 +50,11 @@
 .jiraSelectAppCreation__options__card__iconContainer {
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .jiraSelectAppCreation__options__card__icon {
-    transform: scale(0.5);
+    height: 30px;
 }
 
 .jiraSelectAppCreation__options__card__contentContainer {
@@ -72,7 +73,7 @@
 }
 
 .jiraAppCreation__versionDisclaimer__container {
-    margin: 2em auto;
+    margin: 2em 1em;
 }
 
 .jiraAppCreation__versionDisclaimer__version {

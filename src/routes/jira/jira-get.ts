@@ -49,8 +49,8 @@ const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
 	}
 };
 
-export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId?: number): Promise<InstallationResults> => {
-	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, log, gitHubAppId)));
+export const getInstallations = async (subscriptions: Subscription[], log: Logger, gitHubAppId: number | undefined): Promise<InstallationResults> => {
+	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, gitHubAppId, log)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
 	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
@@ -62,7 +62,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 	};
 };
 
-const getInstallation = async (subscription: Subscription, log: Logger, gitHubAppId?: number): Promise<AppInstallation> => {
+const getInstallation = async (subscription: Subscription, gitHubAppId: number | undefined, log: Logger): Promise<AppInstallation> => {
 	const { jiraHost, gitHubInstallationId } = subscription;
 	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);

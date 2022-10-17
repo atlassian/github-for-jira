@@ -38,25 +38,31 @@ const envFile = ".env";
 	path: path.resolve(__dirname, "../..", env)
 })));
 
-const getProxyFromEnvironment = (): string | undefined => {
-	const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
-	const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
-	return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
+type Transforms<T, K extends keyof T = keyof T> = {
+	[P in K]?: (value?: string) => T[P];
 };
 
-export const envVars: EnvVars = {
-	...process.env,
-	MICROS_ENV: EnvironmentEnum[process.env.MICROS_ENV || EnvironmentEnum.development],
-	MICROS_SERVICE_VERSION: process.env.MICROS_SERVICE_VERSION,
-	MICROS_GROUP: process.env.MICROS_GROUP || "",
-	NODE_ENV: nodeEnv,
-	SENTRY_DSN: process.env.SENTRY_DSN,
-	JIRA_LINK_TRACKING_ID: process.env.JIRA_LINK_TRACKING_ID,
-	PROXY: getProxyFromEnvironment(),
-	GITHUB_REPO_URL: "https://github.com/atlassian/github-for-jira"
-} as EnvVars;
+const transforms: Transforms<EnvVars> = {
+	MICROS_ENV: (value?: string) => EnvironmentEnum[value || EnvironmentEnum.development],
+	MICROS_GROUP: (value?: string) => value || "",
+	NODE_ENV: () => nodeEnv,
+	PROXY: () => {
+		const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
+		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
+		return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
+	},
+	GITHUB_REPO_URL: (value?: string) => value || "https://github.com/atlassian/github-for-jira"
+};
 
-// TODO: Make envvars dynamic
+// Create proxy for `process.env`
+export const envVars: EnvVars = new Proxy<object>({}, {
+	get(_target: object, prop: keyof EnvVars) {
+		// get from process.env directly since the whole env object might be replaced
+		const value = process.env[prop];
+		return transforms[prop]?.(value) || value;
+	}
+}) as EnvVars;
+
 // Check to see if all required environment variables are set
 const missingVars = requiredEnvVars.filter(key => envVars[key] === undefined);
 if (missingVars.length) {
@@ -102,15 +108,7 @@ export interface EnvVars {
 	GIT_BRANCH_NAME?: string;
 	GITHUB_REPO_URL: string;
 	DEPLOYMENT_DATE: string;
-	BULL_QUEUE_PREFIX?: string;
 	GLOBAL_HASH_SECRET: string;
-
-	// Test Vars
-	ATLASSIAN_SECRET?: string;
-	AWS_ACCESS_KEY_ID?: string;
-	AWS_SECRET_ACCESS_KEY?: string;
-	SQS_TEST_QUEUE_URL: string;
-	SQS_TEST_QUEUE_REGION: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
@@ -120,4 +118,8 @@ export interface EnvVars {
 	// Cryptor
 	CRYPTOR_URL: string;
 	CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: string;
+
+	REDISX_CACHE_PORT: string;
+	REDISX_CACHE_HOST: string;
+	REDISX_CACHE_TLS_ENABLED?: string;
 }

@@ -13,7 +13,7 @@ export const getGithubUser = async (gitHubInstallationClient: GitHubInstallation
 		const response =  await gitHubInstallationClient.getUserByUsername(username);
 		return response.data;
 	} catch (err) {
-		logger.warn({ username }, "Cannot retrieve user from Github REST API");
+		logger.warn({ err, username }, "Cannot retrieve user from Github REST API");
 	}
 	return undefined;
 };

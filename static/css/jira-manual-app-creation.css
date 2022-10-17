@@ -119,3 +119,13 @@ form#jiraManualAppCreation__form > div.field-group {
 .jiraManualAppCreation__formFileInput + .error ~ .jiraManualAppCreation__formFileUploaded {
   border: 2px solid #DE350B;
 }
+
+.jiraManualAppCreation__flag__title {
+  margin-bottom: 0.5em;
+}
+
+#aui-flag-container {
+  bottom: 30px;
+  left: 50px;
+  top: initial;
+}

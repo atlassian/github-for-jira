@@ -3,11 +3,12 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { Octokit } from "@octokit/rest";
-import { JiraPullRequestData } from "interfaces/jira";
+import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -30,7 +31,8 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		pullRequestId
 	});
 
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
@@ -38,14 +40,17 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	} catch (err) {
 		context.log.warn(
 			{
-				err,
-				pull_request
+				pullRequestNumber,
+				pullRequestId,
+				repositoryId,
+				repoName,
+				err
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 
@@ -60,7 +65,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				repositoryId,
+				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 
@@ -91,7 +96,8 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
 

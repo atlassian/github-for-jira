@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
-import { Octokit } from "probot";
 import { GraphQLError } from "./github-client-errors";
+import { Octokit } from "probot";
 
 export enum SortDirection {
 	ASC = "asc",
@@ -36,5 +36,26 @@ export type GraphQlQueryResponse<ResponseData> = {
 };
 
 export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
+export interface ReposGetContentsResponse {
+	content?: string;
+	download_url: string | null;
+	encoding?: string;
+	git_url: string;
+	html_url: string;
+	name: string;
+	path: string;
+	sha: string;
+	size: number;
+	type: string;
+	url: string;
+}
 
 export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string};
+
+
+export type CreateReferenceBody = {
+	owner: string,
+	repo: string,
+	ref: string,
+	sha: string
+}

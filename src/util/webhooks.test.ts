@@ -42,7 +42,8 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202"
+					status: "202",
+					gitHubProduct: "cloud"
 				}
 			);
 
@@ -52,7 +53,8 @@ describe("Webhooks suite", () => {
 				{
 					gsd_histogram: "1000_10000_30000_60000_120000_300000_600000_3000000",
 					name: "workflow_run",
-					status: "202"
+					status: "202",
+					gitHubProduct: "cloud"
 				}
 			);
 		});

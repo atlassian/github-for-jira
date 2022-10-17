@@ -7,27 +7,32 @@ import { getLogger } from "config/logger";
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 1234;
+	let client: GitHubInstallationClient;
+
+	beforeEach(() => {
+		mockSystemTime(12345678);
+		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, getLogger("test"));
+	});
+
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 
 		const fixture = transformPullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		mockSystemTime(12345678);
-
+		githubUserTokenNock(100403908);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 100403908,
+			id: "100403908",
 			name: "integrations/test",
 			pullRequests: [
 				{
@@ -68,27 +73,26 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[1];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		mockSystemTime(12345678);
-
+		githubUserTokenNock(100403908);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
+		githubUserTokenNock(100403908);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,
 				name: "Last Commit User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
 		expect(data).toMatchObject({
-			id: 100403908,
+			id: "100403908",
 			name: "integrations/test",
 			pullRequests: [
 				{
@@ -156,21 +160,20 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[2];
 		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
 
-		mockSystemTime(12345678);
-
+		githubUserTokenNock(100403908);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
+		githubUserTokenNock(100403908);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,
 				name: "Last Commit User Name"
 			});
 
-		const client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), getLogger("test"));
 		const data = await transformPullRequest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
@@ -178,7 +181,7 @@ describe("pull_request transform", () => {
 		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
 
 		expect(data).toMatchObject({
-			id: 100403908,
+			id: "100403908",
 			name: "integrations/test",
 			pullRequests: [
 				{

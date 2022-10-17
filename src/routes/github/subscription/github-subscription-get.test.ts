@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subscription } from "models/subscription";
 import { GithubSubscriptionGet } from "routes/github/subscription/github-subscription-get";
+import { when } from "jest-when";
+import { GitHubServerApp } from "models/github-server-app";
+
+jest.mock("models/github-server-app");
 
 const createGitHubNockGet = (url, status, response) => {
 	githubNock
@@ -11,7 +15,7 @@ const createGitHubNockGet = (url, status, response) => {
 describe("github-subscription-get", () => {
 	const gitHubInstallationId = 15;
 	const jiraHost = "mock-host";
-	let req, res, next;
+	let req, res, next, gitHubApp;
 
 	beforeEach(async () => {
 		await Subscription.create({
@@ -22,11 +26,12 @@ describe("github-subscription-get", () => {
 		next = jest.fn();
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
+			log: { child:() => ({ error: jest.fn(), info: jest.fn(), debug: jest.fn() }) },
 			params: {
 				installationId: gitHubInstallationId
 			},
-			csrfToken: jest.fn()
+			csrfToken: jest.fn(),
+			body: {}
 		};
 
 		res = {
@@ -38,13 +43,13 @@ describe("github-subscription-get", () => {
 				jiraHost,
 				githubToken: "abc-token",
 				isAdmin: jest.fn().mockResolvedValue(true),
-				nonce: ""
+				nonce: "",
+				gitHubAppConfig: {}
 			}
 		};
-
 	});
 
-	it("Should get GitHub Subscriptions", async () => {
+	it("Should get GitHub Subscriptions | Cloud", async () => {
 
 		const installation = {
 			target_type: "Org", account: { login: "test-org" }
@@ -65,6 +70,57 @@ describe("github-subscription-get", () => {
 			installation,
 			host: res.locals.jiraHost,
 			hasSubscriptions: true
+		}));
+	});
+
+	it("Should get GitHub Subscriptions | Server", async () => {
+		const gitHubAppId = 1;
+		res.locals.gitHubAppConfig.gitHubAppId = 1;
+		res.locals.gitHubAppConfig.uuid = uuid;
+
+		gitHubApp = {
+			id: gitHubAppId,
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app1",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret1",
+			webhookSecret: "anothersecret1",
+			privateKey: "privatekey1",
+			installationId: 1,
+			decrypt: async (s: any) => s
+		};
+
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			gitHubAppId
+		});
+
+		when(GitHubServerApp.findForUuid)
+			.expectCalledWith(uuid)
+			.mockResolvedValue(gitHubApp);
+
+		const installation = {
+			target_type: "Org", account: { login: "test-org" }
+		};
+		createGitHubNockGet("/user", 200, { login: "test-org" });
+
+		createGitHubNockGet("/app/installations/15", 200, installation);
+
+		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
+			role: "admin", user: { login: "test-org" }
+		});
+
+		await GithubSubscriptionGet(req as any, res as any, next as any);
+		expect(res.render).toHaveBeenCalledWith("github-subscriptions.hbs", expect.objectContaining({
+			csrfToken: req.csrfToken(),
+			nonce: res.locals.nonce,
+			installation,
+			host: res.locals.jiraHost,
+			hasSubscriptions: true,
+			gitHubAppUuid: uuid
 		}));
 	});
 
@@ -103,7 +159,9 @@ describe("github-subscription-get", () => {
 
 		res = {
 			sendStatus: jest.fn(),
-			locals: {}
+			locals: {
+				gitHubAppConfig: {}
+			}
 		};
 
 		await GithubSubscriptionGet(req as any, res as any, next as any);

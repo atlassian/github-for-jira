@@ -5,11 +5,14 @@ import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
+
 	context.log = context.log.child({
 		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId
 	});
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log);
+
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 	const jiraPayload = await transformWorkflow(gitHubInstallationClient, payload, logger);
 
 	if (!jiraPayload) {
@@ -29,6 +32,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };

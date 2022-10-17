@@ -1,4 +1,3 @@
-import { probot } from "./app";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 
@@ -24,8 +23,6 @@ export async function stop() {
 		return;
 	}
 	logger.info("Micros Lifecycle: Stopping queue processing");
-	// TODO: change this to `probot.close()` once we update probot to latest version
-	probot.httpServer?.close();
 
 	await sqsQueues.stop();
 

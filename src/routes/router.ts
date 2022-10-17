@@ -15,6 +15,8 @@ import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
+import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 
 export const RootRouter = Router();
 
@@ -23,7 +25,9 @@ RootRouter.use(Sentry.Handlers.requestHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
 RootRouter.use(urlencoded({ extended: false }));
-RootRouter.use(json());
+RootRouter.use(json({
+	limit: "30mb" //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
+}));
 RootRouter.use(cookieParser());
 
 // Add pertinent information to logger for all subsequent routes
@@ -51,6 +55,11 @@ RootRouter.use(cookieSessionMiddleware);
 
 // Saves the jiraHost cookie to the secure session if available
 RootRouter.use(jirahostMiddleware);
+
+// App Manifest flow route
+RootRouter.get("/github-manifest", GithubManifestGet);
+
+RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

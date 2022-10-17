@@ -9,24 +9,24 @@ import { getCommitSinceDate } from "~/src/sync/sync-utils";
 // TODO: better typings
 export const getBranchTask = async (
 	logger: Logger,
-	newGithub: GitHubInstallationClient,
+	gitHubClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number,
 	messagePayload?: BackfillMessagePayload) => {
 	// TODO: fix typings for graphql
-	logger.info("Syncing branches: started");
+	logger.debug("Syncing branches: started");
 	perPage = perPage || 20;
 
 	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
-	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
+	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
-	logger.info("Syncing branches: finished");
+	logger.debug("Syncing branches: finished");
 
-	const jiraPayload = await transformBranches({ branches, repository });
+	const jiraPayload = await transformBranches({ branches, repository }, messagePayload?.gitHubAppConfig?.gitHubBaseUrl);
 
 	return {
 		edges,

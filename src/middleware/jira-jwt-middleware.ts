@@ -1,7 +1,6 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
 import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
@@ -30,9 +29,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	});
 
 	verifySymmetricJwtTokenMiddleware(
-		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, installation.jiraHost)
-			? await installation.decrypt("encryptedSharedSecret")
-			: installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		tokenType,
 		req,
 		res,

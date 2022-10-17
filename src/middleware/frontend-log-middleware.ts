@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, getLogger, cloneAllowedLogFields } from "config/logger";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { defaultLogLevel, getLogger } from "config/logger";
+import { getUnvalidatedJiraHost } from "middleware/jirahost-middleware";
+import { merge } from "lodash";
+import { v4 as newUUID } from "uuid";
 
 /*
 
@@ -41,16 +44,19 @@ declare global {
 	}
 }
 
-export const LogMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-	req.log = getLogger(FILTERING_FRONTEND_HTTP_LOGS_MIDDLEWARE_NAME, cloneAllowedLogFields(req.log?.fields));
-
+export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	req.log = getLogger("frontend-log-middleware", {
+		fields: req.log?.fields,
+		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
+		filterHttpRequests: true
+	});
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
-			req.log.fields = { ...req.log.fields, ...fields };
-		} else {
-			throw new Error(`No log found during request: ${req.method} ${req.path}`);
+			req.log.fields = merge(req.log.fields, fields);
 		}
 	};
+
+	req.addLogFields({ id: newUUID() });
 
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {

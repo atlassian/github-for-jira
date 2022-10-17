@@ -1,9 +1,12 @@
 import { Model } from "sequelize";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { getLogger } from "config/logger";
 
 type StringValues<Obj> = {
 	[Prop in keyof Obj]: Obj[Prop] extends string ? Prop : never
 };
+
+const logger = getLogger("encryption-model");
 
 export abstract class EncryptedModel extends Model {
 
@@ -16,17 +19,29 @@ export abstract class EncryptedModel extends Model {
 	async decrypt(field: (keyof StringValues<this>)): Promise<string> {
 		const value = this[field];
 		if (typeof value !== "string") {
-			throw new Error(`Cannot decrypt '${field}', it is not a string.`);
+			//error TS2731: Implicit conversion of a 'symbol' to a 'string' will fail at runtime. Consider wrapping this expression in 'String(...)'.
+			throw new Error(`Cannot decrypt '${String(field)}', it is not a string.`);
 		}
-		return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
+		try {
+			return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
+		} catch (e) {
+			logger.error(`Fail to decrypt field ${field}`, { error: e });
+			throw e;
+		}
 	}
 
 	protected async encrypt(field: (keyof StringValues<this>)): Promise<string> {
 		const value = this[field];
 		if (typeof value !== "string") {
-			throw new Error(`Cannot encrypt '${field}', it is not a string.`);
+			//error TS2731: Implicit conversion of a 'symbol' to a 'string' will fail at runtime. Consider wrapping this expression in 'String(...)'.
+			throw new Error(`Cannot encrypt '${String(field)}', it is not a string.`);
 		}
-		return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
+		try {
+			return await EncryptionClient.encrypt(this.getEncryptionSecretKey(), value, await this.getEncryptContext(field));
+		} catch (e) {
+			logger.error(`Fail to encrypt field ${field}`, { error: e });
+			throw e;
+		}
 	}
 
 	async encryptChangedSecretFields(fieldsChanged: string[] = []): Promise<void> {

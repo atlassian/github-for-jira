@@ -7,19 +7,20 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
 import { Context } from "probot/lib/context";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
-import { cloneAllowedLogFields, getLogger } from "config/logger";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { defaultLogLevel, getLogger } from "config/logger";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
-const withSentry = function (callback) {
+const withSentry = function(callback) {
 	return async (context: WebhookContext) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 		context.sentry?.configureScope((scope) =>
@@ -61,17 +62,17 @@ export class CustomContext<E = any> extends Context<E> {
 	webhookReceived?: number;
 }
 
-function extractWebhookEventNameFromContext(context: WebhookContext): string {
+const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {
 		webhookEvent = `${webhookEvent}.${context.payload.action}`;
 	}
 	return webhookEvent;
-}
+};
 
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
-	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number) => Promise<void>
+	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
 ) => {
 	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
@@ -98,23 +99,30 @@ export const GithubWebhookMiddleware = (
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
+		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
+		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
+		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
 		context.log = getLogger("github.webhooks", {
-			webhookId,
-			gitHubInstallationId,
-			event: webhookEvent,
-			webhookReceived,
-			repoName,
-			orgName,
-			...cloneAllowedLogFields(context.log.fields)
+			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
+			fields: {
+				webhookId,
+				gitHubInstallationId,
+				event: webhookEvent,
+				webhookReceived,
+				repoName,
+				orgName,
+				...context.log.fields
+			}
 		});
 
-		context.log.debug({ payload }, "Webhook payload");
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 		statsd.increment(metricWebhooks.webhookEvent, [
-			"name: webhooks",
-			`event: ${name}`,
-			`action: ${payload.action}`
+			"name:webhooks",
+			`event:${name}`,
+			`action:${payload.action}`,
+			`gitHubProduct:${gitHubProduct}`
 		]);
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
@@ -146,10 +154,6 @@ export const GithubWebhookMiddleware = (
 			return;
 		}
 
-		const subscriptions = await Subscription.getAllForInstallation(
-			gitHubInstallationId
-		);
-
 		if (!subscriptions.length) {
 			context.log.info(
 				{ noop: "no_subscriptions", orgName: orgName },
@@ -159,6 +163,7 @@ export const GithubWebhookMiddleware = (
 		}
 
 		context.log.info(
+			{ gitHubProduct },
 			`Processing event for ${subscriptions.length} jira instances`
 		);
 
@@ -203,20 +208,22 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
+				context.gitHubAppConfig?.gitHubAppId,
 				context.log
 			);
+
 			if (!jiraClient) {
 				// Don't call callback if we have no jiraClient
-				context.log.error(
+				context.log.warn(
 					{ jiraHost },
-					`No enabled installation found.`
+					`No installations found.`
 				);
 				continue;
 			}
 			const util = getJiraUtil(jiraClient);
 
 			try {
-				await callback(context, jiraClient, util, gitHubInstallationId);
+				await callback(context, jiraClient, util, gitHubInstallationId, subscription);
 			} catch (err) {
 				const isWarning = warnOnErrorCodes.find(code => err.message.includes(code));
 				if (!isWarning) {

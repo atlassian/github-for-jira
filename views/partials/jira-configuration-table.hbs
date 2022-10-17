@@ -9,6 +9,7 @@
           <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled"
                 id="sync-status-modal-btn">
             Information
+
           </span>
         </th>
         <th class="jiraConfiguration__table__head__title">Settings</th>
@@ -20,7 +21,7 @@
         <tr class="jiraConfiguration__table__row">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
-            {{#unless hideAvatar}}
+            {{#unless ../hideAvatar}}
               <img
                   class="jiraConfiguration__table__cell__avatar"
                   src="{{connection.account.avatar_url}}"
@@ -62,52 +63,55 @@
 
           {{! Backfill status }}
           <td class="jiraConfiguration__table__cell">
+            <div class="jiraConfiguration__infoContainer">
               <span
-                  id="{{id}}-status"
-                  class="jiraConfiguration__table__{{toLowerCase
-                      (replaceSpaceWithHyphen connection.syncStatus)
-                  }}
-                jiraConfiguration__table__syncStatus"
-              >
-                {{connection.syncStatus}}
-              </span>
-            {{!-- Display any sync warnings --}}
-            {{#if (isMissingPermissions connection.syncWarning)}}
-              <div class="jiraConfiguration__syncWarning">
-                  <span
-                      class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                    Sync failed warnings
-                  </span>
-                <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                  <div>Some tasks have not been backfilled. Please
-                    <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                       href="{{html_url}}"
-                       data-installation-link="{{html_url}}"
-                       target="_blank">accept permissions</a>
-                    on GitHub (you must be the admin of your organization), then retry backfill.
+                    id="{{id}}-status"
+                    class="jiraConfiguration__table__{{toLowerCase
+                        (replaceSpaceWithHyphen connection.syncStatus)
+                    }}
+                  jiraConfiguration__table__syncStatus"
+                >
+                  {{connection.syncStatus}}
+                </span>
+              {{!-- Display any sync warnings --}}
+              {{#if (isMissingPermissions connection.syncWarning)}}
+                <div class="jiraConfiguration__syncWarning">
+                    <span
+                        class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                      Sync failed warnings
+                    </span>
+                  <div class="jiraConfiguration__syncWarningMessage warning-popup">
+                    <div>Some tasks have not been backfilled. Please
+                      <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                         href="{{html_url}}"
+                         data-installation-link="{{html_url}}"
+                         target="_blank">accept permissions</a>
+                      on GitHub (you must be the admin of your organization), then retry backfill.
+                    </div>
                   </div>
                 </div>
-              </div>
-            {{/if}}
-            {{#if (inProgressOrPendingSync connection.syncStatus)}}
-              <div class="jiraConfiguration__loaderContainer">
-                <aui-spinner size="small"></aui-spinner>
-              </div>
-            {{/if}}
-            {{#if (failedSync connection.syncStatus)}}
-              <div class="jiraConfiguration__retryContainer">
-                <button
-                    class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                    data-jira-host="{{ ../host }}"
-                    data-installation-id="{{ id }}"
-                    id="restart-backfill"
-                >
-                  &#x21bb;
-                </button>
-                <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                <div class="jiraConfiguration__retryMsg">Retry</div>
-              </div>
-            {{/if}}
+              {{/if}}
+              {{#if (inProgressOrPendingSync connection.syncStatus)}}
+                <div class="jiraConfiguration__infoSpinner">
+                  <aui-spinner size="small"></aui-spinner>
+                </div>
+              {{/if}}
+              {{#if (failedSync connection.syncStatus)}}
+                <div class="jiraConfiguration__retryContainer">
+                  <button
+                      class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
+                      data-jira-host="{{ ../host }}"
+                      data-installation-id="{{ id }}"
+                      data-app-id="{{ ../gitHubAppId }}"
+                      id="restart-backfill"
+                  >
+                    &#x21bb;
+                  </button>
+                  <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                  <div class="jiraConfiguration__retryMsg">Retry</div>
+                </div>
+              {{/if}}
+            </div>
           </td>
           {{! Settings }}
           <td class="jiraConfiguration__table__cell__settings">
@@ -137,6 +141,7 @@
                       class="sync-connection-link restart-backfill-button"
                       data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
+                      data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"
                   >
                     Restart backfill
@@ -147,6 +152,7 @@
                     class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
                     data-installation-id="{{id}}"
                     data-org-name="{{connection.account.login}}"
+                    data-app-id="{{../gitHubAppId}}"
                 >
                     Disconnect
                 </button>
@@ -182,6 +188,7 @@
       </p>
 
       <button class="jiraConfiguration__failedConnections__dismiss delete-connection-link"
+              data-app-id="{{../gitHubAppId}}"
               data-installation-id="{{ id }}">
         Dismiss
       </button>
