@@ -42,8 +42,7 @@
   </div>
 
   <div class="gitHubCreateBranch__createdLinks">
-    <div class="aui-button aui-button-light" id="copyGitCheckout">Copy git checkout</div>
-    <a class="aui-button aui-button-light" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
+    <a class="aui-button aui-button-label" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
   </div>
 
   <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
@@ -93,7 +92,6 @@
           {{> server-error-message-box }}
         </div>
     <div class="gitHubCreateBranch__actions">
-      <button class="aui-button aui-button-light skeleton" id="cancelBtn" type="button">Cancel</button>
       <button class="aui-button aui-button-primary skeleton" id="createBranchBtn" type="submit">Create branch</button>
     </div>
   </form>
