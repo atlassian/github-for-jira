@@ -26,6 +26,13 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	try {
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+		if (githubToken && !servers.hasCloudServer && !servers.gheServerInfos.length) {
+			res.render("no-configuration.hbs", {
+				nonce: res.locals.nonce
+			});
+			return;
+		}
+
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
 			res.redirect(`/github/create-branch${url.search}`);
