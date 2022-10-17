@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlagByCloudId, BooleanFlags } from "config/feature-flags";
+import { UUID_REGEX } from "~/src/util/regex";
 
 const instance = envVars.INSTANCE_NAME;
 
@@ -172,7 +173,7 @@ export const moduleUrls = compact(map([...modules.adminPages, ...modules.general
 
 // Remove this function when CREATE_BRANCH flag is complete
 const addCreateBranchAction = async (modules, cloudId) => {
-	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false, cloudId)) {
+	if (await booleanFlagByCloudId(BooleanFlags.CREATE_BRANCH, false, cloudId)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
 				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
@@ -184,11 +185,6 @@ const addCreateBranchAction = async (modules, cloudId) => {
 
 export const JiraAtlassianConnectGet = async (req: Request, res: Response): Promise<void> => {
 	const clientInfo = req.headers["x-pac-client-info"] as string;
-	const cloudInfo = clientInfo?.split(",");
-	const cloudIdValue = cloudInfo.find((r) => { console.log(r); return r.indexOf("cloudId") >= 0; });
-	const cloudId = cloudIdValue?.substring(cloudIdValue?.indexOf("=") + 1);
-	console.log("cloudId");
-	console.log(cloudId);
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
 		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
@@ -218,6 +214,16 @@ export const JiraAtlassianConnectGet = async (req: Request, res: Response): Prom
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: await addCreateBranchAction(modules, cloudId)
+		modules: await addCreateBranchAction(modules, getCloudIdFromClientInfo(clientInfo))
 	});
+};
+
+const getCloudIdFromClientInfo = (clientInfo: string): string | undefined => {
+	if (!clientInfo) {
+		return;
+	}
+
+	const cloudIdRegex = `cloudId=${UUID_REGEX}`;
+	const cloudIdIndex = clientInfo.search(cloudIdRegex);
+	return clientInfo.substring(cloudIdIndex + "cloudId=".length);
 };

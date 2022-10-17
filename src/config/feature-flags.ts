@@ -38,32 +38,22 @@ export enum NumberFlags {
 	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
 }
 
-const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
-	if (!jiraHost) {
+const createLaunchdarklyUser = (key?: string): LDUser => {
+	if (!key) {
 		return {
 			key: "global"
 		};
 	}
 
-
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log("THE HASHED KEY LOOKED LIKE");
-	console.log(createHashWithSharedSecret(jiraHost));
-
 	return {
-		key: createHashWithSharedSecret(jiraHost)
+		key: createHashWithSharedSecret(key)
 	};
 };
 
-const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, jiraHost?: string): Promise<T> => {
+const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, key?: string): Promise<T> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
-		const user = createLaunchdarklyUser(jiraHost);
+		const user = createLaunchdarklyUser(key);
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
@@ -74,6 +64,9 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 // Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
 	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
+
+export const booleanFlagByCloudId = async (flag: BooleanFlags, defaultValue: boolean, cloudId?: string): Promise<boolean> =>
+	await getLaunchDarklyValue(flag, defaultValue, cloudId);
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, jiraHost?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, jiraHost);
