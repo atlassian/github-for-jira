@@ -17,7 +17,7 @@ const getCreateBranchTargetUrl = () => {
 		return`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
 	}
 	const uuid = $("#ghServers").select2("val");
-	return `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
+	return `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to`;
 }
 
 $(document).ready(() => {

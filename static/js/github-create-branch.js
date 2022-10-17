@@ -45,7 +45,6 @@ $(document).ready(() => {
               text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
