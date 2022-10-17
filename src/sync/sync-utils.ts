@@ -61,25 +61,15 @@ type SubscriptionUpdateTasks = {
 }
 
 const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
-	if (!syncType || !targetTasks?.length) {
+	if (!targetTasks?.length) {
 		return;
 	}
-
-	const updateRepository = targetTasks.includes("repository");
-	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
-	const updateRepoSyncTasks = {};
-	const updateSubscriptionTasks: SubscriptionUpdateTasks = {};
-
-	console.log("updateRepository");
-	console.log("updateRepository");
-	console.log("updateRepository");
-	console.log("updateRepository");
-	console.log("updateRepository");
-	console.log(updateRepository);
 
 	// Reset RepoSync states - target tasks: ("pull" | "commit" | "branch" | "build" | "deployment")
 	// Full sync resets cursor and status
 	// Partial sync only resets status (continues from existing cursor)
+	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
+	const updateRepoSyncTasks = { repoUpdatedAt: null };
 	repoSyncTasks.forEach(task => {
 		if (syncType === "full") {
 			updateRepoSyncTasks[`${task}Cursor`] = null;
@@ -87,10 +77,7 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 		updateRepoSyncTasks[`${task}Status`] = null;
 	});
 
-	await RepoSyncState.update({
-		repoUpdatedAt: null,
-		...updateRepoSyncTasks
-	}, {
+	await RepoSyncState.update(updateRepoSyncTasks, {
 		where: {
 			subscriptionId: subscription.id
 		}
@@ -99,12 +86,15 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Reset Subscription Repo state -  target tasks: ("repository")
 	// Full sync resets cursor and status and totalNumberOfRepos
 	// Partial sync only resets status (continues from existing cursor)
-	if (updateRepository) {
+	if (targetTasks.includes("repository")) {
+		const updateSubscriptionTasks: SubscriptionUpdateTasks = {
+			repositoryStatus: null
+		};
+
 		if (syncType === "full") {
 			updateSubscriptionTasks.totalNumberOfRepos = null;
 			updateSubscriptionTasks.repositoryCursor = null;
 		}
-		updateSubscriptionTasks.repositoryStatus = null;
 		await subscription.update(updateSubscriptionTasks);
 	}
 

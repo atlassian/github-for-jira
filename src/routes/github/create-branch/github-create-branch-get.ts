@@ -50,6 +50,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			branchName: `${issueKey}-${branchSuffix}`,
 			key: issueKey
 		},
+		issueUrl: `${jiraHost}/browse/${issueKey}`,
 		repos,
 		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
