@@ -45,7 +45,6 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
-			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -87,7 +86,6 @@ describe("GitHub API Request Suite", () => {
 
 			const data = pullRequestCommits.data;
 
-			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -132,7 +130,6 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
-			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -163,7 +160,7 @@ describe("GitHub API Request Suite", () => {
 			]);
 		});
 
-		it.skip("should return message with multiple issue keys for a single commit", async () => {
+		it("should return message with multiple issue keys for a single commit", async () => {
 			const workflowRunPayload = Object.assign(
 				{},
 				workflowBasic
