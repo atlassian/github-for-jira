@@ -106,7 +106,9 @@ jobs:
       - run: yarn run test:e2e
       - name: export system logs
         if: always()
-        run: free -h > memory.log
+        run: |
+          free -h > memory.log
+          top -b -n 1 > processes.log
       - name: export docker logs
         if: always()
         run: |
@@ -119,9 +121,7 @@ jobs:
           retention-days: 14
           path: |
             test/e2e/test-results/
-            docker-compose.log
-            docker-stats.log
-            memory.log
+            *.log
 
   docker:
     runs-on: ubuntu-22.04
