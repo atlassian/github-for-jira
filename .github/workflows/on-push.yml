@@ -67,7 +67,8 @@ jobs:
         run: yarn test
 
   e2e-test:
-    runs-on: ubuntu-22.04
+    #  Need to run on macos to get 14gb of memory instead of 7gb with Linux/Windows
+    runs-on: macos-12
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -108,7 +109,7 @@ jobs:
         if: always()
         run: |
           free -h > memory.log
-          top -b -n 1 > processes.log
+          top -c -b -n 1 > processes.log
       - name: export docker logs
         if: always()
         run: |
