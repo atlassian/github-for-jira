@@ -45,7 +45,6 @@ $(document).ready(() => {
               text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
@@ -96,11 +95,6 @@ $(document).ready(() => {
     if (validateForm()) {
       createBranchPost();
     }
-  });
-
-  $("#cancelBtn").click(function (event) {
-    event.preventDefault();
-    window.close();
   });
 
   $("#changeLogin").click(function (event) {
@@ -220,7 +214,9 @@ const createBranchPost = () => {
 const showLoading = () => {
   $("#createBranchForm").hide();
   $(".headerImageLogo").addClass("headerImageLogo-lg");
-  $(".gitHubCreateBranch__spinner").show();
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
 };
 
 const showSuccessScreen = (repo) => {

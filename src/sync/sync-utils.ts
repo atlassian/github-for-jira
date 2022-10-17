@@ -9,31 +9,36 @@ import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
 
+type SyncType = "full" | "partial";
+
 export async function findOrStartSync(
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: "full" | "partial",
+	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
 ): Promise<void> {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
-	// Set sync status to PENDING, reset number of synced repos, remove repository cursor and status
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
 		numberOfSyncedRepos: 0,
-		totalNumberOfRepos: null,
-		repositoryCursor: null,
-		repositoryStatus: null,
 		syncWarning: null
 	});
 
 	logger.info({ subscription, syncType }, "Starting sync");
 
-	if (syncType === "full") {
+	await resetTargetedTasks(subscription, syncType, targetTasks);
+
+	if (syncType === "full" && !targetTasks?.length) {
+		fullSyncStartTime = new Date().toISOString();
+		await subscription.update({
+			totalNumberOfRepos: null,
+			repositoryCursor: null,
+			repositoryStatus: null
+		});
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
-		fullSyncStartTime = new Date().toISOString();
 	}
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
@@ -48,6 +53,52 @@ export async function findOrStartSync(
 		gitHubAppConfig
 	}, 0, logger);
 }
+
+type SubscriptionUpdateTasks = {
+	totalNumberOfRepos?: number | null;
+	repositoryCursor?: string | null;
+	repositoryStatus?: string | null;
+}
+
+const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
+	if (!targetTasks?.length) {
+		return;
+	}
+
+	// Reset RepoSync states - target tasks: ("pull" | "commit" | "branch" | "build" | "deployment")
+	// Full sync resets cursor and status
+	// Partial sync only resets status (continues from existing cursor)
+	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
+	const updateRepoSyncTasks = { repoUpdatedAt: null };
+	repoSyncTasks.forEach(task => {
+		if (syncType === "full") {
+			updateRepoSyncTasks[`${task}Cursor`] = null;
+		}
+		updateRepoSyncTasks[`${task}Status`] = null;
+	});
+
+	await RepoSyncState.update(updateRepoSyncTasks, {
+		where: {
+			subscriptionId: subscription.id
+		}
+	});
+
+	// Reset Subscription Repo state -  target tasks: ("repository")
+	// Full sync resets cursor and status and totalNumberOfRepos
+	// Partial sync only resets status (continues from existing cursor)
+	if (targetTasks.includes("repository")) {
+		const updateSubscriptionTasks: SubscriptionUpdateTasks = {
+			repositoryStatus: null
+		};
+
+		if (syncType === "full") {
+			updateSubscriptionTasks.totalNumberOfRepos = null;
+			updateSubscriptionTasks.repositoryCursor = null;
+		}
+		await subscription.update(updateSubscriptionTasks);
+	}
+
+};
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
@@ -64,10 +115,10 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 
 	const gitHubAppId = subscription.gitHubAppId;
 
-	//cloud
+	// cloud
 	if (!gitHubAppId) return cloudGitHubAppConfig();
 
-	//ghes
+	// ghes
 	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
 	if (!gitHubServerApp) {
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
