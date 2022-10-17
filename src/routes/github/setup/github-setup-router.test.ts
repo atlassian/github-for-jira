@@ -56,7 +56,6 @@ describe("Github Setup", () => {
 
 		it("should return 200 without jiraHost", async () => {
 			githubAppTokenNock();
-
 			githubNock
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);
@@ -68,7 +67,6 @@ describe("Github Setup", () => {
 
 		it("should return 200 with jiraHost", async () => {
 			githubAppTokenNock();
-
 			githubNock
 				.get(`/app/installations/${installation_id}`)
 				.reply(200, singleInstallation);
