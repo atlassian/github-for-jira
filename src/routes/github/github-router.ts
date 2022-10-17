@@ -12,6 +12,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 import { UUID_REGEX } from "~/src/util/regex";
 import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
+import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -49,5 +50,7 @@ subRouter.use("/subscriptions?", GithubSubscriptionRouter);
 subRouter.use("/create-branch", GithubCreateBranchRouter);
 
 subRouter.use("/repository", GithubRepositoryRouter);
+
+subRouter.use("/branch", GithubBranchRouter);
 
 

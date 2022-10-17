@@ -10,6 +10,11 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	} = res.locals;
 	const { owner, repo, ref } = req.params;
 
+	if (!githubToken || !gitHubAppConfig) {
+		res.sendStatus(401);
+		return;
+	}
+
 	if (!ref || !owner || !repo) {
 		res.status(400).json("Missing required fields.");
 		return;
@@ -21,7 +26,8 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		res.status(200);
 	} catch (err) {
 		if (err.status === 404) {
-			res.status(404).json("Branch not found");
+			res.status(404);
+			return;
 		}
 		res.status(500).json(err);
 	}

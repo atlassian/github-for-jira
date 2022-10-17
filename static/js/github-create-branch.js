@@ -126,14 +126,12 @@ $(document).ready(() => {
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
 	const repo = getRepoDetails();
-	const url = `/github/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
-	// const data = {
-	// 	_csrf: $("#_csrf").val(),
-	// };
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+
 	$.get(url)
 		.fail((error) => {
 			if (error.status = 404) {
-				showValidationErrorMessage("ghParentBranch", "This Branch does not exist on GitHub.");
+				showValidationErrorMessage("ghParentBranch", "Could not find this branch on GitHub.");
 			}
 		});
 }
