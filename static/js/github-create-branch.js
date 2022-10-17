@@ -110,8 +110,8 @@ const validateSourceBranch = (branchName) => {
 	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
 
 	$.get(url)
-		.fail((error) => {
-			if (error.status = 404) {
+		.fail((err) => {
+			if (err.status === 404) {
 				showValidationErrorMessage("ghParentBranch", "Could not find this branch on GitHub.");
 			}
 		});
