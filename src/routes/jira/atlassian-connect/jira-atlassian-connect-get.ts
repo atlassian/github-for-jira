@@ -223,7 +223,6 @@ const getCloudIdFromClientInfo = (clientInfo: string): string | undefined => {
 		return;
 	}
 
-	const cloudIdRegex = `cloudId=${UUID_REGEX}`;
-	const cloudIdIndex = clientInfo.search(cloudIdRegex);
+	const cloudIdIndex = clientInfo.search(`cloudId=${UUID_REGEX}`);
 	return clientInfo.substring(cloudIdIndex + "cloudId=".length);
 };
