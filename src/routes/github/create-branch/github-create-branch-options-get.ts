@@ -2,11 +2,15 @@ import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { getGitHubApiUrl } from "utils/get-github-client-config";
+import axios from "axios";
+import Logger from "bunyan";
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { jiraHost } = res.locals;
-	const { issue_key: key } = req.query;
+	const { issueKey } = req.query;
+	const { githubToken } = req.session;
 
 	if (!jiraHost) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
@@ -14,25 +18,43 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next();
 	}
 
-	if (!key) {
+	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
-	const servers = await getGitHubServers(jiraHost);
-	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 
-	// Only GitHub cloud server connected
-	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		res.redirect(`/github/create-branch${url.search}`);
-	}
-	// Only single GitHub Enterprise connected
-	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
+	const servers = await getGitHubServers(jiraHost);
+
+	try {
+		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
+			await validateGitHubToken(jiraHost, githubToken, req.log);
+			res.redirect(`/github/create-branch${url.search}`);
+			return;
+		}
+		// Only single GitHub Enterprise connected
+		if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
+			const gitHubServerApp = await GitHubServerApp.findForUuid(servers.gheServerInfos[0].uuid);
+			const gitHubAppId = gitHubServerApp?.id || undefined;
+			await validateGitHubToken(jiraHost, githubToken, req.log, gitHubAppId);
+			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
+			return;
+		}
+	} catch (err) {
+		req.log.error("Invalid github token");
 	}
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
-		issueKey: key,
 		servers
+	});
+};
+
+const validateGitHubToken = async (jiraHost: string, githubToken: string, logger: Logger, gitHubAppId?: number) => {
+	const githubUrl = await getGitHubApiUrl(jiraHost, gitHubAppId, logger);
+	await axios.get(githubUrl, {
+		headers: {
+			Authorization: `Bearer ${githubToken}`
+		}
 	});
 };
 
@@ -40,11 +62,12 @@ const getGitHubServers = async (jiraHost: string) => {
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const ghCloudSubscriptions = subscriptions.filter(subscription => !subscription.gitHubAppId);
 	const gheServerSubscriptions = subscriptions.filter(subscription => subscription.gitHubAppId);
+	const uniqueGithubAppIds = new Set(gheServerSubscriptions.map(gheServerSubscription => gheServerSubscription.gitHubAppId));
 
 	const gheServerInfos = new Array<{ uuid: string, baseUrl: string, appName: string }>();
-	for (const subscription of gheServerSubscriptions) {
-		if (subscription.gitHubAppId) {
-			const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(subscription.gitHubAppId);
+	for (const gitHubAppId of uniqueGithubAppIds) {
+		if (gitHubAppId) {
+			const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 			if (gitHubServerApp) {
 				gheServerInfos.push({
 					"uuid": gitHubServerApp.uuid,

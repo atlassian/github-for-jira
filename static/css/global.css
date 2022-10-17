@@ -343,7 +343,8 @@ Skeleton element styling
 }
 
 .skeleton,
-.skeleton > label {
+.skeleton > label,
+.skeleton > a {
 /* Override AUI styling */
   color: transparent !important;
 }

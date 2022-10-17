@@ -20,7 +20,6 @@ import { when } from "jest-when";
 import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
@@ -319,6 +318,10 @@ describe("sync/branches", () => {
 				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.mockResolvedValue(true);
+
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -330,7 +333,7 @@ describe("sync/branches", () => {
 		});
 
 		const makeExpectedResponse = async (branchName: string) => {
-			return makeExpectedResponseCloudServer(branchName, await transformRepositoryId(1, gheUrl));
+			return makeExpectedResponseCloudServer(branchName, "6769746875626d79646f6d61696e636f6d-1");
 		};
 
 		it("should sync to Jira when branch refs have jira references", async () => {

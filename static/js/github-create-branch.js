@@ -3,7 +3,8 @@ let totalRepos = [];
 let uuid;
 
 $(document).ready(() => {
-  // Fetching the list of default repos
+
+	// Fetching the list of default repos
   totalRepos = $(".default-repos").map((_, option) => ({
     id: $(option).html(),
     text: $(option).html()
@@ -44,7 +45,6 @@ $(document).ready(() => {
               text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
@@ -219,7 +219,9 @@ const createBranchPost = () => {
 const showLoading = () => {
   $("#createBranchForm").hide();
   $(".headerImageLogo").addClass("headerImageLogo-lg");
-  $(".gitHubCreateBranch__spinner").show();
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
 };
 
 const showSuccessScreen = (repo) => {

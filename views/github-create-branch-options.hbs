@@ -9,6 +9,7 @@
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <link
@@ -57,11 +58,11 @@
                  <form class="aui jiraSelectGitHubProduct__selectServerInstance__form">
                      <div class="field-group" id="serverInstance__fieldGroup">
                         <aui-label for="serverInstance" id="serverInstance__label">GitHub Enterprise Server instance</aui-label>
-                        <select id="ghServers" name="serverInstance" class="full-width-field" placeholder="Select a server">
+                        <aui-select id="ghServers" name="serverInstance" class="full-width-field" placeholder="Select a server">
                           {{#each servers.gheServerInfos}}
                             <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
                           {{/each}}
-                        </select>
+                        </aui-select>
                      </div>
                  </form>
             </div>
