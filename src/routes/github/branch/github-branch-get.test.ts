@@ -34,7 +34,7 @@ describe("GitHub Branches Get", () => {
 			.get("/repos/ARC/repo-1/git/refs/heads/branch-01")
 			.reply(200, {});
 		await GithubBranchGet(req, res);
-		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.sendStatus).toHaveBeenCalledWith(200);
 	});
 
 	it("Should return 404 when no branch found", async () => {
@@ -42,7 +42,7 @@ describe("GitHub Branches Get", () => {
 			.get("/repos/ARC/repo-1/git/refs/heads/branch-01")
 			.reply(404, {});
 		await GithubBranchGet(req, res);
-		expect(res.status).toHaveBeenCalledWith(404);
+		expect(res.sendStatus).toHaveBeenCalledWith(404);
 	});
 
 	it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {

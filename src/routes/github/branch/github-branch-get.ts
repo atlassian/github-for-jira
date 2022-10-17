@@ -18,10 +18,10 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	try {
 		await gitHubUserClient.getReference(owner, repo, ref);
-		res.status(200).send();
+		res.sendStatus(200);
 	} catch (err) {
 		if (err.status === 404) {
-			res.status(404).send();
+			res.sendStatus(404);
 			return;
 		}
 		res.status(500).json(err);
