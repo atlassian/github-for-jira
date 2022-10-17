@@ -15,11 +15,10 @@ describe("pull_request transform", () => {
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-
 		const fixture = transformPullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
 
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
@@ -62,9 +61,6 @@ describe("pull_request transform", () => {
 	});
 
 	it("should contain branches on the payload if pull request status is different than closed.", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
 		);
@@ -72,12 +68,14 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[1];
 		fixture.title = "[TES-123] Branch payload Test";
 
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,
@@ -147,9 +145,6 @@ describe("pull_request transform", () => {
 	});
 
 	it("should not contain createPullRequestUrl on the payload if length > 2000", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
 		);
@@ -157,12 +152,14 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[2];
 		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
 
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,
