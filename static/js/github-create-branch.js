@@ -97,18 +97,9 @@ $(document).ready(() => {
     }
   });
 
-  $("#cancelBtn").click(function (event) {
-    event.preventDefault();
-    window.close();
-  });
-
   $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
-  });
-
-  $("#copyGitCheckout").click(function () {
-    navigator.clipboard.writeText("git checkout " + $("#branchNameText").val());
   });
 
   $("#openGitBranch").click(function () {
@@ -228,13 +219,7 @@ const showSuccessScreen = (repo) => {
   $(".gitHubCreateBranch__spinner").hide();
   $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
   $(".gitHubCreateBranch__header").html("GitHub branch created");
-  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
-  setTimeout(showSuccessWithActions, 1500);
-};
-
-const showSuccessWithActions = () => {
-  $(".headerImageLogo").removeClass("headerImageLogo-lg");
-  $(".headerImageLogo").attr("src", "/public/assets/jira-and-github.png");
+  $(".gitHubCreateBranch__subHeader").html(`Branch <b>${$("#branchNameText").val()}</b> created in ${repo.owner}/${repo.name}`);
   $(".gitHubCreateBranch__createdLinks").css("display", "flex");
 };
 
