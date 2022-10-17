@@ -16,7 +16,7 @@ Running the script:
     $ python3 ./resync-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ]--input [ input-file-name.csv ] --output [ output-file-name.csv ]
 
 Example
-    $ python3 ./resync-from-csv.py --env staging --sleep 1 --input stg-installations.csv --output output.csv
+    $ python3 ./resync-from-csv.py --env prod --sleep 1 --input installations-0-1000.csv --output output.csv
 
 First time setup:
 
