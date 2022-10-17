@@ -176,10 +176,6 @@ const loadBranches = () => {
       $("#ghParentBranch").select2("val", defaultBranch);
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
-
-
-
-
     },
     error: () => {
       showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");

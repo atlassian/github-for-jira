@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { createUserClient } from "utils/get-github-client-config";
 
-// Get a branch for the **USER**
+// Get a branch for the **USER TOKEN**
 export const GithubBranchGet = async (req: Request, res: Response): Promise<void> => {
 	const {
 		jiraHost,
