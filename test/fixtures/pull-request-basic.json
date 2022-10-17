@@ -3,7 +3,7 @@
   "payload": {
     "action": "opened",
     "repository": {
-      "id": "test-repo-id",
+      "id": 12312312,
       "name": "test-repo-name",
       "full_name": "example/test-repo-name",
       "html_url": "test-repo-url",
@@ -21,6 +21,11 @@
       "html_url": "test-pull-request-url",
       "head": {
         "repo": {
+					"id": 321806393,
+					"node_id": "MDEwOlJlcG9zaXRvcnkzMjE4MDYzOTM=",
+					"name": "day2-test-empy-repo-before-connect",
+					"full_name": "bgvozdev/day2-test-empy-repo-before-connect",
+					"private": false,
           "html_url": "test-pull-request-head-url"
         },
         "ref": "TEST-321-test-pull-request-head-ref",
@@ -28,6 +33,11 @@
       },
       "base": {
         "repo": {
+					"id": 321806393,
+					"node_id": "MDEwOlJlcG9zaXRvcnkzMjE4MDYzOTM=",
+					"name": "day2-test-empy-repo-before-connect",
+					"full_name": "bgvozdev/day2-test-empy-repo-before-connect",
+					"private": false,
           "html_url": "test-pull-request-base-url"
         },
         "ref": "test-pull-request-base-ref"

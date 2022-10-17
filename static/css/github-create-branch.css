@@ -58,6 +58,10 @@
   margin-top: 2.5em;
 }
 
+.gitHubCreateBranch__issueLink {
+  font-weight: bold;
+}
+
 /** Customizing styling for Select2 **/
 .select2-drop {
   /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
@@ -125,4 +129,9 @@
 .configure-link {
   margin: 8px 0;
   display: inline-block;
+}
+
+.gitHubCreateBranch__createdLinks {
+  display: none;
+  justify-content: space-evenly;
 }

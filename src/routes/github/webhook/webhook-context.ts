@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 
@@ -21,9 +20,8 @@ export class WebhookContext<E = any> {
 	sentry?: Sentry.Hub;
 	timedout?: number;
 	webhookReceived?: number;
-	gitHubAppConfig?: GitHubAppConfig;
-	// Todo: delete github once all references to github has been removed. Found some reference behind FF
-	github: GitHubAPI;
+
+	gitHubAppConfig?: GitHubAppConfig; // TODO: must become required once we remove probot: it is populated for both Cloud and Server in the new webhook handler
 
 	constructor({ id, name, payload, log, action, gitHubAppConfig }: WebhookContextConstructorParam<E>) {
 		this.id = id;

@@ -1,8 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import {
-	replaceSpaceWithHyphenHelper
-} from "utils/handlebars/handlebar-helpers";
+import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -22,8 +20,14 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const { issue_key: key, issue_summary: summary } = req.query;
-	if (!key) {
+	if (!jiraHost) {
+		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return next();
+	}
+
+	const { issueKey, issueSummary } = req.query;
+	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
@@ -33,7 +37,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_CONFIGURAITON));
 	}
 
-	const branchSuffix = summary ? replaceSpaceWithHyphenHelper(summary as string) : "";
+	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
@@ -43,10 +47,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		issue: {
-			branchName: `${key}-${branchSuffix}`,
-			key
+			branchName: `${issueKey}-${branchSuffix}`,
+			key: issueKey
 		},
+		issueUrl: `${jiraHost}/browse/${issueKey}`,
 		repos,
+		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
 		gitHubUser
 	});

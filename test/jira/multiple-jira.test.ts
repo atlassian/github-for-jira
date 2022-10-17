@@ -59,6 +59,8 @@ const jiraMatchingIssuesKeysBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{
@@ -130,6 +132,8 @@ const jiraMultipleJiraBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{

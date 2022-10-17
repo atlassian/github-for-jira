@@ -19,8 +19,10 @@
 </head>
 
 <body>
+
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
+<input type="hidden" id="gitHubHostname" name="hostname" value="{{hostname}}" />
 
 <div class="gitHubCreateBranch__userDetails">
   <div>GitHub account: <b>{{gitHubUser}}</b></div>
@@ -34,7 +36,13 @@
 
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
-    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">Creating a branch for <b>{{issue.key}}</b></div>
+    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">
+      Creating a branch for <a href="{{issueUrl}}" target="_blank" class="gitHubCreateBranch__issueLink">{{issue.key}}</a>
+    </div>
+  </div>
+
+  <div class="gitHubCreateBranch__createdLinks">
+    <a class="aui-button aui-button-label" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
   </div>
 
   <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
@@ -84,13 +92,12 @@
           {{> server-error-message-box }}
         </div>
     <div class="gitHubCreateBranch__actions">
-      <button class="aui-button aui-button-light skeleton" id="cancelBtn" type="button">Cancel</button>
       <button class="aui-button aui-button-primary skeleton" id="createBranchBtn" type="submit">Create branch</button>
     </div>
   </form>
 </section>
 
-<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+<script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
 <script
   src="/public/aui/aui-prototyping.js"
   integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="

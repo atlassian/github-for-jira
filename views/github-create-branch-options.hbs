@@ -9,70 +9,60 @@
     crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
-  <link rel="stylesheet" href="/public/css/coming-soon.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
+<body>
+  <section class="gitHubCreateBranchOptions">
+    <div class="headerImage">
+      <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
+    </div>
+    <div class="gitHubCreateBranchOptions__title">
+      <div class="gitHubCreateBranchOptions__header">Create GitHub Branch</div>
+      <div class="gitHubCreateBranchOptions__subHeader">
+        Creating a branch for <b>{{issueKey}}</b>
+      </div>
+    </div>
 
-<body class="aui-page-hybrid">
-      {{> navigation hideHelpLink=true }}
+    <form id="createBranchOptionsForm" class="aui top-label" data-has-cloud-server="{{servers.hasCloudServer}}" data-ghe-servers-count="{{servers.gheServerInfos.length}}">
 
-      {{#if featureFlagEnabled}}
-          <section class="gitHubCreateBranchOptions">
-            <div class="headerImage">
-              <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
-            </div>
-            <div class="gitHubCreateBranchOptions__title">
-              <div class="gitHubCreateBranchOptions__header">Create GitHub Branch</div>
-              <div class="gitHubCreateBranchOptions__subHeader">
-                Creating a branch for <b>{{issueKey}}</b>
-              </div>
-            </div>
+      <div class="field-group">
+        <div class="gitHubCreateBranchOptions__optionContainer">
+           {{#if servers.hasCloudServer}}
+            <button class="aui-button gitHubCreateBranchOptions__option gitHubCreateBranchOptions__selected" id="gitHubCreateBranchOptions__cloud">
+              <img src="/public/assets/cloud.svg" class="gitHubCreateBranchOptions__Icon" alt="">
+              GitHub Cloud
+            </button>
+          {{/if}}
+          <button class="aui-button gitHubCreateBranchOptions__option" id="gitHubCreateBranchOptions__enterprise">
+            <img src="/public/assets/server.svg" class="gitHubCreateBranchOptions__Icon" alt="">
+            GitHub Enterprise Server
+          </button>
+        </div>
+      </div>
+      <div class="field-group gitHubCreateBranchOptions__serversContainer">
+        <aui-label for="server">GitHub Enterprise Server instance</aui-label>
+        <select id="ghServers" name="server" class="full-width-field" placeholder="Select a server">
+          {{#each servers.gheServerInfos}}
+          <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
+          {{/each}}
+        </select>
+      </div>
 
-            <form id="createBranchOptionsForm" class="aui top-label">
+      <div class="gitHubCreateBranchOptions__actions">
+        <button class="aui-button aui-button-primary" id="nextBtn" type="submit">Next</button>
+      </div>
+    </form>
+  </section>
 
-              <div class="field-group">
-                <div class="gitHubCreateBranchOptions__optionContainer">
-                   {{#if servers.hasCloudServer}}
-                    <button class="aui-button gitHubCreateBranchOptions__option gitHubCreateBranchOptions__selected" id="gitHubCreateBranchOptions__cloud">
-                      <img src="/public/assets/cloud.svg" class="gitHubCreateBranchOptions__Icon" alt="">
-                      GitHub Cloud
-                    </button>
-                  {{/if}}
-                  <button class="aui-button gitHubCreateBranchOptions__option" id="gitHubCreateBranchOptions__enterprise">
-                    <img src="/public/assets/server.svg" class="gitHubCreateBranchOptions__Icon" alt="">
-                    GitHub Enterprise Server
-                  </button>
-                </div>
-              </div>
-              <div class="field-group gitHubCreateBranchOptions__serversContainer">
-                <aui-label for="server">GitHub Enterprise Server instance</aui-label>
-                <select id="ghServers" name="server" class="full-width-field" placeholder="Select a server">
-                  {{#each servers.gheServerInfos}}
-                  <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
-                  {{/each}}
-                </select>
-              </div>
-
-              <div class="gitHubCreateBranchOptions__actions">
-                <button class="aui-button aui-button-primary" id="nextBtn" type="submit">Next</button>
-              </div>
-            </form>
-          </section>
-    {{else}}
-        {{> coming-soon }}
-    {{/if}}
-
-
-  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" nonce="{{nonce}}"></script>
   <script src="/public/js/github-create-branch-options.js" nonce="{{nonce}}"></script>
-  <script src="/public/js/coming-soon.js" nonce="{{nonce}}"></script>
   <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
-
 </body>
 
 </html>

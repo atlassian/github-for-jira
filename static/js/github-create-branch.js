@@ -3,7 +3,8 @@ let totalRepos = [];
 let uuid;
 
 $(document).ready(() => {
-  // Fetching the list of default repos
+
+	// Fetching the list of default repos
   totalRepos = $(".default-repos").map((_, option) => ({
     id: $(option).html(),
     text: $(option).html()
@@ -13,7 +14,7 @@ $(document).ready(() => {
   let url = "/github/repository";
   if(uuid) {
     url = `/github/${uuid}/repository`;
-  } 
+  }
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
@@ -44,7 +45,6 @@ $(document).ready(() => {
               text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
@@ -97,16 +97,15 @@ $(document).ready(() => {
     }
   });
 
-  $("#cancelBtn").click(function (event) {
-    event.preventDefault();
-    window.close();
-  });
-
   $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
   });
 
+  $("#openGitBranch").click(function () {
+    const repo = getRepoDetails();
+    window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
+  });
 });
 
 const loadBranches = () => {
@@ -199,7 +198,7 @@ const createBranchPost = () => {
   showLoading();
   $.post(url, data)
     .done(() => {
-      showSuccessScreen(repo, newBranchName);
+      showSuccessScreen(repo);
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
@@ -211,15 +210,17 @@ const createBranchPost = () => {
 const showLoading = () => {
   $("#createBranchForm").hide();
   $(".headerImageLogo").addClass("headerImageLogo-lg");
-  $(".gitHubCreateBranch__spinner").show();
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
 };
 
-const showSuccessScreen = (repo, newBranchName) => {
+const showSuccessScreen = (repo) => {
   $(".gitHubCreateBranch__spinner").hide();
   $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
   $(".gitHubCreateBranch__header").html("GitHub branch created");
-  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
-  // TODO: Redirect to the success screen with options, needs to be done after ARC-1727[https://softwareteams.atlassian.net/browse/ARC-1727]
+  $(".gitHubCreateBranch__subHeader").html(`Branch <b>${$("#branchNameText").val()}</b> created in ${repo.owner}/${repo.name}`);
+  $(".gitHubCreateBranch__createdLinks").css("display", "flex");
 };
 
 const hideLoading = () => {
