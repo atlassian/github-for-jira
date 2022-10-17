@@ -115,6 +115,8 @@ $(document).ready(() => {
     const repo = getRepoDetails();
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
   });
+
+  showLoading();
 });
 
 const loadBranches = () => {
@@ -219,7 +221,9 @@ const createBranchPost = () => {
 const showLoading = () => {
   $("#createBranchForm").hide();
   $(".headerImageLogo").addClass("headerImageLogo-lg");
-  $(".gitHubCreateBranch__spinner").show();
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
 };
 
 const showSuccessScreen = (repo) => {
