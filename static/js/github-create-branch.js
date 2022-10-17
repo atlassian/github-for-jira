@@ -115,8 +115,6 @@ $(document).ready(() => {
     const repo = getRepoDetails();
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
   });
-
-  showLoading();
 });
 
 const loadBranches = () => {
