@@ -22,7 +22,7 @@ describe("GitHub API Request Suite", () => {
 	describe("compareCommitsBetweenBaseAndHeadBranches", () => {
 
 		it("should return message from multiple commits containing multiple issue keys", async () => {
-			githubUserTokenNock(gitHubInstallationId);
+
 			const workflowRunPayload = Object.assign(
 				{},
 				workflowBasic
@@ -45,6 +45,7 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -63,7 +64,7 @@ describe("GitHub API Request Suite", () => {
 		});
 
 		it("should return message with multiple issue keys for a single commit", async () => {
-			githubUserTokenNock(gitHubInstallationId);
+
 			const workflowRunPayload = Object.assign(
 				{},
 				workflowBasic
@@ -86,6 +87,7 @@ describe("GitHub API Request Suite", () => {
 
 			const data = pullRequestCommits.data;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`
@@ -107,7 +109,6 @@ describe("GitHub API Request Suite", () => {
 	describe("getAllCommitsBetweenReferences", () => {
 		it("should return message from multiple commits containing multiple issue keys", async () => {
 
-			githubUserTokenNock(gitHubInstallationId);
 			const workflowRunPayload = Object.assign(
 				{},
 				workflowBasic
@@ -130,6 +131,7 @@ describe("GitHub API Request Suite", () => {
 
 			const { data } = pullRequestCommits;
 
+			githubUserTokenNock(gitHubInstallationId);
 			githubNock
 				.get(
 					`/repos/${payload.owner}/${payload.repo}/compare/${payload.base}...${payload.head}`

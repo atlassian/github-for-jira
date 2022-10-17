@@ -6,7 +6,7 @@ import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
 
 describe("pull_request transform", () => {
-	const gitHubInstallationId = 1234;
+	const gitHubInstallationId = 100403908;
 	let client: GitHubInstallationClient;
 
 	beforeEach(() => {

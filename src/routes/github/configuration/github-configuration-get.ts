@@ -194,9 +194,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
-		req.log.trace(`got user's installations with admin status from GitHub`);
+		req.log.debug(`got user's installations with admin status from GitHub`);
 		const { data: info } = await gitHubAppClient.getApp();
-		req.log.trace(`got user's authenticated apps from GitHub`);
+		req.log.debug(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
 			log.info({ info }, `verbose logging: getAuthenticated`);
