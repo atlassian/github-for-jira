@@ -15,11 +15,6 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		return;
 	}
 
-	if (!ref || !owner || !repo) {
-		res.status(400).json("Missing required fields.");
-		return;
-	}
-
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	try {
 		await gitHubUserClient.getReference(owner, repo, ref);
