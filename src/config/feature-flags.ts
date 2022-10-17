@@ -62,17 +62,14 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
-	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
+export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, key?: string): Promise<boolean> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
-export const booleanFlagByCloudId = async (flag: BooleanFlags, defaultValue: boolean, cloudId?: string): Promise<boolean> =>
-	await getLaunchDarklyValue(flag, defaultValue, cloudId);
+export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
+	await getLaunchDarklyValue<T>(flag, defaultValue, key);
 
-export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, jiraHost?: string): Promise<T> =>
-	await getLaunchDarklyValue<T>(flag, defaultValue, jiraHost);
-
-export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
-	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
 export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
