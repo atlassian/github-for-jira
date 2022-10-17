@@ -68,7 +68,7 @@ jobs:
 
   e2e-test:
     #  Need to run on macos to get 14gb of memory instead of 7gb with Linux/Windows
-    runs-on: macos-12
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v1
@@ -76,6 +76,7 @@ jobs:
         with:
           node-version: 14
       - uses: volta-cli/action@v1
+      - uses: docker-practice/actions-setup-docker@master
       - uses: actions/cache@v2
         with:
           path: '**/node_modules'
@@ -105,11 +106,11 @@ jobs:
       - name: wait for app to be ready
         run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run test:e2e
-      - name: export system logs
-        if: always()
-        run: |
-          free -h > memory.log
-          top -c -b -n 1 > processes.log
+#      - name: export system logs
+#        if: always()
+#        run: |
+#          free -h > memory.log
+#          top -c -b -n 1 > processes.log
       - name: export docker logs
         if: always()
         run: |
