@@ -14,10 +14,7 @@ describe("GitHub Create Branch Options Get", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
-		app.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		app.use(getFrontendApp());
 	});
 
 	it("should hit the create branch option", async () => {
