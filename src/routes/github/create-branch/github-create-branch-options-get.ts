@@ -39,7 +39,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 			});
 			return;
 		}
-		// Go straight to create branch for only cloud installations
+
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
 			res.redirect(`/github/create-branch${url.search}`);
