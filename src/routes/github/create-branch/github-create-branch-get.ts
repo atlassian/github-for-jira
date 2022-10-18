@@ -32,7 +32,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
-	// In case if somehow the user lands on this page directly from URL
+	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce
