@@ -1,16 +1,17 @@
 import { BinaryLike, createHmac } from "crypto";
-import { Express } from "express";
-import { getFrontendApp } from "~/src/app";
+import express, { Express } from "express";
 import supertest from "supertest";
 import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
+import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post"
 
 export type WrapFrontendApp = Express & {
 	receive: (event: any) => Promise<any>
 }
 
 export const wrapFrontEndAppWithReceive = async (): Promise<WrapFrontendApp> => {
-	const app: WrapFrontendApp = getFrontendApp() as any;
+	const app: WrapFrontendApp = express() as any;
+	app.post("/github/webhooks", WebhookReceiverPost);
 	app.receive = async (event: any) => {
 		await supertest(app)
 			.post("/github/webhooks")
