@@ -6,13 +6,13 @@ services:
     image: redis
     container_name: redis
     ports:
-      - "0.0.0.0:6379:6379"
+      - "6379:6379"
 
   postgres:
     image: postgres:14.2-alpine
     container_name: postgres
     ports:
-      - "0.0.0.0:5432:5432"
+      - "5432:5432"
     environment:
       POSTGRES_HOST_AUTH_METHOD: trust
 
@@ -20,7 +20,7 @@ services:
     image: wernight/ngrok
     container_name: ngrok
     ports:
-      - "0.0.0.0:4040:4040"
+      - "4040:4040"
     command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
@@ -33,7 +33,7 @@ services:
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
       - LS_LOG=error # log level
     ports:
-      - "0.0.0.0:4566:4566"
+      - "4566:4566"
     volumes:
       - ./.localstack:/docker-entrypoint-initaws.d
 
@@ -43,7 +43,7 @@ services:
     environment:
       CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
     ports:
-      - "0.0.0.0:26272:26272"
+      - "26272:26272"
 
   app:
     container_name: app
@@ -57,10 +57,10 @@ services:
     build:
       context: .
     ports:
-      - "0.0.0.0:8080:8080" # main port
-      - "0.0.0.0:9229:9229" # main debug port
-      - "0.0.0.0:8081:8081" # worker port
-      - "0.0.0.0:9230:9230" # worker debug port
+      - "8080:8080" # main port
+      - "9229:9229" # main debug port
+      - "8081:8081" # worker port
+      - "9230:9230" # worker debug port
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
       SQS_BACKFILL_QUEUE_URL: http://localstack:4566/000000000000/backfill

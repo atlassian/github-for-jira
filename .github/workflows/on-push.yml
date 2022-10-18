@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: 14
-      - uses: volta-cli/action@v1
-      - uses: actions/cache@v2
+      - uses: volta-cli/action@latest
+      - uses: actions/cache@latest
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -27,12 +27,12 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: 14
-      - uses: volta-cli/action@v1
-      - uses: actions/cache@v2
+      - uses: volta-cli/action@latest
+      - uses: actions/cache@latest
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -71,13 +71,13 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@latest
+      - uses: actions/setup-node@latest
         with:
           node-version: 14
-      - uses: volta-cli/action@v1
+      - uses: volta-cli/action@latest
       - uses: docker-practice/actions-setup-docker@master
-      - uses: actions/cache@v2
+      - uses: actions/cache@latest
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -114,9 +114,10 @@ jobs:
       - name: export docker logs
         if: always()
         run: |
+          docker ps -a > docker-ps.log
           docker stats --no-stream > docker-stats.log
           docker-compose logs --no-color > docker-compose.log
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@latest
         if: always()
         with:
           name: e2e-output
