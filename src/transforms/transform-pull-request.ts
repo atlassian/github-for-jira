@@ -1,6 +1,6 @@
 import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
-import { Octokit } from "@octokit/rest";
+import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";

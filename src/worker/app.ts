@@ -1,6 +1,5 @@
 import express, { Express } from "express";
 import { HealthcheckRouter } from "routes/healthcheck/healthcheck-router";
-import { overrideProbotLoggingMethods } from "config/logger";
 
 export const createWorkerServerApp = (): Express => {
 	const app = express();
