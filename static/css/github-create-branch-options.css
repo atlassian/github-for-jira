@@ -80,3 +80,7 @@
 .gitHubCreateBranchOptions__serversContainer {
   display: none;
 }
+
+.gitHubCreateBranchOptions__loading {
+  display: none;
+}

@@ -1,12 +1,15 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
-function goToCreateBranch() {
-	AP.context.getToken(function(token) {
+const goToCreateBranch = () => {
+  $(".gitHubCreateBranchOptions").hide();
+  $(".gitHubCreateBranchOptions__loading").show();
+
+  AP.context.getToken(token => {
 		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
-	});
+  });
 }
 
 const getCreateBranchTargetUrl = () => {
