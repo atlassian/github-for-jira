@@ -45,7 +45,7 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	const tasks = getTargetTasks(targetTasks);
 
-	if (subscription.repositoryStatus !== "complete") {
+	if (subscription.repositoryStatus !== "complete" && tasks.includes("repository")) {
 		return {
 			task: "repository",
 			repositoryId: 0,
