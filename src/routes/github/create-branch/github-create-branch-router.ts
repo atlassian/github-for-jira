@@ -10,6 +10,7 @@ GithubCreateBranchRouter.route("/")
 	.get(GithubCreateBranchGet)
 	.post(GithubCreateBranchPost);
 
+// TODO - move to /github/branch directory
 GithubCreateBranchRouter.get("/owners/:owner/repos/:repo/branches", GithubBranchesGet);
 
 GithubCreateBranchRouter.get("/change-github-login", GithubRemoveSession);
