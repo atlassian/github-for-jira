@@ -2,7 +2,6 @@ import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
@@ -102,7 +101,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: WebhookContext, util, repoName, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient, context: WebhookContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
 
 	if (!linkifiedBody) {
@@ -118,9 +117,7 @@ const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, 
 		issue_number: pullRequest.number
 	};
 
-	github instanceof GitHubInstallationClient ?
-		await github.updateIssue(updatedPullRequest) :
-		await github.issues.update(updatedPullRequest);
+	await github.updateIssue(updatedPullRequest);
 };
 
 const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
