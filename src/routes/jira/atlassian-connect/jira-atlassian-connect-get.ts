@@ -4,6 +4,7 @@ import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { UUID_REGEX } from "~/src/util/regex";
+import { getLogger } from "config/logger";
 
 const instance = envVars.INSTANCE_NAME;
 
@@ -184,8 +185,9 @@ const addCreateBranchAction = async (modules, cloudId) => {
 };
 
 export const JiraAtlassianConnectGet = async (req: Request, res: Response): Promise<void> => {
+	const logger = getLogger("jira-atlassian-connect");
 	const clientInfo = req.headers["x-pac-client-info"] as string;
-	req.log.debug("JiraAtlassianConnectGet", {
+	logger.debug("ClientInfo", {
 		clientInfo,
 		headers: req.headers
 	});
