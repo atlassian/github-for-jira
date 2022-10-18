@@ -34,7 +34,7 @@ Create a new [GitHub App](https://github.com/settings/apps), setting the followi
 - **Homepage URL**: `https://github.com/apps/GITHUB_APP_NAME` (The full URL to your GitHub App’s website)
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
-- **Webhook URL**: `https://DOMAIN/github/events`
+- **Webhook URL**: `https://DOMAIN/github/webhooks`
 - **Webhook Secret**: `development`
 
 Your new GitHub app will need the following repository permissions & events:
