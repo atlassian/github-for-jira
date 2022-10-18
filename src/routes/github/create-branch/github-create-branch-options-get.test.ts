@@ -30,20 +30,7 @@ describe("GitHub Create Branch Options Get", () => {
 		app.use(getFrontendApp());
 	});
 
-	it("No gitHubToken - should open the no-configuration page", async () => {
-		await supertest(app)
-			.get("/create-branch-options").set(
-				"Cookie",
-				getSignedCookieHeader({
-					jiraHost
-				}))
-			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain("<button class=\"aui-button aui-button-primary\" id=\"noConfiguration__ConnectToGH\">Connect GitHub organization</button>");
-			});
-	});
-
-	it("Has gitHubToken, but no connection - should open the no-configuration page", async () => {
+	it("No connection - should open the no-configuration page", async () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
@@ -57,7 +44,7 @@ describe("GitHub Create Branch Options Get", () => {
 			});
 	});
 
-	it("Has gitHubToken, with one cloud connection - should open the create-branch page", async () => {
+	it("With one cloud connection - should open the create-branch page", async () => {
 		setupGitHubCloudPingNock();
 		await Subscription.install({
 			host: jiraHost,
@@ -78,7 +65,7 @@ describe("GitHub Create Branch Options Get", () => {
 			});
 	});
 
-	it("Has gitHubToken, with one server connection - should open the create-branch page", async () => {
+	it("With one server connection - should open the create-branch page", async () => {
 		const uuid = newUUID();
 		const serverApp = await GitHubServerApp.install({
 			uuid,
@@ -116,7 +103,7 @@ describe("GitHub Create Branch Options Get", () => {
 			});
 	});
 
-	it("Has gitHubToken, with both cloud & server connections - should open the create-branch-options page", async () => {
+	it("With both cloud & server connections - should open the create-branch-options page", async () => {
 		const serverApp = await GitHubServerApp.install({
 			uuid,
 			appId: 123,
