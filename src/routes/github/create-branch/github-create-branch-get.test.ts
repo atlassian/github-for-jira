@@ -17,10 +17,7 @@ describe("GitHub Create Branch Get", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
-		app.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		app.use(getFrontendApp());
 	});
 	describe("Testing the GET route", () => {
 		beforeEach(async () => {

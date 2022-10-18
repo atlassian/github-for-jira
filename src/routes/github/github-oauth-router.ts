@@ -4,7 +4,6 @@ import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
 import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
@@ -153,8 +152,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
-		// TODO: Not a great place to put this, but it'll do for now
-		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);

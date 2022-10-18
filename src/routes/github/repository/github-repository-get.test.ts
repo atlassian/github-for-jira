@@ -16,10 +16,7 @@ describe("GitHub Repository Search", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
-		app.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		app.use(getFrontendApp());
 	});
 	describe("Testing the Repository Search route", () => {
 
