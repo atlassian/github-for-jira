@@ -77,6 +77,10 @@ $(document).ready(() => {
     data: []
   });
 
+	$("#ghParentBranch").on("change", function (e) {
+		validateSourceBranch(e.val);
+	});
+
   $("#ghRepo").on("change", () => {
     loadBranches();
   });
@@ -98,6 +102,20 @@ $(document).ready(() => {
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
   });
 });
+
+
+const validateSourceBranch = (branchName) => {
+	hideValidationErrorMessage("ghParentBranch");
+	const repo = getRepoDetails();
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+
+	$.get(url)
+		.fail((err) => {
+			if (err.status === 404) {
+				showValidationErrorMessage("ghParentBranch", "Could not find this branch on GitHub.");
+			}
+		});
+}
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);
@@ -167,6 +185,12 @@ const showValidationErrorMessage = (id, message) => {
   if (DOM.find(".error-message").length < 1) {
     DOM.append(`<div class="error-message"><i class="aui-icon aui-iconfont-error"></i>${ message }</div>`);
   }
+};
+
+const hideValidationErrorMessage = (id) => {
+  const DOM = $(`#s2id_${ id }`);
+  DOM.find("a.select2-choice").removeClass("has-errors");
+	DOM.find(".error-message").remove();
 };
 
 const createBranchPost = () => {
