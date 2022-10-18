@@ -36,7 +36,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	});
 
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
-		mocked(keyLocator).mockImplementation(async () => await keyLocator())
+		mocked(keyLocator).mockImplementation(async () => await keyLocator(undefined))
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,

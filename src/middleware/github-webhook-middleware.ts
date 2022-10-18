@@ -55,12 +55,6 @@ const isStateChangeOrDeploymentAction = (action) =>
 		action
 	);
 
-export class CustomContext<E = any> extends Context<E> {
-	sentry?: Sentry.Hub;
-	timedout?: number;
-	webhookReceived?: number;
-}
-
 const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
 	let webhookEvent = context.name;
 	if (context.payload?.action) {

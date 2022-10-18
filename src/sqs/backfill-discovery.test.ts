@@ -3,7 +3,6 @@ import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { sqsQueues } from "./queues";
-import { createWebhookApp } from "test/utils/probot";
 import { waitUntil } from "test/utils/wait-until";
 
 import getRepositories from "fixtures/get-repositories.json";

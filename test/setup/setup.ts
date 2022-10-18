@@ -20,8 +20,11 @@ type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: numb
 type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
+type CreateWebhookApp = () => Promise<Application>;
+
 export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
 declare global {
+	type Application = { receive: (payload: any) => Promise<any> };
 	let jiraHost: string;
 	let gitHubAppConfig: GitHubAppConfig;
 	let gitHubCloudConfig: GitHubConfig;
@@ -40,6 +43,7 @@ declare global {
 	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
 	let testEnvVars: TestEnvVars;
+	let createWebhookApp: CreateWebhookApp;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -61,6 +65,7 @@ declare global {
 			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
 			testEnvVars: TestEnvVars;
+			createWebhookApp: CreateWebhookApp;
 		}
 	}
 }
@@ -156,6 +161,7 @@ beforeEach(() => {
 		apiUrl: "https://api.github.com",
 		graphqlUrl: "https://api.github.com/graphql"
 	};
+	global.createWebhookApp = async () => ({receive: async () => undefined});
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting

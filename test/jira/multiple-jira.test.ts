@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "../utils/probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import nock from "nock";

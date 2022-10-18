@@ -1,5 +1,3 @@
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import workflowBasicFixture from "fixtures/workflow-basic.json";

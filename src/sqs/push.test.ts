@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import nock from "nock";
 import { createJobData } from "../transforms/push";
-import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
-import { Application } from "probot";
 import { waitUntil } from "test/utils/wait-until";
 import { pushQueueMessageHandler } from "./push";
 import { PushQueueMessagePayload, SQSMessageContext } from "./sqs.types";

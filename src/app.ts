@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, Request, Response, RequestHandler } from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import path from "path";
 import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
 import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
@@ -76,7 +76,7 @@ const secureHeaders = (app: Express) => {
 	app.use(helmet.hidePoweredBy());
 };
 
-export const createFrontendApp = (): Express => {
+export const getFrontendApp = (): Express => {
 
 	const app: Express = express();
 
