@@ -1,10 +1,12 @@
 import { NextFunction, Request, Response } from "express";
+import axios from "axios";
+import Logger from "bunyan";
 import { Errors } from "config/errors";
 import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { getGitHubApiUrl } from "utils/get-github-client-config";
-import axios from "axios";
-import Logger from "bunyan";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
@@ -26,6 +28,18 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	try {
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+		// If user has no subscriptions redirect to not configured page
+		if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
+			res.render("no-configuration.hbs", {
+				nonce: res.locals.nonce
+			});
+			sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+				name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+				jiraHost
+			});
+			return;
+		}
+		// Go straight to create branch for only cloud installations
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
 			res.redirect(`/github/create-branch${url.search}`);
@@ -46,6 +60,11 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		servers
+	});
+
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName,
+		jiraHost
 	});
 
 };
