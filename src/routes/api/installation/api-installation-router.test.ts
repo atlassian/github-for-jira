@@ -11,10 +11,7 @@ jest.mock("./api-installation-get");
 jest.mock("./api-installation-syncstate-get");
 
 const setupAppAndRouter = () => {
-	return getFrontendApp({
-		getSignedJsonWebToken: () => "",
-		getInstallationAccessToken: async () => ""
-	});
+	return getFrontendApp();
 };
 
 const turnOnGHESFF = () => {
