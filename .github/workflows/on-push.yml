@@ -10,12 +10,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@latest
-      - uses: actions/setup-node@latest
-        with:
-          node-version: 14
-      - uses: volta-cli/action@latest
-      - uses: actions/cache@latest
+      - uses: actions/checkout@v1
+      - uses: volta-cli/action@v4
+      - uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -27,12 +24,9 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@latest
-      - uses: actions/setup-node@latest
-        with:
-          node-version: 14
-      - uses: volta-cli/action@latest
-      - uses: actions/cache@latest
+      - uses: actions/checkout@v1
+      - uses: volta-cli/action@v4
+      - uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -67,17 +61,13 @@ jobs:
         run: yarn test
 
   e2e-test:
-    #  Need to run on macos to get 14gb of memory instead of 7gb with Linux/Windows
-    runs-on: macos-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@latest
-      - uses: actions/setup-node@latest
-        with:
-          node-version: 14
-      - uses: volta-cli/action@latest
+      - uses: actions/checkout@v1
+      - uses: volta-cli/action@v4
       - uses: docker-practice/actions-setup-docker@master
-      - uses: actions/cache@latest
+      - uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
@@ -106,18 +96,18 @@ jobs:
       - name: wait for app to be ready
         run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run test:e2e
-#      - name: export system logs
-#        if: always()
-#        run: |
-#          free -h > memory.log
-#          top -c -b -n 1 > processes.log
+      - name: export system logs
+        if: always()
+        run: |
+          free -h > memory.log
+          top -c -b -n 1 > processes.log
       - name: export docker logs
         if: always()
         run: |
           docker ps -a > docker-ps.log
           docker stats --no-stream > docker-stats.log
           docker-compose logs --no-color > docker-compose.log
-      - uses: actions/upload-artifact@latest
+      - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: e2e-output
