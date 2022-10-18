@@ -23,15 +23,15 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	}
 
 	const servers = await getGitHubServers(jiraHost);
+	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
+		res.render("no-configuration.hbs", {
+			nonce: res.locals.nonce
+		});
+		return;
+	}
 
 	try {
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
-		if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
-			res.render("no-configuration.hbs", {
-				nonce: res.locals.nonce
-			});
-			return;
-		}
 
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
