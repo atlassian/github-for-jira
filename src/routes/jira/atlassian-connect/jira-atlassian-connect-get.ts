@@ -187,9 +187,9 @@ const addCreateBranchAction = async (modules, cloudId) => {
 export const JiraAtlassianConnectGet = async (req: Request, res: Response): Promise<void> => {
 	const logger = getLogger("jira-atlassian-connect");
 	const clientInfo = req.headers["x-pac-client-info"] as string;
-	logger.debug("ClientInfo", {
-		clientInfo,
-		headers: req.headers
+	logger.info("ClientInfo", {
+		headers: req.headers,
+		req
 	});
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
