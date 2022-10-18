@@ -96,6 +96,7 @@
 		"yaml": "^2.0.1"
 	},
 	"devDependencies": {
+		"@octokit/rest": "^19.0.5",
 		"@types/bunyan": "^1.8.6",
 		"@types/bunyan-format": "^0.2.4",
 		"@types/cache-manager": "^3.4.0",

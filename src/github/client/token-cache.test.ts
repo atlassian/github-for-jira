@@ -5,7 +5,6 @@ import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "~/src/models/subscription";
-import * as PrivateKey from "probot/lib/private-key";
 
 jest.mock("./key-locator");
 jest.mock("~/src/config/feature-flags");
@@ -37,7 +36,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	});
 
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
-		mocked(keyLocator).mockImplementation(async () => PrivateKey.findPrivateKey() || "");
+		mocked(keyLocator).mockImplementation(async () => await keyLocator())
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,

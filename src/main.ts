@@ -1,5 +1,6 @@
 import { Express } from "express";
 import "config/env"; // Important to be before other dependencies
+import { getLogger } from "config/logger";
 import throng from "throng";
 import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
@@ -10,7 +11,7 @@ async function start() {
 	const app: Express = createFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
 	app.listen(port, () => {
-		app.locals.logger.info(`started at port ${port}`);
+		getLogger("frontend-app").info(`started at port ${port}`);
 	});
 }
 

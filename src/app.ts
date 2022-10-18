@@ -7,7 +7,6 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
-import { getLogger } from "config/logger";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -77,23 +76,9 @@ const secureHeaders = (app: Express) => {
 	app.use(helmet.hidePoweredBy());
 };
 
-const logRequest = function ({logger}: any): RequestHandler {
-	//Copy from origin probot logging config
-	//https://github.com/probot/probot/blob/v9.15.1/src/middleware/logging.ts
-	//However I remove all the trace/time logging, don't think we need those.
-  return function (req: Request, res: Response, next: NextFunction) {
-    // Make a logger available on the request
-    req.log = logger;
-    next()
-  }
-}
-
 export const createFrontendApp = (): Express => {
 
 	const app: Express = express();
-
-	app.locals.log = getLogger("frontend");
-	app.use(logRequest({logger: app.locals.logger}));
 
 	app.use(elapsedTimeMetrics);
 
