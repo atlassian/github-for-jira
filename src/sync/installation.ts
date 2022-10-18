@@ -33,7 +33,7 @@ const tasks: TaskProcessors = {
 	deployment: getDeploymentTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "repository"];
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 	if (targetTasks?.length) {
@@ -57,7 +57,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 
 	for (const syncState of repoSyncStates) {
-		const task = tasks.find(
+		const repoSyncTasks = tasks.filter(task => task !== "repository");
+		const task = repoSyncTasks.find(
 			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
