@@ -108,5 +108,6 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
 
 export const isGitHubCloudApp = async (gitHubAppId: number | undefined): Promise<boolean>=> {
+	console.log('============', GitHubServerApp.getForGitHubServerAppId);
 	return !(gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId));
 }
