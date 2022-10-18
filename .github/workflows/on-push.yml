@@ -101,6 +101,9 @@ jobs:
         run: |
           free -h > memory.log
           top -c -b -n 1 > processes.log
+          dmesg > dmesg.log
+          cat /var/log/syslog > sys.log
+          journalctl -k > journal.log
       - name: export docker logs
         if: always()
         run: |
