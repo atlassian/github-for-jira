@@ -175,7 +175,8 @@ const addCreateBranchAction = async (modules) => {
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
-				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}&ac.jiraHost={tenant.host}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jiraHost={tenant.info}`
+				// `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}&ac.jiraHost={tenant.host}`
 			}
 		};
 	}

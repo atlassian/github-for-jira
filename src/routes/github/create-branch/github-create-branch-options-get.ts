@@ -10,9 +10,11 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { jiraHost } = res.locals;
-	const { issueKey } = req.query;
+	const { jiraHost: jiraHostLocal } = res.locals;
+	const { issueKey, jiraHost: jiraHostParam } = req.query;
 	const { githubToken } = req.session;
+
+	const jiraHost = jiraHostLocal || jiraHostParam;
 
 	if (!jiraHost) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
