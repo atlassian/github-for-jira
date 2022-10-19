@@ -4,7 +4,6 @@ import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-import { getCloudIdFromClientInfo } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 
 jest.mock("config/feature-flags");
 
@@ -52,21 +51,4 @@ describe("Atlassian Connect", () => {
 		});
 	});
 
-	describe("getCloudIdFromClientInfo", () => {
-
-		it("should return undefined if no value passed", () => {
-			expect(getCloudIdFromClientInfo()).toBe(undefined);
-		});
-
-		it("should return undefined if no cloudId found", () => {
-			const mockInfoWithoutCloudId = "client=upm,ondemand=true,entitlementId=e7b1797f-5822-4baa-a675-cf6cf8d80bcd,someID=03ce73f8-41fc-492e-9983-83ab6d8ebd32";
-			expect(getCloudIdFromClientInfo(mockInfoWithoutCloudId)).toBe(undefined);
-		});
-
-		it("should find cloud id from string", () => {
-			const cloudId = "03ce73f8-41fc-492e-9983-83ab6d8ebd32";
-			const mockInfoWithCloudId = "client=upm,ondemand=true,entitlementId=e7b1797f-5822-4baa-a675-cf6cf8d80bcd,cloudId=03ce73f8-41fc-492e-9983-83ab6d8ebd32";
-			expect(getCloudIdFromClientInfo(mockInfoWithCloudId)).toBe(cloudId);
-		});
-	});
 });

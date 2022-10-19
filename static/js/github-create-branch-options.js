@@ -6,6 +6,14 @@ function goToCreateBranch() {
 		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
+		const interval = setInterval(function () {
+			if (child.closed) {
+				clearInterval(interval);
+				AP.navigator.go('issue', {
+					issueKey: 'DEP-20'
+				});
+			}
+		}, 100);
 	});
 }
 

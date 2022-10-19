@@ -25,20 +25,19 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	}
 
 	const servers = await getGitHubServers(jiraHost);
+	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
+		res.render("no-configuration.hbs", {
+			nonce: res.locals.nonce
+		});
+		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+			jiraHost
+		});
+		return;
+	}
 
 	try {
 		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
-		// If user has no subscriptions redirect to not configured page
-		if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
-			res.render("no-configuration.hbs", {
-				nonce: res.locals.nonce
-			});
-			sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-				name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
-				jiraHost
-			});
-			return;
-		}
 
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
