@@ -89,18 +89,11 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	try {
 
 		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
-			try {
-				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, begin use anonymouse client for exchange access_token`);
-				const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-				const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
-					clientId, clientSecret: gitHubClientSecret, code, state
-				});
-				req.session.githubToken = accessToken;
-				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, success use anonymouse client for exchange access_token`);
-			} catch (e) {
-				logger.error(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, fail use anonymouse client for exchange access_token`, e);
-				throw e;
-			}
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
+				clientId, clientSecret: gitHubClientSecret, code, state
+			});
+			req.session.githubToken = accessToken;
 		} else {
 			const response = await axios.get(
 				`${hostname}/login/oauth/access_token`,
@@ -159,15 +152,8 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		req.log.debug("found github token in session. validating token with API.");
 
 		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
-			try {
-				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, begin use anonymouse client for checking github token is valid`);
-				const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-				await gitHubAnonymousClient.checkGitHubToken(githubToken);
-				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, success use anonymouse client for checking github token is valid`);
-			} catch (e) {
-				logger.error(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, fail use anonymouse client for checking github token is valid`, e);
-				throw e;
-			}
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			await gitHubAnonymousClient.checkGitHubToken(githubToken);
 		} else {
 			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
 			await axios.get(url, {
