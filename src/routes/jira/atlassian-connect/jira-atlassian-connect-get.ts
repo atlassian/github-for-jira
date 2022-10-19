@@ -67,14 +67,6 @@ const modules = {
 	},
 	generalPages: [
 		{
-			key: "create-branch-options",
-			name: {
-				value: "GitHub Create Branch"
-			},
-			url: `/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}&jiraHost={ac.jiraHost}`,
-			location: "none"
-		},
-		{
 			key: "github-select-product-page",
 			name: {
 				value: "GitHub Select Product"
