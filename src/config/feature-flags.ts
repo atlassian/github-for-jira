@@ -63,8 +63,10 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, key?: string): Promise<boolean> =>
-	await getLaunchDarklyValue(flag, defaultValue, key);
+export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, key?: string): Promise<boolean> => {
+	if (flag === BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER) return true;
+	return await getLaunchDarklyValue(flag, defaultValue, key);
+};
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);
