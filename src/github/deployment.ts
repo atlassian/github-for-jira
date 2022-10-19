@@ -2,7 +2,6 @@ import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAPI } from "probot";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
 import { isBlocked } from "config/feature-flags";
@@ -22,7 +21,6 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 };
 
 export const processDeployment = async (
-	_github: GitHubAPI,
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
 	webhookPayload: WebhookPayloadDeploymentStatus,

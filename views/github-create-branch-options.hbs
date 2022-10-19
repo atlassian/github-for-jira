@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
   <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <link
     rel="stylesheet"
@@ -21,14 +22,14 @@
 </head>
 
 <body class="aui-page-hybrid p-6">
-    <div class="jiraSelectGitHubProduct">
+    <div class="gitHubCreateBranchOptions jiraSelectGitHubProduct">
          <section class="jiraSelectGitHubProduct__content">
             <div class="headerImage">
                 <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
             </div>
             <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
             <div class="jiraSelectGitHubProduct__options__container">
-                <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub product would you like to use?</h2>
+                <h2 class="jiraSelectGitHubProduct__options__prompt">Which GitHub product would you like to use?</h2>
 
                 <div class="jiraSelectGitHubProduct__options__cardsContainer">
                     {{> select-github-product-card
@@ -75,7 +76,13 @@
           </section>
       </div>
 
-  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <div class="gitHubCreateBranchOptions__loading">
+    {{> loading-screen
+        title="Connecting to GitHub"
+    }}
+  </div>
+
+  <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
   <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
