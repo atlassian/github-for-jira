@@ -22,7 +22,9 @@
 </head>
 
 <body class="aui-page-hybrid p-6">
-    <div class="gitHubCreateBranchOptions jiraSelectGitHubProduct">
+    <div class="gitHubCreateBranchOptions jiraSelectGitHubProduct"
+         data-has-cloud-server="{{servers.hasCloudServer}}"
+         data-ghe-servers-count="{{servers.gheServerInfos.length}}">
          <section class="jiraSelectGitHubProduct__content">
             <div class="headerImage">
                 <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />

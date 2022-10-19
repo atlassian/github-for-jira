@@ -22,22 +22,6 @@ function openChildWindow(url) {
 	return child;
 }
 
-const goToCreateBranch = (url) => {
-	AP.context.getToken(token => {
-		const child = window.open(url);
-		child.window.jiraHost = jiraHost;
-		child.window.jwt = token;
-		if (isAutoRedirect()) {
-			const childWindowTimer = setInterval(() => {
-				if (child.closed) {
-					AP.navigator.go("issue", { issueKey: params.get("issueKey") });
-					clearInterval(childWindowTimer);
-				}
-			}, 500);
-		}
-	});
-};
-
 $(document).ready(function() {
 	let selectedVersion;
 
@@ -91,16 +75,6 @@ $(document).ready(function() {
 		}
 	});
 
-	$(".gitHubCreateBranchOptions__actionBtn").click(function (event) {
-		event.preventDefault();
-		const uuid = $("#ghServers").select2("val");
-
-		if (selectedVersion === "cloud") {
-			goToCreateBranch(`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`);
-		} else {
-			goToCreateBranch(`session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to`);
-		}
-	});
 });
 
 
