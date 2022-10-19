@@ -3,22 +3,29 @@ const issueKey = params.get("issueKey");
 const issueSummary = params.get("issueSummary");
 
 $(document).ready(() => {
-
   $("#ghServers").auiSelect2();
+  const {isRedirect, url} = isAutoRedirect();
 
-  $(".jiraSelectGitHubProduct__options__card.horizontal.server").click(function (event) {
+  if(isRedirect) {
+    goToCreateBranch(url, true);
+  } else {
+    $(".gitHubCreateBranchOptions").show();
+    $(".gitHubCreateBranchOptions__loading").hide();
+  }
+
+  $(".jiraSelectGitHubProduct__options__card.horizontal.server").click((event) => {
     event.preventDefault();
 
     $(".jiraSelectGitHubProduct__selectServerInstance").css("display", "block");
   });
 
-  $(".jiraSelectGitHubProduct__options__card.horizontal.cloud").click(function (event) {
+  $(".jiraSelectGitHubProduct__options__card.horizontal.cloud").click((event) => {
     event.preventDefault();
 
     $(".jiraSelectGitHubProduct__selectServerInstance").css("display", "none");
   });
 
-  $(".gitHubCreateBranchOptions__actionBtn").click(function (event) {
+  $(".gitHubCreateBranchOptions__actionBtn").click((event) => {
     event.preventDefault();
     const uuid = $("#ghServers").select2("val");
 
@@ -28,15 +35,6 @@ $(document).ready(() => {
       goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false);
     }
   });
-
-  const {isRedirect, url} = isAutoRedirect();
-  if(isRedirect) {
-    goToCreateBranch(url, true);
-  } else {
-    $(".gitHubCreateBranchOptions").show();
-    $(".gitHubCreateBranchOptions__loading").hide();
-  }
-
 });
 
 const createUrlForGH = (issueKey, issueSummary, uuid) => {
@@ -61,6 +59,11 @@ const goToCreateBranch = (url, isRedirect) => {
   });
 };
 
+/**
+ * Checks the number of cloud & enterprise servers and returns if the page should be redirected or not,
+ * with the corresponding url for creating branch
+ * @returns {{isRedirect: boolean, url: string | null}}
+ */
 const isAutoRedirect = () => {
   const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
   const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
