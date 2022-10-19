@@ -4,7 +4,7 @@ import { json } from "body-parser";
 import supertest from "supertest";
 import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
-import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post"
+import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 
 export type WebhookApp = Express & {
 	receive: (event: any) => Promise<any>
@@ -23,9 +23,9 @@ export const createWebhookApp = async (): Promise<WebhookApp> => {
 			.set("x-github-delivery", uuid())
 			.set("content-type", "application/json")
 			.expect(204);
-	}
+	};
 	return app;
-}
+};
 
 const createHash = (data: BinaryLike, secret: string): string => {
 	return `sha256=${createHmac("sha256", secret)
