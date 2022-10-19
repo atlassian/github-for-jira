@@ -1,5 +1,4 @@
-const params = new URLSearchParams(window.location.search.substring(1));
-const jiraHost = params.get("xdm_e");
+// `params` and `jiraHost` are already defined in the `jira-select-card-option.js`
 
 const goToCreateBranch = () => {
   AP.context.getToken(token => {
@@ -18,9 +17,8 @@ const goToCreateBranch = () => {
 }
 
 const getCreateBranchTargetUrl = () => {
-	const searchParams = new URLSearchParams(window.location.search.substring(1));
-	const issueKey = searchParams.get("issueKey");
-	const issueSummary = searchParams.get("issueSummary");
+	const issueKey = params.get("issueKey");
+	const issueSummary = params.get("issueSummary");
 	if ($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
 		return`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
 	}
