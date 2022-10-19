@@ -20,12 +20,8 @@
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
 
-<body class="aui-page-hybrid">
+<body class="aui-page-hybrid p-6">
     <div class="jiraSelectGitHubProduct">
-        <header class="jiraSelectGitHubProduct__header">
-           {{> navigation }}
-        </header>
-
          <section class="jiraSelectGitHubProduct__content">
             <div class="headerImage">
                 <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
@@ -37,7 +33,7 @@
                 <div class="jiraSelectGitHubProduct__options__cardsContainer">
                     {{> select-github-product-card
                         cardTitle='GitHub Cloud'
-                        cardContent='Select this option if the URL of your GitHub organization starts with "http://github.com".'
+                        cardContent='Select this option if the URL of your GitHub organization starts with "https://github.com".'
                         cardImagePath='/public/assets/cloud.svg'
                         cardImageAlt='Cloud'
                         gitHubProduct='cloud'
@@ -86,7 +82,6 @@
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" nonce="{{nonce}}"></script>
   <script src="/public/js/github-create-branch-options.js" nonce="{{nonce}}"></script>
-  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 </body>
 
 </html>

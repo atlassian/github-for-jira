@@ -80,3 +80,7 @@
 .gitHubCreateBranchOptions__serversContainer {
   display: none;
 }
+
+.jiraSelectGitHubProduct__selectServerInstance {
+  margin-top: 16px;
+}
