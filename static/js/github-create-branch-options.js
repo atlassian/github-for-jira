@@ -1,4 +1,6 @@
 // `params` and `jiraHost` are already defined in the `jira-select-card-option.js`
+const issueKey = params.get("issueKey");
+const issueSummary = params.get("issueSummary");
 
 $(document).ready(() => {
 
