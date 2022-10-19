@@ -91,7 +91,7 @@ function createJiraPayloadNoUsername(transofmedRepoId) {
 
 describe("Push Webhook", () => {
 
-	describe('cloud',  () => {
+	describe("cloud",  () => {
 
 		const createMessageProcessingContext = (payload): SQSMessageContext<PushQueueMessagePayload> => ({
 			payload: createJobData(updateInstallationId(payload), jiraHost),
@@ -581,7 +581,7 @@ describe("Push Webhook", () => {
 		});
 	});
 
-	describe('server', () => {
+	describe("server", () => {
 
 		let gitHubServerApp: GitHubServerApp;
 

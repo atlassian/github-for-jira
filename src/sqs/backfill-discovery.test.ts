@@ -12,6 +12,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { v4 as UUID } from "uuid";
 import fs from "fs";
 import path from "path";
+import { createWebhookApp } from "test/utils/create-webhook-app";
 
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
