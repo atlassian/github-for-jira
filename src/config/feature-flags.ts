@@ -23,7 +23,8 @@ export enum BooleanFlags {
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	CREATE_BRANCH = "create-branch",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer"
+	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
+	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router"
 }
 
 export enum StringFlags {
