@@ -9,6 +9,7 @@ module.exports = {
 		video: "retain-on-failure",
 		screenshot: 'only-on-failure',
 	},
+	workers: 1,
 	timeout: 90000,
 	globalSetup: "./test/e2e/setup.ts",
 	globalTeardown: "./test/e2e/teardown.ts",

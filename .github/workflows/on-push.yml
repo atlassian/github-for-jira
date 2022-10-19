@@ -47,7 +47,7 @@ jobs:
           echo "ATLASSIAN_URL=${{ secrets.E2E_ATLASSIAN_URL }}" >> .env
       - run: docker-compose up -d app
       - name: wait for app to be ready
-        run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
+        run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run db:test
       - name: Run tests
         env:
@@ -95,7 +95,7 @@ jobs:
           echo "LOG_LEVEL=debug" >> .env
       - run: docker-compose up -d
       - name: wait for app to be ready
-        run: curl --head -X GET --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
+        run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run test:e2e
       - name: export system logs
         if: always()
