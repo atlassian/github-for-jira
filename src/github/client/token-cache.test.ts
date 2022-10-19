@@ -64,6 +64,6 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		expect(token2).toBeTruthy();
 		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), 1);
 		expect(token3).toBeTruthy();
-		expect(keyLocator).toHaveBeenCalledTimes(1);
+		expect(keyLocator).toHaveBeenCalledTimes(3);
 	});
 });

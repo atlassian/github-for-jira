@@ -55,7 +55,6 @@ export class AppTokenHolder {
 	 */
 	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
-		console.log('----------', {currentToken, exp: currentToken?.isAboutToExpire});
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = await keyLocator(ghsaId);
 			if (!key) {
@@ -63,7 +62,6 @@ export class AppTokenHolder {
 			}
 			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
-			console.log('------ set to cache ----------', {id: appId.toString(), currentToken});
 		}
 		return currentToken;
 	}
