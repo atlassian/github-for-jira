@@ -6,12 +6,14 @@ const goToCreateBranch = () => {
 		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
-    const childWindowTimer = setInterval(() => {
-      if (child.closed) {
-        AP.navigator.go("issue", { issueKey: params.get("issueKey") });
-        clearInterval(childWindowTimer);
-      }
-    }, 500);
+    if (isAutoRedirect()) {
+      const childWindowTimer = setInterval(() => {
+        if (child.closed) {
+          AP.navigator.go("issue", { issueKey: params.get("issueKey") });
+          clearInterval(childWindowTimer);
+        }
+      }, 500);
+    }
   });
 }
 
