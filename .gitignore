@@ -1,6 +1,3 @@
-# DB Config
-db/config.json
-
 # Environment Files
 .env
 .env.local
