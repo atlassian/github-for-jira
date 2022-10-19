@@ -68,7 +68,7 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	describe("cloud", () => {
+	describe('cloud', () => {
 
 		beforeEach(async () => {
 			await new DatabaseStateCreator()
@@ -145,7 +145,7 @@ describe("sync/pull-request", () => {
 		});
 	});
 
-	describe("server", () => {
+	describe('server', () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {

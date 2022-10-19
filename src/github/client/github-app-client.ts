@@ -22,7 +22,7 @@ export class GitHubAppClient extends GitHubClient {
 		gitHubConfig: GitHubConfig,
 		logger: Logger,
 		appId: string,
-		privateKey: string
+		privateKey: string,
 	) {
 		super(gitHubConfig, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);

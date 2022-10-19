@@ -150,7 +150,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
 	let gitHubClient: GitHubInstallationClient;
 
-	describe("cloud", () => {
+	describe('cloud', () => {
 
 		beforeEach(async () => {
 			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
@@ -391,7 +391,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 	});
 
-	describe("server", () => {
+	describe('server', () => {
 
 		let gitHubClient: GitHubInstallationClient;
 

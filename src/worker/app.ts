@@ -7,4 +7,4 @@ export const createWorkerServerApp = (): Express => {
 	app.set("trust proxy", true);
 	app.use(HealthcheckRouter);
 	return app;
-};
+}

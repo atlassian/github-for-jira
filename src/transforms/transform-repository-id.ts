@@ -17,8 +17,8 @@ function calculatePrefix(url: string) {
 	// - Removing special characters to smooth quirks like "myserver.com/blah/" and "myserver.com/blah"
 	// - Using parsed url to remove protocol (in case the server available via both HTTP and HTTPS) and query params
 	const prefix = Buffer.from(
-		(parsedUrl.host + parsedUrl.pathname).toLowerCase().replace(/[\W_]/g, "")
-	).toString("hex").substring(0, 512);
+		(parsedUrl.host + parsedUrl.pathname).toLowerCase().replace(/[\W_]/g, '')
+	).toString('hex').substring(0, 512);
 
 	return prefix;
 }
