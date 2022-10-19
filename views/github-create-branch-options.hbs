@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
   <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
@@ -56,6 +57,12 @@
       </div>
     </form>
   </section>
+
+  <div class="gitHubCreateBranchOptions__loading">
+    {{> loading-screen
+        title="Connecting to GitHub"
+    }}
+  </div>
 
   <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
