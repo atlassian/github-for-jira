@@ -28,7 +28,9 @@ const getCreateBranchTargetUrl = () => {
 
 $(document).ready(() => {
 
-  $("#ghServers").auiSelect2();
+  $("#ghServers").auiSelect2({
+    placeholder: "Select a server"
+  });
 
   $(".gitHubCreateBranchOptions__option").click((event) => {
     event.preventDefault();
