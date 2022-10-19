@@ -1,4 +1,5 @@
 .gitHubCreateBranchOptions {
+  display: none;
   margin: 10% auto;
   max-width: 480px;
 }
@@ -78,9 +79,5 @@
 }
 
 .gitHubCreateBranchOptions__serversContainer {
-  display: none;
-}
-
-.gitHubCreateBranchOptions__loading {
   display: none;
 }

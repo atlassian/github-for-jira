@@ -2,9 +2,6 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
 const goToCreateBranch = () => {
-  $(".gitHubCreateBranchOptions").hide();
-  $(".gitHubCreateBranchOptions__loading").show();
-
   AP.context.getToken(token => {
 		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
@@ -45,6 +42,9 @@ $(document).ready(() => {
 
   if(isAutoRedirect()) {
     goToCreateBranch();
+  } else {
+    $(".gitHubCreateBranchOptions").show();
+    $(".gitHubCreateBranchOptions__loading").hide();
   }
 });
 
