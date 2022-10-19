@@ -63,6 +63,7 @@ services:
       - "9230:9230" # worker debug port
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
+      CRYPTOR_URL: http://cryptor:26272
       SQS_BACKFILL_QUEUE_URL: http://localstack:4566/000000000000/backfill
       SQS_PUSH_QUEUE_URL: http://localstack:4566/000000000000/push
       SQS_DEPLOYMENT_QUEUE_URL: http://localstack:4566/000000000000/deployment
