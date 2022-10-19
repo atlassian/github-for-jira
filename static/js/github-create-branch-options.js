@@ -16,9 +16,10 @@ $(document).ready(() => {
     const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
     const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
     if (!hasCloudServer && gheServersCount > 1) {
-      $(".jiraSelectGitHubProduct__options__container").append("<div>WTF</div>");
       $(".jiraSelectGitHubProduct__options__container").hide();
       $(".jiraSelectGitHubProduct__selectServerInstance").show();
+      $(".optionBtn").prop("disabled", false).attr("aria-disabled", "false").addClass("aui-button-primary");
+
     }
   }
 
