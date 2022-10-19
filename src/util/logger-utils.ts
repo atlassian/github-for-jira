@@ -3,6 +3,7 @@ import safeJsonStringify from "safe-json-stringify";
 import bformat from "bunyan-format";
 import { DEBUG } from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { isNodeDev } from "utils/is-node-env";
 
 const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username", "prTitle", "prRef", "owner", "description", "repo"];
 // For any Micros env we want the logs to be in JSON format.
@@ -20,7 +21,7 @@ class RawLogStream extends Writable {
 
 	public constructor() {
 		super({ objectMode: true });
-		this.writeStream = bformat({ outputMode, levelInString: true, color: !process.env.CI });
+		this.writeStream = bformat({ outputMode, levelInString: true, color: isNodeDev() });
 	}
 
 	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {

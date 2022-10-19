@@ -21,7 +21,7 @@ services:
     container_name: ngrok
     ports:
       - "4040:4040"
-    command: ngrok http --authtoken $NGROK_AUTHTOKEN app:8080
+    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN app:8080
 
   localstack:
     image: localstack/localstack:1.0.4
