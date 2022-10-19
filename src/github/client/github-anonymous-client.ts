@@ -53,10 +53,10 @@ export class GitHubAnonymousClient extends GitHubClient {
 		return response.data.access_token;
 	}
 
-	public async checkGitTokenStillValid(githubToken: string) {
-		await this.axios.get("/", {
+	public async checkGitHubToken(gitHubToken: string) {
+		await this.axios.get("", {
 			headers: {
-				Authorization: `Bearer ${githubToken}`
+				Authorization: `Bearer ${gitHubToken}`
 			}
 		});
 	}

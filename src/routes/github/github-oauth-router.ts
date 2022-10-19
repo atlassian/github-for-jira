@@ -162,7 +162,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			try {
 				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, begin use anonymouse client for checking github token is valid`);
 				const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-				await gitHubAnonymousClient.checkGitTokenStillValid(githubToken);
+				await gitHubAnonymousClient.checkGitHubToken(githubToken);
 				logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, success use anonymouse client for checking github token is valid`);
 			} catch (e) {
 				logger.error(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, fail use anonymouse client for checking github token is valid`, e);
