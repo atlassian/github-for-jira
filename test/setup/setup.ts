@@ -10,7 +10,6 @@ import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { resetEnvVars, TestEnvVars } from "test/setup/env-test";
 import { GitHubConfig } from "~/src/github/client/github-client";
-import { wrapFrontEndAppWithReceive, WrapFrontendApp } from "./create-webhook-app";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -23,7 +22,6 @@ type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<nu
 
 export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
 declare global {
-	type Application = WrapFrontendApp;
 	let jiraHost: string;
 	let gitHubAppConfig: GitHubAppConfig;
 	let gitHubCloudConfig: GitHubConfig;
@@ -42,7 +40,6 @@ declare global {
 	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
 	let testEnvVars: TestEnvVars;
-	let createWebhookApp: typeof wrapFrontEndAppWithReceive;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
@@ -64,7 +61,6 @@ declare global {
 			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
 			testEnvVars: TestEnvVars;
-			createWebhookApp: typeof wrapFrontEndAppWithReceive;
 		}
 	}
 }
@@ -160,7 +156,6 @@ beforeEach(() => {
 		apiUrl: "https://api.github.com",
 		graphqlUrl: "https://api.github.com/graphql"
 	};
-	global.createWebhookApp = wrapFrontEndAppWithReceive;
 });
 
 // Checks to make sure there's no extra HTTP mocks waiting

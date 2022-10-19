@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
+import { createWebhookApp } from "test/utils/create-webhook-app";
 
 const githubPullReviewsResponse = [
 	{

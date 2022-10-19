@@ -4,9 +4,10 @@ import { Subscription } from "models/subscription";
 
 import issueNullBody from "fixtures/issue-null-body.json";
 import issueBasic from "fixtures/issue-basic.json";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 describe("Issue Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {

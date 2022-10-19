@@ -140,7 +140,7 @@ describe("Jira Utils", () => {
 			expect(await isGitHubCloudApp(1)).toBeTruthy();
 		});
 
-		it.only("should return false if gitHubAppId is provided and a GitHub app is found", async () => {
+		it("should return false if gitHubAppId is provided and a GitHub app is found", async () => {
 			payload = {
 				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
 				gitHubAppName: "My GitHub Server App",
@@ -151,7 +151,6 @@ describe("Jira Utils", () => {
 				privateKey: "myprivatekey",
 				installationId: 2
 			};
-console.log('-----------------', GitHubServerApp.getForGitHubServerAppId);
 			mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(payload);
 			expect(await isGitHubCloudApp(1)).toBeFalsy();
 		});

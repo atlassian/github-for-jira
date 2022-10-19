@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
@@ -14,7 +15,7 @@ const turnFF_OnOff = (newStatus: boolean) => {
 };
 
 describe("Issue Comment Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {

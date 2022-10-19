@@ -8,9 +8,10 @@ import branchInvalidRef from "fixtures/branch-invalid-ref_type.json";
 import branchBasic from "fixtures/branch-basic.json";
 import branchNoIssues from "fixtures/branch-no-issues.json";
 import branchDelete from "fixtures/branch-delete.json";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 describe("Branch Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeAll(async () => {

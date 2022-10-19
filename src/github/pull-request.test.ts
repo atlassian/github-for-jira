@@ -14,11 +14,12 @@ import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
 describe("Pull Request Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 	const issueKeys = ["TEST-123", "TEST-321"];
 

@@ -22,6 +22,7 @@ import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/fea
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 function updateInstallationId(payload) {
 	payload.installation.id = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -100,7 +101,7 @@ describe("Push Webhook", () => {
 			lastAttempt: false
 		});
 
-		let app: Application;
+		let app: WebhookApp;
 		beforeEach(async () => {
 			jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 			app = await createWebhookApp();
