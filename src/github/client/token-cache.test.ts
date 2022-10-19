@@ -5,6 +5,9 @@ import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "~/src/models/subscription";
+import { envVars } from "config/env";
+import fs from "fs";
+import path from "path";
 
 jest.mock("./key-locator");
 jest.mock("~/src/config/feature-flags");
@@ -36,7 +39,9 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	});
 
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
-		mocked(keyLocator).mockImplementation(async () => await keyLocator(undefined))
+		mocked(keyLocator).mockImplementation(async () => {
+			return fs.readFileSync(path.resolve(process.cwd(), envVars.PRIVATE_KEY_PATH)).toString();
+		});
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,
