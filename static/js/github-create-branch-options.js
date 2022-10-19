@@ -22,7 +22,7 @@ $(document).ready(() => {
     event.preventDefault();
     const uuid = $("#ghServers").select2("val");
 
-    if ($(".optionsCard").data('type') === "cloud") {
+    if ($(".optionsCard.selected").data('type') === "cloud") {
       goToCreateBranch(createUrlForGH(issueKey, issueSummary), false);
     } else {
       goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false);
