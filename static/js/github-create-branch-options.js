@@ -11,18 +11,25 @@ $(document).ready(() => {
   } else {
     $(".gitHubCreateBranchOptions").show();
     $(".gitHubCreateBranchOptions__loading").hide();
+
+   // When there are no cloud servers but multiple enterprise servers
+    const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
+    const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
+    if (!hasCloudServer && gheServersCount > 1) {
+      $(".jiraSelectGitHubProduct__options__container").append("<div>WTF</div>");
+      $(".jiraSelectGitHubProduct__options__container").hide();
+      $(".jiraSelectGitHubProduct__selectServerInstance").show();
+    }
   }
 
   $(".jiraSelectGitHubProduct__options__card.horizontal.server").click((event) => {
     event.preventDefault();
-
-    $(".jiraSelectGitHubProduct__selectServerInstance").css("display", "block");
+    $(".jiraSelectGitHubProduct__selectServerInstance").show();
   });
 
   $(".jiraSelectGitHubProduct__options__card.horizontal.cloud").click((event) => {
     event.preventDefault();
-
-    $(".jiraSelectGitHubProduct__selectServerInstance").css("display", "none");
+    $(".jiraSelectGitHubProduct__selectServerInstance").hide();
   });
 
   $(".gitHubCreateBranchOptions__actionBtn").click((event) => {
