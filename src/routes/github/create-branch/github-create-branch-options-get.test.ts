@@ -139,7 +139,6 @@ describe("GitHub Create Branch Options Get", () => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain("GitHub Cloud");
 				expect(res.text).toContain("GitHub Enterprise Server");
-				expect(res.text).toContain("<div class=\"gitHubCreateBranchOptions__header\">Create GitHub Branch</div>");
 			});
 	});
 });
