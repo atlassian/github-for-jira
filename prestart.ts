@@ -35,7 +35,7 @@ const waitForTunnel = async () => {
 			const ngrokDomain = tunnel.public_url;
 			console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
 			envContents = envContents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
-			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
+			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/webhooks`);
 			fs.writeFileSync(envFilePath, envContents);
 			console.info(`Updated ${envFileName} file to use ngrok domain '${ngrokDomain}'.`);
 		} catch (e) {
