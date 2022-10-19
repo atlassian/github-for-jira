@@ -1,12 +1,20 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
-function goToCreateBranch() {
-	AP.context.getToken(function(token) {
+const goToCreateBranch = () => {
+  AP.context.getToken(token => {
 		const child = window.open(getCreateBranchTargetUrl());
 		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
-	});
+    if (isAutoRedirect()) {
+      const childWindowTimer = setInterval(() => {
+        if (child.closed) {
+          AP.navigator.go("issue", { issueKey: params.get("issueKey") });
+          clearInterval(childWindowTimer);
+        }
+      }, 500);
+    }
+  });
 }
 
 const getCreateBranchTargetUrl = () => {
@@ -36,6 +44,9 @@ $(document).ready(() => {
 
   if(isAutoRedirect()) {
     goToCreateBranch();
+  } else {
+    $(".gitHubCreateBranchOptions").show();
+    $(".gitHubCreateBranchOptions__loading").hide();
   }
 });
 
