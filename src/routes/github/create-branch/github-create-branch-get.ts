@@ -17,11 +17,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	} = res.locals;
 
 	if (!githubToken) {
+		req.log.warn(Errors.MISSING_GITHUB_TOKEN);
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
 	if (!jiraHost) {
-		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
+		req.log.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
 	}
@@ -36,6 +37,10 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!subscriptions) {
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce
+		});
+		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+			jiraHost
 		});
 		return;
 	}
