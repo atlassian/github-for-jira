@@ -21,9 +21,9 @@ $(document).ready(() => {
     const uuid = $("#ghServers").select2("val");
 
     if ($(".optionsCard").data('type') === "cloud") {
-      goToCreateBranch(`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`, false);
+      goToCreateBranch(createUrlForGH(issueKey, issueSummary), false);
     } else {
-      goToCreateBranch(`session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to`, false);
+      goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false);
     }
   });
 
@@ -36,6 +36,12 @@ $(document).ready(() => {
   }
 
 });
+
+const createUrlForGH = (issueKey, issueSummary, uuid) => {
+  return uuid ?
+    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to` :
+    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
+};
 
 const goToCreateBranch = (url, isRedirect) => {
   AP.context.getToken(token => {
@@ -59,14 +65,16 @@ const isAutoRedirect = () => {
   // Only GitHub cloud server connected
 	if (hasCloudServer && gheServersCount === 0) {
 		return {
-      url: `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`,
+      url: createUrlForGH(issueKey, issueSummary),
       isRedirect: true
     };
 	}
 	// Only single GitHub Enterprise connected
 	if (!hasCloudServer && gheServersCount === 1) {
+    const uuid = $("#ghServers").select2("val");
+
     return {
-      url: `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to`,
+      url: createUrlForGH(issueKey, issueSummary, uuid),
       isRedirect: true
     };
 	}
