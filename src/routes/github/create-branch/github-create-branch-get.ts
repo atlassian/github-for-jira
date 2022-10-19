@@ -32,9 +32,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
-	// TODO - this should redirect to a you are not configured page instead.
+	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
-		return next(new Error(Errors.MISSING_CONFIGURAITON));
+		res.render("no-configuration.hbs", {
+			nonce: res.locals.nonce
+		});
+		return;
 	}
 
 	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
