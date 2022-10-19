@@ -10,7 +10,6 @@ import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient, GitHubConfig } from "./github-client";
-import { SearchedRepositoriesResponse } from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -87,13 +86,4 @@ export class GitHubAppClient extends GitHubClient {
 	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse[]>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse[]>(`/app/installations`, {});
 	};
-
-	// TODO - move to githubinstallationClient
-	public async searchRepositories(queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
-		return await this.axios.get<SearchedRepositoriesResponse>("search/repositories?q={q}", {
-			urlParams: {
-				q: queryString
-			}
-		});
-	}
 }
