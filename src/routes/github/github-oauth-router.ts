@@ -88,12 +88,14 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	try {
 
-		if(await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+			logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, begin use anonymouse client for exchange access_token`);
 			const gitHubAnonymousClient = await createAnonymousClient(hostname, jiraHost, logger);
 			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
 				clientId, clientSecret: gitHubClientSecret, code, state
 			});
 			req.session.githubToken = accessToken;
+			logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, success use anonymouse client for exchange access_token`);
 		} else {
 			const response = await axios.get(
 				`${hostname}/login/oauth/access_token`,
@@ -151,12 +153,19 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
-		await axios.get(url, {
-			headers: {
-				Authorization: `Bearer ${githubToken}`
-			}
-		});
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+			logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, begin use anonymouse client for checking github token is valid`);
+			const gitHubAnonymousClient = await createAnonymousClient(gitHubAppConfig.hostname, jiraHost, logger);
+			await gitHubAnonymousClient.checkGitTokenStillValid(githubToken);
+			logger.info(`USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER is true, success use anonymouse client for checking github token is valid`);
+		} else {
+			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
+			await axios.get(url, {
+				headers: {
+					Authorization: `Bearer ${githubToken}`
+				}
+			});
+		}
 
 		req.log.debug(`Github token is valid, continuing...`);
 
