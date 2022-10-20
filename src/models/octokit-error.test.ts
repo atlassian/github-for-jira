@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Octokit } from "@octokit/rest";
+import { Octokit } from "probot";
 import { OctokitError } from "./octokit-error";
 
 const buildHttpError = (message: string, code?: number, headers?: any) => {

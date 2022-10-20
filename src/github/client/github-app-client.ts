@@ -5,6 +5,8 @@ import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
+import * as PrivateKey from "probot/lib/private-key";
+import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient, GitHubConfig } from "./github-client";
@@ -20,9 +22,9 @@ export class GitHubAppClient extends GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		logger: Logger,
-		appId: string,
-		privateKey: string
+		logger?: Logger,
+		appId = envVars.APP_ID,
+		privateKey = PrivateKey.findPrivateKey() || ""
 	) {
 		super(gitHubConfig, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
