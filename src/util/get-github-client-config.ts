@@ -57,9 +57,11 @@ async function calculateProxyBaseUrl(jiraHost: string, gitHubBaseUrl: string | u
 			skipOutboundProxy = false;
 		}
 		if (skipOutboundProxy) {
+			logger.warn("Skip outbound proxy");
 			return undefined;
 		}
 	}
+	logger.info("Use outbound proxy");
 	return envVars.PROXY;
 }
 
