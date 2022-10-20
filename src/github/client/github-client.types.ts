@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { GraphQLError } from "./github-client-errors";
-import { Octokit } from "@octokit/rest";
+import { Octokit } from "probot";
 
 export enum SortDirection {
 	ASC = "asc",

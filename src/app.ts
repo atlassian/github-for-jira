@@ -1,14 +1,16 @@
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express, NextFunction, Request, Response, Router } from "express";
 import path from "path";
 import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
 import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
 import crypto from "crypto";
+import { Application } from "probot";
 import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
 
-export const setupFrontendApp = (app: Express): Express => {
+export const getFrontendApp = (): Express => {
+	const app = express();
 
 	// We run behind ngrok.io so we need to trust the proxy always
 	// TODO: look into the security of this.  Maybe should only be done for local dev?
@@ -25,14 +27,14 @@ export const setupFrontendApp = (app: Express): Express => {
 	return app;
 };
 
-const secureHeaders = (app: Express) => {
-	app.use((_: Request, res: Response, next: NextFunction): void => {
+const secureHeaders = (router: Router, frontendApp: Express) => {
+	router.use((_: Request, res: Response, next: NextFunction): void => {
 		res.locals.nonce = crypto.randomBytes(16).toString("hex");
 		next();
 	});
 
 	// Content Security Policy
-	app.use(helmet.contentSecurityPolicy({
+	router.use(helmet.contentSecurityPolicy({
 		useDefaults: true,
 		directives: {
 			defaultSrc: ["'self'"],
@@ -54,7 +56,7 @@ const secureHeaders = (app: Express) => {
 		}
 	}));
 	// Enable HSTS with the value we use for education.github.com
-	app.use(helmet.hsts({
+	router.use(helmet.hsts({
 		maxAge: 15552000
 	}));
 	// X-Frame / Clickjacking protection
@@ -62,32 +64,29 @@ const secureHeaders = (app: Express) => {
 	// set this based on the referrer URL and match if it's *.atlassian.net or *.jira.com
 	// app.use(helmet.frameguard({ action: 'deny' }))
 	// MIME-Handling: Force Save in IE
-	app.use(helmet.ieNoOpen());
+	router.use(helmet.ieNoOpen());
 	// Disable caching
-	app.use(helmet.noCache());
+	router.use(helmet.noCache());
 	// Disable mimetype sniffing
-	app.use(helmet.noSniff());
+	router.use(helmet.noSniff());
 	// Basic XSS Protection
-	app.use(helmet.xssFilter());
+	router.use(helmet.xssFilter());
 
 	// Remove the X-Powered-By
 	// This particular combination of methods works
-	app.disable("x-powered-by");
-	app.use(helmet.hidePoweredBy());
+	frontendApp.disable("x-powered-by");
+	router.use(helmet.hidePoweredBy());
 };
 
-export const getFrontendApp = (): Express => {
-
-	const app: Express = express();
-
-	app.use(elapsedTimeMetrics);
+export const setupFrontend = (app: Application): void => {
+	const router = app.route();
+	router.use(elapsedTimeMetrics);
 
 	if (process.env.FORCE_HTTPS) {
-		app.use(sslify.HTTPS({ trustProtoHeader: true }));
+		router.use(sslify.HTTPS({ trustProtoHeader: true }));
 	}
 
-	setupFrontendApp(app);
-	secureHeaders(app);
-
-	return app;
+	const frontendApp = getFrontendApp();
+	secureHeaders(router, frontendApp);
+	router.use(frontendApp);
 };
