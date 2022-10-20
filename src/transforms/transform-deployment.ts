@@ -181,21 +181,27 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	const associations: JiraAssociation[] = [];
 	let totalAssociationCount = 0;
 	if (issueIds?.length) {
+		const maximumIssuesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const issues = issueIds
+			.slice(0, maximumIssuesToSubmit);
 		associations.push(
 			{
 				associationType: "issueIdOrKeys",
-				values: issueIds
+				values: issues
 			}
 		);
-		totalAssociationCount += issueIds.length;
+		totalAssociationCount += issues.length;
 	}
 
 	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
 		if (config?.deployments?.services?.ids) {
+			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+			const services = config.deployments.services.ids
+				.slice(0, maximumServicesToSubmit);
 			associations.push(
 				{
 					associationType: "serviceIdOrKeys",
-					values: config.deployments.services.ids
+					values: services
 				}
 			);
 			totalAssociationCount += config.deployments.services.ids.length;
