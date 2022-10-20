@@ -1,5 +1,5 @@
 import { SentryScopeProxy } from "./sentry-scope-proxy";
-import { GitHubAPI, Octokit } from "probot";
+import { Octokit } from "@octokit/rest";
 
 /*
  * Wraps an Octokit HttpError and extracts metadata for Sentry.
@@ -26,19 +26,6 @@ export class OctokitError extends Error {
 
 	get responseCode() {
 		return this.httpError.status;
-	}
-
-	/*
-	 * Takes an octokit instance and wraps request errors. Useful when the octokit is instantiated by someone else (i.e., Probot)
-	 */
-	static wrapRequestErrors(githubApi: GitHubAPI): void {
-		githubApi.hook.wrap("request", async (request, options) => {
-			try {
-				return await request(options);
-			} catch (error) {
-				throw new OctokitError(error, options);
-			}
-		});
 	}
 
 	requestMetadata = () => ({

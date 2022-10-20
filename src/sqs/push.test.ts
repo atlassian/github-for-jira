@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import nock from "nock";
 import { createJobData } from "../transforms/push";
-import { createWebhookApp } from "test/utils/probot";
 import { getLogger } from "config/logger";
-import { Application } from "probot";
 import { waitUntil } from "test/utils/wait-until";
 import { pushQueueMessageHandler } from "./push";
 import { PushQueueMessagePayload, SQSMessageContext } from "./sqs.types";
@@ -24,6 +22,7 @@ import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/fea
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 function updateInstallationId(payload) {
 	payload.installation.id = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -102,7 +101,7 @@ describe("Push Webhook", () => {
 			lastAttempt: false
 		});
 
-		let app: Application;
+		let app: WebhookApp;
 		beforeEach(async () => {
 			jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 			app = await createWebhookApp();

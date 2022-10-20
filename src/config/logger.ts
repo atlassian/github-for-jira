@@ -86,17 +86,6 @@ const loggerStreamUnsafe = (): Logger.Stream => ({
 	closeOnExit: false
 });
 
-// TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
-export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
-	// Remove  Default Probot Logging Stream
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(probotLogger as any).streams.pop();
-
-	// Replace with formatOut stream
-	probotLogger.addStream(loggerStreamSafe());
-	probotLogger.addStream(loggerStreamUnsafe());
-};
-
 interface LoggerOptions {
 	fields?: Record<string, unknown>;
 	streams?: Stream[];

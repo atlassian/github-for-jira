@@ -1,29 +1,18 @@
+import { Express } from "express";
 import "config/env"; // Important to be before other dependencies
+import { getLogger } from "config/logger";
 import throng from "throng";
-import * as PrivateKey from "probot/lib/private-key";
-import { createProbot } from "probot";
 import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
-import { configureAndLoadApp } from "./configure-robot";
-
-const probot = createProbot({
-	id: Number(process.env.APP_ID),
-	secret: process.env.WEBHOOK_SECRET,
-	cert: PrivateKey.findPrivateKey() || undefined,
-	port: Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080,
-	webhookPath: "/github/events",
-	webhookProxy: process.env.WEBHOOK_PROXY_URL,
-	throttleOptions: {
-		enabled: false
-	}
-});
+import { getFrontendApp } from "./app";
 
 async function start() {
 	initializeSentry();
-	// We are always behind a proxy, but we want the source IP
-	probot.server.set("trust proxy", true);
-	configureAndLoadApp(probot);
-	probot.start();
+	const app: Express = getFrontendApp();
+	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
+	app.listen(port, () => {
+		getLogger("frontend-app").info(`started at port ${port}`);
+	});
 }
 
 if (isNodeProd()) {
@@ -37,3 +26,4 @@ if (isNodeProd()) {
 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
 	start();
 }
+
