@@ -3,8 +3,6 @@ import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
 import { keyLocator } from "~/src/github/client/key-locator";
-import * as PrivateKey from "probot/lib/private-key";
-
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -58,8 +56,7 @@ export class AppTokenHolder {
 	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = ghsaId ? await keyLocator(ghsaId) : PrivateKey.findPrivateKey();
-
+			const key = await keyLocator(ghsaId);
 			if (!key) {
 				throw new Error(`No private key found for GitHub app ${appId.toString}`);
 			}
