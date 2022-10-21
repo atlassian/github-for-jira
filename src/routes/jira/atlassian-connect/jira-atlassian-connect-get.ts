@@ -162,15 +162,12 @@ const modules = {
 
 export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
-// Remove this function when CREATE_BRANCH flag is complete
+// Remove this function when CREATE_BRANCH flag is complete!!!!
 const addCreateBranchAction = async (modules) => {
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
-				// TODO MAKE SURE TO REVERT THIS LINE TO ACTUAL
-				templateUrl: `${envVars.APP_URL}/github/instance?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl=joshkayjira.com&redirectPath=create-branch`
-				// templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl=joshkayjira.com`
-				// templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}`
+				templateUrl: `${envVars.APP_URL}/github/instance?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}.com&redirectPath=create-branch`
 			}
 		};
 	}
