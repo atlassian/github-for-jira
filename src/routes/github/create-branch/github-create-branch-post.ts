@@ -7,6 +7,35 @@ import { metricCreateBranch } from "~/src/config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "~/src/util/get-cloud-or-server";
 import { Subscription } from "models/subscription";
 
+/**
+ * Returns the URL for Installation settings page in GitHub
+ *
+ * @param userLogin
+ * @param hostname
+ * @param jiraHost
+ * @param repoOwner
+ * @param repoName
+ */
+const getGitHubConfigurationLink = async (
+	userLogin: string,
+	jiraHost: string,
+	hostname: string,
+	repoOwner: string,
+	repoName: string
+) => {
+	// URL for the app configuration for different repoOwners/organizations in GitHub, used during 403 errors
+	let url = `${hostname}/organizations/${repoOwner}/settings/installations/`;
+
+	// If the repoOwners/organizations is the same as the user's login, then the url is different
+	if (userLogin === repoOwner) {
+		url = `${hostname}/settings/installations/`;
+	}
+
+	const subscription = await Subscription.findForRepoNameAndOwner(repoName, repoOwner, jiraHost);
+
+	return url + subscription?.gitHubInstallationId;
+};
+
 const errorMessages = (statusCode: number, url?: string): string => {
 	switch (statusCode) {
 		case 403: {
@@ -29,30 +58,6 @@ const errorMessages = (statusCode: number, url?: string): string => {
 			return "We couldn’t create this branch because something went wrong. Please try again.";
 		}
 	}
-};
-
-/**
- * Returns the URL for Installation settings page in GitHub
- *
- * @param gitHubAppConfig
- * @param gitHubUserClient
- * @param jiraHost
- * @param repoOwner
- * @param repoName
- */
-const getGitHubConfigurationLink = async (gitHubAppConfig, gitHubUserClient, jiraHost, repoOwner, repoName) => {
-	// URL for the app configuration for different repoOwners/organizations in GitHub, used during 403 errors
-	let url = `${gitHubAppConfig.hostname}/organizations/${repoOwner}/settings/installations/`;
-	const user = await gitHubUserClient.getUser();
-
-	// If the repoOwners/organizations is the same as the user's login, then the url is different
-	if (user.data.login === repoOwner) {
-		url = `${gitHubAppConfig.hostname}/settings/installations/`;
-	}
-
-	const subscription = await Subscription.findForRepoNameAndOwner(repoName, repoOwner, jiraHost);
-
-	return url + subscription?.gitHubInstallationId;
 };
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
@@ -90,7 +95,8 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		req.log.error({ err }, "Error creating branch");
 
 		if (err.status === 403) {
-			const gitHubConfigurationLink = await getGitHubConfigurationLink(gitHubAppConfig, gitHubUserClient, jiraHost, owner, repo);
+			const user = await gitHubUserClient.getUser();
+			const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.hostname, owner, repo);
 			res.status(err.status).json(errorMessages(err?.status || 500, gitHubConfigurationLink));
 
 		} else {
