@@ -16,6 +16,8 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
+export const LOGGER_NAME = 'github.webhooks';
+
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
 // A new Sentry hub is assigned to context.sentry and can be used later to add context to the error message.
@@ -96,11 +98,12 @@ export const GithubWebhookMiddleware = (
 
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
-		context.log = getLogger("github.webhooks", {
+		context.log = getLogger(LOGGER_NAME, {
 			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
 			fields: {
 				webhookId,
 				gitHubInstallationId,
+				gitHubServerAppIdPk: '' + gitHubAppId,
 				event: webhookEvent,
 				webhookReceived,
 				repoName,
@@ -108,6 +111,8 @@ export const GithubWebhookMiddleware = (
 				...context.log.fields
 			}
 		});
+
+		context.log.info("Processing webhook");
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
