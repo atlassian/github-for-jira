@@ -5,7 +5,6 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common
 import { statsd } from "~/src/config/statsd";
 import { metricCreateBranch } from "~/src/config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "~/src/util/get-cloud-or-server";
-import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 
 const errorMessages = (statusCode: number, url?: string): string => {
@@ -51,19 +50,9 @@ const getGitHubConfigurationLink = async (gitHubAppConfig, gitHubUserClient, jir
 		url = `${gitHubAppConfig.hostname}/settings/installations/`;
 	}
 
-	const syncedRepos = await RepoSyncState.findByOwnerAndRepo(repoOwner, repoName);
-	const subscriptionIds = syncedRepos.map(repo => repo.subscriptionId);
+	const subscription = await Subscription.findForRepoNameAndOwner(repoName, repoOwner, jiraHost);
 
-	const installationIds = await Promise.all(
-		subscriptionIds.map(async (subscriptionId) => {
-			const subscription = await Subscription.findByPk(subscriptionId);
-			return (subscription && subscription.jiraHost === jiraHost) ? subscription.gitHubInstallationId : null;
-		})
-	);
-	const installationId = installationIds.filter(Boolean)[0];
-	url += installationId;
-
-	return url;
+	return url + subscription?.gitHubInstallationId;
 };
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
