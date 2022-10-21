@@ -94,6 +94,15 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+	static async findByOwnerAndRepo(repoOwner: string, repoName: string): Promise<RepoSyncState[] | []> {
+		return RepoSyncState.findAll({
+			where: {
+				repoName,
+				repoOwner
+			}
+		});
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
