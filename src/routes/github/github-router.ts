@@ -13,10 +13,13 @@ import { UUID_REGEX } from "~/src/util/regex";
 import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
+import { GithubInstanceRouter } from "routes/github/instance/github-instance-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+subRouter.use("/instance", GithubInstanceRouter);
 
 // Webhook Route
 subRouter.post("/webhooks",

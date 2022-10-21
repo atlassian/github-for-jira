@@ -1,14 +1,14 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { Subscription } from "~/src/models/subscription";
-import { GitHubServerApp } from "~/src/models/github-server-app";
+import { Subscription } from "models/subscription";
+import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
-export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubInstanceGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { jiraHost: jiraHostLocal } = res.locals;
-	const { issueKey, tenantUrl } = req.query;
+	const { tenantUrl, redirectPath } = req.query;
 
 	if (!jiraHostLocal && !tenantUrl) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
@@ -16,13 +16,8 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next();
 	}
 
-	if (!issueKey) {
-		return next(new Error(Errors.MISSING_ISSUE_KEY));
-	}
-
 	const jiraHost = jiraHostLocal || getJiraHostFromTenantUrl(tenantUrl);
 
-	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
 		res.render("no-configuration.hbs", {
@@ -39,17 +34,12 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
 	}
 	// Only single GitHub Enterprise connected
 	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/${redirectPath}${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
 	}
 

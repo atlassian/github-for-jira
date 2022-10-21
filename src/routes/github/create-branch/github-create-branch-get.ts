@@ -11,10 +11,12 @@ const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
-		jiraHost,
+		jiraHost: jiraHostLocal,
 		githubToken,
 		gitHubAppConfig
 	} = res.locals;
+	const { jiraHost: jiraHostParam } = req.query;
+	const jiraHost = jiraHostLocal || jiraHostParam;
 
 	if (!githubToken) {
 		req.log.warn(Errors.MISSING_GITHUB_TOKEN);
@@ -33,6 +35,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
+	// TODO move to middleware or shared for create-branch-options-get
 	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
 		res.render("no-configuration.hbs", {
