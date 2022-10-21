@@ -19,8 +19,8 @@ export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRole
 		await passinput.press("Enter");
 		await page.waitForURL(data.urls.base);
 
-		if (saveState && role.storage) {
-			await page.context().storageState({ path: role.storage });
+		if (saveState && role.state) {
+			await page.context().storageState({ path: role.state });
 		}
 	}
 

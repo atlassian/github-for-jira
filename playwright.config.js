@@ -7,16 +7,18 @@ module.exports = {
 	use: {
 		trace: "retain-on-failure",
 		video: "retain-on-failure",
-		screenshot: 'only-on-failure',
+		screenshot: "only-on-failure"
 	},
-	workers: 1,
 	timeout: 90000,
 	globalSetup: "./test/e2e/setup.ts",
 	globalTeardown: "./test/e2e/teardown.ts",
 	projects: [
 		{
 			name: "chromium",
-			use: { ...devices["Desktop Chrome"] }
+			use: {
+				...devices["Desktop Chrome"],
+				storageState: "./test/e2e/test-results/states/global.json"
+			}
 		}
 		/*{
 			name: "firefox",

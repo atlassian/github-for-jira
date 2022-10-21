@@ -27,8 +27,8 @@ export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles, s
 		await passinput.press("Enter");
 		await page.waitForURL(data.urls.yourWork);
 
-		if (saveState && role.storage) {
-			await page.context().storageState({ path: role.storage });
+		if (saveState && role.state) {
+			await page.context().storageState({ path: role.state });
 		}
 	}
 

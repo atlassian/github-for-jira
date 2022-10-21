@@ -3,14 +3,14 @@ import { jiraAppInstall, jiraAppUninstall, jiraLogin } from "test/e2e/utils/jira
 import { githubLogin } from "test/e2e/utils/github";
 import { testData } from "test/e2e/constants";
 
-test.describe("setup functions", () => {
+test.describe("Jira App", () => {
 
 	for (const useState of [false, true]) {
 		test.describe("jira", () => {
 			test.describe(useState ? "with state" : "without state", () => {
 				if (useState) {
 					test.use({
-						storageState: testData.jira.roles.admin.storage
+						storageState: testData.jira.roles.admin.state
 					});
 				}
 
@@ -42,7 +42,7 @@ test.describe("setup functions", () => {
 			test.describe(useState ? "with state" : "without state", () => {
 				if (useState) {
 					test.use({
-						storageState: testData.jira.roles.admin.storage
+						storageState: testData.jira.roles.admin.state
 					});
 				}
 

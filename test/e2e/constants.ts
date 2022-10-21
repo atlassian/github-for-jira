@@ -4,7 +4,9 @@ export const STATE_PATH = "./test/e2e/test-results/states";
 export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 
 export const testData: TestData = {
-	storagePath: STATE_PATH,
+	stateDirectoryPath: STATE_PATH,
+	state: `${STATE_PATH}/global.json`,
+	appUrl: e2eEnvVars.APP_URL,
 	jira: {
 		urls: {
 			base: e2eEnvVars.ATLASSIAN_URL,
@@ -20,7 +22,7 @@ export const testData: TestData = {
 			admin: {
 				username: e2eEnvVars.JIRA_ADMIN_USERNAME,
 				password: e2eEnvVars.JIRA_ADMIN_PASSWORD,
-				storage: `${STATE_PATH}/jira-admin.json`
+				state: `${STATE_PATH}/jira-admin.json`
 			}
 		}
 	},
@@ -43,7 +45,9 @@ export const testData: TestData = {
 };
 
 export interface TestData {
-	storagePath: string;
+	stateDirectoryPath: string;
+	state: string;
+	appUrl: string;
 	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
 	github: TestDataEntry<GithubTestDataURLs>;
 }
@@ -82,5 +86,5 @@ export type JiraTestDataRoles = TestDataRoles;
 export interface TestDataRole {
 	username: string;
 	password: string;
-	storage?: string;
+	state?: string;
 }

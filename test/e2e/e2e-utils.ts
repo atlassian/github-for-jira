@@ -6,8 +6,8 @@ export const clearState = () => {
 };
 
 export const stateExists = (role: TestDataRole): boolean => {
-	if (role.storage) {
-		return fs.existsSync(role.storage);
+	if (role.state) {
+		return fs.existsSync(role.state);
 	}
 	return true;
 };
