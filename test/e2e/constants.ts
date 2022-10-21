@@ -5,7 +5,7 @@ export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 
 export const testData: TestData = {
 	stateDirectoryPath: STATE_PATH,
-	state: `${STATE_PATH}/global.json`,
+	state: `${STATE_PATH}/default.json`,
 	appUrl: e2eEnvVars.APP_URL,
 	jira: {
 		urls: {

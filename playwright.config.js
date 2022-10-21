@@ -17,7 +17,7 @@ module.exports = {
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
-				storageState: "./test/e2e/test-results/states/global.json"
+				storagePath: "./test/e2e/test-results/states/default.json"
 			}
 		}
 		/*{
