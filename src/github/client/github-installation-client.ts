@@ -19,7 +19,8 @@ import {
 	GetRepositoriesResponse,
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
-	getDeploymentsQuery
+	getDeploymentsQuery,
+	SearchedRepositoriesResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
@@ -155,10 +156,11 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Get a page of repositories.
 	 */
-	public getRepositoriesPage = async (per_page = 1, cursor?: string): Promise<GetRepositoriesResponse> => {
+	public getRepositoriesPage = async (per_page = 1, cursor?: string, order_by?: string): Promise<GetRepositoriesResponse> => {
 		try {
 			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, await this.installationAuthenticationHeaders(), {
 				per_page,
+				order_by,
 				cursor
 			});
 			return response.data.data;
@@ -185,6 +187,12 @@ export class GitHubInstallationClient extends GitHubClient {
 			...response,
 			hasNextPage
 		};
+	};
+
+	public searchRepositories = async (queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={q}`,{ },
+			{ q: queryString }
+		);
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {

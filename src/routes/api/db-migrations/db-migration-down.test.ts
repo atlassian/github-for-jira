@@ -22,10 +22,7 @@ describe("DB migration down", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
 		frontendApp = express();
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{

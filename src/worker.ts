@@ -3,15 +3,20 @@ import throng from "throng";
 import { isNodeProd } from "utils/is-node-env";
 import { listenToMicrosLifecycle } from "./services/micros/lifecycle";
 import { ClusterCommand, sendCommandToCluster } from "./services/cluster/send-command";
-import { probot } from "./worker/app";
+import { createWorkerServerApp } from "./worker/app";
 import { initializeSentry } from "./config/sentry";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
 import { start, stop } from "./worker/startup";
+import { getLogger } from "config/logger";
 
 const initialize = () => {
 	initializeSentry();
 	// starts healthcheck/deepcheck or else deploy will fail
-	probot.start();
+	const port = Number(process.env.WORKER_PORT) || Number(process.env.PORT) || 8081;
+	const workerWebApp = createWorkerServerApp();
+	workerWebApp.listen(port, ()=>{
+		getLogger("worker").info(`Worker started at port ${port}`);
+	});
 };
 
 if (isNodeProd()) {
@@ -19,11 +24,11 @@ if (isNodeProd()) {
 	// Read more about Node clustering: https://nodejs.org/api/cluster.html
 	throng({
 		worker: () => {
-			initialize();
 			listenForClusterCommand(ClusterCommand.start, start);
 			listenForClusterCommand(ClusterCommand.stop, stop);
 		},
 		master: () => {
+			initialize();
 			// Listen to micros lifecycle event to know when to start/stop
 			listenToMicrosLifecycle(
 				// When 'active' event is triggered, start queue processing

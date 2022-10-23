@@ -164,10 +164,10 @@ export type PushQueueMessagePayload = {
 }
 
 export type GitHubAppConfig = {
-	gitHubAppId: number | undefined,
+	gitHubAppId: number | undefined, // undefined for cloud
 	appId: number,
 	clientId: string,
-	gitHubBaseUrl: string,
+	gitHubBaseUrl: string, // GITHUB_CLOUD_BASEURL for cloud
 	gitHubApiUrl: string,
 	uuid: string | undefined,
 	//gitHubClientSecret: string,
