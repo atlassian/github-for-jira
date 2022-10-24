@@ -3,6 +3,9 @@ import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubCreateBranchPost } from "./github-create-branch-post";
 import { getLogger } from "config/logger";
+import { mocked } from "ts-jest/utils";
+
+jest.mock("models/subscription");
 
 describe("github-create-branch", () => {
 	const gitHubInstallationId = 15;
@@ -38,7 +41,9 @@ describe("github-create-branch", () => {
 			locals: {
 				jiraHost,
 				githubToken: "abc-token",
-				gitHubAppConfig: {}
+				gitHubAppConfig: {
+					hostname: "omega"
+				}
 			}
 		};
 	});
@@ -75,6 +80,50 @@ describe("github-create-branch", () => {
 		delete req.body[attribute];
 		await GithubCreateBranchPost(req as any, res as any);
 		expect(res.status).toHaveBeenCalledWith(400);
+	});
+
+	it("Should return 403 errors with URL to GitHub app settings", async () => {
+		// To allow res.send().json()
+		res.status.mockReturnValue(res);
+
+		const sha = "kenshin";
+		githubNock.get("/repos/ARC/cat-photos/git/refs/heads/main")
+			.reply(200, { object: { sha } });
+		githubNock.post("/repos/ARC/cat-photos/git/refs", {
+			"owner": "ARC",
+			"repo": "cat-photos",
+			"ref": "refs/heads/chesire",
+			"sha": sha
+		}).reply(403);
+		githubNock.get("/user").reply(200, { login: "ARC" });
+		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
+
+		await GithubCreateBranchPost(req as any, res as any);
+
+		expect(res.status).toHaveBeenCalledWith(403);
+		expect(res.json).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
+	});
+
+	it("Should return 403 errors with URL to GitHub app settings for a different org", async () => {
+		// To allow res.send().json()
+		res.status.mockReturnValue(res);
+
+		const sha = "himura";
+		githubNock.get("/repos/ARC/cat-photos/git/refs/heads/main")
+			.reply(200, { object: { sha } });
+		githubNock.post("/repos/ARC/cat-photos/git/refs", {
+			"owner": "ARC",
+			"repo": "cat-photos",
+			"ref": "refs/heads/chesire",
+			"sha": sha
+		}).reply(403);
+		githubNock.get("/user").reply(200, { login: "samuraiX" });
+		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
+
+		await GithubCreateBranchPost(req as any, res as any);
+
+		expect(res.status).toHaveBeenCalledWith(403);
+		expect(res.json).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/organizations/ARC/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
 	});
 
 });
