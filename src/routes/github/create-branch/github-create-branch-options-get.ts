@@ -5,6 +5,7 @@ import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
+// TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { jiraHost: jiraHostLocal } = res.locals;
@@ -39,11 +40,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
-		console.log(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
 	}

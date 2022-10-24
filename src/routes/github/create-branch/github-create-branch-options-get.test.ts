@@ -13,12 +13,6 @@ jest.mock("config/feature-flags");
 
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
-	const setupGitHubCloudPingNock = () => {
-		githubNock.get("/").reply(200);
-	};
-	const setupGHEPingNock = () => {
-		gheApiNock.get("").reply(200);
-	};
 	beforeEach(() => {
 		app = express();
 		app.use((req, _, next) => {
@@ -45,7 +39,6 @@ describe("GitHub Create Branch Options Get", () => {
 	});
 
 	it("With one cloud connection - should open the create-branch page", async () => {
-		setupGitHubCloudPingNock();
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
@@ -61,7 +54,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch");
+				expect(res.text).toBe("Found. Redirecting to /github/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net");
 			});
 	});
 
@@ -89,7 +82,6 @@ describe("GitHub Create Branch Options Get", () => {
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
-		setupGHEPingNock();
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
@@ -99,7 +91,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch`);
+				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net`);
 			});
 	});
 
