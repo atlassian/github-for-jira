@@ -25,13 +25,14 @@ When an organization contains a small amount of data, the backfilling process is
 
 <h3>Q: What about pull requests and issues? I noticed I need to grant read and write permissions. Why is this needed?</h3>
 
-**A:** This is needed so our app can create links to Jira issues from pull request or issue comments. When you create a comment and include the issue key surrounded by square brackets, our app while ping Jira to see if that issue key exists in a project in Jira and, if it finds a matching issue, will create a link for easy navigation.
+**A:** This is needed so our app can create links to Jira issues from pull request or issue comments. When you create a comment and include the issue key surrounded by square brackets, our app while ping Jira to see if that issue key exists in a project in Jira and, if it finds a matching issue, will create a link for easy navigation. As for contents, we need the write access so we can create a branch on your behalf.
 
 ![Pull request and issue comment links](./images/read-and-write-permissions-issues-and-prs.png)
 
 <h3>Q: What happens if another change is made to the app in the future that requires new permissions? Can I choose to accept the new permission but ignore previously requested permissions that I don’t want/feel comfortable with?</h3>
 
 **A:** Unfortunately not. GitHub apps are limited in this sense as permissions are not granular.
+
 
 ### GitHub Enterprise Server
 <h3>Q: How do I set up a hole in my firewall?</h3>

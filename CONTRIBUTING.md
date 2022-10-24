@@ -42,7 +42,7 @@ Your new GitHub app will need the following repository permissions & events:
 **Repository Permissions**:
 + Actions: Read-only
 + Code scanning alerts: Read-only
-+ Contents: Read-only
++ Contents: Read & Write
 + Deployments: Read-only
 + Issues: Read & write
 + Metadata: Read-only
