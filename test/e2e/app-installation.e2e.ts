@@ -8,9 +8,11 @@ test.describe("Jira App", () => {
 	for (const useState of [false, true]) {
 		test.describe("jira", () => {
 			test.describe(useState ? "with state" : "without state", () => {
-				test.use({
-					storageState: useState ? testData.jira.roles.admin.state : testData.state
-				});
+				if (useState) {
+					test.use({
+						storageState: testData.jira.roles.admin.state
+					});
+				}
 
 				test("jiraLogin", async ({ page }) => {
 					expect(await jiraLogin(page, "admin")).toBeTruthy();

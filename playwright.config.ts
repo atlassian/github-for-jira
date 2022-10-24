@@ -1,6 +1,6 @@
-const { devices } = require("@playwright/test");
+import { type PlaywrightTestConfig, devices } from '@playwright/test';
 
-module.exports = {
+const config: PlaywrightTestConfig = {
 	testDir: "./test/e2e",
 	testMatch: /.*\.e2e\.ts/,
 	outputDir: "./test/e2e/test-results",
@@ -16,7 +16,8 @@ module.exports = {
 		{
 			name: "chromium",
 			use: {
-				...devices["Desktop Chrome"]
+				...devices["Desktop Chrome"],
+				storageState: "./test/e2e/test-results/states/default.json"
 			}
 		}
 		/*{
@@ -29,3 +30,4 @@ module.exports = {
 		}*/
 	]
 };
+export default config;
