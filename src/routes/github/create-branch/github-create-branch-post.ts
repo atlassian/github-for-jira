@@ -100,7 +100,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 			res.status(err.status).json(getErrorMessages(err?.status, gitHubConfigurationLink));
 
 		} else {
-			res.status(err.status).json(getErrorMessages(err?.status));
+			res.status(err.status || 500).json(getErrorMessages(err?.status || 500));
 		}
 		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 		statsd.increment(metricCreateBranch.failed, {
