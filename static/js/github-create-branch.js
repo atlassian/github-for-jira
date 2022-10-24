@@ -217,7 +217,7 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage(error.responseJSON);
+      showErrorMessage(error.responseJSON.error);
       hideLoading();
     });
 };
