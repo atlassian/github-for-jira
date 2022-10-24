@@ -3,34 +3,43 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { JiraCommit } from "interfaces/jira";
+import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
 import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { PushQueueMessagePayload, GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { isEmpty } from "lodash";
-import { GitHubPushData } from "../interfaces/github";
+import { compact, isEmpty } from "lodash";
+import { GithubCommitFile, GitHubPushData } from "interfaces/github";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: define better types for this file
 const mapFile = (
-	githubFile,
+	githubFile: GithubCommitFile,
 	repoName: string,
-	repoOwner: string | null,
-	commitHash: string
-) => {
+	commitHash: string,
+	repoOwner?: string
+): JiraCommitFile | undefined => {
 	// changeType enum: [ "ADDED", "COPIED", "DELETED", "MODIFIED", "MOVED", "UNKNOWN" ]
 	// on github when a file is renamed we get two "files": one added, one removed
 	const mapStatus = {
-		added: "ADDED",
-		removed: "DELETED",
-		modified: "MODIFIED"
+		added: JiraCommitFileChangeTypeEnum.ADDED,
+		removed: JiraCommitFileChangeTypeEnum.DELETED,
+		modified: JiraCommitFileChangeTypeEnum.MODIFIED,
+		renamed: JiraCommitFileChangeTypeEnum.MOVED,
+		copied: JiraCommitFileChangeTypeEnum.COPIED,
+		changed: JiraCommitFileChangeTypeEnum.MODIFIED,
+		unchanged: JiraCommitFileChangeTypeEnum.UNKNOWN
 	};
 
 	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
+	if (isEmpty(githubFile.filename)) {
+		return undefined;
+	}
+
 	return {
-		path: githubFile.filename,
-		changeType: mapStatus[githubFile.status] || "UNKNOWN",
+		path: githubFile.filename.slice(0, 1024), // max length 1024
+		changeType: mapStatus[githubFile.status] || JiraCommitFileChangeTypeEnum.UNKNOWN,
 		linesAdded: githubFile.additions,
 		linesRemoved: githubFile.deletions,
 		url: githubFile.blob_url || fallbackUrl
@@ -141,7 +150,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					} = await github.getCommit(owner.login, repo, sha.id);
 
 					// Jira only accepts a max of 10 files for each commit, so don't send all of them
-					const filesToSend = files.slice(0, 10);
+					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
 
 					// merge commits will have 2 or more parents, depending how many are in the sequence
 					const isMergeCommit = parents?.length > 1;
@@ -154,7 +163,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 						authorTimestamp: githubCommitAuthor.date,
 						displayId: commitSha.substring(0, 6),
 						fileCount: files.length, // Send the total count for all files
-						files: filesToSend.map((file) => mapFile(file, repo, owner.name, sha.id)),
+						files: compact(filesToSend.map((file) => mapFile(file, repo, sha.id, owner.name))),
 						id: commitSha,
 						issueKeys: sha.issueKeys,
 						url: html_url,
@@ -178,11 +187,8 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		for (const chunk of chunks) {
 			const jiraPayload = {
-				name: repository.name,
-				url: repository.html_url,
-				id: repository.id,
-				commits: chunk,
-				updateSequenceId: Date.now()
+				... await transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
+				commits: chunk
 			};
 
 			log.info("Sending data to Jira");

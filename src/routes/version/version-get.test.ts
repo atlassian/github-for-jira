@@ -1,7 +1,6 @@
 import express, { Application } from "express";
 import { VersionGet } from "./version-get";
 import supertest from "supertest";
-import { envVars }  from "config/env";
 
 describe("/version", () => {
 	let app: Application;
@@ -11,10 +10,10 @@ describe("/version", () => {
 	});
 
 	it("should return 200 with relevant git branch and commit details", async () => {
-		envVars.GIT_COMMIT_SHA = "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8";
-		envVars.GIT_COMMIT_DATE = "Wed Oct 13 16:32:22 2021 +1100";
-		envVars.GIT_BRANCH_NAME = "arc-384-info";
-		envVars.DEPLOYMENT_DATE = "Wed Oct 13 16:32:22 2021 AEDT";
+		process.env.GIT_COMMIT_SHA = "34b6df6ca06f4ba9516a6e943b90bdb148b3f0e8";
+		process.env.GIT_COMMIT_DATE = "Wed Oct 13 16:32:22 2021 +1100";
+		process.env.GIT_BRANCH_NAME = "arc-384-info";
+		process.env.DEPLOYMENT_DATE = "Wed Oct 13 16:32:22 2021 AEDT";
 
 		return supertest(app)
 			.get("/version")

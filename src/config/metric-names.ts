@@ -5,28 +5,12 @@ export const metricError = {
 	expressRateLimited: `${server}.error.express-rate-limited`,
 	githubErrorRendered: `${frontend}.error.github-error-rendered`,
 	failedConnection: `${server}.error.failed-connection`,
-	queueError: `${server}.error.queue-error`,
-	queueFailed: `${server}.error.queue-failed`,
 	blockedByGitHubAllowlist: `${server}.error.blocked-by-github-allowlist`,
 	gheServerUrlError: `${server}.error.ghe.server.url.request.failed`
 };
 
 /**
- * Old Redis queue metrics
- */
-export const redisQueueMetrics = {
-	active: `${server}.queue.active`,
-	completed: `${server}.queue.completed`,
-	failed: `${server}.queue.failed`,
-	delayed: `${server}.queue.delayed`,
-	waiting: `${server}.queue.waiting`,
-	paused: `${server}.queue.paused`,
-	repeatable: `${server}.queue.repeatable`,
-	jobDuration: `${server}.queue.job-duration`
-};
-
-/**
- * New SQS queue metrics
+ * SQS queue metrics
  */
 export const sqsQueueMetrics = {
 	received: `${server}.sqs.queue.received`,
@@ -44,8 +28,7 @@ export const metricHttpRequest = {
 	jira: `${server}.http.request.jira`, //Jira requests execution time histogram
 	install: `${server}.http.request.install`, //Count how many installation requests we received
 	uninstall: `${server}.http.request.uninstall`, //Count how many uninstallation requests we received
-	syncPullRequest: `${server}.http.request.sync-pull-request`, //Measures retrieval time from GitHub API
-	requestStatusSync: `${server}.http.request.request-status-syncs`
+	syncPullRequest: `${server}.http.request.sync-pull-request` //Measures retrieval time from GitHub API
 };
 
 export const metricSyncStatus = {
@@ -66,5 +49,10 @@ export const metricWebhooks = {
 	webhookProcessed: `${server}.webhooks.processed`,
 	webhookFailure: `${server}.webhooks.failed`,
 	webhookLatency: `${server}.webhooks.processing-time.latency`
+};
+
+export const metricCreateBranch = {
+	created: `${server}.create-branch.created`,
+	failed: `${server}.create-branch.failed`
 };
 

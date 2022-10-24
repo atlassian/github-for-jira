@@ -1,10 +1,10 @@
 import { getLogger } from "config/logger";
 import { RepoSyncState } from "models/reposyncstate";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { Config } from "interfaces/common";
 import YAML from "yaml";
 import { InstallationId } from "../github/client/installation-id";
 import { Subscription } from "models/subscription";
+import { createInstallationClient } from "utils/get-github-client-config";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
@@ -34,7 +34,7 @@ export const updateRepoConfig = async (
 		try {
 			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 
-			if (!repoSyncState){
+			if (!repoSyncState) {
 				logger.error({
 					githubInstallationId,
 					repositoryId
@@ -42,7 +42,7 @@ export const updateRepoConfig = async (
 				return;
 			}
 
-			await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId);
+			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId);
 		} catch (err) {
 			logger.error({
 				err,
@@ -56,19 +56,33 @@ export const updateRepoConfig = async (
 /**
  * Returns the config for a given repo.
  */
-export const getRepoConfig = async (subscription: Subscription, repositoryId: number): Promise<Config | undefined> => {
+export const getRepoConfig = async (
+	subscription: Subscription,
+	installationId: InstallationId,
+	repositoryId: number,
+	repoOwner: string,
+	repoName: string
+): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
 	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
-	// TODO: if repoSyncState is not available, try to get the config file from GitHub!
-	return repoSyncState?.config;
+
+	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
+	// config directly from the config file in the GitHub repo.
+	if (!repoSyncState) {
+		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId);
+		return convertYamlToUserConfig(yamlConfig);
+	}
+
+	// Standard case: we return the config from our database.
+	return repoSyncState.config;
 };
 
 /**
  * Fetches contents from CONFIG_PATH from GitHub via GitHub's API, transforms it from base64 to ascii and returns the transformed string.
  */
-const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string): Promise<string | undefined> => {
-	const client = new GitHubInstallationClient(githubInstallationId, logger);
+const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId?: number): Promise<string | undefined> => {
+	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, logger, gitHubAppId);
 	const contents = await client.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
 
 	if (!contents) {
@@ -123,8 +137,28 @@ const convertYamlToUserConfig = (input?: string): Config => {
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId): Promise<void> => {
-	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName);
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
+	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
 	const config = convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
+};
+
+/**
+ * Checks for the user config file in the given repositories and stores the config in the database.
+ * If an error occurs for one of the repositories, we'll just log it and continue on with the
+ * other repositories.
+ * @param repoSyncStates the repositories in which to look for the config file
+ * @param githubInstallationId the GitHub installation ID the repositories belong to
+ * @param jiraHost
+ * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
+ */
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
+	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
+		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId)
+			.catch(err => logger.error({
+				err,
+				githubInstallationId,
+				repositoryId: repoSyncState.repoId
+			}, "error while updating a single repo config"));
+	}));
 };

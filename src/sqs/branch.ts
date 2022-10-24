@@ -1,6 +1,7 @@
 import { processBranch } from "../github/branch";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { BranchMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: SQSMessageContext<BranchMessagePayload>) => {
 	const messagePayload: BranchMessagePayload = context.payload;
@@ -10,9 +11,12 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		jiraHost,
 		gitHubInstallationId: installationId
 	});
-	context.log.info("Handling branch message from the SQS queue");
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
+	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
+	context.log.info({ gitHubProduct }, "Handling branch message from the SQS queue");
 
 	await processBranch(
 		gitHubInstallationClient,

@@ -2,11 +2,13 @@ import { Subscription } from "models/subscription";
 import { NextFunction, Request, Response } from "express";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const gitHubInstallationId = Number(req.params.installationId);
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppConfig?.gitHubAppId);
 
 	logger.debug("Received GET subscription request");
 
@@ -52,7 +54,7 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			return next(new Error("Unauthorized"));
 		}
 	} catch (err) {
-		logger.error(err, "Unable to show subscription page");
+		logger.error({ err, gitHubProduct }, "Unable to show subscription page");
 		return next(new Error("Unable to show subscription page"));
 	}
 };

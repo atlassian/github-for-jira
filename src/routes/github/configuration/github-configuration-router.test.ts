@@ -32,7 +32,7 @@ describe("Github Configuration", () => {
 			//TODO: why? Comment this out make test works?
 			//setting both fields make sequelize confused as it internally storage is just the "secrets"
 			//secrets: "def234",
-			sharedSecret: "ghi345"
+			encryptedSharedSecret: "ghi345"
 		});
 
 		frontendApp = express();
@@ -40,10 +40,7 @@ describe("Github Configuration", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "token",
-			getInstallationAccessToken: async () => "access-token"
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	describe("Github Token Validation", () => {

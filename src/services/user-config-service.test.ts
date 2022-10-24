@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { updateRepoConfig } from "services/user-config-service";
+import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
 import { getInstallationId } from "~/src/github/client/installation-id";
-import { envVars } from "config/env";
 
 describe("User Config Service", () => {
 	const gitHubInstallationId = 1234;
@@ -37,7 +36,7 @@ describe("User Config Service", () => {
 			jiraClientKey: "client-key"
 		});
 
-		envVars.PROXY = undefined;
+		process.env.PROXY = undefined;
 
 		repoSyncState = await RepoSyncState.create({
 			subscriptionId: subscription.id,
@@ -61,9 +60,9 @@ describe("User Config Service", () => {
 
 	});
 
-	const givenGitHubReturnsConfigFile = () => {
+	const givenGitHubReturnsConfigFile = (repoOwner: string = repoSyncState.repoOwner, repoName = repoSyncState.repoName) => {
 		// see https://docs.github.com/en/rest/repos/contents#get-repository-content
-		githubNock.get(`/repos/${repoSyncState.repoOwner}/${repoSyncState.repoName}/contents/.jira/config.yml`)
+		githubNock.get(`/repos/${repoOwner}/${repoName}/contents/.jira/config.yml`)
 			.reply(200, {
 				content: configFileContentBase64
 			});
@@ -71,17 +70,31 @@ describe("User Config Service", () => {
 
 	it("should not update config in database when config file hasn't been touched", async () => {
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
-		const freshRepoSyncState = await RepoSyncState.findByRepoId(subscription, repoSyncState.repoId);
-		expect(freshRepoSyncState?.config).toBeFalsy();
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		expect(config).toBeFalsy();
 	});
 
 	it("should update config in database when config file has been touched", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const freshRepoSyncState = await RepoSyncState.findByRepoId(subscription, repoSyncState.repoId);
-		expect(freshRepoSyncState?.config).toBeTruthy();
-		expect(freshRepoSyncState?.config?.deployments?.environmentMapping?.development).toHaveLength(4);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		expect(config).toBeTruthy();
+		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
+
+	it("should get config directly from GitHub when we don't have a record of the repo", async () => {
+		// coordinates of a repo that we don't have in the database
+		const unknownRepoName = "unknownRepo";
+		const unknownRepoOwner = "unknownOwner";
+		const unknownRepoId = 42;
+
+		githubUserTokenNock(gitHubInstallationId);
+		givenGitHubReturnsConfigFile(unknownRepoOwner, unknownRepoName);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), unknownRepoId, unknownRepoOwner, unknownRepoName);
+		expect(config).toBeTruthy();
+		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
+	});
+
 
 });

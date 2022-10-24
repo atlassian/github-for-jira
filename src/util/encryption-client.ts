@@ -1,5 +1,6 @@
 import { envVars } from "config/env";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { retry } from "ts-retry-promise";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
@@ -36,22 +37,35 @@ export class EncryptionClient {
 	});
 
 	static async encrypt(secretKey: EncryptionSecretKeyEnum, plainText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
-			plainText,
-			encryptionContext
-		});
-		return response.data.cipherText;
+		return await retry(async () => {
+			const response = await this.axios.post<EncryptResponse>(`/cryptor/encrypt/micros/github-for-jira/${secretKey}`, {
+				plainText,
+				encryptionContext
+			});
+			return response.data.cipherText;
+		}, { retries: 5, delay: 500 });
 	}
 
 	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
-		const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
-			cipherText,
-			encryptionContext
-		});
-		return response.data.plainText;
+		return await retry(async () => {
+			const response = await this.axios.post<DecryptResponse>(`/cryptor/decrypt`, {
+				cipherText,
+				encryptionContext
+			});
+			return response.data.plainText;
+		}, { retries: 5, delay: 500 });
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {
 		return await this.axios.get("/healthcheck");
+	}
+
+	static async deepcheck(): Promise<string[]> {
+		return await Promise.all([
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "healthcheck-test-github-server-app")
+				.then(value => EncryptionClient.decrypt(value)),
+			EncryptionClient.encrypt(EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS, "healthcheck-test-jira-instance-secret")
+				.then(value => EncryptionClient.decrypt(value))
+		]);
 	}
 }

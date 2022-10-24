@@ -1,4 +1,3 @@
-import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
@@ -8,13 +7,12 @@ import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
+const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();
-		const { data: installation } = gitHubAppClient instanceof GitHubAppClient ?
-			await gitHubAppClient.getInstallation(gitHubInstallationId) :
-			await gitHubAppClient.apps.getInstallation({ installation_id: gitHubInstallationId });
+		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
 	}	catch (err) {
@@ -29,6 +27,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitH
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppId } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	if (!githubToken || !jiraHost) {
 		res.sendStatus(401);
@@ -75,7 +74,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		res.sendStatus(200);
 	} catch (err) {
-		req.log.error(err, "Error processing subscription add request");
+		req.log.error({ err, gitHubProduct }, "Error processing subscription add request");
 		res.sendStatus(500);
 	}
 };

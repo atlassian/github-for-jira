@@ -1,6 +1,6 @@
 import { enqueuePush } from "./push";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubRepository } from "../interfaces/github";
+import { GitHubCommit, GitHubRepository } from "interfaces/github";
 
 jest.mock("../sqs/queues");
 
@@ -13,8 +13,11 @@ describe("Enqueue push", () => {
 			repository: {} as GitHubRepository,
 			commits: [{
 				id: "c123",
-				message: "ARC-0001 some message"
-			}]
+				message: "ARC-0001 some message",
+				added: [],
+				modified: [],
+				removed: []
+			} as unknown as GitHubCommit]
 		}, jiraHost, {
 			gitHubAppId: 1,
 			appId: 2,

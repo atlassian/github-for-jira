@@ -4,7 +4,10 @@ import { isEmpty } from "lodash";
 import { WebhookPayloadCreate } from "@octokit/webhooks";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraBranchData, JiraCommit } from "src/interfaces/jira";
+import { JiraBranchBulkSubmitData, JiraCommit } from "src/interfaces/jira";
+import { getLogger } from "config/logger";
+import Logger from "bunyan";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, issueKeys: string[]): Promise<JiraCommit> => {
 	const { data: { object: { sha } } } = await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
@@ -24,7 +27,7 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: W
 	};
 };
 
-export const transformBranch = async (github: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate): Promise<JiraBranchData | undefined> => {
+export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: WebhookPayloadCreate, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}
@@ -36,22 +39,24 @@ export const transformBranch = async (github: GitHubInstallationClient, webhookP
 		return;
 	}
 
-	const lastCommit = await getLastCommit(github, webhookPayload, issueKeys);
-	return {
-		id: repository.id.toString(),
-		name: repository.full_name,
-		url: repository.html_url,
-		branches: [
-			{
-				createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),
-				lastCommit,
-				id: getJiraId(ref),
-				issueKeys,
-				name: ref,
-				url: `${repository.html_url}/tree/${ref}`,
-				updateSequenceId: Date.now()
-			}
-		],
-		updateSequenceId: Date.now()
-	};
+	try {
+		const lastCommit = await getLastCommit(gitHubInstallationClient, webhookPayload, issueKeys);
+		return {
+			... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+			branches: [
+				{
+					createPullRequestUrl: generateCreatePullRequestUrl(repository.html_url, ref, issueKeys),
+					lastCommit,
+					id: getJiraId(ref),
+					issueKeys,
+					name: ref,
+					url: `${repository.html_url}/tree/${ref}`,
+					updateSequenceId: Date.now()
+				}
+			]
+		};
+	} catch (err) {
+		logger.warn(err, "Could not get latest commit from branch as the branch is not available yet on the API. Retrying later.");
+		throw err;
+	}
 };

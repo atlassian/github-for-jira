@@ -8,6 +8,8 @@ import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { resetEnvVars, TestEnvVars } from "test/setup/env-test";
+import { GitHubConfig } from "~/src/github/client/github-client";
 // WARNING: Be very careful what you import here as it might affect test
 // in other tests because of dependency tree.  Keep imports to a minimum.
 jest.mock("lru-cache");
@@ -18,9 +20,11 @@ type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: numb
 type GithubAppTokenNockFunc = () => void
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
+export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
 declare global {
 	let jiraHost: string;
 	let gitHubAppConfig: GitHubAppConfig;
+	let gitHubCloudConfig: GitHubConfig;
 	let jiraStaginHost: string;
 	let jiraNock: nock.Scope;
 	let jiraStagingNock: nock.Scope;
@@ -35,11 +39,13 @@ declare global {
 	let gheUserTokenNock: GithubUserTokenNockFunc;
 	let gheAppTokenNock: GithubAppTokenNockFunc;
 	let mockSystemTime: MockSystemTimeFunc;
+	let testEnvVars: TestEnvVars;
 	// eslint-disable-next-line @typescript-eslint/no-namespace
 	namespace NodeJS {
 		interface Global {
 			jiraHost: string;
 			gitHubAppConfig: GitHubAppConfig;
+			gitHubCloudConfig: GitHubConfig;
 			jiraStaginHost: string;
 			jiraNock: nock.Scope;
 			jiraStagingNock: nock.Scope;
@@ -54,18 +60,10 @@ declare global {
 			gheUserTokenNock: GithubUserTokenNockFunc;
 			gheAppTokenNock: GithubAppTokenNockFunc;
 			mockSystemTime: MockSystemTimeFunc;
+			testEnvVars: TestEnvVars;
 		}
 	}
 }
-
-const resetEnvVars = () => {
-	// Assign defaults to process.env, but don't override existing values if they
-	// are already set in the environment.
-	process.env = {
-		...process.env,
-		...envVars
-	};
-};
 
 const clearState = async () => Promise.all([
 	sequelize.truncate({ truncate: true })
@@ -146,10 +144,17 @@ beforeEach(() => {
 	global.githubAppTokenNock = githubAppToken(githubNock);
 	global.gheUserTokenNock = githubUserToken(gheApiNock);
 	global.gheAppTokenNock = githubAppToken(gheApiNock);
+	global.testEnvVars = envVars as TestEnvVars;
 	global.mockSystemTime = (time: number | string | Date) => {
 		const mock = jest.isMockFunction(Date.now) ? jest.mocked(Date.now) : jest.spyOn(Date, "now");
 		mock.mockReturnValue(new Date(time).getTime());
 		return mock;
+	};
+	global.gitHubCloudConfig = {
+		hostname: "https://github.com",
+		baseUrl: "https://github.com",
+		apiUrl: "https://api.github.com",
+		graphqlUrl: "https://api.github.com/graphql"
 	};
 });
 

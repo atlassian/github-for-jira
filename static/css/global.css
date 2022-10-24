@@ -319,3 +319,51 @@ a:focus {
 .aui-iconfont-warning {
   color: #FFAB00;
 }
+
+.headerImageLogo {
+  height: 40px;
+  transition: all 1.5s ease;
+}
+
+/******************************
+Skeleton element styling
+*******************************/
+.skeleton {
+  animation: 1s loading ease-in-out infinite;
+  animation-delay: .06s;
+  background: linear-gradient(
+          100deg,
+          rgba(255, 255, 255, 0) 40%,
+          rgba(255, 255, 255, .5) 50%,
+          rgba(255, 255, 255, 0) 60%
+  ) #ebecf0;
+  background-size: 200% 100%;
+  background-position-x: 180%;
+  border-radius: 4px;
+}
+
+.skeleton,
+.skeleton > label,
+.skeleton > a {
+/* Override AUI styling */
+  color: transparent !important;
+}
+
+.skeleton-element {
+  height: 1.5em;
+}
+
+.skeleton-input {
+  height: 2.5em;
+}
+
+@keyframes loading {
+  to {
+    background-position-x: -20%;
+  }
+}
+
+.loaded {
+  /* Override AUI styling */
+  display: none !important;
+}

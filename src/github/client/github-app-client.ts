@@ -5,12 +5,9 @@ import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import * as PrivateKey from "probot/lib/private-key";
-import { envVars } from "config/env";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
-import { GitHubClient } from "./github-client";
-
+import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -22,12 +19,12 @@ export class GitHubAppClient extends GitHubClient {
 	private readonly appToken: AuthToken;
 
 	constructor(
-		logger?: Logger,
-		baseUrl?: string,
-		appId = envVars.APP_ID,
-		privateKey = PrivateKey.findPrivateKey() || ""
+		gitHubConfig: GitHubConfig,
+		logger: Logger,
+		appId: string,
+		privateKey: string
 	) {
-		super(logger, baseUrl);
+		super(gitHubConfig, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
@@ -84,8 +81,7 @@ export class GitHubAppClient extends GitHubClient {
 		});
 	};
 
-	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations`, {});
+	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse[]>> => {
+		return await this.axios.get<Octokit.AppsGetInstallationResponse[]>(`/app/installations`, {});
 	};
-
 }

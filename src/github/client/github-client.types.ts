@@ -1,6 +1,6 @@
 import { AxiosResponse } from "axios";
 import { GraphQLError } from "./github-client-errors";
-import { Octokit } from "probot";
+import { Octokit } from "@octokit/rest";
 
 export enum SortDirection {
 	ASC = "asc",
@@ -51,3 +51,11 @@ export interface ReposGetContentsResponse {
 }
 
 export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string};
+
+
+export type CreateReferenceBody = {
+	owner: string,
+	repo: string,
+	ref: string,
+	sha: string
+}

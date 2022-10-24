@@ -35,7 +35,7 @@ const waitForTunnel = async () => {
 			const ngrokDomain = tunnel.public_url;
 			console.info(`ngrok forwarding ${ngrokDomain} to ${tunnel.config.addr}`);
 			envContents = envContents.replace(/APP_URL=.*/, `APP_URL=${ngrokDomain}`);
-			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/events`);
+			envContents = envContents.replace(/WEBHOOK_PROXY_URL=.*/, `WEBHOOK_PROXY_URL=${ngrokDomain}/github/webhooks`);
 			fs.writeFileSync(envFilePath, envContents);
 			console.info(`Updated ${envFileName} file to use ngrok domain '${ngrokDomain}'.`);
 		} catch (e) {
@@ -49,7 +49,7 @@ const waitForTunnel = async () => {
 const callQueues = async () => {
 	const queueUrls = Object.entries(process.env)
 		.filter(([key, value]) => /^SQS_.*_QUEUE_URL$/.test(key) && value)
-		.map(([_key, value]) => value as string);
+		.map(([_key, value]) => `${value}?Action=GetQueueUrl&QueueName=${value!.split("/").pop()}`);
 	console.info(`Checking for localstack initialization...`);
 	if (queueUrls.length) {
 		const url = new URL(queueUrls[0]);
@@ -98,7 +98,7 @@ const createEnvFile = async () => {
 				console.info(stdout);
 				resolve();
 			});
-		})
+		});
 	}
 };
 

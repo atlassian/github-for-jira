@@ -102,7 +102,7 @@
         <div class="field-group">
           <label for="webhook-url">Webhook URL</label>
           <input class="text full-width-field" type="text"
-                 value="{{appUrl}}/github/{{uuid}}/webhook"
+                 value="{{appUrl}}/github/{{uuid}}/webhooks"
                  readonly
           />
         </div>
@@ -153,7 +153,7 @@
             -->
             <input class="jiraManualAppCreation__formFileInput"
                    id="privateKeyFile"
-                   data-aui-validation-pattern="^\s*$|^.*\.(pem|PEM)$"
+                   data-aui-validation-pattern="^.*\.(pem|PEM)$"
                    data-aui-validation-pattern-msg="We couldn&#x2019;t upload this file. Please try again."
                    data-aui-validation-field
                    required

@@ -9,7 +9,9 @@ import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptio
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
+import { shouldTagBackfillRequests } from "config/feature-flags";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -35,7 +37,8 @@ export const getJiraClient = async (
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
 
 	if (!installation) {
@@ -44,9 +47,7 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		await booleanFlag(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, false, jiraHost)
-			? await installation.decrypt("encryptedSharedSecret")
-			: installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		logger
 	);
 
@@ -80,10 +81,30 @@ export const getJiraClient = async (
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
+				list: (issue_id: string) =>
+					instance.get("/rest/api/latest/issue/{issue_id}/comment?expand=properties", {
+						urlParams: {
+							issue_id
+						}
+					}),
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
 							issue_id
+						}
+					}),
+				updateForIssue: (issue_id: string, comment_id: string, payload) =>
+					instance.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
+						urlParams: {
+							issue_id,
+							comment_id
+						}
+					}),
+				deleteForIssue: (issue_id: string, comment_id: string) =>
+					instance.delete("rest/api/latest/issue/{issue_id}/comment/{comment_id}", {
+						urlParams: {
+							issue_id,
+							comment_id
 						}
 					})
 			},
@@ -123,15 +144,15 @@ export const getJiraClient = async (
 		},
 		devinfo: {
 			branch: {
-				delete: (repositoryId: string, branchRef: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, branchRef: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/branch/{branchJiraId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/branch/{branchJiraId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								branchJiraId: getJiraId(branchRef)
 							}
 						}
@@ -174,28 +195,28 @@ export const getJiraClient = async (
 					])
 			},
 			pullRequest: {
-				delete: (repositoryId: string, pullRequestId: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/pull_request/{pullRequestId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/pull_request/{pullRequestId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								pullRequestId
 							}
 						}
 					)
 			},
 			repository: {
-				delete: (repositoryId: string) =>
-					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
+				delete: (transformedRepositoryId: TransformedRepositoryId) =>
+					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
 						params: {
 							_updateSequenceId: Date.now()
 						},
 						urlParams: {
-							repositoryId
+							transformedRepositoryId
 						}
 					}),
 				update: async (data, options?: JiraSubmitOptions) => {
@@ -207,9 +228,9 @@ export const getJiraClient = async (
 						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
-							truncatedCommits: getTruncatedIssuekeys(data.commits),
-							truncatedBranches: getTruncatedIssuekeys(data.branches),
-							truncatedPRs: getTruncatedIssuekeys(data.pullRequests)
+							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -264,8 +285,7 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
-				logger?.info("Sending builds payload to jira.");
+				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
@@ -298,8 +318,7 @@ export const getJiraClient = async (
 						}
 					};
 				}
-				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
-				logger?.info("Sending deployments payload to jira.");
+				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 				return {
 					status: response.status,
@@ -445,21 +464,18 @@ interface IssueKeyObject {
 	associations?: JiraAssociation[];
 }
 
+// TODO: add unit tests
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		// Filter out anything that doesn't have issue keys or are not over the limit
 		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
 			});
 		}
 		const association = findIssueKeyAssociation(value);
 		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
 			acc.push({
-				...value,
+				// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
 				associations: [association]
 			});
 		}

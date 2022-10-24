@@ -1,4 +1,4 @@
-import { getLogger, getUnsafeLogger } from "config/logger";
+import { getLogger } from "config/logger";
 import { RingBuffer, Stream } from "bunyan";
 
 describe("logger behaviour", () => {
@@ -8,19 +8,6 @@ describe("logger behaviour", () => {
 
 		beforeEach(() => {
 			ringBuffer = new RingBuffer({ limit: 5 });
-		});
-
-		it("should serialize sensitive data as part of getlogger", () => {
-			const logger = getLogger("name", { fields: { jiraHost: "CATS" } });
-			expect(logger.fields.jiraHost).toBe("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
-		});
-
-		it("should serialize sensitive data as part of logging action", () => {
-			const logger = getLogger("name", { fields: { orgName: "CATS" } });
-			logger.addStream({ stream: ringBuffer as Stream });
-			logger.info({ jiraHost: "CATS" }, "Good day");
-
-			expect(JSON.parse(ringBuffer.records[0]).jiraHost).toEqual("8fc7392715b5a41d57eae37981e736cdca9165861b9ad0a79b4114a0b2e889e2");
 		});
 
 		it("should write out logging action text to msg stream", () => {
@@ -53,12 +40,17 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[2]).msg).toEqual("Error");
 			expect(JSON.parse(ringBuffer.records[3]).msg).toEqual("FATALALITY");
 		});
-	});
 
-	describe("unsafe logger", () => {
-		it("should not serialize sensitive data", () => {
-			const logger = getUnsafeLogger("name", { fields: { jiraHost: "CATS" } });
-			expect(logger.fields.jiraHost).toBe("CATS");
+		it("Should remove branch from URL", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				config: {
+					url: "/rest/devinfo/0.10/repository/448757705/branch/bugfix-installed-script?_updateSequenceId=1663617601470"
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).config.url).toEqual("/rest/devinfo/0.10/repository/448757705/branch/CENSORED");
 		});
 	});
 

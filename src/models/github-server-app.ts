@@ -38,11 +38,6 @@ export class GitHubServerApp extends EncryptedModel {
 	}
 
 	async getEncryptContext() {
-		//For example: we can call database to fetch sharedSecret for use as EncryptionContext
-		//const installation = await Installation.findByPk(this.installationId);
-		//return {
-		//	installationSharedSecret: installation?.sharedSecret
-		//};
 		return {};
 	}
 
