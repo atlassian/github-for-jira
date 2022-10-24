@@ -22,7 +22,7 @@ const writeDebugLogsForRawBody = (verification: string, signatureSHA256: string,
 	logger.info(`bgvozdev debugging, signatureSHA256=${signatureSHA256}`);
 
 	try {
-		const verificationRawBody = createHash(JSON.stringify(response.locals.rawBody), webhookSecret);
+		const verificationRawBody = createHash(response.locals.rawBodyd, webhookSecret);
 		logger.info(`bgvozev debugging, verificationRawBody=${verificationRawBody}`);
 
 		if (verification !== verificationRawBody) {
