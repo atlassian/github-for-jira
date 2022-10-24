@@ -5,7 +5,7 @@ declare const transformedRepositoryId: unique symbol;
 
 export type TransformedRepositoryId = string & { [transformedRepositoryId]: never };
 
-function calculatePrefix(url: string) {
+const calculatePrefix = (url: string) => {
 	const parsedUrl = new URL(url);
 
 	// - "1024" is the limit for repo id in Jira API, see
@@ -17,11 +17,11 @@ function calculatePrefix(url: string) {
 	// - Removing special characters to smooth quirks like "myserver.com/blah/" and "myserver.com/blah"
 	// - Using parsed url to remove protocol (in case the server available via both HTTP and HTTPS) and query params
 	const prefix = Buffer.from(
-		(parsedUrl.host + parsedUrl.pathname).toLowerCase().replace(/[\W_]/g, '')
-	).toString('hex').substring(0, 512);
+		(parsedUrl.host + parsedUrl.pathname).toLowerCase().replace(/[\W_]/g, "")
+	).toString("hex").substring(0, 512);
 
 	return prefix;
-}
+};
 
 /**
  * This is a temporary solution until we have a globally unique UUIDs across the globe (cloud repos, GHE server
@@ -30,7 +30,7 @@ function calculatePrefix(url: string) {
  * @param repositoryId
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export async function transformRepositoryId(repositoryId: number, gitHubBaseUrl?: string): Promise<TransformedRepositoryId> {
+export const transformRepositoryId = async (repositoryId: number, gitHubBaseUrl?: string): Promise<TransformedRepositoryId> => {
 	if (!await booleanFlag(BooleanFlags.USE_REPO_ID_TRANSFORMER, false)) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
@@ -40,4 +40,4 @@ export async function transformRepositoryId(repositoryId: number, gitHubBaseUrl?
 	}
 
 	return `${calculatePrefix(gitHubBaseUrl)}-${repositoryId}` as TransformedRepositoryId;
-}
+};

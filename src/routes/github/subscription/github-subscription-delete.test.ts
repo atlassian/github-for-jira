@@ -32,7 +32,7 @@ describe("delete-github-subscription", () => {
 		});
 
 		req = {
-			log: getLogger('test'),
+			log: getLogger("test"),
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost

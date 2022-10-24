@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { processInstallation } from "./installation";
-import nock from "nock";
+import { removeInterceptor } from "nock";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import pullRequestList from "fixtures/api/pull-request-list.json";
@@ -68,7 +68,7 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	describe('cloud', () => {
+	describe("cloud", () => {
 
 		beforeEach(async () => {
 			await new DatabaseStateCreator()
@@ -124,7 +124,7 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			removeInterceptor(interceptor);
 		});
 
 		it("should not sync if nodes do not contain issue keys", async () => {
@@ -141,11 +141,11 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
+			removeInterceptor(interceptor);
 		});
 	});
 
-	describe('server', () => {
+	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {

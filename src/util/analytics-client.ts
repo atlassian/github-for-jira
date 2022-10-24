@@ -10,9 +10,11 @@ const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
-export function sendAnalytics(eventType: "screen", attributes: { name: string } & Record<string, unknown>)
-export function sendAnalytics(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>)
-export function sendAnalytics(eventType: string, attributes: Record<string, unknown> = {}): void {
+export const sendAnalytics: {
+	(eventType: "screen", attributes: { name: string } & Record<string, unknown>);
+	(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>);
+} = (eventType: string, attributes: Record<string, unknown> = {}): void => {
+
 	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
@@ -77,10 +79,10 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 			logger.warn(`Cannot sendAnalytics: unknown eventType`);
 			break;
 	}
-}
+};
 
 const sendEvent = (promise: Promise<unknown>) => {
 	promise.catch((error) => {
 		logger.warn(`Cannot sendAnalytics event: ${error}`);
 	});
-}
+};

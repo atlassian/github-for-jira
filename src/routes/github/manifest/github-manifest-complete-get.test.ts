@@ -22,7 +22,7 @@ describe("github-manifest-complete-get", () => {
 			query: {
 				code: "ABCDEFGH"
 			},
-			log: getLogger('test'),
+			log: getLogger("test"),
 			session: {
 				temp: {
 					gheHost: "https://github.mydomain.com"

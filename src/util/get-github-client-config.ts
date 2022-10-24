@@ -45,7 +45,7 @@ const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | u
 		let skipOutboundProxy: boolean;
 		try {
 			skipOutboundProxy = skipList
-				.split(',')
+				.split(",")
 				.filter(hostname => !!hostname)
 				.map(hostname => hostname.trim())
 				.map(hostname => hostname.indexOf("://") >= 0 ? hostname : "http://" + hostname)
