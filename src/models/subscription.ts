@@ -154,7 +154,7 @@ export class Subscription extends Model {
 	}
 
 	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
-		const results = await this.sequelize?.query(
+		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
@@ -198,7 +198,7 @@ export class Subscription extends Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const results = await this.sequelize?.query(
+		const results = await this.sequelize!.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
