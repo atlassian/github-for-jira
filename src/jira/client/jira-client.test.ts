@@ -136,7 +136,8 @@ describe("Test getting a jira client", () => {
 			gitHubInstallationId: "12345"
 		}).reply(202);
 
-		expect(async ()=> await client.devinfo.installation.delete(12345)).not.toThrow();
+		const resp = await client.devinfo.installation.delete(12345);
+		expect(resp.map((r: {status: number}) => r.status)).toEqual([202, 202, 202]);
 
 		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
 	});
