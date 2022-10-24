@@ -89,11 +89,24 @@ describe("github-server-app-middleware", () => {
 			gitHubAppName: "My GitHub Server App",
 			gitHubBaseUrl: "http://myinternalserver.com",
 			gitHubClientId: "lvl.1234",
-			gitHubClientSecret: "myghsecret",
-			webhookSecret: "mywebhooksecret",
-			privateKey: "myprivatekey",
+			gitHubClientSecret: "encrypted:myghsecret",
+			webhookSecret: "encrypted:mywebhooksecret",
+			privateKey: "encrypted:myprivatekey",
 			installationId: JIRA_INSTALLATION_ID,
-			decrypt: async (s: any) => s
+			decrypt: async (s: any) => s,
+
+			getDecryptedGitHubClientSecret: () => {
+				return Promise.resolve("myghsecret");
+			},
+
+			getDecryptedPrivateKey: () => {
+				return Promise.resolve("myprivatekey");
+			},
+
+			getDecryptedWebhookSecret: () => {
+				return Promise.resolve("mywebhooksecret");
+			}
+
 		};
 
 		installation = {
@@ -119,10 +132,10 @@ describe("github-server-app-middleware", () => {
 			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
-			gitHubClientSecret: "gitHubClientSecret",
+			gitHubClientSecret: "myghsecret",
 			hostname: "http://myinternalserver.com",
-			privateKey: "privateKey",
-			webhookSecret: "webhookSecret"
+			privateKey: "myprivatekey",
+			webhookSecret: "mywebhooksecret"
 		});
 	});
 });
