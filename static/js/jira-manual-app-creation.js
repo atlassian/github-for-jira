@@ -62,7 +62,7 @@ const gitHubAppPostRequest = (data) => {
 		url: `/jira/connect/enterprise/app`,
 		data,
 		success: function() {
-			const child = openChildWindow(`/session/github/${response.data.uuid}/configuration?ghRedirect=to`);
+			const child = openChildWindow(`/session/github/${data.uuid}/configuration?ghRedirect=to`);
 			child.window.jiraHost = jiraHost;
 			child.window.jwt = token;
 		},
