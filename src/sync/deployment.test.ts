@@ -29,7 +29,7 @@ describe("sync/deployments", () => {
 		}
 	});
 
-	describe('cloud', () => {
+	describe("cloud", () => {
 
 		const createGitHubNock = (deploymentsResponse?) => {
 			githubNock
@@ -403,7 +403,7 @@ describe("sync/deployments", () => {
 		});
 	});
 
-	describe('server', () => {
+	describe("server", () => {
 
 		const createGitHubServerNock = (deploymentsResponse?) => {
 			gheNock

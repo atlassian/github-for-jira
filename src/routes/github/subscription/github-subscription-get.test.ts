@@ -27,7 +27,7 @@ describe("github-subscription-get", () => {
 		next = jest.fn();
 
 		req = {
-			log: getLogger('test'),
+			log: getLogger("test"),
 			params: {
 				installationId: gitHubInstallationId
 			},

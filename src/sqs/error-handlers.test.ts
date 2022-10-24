@@ -63,13 +63,13 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		function getJiraClientError(code: number) {
+		const getJiraClientError = (code: number) => {
 			return new JiraClientError("err", {
 				message: "",
 				name: "",
 				config: {}, isAxiosError: true, toJSON: () => ({})
 			}, code);
-		}
+		};
 
 		it("Unretryable and not an error on Jira 401", async () => {
 

@@ -29,7 +29,7 @@ export enum TokenType {
 }
 
 
-function extractJwtFromRequest(req: Request): string | undefined {
+const extractJwtFromRequest = (req: Request): string | undefined => {
 
 	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
@@ -62,24 +62,26 @@ function extractJwtFromRequest(req: Request): string | undefined {
 	}
 
 	return token;
-}
+};
 
-export function sendError(res: Response, code: number, msg: string): void {
+export const sendError = (res: Response, code: number, msg: string): void => {
 	res.status(code).json({
 		message: msg
 	});
-}
+};
 
-function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boolean): any {
+//disable eslint rule as decodeAsymmetric return any
+/*eslint-disable @typescript-eslint/no-explicit-any*/
+const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boolean): any => {
 	return decodeAsymmetric(
 		token,
 		publicKey,
 		getAlgorithm(token),
 		noVerify
 	);
-}
+};
 
-function verifyQsh(qsh: string, req: Request): boolean {
+const verifyQsh = (qsh: string, req: Request): boolean => {
 	// to get full path from express request, we need to add baseUrl with path
 	/**
 	 * TODO: Remove `decodeURIComponent` later
@@ -100,9 +102,9 @@ function verifyQsh(qsh: string, req: Request): boolean {
 		return qsh === expectedHash;
 	}
 	return true;
-}
+};
 
-export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response): boolean {
+export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, req: Request, res: Response): boolean => {
 	const expiry = verifiedClaims.exp;
 
 	// TODO: build in leeway?
@@ -133,7 +135,7 @@ export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenTy
 		sendError(res, 401, "JWT tokens without qsh are not allowed");
 		return false;
 	}
-}
+};
 
 const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
 	const token = extractJwtFromRequest(req);
@@ -159,7 +161,8 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 		return false;
 	}
 
-	let verifiedClaims;
+	/* eslint-disable @typescript-eslint/no-explicit-any*/
+	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (error) {

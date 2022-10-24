@@ -10,16 +10,16 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
-function mapStatus(status: string, merged_at?: string) {
+const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
 	if (status === "open") return "OPEN";
 	if (status === "closed" && merged_at) return "MERGED";
 	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
-}
+};
 
 // TODO: define arguments and return
-function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
+const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReview> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
@@ -42,7 +42,7 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 		// Returns the reviews' array with unique users
 		return acc;
 	}, []);
-}
+};
 
 // TODO: define arguments and return
 export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
