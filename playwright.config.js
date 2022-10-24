@@ -1,6 +1,6 @@
-import { type PlaywrightTestConfig, devices } from '@playwright/test';
+const { devices } = require("@playwright/test");
 
-const config: PlaywrightTestConfig = {
+module.exports = {
 	testDir: "./test/e2e",
 	testMatch: /.*\.e2e\.ts/,
 	outputDir: "./test/e2e/test-results",
@@ -30,4 +30,3 @@ const config: PlaywrightTestConfig = {
 		}*/
 	]
 };
-export default config;
