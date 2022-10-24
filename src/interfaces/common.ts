@@ -44,7 +44,7 @@ declare global {
 				githubToken?: string;
 				gitHubUuid?: string;
 				temp?:  {
-					[key: string]: any;
+					[key: string]: string;
 				}
 			};
 		}

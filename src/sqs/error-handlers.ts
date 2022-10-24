@@ -18,8 +18,8 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-
-export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: JiraClientError | Octokit.HookError | RateLimitingError | Error,
+type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Error;
+export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
 	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
@@ -39,8 +39,8 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: J
 /**
  * Error handler which sents failed webhook metric if the retry limit is reached
  */
-export function webhookMetricWrapper(delegate: ErrorHandler<any>, webhookName: string) {
-	return async (error, context) => {
+export const webhookMetricWrapper = (delegate: ErrorHandler<unknown>, webhookName: string) => {
+	return async (error: Error, context: SQSMessageContext<unknown>) => {
 		const errorHandlingResult = await delegate(error, context);
 
 		if (errorHandlingResult.isFailure && (!errorHandlingResult.retryable || context.lastAttempt)) {
@@ -50,7 +50,7 @@ export function webhookMetricWrapper(delegate: ErrorHandler<any>, webhookName: s
 
 		return errorHandlingResult;
 	};
-}
+};
 
 const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	if (error instanceof JiraClientError &&
@@ -76,11 +76,11 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 	return undefined;
 };
 
-function maybeHandleRateLimitingError(error: Error): ErrorHandlingResult | undefined {
+const maybeHandleRateLimitingError = (error: Error): ErrorHandlingResult | undefined => {
 	if (error instanceof RateLimitingError) {
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 	}
 
 	return undefined;
-}
+};

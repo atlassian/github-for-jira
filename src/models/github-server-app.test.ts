@@ -289,21 +289,21 @@ describe("GitHubServerApp", () => {
 		});
 	});
 
-	it('getDecryptedPrivateKey should return decrypted value', async () => {
+	it("getDecryptedPrivateKey should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		expect(await savedGitHubServerApp!.privateKey).toEqual("encrypted:myprivatekey");
 		expect(await savedGitHubServerApp!.getDecryptedPrivateKey()).toEqual("myprivatekey");
 	});
 
-	it('getDecryptedGitHubClientSecret should return decrypted value', async () => {
+	it("getDecryptedGitHubClientSecret should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		expect(await savedGitHubServerApp!.gitHubClientSecret).toEqual("encrypted:myghsecret");
 		expect(await savedGitHubServerApp!.getDecryptedGitHubClientSecret()).toEqual("myghsecret");
 	});
 
-	it('getDecryptedWebhookSecret should return decrypted value', async () => {
+	it("getDecryptedWebhookSecret should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		expect(await savedGitHubServerApp!.webhookSecret).toEqual("encrypted:mywebhooksecret");
