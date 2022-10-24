@@ -243,12 +243,14 @@ describe("Subscription", () => {
 				const repo00Sub = await Subscription.findForRepoNameAndOwner("repo-0-0", "atlassian", jiraHost);
 				const repo1Sub = await Subscription.findForRepoNameAndOwner("repo-1", "atlassian", jiraHost);
 				const repo2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian", jiraHost);
-				const repoRandomSub = await Subscription.findForRepoNameAndOwner("repo-unknown", "atlassian", jiraHost);
-				const repoRandom2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian2", jiraHost);
 				expect(repo0Sub?.jiraClientKey).toBe("myClientKey");
 				expect(repo00Sub?.jiraClientKey).toBe("myClientKey");
 				expect(repo1Sub?.jiraClientKey).toBe("myClientKey_ghe_1");
 				expect(repo2Sub?.jiraClientKey).toBe("myClientKey_ghe_2");
+			});
+			it("should return undefined for unknown given repo name and owner", async () => {
+				const repoRandomSub = await Subscription.findForRepoNameAndOwner("repo-unknown", "atlassian", jiraHost);
+				const repoRandom2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian2", jiraHost);
 				expect(repoRandomSub?.jiraClientKey).toBe(undefined);
 				expect(repoRandom2Sub?.jiraClientKey).toBe(undefined);
 			});

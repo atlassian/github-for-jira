@@ -37,7 +37,7 @@ describe("github-create-branch", () => {
 		res = {
 			sendStatus: jest.fn(),
 			status: jest.fn(),
-			json: jest.fn(),
+			send: jest.fn(),
 			locals: {
 				jiraHost,
 				githubToken: "abc-token",
@@ -101,7 +101,7 @@ describe("github-create-branch", () => {
 		await GithubCreateBranchPost(req as any, res as any);
 
 		expect(res.status).toHaveBeenCalledWith(403);
-		expect(res.json).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
+		expect(res.send).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
 	});
 
 	it("Should return 403 errors with URL to GitHub app settings for a different org", async () => {
@@ -123,7 +123,7 @@ describe("github-create-branch", () => {
 		await GithubCreateBranchPost(req as any, res as any);
 
 		expect(res.status).toHaveBeenCalledWith(403);
-		expect(res.json).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/organizations/ARC/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
+		expect(res.send).toBeCalledWith("We couldn’t create this branch, possibly because this GitHub repository hasn't been configured to your Jira site. <a href=\"omega/organizations/ARC/settings/installations/15\" target=\"_blank\">Allow access to this repository.</a>");
 	});
 
 });
