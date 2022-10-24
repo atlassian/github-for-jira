@@ -79,7 +79,7 @@ export function sendAnalytics(eventType: string, attributes: Record<string, unkn
 	}
 }
 
-function sendEvent(promise: Promise<unknown>) {
+const sendEvent = (promise: Promise<unknown>) => {
 	promise.catch((error) => {
 		logger.warn(`Cannot sendAnalytics event: ${error}`);
 	});

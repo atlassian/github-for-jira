@@ -42,7 +42,7 @@
 		"no-unused-vars": "off",
 		"no-console": "warn",
 		"quotes": [
-			"warn",
+			"off",
 			"double",
 			{
 				"avoidEscape": true,
@@ -62,5 +62,11 @@
 		"func-style" : ["warn", "expression"],
 		"require-await": "off",
 		"@typescript-eslint/no-floating-promises": ["error"]
-	}
+	},
+	"overrides": [{
+		"files": [ "src/**/*.test.ts" ],
+		"rules": {
+			"@typescript-eslint/no-explicit-any": "off"
+		}
+	}]
 }

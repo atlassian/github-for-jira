@@ -9,10 +9,20 @@ const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
 
+type ChunkData = {
+	msg?: string;
+	filterHttpRequests?: boolean;
+	level?: number | undefined;
+	/* eslint-disable @typescript-eslint/no-explicit-any */
+	[key:string]: any
+}
+
+type Callback = (error?: Error | null) => void;
+
 //  See https://github.com/probot/probot/issues/1577
-export const filterHttpRequests = (record: Record<string, any>) => {
+export const filterHttpRequests = (record: ChunkData) => {
 	const { msg, filterHttpRequests } = record;
-	return !!filterHttpRequests && /(GET|POST|DELETE|PUT|PATCH)/.test(msg);
+	return !!filterHttpRequests && /(GET|POST|DELETE|PUT|PATCH)/.test(msg || "");
 };
 
 class RawLogStream extends Writable {
@@ -23,7 +33,7 @@ class RawLogStream extends Writable {
 		this.writeStream = bformat({ outputMode, levelInString: true });
 	}
 
-	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
 
 		// Skip unwanted logs
 		if (filterHttpRequests(record)) {
@@ -38,12 +48,12 @@ class RawLogStream extends Writable {
 
 export class SafeRawLogStream extends RawLogStream {
 
-	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
 		const hashedRecord = this.hashSensitiveData(record);
 		await super._write(hashedRecord, encoding, next);
 	}
 
-	private hashSensitiveData(record: Record<string, any>): Record<string, string | undefined> {
+	private hashSensitiveData(record: ChunkData): Record<string, string | undefined> {
 		const recordClone = { ...record };
 
 		Object.keys(recordClone).forEach(key => {
@@ -58,7 +68,7 @@ export class SafeRawLogStream extends RawLogStream {
 
 export class UnsafeRawLogStream extends RawLogStream {
 
-	public async _write(record: Record<string, any>, encoding: BufferEncoding, next): Promise<void> {
+	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
 
 		// Skip any log above DEBUG level
 		if (!record.level || isNaN(record.level) || record.level > DEBUG) {
