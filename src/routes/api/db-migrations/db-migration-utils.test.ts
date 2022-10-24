@@ -44,7 +44,7 @@ describe("DB migration utils", () => {
 				});
 		});
 		it("should pass test when it is last script is local db folder", async () => {
-			await validateScriptLocally(MIGRATION_SCRIPT_LAST);
+			expect(async () => await validateScriptLocally(MIGRATION_SCRIPT_LAST)).not.toThrow();
 		});
 		it("should throw error when it is not last script is db folder", async () => {
 			let err = null;

@@ -15,11 +15,11 @@ enum ErrorResponseCode {
 	CANNOT_CONNECT = "GHE_ERROR_CANNOT_CONNECT"
 }
 
-function isInteger(n: string) {
+const isInteger = (n: string) => {
 	return !isNaN(Number(n));
-}
+};
 
-function sendErrorMetricAndAnalytics(jiraHost: string, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) {
+const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) => {
 	const errorCodeAndStatusObj: { errorCode: string, status?: string } = { errorCode };
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
@@ -31,7 +31,7 @@ function sendErrorMetricAndAnalytics(jiraHost: string, errorCode: ErrorResponseC
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
-}
+};
 
 export const JiraConnectEnterprisePost = async (
 	req: Request,

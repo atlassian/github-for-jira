@@ -65,7 +65,7 @@
 		"jest/expect-expect": [
       "error",
       {
-        "assertFunctionNames": ["expect", "supertest.**.expect"]
+        "assertFunctionNames": ["expect", "supertest.**.expect", "*.expect"]
       }
     ]
 	},
