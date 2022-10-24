@@ -130,7 +130,7 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
+		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
 		return { webhookSecret, gitHubServerApp };
 	}
 	if (!envVars.WEBHOOK_SECRET) {
