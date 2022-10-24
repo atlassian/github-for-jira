@@ -1,0 +1,21 @@
+.noConfiguration__container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.noConfiguration__content {
+  display: flex;
+}
+
+.noConfiguration__content p {
+  max-width: 420px;
+  font-size: 14px;
+  color: #253858;
+  margin: 16px 0;
+}
+
+.noConfiguration__content img {
+  margin-left: 60px;
+}

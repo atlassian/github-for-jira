@@ -49,7 +49,7 @@ describe("GitHub Create Branch Get", () => {
 				.reply(200);
 			githubNock
 				// .post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: 'UPDATED_AT' } })
-				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: 'UPDATED_AT' } })
+				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: "UPDATED_AT" } })
 				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
 			githubNock
 				.get("/user")

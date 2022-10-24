@@ -34,7 +34,7 @@ export const statsd = new StatsD({
  *
  * @returns {function(): number} A function to call to get the duration since this function was created
  */
-function hrtimer() {
+const hrtimer = () => {
 	const start = process.hrtime();
 
 	return () => {
@@ -43,7 +43,7 @@ function hrtimer() {
 		const nanoseconds = durationComponents[1];
 		return seconds * 1000 + nanoseconds / 1e6;
 	};
-}
+};
 
 /**
  * Returns a middleware function which produce duration and requests count metrics
@@ -91,13 +91,13 @@ export const elapsedTimeMetrics = (
 /**
  * Async Function Timer using Distributions
  */
-export function asyncDistTimer(
+export const asyncDistTimer = (
 	func: (...args: never[]) => Promise<unknown>,
 	stat: string | string[],
 	sampleRate?: number,
 	tags?: Tags,
 	callback?: StatsCb
-) {
+) => {
 	return (...args: never[]): Promise<unknown> => {
 		const end = hrtimer();
 		const p = func(...args);
@@ -107,4 +107,4 @@ export function asyncDistTimer(
 		return p;
 	};
 
-}
+};

@@ -2,7 +2,7 @@ import { Installation } from "~/src/models/installation";
 import { GithubManifestCompleteGet } from "~/src/routes/github/manifest/github-manifest-complete-get";
 import { v4 as UUID } from "uuid";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-
+import { getLogger } from "config/logger";
 
 const createGheNockPost = (url, status, response) => {
 	gheApiNock
@@ -22,6 +22,7 @@ describe("github-manifest-complete-get", () => {
 			query: {
 				code: "ABCDEFGH"
 			},
+			log: getLogger("test"),
 			session: {
 				temp: {
 					gheHost: "https://github.mydomain.com"

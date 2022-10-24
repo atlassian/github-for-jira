@@ -148,7 +148,7 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
+	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
 	// Separating the subscriptions for GH cloud and GHE servers
 	const ghCloudSubscriptions = subscriptions.filter(subscription => !subscription.gitHubAppId);
@@ -162,7 +162,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	} = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
 
 	// Connections for GH Enterprise
-	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
+	const gheServersWithConnections = await Promise.all(gheServers.map(async (server: GitHubServerApp) => {
 		const subscriptionsForServer = gheServerSubscriptions.filter(subscription => subscription.gitHubAppId === server.id);
 		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptionsForServer, req, server.id);
 

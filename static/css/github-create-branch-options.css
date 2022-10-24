@@ -1,6 +1,6 @@
 .gitHubCreateBranchOptions {
+  display: none;
   margin: 10% auto;
-  max-width: 480px;
 }
 
 #createBranchOptionsForm .field-group {
@@ -79,4 +79,8 @@
 
 .gitHubCreateBranchOptions__serversContainer {
   display: none;
+}
+
+.jiraSelectGitHubProduct__selectServerInstance {
+  margin-top: 16px;
 }

@@ -12,8 +12,8 @@
     referrerpolicy="no-referrer"
   />
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
-  <link rel="stylesheet" href="/public/css/github-create-branch.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/github-create-branch.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
@@ -87,9 +87,9 @@
           />
     </div>
 
-        <div class="gitHubCreateBranch__serverError">
-          {{> server-error-message-box }}
-        </div>
+    <div class="gitHubCreateBranch__serverError">
+      {{> server-error-message-box }}
+    </div>
     <div class="gitHubCreateBranch__actions">
       <button class="aui-button aui-button-primary skeleton" id="createBranchBtn" type="submit">Create branch</button>
     </div>

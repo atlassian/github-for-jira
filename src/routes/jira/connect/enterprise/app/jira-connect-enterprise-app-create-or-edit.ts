@@ -14,10 +14,20 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 		const uuid = req.params.uuid;
 
 		if (uuid) {
-			const app = await GitHubServerApp.findForUuid(uuid);
+			// TODO: add tests!!!
+			const app = await GitHubServerApp.getForUuidAndInstallationId(uuid, res.locals.installation.id);
+			if (!app) {
+				req.log.warn("Cannot find the app");
+				res.status(404).send({
+					error: "The app is not found"
+				});
+				return;
+			}
 			config = {
 				app,
-				serverUrl: app?.gitHubBaseUrl,
+				decryptedWebhookSecret: await app.getDecryptedWebhookSecret(),
+				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(),
+				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
 				uuid,
 				csrfToken: req.csrfToken()

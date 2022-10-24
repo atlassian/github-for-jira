@@ -151,7 +151,6 @@ describe("Jira Utils", () => {
 				privateKey: "myprivatekey",
 				installationId: 2
 			};
-
 			mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(payload);
 			expect(await isGitHubCloudApp(1)).toBeFalsy();
 		});

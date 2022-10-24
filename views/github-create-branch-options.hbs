@@ -11,58 +11,85 @@
   <link rel="stylesheet" href="/public/css/github-create-branch-options.css" media="all" />
   <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
+  <link
+    rel="stylesheet"
+    href="/public/css/jira-select-github-product.css"
+    media="all"
+  />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
-<body>
-  <section class="gitHubCreateBranchOptions">
-    <div class="headerImage">
-      <img src="/public/assets/jira-and-github.png" alt="Jira and GitHub logos" />
-    </div>
-    <div class="gitHubCreateBranchOptions__title">
-      <div class="gitHubCreateBranchOptions__header">Create GitHub Branch</div>
-      <div class="gitHubCreateBranchOptions__subHeader">
-        Creating a branch for <b>{{issueKey}}</b>
-      </div>
-    </div>
 
-    <form id="createBranchOptionsForm" class="aui top-label" data-has-cloud-server="{{servers.hasCloudServer}}" data-ghe-servers-count="{{servers.gheServerInfos.length}}">
+<body class="aui-page-hybrid p-6">
+    <div class="gitHubCreateBranchOptions jiraSelectGitHubProduct"
+         data-has-cloud-server="{{servers.hasCloudServer}}"
+         data-ghe-servers-count="{{servers.gheServerInfos.length}}">
+         <section class="jiraSelectGitHubProduct__content">
+            <div class="headerImage">
+                <img src="/public/assets/jira-github-connection.svg" class="headerImageLogo" alt="Jira and GitHub logos" />
+            </div>
+            <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
+            <div class="jiraSelectGitHubProduct__options__container">
+                <h2 class="jiraSelectGitHubProduct__options__prompt">Which GitHub product would you like to use?</h2>
 
-      <div class="field-group">
-        <div class="gitHubCreateBranchOptions__optionContainer">
-           {{#if servers.hasCloudServer}}
-            <button class="aui-button gitHubCreateBranchOptions__option gitHubCreateBranchOptions__selected" id="gitHubCreateBranchOptions__cloud">
-              <img src="/public/assets/cloud.svg" class="gitHubCreateBranchOptions__Icon" alt="">
-              GitHub Cloud
-            </button>
-          {{/if}}
-          <button class="aui-button gitHubCreateBranchOptions__option" id="gitHubCreateBranchOptions__enterprise">
-            <img src="/public/assets/server.svg" class="gitHubCreateBranchOptions__Icon" alt="">
-            GitHub Enterprise Server
-          </button>
-        </div>
-      </div>
-      <div class="field-group gitHubCreateBranchOptions__serversContainer">
-        <aui-label for="server">GitHub Enterprise Server instance</aui-label>
-        <select id="ghServers" name="server" class="full-width-field" placeholder="Select a server">
-          {{#each servers.gheServerInfos}}
-          <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
-          {{/each}}
-        </select>
+                <div class="jiraSelectGitHubProduct__options__cardsContainer">
+                    {{> select-github-product-card
+                        cardTitle='GitHub Cloud'
+                        cardContent='Select this option if the URL of your GitHub organization starts with "https://github.com".'
+                        cardImagePath='/public/assets/cloud.svg'
+                        cardImageAlt='Cloud'
+                        gitHubProduct='cloud'
+                        verticalLayout=false
+                    }}
+                    {{> select-github-product-card
+                        cardTitle='GitHub Enterprise Server'
+                        cardContent='Select this option if you use the on-premise version of GitHub installed into your own infrastructure.'
+                        cardImagePath='/public/assets/server.svg'
+                        cardImageAlt='Server'
+                        gitHubProduct='server'
+                        verticalLayout=false
+                    }}
+                </div>
+            </div>
+
+            <div class="jiraSelectGitHubProduct__selectServerInstance">
+                 <form class="aui jiraSelectGitHubProduct__selectServerInstance__form">
+                     <div class="field-group" id="serverInstance__fieldGroup">
+                        <aui-label for="serverInstance" id="serverInstance__label">Select GitHub Enterprise Server instance</aui-label>
+                        <select id="ghServers" name="serverInstance" class="full-width-field">
+                          {{#each servers.gheServerInfos}}
+                            <option value="{{uuid}}">{{baseUrl}}/{{appName}}</option>
+                          {{/each}}
+                        </select>
+                     </div>
+                 </form>
+            </div>
+
+            <div class="jiraSelectGitHubProduct__actionBtn__container left-aligned">
+                <button
+                    class="aui-button gitHubCreateBranchOptions__actionBtn optionBtn"
+                    aria-disabled="true"
+                    disabled
+                >
+                    Next
+                </button>
+            </div>
+          </section>
       </div>
 
-      <div class="gitHubCreateBranchOptions__actions">
-        <button class="aui-button aui-button-primary" id="nextBtn" type="submit">Next</button>
-      </div>
-    </form>
-  </section>
+  <div class="gitHubCreateBranchOptions__loading">
+    {{> loading-screen
+        title="Connecting to GitHub"
+    }}
+  </div>
 
   <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
+  <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>
   <script src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
     crossorigin="anonymous" referrerpolicy="no-referrer" nonce="{{nonce}}"></script>
   <script src="/public/js/github-create-branch-options.js" nonce="{{nonce}}"></script>
-  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 </body>
 
 </html>

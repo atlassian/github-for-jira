@@ -59,8 +59,8 @@ describe("BranchhWebhookHandler", () => {
 			}));
 		});
 
-		describe('deleteBranchWebhookHandler', () => {
-			it('should transform repo id', async () => {
+		describe("deleteBranchWebhookHandler", () => {
+			it("should transform repo id", async () => {
 				const jiraClient = {
 					devinfo: {
 						branch: {
@@ -83,7 +83,7 @@ describe("BranchhWebhookHandler", () => {
 				repository: {
 					id: 1
 				},
-				ref: 'TEST-1'
+				ref: "TEST-1"
 			},
 			gitHubAppConfig: cloud ? {
 				uuid: undefined,
