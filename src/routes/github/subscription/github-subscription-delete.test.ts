@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import { GithubSubscriptionDelete } from "./github-subscription-delete";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
+import { getLogger } from "config/logger";
 
 jest.mock("models/github-server-app");
 
@@ -31,7 +32,7 @@ describe("delete-github-subscription", () => {
 		});
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn(), debug: jest.fn() }) },
+			log: getLogger('test'),
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost

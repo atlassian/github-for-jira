@@ -36,7 +36,7 @@
       <section class="jiraSelectGitHubProduct__content">
         <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
         <div class="jiraSelectGitHubProduct__options__container">
-            <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub version do you want to connect?</h2>
+            <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub product do you want to connect?</h2>
 
             <div class="jiraSelectGitHubProduct__options__cardsContainer">
                 {{> select-github-product-card
@@ -45,6 +45,7 @@
                     cardImagePath='/public/assets/cloud.svg'
                     cardImageAlt='Cloud'
                     gitHubProduct='cloud'
+                    verticalLayout=true
                 }}
                 {{> select-github-product-card
                     cardTitle='GitHub Enterprise Server'
@@ -52,11 +53,12 @@
                     cardImagePath='/public/assets/server.svg'
                     cardImageAlt='Server'
                     gitHubProduct='server'
+                    verticalLayout=true
                 }}
             </div>
         </div>
 
-        <div class="jiraSelectGitHubProduct__actionBtn__container">
+        <div class="jiraSelectGitHubProduct__actionBtn__container centered">
             <button
                 class="aui-button jiraSelectGitHubProduct__actionBtn optionBtn"
                 aria-disabled="true"

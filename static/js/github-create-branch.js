@@ -1,36 +1,41 @@
 let queriedRepos = [];
 let totalRepos = [];
+let uuid;
 
 $(document).ready(() => {
-  // Fetching the list of default repos
+
+	// Fetching the list of default repos
   totalRepos = $(".default-repos").map((_, option) => ({
     id: $(option).html(),
     text: $(option).html()
   })).toArray();
 
-  $("#ghServers").auiSelect2();
-
+  uuid = $("#createBranchForm").attr("data-ghe-uuid");
+  let url = "/github/repository";
+  if(uuid) {
+    url = `/github/${uuid}/repository`;
+  }
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
+    formatNoMatches: () => "No search results",
     dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
-      url: "/github/repository",
+      url,
       data: term => ({
         repoName: term
       }),
       results: function (response) {
         const { repositories } = response;
         repositories.forEach(repository => {
-          if (queriedRepos.filter(repo => repo.id === repository.repo.nameWithOwner).length < 1) {
+          if (queriedRepos.filter(repo => repo.id === repository?.full_name).length < 1) {
             const additionalRepo = {
-              id: repository.repo.nameWithOwner,
-              text: repository.repo.nameWithOwner
+              id: repository.full_name,
+              text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
@@ -59,6 +64,11 @@ $(document).ready(() => {
     }
   })
     .on("select2-close", () => {
+      if ($("#ghRepo").val().length) {
+        $(".no-repo-container").hide();
+      } else {
+        $(".no-repo-container").show();
+      }
       showLoaderInsideSelect2Dropdown("ghRepo", false);
     });
 
@@ -66,6 +76,10 @@ $(document).ready(() => {
     placeholder: "Select a branch",
     data: []
   });
+
+	$("#ghParentBranch").on("change", function (e) {
+		validateSourceBranch(e.val);
+	});
 
   $("#ghRepo").on("change", () => {
     loadBranches();
@@ -78,17 +92,30 @@ $(document).ready(() => {
     }
   });
 
-  $("#cancelBtn").click(function (event) {
-    event.preventDefault();
-    window.close();
-  });
-
   $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
   });
 
+  $("#openGitBranch").click(function () {
+    const repo = getRepoDetails();
+    window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
+  });
 });
+
+
+const validateSourceBranch = (branchName) => {
+	hideValidationErrorMessage("ghParentBranch");
+	const repo = getRepoDetails();
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+
+	$.get(url)
+		.fail((err) => {
+			if (err.status === 404) {
+				showValidationErrorMessage("ghParentBranch", "Could not find this branch on GitHub.");
+			}
+		});
+}
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);
@@ -96,9 +123,13 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+  if(uuid) {
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+  }
   $.ajax({
     type: "GET",
-    url: `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`,
+    url,
     success: (response) => {
       const { branches, defaultBranch } = response;
       const allBranches = branches.map((item) => ({
@@ -128,7 +159,7 @@ const loadBranches = () => {
       showLoaderOnSelect2Input("ghParentBranch", false);
     },
     error: () => {
-      showErrorMessage(["Oops, failed to fetch branches!"]);
+      showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
       toggleSubmitDisabled(false);
       showLoaderOnSelect2Input("ghParentBranch", false);
     }
@@ -156,28 +187,61 @@ const showValidationErrorMessage = (id, message) => {
   }
 };
 
+const hideValidationErrorMessage = (id) => {
+  const DOM = $(`#s2id_${ id }`);
+  DOM.find("a.select2-choice").removeClass("has-errors");
+	DOM.find(".error-message").remove();
+};
+
 const createBranchPost = () => {
-  const url = "/github/create-branch";
+  let url = "/github/create-branch";
+  if(uuid) {
+    url = `/github/${uuid}/create-branch`;
+  }
   const repo = getRepoDetails();
+  const newBranchName = $("#branchNameText").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
     sourceBranchName: $("#ghParentBranch").select2("val"),
-    newBranchName: $("#branchNameText").val(),
+    newBranchName,
     _csrf: $("#_csrf").val(),
   };
   toggleSubmitDisabled(true);
   hideErrorMessage();
 
+  showLoading();
   $.post(url, data)
     .done(() => {
-      // On success, we close the tab so the user returns to original screen
-      window.close();
+      showSuccessScreen(repo);
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage(error.responseJSON);
+      showErrorMessage(error.responseJSON.error);
+      hideLoading();
     });
+};
+
+const showLoading = () => {
+  $("#createBranchForm").hide();
+  $(".headerImageLogo").addClass("headerImageLogo-lg");
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
+};
+
+const showSuccessScreen = (repo) => {
+  $(".gitHubCreateBranch__spinner").hide();
+  $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
+  $(".gitHubCreateBranch__header").html("GitHub branch created");
+  $(".gitHubCreateBranch__subHeader").html(`Branch <b>${$("#branchNameText").val()}</b> created in ${repo.owner}/${repo.name}`);
+  $(".gitHubCreateBranch__createdLinks").css("display", "flex");
+};
+
+const hideLoading = () => {
+  $("#createBranchForm").show();
+  $(".headerImageLogo").removeClass("headerImageLogo-lg");
+  $(".gitHubCreateBranch__spinner").hide();
 };
 
 const toggleSubmitDisabled = (bool) => {
@@ -195,10 +259,7 @@ const getRepoDetails = () => {
 
 const showErrorMessage = (messages) => {
   $(".gitHubCreateBranch__serverError").show();
-  let errorList = '<ul class="m-1">';
-  messages.map(message => errorList +=  `<li>${message}</li>`);
-  errorList += '</ul>';
-  $(".errorMessageBox__message").empty().append(`<div>Failed to create branch. This can be caused by one of the following reasons:</div>${errorList}`);
+  $(".errorMessageBox__message").empty().append(`${messages}`);
 };
 
 const hideErrorMessage = () => {

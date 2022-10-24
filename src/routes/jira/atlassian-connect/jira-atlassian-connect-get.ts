@@ -68,6 +68,14 @@ const modules = {
 	},
 	generalPages: [
 		{
+			key: "create-branch-options",
+			name: {
+				value: "GitHub Create Branch"
+			},
+			url: `/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}`,
+			location: "none"
+		},
+		{
 			key: "github-select-product-page",
 			name: {
 				value: "GitHub Select Product"
@@ -168,7 +176,7 @@ const addCreateBranchAction = async (modules) => {
 	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/github/create-branch?issue_key={issue.key}&issue_summary={issue.summary}`
+				templateUrl: `/plugins/servlet/ac/${key}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
 			}
 		};
 	}

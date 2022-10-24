@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import axios from "axios";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { Installation } from "~/src/models/installation";
 import { Errors } from "config/errors";
+import { createAnonymousClient } from "utils/get-github-client-config";
 
 export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
@@ -18,10 +18,13 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!installation) {
 		throw new Error(`No Installation found for ${jiraHost}`);
 	}
-	// complete GitHub app manifest flow
-	const apiUrl = `${gheHost}/api/v3/app-manifests/${req.query.code}/conversions`;
+	if (!req.query.code) {
+		throw new Error("No code was provided");
+	}
+
 	try {
-		const gitHubAppConfig = (await axios.post(apiUrl, {}, { headers: { Accept: "application/vnd.github.v3+json" } })).data;
+		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, req.log);
+		const gitHubAppConfig = await gitHubClient.createGitHubApp('' + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,

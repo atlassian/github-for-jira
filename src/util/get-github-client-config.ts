@@ -6,7 +6,6 @@ import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { envVars } from "~/src/config/env";
-import * as PrivateKey from "probot/lib/private-key";
 import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
@@ -24,7 +23,7 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number, logger: Logger) {
+export async function getGitHubApiUrl(jiraHost: string, gitHubAppId: number | undefined, logger: Logger) {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.apiUrl}`
@@ -57,9 +56,11 @@ async function calculateProxyBaseUrl(jiraHost: string, gitHubBaseUrl: string | u
 			skipOutboundProxy = false;
 		}
 		if (skipOutboundProxy) {
+			logger.warn("Skip outbound proxy");
 			return undefined;
 		}
 	}
+	logger.info("Use outbound proxy");
 	return envVars.PROXY;
 }
 
@@ -89,15 +90,13 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
-		privateKey: await gitHubServerApp.decrypt("privateKey")
+		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
+		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
 	}
 );
 
 const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
-	const privateKey = await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
-		? await keyLocator(undefined)
-		: PrivateKey.findPrivateKey();
+	const privateKey = await keyLocator(undefined);
 
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
@@ -125,9 +124,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  */
 export async function createAppClient(logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)
-		? new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey)
-		: new GitHubAppClient(gitHubClientConfig, logger);
+	return new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 }
 
 /**
@@ -153,4 +150,9 @@ export async function createUserClient(githubToken: string, jiraHost: string, lo
 
 export async function createAnonymousClient(gitHubBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> {
 	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
+}
+
+export async function createAnonymousClientByGitHubAppId(gitHubAppId: number, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> {
+	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+	return new GitHubAnonymousClient(config);
 }

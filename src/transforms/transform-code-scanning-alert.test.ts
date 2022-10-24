@@ -1,29 +1,87 @@
 import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
-import { Context } from "probot/lib/context";
-import { wrapLogger } from "probot/lib/wrap-logger";
-import { getLogger } from "./../config/logger";
-import { GitHubAPI } from "probot";
+import { getLogger } from "config/logger";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-const buildContext = (payload): Context => {
-	return new Context({
+jest.mock("config/feature-flags");
+
+const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContext => {
+	return new WebhookContext({
 		"id": "hi",
 		"name": "hi",
-		"payload": payload
-	}, GitHubAPI(), wrapLogger(getLogger("logger")));
+		"payload": payload,
+		gitHubAppConfig: gitHubAppConfig,
+		log: getLogger("foo")
+	});
+};
+
+const turnOnGHESFF = () => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.mockResolvedValue(true);
 };
 
 describe("code_scanning_alert transform", () => {
-	Date.now = jest.fn(() => 12345678);
+	beforeEach(() => {
+		Date.now = jest.fn(() => 12345678);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_REPO_ID_TRANSFORMER,
+			expect.anything()
+		).mockResolvedValue(true);
+	});
 	const gitHubInstallationId = 1234;
 	const jiraHost = "testHost";
 
-	it("code_scanning_alert is transformed into a remote link", async () => {
+	it("code_scanning_alert is transformed into a remote link for Cloud", async () => {
 		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId, jiraHost);
 		expect(remoteLinks).toMatchObject({
 			remoteLinks: [{
 				schemaVersion: "1.0",
 				id: "403470608-272",
+				updateSequenceNumber: 12345678,
+				displayName: "Alert #272",
+				description: "Reflected cross-site scripting",
+				url: "https://github.com/TerryAg/github-jira-test/security/code-scanning/272",
+				type: "security",
+				status: {
+					appearance: "removed",
+					label: "open"
+				},
+				lastUpdated: "2021-09-06T06:00:00Z",
+				associations: [{
+					associationType: "issueKeys",
+					values: ["GH-9"]
+				}]
+			}]
+		});
+	});
+
+	it("code_scanning_alert is transformed into a remote link for server", async () => {
+		turnOnGHESFF();
+
+		const builderOutput = await new DatabaseStateCreator()
+			.forServer()
+			.create();
+		const gitHubServerApp = builderOutput.gitHubServerApp!;
+
+		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload, {
+			gitHubAppId: gitHubServerApp.id,
+			appId: gitHubServerApp.appId,
+			clientId: gitHubServerApp.gitHubClientId,
+			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/api",
+			uuid: gitHubServerApp.uuid
+		}), gitHubInstallationId, jiraHost);
+
+		expect(remoteLinks).toMatchObject({
+			remoteLinks: [{
+				schemaVersion: "1.0",
+				id: "6769746875626d79646f6d61696e636f6d-403470608-272",
 				updateSequenceNumber: 12345678,
 				displayName: "Alert #272",
 				description: "Reflected cross-site scripting",

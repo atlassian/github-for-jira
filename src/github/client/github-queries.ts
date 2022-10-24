@@ -32,9 +32,7 @@ export interface GetRepositoriesResponse {
 }
 
 export interface SearchedRepositoriesResponse {
-	search: {
-		repos: RepositoryNode[]
-	};
+	items: RepositoryNode[]
 }
 
 export interface UserOrganizationsResponse {
@@ -46,9 +44,9 @@ export interface UserOrganizationsResponse {
 	}
 }
 
-export const GetRepositoriesQuery = `query ($per_page: Int!, $cursor: String) {
+export const GetRepositoriesQuery = `query ($per_page: Int!, $order_by: RepositoryOrderField = CREATED_AT, $cursor: String) {
   viewer {
-    repositories(first: $per_page, after: $cursor) {
+    repositories(first: $per_page, after: $cursor, orderBy: {field: $order_by, direction: DESC}) {
       totalCount
       pageInfo {
         endCursor
@@ -401,7 +399,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
 
 export const SearchRepositoriesQuery = `query($query_string: String!, $per_page: Int!, $cursor: String) {
   search(
-    type: REPOSITORY, 
+    type: REPOSITORY,
     query: $query_string,
     first: $per_page,
     after: $cursor
@@ -418,8 +416,8 @@ export const SearchRepositoriesQuery = `query($query_string: String!, $per_page:
 }
 `;
 
-export const UserOrganizationsQuery = `query($first: Int!) { 
-  viewer { 
+export const UserOrganizationsQuery = `query($first: Int!) {
+  viewer {
     login
     organizations(first: $first) {
       nodes {

@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
 import {
@@ -15,6 +15,7 @@ import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -170,7 +171,7 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 // Returns undefined when there are no issue ids to map.
 const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	issueIds: string[],
-	repositoryId: string,
+	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[]
 ): JiraAssociation[] | undefined => {
 
@@ -192,7 +193,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
-					repositoryId: repositoryId
+					repositoryId: transformedRepositoryId
 				};
 			});
 		if (commitKeys.length) {
@@ -208,7 +209,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
@@ -226,7 +227,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
 	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		payload.repository.id.toString(),
+		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries
 	);
 

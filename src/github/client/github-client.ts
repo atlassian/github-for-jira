@@ -19,7 +19,11 @@ export interface GitHubConfig {
  */
 export class GitHubClient {
 	protected readonly logger: Logger;
-	protected readonly baseUrl: string;
+
+	// For GHES must always be equal to gitHubBaseUrl::gitHubBaseUrl
+	// For Cloud must always be equal to GITHUB_CLOUD_BASEURL
+	public readonly baseUrl: string;
+
 	protected readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;

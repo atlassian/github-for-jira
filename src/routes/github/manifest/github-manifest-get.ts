@@ -28,7 +28,7 @@ const getAppManifest = () => {
 		"default_permissions": {
 			"actions": "read",
 			"security_events": "read",
-			"contents": "read",
+			"contents": "write",
 			"deployments": "read",
 			"issues": "write",
 			"metadata": "read",

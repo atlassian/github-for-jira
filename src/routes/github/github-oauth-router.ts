@@ -4,10 +4,10 @@ import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -85,26 +85,35 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
 
-	try {
-		const response = await axios.get(
-			`${hostname}/login/oauth/access_token`,
-			{
-				params: {
-					client_id: clientId,
-					client_secret: gitHubClientSecret,
-					code,
-					state
-				},
-				headers: {
-					accept: "application/json",
-					"content-type": "application/json"
-				},
-				responseType: "json"
-			}
-		);
 
-		// Saving it to session be used later
-		req.session.githubToken = response.data.access_token;
+	try {
+
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
+				clientId, clientSecret: gitHubClientSecret, code, state
+			});
+			req.session.githubToken = accessToken;
+		} else {
+			const response = await axios.get(
+				`${hostname}/login/oauth/access_token`,
+				{
+					params: {
+						client_id: clientId,
+						client_secret: gitHubClientSecret,
+						code,
+						state
+					},
+					headers: {
+						accept: "application/json",
+						"content-type": "application/json"
+					},
+					responseType: "json"
+				}
+			);
+			// Saving it to session be used later
+			req.session.githubToken = response.data.access_token;
+		}
 
 		// Saving UUID for each GitHubServerApp
 		req.session.gitHubUuid = uuid;
@@ -142,19 +151,22 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
-		await axios.get(url, {
-			headers: {
-				Authorization: `Bearer ${githubToken}`
-			}
-		});
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			await gitHubAnonymousClient.checkGitHubToken(githubToken);
+		} else {
+			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
+			await axios.get(url, {
+				headers: {
+					Authorization: `Bearer ${githubToken}`
+				}
+			});
+		}
 
 		req.log.debug(`Github token is valid, continuing...`);
 
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
-		// TODO: Not a great place to put this, but it'll do for now
-		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);

@@ -113,4 +113,8 @@ export interface EnvVars {
 	// Cryptor
 	CRYPTOR_URL: string;
 	CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: string;
+
+	REDISX_CACHE_PORT: string;
+	REDISX_CACHE_HOST: string;
+	REDISX_CACHE_TLS_ENABLED?: string;
 }
