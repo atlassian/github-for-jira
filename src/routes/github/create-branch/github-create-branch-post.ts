@@ -97,9 +97,9 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		if (err.status === 403) {
 			const user = await gitHubUserClient.getUser();
 			const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.hostname, owner, repo);
-			res.status(err.status).json({ error: getErrorMessages(err?.status, gitHubConfigurationLink) });
+			res.status(err.status).json({ error: getErrorMessages(err.status, gitHubConfigurationLink) });
 		} else {
-			res.status(err.status || 500).json({ error: getErrorMessages(err?.status || 500) });
+			res.status(err.status).json({ error: getErrorMessages(err.status) });
 		}
 		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 		statsd.increment(metricCreateBranch.failed, {
