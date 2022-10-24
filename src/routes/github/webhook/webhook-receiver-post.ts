@@ -23,10 +23,10 @@ const writeDebugLogsForRawBody = (verification: string, signatureSHA256: string,
 
 	try {
 		const verificationRawBody = createHash(response.locals.rawBodyd, webhookSecret);
-		logger.info(`bgvozev debugging, verificationRawBody=${verificationRawBody}`);
+		logger.info(`bgvozdev debugging, verificationRawBody=${verificationRawBody}`);
 
 		if (verification !== verificationRawBody) {
-			logger.info(`bgvozev debugging, verification and verificationRawBody are different!`);
+			logger.info(`bgvozdev debugging, verification and verificationRawBody are different!`);
 		}
 
 	} catch (err) {
