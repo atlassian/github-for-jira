@@ -63,11 +63,15 @@
 		"require-await": "off",
 		"@typescript-eslint/no-floating-promises": ["error"],
 		"jest/expect-expect": [
-      "error",
-      {
-        "assertFunctionNames": ["expect", "supertest.**.expect", "*.expect"]
-      }
-    ]
+			"error",
+			{
+				"assertFunctionNames": [
+					"expect",
+					"supertest.**.expect",
+					"*.expect"
+				]
+			}
+		]
 	},
 	"overrides": [{
 		"files": [ "src/**/*.test.ts" ],
