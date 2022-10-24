@@ -90,8 +90,8 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
-		privateKey: await gitHubServerApp.decrypt("privateKey")
+		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
+		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
 	}
 );
 
