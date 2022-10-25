@@ -6,15 +6,21 @@ import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
 import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 
+type Event = {
+	name: string,
+	payload: object
+}
+
 export type WebhookApp = Express & {
-	receive: (event: any) => Promise<any>
+	receive: (event: Event) => Promise<void>
 }
 
 export const createWebhookApp = async (): Promise<WebhookApp> => {
+	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const app: WebhookApp = express() as any;
 	app.use(json());
 	app.post("/github/webhooks", WebhookReceiverPost);
-	app.receive = async (event: any) => {
+	app.receive = async (event: Event) => {
 		await supertest(app)
 			.post("/github/webhooks")
 			.send(event.payload)

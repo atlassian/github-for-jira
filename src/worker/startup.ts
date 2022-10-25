@@ -5,7 +5,7 @@ const logger = getLogger("worker");
 
 let running = false;
 
-export async function start() {
+export const start = async () => {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
 		return;
@@ -15,9 +15,9 @@ export async function start() {
 	sqsQueues.start();
 
 	running = true;
-}
+};
 
-export async function stop() {
+export const stop = async () => {
 	if (!running) {
 		logger.debug("Worker instance not running, skipping.");
 		return;
@@ -27,4 +27,4 @@ export async function stop() {
 	await sqsQueues.stop();
 
 	running = false;
-}
+};

@@ -1,27 +1,28 @@
-module.exports = {
-	env: {
-		browser: false,
-		es6: true,
-		node: true
+{
+	"env": {
+		"browser": false,
+		"es6": true,
+		"node": true
 	},
-	parser: "@typescript-eslint/parser",
-	parserOptions: {
-		project: "./tsconfig.json",
-		tsconfigRootDir: __dirname,
-		sourceType: "module"
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"project": "tsconfig.json",
+		"sourceType": "module"
 	},
-	plugins: [
+	"plugins": [
 		"@typescript-eslint",
+		"jest",
 		"import"
 	],
-	extends: [
+	"extends": [
 		"eslint:recommended",
+		"plugin:jest/recommended",
 		"plugin:import/recommended",
 		"plugin:import/typescript",
 		"plugin:@typescript-eslint/eslint-recommended",
 		"plugin:@typescript-eslint/recommended"
 	],
-	settings: {
+	"settings": {
 		"import/parsers": {
 			"@typescript-eslint/parser": [
 				".ts",
@@ -29,48 +30,54 @@ module.exports = {
 			]
 		},
 		"import/resolver": {
-			typescript: {
-				alwaysTryTypes: true
+			"typescript": {
+				"alwaysTryTypes": true
 			}
 		}
 	},
-	rules: {
+	"rules": {
 		"@typescript-eslint/explicit-module-boundary-types": "off",
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/no-unused-vars": "error",
 		"no-unused-vars": "off",
-		"no-console": "warn",
-		quotes: [
-			"warn",
+		"no-console": "error",
+		"quotes": [
+			"error",
 			"double",
 			{
-				avoidEscape: true,
-				allowTemplateLiterals: true
+				"avoidEscape": true,
+				"allowTemplateLiterals": true
 			}
 		],
-		indent: ["error", "tab", {
-			SwitchCase: 1
+		"indent": ["error", "tab", {
+			"SwitchCase": 1
 		}],
 		"@import/no-unresolved": "off",
 		"object-curly-spacing": ["error", "always"],
-		semi: ["error", "always"],
+		"semi": ["error", "always"],
 		"no-trailing-spaces": "error",
 		"comma-dangle": "error",
 		"keyword-spacing": "error",
 		"space-in-parens": ["error", "never"],
-		"func-style": ["warn", "expression"],
+		"func-style" : ["error", "expression"],
 		"require-await": "off",
-		"@typescript-eslint/no-floating-promises": ["error"]
+		"@typescript-eslint/no-floating-promises": ["error"],
+		"jest/expect-expect": [
+			"error",
+			{
+				"assertFunctionNames": [
+					"expect",
+					"supertest.**.expect",
+					"*.expect"
+				]
+			}
+		]
 	},
-	overrides: [
-		{
-			files: ["**/*.test.ts"],
-			plugins: [
-				"jest"
-			],
-			extends: [
-				"plugin:jest/recommended"
-			]
+	"overrides": [{
+		"files": [ "src/**/*.test.ts" ],
+		"rules": {
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-non-null-assertion": "off"
 		}
-	]
-};
+	}]
+}
