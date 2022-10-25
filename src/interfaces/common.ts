@@ -47,6 +47,8 @@ declare global {
 					[key: string]: string;
 				}
 			};
+
+			rawBody?: string;
 		}
 	}
 }
