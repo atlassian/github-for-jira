@@ -17,23 +17,6 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
 
-const writeDebugLogsForRawBody = (verification: string, signatureSHA256: string, webhookSecret: string, logger, response: Response) => {
-	logger.info(`bgvozdev debugging, verification=${verification}`);
-	logger.info(`bgvozdev debugging, signatureSHA256=${signatureSHA256}`);
-
-	try {
-		const verificationRawBody = createHash(response.locals.rawBody, webhookSecret);
-		logger.info(`bgvozdev debugging, verificationRawBody=${verificationRawBody}`);
-
-		if (verification !== verificationRawBody) {
-			logger.info(`bgvozdev debugging, verification and verificationRawBody are different!`);
-		}
-
-	} catch (err) {
-		logger.error({ err }, "bgvozdev debugging, boom");
-	}
-};
-
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
@@ -48,10 +31,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		// JSON.stringify?! :wtf: :susp:
-		const verification = createHash(JSON.stringify(payload), webhookSecret);
-
-		writeDebugLogsForRawBody(verification, signatureSHA256, webhookSecret, logger, response);
+		const verification = createHash(response.locals.rawBody, webhookSecret);
 
 		if (verification != signatureSHA256) {
 			logger.warn("Signature validation failed, returning 400");
