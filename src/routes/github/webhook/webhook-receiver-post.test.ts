@@ -19,9 +19,9 @@ const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
 const GHES_WEBHOOK_SECRET = "webhookSecret";
 const CLOUD_WEBHOOK_SECRET = envVars.WEBHOOK_SECRET;
 
-const injectRawBodyToReq = (res: any, req: any) => {
+const injectRawBodyToReq = (req: any) => {
 	req.rawBody = JSON.stringify(req.body);
-	return res;
+	return req;
 };
 
 describe("webhook-receiver-post", () => {
@@ -77,7 +77,7 @@ describe("webhook-receiver-post", () => {
 	it("should throw an error if github app not found", async () => {
 		req = createGHESReqForEvent("push", "", NON_EXIST_GHES_UUID);
 
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(res.sendStatus).toBeCalledWith(400);
 
 	});
@@ -85,7 +85,7 @@ describe("webhook-receiver-post", () => {
 	it("should throw an error if signature doesn't match for GHE app", async () => {
 		req = createReqWithInvalidSignature("push", EXIST_GHES_UUID);
 
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(res.status).toBeCalledWith(400);
 		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
 
@@ -94,7 +94,7 @@ describe("webhook-receiver-post", () => {
 	it("should throw an error if signature doesn't match for GitHub cloud", async () => {
 		req = createReqWithInvalidSignature("push", undefined);
 
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(res.status).toBeCalledWith(400);
 		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
 
@@ -105,7 +105,7 @@ describe("webhook-receiver-post", () => {
 			req = createCloudReqForEvent("push");
 			const spy = jest.fn();
 			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-			await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+			await WebhookReceiverPost(injectRawBodyToReq(req), res);
 			expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
 			expect(spy).toBeCalledWith(expect.objectContaining({
 				id: "100",
@@ -117,7 +117,7 @@ describe("webhook-receiver-post", () => {
 			req = createGHESReqForEvent("push", "", EXIST_GHES_UUID);
 			const spy = jest.fn();
 			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-			await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+			await WebhookReceiverPost(injectRawBodyToReq(req), res);
 			expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
 			expect(spy).toBeCalledWith(expect.objectContaining({
 				id: "100",
@@ -131,7 +131,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("push", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -145,7 +145,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("issues", "opened", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(issueWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -159,7 +159,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("pull_request", "opened", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -173,7 +173,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("pull_request_review", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(pullRequestWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -186,7 +186,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("create", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(createBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -199,7 +199,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("delete", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(deleteBranchWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -212,7 +212,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("repository", "deleted", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepositoryWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -226,7 +226,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("workflow_run", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(workflowWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -239,7 +239,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("deployment_status", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(deploymentWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
@@ -252,7 +252,7 @@ describe("webhook-receiver-post", () => {
 		req = createGHESReqForEvent("code_scanning_alert", "", EXIST_GHES_UUID);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		await WebhookReceiverPost(req, injectRawBodyToReq(res, req));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(codeScanningAlertWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
