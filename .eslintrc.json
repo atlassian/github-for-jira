@@ -16,7 +16,6 @@
 	],
 	"extends": [
 		"eslint:recommended",
-		"plugin:jest/recommended",
 		"plugin:import/recommended",
 		"plugin:import/typescript",
 		"plugin:@typescript-eslint/eslint-recommended",
@@ -75,6 +74,9 @@
 	},
 	"overrides": [{
 		"files": [ "src/**/*.test.ts" ],
+		"extends": [
+			"plugin:jest/recommended"
+		],
 		"rules": {
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-non-null-assertion": "off"
