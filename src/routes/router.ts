@@ -26,7 +26,15 @@ RootRouter.use(Sentry.Handlers.requestHandler());
 // Parse URL-encoded bodies for Jira configuration requests
 RootRouter.use(urlencoded({ extended: false }));
 RootRouter.use(json({
-	limit: "30mb" //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
+	limit: "30mb", //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
+	verify: (_: Request, res: Response, buf) => {
+		try {
+			res.locals.rawBody = buf.toString();
+		} catch (e) {
+			// eslint-disable-next-line no-console
+			console.error("bgvozdev debugging just to make sure this never fails. \"try-catch\" will be removed after the experiment");
+		}
+	}
 }));
 RootRouter.use(cookieParser());
 
