@@ -4,7 +4,7 @@ import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { getJiraClient } from "~/src/jira/client/jira-client";
+import { getJiraClient } from "~/src/jira/client/jira-client.old";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const issueCommentWebhookHandler = async (

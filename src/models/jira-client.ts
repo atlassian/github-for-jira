@@ -4,7 +4,7 @@ import { Installation } from "./installation";
 import Logger from "bunyan";
 
 // TODO: why are there 2 jira clients?
-export class JiraClient {
+/*export class JiraClient {
 	axios: AxiosInstance;
 
 	static async getNewClient(installation: Installation, log: Logger) {
@@ -21,11 +21,11 @@ export class JiraClient {
 	// eslint-disable-next-line @typescript-eslint/no-empty-function
 	private constructor() { }
 
-	/*
+	/!*
 	 * Tests credentials by making a request to the Jira API
 	 *
 	 * @return {boolean} Returns true if client has access to Jira API
-	 */
+	 *!/
 	async isAuthorized(): Promise<boolean> {
 		try {
 			return (await this.axios.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1")).status === 200;
@@ -36,4 +36,4 @@ export class JiraClient {
 			return false;
 		}
 	}
-}
+}*/

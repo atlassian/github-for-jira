@@ -1,6 +1,7 @@
 import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
+import { jiraIssueKeyParser } from "utils/jira-utils";
 
 const logger = getLogger("jira.util");
 
@@ -72,7 +73,7 @@ export const getJiraUtil = (jiraClient) => {
 
 	const unfurl = async (text: string): Promise<string | undefined> => {
 		try {
-			const issues = jiraClient.issues.parse(text);
+			const issues = jiraIssueKeyParser(text);
 			if (!issues) return undefined;
 
 			const validIssues = await jiraClient.issues.getAll(issues);

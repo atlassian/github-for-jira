@@ -97,6 +97,38 @@ export interface JiraIssue {
 	};
 }
 
+export interface JiraIssueComments {
+	startAt: number;
+	maxResults: number;
+	total: number;
+	comments: JiraIssueComment[];
+}
+
+export interface JiraIssueComment {
+	"self": "https://your-domain.atlassian.net/rest/api/2/issue/10010/comment/10000",
+	"id": "10000",
+	"author": {
+		"self": "https://your-domain.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+		"accountId": "5b10a2844c20165700ede21g",
+		"displayName": "Mia Krystof",
+		"active": false
+	},
+	"body": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget venenatis elit. Duis eu justo eget augue iaculis fermentum. Sed semper quam laoreet nisi egestas at posuere augue semper.",
+	"updateAuthor": {
+		"self": "https://your-domain.atlassian.net/rest/api/2/user?accountId=5b10a2844c20165700ede21g",
+		"accountId": "5b10a2844c20165700ede21g",
+		"displayName": "Mia Krystof",
+		"active": false
+	},
+	"created": "2021-01-17T12:34:00.000+0000",
+	"updated": "2021-01-18T23:45:00.000+0000",
+	"visibility": {
+		"type": "role",
+		"value": "Administrators",
+		"identifier": "Administrators"
+	}
+}
+
 export interface JiraCommitFile {
 	path: string;
 	changeType: JiraCommitFileChangeTypeEnum;
@@ -120,6 +152,7 @@ export interface JiraAuthor {
 	name: string;
 	url?: string;
 }
+
 export interface JiraReview extends JiraAuthor {
 	approvalStatus: string;
 }
