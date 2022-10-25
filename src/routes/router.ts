@@ -27,8 +27,8 @@ RootRouter.use(Sentry.Handlers.requestHandler());
 RootRouter.use(urlencoded({ extended: false }));
 RootRouter.use(json({
 	limit: "30mb", //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
-	verify: (_: Request, res: Response, buf) => {
-		res.locals.rawBody = buf.toString();
+	verify: (req: Request, _: Response, buf) => {
+		req.rawBody = buf.toString();
 	}
 }));
 

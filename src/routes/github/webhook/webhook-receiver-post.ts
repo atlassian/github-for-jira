@@ -31,7 +31,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(response.locals.rawBody, webhookSecret);
+		const verification = createHash(request.rawBody, webhookSecret);
 
 		if (verification != signatureSHA256) {
 			logger.warn("Signature validation failed, returning 400");
@@ -119,7 +119,10 @@ const webhookRouter = async (context: WebhookContext) => {
 	}
 };
 
-export const createHash = (data: BinaryLike, secret: string): string => {
+export const createHash = (data: BinaryLike | undefined, secret: string): string => {
+	if (!data) {
+		throw new Error("No data to hash");
+	}
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;

@@ -5,14 +5,14 @@ import supertest from "supertest";
 
 describe("router", () => {
 	let app;
-	let capturedRes;
+	let capturedReq;
 
 	beforeEach(() => {
 		app = express();
 		app.use(RootRouter);
-		capturedRes = undefined;
-		app.post("/test", (_: Request, res: Response) => {
-			capturedRes = res;
+		capturedReq = undefined;
+		app.post("/test", (req: Request, res: Response) => {
+			capturedReq = req;
 			res.sendStatus(202);
 		});
 	});
@@ -24,7 +24,7 @@ describe("router", () => {
 			.set("content-type", "application/json")
 			.send(BODY_WITH_SPACE_AT_THE_END)
 			.expect(() => {
-				expect(capturedRes.locals.rawBody).toEqual(BODY_WITH_SPACE_AT_THE_END);
+				expect(capturedReq.rawBody).toEqual(BODY_WITH_SPACE_AT_THE_END);
 			});
 	});
 });
