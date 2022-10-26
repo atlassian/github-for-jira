@@ -49,16 +49,19 @@ const waitForTunnel = async () => {
 const callQueues = async () => {
 	const queueUrls = Object.entries(process.env)
 		.filter(([key, value]) => /^SQS_.*_QUEUE_URL$/.test(key) && value)
-		.map(([_key, value]) => `${value}?Action=GetQueueUrl&QueueName=${value!.split("/").pop()}`);
-	console.info(`Checking for localstack initialization...`);
+		.map(([_key, value]) => {
+			const url = new URL(value!);
+			return `${url.protocol}//${url.host}?Action=GetQueueUrl&QueueName=${value!.split("/").pop()}`;
+		});
 	if (queueUrls.length) {
 		const url = new URL(queueUrls[0]);
-		const response = await axios.get(`${url.protocol}//${url.host}/health`, { responseType: "json" });
-		if (response.data?.services?.sqs !== "running") {
-			console.info("localstack not initialized.");
+		try {
+			await axios.get(`${url.protocol}//${url.host}?Action=ListQueues`);
+			console.info(`ElasticMQ initialized.`);
+		} catch (e) {
+			console.warn("ElasticMQ not initialized.");
 			return Promise.reject();
 		}
-		console.info(`localstack initialized.`);
 	}
 
 	console.info(`Calling queues: ${queueUrls.join(", ")}`);
