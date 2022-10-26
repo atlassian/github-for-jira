@@ -4,7 +4,7 @@ import { getCloudOrServerFromGitHubAppId, GithubProductEnum } from "utils/get-cl
 import { Installation } from "models/installation";
 import { getAxiosInstance } from "~/src/jira/client/axios";
 import { AxiosInstance, AxiosResponse } from "axios";
-import { JiraIssue, JiraIssueComments } from "interfaces/jira";
+import { JiraIssue, JiraIssueCommentPayload, JiraIssueComments, JiraIssueTransitions, JiraIssueWorklog, JiraIssueWorklogPayload } from "interfaces/jira";
 
 export class JiraClient {
 	private readonly axios: AxiosInstance;
@@ -67,8 +67,66 @@ export class JiraClient {
 			.map(response => response!.data);
 	}
 
-	public async getIssueComments(issueIdOrKey: string):Promise<AxiosResponse<JiraIssueComments>> {
+	public async getIssueComments(issueIdOrKey: string): Promise<AxiosResponse<JiraIssueComments>> {
 		return this.axios.get("/rest/api/latest/issue/{issueIdOrKey}/comment?expand=properties", {
+			urlParams: {
+				issueIdOrKey
+			}
+		});
+	}
+
+	public async addIssueComment(issueIdOrKey: string, payload: JiraIssueCommentPayload): Promise<AxiosResponse> {
+		return await this.axios.post("/rest/api/latest/issue/{issueIdOrKey}/comment", payload, {
+			urlParams: {
+				issueIdOrKey
+			}
+		});
+	}
+
+	public async updateIssueComment(issueIdOrKey: string, commendId: string, payload: JiraIssueCommentPayload): Promise<AxiosResponse> {
+		return await this.axios.put("rest/api/latest/issue/{issueIdOrKey}/comment/{commendId}", payload, {
+			urlParams: {
+				issueIdOrKey,
+				commendId
+			}
+		});
+	}
+
+	public async deleteIssueComment(issueIdOrKey: string, commendId: string): Promise<AxiosResponse> {
+		return await this.axios.delete("rest/api/latest/issue/{issueIdOrKey}/comment/{commendId}", {
+			urlParams: {
+				issueIdOrKey,
+				commendId
+			}
+		});
+	}
+
+	public async getIssueTransitions(issueIdOrKey: string): Promise<AxiosResponse<JiraIssueTransitions>> {
+		return await this.axios.get("/rest/api/latest/issue/{issueIdOrKey}/transitions", {
+			urlParams: {
+				issueIdOrKey
+			}
+		});
+	}
+
+	public async performIssueTransition(issueIdOrKey: string, transitionId: string): Promise<AxiosResponse> {
+		return await this.axios.post(
+			"/rest/api/latest/issue/{issueIdOrKey}/transitions",
+			{
+				transition: {
+					id: transitionId
+				}
+			},
+			{
+				urlParams: {
+					issueIdOrKey
+				}
+			}
+		);
+	}
+
+	public async addIssueWorklog(issueIdOrKey: string, payload: JiraIssueWorklogPayload): Promise<AxiosResponse<JiraIssueWorklog>> {
+		return await this.axios.post("/rest/api/latest/issue/{issueIdOrKey}/worklog", payload, {
 			urlParams: {
 				issueIdOrKey
 			}

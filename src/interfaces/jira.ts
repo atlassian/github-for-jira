@@ -104,6 +104,96 @@ export interface JiraIssueComments {
 	comments: JiraIssueComment[];
 }
 
+export interface JiraEntityProperty {
+	key: string;
+	value: any;
+}
+
+export interface JiraIssueVisibility {
+	identifier?: string;
+	type: "group" | "role";
+	value: string;
+}
+
+export interface JiraIssueCommentPayload {
+	visibility?: JiraIssueVisibility;
+	properties?: JiraEntityProperty[];
+	body: string;
+}
+
+export interface JiraIssueTransitions {
+	transitions?: JiraIssueTransition[];
+	expand?: string;
+}
+
+export interface JiraIssueTransition {
+	id: string;
+	name?: string;
+	to?: {
+		self?: string;
+		description?: string;
+		iconUrl?: string;
+		name?: string;
+		id?: string;
+		statusCategory?: {
+			self?: string;
+			id?: number;
+			key?: string;
+			colorName?: string;
+		}
+	};
+	hasScreen?: boolean;
+	isGlobal?: boolean;
+	isInitial?: boolean;
+	isAvailable?: boolean;
+	isConditional?: boolean;
+	expand?: string;
+	looped?: boolean;
+	fields?: {
+		[key: string]: {
+			required: boolean,
+			schema: {
+				type: string;
+				items?: string;
+				system?: string;
+				custom?: string;
+				customId?: number;
+			},
+			name: string;
+			key: string;
+			operations: string[];
+			autoCompleteUrl?: string;
+			hasDefaultValue?: boolean;
+			allowedValues?: any[];
+			defaultValue?: any;
+		};
+	};
+}
+
+export interface JiraIssueWorklogPayload {
+	timeSpent?: string;
+	timeSpentSeconds?: number;
+	visibility?: JiraIssueVisibility;
+	comment?: string;
+	started?: Date;
+}
+
+export interface JiraIssueWorklog {
+	self: string;
+	author: JiraUserDetails;
+	updateAuthor: JiraUserDetails;
+	comment: string;
+	created: Date;
+	updated: Date;
+	visibility: JiraIssueVisibility;
+	started: Date;
+	timeSpent: string;
+	timeSpentSeconds: number;
+	id: string;
+	issueId: string;
+	properties: JiraEntityProperty[];
+}
+
 export interface JiraIssueComment {
 	"self": "https://your-domain.atlassian.net/rest/api/2/issue/10010/comment/10000",
 	"id": "10000",
@@ -144,6 +234,22 @@ export enum JiraCommitFileChangeTypeEnum {
 	MODIFIED = "MODIFIED",
 	MOVED = "MOVED",
 	UNKNOWN = "UNKNOWN"
+}
+
+export interface JiraUserDetails {
+	self: string;
+	accountId: string;
+	emailAddress?: string;
+	avatarUrls: {
+		"16x16": string;
+		"32x32": string;
+		"48x48": string;
+		"64x64": string;
+	};
+	displayName: string;
+	active: boolean;
+	timeZone: string;
+	accountType: "atlassian" | "app" | "customer";
 }
 
 export interface JiraAuthor {
