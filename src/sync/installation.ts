@@ -331,6 +331,7 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -376,7 +377,7 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-
+	logger.info({ nextTask, scheduleNextTask, err }, "joshkay temp logging - expected failed repository task with next task also repository...forever");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
