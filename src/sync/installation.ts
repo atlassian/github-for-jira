@@ -33,7 +33,7 @@ const tasks: TaskProcessors = {
 	deployment: getDeploymentTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "repository"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 	if (targetTasks?.length) {
@@ -45,7 +45,7 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	const tasks = getTargetTasks(targetTasks);
 
-	if (subscription.repositoryStatus !== "complete" && tasks.includes("repository")) {
+	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
 			repositoryId: 0,
@@ -332,6 +332,7 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -377,7 +378,7 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-
+	logger.info({ nextTask, scheduleNextTask, err }, "joshkay temp logging - expected failed repository task with next task also repository...forever");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 

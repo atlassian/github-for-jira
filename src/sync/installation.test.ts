@@ -358,8 +358,8 @@ describe("sync/installation", () => {
 
 	describe("getTargetTasks", () => {
 		it("should return all tasks if no target tasks present", async () => {
-			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "repository"]);
-			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "repository"]);
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment"]);
 		});
 
 		it("should return single target task", async () => {
