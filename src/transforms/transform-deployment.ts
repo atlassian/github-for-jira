@@ -16,6 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -167,27 +168,48 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	return Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key])) || "unmapped";
 };
 
+
 // Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).
 // Returns undefined when there are no issue ids to map.
-const mapJiraIssueIdsAndCommitsToAssociationArray = (
+const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	issueIds: string[],
 	transformedRepositoryId: TransformedRepositoryId,
-	commitSummaries?: CommitSummary[]
-): JiraAssociation[] | undefined => {
+	commitSummaries?: CommitSummary[],
+	config?: Config
+): Promise<JiraAssociation[] | undefined> => {
 
-	if (!issueIds?.length) {
-		return undefined;
+	const associations: JiraAssociation[] = [];
+	let totalAssociationCount = 0;
+	if (issueIds?.length) {
+		const maximumIssuesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const issues = issueIds
+			.slice(0, maximumIssuesToSubmit);
+		associations.push(
+			{
+				associationType: "issueIdOrKeys",
+				values: issues
+			}
+		);
+		totalAssociationCount += issues.length;
 	}
 
-	const associations: JiraAssociation[] = [
-		{
-			associationType: "issueIdOrKeys",
-			values: issueIds
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+		if (config?.deployments?.services?.ids) {
+			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+			const services = config.deployments.services.ids
+				.slice(0, maximumServicesToSubmit);
+			associations.push(
+				{
+					associationType: "serviceIdOrKeys",
+					values: services
+				}
+			);
+			totalAssociationCount += config.deployments.services.ids.length;
 		}
-	];
+	}
 
 	if (commitSummaries?.length) {
-		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - issueIds.length;
+		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 		const commitKeys = commitSummaries
 			.slice(0, maximumCommitsToSubmit)
 			.map((commitSummary) => {
@@ -224,16 +246,6 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		logger
 	);
 
-	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
-	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
-		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
-		commitSummaries
-	);
-
-	if (!associations?.length) {
-		return undefined;
-	}
 
 	let config: Config | undefined;
 
@@ -252,7 +264,20 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		}, "could not find subscription - not using user config to map environments!");
 	}
 
+	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
+	const associations = await mapJiraIssueIdsCommitsAndServicesToAssociationArray(
+		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
+		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
+		commitSummaries,
+		config
+	);
+
+	if (!associations?.length) {
+		return undefined;
+	}
+
 	const environment = mapEnvironment(deployment_status.environment, config);
+
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,

@@ -11,7 +11,7 @@ export const keyLocator = async (gitHubAppId: number | undefined): Promise<strin
 	if (gitHubAppId) {
 		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 		if (gitHubServerApp) {
-			return await gitHubServerApp.decrypt("privateKey");
+			return await gitHubServerApp.getDecryptedPrivateKey();
 		}
 	}
 	else {

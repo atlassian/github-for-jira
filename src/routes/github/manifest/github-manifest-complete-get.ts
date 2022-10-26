@@ -24,7 +24,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 
 	try {
 		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, req.log);
-		const gitHubAppConfig = await gitHubClient.createGitHubApp('' + req.query.code);
+		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,

@@ -5,13 +5,13 @@ import { Repository } from "models/subscription";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 // TODO: better typings in file
-function mapStatus({ state, merged_at }): string {
+const mapStatus = ({ state, merged_at }): string => {
 	if (state === "merged") return "MERGED";
 	if (state === "open") return "OPEN";
 	if (state === "closed" && merged_at) return "MERGED";
 	if (state === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
-}
+};
 
 interface Payload {
 	pullRequest: Octokit.PullsListResponseItem;

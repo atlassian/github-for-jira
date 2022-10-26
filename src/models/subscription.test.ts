@@ -257,10 +257,6 @@ describe("Subscription", () => {
 		});
 	});
 
-	it("should have tests in here", () => {
-		// TODO: add tests
-	});
-
 	describe.skip("getAllForInstallation", () => {
 		// TODO: add tests
 	});

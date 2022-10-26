@@ -44,9 +44,11 @@ declare global {
 				githubToken?: string;
 				gitHubUuid?: string;
 				temp?:  {
-					[key: string]: any;
+					[key: string]: string;
 				}
 			};
+
+			rawBody?: string;
 		}
 	}
 }
@@ -67,6 +69,10 @@ export interface Config {
 			testing?: string[];
 			staging?: string[];
 			production?: string[];
+		}
+
+		services?: {
+			ids?: string[];
 		}
 	}
 }

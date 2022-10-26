@@ -31,7 +31,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(JSON.stringify(payload), webhookSecret);
+		const verification = createHash(request.rawBody, webhookSecret);
+
 		if (verification != signatureSHA256) {
 			logger.warn("Signature validation failed, returning 400");
 			response.status(400).send("signature does not match event payload and secret");
@@ -118,7 +119,10 @@ const webhookRouter = async (context: WebhookContext) => {
 	}
 };
 
-export const createHash = (data: BinaryLike, secret: string): string => {
+export const createHash = (data: BinaryLike | undefined, secret: string): string => {
+	if (!data) {
+		throw new Error("No data to hash");
+	}
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;
@@ -130,7 +134,7 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
+		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
 		return { webhookSecret, gitHubServerApp };
 	}
 	if (!envVars.WEBHOOK_SECRET) {
