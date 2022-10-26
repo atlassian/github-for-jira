@@ -70,5 +70,9 @@ export interface Config {
 			staging?: string[];
 			production?: string[];
 		}
+
+		services?: {
+			ids?: string[];
+		}
 	}
 }
