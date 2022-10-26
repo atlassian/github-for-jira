@@ -57,8 +57,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 
 	for (const syncState of repoSyncStates) {
-		const repoSyncTasks = tasks.filter(task => task !== "repository");
-		const task = repoSyncTasks.find(
+		const task = tasks.find(
 			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
 		);
 		if (!task) continue;
