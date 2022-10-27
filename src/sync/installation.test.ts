@@ -51,8 +51,6 @@ describe("sync/installation", () => {
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
-	const MOCK_TASK = "test-value";
-
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
@@ -171,7 +169,7 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -190,7 +188,7 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -216,7 +214,7 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -241,7 +239,7 @@ describe("sync/installation", () => {
 				status: 404
 			};
 
-			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -249,14 +247,14 @@ describe("sync/installation", () => {
 
 		it("Repository ignored if GraphQL not found error", async () => {
 
-			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Repository failed if some kind of unknown error", async () => {
-			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
@@ -282,7 +280,7 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -291,7 +289,7 @@ describe("sync/installation", () => {
 		it("5s delay if connection timeout", async () => {
 			const connectionTimeoutErr = "connect ETIMEDOUT";
 
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -301,7 +299,7 @@ describe("sync/installation", () => {
 			const connectionTimeoutErr = "an error that doesnt match";
 			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO };
 
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_SUBSCRIPTION, TEST_LOGGER, MOCK_TASK, scheduleNextTask);
+			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);

@@ -317,7 +317,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, subscription, logger, task, scheduleNextTask);
+		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
 	}
 };
 
@@ -329,7 +329,6 @@ export const handleBackfillError = async (err,
 	nextTask: Task,
 	subscription: Subscription,
 	logger: Logger,
-	task: string,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
 	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
@@ -378,16 +377,16 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, task, scheduleNextTask);
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, task: string,  scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task,  scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
-	if (task === "repository" && nextTask.task === "repository") {
+	if (nextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
