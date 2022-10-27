@@ -380,7 +380,7 @@ export const handleBackfillError = async (err,
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task,  scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
