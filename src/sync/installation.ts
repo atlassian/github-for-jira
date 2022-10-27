@@ -317,7 +317,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
+		await handleBackfillError(err, data, nextTask, subscription, logger, task, scheduleNextTask);
 	}
 };
 
@@ -329,9 +329,9 @@ export const handleBackfillError = async (err,
 	nextTask: Task,
 	subscription: Subscription,
 	logger: Logger,
+	task: string,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
-	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -377,16 +377,19 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-	logger.info({ nextTask, scheduleNextTask, err }, "joshkay temp logging - expected failed repository task with next task also repository...forever");
-	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, task, scheduleNextTask);
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, task: string,  scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
+	if (task === "repository" && nextTask.task === "repository") {
+		await subscription.update({ syncStatus: SyncStatus.FAILED });
+		return;
+	}
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
 };
