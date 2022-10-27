@@ -71,17 +71,6 @@ describe("Jira Utils", () => {
 			expect(jiraIssueKeyParser("Ja9-123")).toEqual(["JA9-123"]);
 		});
 
-		it("should extract jira issue key with a single letter project id or single number id", () => {
-			expect(jiraIssueKeyParser("J-123")).toEqual(["J-123"]);
-			expect(jiraIssueKeyParser("b-123")).toEqual(["B-123"]);
-			expect(jiraIssueKeyParser("b-1")).toEqual(["B-1"]);
-			expect(jiraIssueKeyParser("bah-9")).toEqual(["BAH-9"]);
-		});
-
-		it("should not extract jira issue key with id starting with 0", () => {
-			expect(jiraIssueKeyParser("J42-0123")).toEqual([]);
-		});
-
 		it("extracts alphanumeric issue key from a branch", () => {
 			expect(jiraIssueKeyParser("feature/J3-123-my-feature")).toEqual(["J3-123"]);
 		});
