@@ -45,7 +45,7 @@
             <mxRectangle x="60" y="160" width="70" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-13" value="id&#xa;clientKey&#xa;sharedSecret&#xa;jiraHost" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;fontColor=#1A1A1A;" parent="j9X3w0Fw8t5LKd1pTGYZ-12" vertex="1">
+        <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-13" value="id&#xa;clientKey&#xa;encryptedSharedSecret&#xa;jiraHost" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;fontColor=#1A1A1A;" parent="j9X3w0Fw8t5LKd1pTGYZ-12" vertex="1">
           <mxGeometry y="30" width="160" height="90" as="geometry" />
         </mxCell>
         <mxCell id="j9X3w0Fw8t5LKd1pTGYZ-26" value="Subscription" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;fontColor=#007FFF;glass=0;" parent="1" vertex="1">

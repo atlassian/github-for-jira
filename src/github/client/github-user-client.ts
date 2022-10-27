@@ -7,6 +7,12 @@ import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
+import {
+	GetRepositoriesQuery,
+	GetRepositoriesResponse,
+	UserOrganizationsQuery,
+	UserOrganizationsResponse
+} from "~/src/github/client/github-queries";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -58,6 +64,31 @@ export class GitHubUserClient extends GitHubClient {
 		return await this.get<Octokit.UsersGetAuthenticatedResponse>("/user");
 	}
 
+	public async getUserRepositories(per_page = 20, cursor?: string): Promise<GetRepositoriesResponse> {
+		try {
+			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {}, {
+				per_page,
+				cursor
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch repositories");
+			throw err;
+		}
+	}
+
+	public async getUserOrganizations(first = 10): Promise<UserOrganizationsResponse> {
+		try {
+			const response = await this.graphql<UserOrganizationsResponse>(UserOrganizationsQuery, {}, {
+				first
+			});
+			return response.data.data;
+		} catch (err) {
+			this.logger.error({ err }, "Could not fetch organizations");
+			throw err;
+		}
+	}
+
 	public getMembershipForOrg = async (org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
 		return await this.get<Octokit.OrgsGetMembershipResponse>(`/user/memberships/orgs/{org}`, {
 			urlParams: {
@@ -86,6 +117,25 @@ export class GitHubUserClient extends GitHubClient {
 				owner,
 				repo
 			});
+	}
+
+	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
+		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {
+			urlParams: {
+				owner,
+				repo,
+				per_page
+			}
+		});
+	}
+
+	public async getRepository(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
+		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {
+			urlParams: {
+				owner,
+				repo
+			}
+		});
 	}
 
 }

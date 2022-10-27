@@ -96,7 +96,12 @@ export const handleFailedRequest = (logger: Logger) =>
 	(error: AxiosError) => {
 		const { response, config, request } = error;
 		const requestId = response?.headers?.["x-github-request-id"];
-		logger = logger.child({ res: response, config, req: request, err: error, requestId });
+		logger = logger.child({
+			requestId, resStatus: response?.status,
+			requestMethod: request?.method,
+			requestPath: request?.path,
+			errorMessage: error?.message
+		});
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
@@ -133,6 +138,7 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
+			logger.info({ response, request, error, isWarning }, "joshkay temp logging - githubclient interceptor handleFailedRequest");
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 

@@ -12,7 +12,7 @@ jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
 	const githubInstallationId = 17979017;
-	let statsdHistogramSpy;
+	let statsdHistogramSpy: jest.SpyInstance;
 
 	beforeEach(() => {
 		// Lock Time
@@ -24,14 +24,14 @@ describe("GitHub Client", () => {
 		statsdHistogramSpy.mockRestore();
 	});
 
-	function givenGitHubReturnsPullrequests(
+	const givenGitHubReturnsPullrequests = (
 		owner: string,
 		repo: string,
 		perPage: number,
 		page: number,
 		expectedInstallationTokenInHeader?: string,
 		scope: nock.Scope = gheApiNock
-	) {
+	) => {
 		scope
 			.get(`/repos/${owner}/${repo}/pulls`)
 			.query({
@@ -49,9 +49,9 @@ describe("GitHub Client", () => {
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
 			]);
-	}
+	};
 
-	function verifyMetricsSent(path: string, status) {
+	const verifyMetricsSent = (path: string, status: string) => {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
 			method: "GET",
@@ -59,7 +59,7 @@ describe("GitHub Client", () => {
 			status,
 			gitHubProduct: "server"
 		}));
-	}
+	};
 
 	it("works with a non-cloud installation", async () => {
 		const owner = "owner";
@@ -88,7 +88,7 @@ describe("GitHub Client", () => {
 				hostname: gheUrl,
 				baseUrl: gheUrl,
 				apiUrl: gheApiUrl,
-				graphqlUrl: gheApiUrl  + '/graphql'
+				graphqlUrl: gheApiUrl  + "/graphql"
 			},
 			getLogger("test")
 		);

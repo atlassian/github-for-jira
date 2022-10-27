@@ -2,13 +2,13 @@ import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
-import { JiraPullRequestData } from "interfaces/jira";
+import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -40,14 +40,17 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	} catch (err) {
 		context.log.warn(
 			{
-				err,
-				pull_request
+				pullRequestNumber,
+				pullRequestId,
+				repositoryId,
+				repoName,
+				err
 			},
 			"Missing Github Permissions: Can't retrieve reviewers"
 		);
 	}
 
-	const jiraPayload: JiraPullRequestData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 
 	context.log.info("Pullrequest mapped to Jira Payload");
 
@@ -62,7 +65,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				repositoryId,
+				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 
@@ -98,7 +101,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: WebhookContext, util, repoName, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient, context: WebhookContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
 
 	if (!linkifiedBody) {
@@ -114,9 +117,7 @@ const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, 
 		issue_number: pullRequest.number
 	};
 
-	github instanceof GitHubInstallationClient ?
-		await github.updateIssue(updatedPullRequest) :
-		await github.issues.update(updatedPullRequest);
+	await github.updateIssue(updatedPullRequest);
 };
 
 const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {

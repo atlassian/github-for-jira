@@ -3,11 +3,12 @@
   "payload": {
     "action": "created",
     "issue": {
-      "number": "test-issue-number"
+      "number": "TEST-123"
     },
     "comment": {
       "body": "Test example comment with linked Jira issue: [TEST-123]",
-      "id": "5678"
+      "id": "5678",
+			"html_url": "some-comment-url"
     },
     "repository": {
       "name": "test-repo-name",

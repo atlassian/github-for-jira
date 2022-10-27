@@ -1,3 +1,5 @@
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+
 interface JiraPullRequestCommit {
 	id: string;
 	repositoryUri: string;
@@ -6,6 +8,13 @@ interface JiraPullRequestCommit {
 interface JiraPullRequestRef {
 	name: string;
 	uri: string;
+}
+
+export interface BulkSubmitRepositoryInfo {
+	id: TransformedRepositoryId;
+	name: string;
+	url: string;
+	updateSequenceId: number;
 }
 
 export interface JiraPullRequestHead {
@@ -44,8 +53,8 @@ export interface JiraBuild {
 	references?: JiraPullRequestHead[];
 }
 
-export interface JiraBuildData {
-	product: string;
+export interface JiraBuildBulkSubmitData {
+	product: string; // TODO: doesn't match with data depot API docs (must be under providerMetadata), check with Saiyans
 	builds: JiraBuild[];
 }
 
@@ -59,12 +68,8 @@ export interface JiraBranch {
 	updateSequenceId: number;
 }
 
-export interface JiraBranchData {
-	id: string;
-	name: string;
-	url: string;
+export interface JiraBranchBulkSubmitData {
 	branches: JiraBranch[];
-	updateSequenceId: number;
 }
 
 export interface JiraCommit {
@@ -94,10 +99,19 @@ export interface JiraIssue {
 
 export interface JiraCommitFile {
 	path: string;
-	changeType: string;
-	linesAdded?: string[];
-	linesRemoved?: string[];
+	changeType: JiraCommitFileChangeTypeEnum;
+	linesAdded: number;
+	linesRemoved: number;
 	url: string;
+}
+
+export enum JiraCommitFileChangeTypeEnum {
+	ADDED = "ADDED",
+	COPIED = "COPIED",
+	DELETED = "DELETED",
+	MODIFIED = "MODIFIED",
+	MOVED = "MOVED",
+	UNKNOWN = "UNKNOWN"
 }
 
 export interface JiraAuthor {
@@ -110,12 +124,8 @@ export interface JiraReview extends JiraAuthor {
 	approvalStatus: string;
 }
 
-export interface JiraCommitData {
+export interface JiraCommitBulkSubmitData extends BulkSubmitRepositoryInfo {
 	commits: JiraCommit[];
-	id: string;
-	name: string;
-	url: string;
-	updateSequenceId: number;
 }
 
 export interface JiraDeployment {
@@ -140,30 +150,26 @@ export interface JiraDeployment {
 	associations: JiraAssociation[];
 }
 
-export interface JiraDeploymentData {
+export interface JiraDeploymentBulkSubmitData {
 	deployments: JiraDeployment[];
 }
 
-export interface JiraPullRequestData {
-	id: number;
-	name: string;
-	url: string;
+export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo {
 	branches: JiraBranch[];
 	pullRequests: JiraPullRequest[];
-	updateSequenceId: number;
 }
 
 export interface JiraAssociation {
-	associationType: "issueKeys" | "issueIdOrKeys" | "commit";
+	associationType: "issueKeys" | "issueIdOrKeys" | "commit" | "serviceIdOrKeys";
 	values: string[] | JiraCommitKey[];
 }
 
 export interface JiraCommitKey {
 	commitHash: string;
-	repositoryId: string;
+	repositoryId: TransformedRepositoryId;
 }
 
-export interface JiraRemoteLinkData {
+export interface JiraRemoteLinkBulkSubmitData {
 	remoteLinks: JiraRemoteLink[];
 }
 

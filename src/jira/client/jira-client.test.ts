@@ -3,8 +3,6 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "./jira-client";
 import { getHashedKey } from "models/sequelize";
 import * as Axios from "./axios";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
@@ -138,12 +136,13 @@ describe("Test getting a jira client", () => {
 			gitHubInstallationId: "12345"
 		}).reply(202);
 
-		await client.devinfo.installation.delete(12345);
+		const resp = await client.devinfo.installation.delete(12345);
+		expect(resp.map((r: {status: number}) => r.status)).toEqual([202, 202, 202]);
 
 		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
 	});
 
-	describe("Reading sharedSecret", () => {
+	describe("Reading encryptedSharedSecret", () => {
 		beforeEach(async ()=>{
 			const inst: Installation = await Installation.findOne({
 				where: {
@@ -154,23 +153,7 @@ describe("Test getting a jira client", () => {
 				encryptedSharedSecret: "new-encrypted-shared-secret"
 			});
 		});
-		it("should use exiting sharedSecret field if read from cryptor FF is Off", async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
-				.mockResolvedValue(false);
-			jest.spyOn(Axios, "getAxiosInstance");
-			client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
-			expect(Axios.getAxiosInstance).toHaveBeenCalledWith(
-				expect.anything(),
-				"shared-secret",
-				expect.anything()
-			);
-		});
-
-		it("should use new encrypted shared secret field if read from cryptor FF is On", async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.READ_SHARED_SECRET_FROM_CRYPTOR, expect.anything(), expect.anything())
-				.mockResolvedValue(true);
+		it("should use new encrypted shared secret field", async () => {
 			jest.spyOn(Axios, "getAxiosInstance");
 			client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
 			expect(Axios.getAxiosInstance).toHaveBeenCalledWith(

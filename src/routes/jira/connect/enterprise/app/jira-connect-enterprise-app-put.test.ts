@@ -32,10 +32,10 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
 			iss: jiraHost
-		}, installation.sharedSecret);
+		}, await installation.decrypt("encryptedSharedSecret"));
 	});
 
-	it("should return 200 with success true when correct uuid and installation id are passed", async () => {
+	it("should return 202 when correct uuid and installation id are passed", async () => {
 		await GitHubServerApp.create({
 			uuid,
 			appId: 1,
@@ -60,19 +60,16 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			jiraHost
 		};
 
-		return supertest(app)
+		await supertest(app)
 			.put(`/jira/connect/enterprise/app/${uuid}`)
 			.query({
 				jwt
 			})
 			.send(payload)
-			.expect(200)
-			.then((res) => {
-				expect(res.body.success).toBeTruthy();
-			});
+			.expect(202);
 	});
 
-	it("should return 200 with success true when correct uuid and installation id are passed, with partial data", async () => {
+	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {
 		await GitHubServerApp.create({
 			uuid,
 			appId: 1,
@@ -86,27 +83,31 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		});
 
 		const payload ={
-			gitHubAppName: "my-app",
-			webhookSecret: `secret`,
+			gitHubAppName: "newName",
+			webhookSecret: "newSecret",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
 			gitHubClientSecret: "secret",
 			uuid,
 			jiraHost
 		};
 
-		return supertest(app)
+		await supertest(app)
 			.put(`/jira/connect/enterprise/app/${uuid}`)
 			.query({
 				jwt
 			})
 			.send(payload)
-			.expect(200)
-			.then((res) => {
-				expect(res.body.success).toBeTruthy();
-			});
+			.expect(202);
+
+		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
+
+		expect(restoredApp.gitHubAppName).toEqual("newName");
+		expect(await restoredApp.getDecryptedWebhookSecret()).toEqual("newSecret");
+		expect(await restoredApp.getDecryptedPrivateKey()).toEqual("privatekey");
+		expect(await restoredApp.getDecryptedGitHubClientSecret()).toEqual("secret");
 	});
 
-	it("should return 200 with success false when wrong uuid param is passed", async () => {
+	it("should return 404 when wrong uuid param is passed", async () => {
 		await GitHubServerApp.create({
 			uuid,
 			appId: 1,
@@ -133,20 +134,18 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const incorrectUUID = "4c74e9ce-faf9-489e-821f-e7a8006e473b";
 
-		return supertest(app)
+		const res = await supertest(app)
 			.put(`/jira/connect/enterprise/app/${incorrectUUID}`)
 			.query({
 				jwt
 			})
 			.send(payload)
-			.expect(200)
-			.then((res) => {
-				expect(res.body.success).toBeFalsy();
-				expect(res.body.message).toEqual("No GitHub App found. Cannot update.");
-			});
+			.expect(404);
+		expect(res.body.message).toEqual("No GitHub App found. Cannot update.");
+
 	});
 
-	it("should return 200 with success false when wrong installationId is passed", async () => {
+	it("should return 404 when wrong installationId is passed", async () => {
 		await GitHubServerApp.create({
 			uuid,
 			appId: 1,
@@ -171,16 +170,13 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			jiraHost
 		};
 
-		return supertest(app)
+		const res = await supertest(app)
 			.put(`/jira/connect/enterprise/app/${uuid}`)
 			.query({
 				jwt
 			})
 			.send(payload)
-			.expect(200)
-			.then((res) => {
-				expect(res.body.success).toBeFalsy();
-				expect(res.body.message).toEqual("No GitHub App found. Cannot update.");
-			});
+			.expect(404);
+		expect(res.body.message).toEqual("No GitHub App found. Cannot update.");
 	});
 });

@@ -223,9 +223,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
 				const log = logger.child({
-					err,
-					payload: data,
-					repository,
+					errorStatus: err.status,
+					isRetryable: err.isRetryable,
+					rateLimitReset: err.rateLimitReset,
+					repositoryId: repository.id,
 					cursor,
 					task
 				});
@@ -313,7 +314,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			scheduleNextTask
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
+		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
@@ -330,6 +331,7 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -375,7 +377,7 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-
+	logger.info({ nextTask, scheduleNextTask, err }, "joshkay temp logging - expected failed repository task with next task also repository...forever");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
@@ -383,7 +385,7 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-	statsd.increment(metricTaskStatus.failed, [`type: ${nextTask.task}`, `gitHubProduct: ${gitHubProduct}`]);
+	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);

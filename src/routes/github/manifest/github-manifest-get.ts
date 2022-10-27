@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { envVars } from "~/src/config/env";
 
 export const GithubManifestGet = async (req: Request, res: Response) => {
-	const gheHost = req.query.gheHost;
+	const gheHost = req.query.gheHost as string;
 	if (!gheHost) {
 		throw new Error("GHE URL not found");
 	}
@@ -28,7 +28,7 @@ const getAppManifest = () => {
 		"default_permissions": {
 			"actions": "read",
 			"security_events": "read",
-			"contents": "read",
+			"contents": "write",
 			"deployments": "read",
 			"issues": "write",
 			"metadata": "read",

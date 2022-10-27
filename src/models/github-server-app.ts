@@ -7,6 +7,10 @@ import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
+const GITHUB_CLIENT_SECRET_FIELDNAME = "gitHubClientSecret";
+const PRIVATE_KEY_FIELDNAME = "privateKey";
+const WEBHOOK_SECRET_FIELDNAME = "webhookSecret";
+
 export interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
@@ -37,17 +41,24 @@ export class GitHubServerApp extends EncryptedModel {
 		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
 	}
 
+	getDecryptedGitHubClientSecret(): Promise<string> {
+		return this.decrypt(GITHUB_CLIENT_SECRET_FIELDNAME);
+	}
+
+	getDecryptedPrivateKey(): Promise<string>  {
+		return this.decrypt(PRIVATE_KEY_FIELDNAME);
+	}
+
+	getDecryptedWebhookSecret(): Promise<string>  {
+		return this.decrypt(WEBHOOK_SECRET_FIELDNAME);
+	}
+
 	async getEncryptContext() {
-		//For example: we can call database to fetch sharedSecret for use as EncryptionContext
-		//const installation = await Installation.findByPk(this.installationId);
-		//return {
-		//	installationSharedSecret: installation?.sharedSecret
-		//};
 		return {};
 	}
 
 	getSecretFields() {
-		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
+		return [GITHUB_CLIENT_SECRET_FIELDNAME, PRIVATE_KEY_FIELDNAME, WEBHOOK_SECRET_FIELDNAME] as const;
 	}
 
 	static async getForGitHubServerAppId(

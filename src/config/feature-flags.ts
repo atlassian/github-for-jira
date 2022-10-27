@@ -15,23 +15,24 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	LOG_UNSAFE_DATA = "log-unsafe-data",
-	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	RETRY_ALL_ERRORS = "retry-all-errors",
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	READ_SHARED_SECRET_FROM_CRYPTOR = "read-shared-secret-from-cryptor",
-	CONFIG_AS_CODE = "config-as-code",
 	CREATE_BRANCH = "create-branch",
+	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
+	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
+	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
+	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
-	LOG_LEVEL = "log-level"
+	LOG_LEVEL = "log-level",
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
 }
 
 export enum NumberFlags {
@@ -40,22 +41,22 @@ export enum NumberFlags {
 	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
 }
 
-const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
-	if (!jiraHost) {
+const createLaunchdarklyUser = (key?: string): LDUser => {
+	if (!key) {
 		return {
 			key: "global"
 		};
 	}
 
 	return {
-		key: createHashWithSharedSecret(jiraHost)
+		key: createHashWithSharedSecret(key)
 	};
 };
 
-const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, jiraHost?: string): Promise<T> => {
+const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, key?: string): Promise<T> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
-		const user = createLaunchdarklyUser(jiraHost);
+		const user = createLaunchdarklyUser(key);
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
@@ -64,14 +65,14 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
-	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
+export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, key?: string): Promise<boolean> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
-export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, jiraHost?: string): Promise<T> =>
-	await getLaunchDarklyValue<T>(flag, defaultValue, jiraHost);
+export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
+	await getLaunchDarklyValue<T>(flag, defaultValue, key);
 
-export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
-	await getLaunchDarklyValue(flag, defaultValue, jiraHost);
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
 export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
 	launchdarklyClient.on(`update:${flag}`, listener);

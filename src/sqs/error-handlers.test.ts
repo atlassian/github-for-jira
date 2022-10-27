@@ -3,7 +3,7 @@ import { statsd }  from "config/statsd";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
-import { Octokit } from "probot";
+import { Octokit } from "@octokit/rest";
 import { RateLimitingError } from "../github/client/github-client-errors";
 import { AxiosResponse, AxiosResponseHeaders } from "axios";
 import { ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
@@ -63,13 +63,13 @@ describe("error-handlers", () => {
 			expect(result.isFailure).toBe(true);
 		});
 
-		function getJiraClientError(code: number) {
+		const getJiraClientError = (code: number) => {
 			return new JiraClientError("err", {
 				message: "",
 				name: "",
 				config: {}, isAxiosError: true, toJSON: () => ({})
 			}, code);
-		}
+		};
 
 		it("Unretryable and not an error on Jira 401", async () => {
 

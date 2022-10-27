@@ -45,10 +45,7 @@ describe("Maintenance", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use(getFrontendApp({
-				getSignedJsonWebToken: () => "",
-				getInstallationAccessToken: async () => ""
-			}));
+			app.use(getFrontendApp());
 		});
 
 		describe("Atlassian Connect", () => {
@@ -75,7 +72,7 @@ describe("Maintenance", () => {
 		});
 
 		describe("Maintenance", () => {
-			it("should return maintenance page on '/maintenance' even if maintenance mode is off", () => {
+			it("should return maintenance page on '/maintenance' even if maintenance mode is off", async () => {
 				whenMaintenanceMode(false);
 
 				return supertest(app)

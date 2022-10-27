@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { JiraAssociation, JiraDeploymentData } from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
 import {
@@ -15,6 +15,7 @@ import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
@@ -167,33 +168,54 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	return Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key])) || "unmapped";
 };
 
+
 // Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).
 // Returns undefined when there are no issue ids to map.
-const mapJiraIssueIdsAndCommitsToAssociationArray = (
+const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	issueIds: string[],
-	repositoryId: string,
-	commitSummaries?: CommitSummary[]
-): JiraAssociation[] | undefined => {
+	transformedRepositoryId: TransformedRepositoryId,
+	commitSummaries?: CommitSummary[],
+	config?: Config
+): Promise<JiraAssociation[] | undefined> => {
 
-	if (!issueIds?.length) {
-		return undefined;
+	const associations: JiraAssociation[] = [];
+	let totalAssociationCount = 0;
+	if (issueIds?.length) {
+		const maximumIssuesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const issues = issueIds
+			.slice(0, maximumIssuesToSubmit);
+		associations.push(
+			{
+				associationType: "issueIdOrKeys",
+				values: issues
+			}
+		);
+		totalAssociationCount += issues.length;
 	}
 
-	const associations: JiraAssociation[] = [
-		{
-			associationType: "issueIdOrKeys",
-			values: issueIds
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+		if (config?.deployments?.services?.ids) {
+			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+			const services = config.deployments.services.ids
+				.slice(0, maximumServicesToSubmit);
+			associations.push(
+				{
+					associationType: "serviceIdOrKeys",
+					values: services
+				}
+			);
+			totalAssociationCount += config.deployments.services.ids.length;
 		}
-	];
+	}
 
 	if (commitSummaries?.length) {
-		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - issueIds.length;
+		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 		const commitKeys = commitSummaries
 			.slice(0, maximumCommitsToSubmit)
 			.map((commitSummary) => {
 				return {
 					commitHash: commitSummary.sha,
-					repositoryId: repositoryId
+					repositoryId: transformedRepositoryId
 				};
 			});
 		if (commitKeys.length) {
@@ -209,7 +231,7 @@ const mapJiraIssueIdsAndCommitsToAssociationArray = (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
@@ -224,37 +246,38 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		logger
 	);
 
+
+	let config: Config | undefined;
+
+	const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
+	if (subscription) {
+		config = await getRepoConfig(
+			subscription,
+			githubInstallationClient.githubInstallationId,
+			payload.repository.id,
+			payload.repository.owner.login,
+			payload.repository.name);
+	} else {
+		logger.warn({
+			jiraHost,
+			githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+		}, "could not find subscription - not using user config to map environments!");
+	}
+
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
-	const associations = mapJiraIssueIdsAndCommitsToAssociationArray(
+	const associations = await mapJiraIssueIdsCommitsAndServicesToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		payload.repository.id.toString(),
-		commitSummaries
+		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
+		commitSummaries,
+		config
 	);
 
 	if (!associations?.length) {
 		return undefined;
 	}
 
-	let config: Config | undefined;
-
-	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
-		if (subscription) {
-			config = await getRepoConfig(
-				subscription,
-				githubInstallationClient.githubInstallationId,
-				payload.repository.id,
-				payload.repository.owner.login,
-				payload.repository.name);
-		} else {
-			logger.warn({
-				jiraHost,
-				githubInstallationId: githubInstallationClient.githubInstallationId.installationId
-			}, "could not find subscription - not using user config to map environments!");
-		}
-	}
-
 	const environment = mapEnvironment(deployment_status.environment, config);
+
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,

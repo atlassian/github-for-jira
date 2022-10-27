@@ -1,13 +1,12 @@
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import workflowBasicFixture from "fixtures/workflow-basic.json";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("../config/feature-flags");
 
 describe("Workflow Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {
@@ -21,7 +20,7 @@ describe("Workflow Webhook", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			sharedSecret: "shared-secret"
+			encryptedSharedSecret: "shared-secret"
 		});
 
 		githubUserTokenNock(gitHubInstallationId);

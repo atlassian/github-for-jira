@@ -10,6 +10,7 @@ import Logger from "bunyan";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 /**
  * Find the next page number from the response headers.
@@ -40,7 +41,7 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: Logger,
-	newGithub: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
@@ -56,7 +57,7 @@ export const getPullRequestTask = async (
 		status,
 		headers,
 		request
-	} =	await newGithub
+	} =	await gitHubInstallationClient
 		.getPullRequests(repository.owner.login, repository.name,
 			{
 				per_page: perPage,
@@ -71,7 +72,7 @@ export const getPullRequestTask = async (
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		[`status:${status}`, `gitHubProduct: ${gitHubProduct}`]);
+		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
@@ -84,13 +85,14 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				const prResponse = await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number);
+				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
-				const ghUser = await getGithubUser(newGithub, prDetails?.user.login
+				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login
 				);
 				const data = await transformPullRequest(
 					{ pullRequest: pull, repository },
 					prDetails,
+					gitHubInstallationClient.baseUrl,
 					ghUser
 				);
 				return data?.pullRequests[0];
@@ -105,11 +107,8 @@ export const getPullRequestTask = async (
 		jiraPayload:
 			pullRequests?.length
 				? {
-					id: repository.id.toString(),
-					name: repository.full_name,
-					pullRequests,
-					url: repository.html_url,
-					updateSequenceId: Date.now()
+					... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+					pullRequests
 				}
 				: undefined
 	};

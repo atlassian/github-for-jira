@@ -24,10 +24,7 @@ const turnGHE_FF_OnOff = (newStatus: boolean) => {
 };
 
 const setupAppAndRouter = () => {
-	return getFrontendApp({
-		getSignedJsonWebToken: () => "",
-		getInstallationAccessToken: async () => ""
-	});
+	return getFrontendApp();
 };
 
 const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {

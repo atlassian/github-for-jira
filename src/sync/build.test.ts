@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { Installation } from "models/installation";
-import { RepoSyncState } from "models/reposyncstate";
-import { Subscription } from "models/subscription";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -13,17 +10,17 @@ import buildFixture from "fixtures/api/build.json";
 import multiBuildFixture from "fixtures/api/build-multi.json";
 import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
 
 describe("sync/builds", () => {
-	const installationId = 1234;
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	const makeExpectedJiraResponse = (builds) => ({
 		builds,
 		properties: {
-			"gitHubInstallationId": 1234
+			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
 		},
 		providerMetadata: {}
 	});
@@ -38,44 +35,19 @@ describe("sync/builds", () => {
 
 		mockSystemTime(12345678);
 
-		await Installation.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			sharedSecret: "secret",
-			clientKey: "client-key"
-		});
-
-		const subscription = await Subscription.create({
-			gitHubInstallationId: installationId,
-			jiraHost,
-			syncStatus: "ACTIVE",
-			repositoryStatus: "complete"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 1,
-			repoName: "test-repo-name",
-			repoOwner: "integrations",
-			repoFullName: "test-repo-name",
-			repoUrl: "test-repo-url",
-			branchStatus: "complete",
-			commitStatus: "complete",
-			pullStatus: "complete",
-			deploymentStatus: "complete",
-			buildStatus: "pending", // We want the next process to be build
-			updatedAt: new Date(),
-			createdAt: new Date()
-		});
+		await new DatabaseStateCreator()
+			.withActiveRepoSyncState()
+			.repoSyncStatePendingForBuilds()
+			.create();
 
 		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 	});
 
 	it("should sync builds to Jira when build message contains issue key", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -117,10 +89,10 @@ describe("sync/builds", () => {
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -187,10 +159,10 @@ describe("sync/builds", () => {
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
@@ -210,9 +182,9 @@ describe("sync/builds", () => {
 	});
 
 	it("should not call Jira if no data is returned", async () => {
-		const data: BackfillMessagePayload = { installationId, jiraHost };
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
-		githubUserTokenNock(installationId);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
 			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1`)
 			.reply(200, {});

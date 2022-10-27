@@ -1,4 +1,3 @@
-import { probot } from "./app";
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 
@@ -6,7 +5,7 @@ const logger = getLogger("worker");
 
 let running = false;
 
-export async function start() {
+export const start = async () => {
 	if (running) {
 		logger.debug("Worker instance already running, skipping.");
 		return;
@@ -16,18 +15,16 @@ export async function start() {
 	sqsQueues.start();
 
 	running = true;
-}
+};
 
-export async function stop() {
+export const stop = async () => {
 	if (!running) {
 		logger.debug("Worker instance not running, skipping.");
 		return;
 	}
 	logger.info("Micros Lifecycle: Stopping queue processing");
-	// TODO: change this to `probot.close()` once we update probot to latest version
-	probot.httpServer?.close();
 
 	await sqsQueues.stop();
 
 	running = false;
-}
+};

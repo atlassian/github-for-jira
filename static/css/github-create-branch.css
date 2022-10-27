@@ -1,7 +1,6 @@
 .gitHubCreateBranch {
-  margin: auto;
+  margin: 10% auto;
   max-width: 480px;
-  height: 100vh;
 }
 
 #createBranchForm .field-group {
@@ -14,6 +13,22 @@
   line-height: 1.7rem;
   background: #ebecf0;
   color: #7a869a;
+}
+
+.headerImage {
+  position: relative;
+}
+
+.headerImageLogo-lg {
+  height: 146px;
+}
+
+.gitHubCreateBranch__spinner {
+  display: none;
+  position: absolute;
+  top: 62px;
+  left: 230px;
+  color: #fff;
 }
 
 .gitHubCreateBranch__title {
@@ -38,6 +53,10 @@
   margin-top: 2.5em;
 }
 
+.gitHubCreateBranch__issueLink {
+  font-weight: bold;
+}
+
 /** Customizing styling for Select2 **/
 .select2-drop {
   /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
@@ -50,4 +69,64 @@
   content: "\f15b";
   font-weight: 400;
   right: 4px;
+}
+.select2-loader {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+.select2-loader-for-input {
+  position: absolute;
+  top: 37px;
+  z-index: 2;
+  left: 8px;
+  padding: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.gitHubCreateBranch__serverError {
+  display: none;
+  margin-top: 2.5em;
+}
+
+.aui-icon.aui-iconfont-error {
+  margin-top: 10px;
+}
+
+.gitHubCreateBranch__userDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 16px 23px 0px 0px;
+}
+
+.has-errors {
+  border: 2px solid #DE350B!important;
+}
+
+.error-message {
+  color: #DE350B;
+  font-size: 0.9rem;
+}
+
+.no-repo-container {
+  display: none;
+  margin: 4px 0 0;
+}
+
+.no-repo-link:hover {
+  text-decoration: underline;
+}
+
+.configure-link {
+  margin: 8px 0;
+  display: inline-block;
+}
+
+.gitHubCreateBranch__createdLinks {
+  display: none;
+  justify-content: space-evenly;
 }

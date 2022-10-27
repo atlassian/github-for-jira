@@ -1,41 +1,15 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
-const GITHUB_CLOUD = ["github.com", "www.github.com"];
-
-const validateUrl = url => {
-	const pattern = /^((?:http:\/\/)|(?:https:\/\/))(www.)?((?:[a-zA-Z0-9]+\.[a-z]{3})|(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))([/a-zA-Z0-9.]*)$/gm;
-	return url.match(pattern);
-}
 
 AJS.formValidation.register(['ghe-url'], (field) => {
 	const inputURL = field.el.value;
-	try {
-		const { hostname } = new URL(inputURL);
-
-		if (!validateUrl(inputURL)) {
-			field.invalidate(AJS.format(
-				'The entered URL is not valid. ' +
-				'<a href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
-				'Learn more' +
-				'</a>.'
-			));
-			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
-		}
-		else if (GITHUB_CLOUD.includes(hostname)) {
-			field.invalidate(AJS.format('The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.'));
-			$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
-		} else {
-			field.validate();
-			$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
-		}
-	} catch (e) {
-    if (!inputURL.trim().length) {
-      field.invalidate(AJS.format('This is a required field.'));
-    } else {
-      field.invalidate(AJS.format('The entered URL is not valid.'));
-    }
+	if (!inputURL.trim().length) {
+		field.invalidate(AJS.format('This is a required field.'));
 		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+	} else {
+		field.validate();
+		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
 	}
 });
 
@@ -49,32 +23,35 @@ const requestFailed = () => {
 	$("#gheServerBtnSpinner").hide();
 };
 
-const getGHEServerError = (code, url) => {
-	switch (code) {
+const getGHEServerError = (error, url) => {
+	let reason = '';
+	if (error.reason) {
+		reason = `<br />Reason: ${error.reason}.<br />`;
+	}
+	switch (error.code) {
 		case "GHE_ERROR_INVALID_URL":
 			return {
 				title: "Invalid URL",
-				message: "<b>${url}</b> doesn't look right. Please check and try again.",
+				message: 'The entered URL is not valid. ' +
+					reason +
+					'<a href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">' +
+					'Learn more' +
+					'</a>.',
 			};
-		case "GHE_ERROR_ENOTFOUND":
+		case "GHE_ERROR_GITHUB_CLOUD_HOST":
 			return {
-				title: `We couldn't verify ${url}`,
-				message: "Please make sure you've entered the correct URL and check that you've properly configured the hole in your firewall.",
+				title: "GitHub Cloud site",
+				message: `The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.`,
 			};
-		case "GHE_SERVER_BAD_GATEWAY":
+		case "GHE_ERROR_CANNOT_CONNECT":
 			return {
-				title: "Bad Gateway",
-				message: "We weren't able to complete your request. Please try again."
-			};
-		case "GHE_ERROR_CONNECTION_TIMED_OUT":
-			return {
-				title: "Connection timed out",
-				message: `We couldn't connect to <b>${url}</b>. Please make sure GitHub for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
+				title: "Connection failed",
+				message: `We couldn't connect to <b>${url}</b>. ${reason}Please make sure GitHub for Jira can connect to it and try again. <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data" target="_blank">Learn more</a>`
 			};
 		default:
 			return {
 				title: "Something went wrong",
-				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Trace ID: <b>${code}</b>`
+				message: `We ran into a hiccup while verifying your details. Please try again later. <br/> Error code: <b>${error.code}</b>. ${reason}`
 			};
 	}
 }
@@ -109,11 +86,17 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 						}
 					);
 				} else {
-					const errorMessage = getGHEServerError(data.errors[0].code, gheServerURL);
+					const errorMessage = getGHEServerError(data.errors[0], gheServerURL);
 					handleGheUrlRequestErrors(errorMessage);
 				}
 			}
-		);
+		).fail(function(xhr, status, error) {
+			console.error("Error while calling backend", status, error);
+			handleGheUrlRequestErrors(getGHEServerError({
+				code: status,
+				reason: xhr.responseText
+			}, gheServerURL));
+		});
 	});
 };
 

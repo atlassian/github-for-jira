@@ -46,7 +46,7 @@ describe("Jira Configuration Suite", () => {
 			//TODO: why? Comment this out make test works?
 			//setting both fields make sequelize confused as it internally storage is just the "secrets"
 			//secrets: "def234",
-			sharedSecret: "ghi345"
+			encryptedSharedSecret: "ghi345"
 		});
 
 	});
@@ -303,10 +303,7 @@ describe.each([
 
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	it(`Testing route: ${url}`, async () => {

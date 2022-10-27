@@ -1,4 +1,3 @@
-import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
@@ -10,12 +9,10 @@ import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-const hasAdminAccess = async (gitHubAppClient: GitHubAppClient | GitHubAPI, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
+const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
 		const { data: { login } } = await gitHubUserClient.getUser();
-		const { data: installation } = gitHubAppClient instanceof GitHubAppClient ?
-			await gitHubAppClient.getInstallation(gitHubInstallationId) :
-			await gitHubAppClient.apps.getInstallation({ installation_id: gitHubInstallationId });
+		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
 	}	catch (err) {

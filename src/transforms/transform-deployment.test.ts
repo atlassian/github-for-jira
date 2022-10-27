@@ -3,16 +3,22 @@
 import { transformDeployment, mapEnvironment } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getInstallationId } from "../github/client/installation-id";
+import { getInstallationId, InstallationId } from "../github/client/installation-id";
 import deployment_status from "fixtures/deployment_status-basic.json";
 import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
-import { Subscription } from "models/subscription";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
+
+const turnFF_OnOff_service = (newStatus: boolean) => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
+		.mockResolvedValue(newStatus);
+};
 
 const mockConfig = {
 	deployments: {
@@ -20,8 +26,56 @@ const mockConfig = {
 			development: [
 				"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
 			]
+		},
+		services: {
+			ids: [
+				"service-id-1",
+				"service-id-2"
+			]
 		}
 	}
+};
+
+const mockGetRepoConfig = () => {
+	when(getRepoConfig).calledWith(
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything()
+	).mockResolvedValue(mockConfig);
+};
+
+const turnOnGHESFF = () => {
+	when(jest.mocked(booleanFlag))
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.mockResolvedValue(true);
+};
+
+const buildJiraPayload = (associations) => {
+	return {
+		deployments: [{
+			schemaVersion: "1.0",
+			deploymentSequenceNumber: 1234,
+			updateSequenceNumber: 123456,
+			displayName: "deploy",
+			url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
+			description: "deploy",
+			lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
+			state: "successful",
+			pipeline: {
+				id: "deploy",
+				displayName: "deploy",
+				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
+			},
+			environment: {
+				id: "Production",
+				displayName: "Production",
+				type: "production"
+			},
+			associations
+		}]
+	};
 };
 
 describe("deployment environment mapping", () => {
@@ -114,391 +168,550 @@ describe("deployment environment mapping", () => {
 	});
 });
 
-const TEST_INSTALLATION_ID = 1234;
 describe("transform GitHub webhook payload to Jira payload", () => {
 	const { payload: { repository: { name: repoName, owner } } } = deployment_status;
-	let githubClient: GitHubInstallationClient;
+	let gitHubClient: GitHubInstallationClient;
 
-	beforeEach(() => {
-		githubClient = new GitHubInstallationClient(getInstallationId(TEST_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
-	});
+	describe("cloud", () => {
 
-	it(`supports branch and merge workflows, sending related commits in deployment`, async () => {
+		beforeEach(async () => {
+			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
 
-		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
+			await new DatabaseStateCreator().create();
+		});
 
-		// Mocking all GitHub API Calls
-		// Get commit
-		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				...owner,
-				commit: {
-					message: "testing"
-				}
-			});
+		it(`uses user config to associate services`, async () => {
+			turnFF_OnOff_service(true);
 
-		// List deployments
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
-			.reply(200,
-				[
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "foo42",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
 					{
 						id: 1,
-						environment: "Production",
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					}
-				]
-			);
-
-		// List deployments statuses
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
-			.reply(200, [
-				{
-					id: 1,
-					state: "pending"
-				},
-				{
-					id: 2,
-					state: "success"
-				}
-			]);
-
-		// Compare commits
-		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				commits: [
-					{
-						commit: {
-							message: "ABC-1"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						state: "pending"
 					},
 					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						id: 2,
+						state: "success"
 					}
-				]
-			}
-			);
+				]);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				}
+				);
 
-		expect(jiraPayload).toMatchObject({
-			deployments: [{
-				schemaVersion: "1.0",
-				deploymentSequenceNumber: 1234,
-				updateSequenceNumber: 123456,
-				displayName: "deploy",
-				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-				description: "deploy",
-				lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
-				state: "successful",
-				pipeline: {
-					id: "deploy",
-					displayName: "deploy",
-					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
-				},
-				environment: {
-					id: "Production",
-					displayName: "Production",
-					type: "production"
-				},
-				associations: [
+			mockGetRepoConfig();
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+
+			expect(jiraPayload?.deployments[0].associations).toStrictEqual(
+				[
 					{
 						associationType: "issueIdOrKeys",
-						values: ["ABC-1", "ABC-2"]
+						values: ["ABC-123", "ABC-1", "ABC-2"]
+					},
+					{
+						associationType: "serviceIdOrKeys",
+						values: ["service-id-1", "service-id-2"]
 					},
 					{
 						associationType: "commit",
 						values: [
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
-								repositoryId: "65"
+								repositoryId: "test-repo-id"
 							},
 							{
 								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
-								repositoryId: "65"
+								repositoryId: "test-repo-id"
 							}
 						]
-					}
-				]
-			}]
+					}]
+			);
 		});
-	});
 
-	it(`supports branch and merge workflows, sending zero commits in deployment when 500 issues`, async () => {
+		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud`, async () => {
 
-		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
+			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
-		// Mocking all GitHub API Calls
-		// Get commit
-		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				...owner,
-				commit: {
-					message: "testing"
-				}
-			});
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
 
-		// List deployments
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
-			.reply(200,
-				[
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "Production",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
 					{
 						id: 1,
-						environment: "Production",
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					}
-				]
-			);
-
-		// List deployments statuses
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
-			.reply(200, [
-				{
-					id: 1,
-					state: "pending"
-				},
-				{
-					id: 2,
-					state: "success"
-				}
-			]);
-
-		// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-		const commitMessage = "ABC-" + [...Array(500).keys()].join(" ABC-");
-
-		// Compare commits
-		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				commits: [
+						state: "pending"
+					},
 					{
-						commit: {
-							message: commitMessage
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						id: 2,
+						state: "success"
 					}
-				]
-			}
-			);
+				]);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
 
-		// make expected issue id array
-		const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
-		expect(jiraPayload).toMatchObject({
-			deployments: [{
-				schemaVersion: "1.0",
-				deploymentSequenceNumber: 1234,
-				updateSequenceNumber: 123456,
-				displayName: "deploy",
-				url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
-				description: "deploy",
-				lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
-				state: "successful",
-				pipeline: {
-					id: "deploy",
-					displayName: "deploy",
-					url: "test-repo-url/commit/885bee1-commit-id-1c458/checks"
+			expect(jiraPayload).toMatchObject(buildJiraPayload([
+				{
+					associationType: "issueIdOrKeys",
+					values: ["ABC-1", "ABC-2"]
 				},
-				environment: {
-					id: "Production",
-					displayName: "Production",
-					type: "production"
-				},
-				associations: [
+				{
+					associationType: "commit",
+					values: [
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+							repositoryId: "65"
+						},
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+							repositoryId: "65"
+						}
+					]
+				}
+			]));
+		});
+
+		// The number of values counted across all associationTypes (issueKeys, issueIdOrKeys and serviceIdOrKeys) must not exceed a limit of 500.
+		// https://developer.atlassian.com/cloud/jira/software/rest/api-group-deployments/#api-rest-deployments-0-1-bulk-post
+		describe("limits to 500 total", () => {
+			beforeEach(() => {
+				//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+				// Mocking all GitHub API Calls
+				// Get commit
+				githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+					.reply(200, {
+						...owner,
+						commit: {
+							message: "testing"
+						}
+					});
+
+				// List deployments
+				githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
+					.reply(200,
+						[
+							{
+								id: 1,
+								environment: "Production",
+								sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+							}
+						]
+					);
+
+				// List deployments statuses
+				githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+					.reply(200, [
+						{
+							id: 1,
+							state: "pending"
+						},
+						{
+							id: 2,
+							state: "success"
+						}
+					]);
+			});
+
+			it(`crops issue keys (505) to 500 (5 issue keys must be left aside)`, async () => {
+
+				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
+				const commitMessage = "ABC-" + [...Array(505).keys()].join(" ABC-");
+
+				// Compare commits
+				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+					.reply(200, {
+						commits: [
+							{
+								commit: {
+									message: commitMessage
+								},
+								sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+							}
+						]
+					});
+
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+				// make expected issue id array
+				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
+
+				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
 						associationType: "issueIdOrKeys",
 						values: expectedIssueIds
 					}
-				]
-			}]
-		});
-	});
-
-	it(`uses user config to map environment`, async () => {
-
-		await Subscription.create({
-			gitHubInstallationId: TEST_INSTALLATION_ID,
-			jiraHost: "https://test-atlassian-instance.atlassian.net",
-			jiraClientKey: "client-key"
-		});
-
-		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-
-		// Mocking all GitHub API Calls
-		// Get commit
-		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				...owner,
-				commit: {
-					message: "testing"
-				}
+				]));
 			});
 
-		// List deployments
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
-			.reply(200,
-				[
-					{
-						id: 1,
-						environment: "foo42",
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					}
-				]
-			);
+			it(`crops issue keys (499) and services (2) to 500 (one service must be left aside)`, async () => {
+				await turnFF_OnOff_service(true);
 
-		// List deployments statuses
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
-			.reply(200, [
-				{
-					id: 1,
-					state: "pending"
-				},
-				{
-					id: 2,
-					state: "success"
-				}
-			]);
+				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
+				const commitMessage = "ABC-" + [...Array(499).keys()].join(" ABC-");
 
-		// Compare commits
-		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				commits: [
+				// Compare commits
+				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+					.reply(200, {
+						commits: [
+							{
+								commit: {
+									message: commitMessage
+								},
+								sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+							}
+						]
+					});
+
+				mockGetRepoConfig();
+
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+				// make expected issue id array
+
+				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
-						commit: {
-							message: "ABC-1"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						associationType: "issueIdOrKeys",
+						values: [...Array(499).keys()].map(number => "ABC-" + number)
 					},
 					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						associationType: "serviceIdOrKeys",
+						values: ["service-id-1"] // 'service-id-2' should not be expected
 					}
-				]
-			}
-			);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.CONFIG_AS_CODE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
-		when(getRepoConfig).calledWith(
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(mockConfig);
-
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
-		expect(jiraPayload?.deployments[0].environment.type).toBe("development");
-	});
-
-	it(`does NOT use user config to map environment when FF is disabled`, async () => {
-
-		await Subscription.create({
-			gitHubInstallationId: TEST_INSTALLATION_ID,
-			jiraHost: "testing.atlassian.net",
-			jiraClientKey: "client-key"
-		});
-
-		//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-		githubUserTokenNock(TEST_INSTALLATION_ID);
-
-		// Mocking all GitHub API Calls
-		// Get commit
-		githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				...owner,
-				commit: {
-					message: "testing"
-				}
+				]));
 			});
 
-		// List deployments
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
-			.reply(200,
-				[
-					{
-						id: 1,
-						environment: "foo42",
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
-					}
-				]
-			);
+			it(`crops issue keys (497), service ids (2) and commits (2) to 500 (one commit must be left aside)`, async () => {
+				await turnFF_OnOff_service(true);
 
-		// List deployments statuses
-		githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
-			.reply(200, [
-				{
-					id: 1,
-					state: "pending"
-				},
-				{
-					id: 2,
-					state: "success"
-				}
-			]);
+				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
+				const commitMessage = "ABC-" + [...Array(497).keys()].join(" ABC-");
 
-		// Compare commits
-		githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
-			.reply(200, {
-				commits: [
+				// Compare commits
+				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+					.reply(200, {
+						commits: [
+							{
+								commit: {
+									message: commitMessage
+								},
+								sha: "expected"
+							},
+							{
+								commit: {
+									message: commitMessage
+								},
+								sha: "notexpected"
+							}
+						]
+					});
+
+				when(getRepoConfig).calledWith(
+					expect.anything(),
+					expect.anything(),
+					expect.anything(),
+					expect.anything(),
+					expect.anything()
+				).mockResolvedValue(mockConfig);
+
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
-						commit: {
-							message: "ABC-1"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						associationType: "issueIdOrKeys",
+						values: [...Array(497).keys()].map(number => "ABC-" + number)
 					},
 					{
-						commit: {
-							message: "ABC-2"
-						},
-						sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						associationType: "serviceIdOrKeys",
+						values: ["service-id-1", "service-id-2"]
+					},
+					{
+						associationType: "commit",
+						values: [
+							{
+								repositoryId: "65",
+								commitHash: "expected"
+							}
+						]
 					}
-				]
-			}
-			);
+				]));
+			});
+		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.CONFIG_AS_CODE,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
+		it(`uses user config to map environment`, async () => {
 
-		when(getRepoConfig).calledWith(
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(mockConfig);
+			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
-		const jiraPayload = await transformDeployment(githubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
-		expect(jiraPayload?.deployments[0].environment.type).toBe("unmapped");
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "foo42",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]);
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
+
+			mockGetRepoConfig();
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			expect(jiraPayload?.deployments[0].environment.type).toBe("development");
+		});
+
 	});
 
+	describe("server", () => {
 
+		let gitHubClient: GitHubInstallationClient;
+
+		beforeEach(async () => {
+			const builderOutput = await new DatabaseStateCreator()
+				.forServer()
+				.create();
+
+			gitHubClient = new GitHubInstallationClient(
+				new InstallationId(gheUrl, builderOutput.gitHubServerApp!.appId, DatabaseStateCreator.GITHUB_INSTALLATION_ID),
+				{
+					hostname: gheUrl,
+					baseUrl: gheUrl,
+					apiUrl: gheApiUrl,
+					graphqlUrl: gheApiUrl + "/graphql"
+				},
+				getLogger("test"),
+				builderOutput.gitHubServerApp!.id
+			);
+		});
+
+		it(`supports branch and merge workflows, sending related commits in deployment for Server`, async () => {
+
+			turnOnGHESFF();
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_REPO_ID_TRANSFORMER,
+				expect.anything()
+			).mockResolvedValue(true);
+
+			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			gheApiNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// List deployments
+			gheApiNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "Production",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			gheApiNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]);
+
+			// Compare commits
+			gheApiNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload).toMatchObject(buildJiraPayload([
+				{
+					associationType: "issueIdOrKeys",
+					values: ["ABC-1", "ABC-2"]
+				},
+				{
+					associationType: "commit",
+					values: [
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+							repositoryId: "6769746875626d79646f6d61696e636f6d-65"
+						},
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+							repositoryId: "6769746875626d79646f6d61696e636f6d-65"
+						}
+					]
+				}
+			]));
+		});
+	});
 });

@@ -49,6 +49,7 @@ export const getRepositoryTask = async (
 			cursor: nextCursor
 		}));
 	} else {
+		logger.info({ cursor }, "joshkay temp logging - Start fetch of Repos");
 		const response = await newGithub.getRepositoriesPage(perPage, cursor as string);
 		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 		totalCount = response.viewer.repositories.totalCount;
@@ -80,9 +81,7 @@ export const getRepositoryTask = async (
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	if (await booleanFlag(BooleanFlags.CONFIG_AS_CODE, false, jiraHost)) {
-		await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId, jiraHost, gitHubAppId);
-	}
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId, jiraHost, gitHubAppId);
 
 	return {
 		edges,

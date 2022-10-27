@@ -18,10 +18,7 @@ describe("Github Setup", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => "access-token"
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	describe("#GET", () => {
@@ -34,12 +31,13 @@ describe("Github Setup", () => {
 				//setting both fields make sequelize confused as it internally storage is just the "secrets"
 				//secrets: "def234",
 				//secrets: "def234",
-				sharedSecret: "ghi345"
+				encryptedSharedSecret: "ghi345"
 			});
 
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
+			githubAppTokenNock();
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.expect(422);
@@ -111,10 +109,7 @@ describe("Github Setup", () => {
 		it("should return a 200 with the redirect url to the app if a valid domain is given and an installation already exists", async () => {
 			await Installation.create({
 				jiraHost,
-				//TODO: why? Comment this out make test works?
-				//setting both fields make sequelize confused as it internally storage is just the "secrets"
-				//secrets: "secret",
-				sharedSecret: "sharedSecret",
+				encryptedSharedSecret: "sharedSecret",
 				clientKey: "clientKey"
 			});
 

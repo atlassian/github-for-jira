@@ -1,5 +1,5 @@
 import { Installation } from "./installation";
-import Sequelize from "sequelize";
+import { QueryTypes } from "sequelize";
 import { v4 as UUID } from "uuid";
 import { getHashedKey } from "models/sequelize";
 
@@ -33,7 +33,7 @@ describe("Installation", () => {
 			});
 			const installation = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
 			await installation.update({
-				sharedSecret: "new-shared-secret"
+				encryptedSharedSecret: "new-shared-secret"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:new-shared-secret");
@@ -43,7 +43,7 @@ describe("Installation", () => {
 			await Installation.create({
 				host: "whatever.abc",
 				clientKey: getHashedKey(clientKey),
-				sharedSecret: "some-plain-shared-secret-create"
+				encryptedSharedSecret: "some-plain-shared-secret-create"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-create");
@@ -53,21 +53,10 @@ describe("Installation", () => {
 			await Installation.build({
 				host: "whatever.abc",
 				clientKey: getHashedKey(clientKey),
-				sharedSecret: "some-plain-shared-secret-build"
+				encryptedSharedSecret: "some-plain-shared-secret-build"
 			}).save();
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
 			expect(encryptedSharedSecretInDB).toEqual("encrypted:some-plain-shared-secret-build");
-		});
-		it("should use the sharedSecret when both set", async () => {
-			const clientKey = UUID();
-			await Installation.create({
-				host: "whatever.abc",
-				clientKey: getHashedKey(clientKey), //TODO: indicate in-consistent usage of the model
-				sharedSecret: "secret-A",
-				encryptedSharedSecret: "secret-B"
-			});
-			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
-			expect(encryptedSharedSecretInDB).toEqual("encrypted:secret-A");
 		});
 	});
 	const insertNewInstallation = async ({ clientKey }) => {
@@ -77,7 +66,7 @@ describe("Installation", () => {
 					values
 					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
 				`, {
-			type: Sequelize.QueryTypes.INSERT
+			type: QueryTypes.INSERT
 		});
 	};
 

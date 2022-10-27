@@ -5,7 +5,7 @@ import { JiraIssue } from "interfaces/jira";
 const logger = getLogger("jira.util");
 
 export const getJiraUtil = (jiraClient) => {
-	const containsReferenceLink = (line) => {
+	const containsReferenceLink = (line: string) => {
 		// reference text links should have 2 parts only
 		if (line.split(" ").length === 2) {
 			const hasSquareBrackets = line.charAt(0) === "[" && line.includes("]:");
@@ -23,7 +23,7 @@ export const getJiraUtil = (jiraClient) => {
 	// [TEST-2019]: http://example.com/browse/TEST-2019
 	// [TEST-2020]: https://example.com/browse/TEST-2020
 	// if no issue keys exist, return []
-	const checkForReferenceText = (text) => {
+	const checkForReferenceText = (text: string) => {
 		const splitTextByNewLine = text.split("\n");
 
 		return splitTextByNewLine
@@ -31,7 +31,7 @@ export const getJiraUtil = (jiraClient) => {
 			.map((referenceLink) => referenceLink.slice(1, referenceLink.indexOf("]")));
 	};
 
-	function addJiraIssueLinks(text: string, issues: JiraIssue[]): string {
+	const addJiraIssueLinks = (text: string, issues: JiraIssue[]): string => {
 		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
 		const issueMap = issues.reduce((acc, issue) => ({
 			...acc,
@@ -68,9 +68,9 @@ export const getJiraUtil = (jiraClient) => {
 		}
 
 		return links.length ? [text, links.join("\n")].join("\n\n") : text;
-	}
+	};
 
-	async function unfurl(text: string): Promise<string | undefined> {
+	const unfurl = async (text: string): Promise<string | undefined> => {
 		try {
 			const issues = jiraClient.issues.parse(text);
 			if (!issues) return undefined;
@@ -86,9 +86,16 @@ export const getJiraUtil = (jiraClient) => {
 			logger.warn({ err, issueText: text }, "Error getting all JIRA issues");
 			return undefined;
 		}
-	}
+	};
 
-	async function runJiraCommands(commands) {
+	type Command = {
+		kind: string;
+		name: string;
+		text: string;
+		time: number;
+		issueKeys: string[]
+	};
+	const runJiraCommands = async (commands: Command[]) => {
 		return Promise.all(commands.map(command => {
 			if (command.kind === "comment") {
 				return Promise.all(command.issueKeys.map(issueKey => jiraClient.issues.comments.addForIssue(issueKey, {
@@ -108,11 +115,11 @@ export const getJiraUtil = (jiraClient) => {
 					const transitions = (await jiraClient.issues.transitions.getForIssue(issueKey))
 						.data
 						.transitions
-						.map(transition => ({
+						.map((transition: {id: string, name: string}) => ({
 							id: transition.id,
 							name: transition.name.replace(" ", "-").toLowerCase()
 						}))
-						.filter(transition => transition.name.startsWith(command.name));
+						.filter((transition: {id: string, name: string}) => transition.name.startsWith(command.name));
 
 					// We only want to run a transition if we match only one. If we don't match a transition
 					// or if we match two transitions, we should resolve rather than transitioning.
@@ -131,7 +138,7 @@ export const getJiraUtil = (jiraClient) => {
 			}
 			return Promise.resolve();
 		}));
-	}
+	};
 
 	return {
 		addJiraIssueLinks,

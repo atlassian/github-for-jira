@@ -24,6 +24,9 @@ Object {
   "issues": Object {
     "comments": Object {
       "addForIssue": [Function],
+      "deleteForIssue": [Function],
+      "list": [Function],
+      "updateForIssue": [Function],
     },
     "get": [Function],
     "getAll": [Function],

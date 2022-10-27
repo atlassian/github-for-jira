@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
 
 import issueNullBody from "fixtures/issue-null-body.json";
 import issueBasic from "fixtures/issue-basic.json";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 describe("Issue Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {
@@ -22,7 +21,7 @@ describe("Issue Webhook", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			sharedSecret: "shared-secret"
+			encryptedSharedSecret: "shared-secret"
 		});
 	});
 
