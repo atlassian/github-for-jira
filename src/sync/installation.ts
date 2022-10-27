@@ -332,6 +332,7 @@ export const handleBackfillError = async (err,
 	task: string,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {

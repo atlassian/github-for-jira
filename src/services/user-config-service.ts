@@ -5,10 +5,12 @@ import YAML from "yaml";
 import { InstallationId } from "../github/client/installation-id";
 import { Subscription } from "models/subscription";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
 const MAX_PATTERNS_PER_ENVIRONMENT = 10;
+const MAX_SERVICE_ID_COUNT = 100;
 
 /**
  * Checks whether a list of modified files contains the config file. If yes, reads that config file
@@ -71,7 +73,7 @@ export const getRepoConfig = async (
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
 		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId);
-		return convertYamlToUserConfig(yamlConfig);
+		return await convertYamlToUserConfig(yamlConfig);
 	}
 
 	// Standard case: we return the config from our database.
@@ -107,7 +109,7 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 /**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
-const convertYamlToUserConfig = (input?: string): Config => {
+const convertYamlToUserConfig = async (input?: string): Promise<Config> => {
 
 	if (!input) {
 		return {};
@@ -115,21 +117,33 @@ const convertYamlToUserConfig = (input?: string): Config => {
 
 	const config: Config = YAML.parse(input);
 
-	if (!config?.deployments?.environmentMapping) {
+	const configDeployments = config?.deployments;
+	const deployments = {};
+	if (configDeployments != null) {
+		if (configDeployments.environmentMapping) {
+			deployments["environmentMapping"] =  {
+				development: configDeployments.environmentMapping.development,
+				testing: configDeployments.environmentMapping.testing,
+				staging: configDeployments.environmentMapping.staging,
+				production: configDeployments.environmentMapping.production
+			};
+		}
+		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+			if (configDeployments.services?.ids) {
+				deployments["services"] = {
+					ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
+				};
+			}
+		}
+	}
+
+
+	if (!deployments) {
 		throw new Error(`Invalid .jira/config.yml structure`);
 	}
 
 	// Trim the input data to only include the required attributes
-	const output = {
-		deployments: {
-			environmentMapping: {
-				development: config.deployments.environmentMapping.development,
-				testing: config.deployments.environmentMapping.testing,
-				staging: config.deployments.environmentMapping.staging,
-				production: config.deployments.environmentMapping.production
-			}
-		}
-	};
+	const output =  { deployments } ;
 
 	if (hasTooManyPatternsPerEnvironment(output)) {
 		throw new Error(`Too many patterns per environment! Maximum is: ${MAX_PATTERNS_PER_ENVIRONMENT}`);
@@ -139,7 +153,7 @@ const convertYamlToUserConfig = (input?: string): Config => {
 
 const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
-	const config = convertYamlToUserConfig(yamlConfig);
+	const config = await convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
 };
 
