@@ -167,15 +167,18 @@ export class Subscription extends Model {
 				repoName
 			}
 		});
+		let replacements = { jiraHost, repoOwner } as any;
+
 		// Check if the repo exists in our DB
 		if (repo.length) {
 			query += "AND rss.\"repoName\" = :repoName";
+			replacements = { ...replacements, repoName };
 		}
 
 		const results = await this.sequelize!.query(
 			query,
 			{
-				replacements: { jiraHost, repoOwner, repoName },
+				replacements,
 				type: QueryTypes.SELECT
 			}
 		);
