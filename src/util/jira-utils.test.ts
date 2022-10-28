@@ -70,10 +70,10 @@ describe("Jira Utils", () => {
 			expect(jiraIssueKeyParser("Ja9-123")).toEqual(["JA9-123"]);
 		});
 
-		it("should extract jira issue key with a single letter project id or single number id", () => {
-			expect(jiraIssueKeyParser("J-123")).toEqual(["J-123"]);
-			expect(jiraIssueKeyParser("b-123")).toEqual(["B-123"]);
-			expect(jiraIssueKeyParser("b-1")).toEqual(["B-1"]);
+		it("should extract jira issue key with a least a two letter project id or single number id", () => {
+			expect(jiraIssueKeyParser("J-123")).toEqual([]);
+			expect(jiraIssueKeyParser("ba-123")).toEqual(["BA-123"]);
+			expect(jiraIssueKeyParser("bo-1")).toEqual(["BO-1"]);
 			expect(jiraIssueKeyParser("bah-9")).toEqual(["BAH-9"]);
 		});
 
@@ -100,7 +100,9 @@ describe("Jira Utils", () => {
 				});
 		});
 
-		it("should extract issue keys with unicode characters including non-latin based", () => {
+		// Can't do this until we fix the devinfo API service to accept unicode or other non-standard issue keys
+		// Or that we move all parsing to an API service
+		it.skip("should extract issue keys with unicode characters including non-latin based", () => {
 			// Latin (french)
 			expect(jiraIssueKeyParser("tête-123")).toEqual(["TÊTE-123"]);
 			// Arabic - because of RTL, using unicode version to not change direction of text
@@ -133,10 +135,13 @@ describe("Jira Utils", () => {
 		});
 
 		it("should not extract issue keys longer than 256 characters for project key or number", () => {
+			// Too long, don't parse
 			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10)}-1234567890`)).toEqual([]);
-			// this is the exception since it'll cut off the end of the number
-			expect(jiraIssueKeyParser(`ABCDEFGHIJKLMNOPQRSTUVWXYZ-${"1234567890".repeat(26)}`)).toEqual(["ABCDEFGHIJKLMNOPQRSTUVWXYZ-123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"]);
 			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10)}-${"1234567890".repeat(26)}`)).toEqual([]);
+			// this is the exception since it'll cut off the end of the number
+			expect(jiraIssueKeyParser(`ABCDEFGHIJKLMNOPQRSTUVWXYZ-${"1234567890".repeat(26)}`)).toEqual(["ABCDEFGHIJKLMNOPQRSTUVWXYZ-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456"]);
+			// Make sure we can do 256 character project key
+			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10).slice(0, 256)}-1234567890`)).toEqual(["ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUV-1234567890"]);
 		});
 	});
 

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
-import { transformDeployment, mapEnvironment } from "./transform-deployment";
+import { mapEnvironment, transformDeployment } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId, InstallationId } from "../github/client/installation-id";
@@ -240,8 +240,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
 						}
 					]
-				}
-				);
+				});
 
 			mockGetRepoConfig();
 
@@ -408,7 +407,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			it(`crops issue keys (505) to 500 (5 issue keys must be left aside)`, async () => {
 
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(505).keys()].join(" ABC-");
+				const message = Array.from(new Array(505)).map((_, i) => `ABC-${i + 1}`).join(" ");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -416,7 +415,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						commits: [
 							{
 								commit: {
-									message: commitMessage
+									message
 								},
 								sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
 							}
@@ -425,13 +424,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
-				// make expected issue id array
-				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
-
 				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
 						associationType: "issueIdOrKeys",
-						values: expectedIssueIds
+						values: Array.from(new Array(500)).map((_, i) => `ABC-${i + 1}`)
 					}
 				]));
 			});
@@ -440,7 +436,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				await turnFF_OnOff_service(true);
 
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(499).keys()].join(" ABC-");
+				const message = Array.from(new Array(499)).map((_, i) => `ABC-${i + 1}`).join(" ");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -448,7 +444,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						commits: [
 							{
 								commit: {
-									message: commitMessage
+									message
 								},
 								sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
 							}
@@ -464,7 +460,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(499).keys()].map(number => "ABC-" + number)
+						values: Array.from(new Array(499)).map((_, i) => `ABC-${i + 1}`)
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -477,7 +473,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				await turnFF_OnOff_service(true);
 
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(497).keys()].join(" ABC-");
+				const message = Array.from(new Array(497)).map((_, i) => `ABC-${i + 1}`).join(" ");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -485,13 +481,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						commits: [
 							{
 								commit: {
-									message: commitMessage
+									message
 								},
 								sha: "expected"
 							},
 							{
 								commit: {
-									message: commitMessage
+									message
 								},
 								sha: "notexpected"
 							}
@@ -511,7 +507,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload([
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(497).keys()].map(number => "ABC-" + number)
+						values: Array.from(new Array(497)).map((_, i) => `ABC-${i + 1}`)
 					},
 					{
 						associationType: "serviceIdOrKeys",

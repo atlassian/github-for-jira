@@ -150,7 +150,7 @@ describe("pull_request transform", () => {
 		);
 
 		const fixture = pullRequestList[2];
-		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 
 		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
@@ -170,7 +170,7 @@ describe("pull_request transform", () => {
 
 		const { updated_at, title } = fixture;
 
-		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
+		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i + 1}`);
 
 		expect(data).toMatchObject({
 			id: "100403908",

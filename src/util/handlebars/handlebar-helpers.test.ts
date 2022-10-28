@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {
-	replaceSpaceWithHyphenHelper,
-	toLowercaseHelper,
-	concatStringHelper
-} from "./handlebar-helpers";
+import { concatStringHelper, replaceSpaceWithHyphenHelper, toLowercaseHelper } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -22,6 +18,7 @@ describe("Handlebar Helpers", () => {
 			expect(toLowercaseHelper("FOO")).toEqual("foo");
 			expect(toLowercaseHelper("BaR")).toEqual("bar");
 			expect(toLowercaseHelper(10943 as any)).toEqual("10943");
+			expect(toLowercaseHelper({ toString: () => "BLAH" } as any)).toMatch("");
 			expect(toLowercaseHelper(new Date(0) as any)).toMatch("thu jan 01 1970");
 		});
 	});
@@ -41,6 +38,7 @@ describe("Handlebar Helpers", () => {
 			expect(replaceSpaceWithHyphenHelper("FOO bar")).toEqual("FOO-bar");
 			expect(replaceSpaceWithHyphenHelper("baR")).toEqual("baR");
 			expect(replaceSpaceWithHyphenHelper(10943 as any)).toEqual("10943");
+			expect(replaceSpaceWithHyphenHelper({ toString: () => "foo bar" } as any)).toMatch("");
 			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970");
 		});
 	});

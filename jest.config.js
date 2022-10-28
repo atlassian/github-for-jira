@@ -1,6 +1,9 @@
 const { pathsToModuleNameMapper } = require("ts-jest");
 const { compilerOptions } = require("./tsconfig.json");
 
+// Sets timezone to be UTC so all tests pass no matter the dev's location
+process.env.TZ = 'UTC';
+
 module.exports = {
 	"testEnvironment": "node",
 	"testTimeout": 10000,
