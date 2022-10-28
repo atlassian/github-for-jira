@@ -96,6 +96,27 @@ export interface JiraIssue {
 		summary: string;
 	};
 }
+export interface JiraSubmitDeploymentsResponse {
+	deploymentSequenceNumber: number,
+	pipelineId: string,
+	environmentId: string,
+	updatedTimestamp: string,
+	gatingStatus: JiraGatingStatusTypeEnum,
+	details?: JiraSubmitDeploymentsResponseDetail[]
+}
+
+export enum JiraGatingStatusTypeEnum {
+	ALLOWED = "allowed",
+	PREVENTED = "prevented",
+	AWAING = "awaiting",
+	INVALID = "invalid"
+}
+
+export interface JiraSubmitDeploymentsResponseDetail {
+	type: string,
+	issueKey: string,
+	issueLink: string
+}
 
 export interface JiraCommitFile {
 	path: string;

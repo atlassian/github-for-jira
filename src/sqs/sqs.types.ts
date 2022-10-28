@@ -1,4 +1,4 @@
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import { WebhookPayloadDeploymentStatus, WebhookPayloadDeploymentGatingChecker } from "@octokit/webhooks";
 import type { WebhookPayloadCreate } from "@octokit/webhooks";
 import type { TaskType } from "~/src/sync/sync.types";
 import { Message } from "aws-sdk/clients/sqs";
@@ -151,6 +151,18 @@ export type DeploymentMessagePayload = {
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
 	// that payload size for deployment_status webhooks maxes out at 13KB.
 	webhookPayload: WebhookPayloadDeploymentStatus,
+}
+
+export type DeploymentGatingPollerMessagePayload = {
+	jiraHost: string,
+	installationId: number,
+	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+	webhookReceived: number,
+	webhookId: string,
+
+	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
+	// that payload size for deployment_status webhooks maxes out at 13KB.
+	webhookPayload: WebhookPayloadDeploymentGatingChecker,
 }
 
 export type PushQueueMessagePayload = {

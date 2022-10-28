@@ -50,6 +50,26 @@ export interface ReposGetContentsResponse {
 	url: string;
 }
 
+export interface ReviewPendingWorkflowRunParams  {
+	environment_ids: string[],
+	state: "approved" | "rejected",
+	comment: string
+}
+
+export interface ReviewPendingWorkflowRunResponse {
+	content?: string;
+	download_url: string | null;
+	encoding?: string;
+	git_url: string;
+	html_url: string;
+	name: string;
+	path: string;
+	sha: string;
+	size: number;
+	type: string;
+	url: string;
+}
+
 export type ActionsListRepoWorkflowRunsResponseEnhanced = Octokit.ActionsListRepoWorkflowRunsResponse & {name: string};
 
 

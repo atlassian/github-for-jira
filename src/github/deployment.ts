@@ -8,6 +8,9 @@ import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { Config } from "interfaces/common";
+import { Subscription } from "models/subscription";
+import { getRepoConfig } from "services/user-config-service";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -43,9 +46,28 @@ export const processDeployment = async (
 		return;
 	}
 
+	let config: Config | undefined;
+
+	const subscription = await Subscription.getSingleInstallation(jiraHost, newGitHubClient.githubInstallationId.installationId, gitHubAppId);
+	if (subscription) {
+		config = await getRepoConfig(
+			subscription,
+			newGitHubClient.githubInstallationId,
+			webhookPayload.repository.id,
+			webhookPayload.repository.owner.login,
+			webhookPayload.repository.name);
+	} else {
+		logger.warn({
+			jiraHost,
+			githubInstallationId: newGitHubClient.githubInstallationId.installationId
+		}, "could not find subscription - not using user config to map environments!");
+	}
+
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
+	logger.error(config);
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId, config);
+	logger.error(jiraPayload);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -65,8 +87,30 @@ export const processDeployment = async (
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
 		logger.warn({
+			jiraPayload,
 			rejectedDeployments: result.rejectedDeployments
 		}, "Jira API rejected deployment!");
+	}
+
+	const checkGatingStatus = config?.deployments?.services?.checkGatingStatus;
+	if (jiraPayload.deployments[0].state === "in_progress" && checkGatingStatus?.environmentId === jiraPayload.deployments[0].environment.id)  {
+		await sqsQueues.deploymentGatingPoller.sendMessage({
+			jiraHost: jiraClient.baseURL,
+			installationId: gitHubInstallationId,
+			webhookPayload: {
+				githubDeployment: webhookPayload.deployment,
+				repository: webhookPayload.repository,
+				jiraEnvironmentId: jiraPayload.deployments[0].environment.id,
+				deploymentGatingConfig: {
+					totalRetryCount : checkGatingStatus.retry,
+					sleep : checkGatingStatus.sleep
+				},
+				currentRetry: 0
+			},
+			webhookReceived: Date.now(),
+			webhookId: webhookId,
+			gitHubAppConfig: gitHubAppConfig
+		}, checkGatingStatus.sleep);
 	}
 
 	emitWebhookProcessedMetrics(

@@ -6,7 +6,8 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { deploymentQueueMessageHandler } from "./deployment";
 import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
-import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload } from "./sqs.types";
+import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload, DeploymentGatingPollerMessagePayload } from "./sqs.types";
+import { deploymentGatingPollerQueueMessageHandler } from "./deployment-gating-poller";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
@@ -43,6 +44,18 @@ export const sqsQueues = {
 		maxAttempts: 5
 	},
 	deploymentQueueMessageHandler,
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_status")
+	),
+
+	deploymentGatingPoller: new SqsQueue<DeploymentGatingPollerMessagePayload>({
+		queueName: "deployment-gating-poller",
+		queueUrl: envVars.SQS_DEPLOYMENT_GATING_POLLER_QUEUE_URL,
+		queueRegion: envVars.SQS_DEPLOYMENT_GATING_POLLER_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 60,
+		maxAttempts: 5
+	},
+	deploymentGatingPollerQueueMessageHandler,
 	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_status")
 	),
 

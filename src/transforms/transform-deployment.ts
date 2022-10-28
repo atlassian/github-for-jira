@@ -232,7 +232,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined, initializedConfig: Config | undefined = undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
@@ -248,21 +248,23 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	);
 
 
-	let config: Config | undefined;
+	let config: Config | undefined = initializedConfig;
 
-	const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
-	if (subscription) {
-		config = await getRepoConfig(
-			subscription,
-			githubInstallationClient.githubInstallationId,
-			payload.repository.id,
-			payload.repository.owner.login,
-			payload.repository.name);
-	} else {
-		logger.warn({
-			jiraHost,
-			githubInstallationId: githubInstallationClient.githubInstallationId.installationId
-		}, "could not find subscription - not using user config to map environments!");
+	if (config === undefined) {
+		const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
+		if (subscription) {
+			config = await getRepoConfig(
+				subscription,
+				githubInstallationClient.githubInstallationId,
+				payload.repository.id,
+				payload.repository.owner.login,
+				payload.repository.name);
+		} else {
+			logger.warn({
+				jiraHost,
+				githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+			}, "could not find subscription - not using user config to map environments!");
+		}
 	}
 
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
