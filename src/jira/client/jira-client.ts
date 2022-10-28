@@ -4,7 +4,15 @@ import { getCloudOrServerFromGitHubAppId, GithubProductEnum } from "utils/get-cl
 import { Installation } from "models/installation";
 import { getAxiosInstance } from "~/src/jira/client/axios";
 import { AxiosInstance, AxiosResponse } from "axios";
-import { JiraIssue, JiraIssueCommentPayload, JiraIssueComments, JiraIssueTransitions, JiraIssueWorklog, JiraIssueWorklogPayload } from "interfaces/jira";
+import { JiraCommit, JiraIssue, JiraIssueCommentPayload, JiraIssueComments, JiraIssueTransitions, JiraIssueWorklog, JiraIssueWorklogPayload, JiraRepositoryEntityType, JiraSubmitOptions } from "interfaces/jira";
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getJiraId } from "~/src/jira/util/id";
+import { Subscription } from "models/subscription";
+import { shouldTagBackfillRequests } from "config/feature-flags";
+
+// Max number of issue keys we can pass to the Jira API
+export const ISSUE_KEY_API_LIMIT = 100;
+const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export class JiraClient {
 	private readonly axios: AxiosInstance;
@@ -131,5 +139,145 @@ export class JiraClient {
 				issueIdOrKey
 			}
 		});
+	}
+
+	public async deleteRepository(transformedRepositoryId: TransformedRepositoryId): Promise<AxiosResponse> {
+		return await this.axios.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
+			params: {
+				_updateSequenceId: Date.now()
+			},
+			urlParams: {
+				transformedRepositoryId
+			}
+		});
+	}
+
+	public async updateRepository(data, options?: JiraSubmitOptions): Promise<AxiosResponse[]> {
+		dedupIssueKeys(data);
+
+		if (
+			!withinIssueKeyLimit(data.commits) ||
+			!withinIssueKeyLimit(data.branches) ||
+			!withinIssueKeyLimit(data.pullRequests)
+		) {
+			this.logger.warn({
+				truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+				truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+				truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
+			}, issueKeyLimitWarning);
+			truncateIssueKeys(data);
+			const subscription = await Subscription.getSingleInstallation(
+				jiraHost,
+				this.gitHubInstallationId,
+				this.gitHubAppId
+			);
+			await subscription?.update({ syncWarning: issueKeyLimitWarning });
+		}
+
+		return this.batchedBulkUpdate(
+			data,
+			this.gitHubInstallationId,
+			options
+		);
+	}
+
+	public async deleteBranch(transformedRepositoryId: TransformedRepositoryId, branchRef: string): Promise<AxiosResponse> {
+		return await this.deleteRepositoryEntity(transformedRepositoryId, "branch", getJiraId(branchRef));
+	}
+
+	public async deleteCommit(transformedRepositoryId: TransformedRepositoryId, commitRef: string): Promise<AxiosResponse> {
+		return await this.deleteRepositoryEntity(transformedRepositoryId, "commit", commitRef);
+	}
+
+	public async deletePullRequest(transformedRepositoryId: TransformedRepositoryId, pullRequestId: string): Promise<AxiosResponse> {
+		return await this.deleteRepositoryEntity(transformedRepositoryId, "pull_request", pullRequestId);
+	}
+
+	public async deleteInstallation(gitHubInstallationId: string | number): Promise<AxiosResponse[]> {
+		return await Promise.all([
+			// We are sending devinfo events with the property "installationId", so we delete by this property.
+			this.axios.delete(
+				"/rest/devinfo/0.10/bulkByProperties",
+				{
+					params: {
+						installationId: gitHubInstallationId
+					}
+				}
+			),
+
+			// We are sending build events with the property "gitHubInstallationId", so we delete by this property.
+			this.axios.delete(
+				"/rest/builds/0.1/bulkByProperties",
+				{
+					params: {
+						gitHubInstallationId
+					}
+				}
+			),
+
+			// We are sending deployments events with the property "gitHubInstallationId", so we delete by this property.
+			this.axios.delete(
+				"/rest/deployments/0.1/bulkByProperties",
+				{
+					params: {
+						gitHubInstallationId
+					}
+				}
+			)
+		]);
+	}
+
+	private async deleteRepositoryEntity(transformedRepositoryId: TransformedRepositoryId, entityType: JiraRepositoryEntityType, entityId: string): Promise<AxiosResponse> {
+		return await this.axios.delete(
+			"/rest/devinfo/0.10/repository/{transformedRepositoryId}/{entityType}/{entityId}",
+			{
+				params: {
+					_updateSequenceId: Date.now()
+				},
+				urlParams: {
+					transformedRepositoryId,
+					entityType,
+					entityId
+				}
+			}
+		);
+	}
+
+	private async batchedBulkUpdate(data, installationId: number, options?: JiraSubmitOptions) {
+		const dedupedCommits = dedupCommits(data.commits);
+
+		// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
+		const commitChunks: JiraCommit[][] = [];
+		do {
+			commitChunks.push(dedupedCommits.splice(0, 400));
+		} while (dedupedCommits.length);
+
+		const shouldTagBackfillRequestsValue = await shouldTagBackfillRequests();
+		const batchedUpdates = commitChunks.map((commitChunk) => {
+			if (commitChunk.length) {
+				data.commits = commitChunk;
+			}
+			let body;
+			if (shouldTagBackfillRequestsValue) {
+				body = {
+					preventTransitions: options?.preventTransitions || false,
+					operationType: options?.operationType || "NORMAL",
+					repositories: [data],
+					properties: {
+						installationId
+					}
+				};
+			} else {
+				body = {
+					preventTransitions: options?.preventTransitions || false,
+					repositories: [data],
+					properties: {
+						installationId
+					}
+				};
+			}
+			return this.axios.post("/rest/devinfo/0.10/bulk", body);
+		});
+		return Promise.all(batchedUpdates);
 	}
 }

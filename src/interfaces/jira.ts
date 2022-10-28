@@ -194,6 +194,8 @@ export interface JiraIssueWorklog {
 	properties: JiraEntityProperty[];
 }
 
+export type JiraRepositoryEntityType = "commit" | "branch" | "pull_request";
+
 export interface JiraIssueComment {
 	"self": "https://your-domain.atlassian.net/rest/api/2/issue/10010/comment/10000",
 	"id": "10000",
