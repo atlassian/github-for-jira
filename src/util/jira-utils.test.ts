@@ -60,8 +60,7 @@ describe("Jira Utils", () => {
 			["2PAC-123", "42-123"].forEach(value => expect(jiraIssueKeyParser(value)).toEqual([]));
 		});
 
-		// unskip once FF is removed
-		it.skip("should not extract jira issue key with number starting with 0", () => {
+		it("should not extract jira issue key with number starting with 0", () => {
 			expect(jiraIssueKeyParser("PAC-001")).toEqual([]);
 		});
 
@@ -69,6 +68,13 @@ describe("Jira Utils", () => {
 			expect(jiraIssueKeyParser("J42-123")).toEqual(["J42-123"]);
 			expect(jiraIssueKeyParser("b4l-123")).toEqual(["B4L-123"]);
 			expect(jiraIssueKeyParser("Ja9-123")).toEqual(["JA9-123"]);
+		});
+
+		it("should extract jira issue key with a single letter project id or single number id", () => {
+			expect(jiraIssueKeyParser("J-123")).toEqual(["J-123"]);
+			expect(jiraIssueKeyParser("b-123")).toEqual(["B-123"]);
+			expect(jiraIssueKeyParser("b-1")).toEqual(["B-1"]);
+			expect(jiraIssueKeyParser("bah-9")).toEqual(["BAH-9"]);
 		});
 
 		it("extracts alphanumeric issue key from a branch", () => {

@@ -3,7 +3,6 @@ import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
-import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
@@ -64,15 +63,6 @@ interface Author {
 	};
 }
 
-let regexFixFeature = false;
-onFlagChange(BooleanFlags.REGEX_FIX, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX, false);
-});
-
-let issueKeyRegexCharLimitFeature = false;
-onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
-	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, false);
-});
 /**
  * Parses strings for Jira issue keys for commit messages,
  * branches, and pull requests.
@@ -101,15 +91,9 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	// [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter, then must be at least one more unicode-digit character up to 256 length to prefix the ID
 	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
 
-	// Regex given to us by sayans
-	let regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
-
-	if (issueKeyRegexCharLimitFeature) {
-		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
-	} else if (regexFixFeature) {
-		// Old regex which was working before trying to update it to the "correct" one
-		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
-	}
+	// Regex given to us by sayans - Do not use for now as it's faulty.  Need to move this into devinfo api service
+	// const regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+	const regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
 
 	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
 	return uniq(Array.from(str.matchAll(regex), m => m[2].toUpperCase()));
