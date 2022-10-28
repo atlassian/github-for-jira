@@ -28,7 +28,6 @@ services:
       - "9325:9325"
     volumes:
       - ./elasticmq.conf:/opt/elasticmq.conf
-      - ./elasticmq/data:/elasticmq/data
   cryptor:
     build: etc/cryptor-mock
     container_name: cryptor

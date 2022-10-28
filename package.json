@@ -40,7 +40,8 @@
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
-		"precommit": "run-p lint build"
+		"precommit": "run-p lint build",
+		"sqs:purge" : "dotenv -- ts-node -r tsconfig-paths/register sqs-purge.ts"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
