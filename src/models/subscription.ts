@@ -1,6 +1,7 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
 import { sequelize } from "models/sequelize";
+import { RepoSyncState } from "models/reposyncstate";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -154,15 +155,27 @@ export class Subscription extends Model {
 	}
 
 	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
-		const results = await this.sequelize!.query(
-			"SELECT * " +
+		let query = "SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
-			"AND rss.\"repoName\" = :repoName " +
-			"AND rss.\"repoOwner\" = :repoOwner",
+			"AND rss.\"repoOwner\" = :repoOwner ";
+
+		const repo = await RepoSyncState.findAll({
+			where: {
+				repoOwner,
+				repoName
+			}
+		});
+		// Check if the repo exists in our DB
+		if (repo.length) {
+			query += "AND rss.\"repoName\" = :repoName";
+		}
+
+		const results = await this.sequelize!.query(
+			query,
 			{
-				replacements: { jiraHost, repoName, repoOwner },
+				replacements: { jiraHost, repoOwner, repoName },
 				type: QueryTypes.SELECT
 			}
 		);
