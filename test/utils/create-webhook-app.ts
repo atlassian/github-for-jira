@@ -1,10 +1,9 @@
 import { BinaryLike, createHmac } from "crypto";
 import express, { Express } from "express";
-import { json } from "body-parser";
 import supertest from "supertest";
 import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
-import { WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
+import { RootRouter } from "routes/router";
 
 type Event = {
 	name: string,
@@ -18,8 +17,7 @@ export type WebhookApp = Express & {
 export const createWebhookApp = async (): Promise<WebhookApp> => {
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const app: WebhookApp = express() as any;
-	app.use(json());
-	app.post("/github/webhooks", WebhookReceiverPost);
+	app.use(RootRouter);
 	app.receive = async (event: Event) => {
 		await supertest(app)
 			.post("/github/webhooks")

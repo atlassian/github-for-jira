@@ -122,12 +122,13 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
+	const hasConnections = !!installations.total;
 
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		successfulConnections,
 		failedConnections,
-		hasConnections: !!installations.total,
+		hasConnections,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
@@ -141,7 +142,8 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		connectedOrgCount: installations.total,
 		failedCloudBackfillCount: countStatus(successfulConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
+		hasConnections
 	});
 };
 
@@ -180,13 +182,15 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			applications: value
 		})).value();
 
+	const hasConnections =  !!(installations.total || gheServers?.length);
+
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
-		hasConnections: !!(installations.total || gheServers?.length),
+		hasConnections,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
@@ -207,7 +211,8 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		failedServerBackfillCount: countStatus(gheServersWithConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
 		successfulServerBackfillCount: countStatus(gheServersWithConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
+		hasConnections
 	});
 };
 

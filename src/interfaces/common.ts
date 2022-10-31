@@ -48,6 +48,8 @@ declare global {
 					[key: string]: string;
 				}
 			};
+
+			rawBody?: string;
 		}
 	}
 }
@@ -68,6 +70,10 @@ export interface Config {
 			testing?: string[];
 			staging?: string[];
 			production?: string[];
+		}
+
+		services?: {
+			ids?: string[];
 		}
 	}
 }
