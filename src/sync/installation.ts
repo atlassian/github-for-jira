@@ -377,7 +377,6 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-	logger.info({ nextTask, scheduleNextTask, err }, "joshkay temp logging - expected failed repository task with next task also repository...forever");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
@@ -387,6 +386,10 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
+	if (nextTask.task === "repository") {
+		await subscription.update({ syncStatus: SyncStatus.FAILED });
+		return;
+	}
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
 };
