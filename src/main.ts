@@ -6,14 +6,14 @@ import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 
-async function start() {
+const start = async () => {
 	initializeSentry();
 	const app: Express = getFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
 	app.listen(port, () => {
 		getLogger("frontend-app").info(`started at port ${port}`);
 	});
-}
+};
 
 if (isNodeProd()) {
 	// Production clustering (one process per core)

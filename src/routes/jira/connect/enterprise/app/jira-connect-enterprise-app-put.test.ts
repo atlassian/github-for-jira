@@ -101,10 +101,10 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
 
-		expect(restoredApp.gitHubAppName).toEqual('newName');
-		expect(await restoredApp.getDecryptedWebhookSecret()).toEqual('newSecret');
-		expect(await restoredApp.getDecryptedPrivateKey()).toEqual('privatekey');
-		expect(await restoredApp.getDecryptedGitHubClientSecret()).toEqual('secret');
+		expect(restoredApp.gitHubAppName).toEqual("newName");
+		expect(await restoredApp.getDecryptedWebhookSecret()).toEqual("newSecret");
+		expect(await restoredApp.getDecryptedPrivateKey()).toEqual("privatekey");
+		expect(await restoredApp.getDecryptedGitHubClientSecret()).toEqual("secret");
 	});
 
 	it("should return 404 when wrong uuid param is passed", async () => {
