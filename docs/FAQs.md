@@ -126,8 +126,8 @@ Once you have installed it, then you will be able to search and create new branc
 
 To speed up backfilling, we recommend restarting the backfill from your GitHub configuration screen and specifying a date you would like to sync data from e.g. only backfill data for the past month as opposed to **all** historical data.
 
-![Restart a backfill from your GitHub configuration screen](./docs/images/restart-backfill.png)
-![Select a date to backfill historical data from](./docs/images/select-backfill-date.png)
+![Restart a backfill from your GitHub configuration screen](./images/restart-backfill.png)
+![Select a date to backfill historical data from](./images/select-backfill-date.png)
 
 <h3>Q: Do I have to wait for all data to complete backfilling before I can start using the GitHub for Jira integration?</h3>
 
