@@ -122,11 +122,13 @@ Once you have installed it, then you will be able to search and create new branc
 ## Backfilling Data
 <h3>Q: I've just configured the app and noticed it is taking a very long time to backfill all of my connected repos. Is this normal?</h3>
 
-**A:** This depends on how many repositories you are trying to backfill, and how large they are. GitHub has an API limit every hour and while syncing, we hit that limit and have to wait for the next hour to continue. So, if you have a large number of repos it can take sometimes take a long time for all this data to sync, particularly if any of the repos contain a large amount of historical data. To speed up backfilling, we recommend restarting the backfill from your GitHub configuration screen and specifying a date you would like to sync data from e.g. only backfill data for the past month as opposed to **all** historical data.
+**A:** This depends on how many repositories you are trying to backfill, and how large they are. GitHub has an API limit every hour and while syncing, we hit that limit and have to wait for the next hour to continue. So, if you have a large number of repos it can sometimes take a long time for all this data to sync, particularly if any of the repos contain a large amount of historical data. 
+
+To speed up backfilling, we recommend restarting the backfill from your GitHub configuration screen and specifying a date you would like to sync data from e.g. only backfill data for the past month as opposed to **all** historical data.
 
 ![Restart a backfill from your GitHub configuration screen](./docs/images/restart-backfill.png)
 ![Select a date to backfill historical data from](./docs/images/select-backfill-date.png)
 
 <h3>Q: Do I have to wait for all data to complete backfilling before I can start using the GitHub for Jira integration?</h3>
 
-**A:** No :) The job of backfilling is to pull in all your historical data so that, if any issue keys were references before you installed the app, you will eventually see that data in Jira. This means you can start using the app with your team immediately as the app will start listening and responding to webhook events (real-time data) straight away.
+**A:** No :) The job of backfilling is to pull in all your historical data so that, if any issue keys were referenced before you installed the app, you will eventually see that data in Jira. This means you can start using the app with your team immediately as the app will start listening and responding to webhook events (real-time data) straight away.
