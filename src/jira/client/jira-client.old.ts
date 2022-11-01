@@ -269,7 +269,7 @@ export const getJiraClient = async (
 						properties: {
 							gitHubInstallationId
 						},
-						providerMetadata: {
+						providerMetadataprivate: {
 							product: data.product
 						},
 						preventTransitions: options?.preventTransitions || false,

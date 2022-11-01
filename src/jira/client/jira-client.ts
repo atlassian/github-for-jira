@@ -4,11 +4,25 @@ import { getCloudOrServerFromGitHubAppId, GithubProductEnum } from "utils/get-cl
 import { Installation } from "models/installation";
 import { getAxiosInstance } from "~/src/jira/client/axios";
 import { AxiosInstance, AxiosResponse } from "axios";
-import { JiraCommit, JiraIssue, JiraIssueCommentPayload, JiraIssueComments, JiraIssueTransitions, JiraIssueWorklog, JiraIssueWorklogPayload, JiraRepositoryEntityType, JiraSubmitOptions } from "interfaces/jira";
+import {
+	JiraAssociation,
+	JiraCommit,
+	JiraIssue,
+	JiraIssueCommentPayload,
+	JiraIssueComments,
+	JiraIssueKeyObject,
+	JiraIssueTransitions,
+	JiraIssueWorklog,
+	JiraIssueWorklogPayload,
+	JiraRepositoryEntityType,
+	JiraSubmitOptions
+} from "interfaces/jira";
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getJiraId } from "~/src/jira/util/id";
 import { Subscription } from "models/subscription";
 import { shouldTagBackfillRequests } from "config/feature-flags";
+import { uniq } from "lodash";
+import { DeploymentsResult, getTruncatedIssuekeys } from "~/src/jira/client/jira-client.old";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -17,10 +31,10 @@ const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues ma
 export class JiraClient {
 	private readonly axios: AxiosInstance;
 	private readonly logger: Logger;
-	private readonly gitHubProduct: GithubProductEnum;
-	private readonly gitHubInstallationId: number;
-	private readonly gitHubAppId?: number;
-	private readonly installation: Installation;
+	public readonly gitHubProduct: GithubProductEnum;
+	public readonly gitHubInstallationId: number;
+	public readonly gitHubAppId?: number;
+	public readonly installation: Installation;
 
 	public get jiraHost() {
 		return this.installation.jiraHost;
@@ -153,19 +167,19 @@ export class JiraClient {
 	}
 
 	public async updateRepository(data, options?: JiraSubmitOptions): Promise<AxiosResponse[]> {
-		dedupIssueKeys(data);
+		this.dedupIssueKeys(data);
 
 		if (
-			!withinIssueKeyLimit(data.commits) ||
-			!withinIssueKeyLimit(data.branches) ||
-			!withinIssueKeyLimit(data.pullRequests)
+			!this.withinIssueKeyLimit(data.commits) ||
+			!this.withinIssueKeyLimit(data.branches) ||
+			!this.withinIssueKeyLimit(data.pullRequests)
 		) {
 			this.logger.warn({
-				truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
-				truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
-				truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
+				truncatedCommitsCount: this.getTruncatedIssuekeys(data.commits).length,
+				truncatedBranchesCount: this.getTruncatedIssuekeys(data.branches).length,
+				truncatedPRsCount: this.getTruncatedIssuekeys(data.pullRequests).length
 			}, issueKeyLimitWarning);
-			truncateIssueKeys(data);
+			this.truncateIssueKeys(data);
 			const subscription = await Subscription.getSingleInstallation(
 				jiraHost,
 				this.gitHubInstallationId,
@@ -227,6 +241,80 @@ export class JiraClient {
 		]);
 	}
 
+	public async sendWorkflow(data, options?: JiraSubmitOptions) {
+		this.updateIssueKeysFor(data.builds, uniq);
+		if (!this.withinIssueKeyLimit(data.builds)) {
+			this.logger.warn({
+				truncatedBuilds: getTruncatedIssuekeys(data.builds)
+			}, issueKeyLimitWarning);
+			this.updateIssueKeysFor(data.builds, this.truncate);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, this.gitHubInstallationId, this.gitHubAppId);
+			await subscription?.update({ syncWarning: issueKeyLimitWarning });
+		}
+		let payload;
+		if (await shouldTagBackfillRequests()) {
+			payload = {
+				builds: data.builds,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				},
+				providerMetadataprivate: {
+					product: data.product
+				},
+				preventTransitions: options?.preventTransitions || false,
+				operationType: options?.operationType || "NORMAL"
+			};
+		} else {
+			payload = {
+				builds: data.builds,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				},
+				providerMetadata: {
+					product: data.product
+				}
+			};
+		}
+		this.logger.info({ gitHubProduct: this.gitHubProduct }, "Sending builds payload to jira.");
+		return await this.axios.post("/rest/builds/0.1/bulk", payload);
+	}
+
+	public async sendDeployment(data, options?: JiraSubmitOptions): Promise<DeploymentsResult> {
+		this.updateIssueKeysFor(data.deployments, uniq);
+		if (!this.withinIssueKeyLimit(data.deployments)) {
+			this.logger.warn({
+				truncatedDeployments: getTruncatedIssuekeys(data.deployments)
+			}, issueKeyLimitWarning);
+			this.updateIssueKeysFor(data.deployments, this.truncate);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, this.gitHubInstallationId, this.gitHubAppId);
+			await subscription?.update({ syncWarning: issueKeyLimitWarning });
+		}
+		let payload;
+		if (await shouldTagBackfillRequests()) {
+			payload = {
+				deployments: data.deployments,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				},
+				preventTransitions: options?.preventTransitions || false,
+				operationType: options?.operationType || "NORMAL"
+			};
+		} else {
+			payload = {
+				deployments: data.deployments,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				}
+			};
+		}
+		this.logger.info({ gitHubProduct: this.gitHubProduct }, "Sending deployments payload to jira.");
+		const response: AxiosResponse = await this.axios.post("/rest/deployments/0.1/bulk", payload);
+		return {
+			status: response.status,
+			rejectedDeployments: response.data?.rejectedDeployments
+		};
+	}
+
 	private async deleteRepositoryEntity(transformedRepositoryId: TransformedRepositoryId, entityType: JiraRepositoryEntityType, entityId: string): Promise<AxiosResponse> {
 		return await this.axios.delete(
 			"/rest/devinfo/0.10/repository/{transformedRepositoryId}/{entityType}/{entityId}",
@@ -244,7 +332,7 @@ export class JiraClient {
 	}
 
 	private async batchedBulkUpdate(data, installationId: number, options?: JiraSubmitOptions) {
-		const dedupedCommits = dedupCommits(data.commits);
+		const dedupedCommits = this.dedupCommits(data.commits);
 
 		// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 		const commitChunks: JiraCommit[][] = [];
@@ -279,5 +367,84 @@ export class JiraClient {
 			return this.axios.post("/rest/devinfo/0.10/bulk", body);
 		});
 		return Promise.all(batchedUpdates);
+	}
+
+	private dedupIssueKeys(repositoryObj) {
+		this.updateRepositoryIssueKeys(repositoryObj, uniq);
+	}
+
+	private truncateIssueKeys(repositoryObj) {
+		this.updateRepositoryIssueKeys(repositoryObj, this.truncate);
+	}
+
+	private updateRepositoryIssueKeys(repositoryObj, mutatingFunc) {
+		if (repositoryObj.commits) {
+			repositoryObj.commits = this.updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
+		}
+
+		if (repositoryObj.branches) {
+			repositoryObj.branches = this.updateIssueKeysFor(repositoryObj.branches, mutatingFunc);
+			repositoryObj.branches.forEach((branch) => {
+				if (branch.lastCommit) {
+					branch.lastCommit = this.updateIssueKeysFor([branch.lastCommit], mutatingFunc)[0];
+				}
+			});
+		}
+
+		if (repositoryObj.pullRequests) {
+			repositoryObj.pullRequests = this.updateIssueKeysFor(repositoryObj.pullRequests, mutatingFunc);
+		}
+	}
+
+	private updateIssueKeysFor(resources, func) {
+		resources.forEach((r) => {
+			if (r.issueKeys) {
+				r.issueKeys = func(r.issueKeys);
+			}
+			const association = this.findIssueKeyAssociation(r);
+			if (association) {
+				association.values = func(association.values);
+			}
+		});
+		return resources;
+	}
+
+	private findIssueKeyAssociation(resource: JiraIssueKeyObject): JiraAssociation | undefined {
+		return resource.associations?.find(a => a.associationType == "issueIdOrKeys");
+	}
+
+	private truncate(array: string[]) {
+		return array.slice(0, ISSUE_KEY_API_LIMIT);
+	}
+
+	private getTruncatedIssuekeys(data: JiraIssueKeyObject[] = []): JiraIssueKeyObject[] {
+		return data.reduce((acc: JiraIssueKeyObject[], value: JiraIssueKeyObject) => {
+			if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+				acc.push({
+					issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
+				});
+			}
+			const association = this.findIssueKeyAssociation(value);
+			if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
+				acc.push({
+					// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
+					associations: [association]
+				});
+			}
+			return acc;
+		}, []);
+	}
+
+	private dedupCommits(commits: JiraCommit[] = []): JiraCommit[] {
+		return commits.filter(
+			(obj, pos, arr) =>
+				arr.map((mapCommit) => mapCommit.id).indexOf(obj.id) === pos
+		);
+	}
+
+	private withinIssueKeyLimit(resources: JiraIssueKeyObject[]): boolean {
+		if (!resources) return true;
+		const issueKeyCounts = resources.map((r) => r.issueKeys?.length || this.findIssueKeyAssociation(r)?.values?.length || 0);
+		return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 	}
 }

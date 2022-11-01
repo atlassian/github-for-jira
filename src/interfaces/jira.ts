@@ -229,6 +229,11 @@ export interface JiraCommitFile {
 	url: string;
 }
 
+export interface JiraIssueKeyObject {
+	issueKeys?: string[];
+	associations?: JiraAssociation[];
+}
+
 export enum JiraCommitFileChangeTypeEnum {
 	ADDED = "ADDED",
 	COPIED = "COPIED",
