@@ -356,6 +356,21 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		appProperties: {
+			create: (properyName: string) =>
+				// TODO - remove hardcoded app key
+				instance.put(`/rest/atlassian-connect/1/addons/com.github.integration.GithubForJiraLocal/properties/${properyName}`, {
+					"isConfigured": "true"
+				}),
+			get: (properyName: string) =>
+				// TODO - remove hardcoded app key/rest/atlassian-connect/1/addons/{addonKey}/properties/{propertyKey}
+				instance.get(`/rest/atlassian-connect/1/addons/com.github.integration.GithubForJiraLocal/properties/${properyName}`, {
+					params: {
+					},
+					urlParams: {
+					}
+				})
 		}
 	};
 

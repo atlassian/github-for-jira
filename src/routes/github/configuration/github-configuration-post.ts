@@ -8,6 +8,7 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { getJiraClient } from "~/src/jira/client/jira-client";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -18,6 +19,19 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 	}	catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
+	}
+};
+
+const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, req) => {
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
+	try {
+		const IS_CONFIGRED_PROP = "isConfigured";
+		await jiraClient.appProperties.create(IS_CONFIGRED_PROP);
+		// TODO remove the get - its here to prove the GET works
+		await jiraClient.appProperties.get(IS_CONFIGRED_PROP);
+	}
+	catch (err) {
+		req.log.error({ err }, "Set app properties failed");
 	}
 };
 
@@ -69,6 +83,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			host: jiraHost,
 			gitHubAppId
 		});
+
+		await saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req);
 
 		await findOrStartSync(subscription, req.log);
 
