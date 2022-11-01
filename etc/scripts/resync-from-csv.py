@@ -14,9 +14,9 @@ Input file format:
 
 Running the script:
     $ python3 ./resync-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ]--input [ input-file-name.csv ] --output [ output-file-name.csv ]
-
+python3 ./resync-from-csv.py --env prod --sleep 1 --input installations-0-100.csv --output output.csv
 Example
-    $ python3 ./resync-from-csv.py --env prod --sleep 1 --input installations-0-1000.csv --output output.csv
+    $ python3 ./resync-from-csv.py --env prod --sleep 1 --input installations-400-1000.csv --output output.csv
 
 First time setup:
 
