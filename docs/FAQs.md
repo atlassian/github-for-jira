@@ -122,7 +122,7 @@ Once you have installed it, then you will be able to search and create new branc
 ## Backfilling Data
 <h3>Q: Backfilling my data is taking a long time. When will I see my data in Jira?</h3>
 
-**A:** When you conect a GitHub organization to Jira via the GitHub for Jira app, a process called “backfilling” begins. This process looks for issue keys in your historical data in GitHub. If it finds issue keys, it links your development data to existing issues in Jira.
+**A:** When you connect a GitHub organization to Jira via the GitHub for Jira app, a process called “backfilling” begins. This process looks for issue keys in your historical data in GitHub. If it finds issue keys, it links your development data to existing issues in Jira.
 
 When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
