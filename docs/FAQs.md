@@ -120,11 +120,11 @@ Once you have installed it, then you will be able to search and create new branc
 - **You have enabled time tracking and added to each issue type:** If you aren't seeing time tracking in your issues after adding something like `#time 1w 2d 4h 30m` to your commit message, ask you team's admin to check the site's settings. If they go to **Settings** > **Issue features** > **Time tracking** they will need to make sure that **Copying of comments to work description** is set to **Enabled**. Additionally, they will need to manually add 'Time Tracking' to any issue type (story/bug/task/etc) where this is to be recorded. Go to **Project settings** > **Issue types** and if 'Time tracking' isn't listed under 'Context fields', simply click on it in the right-hand panel and **Save changes**.
 
 ## Backfilling Data
-<h3>Q: I've just configured the app and noticed it is taking a very long time to backfill all of my connected repos. Is this normal?</h3>
+<h3>Q: Backfilling my data is taking a long time. When will I see my data in Jira?</h3>
 
-**A:** This depends on how many repositories you are trying to backfill, and how large they are. GitHub has an API limit every hour and while syncing, we hit that limit and have to wait for the next hour to continue. So, if you have a large number of repos it can sometimes take a long time for all this data to sync, particularly if any of the repos contain a large amount of historical data. 
+**A:** When you conect a GitHub organization to Jira via the GitHub for Jira app, a process called “backfilling” begins. This process looks for issue keys in your historical data in GitHub. If it finds issue keys, it links your development data to existing issues in Jira.
 
-To speed up backfilling, we recommend restarting the backfill from your GitHub configuration screen and specifying a date you would like to sync data from e.g. only backfill data for the past month as opposed to **all** historical data.
+When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
 ![Restart a backfill from your GitHub configuration screen](./images/restart-backfill.png)
 ![Select a date to backfill historical data from](./images/select-backfill-date.png)
