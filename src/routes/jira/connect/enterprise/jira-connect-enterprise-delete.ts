@@ -7,7 +7,6 @@ export const JiraConnectEnterpriseDelete = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
-
 		req.log.debug("Received Jira Connect Enterprise Server DELETE request");
 
 		const { installation }  = res.locals;
