@@ -1,5 +1,11 @@
-import { EnvVars } from "config/env";
+import {  EnvVars } from "config/env";
 import { cloneDeep, difference } from "lodash";
+import { envCheck } from "utils/env-utils";
+
+envCheck(
+	"SQS_TEST_QUEUE_URL",
+	"SQS_TEST_QUEUE_REGION"
+);
 
 export interface TestEnvVars extends EnvVars {
 	// Test Vars
