@@ -10,12 +10,14 @@ describe("DELETE /jira/connect/enterprise", () => {
 	const GITHUB_BASE_URL_1 = "http://myinternalinstance.com";
 	const GITHUB_BASE_URL_2 = "http://myinternalinstance-part2.com";
 
+	let installation1: Installation;
 	let installationId1: number;
+	let installation2: Installation;
 	let installationId2: number;
 
 	beforeEach(async () => {
 		//Three GHE app for first installation for JIRA_HOST_1
-		const installation1 = await Installation.install({
+		installation1 = await Installation.install({
 			clientKey: "clientKey1",
 			host: JIRA_HOST_1,
 			sharedSecret: "12345"
@@ -55,7 +57,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			installationId: installationId1
 		});
 		//One GHE app for first installation for JIRA_HOST_1
-		const installation2 = await Installation.install({
+		installation2 = await Installation.install({
 			clientKey: "clientKey2",
 			host: JIRA_HOST_2,
 			sharedSecret: "78990"
@@ -98,7 +100,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 		const send = jest.fn();
 		const res = {
 			locals: {
-				jiraHost: JIRA_HOST_2
+				installation: installation2
 			},
 			status: jest.fn(() => ({ send }))
 		};

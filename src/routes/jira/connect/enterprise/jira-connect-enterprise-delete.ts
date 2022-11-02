@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
-import { Installation } from "models/installation";
 
 export const JiraConnectEnterpriseDelete = async (
 	req: Request,
@@ -11,11 +10,7 @@ export const JiraConnectEnterpriseDelete = async (
 
 		req.log.debug("Received Jira Connect Enterprise Server DELETE request");
 
-		const { jiraHost }  = res.locals;
-		const installation = await Installation.getForHost(jiraHost);
-		if (!installation) {
-			throw new Error(`Installation not found for jiraHost ${jiraHost}`);
-		}
+		const { installation }  = res.locals;
 
 		await GitHubServerApp.uninstallServer(req.body.serverUrl, installation.id);
 
