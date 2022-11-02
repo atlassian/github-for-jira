@@ -1,10 +1,10 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
-import { envVars }  from "./env";
+import { envVars } from "./env";
 import { createHashWithSharedSecret } from "utils/encryption";
 import Logger from "bunyan";
 
-const logger = getLogger("feature-flags");
+const logger = getLogger("feature-flags", { level: "warn" });
 
 const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 	offline: !envVars.LAUNCHDARKLY_KEY,
@@ -25,6 +25,8 @@ export enum BooleanFlags {
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
 	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
+	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
+	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	NEW_JIRA_CLIENT = "new-jira-client"
 }
 
@@ -37,7 +39,7 @@ export enum StringFlags {
 export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
-	SYNC_BRANCH_COMMIT_TIME_LIMIT= "sync-branch-commit-time-limit",
+	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
@@ -73,7 +75,7 @@ export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T,
 export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
 	await getLaunchDarklyValue(flag, defaultValue, key);
 
-export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
+export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 

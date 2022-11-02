@@ -49,6 +49,7 @@ export const getRepositoryTask = async (
 			cursor: nextCursor
 		}));
 	} else {
+		logger.info({ cursor }, "joshkay temp logging - Start fetch of Repos");
 		const response = await newGithub.getRepositoriesPage(perPage, cursor as string);
 		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 		totalCount = response.viewer.repositories.totalCount;

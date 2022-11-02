@@ -295,6 +295,16 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
+		it("don't reschedule a repository sync straight after a failed repository", async () => {
+			const connectionTimeoutErr = "an error that doesnt match";
+			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO };
+
+			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(1);
+		});
+
 	});
 
 	describe("handleNotFoundErrors", () => {

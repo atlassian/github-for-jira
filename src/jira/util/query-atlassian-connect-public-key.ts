@@ -8,7 +8,6 @@ const CONNECT_INSTALL_KEYS_CDN_URL_STAGING =
 
 /**
  * Queries the public key for the specified keyId
- * @param keyId
  */
 export const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTenant: boolean): Promise<string> => {
 
@@ -17,7 +16,7 @@ export const queryAtlassianConnectPublicKey = async (keyId: string, isStagingTen
 		: CONNECT_INSTALL_KEYS_CDN_URL_STAGING;
 
 	const result = await axios.get(`${keyServerUrl}/${keyId}`, {
-		timeout: 5000
+		timeout: 10000
 	});
 
 	if (result.status !== 200) {

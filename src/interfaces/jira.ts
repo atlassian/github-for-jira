@@ -306,7 +306,7 @@ export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo 
 }
 
 export interface JiraAssociation {
-	associationType: "issueKeys" | "issueIdOrKeys" | "commit";
+	associationType: "issueKeys" | "issueIdOrKeys" | "commit" | "serviceIdOrKeys";
 	values: string[] | JiraCommitKey[];
 }
 

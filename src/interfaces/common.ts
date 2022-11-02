@@ -1,7 +1,8 @@
 export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
 	production = "production",
+	development = "development",
+	test = "test",
+	e2e = "e2e",
 }
 
 export enum BooleanEnum {
@@ -47,6 +48,8 @@ declare global {
 					[key: string]: string;
 				}
 			};
+
+			rawBody?: string;
 		}
 	}
 }
@@ -67,6 +70,10 @@ export interface Config {
 			testing?: string[];
 			staging?: string[];
 			production?: string[];
+		}
+
+		services?: {
+			ids?: string[];
 		}
 	}
 }
