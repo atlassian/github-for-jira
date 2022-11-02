@@ -1,5 +1,5 @@
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "~/src/jira/client/jira-client";
+import { getJiraClient } from "~/src/jira/client/jira-client.old";
 import { Request, Response } from "express";
 
 /**

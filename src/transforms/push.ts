@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient } from "../jira/client/jira-client.old";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";

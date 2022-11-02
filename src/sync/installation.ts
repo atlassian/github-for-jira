@@ -4,7 +4,7 @@ import IORedis from "ioredis";
 import Logger from "bunyan";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient } from "../jira/client/jira-client.old";
 import { statsd } from "config/statsd";
 import { getPullRequestTask } from "./pull-request";
 import { getBranchTask } from "./branches";

@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient } from "../jira/client/jira-client.old";
 import { getJiraUtil } from "../jira/util/jira-client-util";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";

@@ -4,7 +4,7 @@ import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { sqsQueues } from "../sqs/queues";
 import Logger from "bunyan";
-import { getJiraClient } from "../jira/client/jira-client";
+import { getJiraClient } from "../jira/client/jira-client.old";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraBranchBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";

@@ -2,10 +2,10 @@ import { when } from "jest-when";
 import { ApiInstallationDelete } from "./api-installation-delete";
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "~/src/jira/client/jira-client";
+import { getJiraClient } from "~/src/jira/client/jira-client.old";
 
 
-jest.mock("~/src/jira/client/jira-client");
+jest.mock("~/src/jira/client/jira-client.old");
 
 describe("ApiInstallationDelete", ()=>{
 	describe("GHES support", ()=>{
