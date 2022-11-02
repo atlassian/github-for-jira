@@ -1,6 +1,6 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "./jira-client";
+import { getJiraClient } from "./jira-client.old";
 import { getHashedKey } from "models/sequelize";
 import * as Axios from "./axios";
 

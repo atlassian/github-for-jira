@@ -14,6 +14,7 @@ import {
 	JiraIssueTransitions,
 	JiraIssueWorklog,
 	JiraIssueWorklogPayload,
+	JiraRemoteLink,
 	JiraRepositoryEntityType,
 	JiraSubmitOptions
 } from "interfaces/jira";
@@ -241,7 +242,7 @@ export class JiraClient {
 		]);
 	}
 
-	public async sendWorkflow(data, options?: JiraSubmitOptions) {
+	public async sendWorkflow(data, options?: JiraSubmitOptions): Promise<AxiosResponse> {
 		this.updateIssueKeysFor(data.builds, uniq);
 		if (!this.withinIssueKeyLimit(data.builds)) {
 			this.logger.warn({
@@ -313,6 +314,55 @@ export class JiraClient {
 			status: response.status,
 			rejectedDeployments: response.data?.rejectedDeployments
 		};
+	}
+
+	public async sendRemoteLink(data, options?: JiraSubmitOptions): Promise<AxiosResponse> {
+		// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
+		this.updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
+		if (!this.withinIssueKeyAssociationsLimit(data.remoteLinks)) {
+			this.updateIssueKeyAssociationValuesFor(data.remoteLinks, this.truncate);
+			const subscription = await Subscription.getSingleInstallation(jiraHost, this.gitHubInstallationId, this.gitHubAppId);
+			await subscription?.update({ syncWarning: issueKeyLimitWarning });
+		}
+		let payload;
+		if (await shouldTagBackfillRequests()) {
+			payload = {
+				remoteLinks: data.remoteLinks,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				},
+				preventTransitions: options?.preventTransitions || false,
+				operationType: options?.operationType || "NORMAL"
+			};
+		} else {
+			payload = {
+				remoteLinks: data.remoteLinks,
+				properties: {
+					gitHubInstallationId: this.gitHubInstallationId
+				}
+			};
+		}
+		this.logger.info("Sending remoteLinks payload to jira.");
+		return await this.axios.post("/rest/remotelinks/1.0/bulk", payload);
+	}
+
+	private updateIssueKeyAssociationValuesFor(resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] {
+		resources?.forEach(resource => {
+			const association = this.findIssueKeyAssociation(resource);
+			if (association) {
+				association.values = mutatingFunc(resource.associations[0].values);
+			}
+		});
+		return resources;
+	}
+
+	private withinIssueKeyAssociationsLimit(resources: JiraRemoteLink[]): boolean {
+		if (!resources) {
+			return true;
+		}
+
+		const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
+		return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 	}
 
 	private async deleteRepositoryEntity(transformedRepositoryId: TransformedRepositoryId, entityType: JiraRepositoryEntityType, entityId: string): Promise<AxiosResponse> {

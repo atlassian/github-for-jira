@@ -9,10 +9,9 @@ import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptio
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
+import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
-import { JiraClient } from "~/src/jira/client/jira-client";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
