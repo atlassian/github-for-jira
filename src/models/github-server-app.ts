@@ -151,9 +151,9 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	static async uninstallServer(gitHubBaseUrl: string): Promise<void> {
+	static async uninstallServer(gitHubBaseUrl: string, installationId: number): Promise<void> {
 		await this.destroy({
-			where: { gitHubBaseUrl }
+			where: { gitHubBaseUrl, installationId }
 		});
 	}
 

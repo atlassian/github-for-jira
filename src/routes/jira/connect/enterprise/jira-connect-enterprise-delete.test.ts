@@ -78,7 +78,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 		const allServersForInstallationId = await GitHubServerApp.findForInstallationId(installationId1);
 		expect(allServersForInstallationId && allServersForInstallationId.length).toBe(3);
 
-		await GitHubServerApp.uninstallServer(GITHUB_BASE_URL_1);
+		await GitHubServerApp.uninstallServer(GITHUB_BASE_URL_1, installationId1);
 
 		const deletedServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(GITHUB_BASE_URL_1, installationId1);
 		const storedServer = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(GITHUB_BASE_URL_2, installationId1);
@@ -95,19 +95,24 @@ describe("DELETE /jira/connect/enterprise", () => {
 				serverUrl: GITHUB_BASE_URL_2
 			}
 		};
+		const send = jest.fn();
 		const res = {
-			status: jest.fn(() => ({
-				send: jest.fn()
-			}))
+			locals: {
+				jiraHost: JIRA_HOST_2
+			},
+			status: jest.fn(() => ({ send }))
 		};
 		const next = jest.fn();
 
 		//delete some GHE apps
 		await JiraConnectEnterpriseDelete(req as any, res as any, next);
-		expect(res.status).toHaveBeenCalled();
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(send).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
 
 		//assert on remaining apps
 		const allServers = await GitHubServerApp.findAll();
-		expect(allServers.length).toBe(2);
+		expect(allServers.length).toBe(3);
+		const serverFromOtherJiraHost = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(GITHUB_BASE_URL_2, installationId1);
+		expect(serverFromOtherJiraHost.length).toBe(1);
 	});
 });
