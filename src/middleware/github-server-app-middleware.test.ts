@@ -17,16 +17,23 @@ describe("github-server-app-middleware", () => {
 
 	let req;
 	let res;
+	let resStatus: Mock;
+	let resSend: Mock;
 	let next: Mock;
 	let installation;
 	let payload;
 
 	beforeEach(async () => {
 		next = jest.fn();
+		resSend = jest.fn();
+		resStatus = jest.fn(()=> ({
+			send: resSend
+		}));
 		res = {
 			locals: {
 				jiraHost: "https://testatlassian.net"
-			}
+			},
+			status: resStatus
 		};
 
 		req = {
@@ -43,9 +50,9 @@ describe("github-server-app-middleware", () => {
 
 	it("should throw an error if an uuid is provided but no GitHub server app is found", async () => {
 		req.params.uuid = UUID;
-		await expect(GithubServerAppMiddleware(req, res, next))
-			.rejects
-			.toThrow("No GitHub app found for provided id.");
+		await GithubServerAppMiddleware(req, res, next);
+		expect(resStatus).toBeCalledWith(404);
+		expect(resSend).toBeCalledWith("No GitHub app found for provided id.");
 	});
 
 	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match", async () => {
@@ -74,9 +81,9 @@ describe("github-server-app-middleware", () => {
 			.expectCalledWith(UUID)
 			.mockResolvedValue(payload);
 
-		await expect(GithubServerAppMiddleware(req, res, next))
-			.rejects
-			.toThrow("Jira hosts do not match");
+		await GithubServerAppMiddleware(req, res, next);
+		expect(resStatus).toBeCalledWith(401);
+		expect(resSend).toBeCalledWith("Jira hosts do not match.");
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {

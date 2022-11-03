@@ -65,7 +65,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 					method: "GET",
 					pathname
 				})}`)
-				.expect(500);
+				.expect(404);
 		});
 		it("should throw error for uuid belong to other sites", async () => {
 			const anotherGheUUID = uuid();
@@ -95,7 +95,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 					method: "GET",
 					pathname
 				})}`)
-				.expect(500);
+				.expect(401);
 		});
 	});
 });
