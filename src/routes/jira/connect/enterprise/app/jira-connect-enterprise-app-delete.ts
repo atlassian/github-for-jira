@@ -10,7 +10,6 @@ export const JiraConnectEnterpriseAppDelete = async (
 		req.log.debug("Received Jira Connect Enterprise App DELETE request");
 
 		const { gitHubAppConfig } = res.locals;
-
 		if (!gitHubAppConfig.gitHubAppId || gitHubAppConfig.uuid !== req.body.uuid) {
 			res.status(404).send({ message: "No GitHub App found. Cannot delete." });
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
