@@ -10,7 +10,9 @@ export const JiraConnectEnterpriseAppRouter = Router();
 
 JiraConnectEnterpriseAppRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPost);
 
-JiraConnectEnterpriseAppRouter.route("/:uuid")
+const routerWithUUID = Router({ mergeParams: true });
+JiraConnectEnterpriseAppRouter.use("/:uuid", routerWithUUID);
+routerWithUUID.route("")
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
 	.put(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
 	.delete(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
