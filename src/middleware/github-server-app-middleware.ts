@@ -18,7 +18,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		if (!gitHubServerApp) {
 			req.log.error("No GitHub app found for provided uuid.");
-			res.status(404).send("No GitHub app found for provided id.");
+			res.status(404).json({
+				message: "No GitHub app found for provided id."
+			});
 			return;
 		}
 
@@ -26,7 +28,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
-			res.status(401).send("Jira hosts do not match.");
+			res.status(401).json({
+				message: "Jira hosts do not match."
+			});
 			return;
 		}
 

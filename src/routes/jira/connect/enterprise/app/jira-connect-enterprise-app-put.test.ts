@@ -141,7 +141,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			})
 			.send(payload)
 			.expect(404);
-		expect(res.text).toEqual("No GitHub app found for provided id.");
+		expect(res.body).toEqual({ message: "No GitHub app found for provided id." });
 
 	});
 
@@ -177,6 +177,6 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			})
 			.send(payload)
 			.expect(401);
-		expect(res.text).toEqual("Jira hosts do not match.");
+		expect(res.body).toEqual({ message: "Jira hosts do not match." });
 	});
 });
