@@ -2,7 +2,7 @@ import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 
-function censorUrl(url) {
+const censorUrl = (url) => {
 	if (!url) {
 		return url;
 	}
@@ -16,7 +16,7 @@ function censorUrl(url) {
 		}
 	}
 	return url;
-}
+};
 
 const responseConfigSerializer = (config) => {
 	if (!config) {
@@ -85,17 +85,6 @@ const loggerStreamUnsafe = (): Logger.Stream => ({
 	stream: new UnsafeRawLogStream(),
 	closeOnExit: false
 });
-
-// TODO Remove after upgrading Probot to the latest version (override logger via constructor instead)
-export const overrideProbotLoggingMethods = (probotLogger: Logger) => {
-	// Remove  Default Probot Logging Stream
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(probotLogger as any).streams.pop();
-
-	// Replace with formatOut stream
-	probotLogger.addStream(loggerStreamSafe());
-	probotLogger.addStream(loggerStreamUnsafe());
-};
 
 interface LoggerOptions {
 	fields?: Record<string, unknown>;

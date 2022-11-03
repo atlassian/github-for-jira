@@ -303,10 +303,7 @@ describe.each([
 
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	it(`Testing route: ${url}`, async () => {

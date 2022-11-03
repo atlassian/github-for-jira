@@ -3,7 +3,7 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { UserOrganizationsQuery } from "~/src/github/client/github-queries";
+import { Subscription } from "~/src/models/subscription";
 
 const randomString = "random-string";
 describe("GitHub Repository Search", () => {
@@ -16,12 +16,10 @@ describe("GitHub Repository Search", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
-		app.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => ""
-		}));
+		app.use(getFrontendApp());
 	});
 	describe("Testing the Repository Search route", () => {
+
 		it("should redirect to Github login if unauthorized", async () => {
 			await supertest(app)
 				.get("/github/repository").set(
@@ -36,20 +34,32 @@ describe("GitHub Repository Search", () => {
 		});
 
 		it("should hit the create branch on GET if authorized", async () => {
+			const gitHubInstallationId = 15;
+			const orgName = "orgName";
+
+			await Subscription.create({
+				gitHubInstallationId,
+				jiraHost
+			});
+
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
 
 			githubNock
-				.post("/graphql", { query: UserOrganizationsQuery, variables: { first: 10 } })
-				.reply(200, { data: { viewer: { login: randomString, organizations: { nodes: [] } } } });
-			const queryString = `${randomString} org:${randomString} in:name`;
+				.get(`/app/installations/${gitHubInstallationId}`)
+				.reply(200, { account: { login: orgName } });
 
+			githubNock
+				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+				.reply(200);
+
+			const queryString = `${randomString} org:${orgName} in:name`;
 			githubNock
 				.get(`/search/repositories?q=${queryString}`)
 				.reply(200, {
-					items: [ { full_name: "first" }, { full_name: "second" } ]
+					items: [{ full_name: "first" }, { full_name: "second" }]
 				});
 
 			await supertest(app)

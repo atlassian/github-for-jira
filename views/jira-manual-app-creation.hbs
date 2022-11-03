@@ -102,7 +102,7 @@
         <div class="field-group">
           <label for="webhook-url">Webhook URL</label>
           <input class="text full-width-field" type="text"
-                 value="{{appUrl}}/github/{{uuid}}/webhook"
+                 value="{{appUrl}}/github/{{uuid}}/webhooks"
                  readonly
           />
         </div>
@@ -111,8 +111,8 @@
           <label for="webhook-secret">Webhook secret</label>
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
-                 value="{{app.webhookSecret}}"
-                 name="webhookSecret" />
+                 value="{{decryptedWebhookSecret}}"
+                 name="webhookSecret"  />
         </div>
 
         <div class="jiraManualAppCreation__formTitle">Secrets and IDs</div>
@@ -140,7 +140,7 @@
           <label for="client-secret">GitHub client secret</label>
           <input class="text full-width-field" type="password"
                  data-aui-validation-field required
-                 value="{{app.gitHubClientSecret}}"
+                 value="{{decryptedGheSecret}}"
                  name="gitHubClientSecret" />
         </div>
 

@@ -1,4 +1,4 @@
-import nock from "nock";
+import nock, { cleanAll  as nockCleanAll } from "nock";
 import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
@@ -165,7 +165,7 @@ afterEach(async () => {
 		// eslint-disable-next-line jest/no-standalone-expect
 		expect(nock).toBeDone();
 	} finally {
-		nock.cleanAll(); // removes HTTP mocks
+		nockCleanAll(); // removes HTTP mocks
 		jest.resetAllMocks(); // Removes jest mocks
 		jest.restoreAllMocks();
 		await clearState();

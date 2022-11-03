@@ -1,12 +1,12 @@
-# DB Config
-db/config.json
-
 # Environment Files
 .env
 .env.local
 .env.local.*
 .env.*.local
 .env.*.local.*
+!.env.example
+!.env.local.example
+!.env.*.local.example
 
 # DB Secret File
 *.pem
@@ -23,8 +23,7 @@ coverage
 
 # log
 log/
-npm-debug.log
-yarn-error.log
+*.log
 
 # new relic
 newrelic_agent.log
@@ -51,3 +50,6 @@ test/**/*.js.map
 
 #Deployments
 .nebulae/
+
+# e2e tests
+test/e2e/test-results/

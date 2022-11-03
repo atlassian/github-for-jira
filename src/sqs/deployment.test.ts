@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 
 describe("Deployment Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeAll(async () => {

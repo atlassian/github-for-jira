@@ -331,6 +331,7 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -376,7 +377,6 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
@@ -386,6 +386,10 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
+	if (nextTask.task === "repository") {
+		await subscription.update({ syncStatus: SyncStatus.FAILED });
+		return;
+	}
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
 };

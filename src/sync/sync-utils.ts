@@ -11,13 +11,13 @@ import { GitHubServerApp } from "models/github-server-app";
 
 type SyncType = "full" | "partial";
 
-export async function findOrStartSync(
+export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
-): Promise<void> {
+): Promise<void> => {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	await subscription.update({
@@ -52,7 +52,7 @@ export async function findOrStartSync(
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
-}
+};
 
 type SubscriptionUpdateTasks = {
 	totalNumberOfRepos?: number | null;

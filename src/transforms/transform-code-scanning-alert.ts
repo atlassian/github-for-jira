@@ -1,7 +1,6 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { JiraRemoteLinkBulkSubmitData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { GitHubAPI } from "probot";
 import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
@@ -9,15 +8,9 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 
 const MAX_STRING_LENGTH = 255;
 
-const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: Logger): Promise<string> => {
+const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: string, githubClient: GitHubInstallationClient, logger: Logger): Promise<string> => {
 
-	const response = githubClient instanceof GitHubInstallationClient ?
-		await githubClient.getPullRequest(repoOwner, repoName, prId) :
-		await githubClient.pulls.get({
-			owner: repoOwner,
-			repo: repoName,
-			pull_number: prId
-		});
+	const response = await githubClient.getPullRequest(repoOwner, repoName, prId);
 
 	if (response.status !== 200) {
 		logger.warn({ response }, "Received error when querying for Pull Request information.");
@@ -27,7 +20,7 @@ const getPullRequestTitle = async (repoName: string, prId: number, repoOwner: st
 	}
 };
 
-const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, githubClient: GitHubInstallationClient | GitHubAPI, logger: Logger): Promise<string> => {
+const getEntityTitle = async (ref: string, repoName: string, repoOwner: string, githubClient: GitHubInstallationClient, logger: Logger): Promise<string> => {
 	// ref can either be a branch reference or a PR reference
 	const components = ref.split("/");
 	switch (components[1]) {

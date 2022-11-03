@@ -1,6 +1,6 @@
 import { isEmpty, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
-import { Octokit } from "@octokit/rest";
+import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
@@ -10,16 +10,16 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
-function mapStatus(status: string, merged_at?: string) {
+const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
 	if (status === "open") return "OPEN";
 	if (status === "closed" && merged_at) return "MERGED";
 	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
-}
+};
 
 // TODO: define arguments and return
-function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
+const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReview> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
@@ -42,10 +42,10 @@ function mapReviews(reviews: Octokit.PullsListReviewsResponse = []) {
 		// Returns the reviews' array with unique users
 		return acc;
 	}, []);
-}
+};
 
 // TODO: define arguments and return
-export const transformPullRequest = async (github: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
+export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
@@ -68,7 +68,7 @@ export const transformPullRequest = async (github: GitHubInstallationClient, pul
 	log?.info(logPayload, `Pull request status mapped to ${pullRequestStatus}`);
 
 	return {
-		...await transformRepositoryDevInfoBulk(pullRequest.base.repo, github.baseUrl),
+		...await transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
 		// Do not send the branch on the payload when the Pull Request Merged event is called.
 		// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 		branches:
@@ -79,7 +79,7 @@ export const transformPullRequest = async (github: GitHubInstallationClient, pul
 						createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 						lastCommit: {
 							// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(github, pullRequest.head?.user?.login)),
+							author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login)),
 							authorTimestamp: pullRequest.updated_at,
 							displayId: pullRequest?.head?.sha?.substring(0, 6),
 							fileCount: 0,
@@ -100,7 +100,7 @@ export const transformPullRequest = async (github: GitHubInstallationClient, pul
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-				author: getJiraAuthor(pullRequest.user, await getGithubUser(github, pullRequest.user?.login)),
+				author: getJiraAuthor(pullRequest.user, await getGithubUser(gitHubInstallationClient, pullRequest.user?.login)),
 				commentCount: pullRequest.comments,
 				destinationBranch: pullRequest.base.ref,
 				destinationBranchUrl: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,

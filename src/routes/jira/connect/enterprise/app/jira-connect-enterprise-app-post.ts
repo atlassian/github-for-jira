@@ -1,10 +1,9 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const JiraConnectEnterpriseAppPost = async (
 	req: Request,
-	res: Response,
-	next: NextFunction
+	res: Response
 ): Promise<void> => {
 	try {
 		req.log.debug("Received Jira Connect Enterprise App POST request");
@@ -21,7 +20,7 @@ export const JiraConnectEnterpriseAppPost = async (
 			privateKey
 		} = req.body;
 
-		const githubServerApp = await GitHubServerApp.install({
+		await GitHubServerApp.install({
 			uuid,
 			appId,
 			gitHubAppName,
@@ -33,11 +32,11 @@ export const JiraConnectEnterpriseAppPost = async (
 			installationId: installation.id
 		});
 
-		res.status(200).send({ success: true, data: githubServerApp });
+		res.status(202).send();
 
 		req.log.debug("Jira Connect Enterprise App added successfully.");
-	} catch (error) {
-		res.status(200).send({ success: false, message: "Failed to create GitHub App." });
-		return next(new Error(`Failed to render Jira Connect Enterprise App POST request: ${error}`));
+	} catch (err) {
+		req.log.warn({ err }, "Could not create the app");
+		res.status(500).send({ message: "Failed to create GitHub App." });
 	}
 };

@@ -195,7 +195,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		req.log.debug(`got user's installations with admin status from GitHub`);
-		const { data: info } = await gitHubAppClient.getApp(); //(client as GitHubAPI).apps.getAuthenticated();
+		const { data: info } = await gitHubAppClient.getApp();
 		req.log.debug(`got user's authenticated apps from GitHub`);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {

@@ -1,5 +1,5 @@
 import { Installation } from "./installation";
-import Sequelize from "sequelize";
+import { QueryTypes } from "sequelize";
 import { v4 as UUID } from "uuid";
 import { getHashedKey } from "models/sequelize";
 
@@ -66,7 +66,7 @@ describe("Installation", () => {
 					values
 					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
 				`, {
-			type: Sequelize.QueryTypes.INSERT
+			type: QueryTypes.INSERT
 		});
 	};
 

@@ -38,9 +38,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
-			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
-			privateKey: await gitHubServerApp.decrypt("privateKey")
+			gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
+			webhookSecret: await gitHubServerApp.getDecryptedWebhookSecret(),
+			privateKey: await gitHubServerApp.getDecryptedPrivateKey()
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
