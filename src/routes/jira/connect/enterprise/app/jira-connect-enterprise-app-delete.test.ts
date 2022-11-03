@@ -83,7 +83,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should send a successful response when app is deleted", async () => {
 		const response = await mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest(appOneUuid), response, jest.fn());
+		await JiraConnectEnterpriseAppDelete(mockRequest(appOneUuid), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true });
@@ -91,7 +91,8 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should send a failure response when unable to delete app", async () => {
 		const response = await mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response, jest.fn());
+		delete response.locals.gitHubAppConfig;
+		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response);
 
 		expect(response.status).toHaveBeenCalledWith(404);
 		expect(response.send).toHaveBeenCalledWith({ message: "No GitHub App found. Cannot delete." });
