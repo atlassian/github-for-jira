@@ -50,7 +50,52 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 					pathname
 				})}`)
 				.expect(200);
-			expect(capturedGHEAppConfig).toBe({});
+			expect(capturedGHEAppConfig).toEqual(expect.objectContaining({
+				uuid: GHE_APP_UUID,
+				appId: 1,
+				privateKey: "private-key"
+			}));
+		});
+		it("should throw error for invalid uuid", async () => {
+			const pathname = `/jira/connect/enterprise/app/${uuid()}`;
+			await supertest(app)
+				.get(pathname)
+				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
+					method: "GET",
+					pathname
+				})}`)
+				.expect(500);
+		});
+		it("should throw error for uuid belong to other sites", async () => {
+			const anotherGheUUID = uuid();
+			const installationOfAnotherSite = await Installation.install({
+				clientKey: "client-key-2",
+				host: "https://some-other-site.atlassian.net",
+				sharedSecret: "new-shared-secret"
+			});
+			await GitHubServerApp.install({
+				uuid: anotherGheUUID,
+				appId: 1,
+				gitHubAppName: "app2",
+				gitHubBaseUrl: gheUrl,
+				gitHubClientId: "56789",
+				gitHubClientSecret: "secret",
+				installationId: installationOfAnotherSite.id,
+				privateKey: "private-key",
+				webhookSecret: "webhook-secret"
+			});
+
+			//try to delete app with uuid for another site
+			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;
+			await supertest(app)
+				.get(pathname)
+				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
+					method: "GET",
+					pathname
+				})}`)
+				.expect(500);
 		});
 	});
 });
