@@ -247,7 +247,7 @@ describe("await jirahostMiddleware", () => {
 
 });
 
-function getReq(): Request {
+const getReq = (): Request => {
 	return ({
 		path: "/",
 		query: {},
@@ -256,25 +256,25 @@ function getReq(): Request {
 		session: {},
 		cookies: {}
 	} as any) as Request;
-}
+};
 
-function getRes(): Response {
+const getRes = (): Response => {
 	return ({
 		locals: {},
 		clearCookie: jest.fn()
 	} as any) as Response;
-}
+};
 
-function configureLegitJiraReq(req: Request) {
+const configureLegitJiraReq = (req: Request) => {
 	req.path = postInstallUrl;
 	req.method = "GET",
 	req.query = { xdm_e: LEGIT_JIRA_HOST };
 	req.body = {};
-}
+};
 
-function configureLegitFrontendReq(req: Request) {
+const configureLegitFrontendReq = (req: Request) => {
 	req.path = postInstallUrl;
 	req.method = "POST";
 	req.query = {};
 	req.body = { jiraHost: LEGIT_JIRA_HOST };
-}
+};

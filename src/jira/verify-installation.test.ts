@@ -18,7 +18,7 @@ describe("verify-installation", () => {
 		});
 	});
 
-	function mockJiraResponse(status: number) {
+	const mockJiraResponse = (status: number) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		jest.mocked(getAxiosInstance).mockReturnValue({
@@ -26,15 +26,15 @@ describe("verify-installation", () => {
 				status
 			})
 		});
-	}
+	};
 
-	function mockJiraResponseException(error: Error) {
+	const mockJiraResponseException = (error: Error) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		jest.mocked(getAxiosInstance).mockReturnValue({
 			"get": () => Promise.reject(error)
 		});
-	}
+	};
 
 	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);

@@ -73,9 +73,9 @@ type InProgressStorage = {
 	isJobRunnerLive: (jobKey: string, jobRunnerId: string, jobRunnerFlagUpdateTimeoutMsecs: number) => Promise<boolean>;
 }
 
-function sleep(ms) {
+const sleep = (ms: number) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
-}
+};
 
 type Flag = {
 	jobRunnerId: string,
@@ -89,7 +89,7 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 		this.redis = redis;
 	}
 
-	hasInProgressFlag(jobKey: string, invalidatingTimestamp: number): Promise<string | null> {
+	async hasInProgressFlag(jobKey: string, invalidatingTimestamp: number): Promise<string | null> {
 		return this.redis.get(jobKey).then(json => {
 			if (!json) {
 				return null;
