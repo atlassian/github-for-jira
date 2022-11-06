@@ -3,7 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
 import { keyLocator } from "../github/client/key-locator";
-import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
 type ResponseBody = {
 	message: string
@@ -12,7 +12,7 @@ type ResponseBody = {
 type ResponseLocals = {
 	jiraHost: string,
 	gitHubAppId: number | undefined,
-	gitHubAppConfig: GitHubAppConfig
+	gitHubAppConfig: GitHubAppConfigWithSecrets
 }
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response<ResponseBody, ResponseLocals>, next: NextFunction): Promise<void> => {
@@ -53,22 +53,24 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response<Resp
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
 			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: async () => await gitHubServerApp.getDecryptedGitHubClientSecret(),
-			webhookSecret: await gitHubServerApp.getDecryptedWebhookSecret(),
-			privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+			getGitHubClientSecret: async () => await gitHubServerApp.getDecryptedGitHubClientSecret(),
+			getWebhookSecret: async () => await gitHubServerApp.getDecryptedWebhookSecret(),
+			getPrivateKey: async () => await gitHubServerApp.getDecryptedPrivateKey()
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: undefined,
-			appId: envVars.APP_ID,
+			appId: Number(envVars.APP_ID),
 			uuid: undefined, //undefined for cloud
-			hostname: GITHUB_CLOUD_BASEURL,
+			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 			clientId: envVars.GITHUB_CLIENT_ID,
-			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-			webhookSecret: envVars.WEBHOOK_SECRET,
-			privateKey: await keyLocator(undefined)
+			getGitHubClientSecret: async () => envVars.GITHUB_CLIENT_SECRET,
+			getWebhookSecret: async () => envVars.WEBHOOK_SECRET,
+			getPrivateKey: async () => await keyLocator(undefined)
 		};
 	}
 
