@@ -1,4 +1,4 @@
-import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
+import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
 import { sequelize } from "models/sequelize";
 
@@ -153,6 +153,22 @@ export class Subscription extends Model {
 		});
 	}
 
+	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoName\" = :repoName " +
+			"AND rss.\"repoOwner\" = :repoOwner",
+			{
+				replacements: { jiraHost, repoName, repoOwner },
+				type: QueryTypes.SELECT
+			}
+		);
+		return results[0] as Subscription;
+	}
+
 	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await this.findOrCreate({
@@ -182,7 +198,7 @@ export class Subscription extends Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const results = await this.sequelize?.query(
+		const results = await this.sequelize!.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`

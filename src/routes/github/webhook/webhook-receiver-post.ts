@@ -1,8 +1,7 @@
 import { BinaryLike, createHmac } from "crypto";
 import { Request, Response } from "express";
-import { getLogger } from "~/src/config/logger";
 import { pushWebhookHandler } from "~/src/github/push";
-import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
+import { GithubWebhookMiddleware, LOGGER_NAME } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
 import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
@@ -16,18 +15,26 @@ import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { getLogger } from "config/logger";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
-	const logger = getLogger("webhook.receiver");
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	const payload = request.body;
+	const logger = (request.log || getLogger(LOGGER_NAME)).child({
+		paramUuid: uuid,
+		xGitHubDelivery: id,
+		xGitHubEvent: eventName
+	});
+	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(JSON.stringify(payload), webhookSecret);
+		const verification = createHash(request.rawBody, webhookSecret);
+
 		if (verification != signatureSHA256) {
+			logger.warn("Signature validation failed, returning 400");
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
@@ -56,11 +63,12 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 		});
 		await webhookRouter(webhookContext);
+		logger.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
-	} catch (error) {
+	} catch (err) {
+		logger.error({ err }, "Something went wrong, returning 400: " + err.message);
 		response.sendStatus(400);
-		logger.error(error);
 	}
 };
 
@@ -111,7 +119,10 @@ const webhookRouter = async (context: WebhookContext) => {
 	}
 };
 
-export const createHash = (data: BinaryLike, secret: string): string => {
+export const createHash = (data: BinaryLike | undefined, secret: string): string => {
+	if (!data) {
+		throw new Error("No data to hash");
+	}
 	return `sha256=${createHmac("sha256", secret)
 		.update(data)
 		.digest("hex")}`;
@@ -123,7 +134,7 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const webhookSecret = await gitHubServerApp.decrypt("webhookSecret");
+		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
 		return { webhookSecret, gitHubServerApp };
 	}
 	if (!envVars.WEBHOOK_SECRET) {

@@ -27,4 +27,38 @@ export class GitHubAnonymousClient extends GitHubClient {
 		const apiUrl = `/app-manifests/${code}/conversions`;
 		return (await this.axios.post(apiUrl, {}, { headers: { Accept: "application/vnd.github.v3+json" } })).data as CreatedGitHubAppResponse;
 	}
+
+	public async exchangeGitHubToken(opts: {
+		clientId: string,
+		clientSecret: string,
+		code: string,
+		state: string
+	}) {
+		const response = await this.axios.get(`/login/oauth/access_token`,
+			{
+				baseURL: this.baseUrl,
+				params: {
+					client_id: opts.clientId,
+					client_secret: opts.clientSecret,
+					code: opts.code,
+					state: opts.state
+				},
+				headers: {
+					accept: "application/json",
+					"content-type": "application/json"
+				},
+				responseType: "json"
+			}
+		);
+		return response.data.access_token;
+	}
+
+	public async checkGitHubToken(gitHubToken: string) {
+		await this.axios.get("", {
+			headers: {
+				Authorization: `Bearer ${gitHubToken}`
+			}
+		});
+	}
+
 }

@@ -4,7 +4,7 @@
 DIR=$(dirname "$0")
 OLDFILE="${DIR}/../.env"
 NEWFILE="${DIR}/../.env.development.local"
-REGEX="^(APP_URL|WEBHOOK_PROXY_URL|NGROK_AUTHTOKEN)=.*"
+REGEX="^(APP_URL|WEBHOOK_PROXY_URL|NGROK_AUTHTOKEN|INSTANCE_NAME)=.*"
 if [ -f "$OLDFILE" ] && [ !  -f "$NEWFILE" ]; then
   echo "Detected old .env file, moving to .env.development.local"
   mv "$OLDFILE" "$NEWFILE"

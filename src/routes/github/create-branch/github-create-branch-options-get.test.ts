@@ -95,6 +95,57 @@ describe("GitHub Create Branch Options Get", () => {
 			});
 	});
 
+	it("With multiple server connections without cloud connection - should open the create-branch-options page", async () => {
+		const uuid = newUUID();
+		const uuid2 = newUUID();
+		const serverApp = await GitHubServerApp.install({
+			uuid,
+			appId: 123,
+			gitHubAppName: "My GitHub Server App",
+			gitHubBaseUrl: gheUrl,
+			gitHubClientId: "lvl.123",
+			gitHubClientSecret: "myghsecret",
+			webhookSecret: "mywebhooksecret",
+			privateKey: "myprivatekey",
+			installationId: 1
+		});
+		const serverApp2 = await GitHubServerApp.install({
+			uuid: uuid2,
+			appId: 234,
+			gitHubAppName: "My GitHub Server App",
+			gitHubBaseUrl: gheUrl,
+			gitHubClientId: "lvl.234",
+			gitHubClientSecret: "myghsecret",
+			webhookSecret: "mywebhooksecret",
+			privateKey: "myprivatekey",
+			installationId: 1
+		});
+		await Subscription.install({
+			host: jiraHost,
+			installationId: 123,
+			clientKey: "key-123",
+			gitHubAppId: serverApp.id
+		});
+		await Subscription.install({
+			host: jiraHost,
+			installationId: 234,
+			clientKey: "key-123",
+			gitHubAppId: serverApp2.id
+		});
+
+		await supertest(app)
+			.get("/create-branch-options").set(
+				"Cookie",
+				getSignedCookieHeader({
+					jiraHost,
+					githubToken: "random-token"
+				}))
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain("Select your GitHub product");
+			});
+	});
+
 	it("With both cloud & server connections - should open the create-branch-options page", async () => {
 		const serverApp = await GitHubServerApp.install({
 			uuid,
@@ -131,7 +182,6 @@ describe("GitHub Create Branch Options Get", () => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain("GitHub Cloud");
 				expect(res.text).toContain("GitHub Enterprise Server");
-				expect(res.text).toContain("<div class=\"gitHubCreateBranchOptions__header\">Create GitHub Branch</div>");
 			});
 	});
 });

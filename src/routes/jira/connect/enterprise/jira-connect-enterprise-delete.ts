@@ -9,7 +9,9 @@ export const JiraConnectEnterpriseDelete = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise Server DELETE request");
 
-		await GitHubServerApp.uninstallServer(req.body.serverUrl);
+		const { installation }  = res.locals;
+
+		await GitHubServerApp.uninstallServer(req.body.serverUrl, installation.id);
 
 		res.status(200).send({ success: true });
 		req.log.debug("Jira Connect Enterprise Server successfully deleted.");

@@ -11,7 +11,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 // Workflow conclusion - GitHub: Can be one of action_required, cancelled, failure, neutral, success, skipped, stale, or timed_out
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-builds-0-1-bulk-post
 // Build state - Jira: Can be one of pending, in_progress, successful, failed, cancelled, unknown
-function mapStatus(status: string, conclusion?: string): string {
+const mapStatus = (status: string, conclusion?: string): string => {
 	let key = status;
 	if (conclusion) key += `.${conclusion}`;
 	switch (key) {
@@ -33,11 +33,11 @@ function mapStatus(status: string, conclusion?: string): string {
 		default:
 			return "unknown";
 	}
-}
+};
 
-function mapPullRequests(
+const mapPullRequests = (
 	pull_requests: GitHubPullRequest[] = []
-): JiraPullRequestHead[] {
+): JiraPullRequestHead[] => {
 	return pull_requests.map((pr) => ({
 		commit: {
 			id: pr.head.sha,
@@ -48,7 +48,7 @@ function mapPullRequests(
 			uri: `${pr.head.repo.url}/tree/${pr.head.ref}`
 		}
 	}));
-}
+};
 
 export const transformWorkflow = async (
 	githubClient: GitHubInstallationClient,

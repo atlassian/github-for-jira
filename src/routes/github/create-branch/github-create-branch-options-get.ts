@@ -29,10 +29,12 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce
 		});
+
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
 			jiraHost
 		});
+
 		return;
 	}
 
@@ -59,7 +61,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName,
 		jiraHost
 	});
-
 };
 
 const getJiraHostFromTenantUrl = (jiraHostParam) =>  {
