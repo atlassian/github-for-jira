@@ -5,7 +5,17 @@ import { envVars } from "config/env";
 import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
-export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseBody = {
+	message: string
+}
+
+type ResponseLocals = {
+	jiraHost: string,
+	gitHubAppId: number | undefined,
+	gitHubAppConfig: GitHubAppConfig
+}
+
+export const GithubServerAppMiddleware = async (req: Request, res: Response<ResponseBody, ResponseLocals>, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
@@ -42,9 +52,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			gitHubAppId: gitHubServerApp.id,
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
-			hostname: gitHubServerApp.gitHubBaseUrl,
+			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
+			gitHubClientSecret: async () => await gitHubServerApp.getDecryptedGitHubClientSecret(),
 			webhookSecret: await gitHubServerApp.getDecryptedWebhookSecret(),
 			privateKey: await gitHubServerApp.getDecryptedPrivateKey()
 		};

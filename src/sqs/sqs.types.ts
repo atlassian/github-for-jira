@@ -163,18 +163,6 @@ export type PushQueueMessagePayload = {
 	webhookReceived?: number,
 }
 
-export type GitHubAppConfig = {
-	gitHubAppId: number | undefined, // undefined for cloud
-	appId: number,
-	clientId: string,
-	gitHubBaseUrl: string, // GITHUB_CLOUD_BASEURL for cloud
-	gitHubApiUrl: string,
-	uuid: string | undefined,
-	//gitHubClientSecret: string,
-	//webhookSecret: string,
-	//privateKey: string
-}
-
 //refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
 type PayloadRepository = {
 	id: number,

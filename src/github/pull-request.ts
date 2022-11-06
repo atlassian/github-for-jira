@@ -31,7 +31,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		pullRequestId
 	});
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
@@ -65,7 +65,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
+				await transformRepositoryId(repositoryId, context.gitHubAppConfig.gitHubBaseUrl),
 				pullRequestNumber
 			);
 

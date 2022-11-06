@@ -14,7 +14,6 @@ import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
@@ -30,7 +29,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
+		const { webhookSecret } = await getWebhookSecret(uuid);
+		const gitHubAppConfig = response.locals.gitHubAppConfig as GitHubAppConfig;
 		const verification = createHash(request.rawBody, webhookSecret);
 
 		if (verification != signatureSHA256) {
@@ -44,23 +44,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			payload: payload,
 			log: logger,
 			action: payload.action,
-			gitHubAppConfig: {
-				...(!gitHubServerApp ? {
-					gitHubAppId: undefined,
-					appId: parseInt(envVars.APP_ID),
-					clientId: envVars.GITHUB_CLIENT_ID,
-					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
-					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
-					uuid: undefined
-				} : {
-					gitHubAppId: gitHubServerApp.id,
-					appId: gitHubServerApp.appId,
-					clientId: gitHubServerApp.gitHubClientId,
-					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
-					uuid
-				})
-			}
+			gitHubAppConfig: gitHubAppConfig
 		});
 		await webhookRouter(webhookContext);
 		logger.info("Webhook was successfully processed");
@@ -135,7 +119,7 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
 		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
-		return { webhookSecret, gitHubServerApp };
+		return { webhookSecret };
 	}
 	if (!envVars.WEBHOOK_SECRET) {
 		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");

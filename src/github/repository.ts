@@ -10,7 +10,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.delete(
-		await transformRepositoryId(context.payload.repository?.id, context.gitHubAppConfig?.gitHubBaseUrl)
+		await transformRepositoryId(context.payload.repository?.id, context.gitHubAppConfig.gitHubBaseUrl)
 	);
 	const { webhookReceived, name, log } = context;
 
@@ -19,6 +19,6 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		name,
 		log,
 		jiraResponse?.status,
-		context.gitHubAppConfig?.gitHubAppId
+		context.gitHubAppConfig.gitHubAppId
 	);
 };

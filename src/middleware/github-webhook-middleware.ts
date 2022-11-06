@@ -94,7 +94,7 @@ export const GithubWebhookMiddleware = (
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
 		const gitHubInstallationId = Number(payload?.installation?.id);
-		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+		const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
@@ -206,7 +206,7 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
-				context.gitHubAppConfig?.gitHubAppId,
+				context.gitHubAppConfig.gitHubAppId,
 				context.log
 			);
 

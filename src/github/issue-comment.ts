@@ -29,7 +29,7 @@ export const issueCommentWebhookHandler = async (
 	});
 
 	let linkifiedBody;
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
 	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, false, jiraHost)){
@@ -79,7 +79,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationClient.githubInstallationId.installationId,
-		context.gitHubAppConfig?.gitHubAppId,
+		context.gitHubAppConfig.gitHubAppId,
 		context.log
 	);
 

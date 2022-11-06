@@ -53,7 +53,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkBulkSubmitData | undefined> => {
 	const { action, alert, ref, repository } = context.payload;
 
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log, context.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, context.log, context.gitHubAppConfig.gitHubAppId);
 
 	// Grab branch names or PR titles
 	const entityTitles: string[] = [];

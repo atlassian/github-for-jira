@@ -1,6 +1,5 @@
 import * as Sentry from "@sentry/node";
 import Logger from "bunyan";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 
 type WebhookContextConstructorParam <E = any> = {
 	id: string;
@@ -8,7 +7,7 @@ type WebhookContextConstructorParam <E = any> = {
 	payload: E;
 	log: Logger;
 	action?: string;
-	gitHubAppConfig?: GitHubAppConfig;
+	gitHubAppConfig: GitHubAppConfig;
 }
 
 export class WebhookContext<E = any> {
@@ -21,7 +20,7 @@ export class WebhookContext<E = any> {
 	timedout?: number;
 	webhookReceived?: number;
 
-	gitHubAppConfig?: GitHubAppConfig; // TODO: must become required once we remove probot: it is populated for both Cloud and Server in the new webhook handler
+	gitHubAppConfig: GitHubAppConfig;
 
 	constructor({ id, name, payload, log, action, gitHubAppConfig }: WebhookContextConstructorParam<E>) {
 		this.id = id;
