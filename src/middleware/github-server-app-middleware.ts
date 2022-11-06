@@ -18,14 +18,20 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		if (!gitHubServerApp) {
 			req.log.error("No GitHub app found for provided uuid.");
-			throw new Error("No GitHub app found for provided id.");
+			res.status(404).json({
+				message: "No GitHub app found for provided id."
+			});
+			return;
 		}
 
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 
 		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
-			throw new Error("Jira hosts do not match.");
+			res.status(401).json({
+				message: "Jira hosts do not match."
+			});
+			return;
 		}
 
 		req.log.info("Found server app for installation. Defining GitHub app config for GitHub Enterprise Server.");

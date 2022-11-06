@@ -1,6 +1,12 @@
 # GitHub for Jira FAQs
 
-### General
+- [General](#general)
+- [Permissions](#permissions)
+- [GitHub Enterprise Server](#gitHub-enterprise-server)
+- [Smart Commits](#smart-commits)
+- [Backfilling Data](#backfilling-data)
+
+## General
 <h3>Q: Does the GitHub for Jira app support GitLab?</h3>
 
 **A:** No. If you want to integrate GitLab with your Jira instance, you need to install the [GitLab.com for Jira Cloud app](https://docs.gitlab.com/ee/integration/jira/connect-app.html#install-the-gitlabcom-for-jira-cloud-app-for-self-managed-instances) for self-managed instances.
@@ -11,7 +17,7 @@
 
 When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
-### Permissions
+## Permissions
 
 <h3>Q: The permission scope for code and metadata suggests data is read to synchronize development information. Is code stored on Jira? Should I be concerned that, were the app to be compromised, an actor could exfiltrate all our code from GitHub?</h3>
 
@@ -23,9 +29,9 @@ When an organization contains a small amount of data, the backfilling process is
 
 ![Edit GitHub settings](./images/edit-github-settings.png)
 
-<h3>Q: What about pull requests and issues? I noticed I need to grant read and write permissions. Why is this needed?</h3>
+<h3>Q: What about pull requests, contents and issues? I noticed I need to grant read and write permissions. Why is this needed?</h3>
 
-**A:** This is needed so our app can create links to Jira issues from pull request or issue comments. When you create a comment and include the issue key surrounded by square brackets, our app while ping Jira to see if that issue key exists in a project in Jira and, if it finds a matching issue, will create a link for easy navigation.
+**A:** This is needed so our app can create links to Jira issues from pull request or issue comments. When you create a comment and include the issue key surrounded by square brackets, our app while ping Jira to see if that issue key exists in a project in Jira and, if it finds a matching issue, will create a link for easy navigation. As for contents, we need the write access so we can create a branch on your request.
 
 ![Pull request and issue comment links](./images/read-and-write-permissions-issues-and-prs.png)
 
@@ -33,7 +39,7 @@ When an organization contains a small amount of data, the backfilling process is
 
 **A:** Unfortunately not. GitHub apps are limited in this sense as permissions are not granular.
 
-### GitHub Enterprise Server
+## GitHub Enterprise Server
 <h3>Q: How do I set up a hole in my firewall?</h3>
 
 **A:** Refer to [How the GitHub for Jira app fetches data](https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#How-the-GitHub-for-Jira-app-fetches-data).
@@ -102,7 +108,7 @@ If its not there, make sure you install that organization.
 
 Once you have installed it, then you will be able to search and create new branch on the repositories of that organization.
 
-### Smart Commits
+## Smart Commits
 <h3>Q: I'm trying to use Smart Commits but they don't appear to be working. What am I missing?</h3>
 
 **A:** [[Smart Commits](https://support.atlassian.com/bitbucket-cloud/docs/use-smart-commits/)] make it easier for you and your team to comment on issues, transition issues, and add time tracking. To enable this for your team/s you will need to make sure:
@@ -112,3 +118,17 @@ Once you have installed it, then you will be able to search and create new branc
 - **You use the correct naming when transitioning:** if you want to transition an issue from one column to another, please make sure you use the same naming for the column you wish to transition to issue to e.g. if you want to flag an issue as complete and this column is called 'Done' you will need to include #done in your commit messge. #closed/#complete etc will not work unless those words are in fact in your workflow.
 - **You aren't trying to 'jump' columns in your workflow:** If transitions aren't working, you may need to make sure you are abiding by the workflow set up by your team's admin e.g. if you have 3 columns 'todo', 'in progress' and 'done' but your admin has applied a rule that specifies issues can't be moved straight from 'todo' to 'done', any smart commit that tries to transition an issue from todo to done will fail. In this scenario, you need to first move your issue to #in-progress.
 - **You have enabled time tracking and added to each issue type:** If you aren't seeing time tracking in your issues after adding something like `#time 1w 2d 4h 30m` to your commit message, ask you team's admin to check the site's settings. If they go to **Settings** > **Issue features** > **Time tracking** they will need to make sure that **Copying of comments to work description** is set to **Enabled**. Additionally, they will need to manually add 'Time Tracking' to any issue type (story/bug/task/etc) where this is to be recorded. Go to **Project settings** > **Issue types** and if 'Time tracking' isn't listed under 'Context fields', simply click on it in the right-hand panel and **Save changes**.
+
+## Backfilling Data
+<h3>Q: Backfilling my data is taking a long time. When will I see my data in Jira?</h3>
+
+**A:** When you connect a GitHub organization to Jira via the GitHub for Jira app, a process called “backfilling” begins. This process looks for issue keys in your historical data in GitHub. If it finds issue keys, it links your development data to existing issues in Jira.
+
+When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
+
+![Restart a backfill from your GitHub configuration screen](./images/restart-backfill.png)
+![Select a date to backfill historical data from](./images/select-backfill-date.png)
+
+<h3>Q: Do I have to wait for all data to complete backfilling before I can start using the GitHub for Jira integration?</h3>
+
+**A:** No :) The job of backfilling is to pull in all your historical data so that, if any issue keys were referenced before you installed the app, you will eventually see that data in Jira. This means you can start using the app with your team immediately as the app will start listening and responding to webhook events (real-time data) straight away.

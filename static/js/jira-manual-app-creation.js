@@ -56,7 +56,7 @@ const gitHubAppPutRequest = (uuid, data) => {
 	});
 };
 
-const gitHubAppPostRequest = (data) => {
+const gitHubAppPostRequest = (data, token) => {
 	$.ajax({
 		type: "POST",
 		url: `/jira/connect/enterprise/app`,
@@ -104,7 +104,7 @@ $(document).ready(function() {
 			if (isUpdatePage()) {
 				gitHubAppPutRequest(uuid, data);
 			} else {
-				gitHubAppPostRequest(data);
+				gitHubAppPostRequest(data, token);
 			}
 		});
 	});

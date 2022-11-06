@@ -1,7 +1,8 @@
 export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
 	production = "production",
+	development = "development",
+	test = "test",
+	e2e = "e2e",
 }
 
 export enum BooleanEnum {

@@ -38,10 +38,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce
 		});
+
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
 			jiraHost
 		});
+
 		return;
 	}
 
