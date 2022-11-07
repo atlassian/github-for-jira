@@ -4,17 +4,13 @@ import { Installation } from "models/installation";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
+import { JiraAndGitHubVerifiedLocals } from "routes/route-types";
+
 type ResponseBody = {
 	message: string
 }
 
-type ResponseLocals = {
-	jiraHost: string,
-	gitHubAppId: number | undefined,
-	gitHubAppConfig: GitHubAppConfig
-}
-
-export const GithubServerAppMiddleware = async (req: Request, res: Response<ResponseBody, ResponseLocals>, next: NextFunction): Promise<void> => {
+export const GithubServerAppMiddleware = async (req: Request, res: Response<ResponseBody, JiraAndGitHubVerifiedLocals>, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
