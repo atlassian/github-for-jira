@@ -4,7 +4,6 @@ import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { TaskType } from "~/src/sync/sync.types";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";

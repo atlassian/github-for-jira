@@ -4,8 +4,9 @@ import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { envVars } from "config/env";
 
 jest.mock("config/feature-flags");
 
@@ -14,7 +15,14 @@ const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContex
 		"id": "hi",
 		"name": "hi",
 		"payload": payload,
-		gitHubAppConfig: gitHubAppConfig,
+		gitHubAppConfig: gitHubAppConfig || {
+			gitHubAppId: undefined,
+			appId: Number(envVars.APP_ID),
+			uuid: undefined, //undefined for cloud
+			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
+			clientId: envVars.GITHUB_CLIENT_ID
+		},
 		log: getLogger("foo")
 	});
 };

@@ -8,9 +8,3 @@ type GitHubAppConfig = {
 	gitHubBaseUrl: string,
 	gitHubApiUrl: string,
 }
-
-type GitHubAppConfigWithSecrets = GitHubAppConfig & {
-	getGitHubClientSecret: () => Promise<string>,
-	getWebhookSecret: () => Promise<string>,
-	getPrivateKey: () => Promise<string>
-}

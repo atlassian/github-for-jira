@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
-import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
 type ResponseBody = {
@@ -12,7 +11,7 @@ type ResponseBody = {
 type ResponseLocals = {
 	jiraHost: string,
 	gitHubAppId: number | undefined,
-	gitHubAppConfig: GitHubAppConfigWithSecrets
+	gitHubAppConfig: GitHubAppConfig
 }
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response<ResponseBody, ResponseLocals>, next: NextFunction): Promise<void> => {
@@ -54,10 +53,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response<Resp
 			uuid: gitHubServerApp.uuid,
 			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
-			clientId: gitHubServerApp.gitHubClientId,
-			getGitHubClientSecret: async () => await gitHubServerApp.getDecryptedGitHubClientSecret(),
-			getWebhookSecret: async () => await gitHubServerApp.getDecryptedWebhookSecret(),
-			getPrivateKey: async () => await gitHubServerApp.getDecryptedPrivateKey()
+			clientId: gitHubServerApp.gitHubClientId
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
@@ -67,10 +63,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response<Resp
 			uuid: undefined, //undefined for cloud
 			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
 			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
-			clientId: envVars.GITHUB_CLIENT_ID,
-			getGitHubClientSecret: async () => envVars.GITHUB_CLIENT_SECRET,
-			getWebhookSecret: async () => envVars.WEBHOOK_SECRET,
-			getPrivateKey: async () => await keyLocator(undefined)
+			clientId: envVars.GITHUB_CLIENT_ID
 		};
 	}
 

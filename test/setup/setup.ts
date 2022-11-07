@@ -7,7 +7,6 @@ import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { resetEnvVars, TestEnvVars } from "test/setup/env-test";
 import { GitHubConfig } from "~/src/github/client/github-client";
 // WARNING: Be very careful what you import here as it might affect test
