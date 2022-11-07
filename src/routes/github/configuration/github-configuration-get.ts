@@ -19,6 +19,7 @@ import {
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { JiraAndGitHubVerifiedLocals } from "routes/route-types";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -124,7 +125,7 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 		}));
 };
 
-export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubConfigurationGet = async (req: Request, res: Response<string, JiraAndGitHubVerifiedLocals>, next: NextFunction): Promise<void> => {
 	const {
 		jiraHost,
 		githubToken,

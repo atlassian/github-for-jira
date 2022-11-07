@@ -1,12 +1,12 @@
 import { Installation } from "../models/installation";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GitHubAppVerifiedLocals = Record<string, any> & {
-	gitHubAppConfig: GitHubAppConfig
+export type GitHubAppVerifiedLocals = {
+	gitHubAppConfig: GitHubAppConfig,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type JiraVerifiedLocals = Record<string, any> & {
+export type JiraVerifiedLocals = {
 	jiraHost: string,
 	installation: Installation,
 };
