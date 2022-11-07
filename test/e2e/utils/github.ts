@@ -1,6 +1,7 @@
 import { Page } from "@playwright/test";
 import { GithubTestDataRoles, testData } from "test/e2e/constants";
 import { e2eEnvVars } from "test/e2e/env-e2e";
+import { totp } from "speakeasy";
 
 const data = testData.github;
 export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRoles, saveState = false) => {
@@ -17,6 +18,10 @@ export const githubLogin = async (page: Page, roleName: keyof GithubTestDataRole
 		await userinput.press("Tab");
 		await passinput.fill(role.password);
 		await passinput.press("Enter");
+		await page.waitForLoadState();
+		if (page.url().startsWith(data.urls.mfa)) {
+			await page.fill("#totp", totp({ secret: e2eEnvVars.GITHUB_2FA_SECRET,  encoding: "base32" }));
+		}
 		await page.waitForURL(data.urls.base);
 
 		if (saveState && role.state) {
@@ -36,6 +41,26 @@ export const githubAppUpdateURLs = async (page: Page) => {
 	await page.fill("#integration_hook_attributes_url", `${e2eEnvVars.APP_URL}/github/events`);
 	await page.click(`input[name="commit"]`);
 	await page.waitForLoadState();
+};
+
+export const githubCreateRepository = async (page: Page) => {
+	// TODO: add github app install
+	await page.goto(data.urls.apps);
+};
+
+export const githubDeleteRepository = async (page: Page) => {
+	// TODO: add github app install
+	await page.goto(data.urls.apps);
+};
+
+export const githubCreateApp = async (page: Page) => {
+	// TODO: add github app install
+	await page.goto(data.urls.apps);
+};
+
+export const githubDeleteApp = async (page: Page) => {
+	// TODO: add github app install
+	await page.goto(data.urls.apps);
 };
 
 export const githubAppInstall = async (page: Page) => {

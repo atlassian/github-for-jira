@@ -60,6 +60,18 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	return page;
 };
 
+export const jiraCreateProject = async (page: Page): Promise<Page> => {
+	await page.click("nav text=Projects");
+	await page.click(".atlaskit-portal-container button text=Create project");
+	await page.click("data-testid=project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button");
+	await page.click("data-testid=project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button");
+	await page.click("data-testid=project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed");
+	await page.fill("#project-create.create-form.name-field.input", testData.jira.projectId);
+	await page.fill("#project-create.create-form.advanced-dropdown.key-field.input", testData.jira.projectId);
+	await page.click("data-test-id=project-create.create-form.create-screen.submit-button button");
+	return page;
+};
+
 const removeApp = async (page: Page): Promise<boolean> => {
 	await page.waitForSelector("#upm-manage-plugins-user-installed");
 	const pluginRow = page.locator(`.upm-plugin[data-key="${APP_KEY}"]`);

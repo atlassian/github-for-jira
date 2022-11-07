@@ -1222,6 +1222,13 @@
     "@types/mime" "^1"
     "@types/node" "*"
 
+"@types/speakeasy@^2.0.7":
+  version "2.0.7"
+  resolved "https://registry.yarnpkg.com/@types/speakeasy/-/speakeasy-2.0.7.tgz#cb087c501b3eef744a1ae620c19812dd1c3b2f3f"
+  integrity sha512-JEcOhN2SQCoX86ZfiZEe8px84sVJtivBXMZfOVyARTYEj0hrwwbj1nF0FwEL3nJSoEV6uTbcdLllMKBgAYHWCQ==
+  dependencies:
+    "@types/node" "*"
+
 "@types/stack-utils@^2.0.0":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@types/stack-utils/-/stack-utils-2.0.1.tgz#20f18294f797f2209b5f65c8e3b5c8e8261d127c"

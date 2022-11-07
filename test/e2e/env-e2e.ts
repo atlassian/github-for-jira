@@ -8,7 +8,8 @@ envCheck(
 	"JIRA_ADMIN_PASSWORD",
 	"GITHUB_USERNAME",
 	"GITHUB_PASSWORD",
-	"GITHUB_URL"
+	"GITHUB_URL",
+	"GITHUB_2FA_SECRET"
 );
 
 export interface E2EEnvVars extends EnvVars {
@@ -19,7 +20,7 @@ export interface E2EEnvVars extends EnvVars {
 	GITHUB_USERNAME: string;
 	GITHUB_PASSWORD: string;
 	GITHUB_URL: string;
-	GITHUB_2FA_SECRET?: string;
+	GITHUB_2FA_SECRET: string;
 }
 
 export const e2eEnvVars = envVars as E2EEnvVars;

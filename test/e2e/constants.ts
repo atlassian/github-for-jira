@@ -1,13 +1,18 @@
 import { e2eEnvVars } from "test/e2e/env-e2e";
+import crypto from "crypto";
 
 export const STATE_PATH = "./test/e2e/test-results/states";
 export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
+
+// Create random string for project id to prevent collision
+const projectId = crypto.randomBytes(30).toString("hex").replace(/[0-9]/g, "").slice(0, 10).toUpperCase();
 
 export const testData: TestData = {
 	stateDirectoryPath: STATE_PATH,
 	state: `${STATE_PATH}/default.json`,
 	appUrl: e2eEnvVars.APP_URL,
 	jira: {
+		projectId,
 		urls: {
 			base: e2eEnvVars.ATLASSIAN_URL,
 			login: `${e2eEnvVars.ATLASSIAN_URL}/login`,
@@ -16,7 +21,8 @@ export const testData: TestData = {
 			dashboard: `${e2eEnvVars.ATLASSIAN_URL}/jira/dashboards`,
 			yourWork: `${e2eEnvVars.ATLASSIAN_URL}/jira/your-work`,
 			manageApps: `${e2eEnvVars.ATLASSIAN_URL}/plugins/servlet/upm`,
-			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`
+			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`,
+			projectSettings: `${e2eEnvVars.APP_URL}/jira/software/projects/${projectId}/settings/details`
 		},
 		roles: {
 			admin: {
@@ -31,6 +37,7 @@ export const testData: TestData = {
 			base: e2eEnvVars.GITHUB_URL,
 			login: `${e2eEnvVars.GITHUB_URL}/login`,
 			logout: `${e2eEnvVars.GITHUB_URL}/logout`,
+			mfa: `${e2eEnvVars.GITHUB_URL}/sessions/two-factor`,
 			appSettings: `${e2eEnvVars.GITHUB_URL}/settings/apps/${e2eEnvVars.APP_NAME}`,
 			apps: `${e2eEnvVars.GITHUB_URL}/user/settings/apps`
 		},
@@ -48,7 +55,7 @@ export interface TestData {
 	stateDirectoryPath: string;
 	state: string;
 	appUrl: string;
-	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
+	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles> & { projectId: string };
 	github: TestDataEntry<GithubTestDataURLs>;
 }
 
@@ -69,9 +76,11 @@ export interface JiraTestDataURLs extends TestDataURLs {
 	auth: string;
 	manageApps: string;
 	connectJson: string;
+	projectSettings: string;
 }
 
 export interface GithubTestDataURLs extends TestDataURLs {
+	mfa: string;
 	appSettings: string;
 	apps: string;
 }
