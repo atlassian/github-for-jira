@@ -115,9 +115,7 @@ describe("GitHub router", () => {
 							githubToken: VALID_TOKEN,
 							jiraHost,
 							gitHubAppConfig: expect.objectContaining({
-								appId: envVars.APP_ID,
-								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-								webhookSecret: envVars.WEBHOOK_SECRET
+								appId: envVars.APP_ID
 							})
 						})
 					}),
@@ -131,9 +129,7 @@ describe("GitHub router", () => {
 						githubToken: VALID_TOKEN,
 						jiraHost,
 						gitHubAppConfig: expect.objectContaining({
-							appId: envVars.APP_ID,
-							gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-							webhookSecret: envVars.WEBHOOK_SECRET
+							appId: envVars.APP_ID
 						})
 					}));
 			});
@@ -191,10 +187,7 @@ describe("GitHub router", () => {
 							gitHubAppId: gitHubAppId,
 							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
-								uuid: GITHUB_SERVER_APP_UUID,
-								gitHubClientSecret: "gitHubClientSecret",
-								webhookSecret: "webhookSecret",
-								privateKey: "privateKey"
+								uuid: GITHUB_SERVER_APP_UUID
 							})
 						})
 					}),
