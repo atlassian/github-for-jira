@@ -1,8 +1,10 @@
 $("#noConfiguration__ConnectToGH").on("click", () => {
-	AP.navigator.go(
-		"addonmodule",
-		{
-			moduleKey: "github-post-install-page"
-		}
-	);
+	// AP.navigator.go(
+	// 	"addonmodule",
+	// 	{
+	// 		moduleKey: "github-post-install-page"
+	// 	}
+	// );
+
+	document.location.href = "/jira";
 });

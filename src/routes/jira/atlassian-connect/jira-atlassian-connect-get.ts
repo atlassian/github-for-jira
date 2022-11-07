@@ -177,7 +177,6 @@ const addCreateBranchAction = async (modules) => {
 		modules.jiraDevelopmentTool.actions = {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}`
-				// templateUrl: `/plugins/servlet/ac/${APP_KEY}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
 			}
 		};
 	}
