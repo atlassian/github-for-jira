@@ -4,7 +4,14 @@ import { isUserAdminOfOrganization } from "utils/github-utils";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-export const GithubSubscriptionGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType = Response<
+	string,
+	JiraHostVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+	& GitHubAppVerifiedLocals
+>;
+
+export const GithubSubscriptionGet = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const gitHubInstallationId = Number(req.params.installationId);
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });

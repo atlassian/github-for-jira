@@ -124,15 +124,24 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 		}));
 };
 
+type ResponseType = Response<
+	string,
+	JiraHostVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+	& GitHubAppVerifiedLocals
+>
+
 export const GithubConfigurationGet = async (
 	req: Request,
-	res: Response<string, JiraHostVerifiedLocals & GitHubUserTokenVerifiedLocals & GitHubAppVerifiedLocals>,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	const {
 		jiraHost,
 		githubToken,
-		gitHubAppId
+		gitHubAppConfig: {
+			gitHubAppId
+		}
 	} = res.locals;
 
 	const log = req.log.child({ jiraHost });

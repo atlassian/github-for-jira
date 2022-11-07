@@ -21,11 +21,18 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 	}
 };
 
+type ResponseType = Response<
+	{ err: string },
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+>
+
 /**
  * Handle the when a user adds a repo to this installation
  */
-export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
+export const GithubConfigurationPost = async (req: Request, res: ResponseType): Promise<void> => {
+	const { githubToken, jiraHost, gitHubAppConfig: { gitHubAppId } } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 

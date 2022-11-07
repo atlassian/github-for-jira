@@ -1,7 +1,19 @@
 import { Request, Response } from "express";
+import { Octokit } from "@octokit/rest";
 import { createUserClient } from "~/src/util/get-github-client-config";
 
-export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
+type ResponseType = Response<
+	{
+		branches: Octokit.ReposGetBranchResponse[],
+		defaultBranch: string
+	} | {
+		err: string
+	},
+	JiraHostVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+	& GitHubAppVerifiedLocals
+>;
+export const GithubBranchesGet = async (req: Request, res: ResponseType): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 
 	if (!githubToken || !gitHubAppConfig) {

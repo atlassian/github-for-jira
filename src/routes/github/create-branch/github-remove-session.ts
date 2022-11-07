@@ -1,7 +1,13 @@
 import { Request, Response } from "express";
 
+type ResponseType = Response<
+	{ baseUrl: string },
+	JiraHostVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+	& GitHubAppVerifiedLocals
+>;
 
-export const GithubRemoveSession = (req: Request, res: Response) => {
+export const GithubRemoveSession = (req: Request, res: ResponseType) => {
 	const { gitHubAppConfig } = res.locals;
 
 	if (!gitHubAppConfig) {
@@ -10,6 +16,6 @@ export const GithubRemoveSession = (req: Request, res: Response) => {
 	}
 
 	req.session.githubToken = undefined;
-	res.send({ baseUrl: gitHubAppConfig.hostname });
+	res.send({ baseUrl: gitHubAppConfig.gitHubBaseUrl });
 
 };

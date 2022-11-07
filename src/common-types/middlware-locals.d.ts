@@ -1,17 +1,20 @@
+type CommonResponseLocals = {
+	nonce: string
+}
 
-export type JiraHostVerifiedLocals = {
+type JiraHostVerifiedLocals = CommonResponseLocals  & {
 	jiraHost: string,
 };
 
-export type JiraJwtVerifiedLocals = {
+type JiraJwtVerifiedLocals = CommonResponseLocals & {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	installation: any //TODO: This is a hack, fix it with full definition.
 };
 
-export type GitHubAppVerifiedLocals = {
+type GitHubAppVerifiedLocals = CommonResponseLocals & {
 	gitHubAppConfig: GitHubAppConfig,
 };
 
-export type GitHubUserTokenVerifiedLocals = {
-	gitHubToken: string;
+type GitHubUserTokenVerifiedLocals = CommonResponseLocals & {
+	githubToken: string;
 };
