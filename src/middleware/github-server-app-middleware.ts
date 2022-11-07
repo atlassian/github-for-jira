@@ -44,9 +44,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
-			webhookSecret: await gitHubServerApp.getDecryptedWebhookSecret(),
-			privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+			getDecryptedGitHubClientSecret: async () => gitHubServerApp.getDecryptedGitHubClientSecret(),
+			getDecryptedWebhookSecret: async () => gitHubServerApp.getDecryptedWebhookSecret(),
+			getDecryptedPrivateKey: async () =>  gitHubServerApp.getDecryptedPrivateKey()
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
@@ -56,9 +56,9 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			uuid: undefined, //undefined for cloud
 			hostname: GITHUB_CLOUD_BASEURL,
 			clientId: envVars.GITHUB_CLIENT_ID,
-			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-			webhookSecret: envVars.WEBHOOK_SECRET,
-			privateKey: await keyLocator(undefined)
+			getDecryptedGitHubClientSecret: async () => envVars.GITHUB_CLIENT_SECRET,
+			getDecryptedWebhookSecret: async () => envVars.WEBHOOK_SECRET,
+			getDecryptedPrivateKey: async () => keyLocator(undefined)
 		};
 	}
 

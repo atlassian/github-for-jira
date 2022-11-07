@@ -134,15 +134,15 @@ describe("github-server-app-middleware", () => {
 		expect(next).toBeCalledTimes(1);
 
 		expect(res.locals.gitHubAppId).toBe(GIT_HUB_SERVER_APP_ID);
-		expect(res.locals.gitHubAppConfig).toEqual({
+		expect(res.locals.gitHubAppConfig).toEqual(expect.objectContaining({
 			gitHubAppId: GIT_HUB_SERVER_APP_ID,
 			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
-			gitHubClientSecret: "myghsecret",
-			hostname: "http://myinternalserver.com",
-			privateKey: "myprivatekey",
-			webhookSecret: "mywebhooksecret"
-		});
+			hostname: "http://myinternalserver.com"
+		}));
+		expect(await res.locals.gitHubAppConfig.getDecryptedGitHubClientSecret()).toBe("myghsecret");
+		expect(await res.locals.gitHubAppConfig.getDecryptedPrivateKey()).toBe("myprivatekey");
+		expect(await res.locals.gitHubAppConfig.getDecryptedWebhookSecret()).toBe("mywebhooksecret");
 	});
 });

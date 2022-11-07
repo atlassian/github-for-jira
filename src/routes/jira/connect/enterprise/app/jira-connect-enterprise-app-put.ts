@@ -17,7 +17,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		const updatedAppPayload = { ...req.body };
 		if (!updatedAppPayload.privateKey) {
-			updatedAppPayload.privateKey = verifiedApp.privateKey; // will be encrypted on save
+			updatedAppPayload.privateKey = await verifiedApp.getDecryptedPrivateKey(); // will be encrypted on save
 		}
 
 		await GitHubServerApp.updateGitHubAppByUUID(req.body);
