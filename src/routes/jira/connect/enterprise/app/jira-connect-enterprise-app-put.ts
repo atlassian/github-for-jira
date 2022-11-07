@@ -1,16 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { JiraAndGitHubVerifiedLocals } from "routes/route-types";
+
+type ResponseErrorBody = {
+	message: string;
+}
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
-	res: Response,
+	res: Response<ResponseErrorBody, JiraAndGitHubVerifiedLocals>,
 	next: NextFunction
 ): Promise<void> => {
 	req.log.debug("Received Jira Connect Enterprise App PUT request to update app.");
 	try {
 		const { gitHubAppConfig: verifiedApp } = res.locals;
 
-		if (!verifiedApp.gitHubAppId || verifiedApp.uuid !== req.body.uuid) {
+		if (!verifiedApp.gitHubAppId || !verifiedApp.uuid || verifiedApp.uuid !== req.body.uuid) {
 			res.status(404).send({ message: "No GitHub App found. Cannot update." });
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
 		}

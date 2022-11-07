@@ -2,10 +2,15 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
 import { envVars } from "config/env";
+import { JiraAndGitHubVerifiedLocals } from "routes/route-types";
+
+type ResponseErrorBody = {
+	error: string;
+}
 
 export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	req: Request,
-	res: Response,
+	res: Response<string | ResponseErrorBody, JiraAndGitHubVerifiedLocals>,
 	next: NextFunction
 ): Promise<void> => {
 	try {

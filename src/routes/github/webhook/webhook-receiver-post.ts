@@ -15,8 +15,9 @@ import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
+import { GitHubAppVerifiedLocals } from "routes/route-types";
 
-export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
+export const WebhookReceiverPost = async (request: Request, response: Response<string, GitHubAppVerifiedLocals>): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;
@@ -30,7 +31,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret } = await getWebhookSecret(uuid);
-		const gitHubAppConfig = response.locals.gitHubAppConfig as GitHubAppConfig;
+		const gitHubAppConfig = response.locals.gitHubAppConfig;
 		const verification = createHash(request.rawBody, webhookSecret);
 
 		if (verification != signatureSHA256) {

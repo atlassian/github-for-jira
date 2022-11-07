@@ -137,7 +137,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	try {
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
-		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
+		const gitHubAppId = gitHubAppConfig.gitHubAppId;
 
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
