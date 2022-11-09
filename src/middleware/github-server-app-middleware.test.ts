@@ -121,12 +121,12 @@ describe("github-server-app-middleware", () => {
 		expect(next).toBeCalledTimes(1);
 
 		expect(res.locals.gitHubAppId).toBe(GIT_HUB_SERVER_APP_ID);
-		expect(res.locals.gitHubAppConfig).toEqual(expect.objectContaining({
+		expect(res.locals.gitHubAppConfig).toEqual({
 			gitHubAppId: GIT_HUB_SERVER_APP_ID,
 			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
 			hostname: "http://myinternalserver.com"
-		}));
+		});
 	});
 });
