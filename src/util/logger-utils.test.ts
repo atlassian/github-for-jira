@@ -107,6 +107,17 @@ describe("Logger Utils", () => {
 				expect(getLogObject(stdoutSpy.mock).orgName).toBe("3340de80aa35aaa011bafb7c45d96514175f57790cb7bc9567a22d644631f1ef");
 			});
 
+			it("should not log unsafe data to standard logger", async () => {
+				const testMessage = {
+					msg: "More messaging",
+					unsafe: true,
+					orgName: "ORG",
+					level: INFO
+				};
+				await stream._write(testMessage, encoding, next);
+				expect(process.stdout.write).not.toHaveBeenCalled();
+			});
+
 		});
 
 		describe("unsafe logger", () => {
