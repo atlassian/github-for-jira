@@ -97,6 +97,11 @@ $(document).ready(() => {
     changeGitHubLogin();
   });
 
+  $("#changeInstance").click(function (event) {
+    event.preventDefault();
+		changeGitHubInstance();
+  });
+
   $("#openGitBranch").click(function () {
     const repo = getRepoDetails();
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
@@ -303,6 +308,11 @@ const showLoaderOnSelect2Input = (inputDOM, isLoading) => {
   }
 }
 
+const changeGitHubInstance = () => {
+	const url = new URL(window.location.href);
+	document.location.href = `/create-branch-options${url.search}`;
+}
+
 const changeGitHubLogin = () => {
   $.ajax({
     type: "GET",
@@ -313,7 +323,5 @@ const changeGitHubLogin = () => {
     error: (error) => {
       console.log(error);
     }
-
   });
-
 };

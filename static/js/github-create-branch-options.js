@@ -12,14 +12,13 @@ $(document).ready(() => {
     $(".gitHubCreateBranchOptions").show();
     $(".gitHubCreateBranchOptions__loading").hide();
 
-   // When there are no cloud servers but multiple enterprise servers
+    // When there are no cloud servers but multiple enterprise servers
     const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
     const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
     if (!hasCloudServer && gheServersCount > 1) {
       $(".jiraSelectGitHubProduct__options__container").hide();
       $(".jiraSelectGitHubProduct__selectServerInstance").show();
       $(".optionBtn").prop("disabled", false).attr("aria-disabled", "false").addClass("aui-button-primary");
-
     }
   }
 
@@ -38,33 +37,39 @@ $(document).ready(() => {
     const uuid = $("#ghServers").select2("val");
 
     if ($(".optionsCard.selected").data('type') === "cloud") {
-      goToCreateBranch(createUrlForGH(issueKey, issueSummary), false);
+      goToCreateBranch(createUrlForGH(issueKey, issueSummary), false, true);
     } else {
-      goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false);
+      goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false, true);
     }
   });
 });
 
-const createUrlForGH = (issueKey, issueSummary, uuid) => {
+const createUrlForGH = (issueKey, issueSummary, uuid, multiGHInstance) => {
   return uuid ?
-    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to` :
-    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
+    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to&multiGHInstance=${multiGHInstance}` :
+    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&multiGHInstance=${multiGHInstance}`;
 };
 
 const goToCreateBranch = (url, isRedirect) => {
-  AP.context.getToken(token => {
-    const child = window.open(url);
-    child.window.jiraHost = jiraHost;
-    child.window.jwt = token;
-    if (isRedirect) {
-      const childWindowTimer = setInterval(() => {
-        if (child.closed) {
-          AP.navigator.go("issue", { issueKey: params.get("issueKey") });
-          clearInterval(childWindowTimer);
-        }
-      }, 500);
-    }
-  });
+	console.log(AP)
+	console.log(AP.context)
+	if (AP && AP.context) {
+		AP.context.getToken(token => {
+			const child = window.open(url);
+			child.window.jiraHost = jiraHost;
+			child.window.jwt = token;
+			if (isRedirect) {
+				const childWindowTimer = setInterval(() => {
+					if (child.closed) {
+						AP.navigator.go("issue", { issueKey: params.get("issueKey") });
+						clearInterval(childWindowTimer);
+					}
+				}, 500);
+			}
+		});
+	} else {
+		document.location.href = url;
+	}
 };
 
 /**
@@ -87,7 +92,7 @@ const isAutoRedirect = () => {
     const uuid = $("#ghServers").select2("val");
 
     return {
-      url: createUrlForGH(issueKey, issueSummary, uuid),
+      url: createUrlForGH(issueKey, issueSummary, uuid, true),
       isRedirect: true
     };
 	}

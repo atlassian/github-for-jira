@@ -43,7 +43,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 			await validateGitHubToken(jiraHost, githubToken, req.log);
-			res.redirect(`/github/create-branch${url.search}`);
+			res.redirect(`/github/create-branch${url.search}&multiGHInstance=false`);
 			return;
 		}
 		// Only single GitHub Enterprise connected
@@ -51,7 +51,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 			const gitHubServerApp = await GitHubServerApp.findForUuid(servers.gheServerInfos[0].uuid);
 			const gitHubAppId = gitHubServerApp?.id || undefined;
 			await validateGitHubToken(jiraHost, githubToken, req.log, gitHubAppId);
-			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
+			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&multiGHInstance=false`);
 			return;
 		}
 	} catch (err) {

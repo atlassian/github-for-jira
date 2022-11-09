@@ -27,7 +27,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { issueKey, issueSummary } = req.query;
+	const { issueKey, issueSummary, multiGHInstance } = req.query;
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
@@ -64,7 +64,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		repos,
 		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
-		gitHubUser
+		gitHubUser,
+		multiGHInstance
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
