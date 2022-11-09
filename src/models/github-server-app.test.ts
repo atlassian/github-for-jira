@@ -23,6 +23,37 @@ describe("GitHubServerApp", () => {
 		expect(savedGitHubServerApp?.gitHubAppName).toEqual("My GitHub Server App");
 	});
 
+	describe("GHES function", () => {
+		it("should NOT update missing columns if it is not specified in the request body", async () => {
+
+			await GitHubServerApp.install(payload);
+
+			const payLoadWithoutSomeColumns = {
+				uuid: uuid,
+				appId: 123,
+				privateKey: undefined //some specified as with undefined
+				//some specified as missing the key ( so undefined as well )
+			};
+
+			await GitHubServerApp.updateGitHubAppByUUID(payLoadWithoutSomeColumns);
+
+			const app = await GitHubServerApp.findForUuid(uuid);
+
+			expect(app).toBeDefined();
+			expect(app).toEqual(expect.objectContaining({
+				uuid: uuid,
+				appId: 123,
+				gitHubAppName: "My GitHub Server App",
+				gitHubBaseUrl: "http://myinternalserver.com",
+				gitHubClientId: "lvl.1234",
+				gitHubClientSecret: "encrypted:myghsecret",
+				webhookSecret: "encrypted:mywebhooksecret",
+				privateKey: "encrypted:myprivatekey",
+				installationId: 10
+			}));
+		});
+	});
+
 	describe("cryptor", () => {
 		//--------- helpers
 		const defaults = (uuid: string, surfix?: string) => ({
@@ -292,21 +323,21 @@ describe("GitHubServerApp", () => {
 	it("getDecryptedPrivateKey should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-		expect(await savedGitHubServerApp!.privateKey).toEqual("encrypted:myprivatekey");
+		expect(savedGitHubServerApp!.privateKey).toEqual("encrypted:myprivatekey");
 		expect(await savedGitHubServerApp!.getDecryptedPrivateKey()).toEqual("myprivatekey");
 	});
 
 	it("getDecryptedGitHubClientSecret should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-		expect(await savedGitHubServerApp!.gitHubClientSecret).toEqual("encrypted:myghsecret");
+		expect(savedGitHubServerApp!.gitHubClientSecret).toEqual("encrypted:myghsecret");
 		expect(await savedGitHubServerApp!.getDecryptedGitHubClientSecret()).toEqual("myghsecret");
 	});
 
 	it("getDecryptedWebhookSecret should return decrypted value", async () => {
 		await GitHubServerApp.install(payload);
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-		expect(await savedGitHubServerApp!.webhookSecret).toEqual("encrypted:mywebhooksecret");
+		expect(savedGitHubServerApp!.webhookSecret).toEqual("encrypted:mywebhooksecret");
 		expect(await savedGitHubServerApp!.getDecryptedWebhookSecret()).toEqual("mywebhooksecret");
 	});
 });

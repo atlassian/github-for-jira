@@ -100,20 +100,7 @@ describe("github-server-app-middleware", () => {
 			webhookSecret: "encrypted:mywebhooksecret",
 			privateKey: "encrypted:myprivatekey",
 			installationId: JIRA_INSTALLATION_ID,
-			decrypt: async (s: any) => s,
-
-			getDecryptedGitHubClientSecret: () => {
-				return Promise.resolve("myghsecret");
-			},
-
-			getDecryptedPrivateKey: () => {
-				return Promise.resolve("myprivatekey");
-			},
-
-			getDecryptedWebhookSecret: () => {
-				return Promise.resolve("mywebhooksecret");
-			}
-
+			decrypt: async (s: any) => s
 		};
 
 		installation = {
@@ -141,8 +128,5 @@ describe("github-server-app-middleware", () => {
 			clientId: "lvl.1234",
 			hostname: "http://myinternalserver.com"
 		}));
-		expect(await res.locals.gitHubAppConfig.getDecryptedGitHubClientSecret()).toBe("myghsecret");
-		expect(await res.locals.gitHubAppConfig.getDecryptedPrivateKey()).toBe("myprivatekey");
-		expect(await res.locals.gitHubAppConfig.getDecryptedWebhookSecret()).toBe("mywebhooksecret");
 	});
 });
