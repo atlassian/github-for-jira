@@ -130,6 +130,17 @@ describe("Logger Utils", () => {
 				expect(process.stdout.write).not.toHaveBeenCalled();
 			});
 
+			it("should write log when tagged unsafe", async () => {
+				const testMessage = {
+					msg: "More messaging",
+					unsafe: true,
+					orgName: "ORG",
+					level: INFO
+				};
+				await stream._write(testMessage, encoding, next);
+				expect(process.stdout.write).toHaveBeenCalled();
+			});
+
 			it("should not serialize sensitive data", async () => {
 				const testMessage = {
 					msg: "MEOW",

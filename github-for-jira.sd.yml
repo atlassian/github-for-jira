@@ -655,13 +655,13 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill dead letter queue too high!"
-            Threshold: 40 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 5000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 10
-            Period: 600
+            EvaluationPeriods: 5
+            Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
@@ -672,13 +672,13 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for push dead letter queue too high!"
-            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 5000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 10
-            Period: 600
+            EvaluationPeriods: 5
+            Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
@@ -689,13 +689,13 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for deployment dead letter queue too high!"
-            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 5000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 10
-            Period: 600
+            EvaluationPeriods: 5
+            Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
@@ -706,13 +706,13 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for branch dead letter queue too high!"
-            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 5000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 10
-            Period: 600
+            EvaluationPeriods: 5
+            Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
 
