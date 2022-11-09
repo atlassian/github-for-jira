@@ -50,6 +50,10 @@ class RawLogStream extends Writable {
 export class SafeRawLogStream extends RawLogStream {
 
 	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
+		// Skip unsafe data
+		if (record.unsafe) {
+			return next();
+		}
 		const hashedRecord = this.hashSensitiveData(record);
 		await super._write(hashedRecord, encoding, next);
 	}
