@@ -51,8 +51,6 @@ const createUrlForGH = (issueKey, issueSummary, uuid, multiGHInstance) => {
 };
 
 const goToCreateBranch = (url, isRedirect) => {
-	console.log(AP)
-	console.log(AP.context)
 	if (AP && AP.context) {
 		AP.context.getToken(token => {
 			const child = window.open(url);
