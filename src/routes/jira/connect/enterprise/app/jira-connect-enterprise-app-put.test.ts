@@ -67,6 +67,46 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			})
 			.send(payload)
 			.expect(202);
+
+	});
+
+	it("should use existing privateKey if new privateKey is not passed in as body", async () => {
+
+		let existingApp = await GitHubServerApp.create({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id
+		});
+
+		const payload ={
+			gitHubAppName: "my-app",
+			webhookSecret: `secret`,
+			appId: "1",
+			gitHubClientId: "Iv1.msdnf2893rwhdbf",
+			gitHubClientSecret: "secret",
+			uuid,
+			gitHubBaseUrl: "http://testserver.com",
+			//privateKey: "new private key not passed in",
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(202);
+
+		existingApp = await GitHubServerApp.findByPk(existingApp.id);
+
+		expect(await existingApp.getDecryptedPrivateKey()).toBe("privatekey");
 	});
 
 	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {
