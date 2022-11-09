@@ -94,6 +94,7 @@ interface LoggerOptions {
 	serializers?: Serializers;
 	src?: boolean;
 	filterHttpRequests?: boolean;
+	unsafe?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {

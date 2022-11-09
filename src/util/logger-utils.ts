@@ -69,10 +69,13 @@ export class SafeRawLogStream extends RawLogStream {
 
 export class UnsafeRawLogStream extends RawLogStream {
 
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
+	private isAboveDebug = (record: ChunkData) => {
+		return !record.level || isNaN(record.level) || record.level > DEBUG;
+	};
 
-		// Skip any log above DEBUG level
-		if (!record.level || isNaN(record.level) || record.level > DEBUG) {
+	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
+		// Skip any log above DEBUG level that isn't tagged unsafe
+		if (this.isAboveDebug(record) && !record.unsafe) {
 			return next();
 		}
 		// Tag the record do it gets indexed to the _unsafe logging environment
