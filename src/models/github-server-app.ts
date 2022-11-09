@@ -23,6 +23,19 @@ export interface GitHubServerAppPayload {
 	installationId: number;
 }
 
+export interface GitHubServerAppUpdatePayload {
+	uuid: string;
+	appId: number;
+	gitHubBaseUrl?: string;
+	gitHubClientId?: string;
+	gitHubClientSecret?: string;
+	webhookSecret?: string;
+	privateKey?: string;
+	gitHubAppName?: string;
+	installationId?: number;
+}
+
+
 export class GitHubServerApp extends EncryptedModel {
 	id: number;
 	uuid: string;
@@ -157,7 +170,7 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	static async updateGitHubAppByUUID(payload: GitHubServerAppPayload): Promise<void> {
+	static async updateGitHubAppByUUID(payload: GitHubServerAppUpdatePayload): Promise<void> {
 		const {
 			uuid,
 			appId,
