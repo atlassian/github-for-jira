@@ -12,7 +12,15 @@
   height: 2.5em;
   line-height: 1.7rem;
   background: #ebecf0;
-  color: #7a869a;
+  color: #172B4D;
+}
+
+#createBranchForm input[type=text] {
+  padding-left: 10px;
+}
+
+#createBranchForm input[type=text]:focus {
+  background-color: #FAFBFC;
 }
 
 .headerImage {
@@ -129,4 +137,8 @@
 .gitHubCreateBranch__createdLinks {
   display: none;
   justify-content: space-evenly;
+}
+
+.aui-select2-container.select2-container .select2-choice:after {
+  color: #42526E;
 }
