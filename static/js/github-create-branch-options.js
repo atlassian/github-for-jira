@@ -92,7 +92,7 @@ const isAutoRedirect = () => {
     const uuid = $("#ghServers").select2("val");
 
     return {
-      url: createUrlForGH(issueKey, issueSummary, uuid, true),
+      url: createUrlForGH(issueKey, issueSummary, uuid, false),
       isRedirect: true
     };
 	}
