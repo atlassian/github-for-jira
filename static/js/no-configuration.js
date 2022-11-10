@@ -1,10 +1,14 @@
-$("#noConfiguration__ConnectToGH").on("click", () => {
-	// AP.navigator.go(
-	// 	"addonmodule",
-	// 	{
-	// 		moduleKey: "github-post-install-page"
-	// 	}
-	// );
+function openChildWindow(url) {
+	const child = window.open(url);
+	const interval = setInterval(function () {
+		if (child.closed) {
+			clearInterval(interval);
+			location.reload();
+		}
+	}, 500);
+	return child;
+}
 
-	document.location.href = "/jira";
+$("#noConfiguration__ConnectToGH").on("click", () => {
+	openChildWindow("/github/configuration");
 });
