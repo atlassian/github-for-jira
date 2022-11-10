@@ -183,7 +183,10 @@ const addCreateBranchAction = async (modules) => {
 	return modules;
 };
 
-export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
+type ResponseType =  Response<
+	object
+>;
+export const JiraAtlassianConnectGet = async (_: Request, res: ResponseType): Promise<void> => {
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
 		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220

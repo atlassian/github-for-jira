@@ -1,6 +1,10 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
 
+type ResponseType =  Response<
+	never,
+	JiraJwtVerifiedLocals
+>;
 /**
  * Express middleware for connect app events
  *
@@ -10,7 +14,7 @@ import { NextFunction, Request, Response } from "express";
  * @param res Response
  * @param next Next function
  */
-export const extractInstallationFromJiraCallback = async (req: Request, res: Response, next: NextFunction) => {
+export const extractInstallationFromJiraCallback = async (req: Request, res: ResponseType, next: NextFunction) => {
 	if (!req.body?.clientKey) {
 		res.status(401);
 		return;

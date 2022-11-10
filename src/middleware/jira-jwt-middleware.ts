@@ -2,9 +2,15 @@ import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
 import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
 
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& JiraJwtVerifiedLocals
+>;
+
 export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	const { jiraHost } = res.locals;

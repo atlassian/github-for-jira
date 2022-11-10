@@ -216,9 +216,14 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& JiraJwtVerifiedLocals
+>;
 export const JiraGet = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

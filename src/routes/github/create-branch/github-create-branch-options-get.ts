@@ -8,7 +8,12 @@ import { getGitHubApiUrl } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
-export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+>;
+
+export const GithubCreateBranchOptionsGet = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 
 	const { jiraHost } = res.locals;
 	const { issueKey } = req.query;

@@ -9,7 +9,13 @@ import Logger from "bunyan";
 import { RepositoryNode } from "~/src/github/client/github-queries";
 const MAX_REPOS_RETURNED = 20;
 
-export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+>;
+export const GithubCreateBranchGet = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const {
 		jiraHost,
 		githubToken,
@@ -31,7 +37,10 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
-	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
+
+	//TODO  ARC-1823: fix potential subscript get all for host bug
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId as any || null);
 
 	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
@@ -62,7 +71,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		},
 		issueUrl: `${jiraHost}/browse/${issueKey}`,
 		repos,
-		hostname: gitHubAppConfig.hostname,
+		hostname: gitHubAppConfig.gitHubBaseUrl,
 		uuid: gitHubAppConfig.uuid,
 		gitHubUser
 	});

@@ -68,10 +68,14 @@ RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
-// On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", async (req: Request, res: Response) => {
-	const { jiraHost, gitHubAppId } = res.locals;
-	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+// On base path, redirect to Github App Marketplace URL (This is only for cloud)
+type RedirectResponseType =  Response<
+	never,
+	JiraHostVerifiedLocals
+>;
+RootRouter.get("/", async (req: Request, res: RedirectResponseType) => {
+	const { jiraHost } = res.locals;
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, undefined);
 	const { data: info } = await gitHubAppClient.getApp();
 
 	return res.redirect(info.external_url);

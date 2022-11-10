@@ -2,9 +2,14 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { chain, groupBy } from "lodash";
 
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

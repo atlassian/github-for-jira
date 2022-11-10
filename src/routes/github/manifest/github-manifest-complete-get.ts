@@ -4,7 +4,12 @@ import { Installation } from "~/src/models/installation";
 import { Errors } from "config/errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
 
-export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
+type ResponseType =  Response<
+	never,
+	JiraHostVerifiedLocals
+>;
+
+export const GithubManifestCompleteGet = async (req: Request, res: ResponseType) => {
 	const uuid = req.params.uuid;
 	const jiraHost = res.locals.jiraHost;
 	if (!jiraHost) {

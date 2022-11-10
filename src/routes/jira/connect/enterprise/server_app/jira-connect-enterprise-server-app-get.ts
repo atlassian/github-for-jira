@@ -1,9 +1,13 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
+type ResponseType =  Response<
+	never,
+	JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterpriseServerAppGet = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

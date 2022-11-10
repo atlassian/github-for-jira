@@ -1,9 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
+type ResponseType =  Response<
+	{
+		success: true,
+	} | {
+		success: false,
+		message: string
+	},
+	& JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterpriseDelete = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

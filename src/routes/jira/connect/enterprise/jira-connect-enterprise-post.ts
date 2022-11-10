@@ -33,9 +33,23 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	});
 };
 
+type ResponseType =  Response<
+	{
+		success: true,
+		appExists: boolean
+	} | {
+		success: false,
+		errors: {
+			code: ErrorResponseCode,
+			reason?: string | undefined
+		}[]
+	},
+	JiraHostVerifiedLocals
+	& JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterprisePost = async (
 	req: Request,
-	res: Response
+	res: ResponseType
 ): Promise<void> => {
 
 	// Must be configurable and re-evaluated on each execution for testing, therefore

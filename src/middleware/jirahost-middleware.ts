@@ -40,7 +40,14 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //    fetched and JWT validation will fail.
 //
 //
-export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& JiraJwtVerifiedLocals
+>;
+
+export const jirahostMiddleware = async (req: Request, res: ResponseType, next: NextFunction) => {
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
 
@@ -68,7 +75,7 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 			next();
 		});
 	} else {
-		res.locals.jiraHost = req.session.jiraHost;
+		res.locals.jiraHost = req.session.jiraHost as string;
 		next();
 	}
 };

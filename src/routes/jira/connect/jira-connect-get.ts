@@ -2,9 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+>;
 export const JiraConnectGet = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

@@ -5,7 +5,16 @@ import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 const MAX_REPOS_RETURNED = 20;
 
-export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
+type ResponseType =  Response<
+	{
+		repositories: RepositoryNode[]
+	}
+	| number,
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+>;
+export const GitHubRepositoryGet = async (req: Request, res: ResponseType): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const repoName = req.query?.repoName as string;
 
@@ -15,12 +24,13 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	if (!repoName) {
-		res.send(400);
+		res.sendStatus(400);
 		return;
 	}
 
 	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
+		//eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId as any || null);
 		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, req.log);
 		res.send({
 			repositories: repos

@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
 import { createUserClient } from "utils/get-github-client-config";
 
+type ResponseType =  Response<
+	object,
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+>;
 // Get a branch for the **USER TOKEN**
-export const GithubBranchGet = async (req: Request, res: Response): Promise<void> => {
+export const GithubBranchGet = async (req: Request, res: ResponseType): Promise<void> => {
 	const {
 		jiraHost,
 		githubToken,

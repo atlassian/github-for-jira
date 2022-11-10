@@ -17,7 +17,9 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
 
-export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
+type ResponseType =  Response<string>;
+
+export const WebhookReceiverPost = async (request: Request, response: ResponseType): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
 	const id = request.headers["x-github-delivery"] as string;

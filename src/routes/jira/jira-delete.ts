@@ -2,11 +2,15 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Request, Response } from "express";
 
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+>;
 /**
  * Handle the when a user deletes an entry in the UI
  *
  */
-export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
+export const JiraDelete = async (req: Request, res: ResponseType): Promise<void> => {
 	const { jiraHost } = res.locals;
 	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
 	const gitHubInstallationId = Number(req.params.installationId) || Number(req.body.gitHubInstallationId);

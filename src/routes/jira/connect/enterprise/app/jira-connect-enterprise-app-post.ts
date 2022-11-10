@@ -1,9 +1,15 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 
+type ResponseType =  Response<
+	{
+		message: string,
+	},
+	JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterpriseAppPost = async (
 	req: Request,
-	res: Response
+	res: ResponseType
 ): Promise<void> => {
 	try {
 		req.log.debug("Received Jira Connect Enterprise App POST request");

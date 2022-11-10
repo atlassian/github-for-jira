@@ -1,9 +1,22 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 
+type ResponseType =  Response<
+	{
+		success: true,
+	}
+	| {
+		message: string
+	}
+	| {
+		success: false,
+		message: string
+	},
+	GitHubAppVerifiedLocals
+>;
 export const JiraConnectEnterpriseAppDelete = async (
 	req: Request,
-	res: Response
+	res: ResponseType
 ): Promise<void> => {
 	try {
 		req.log.debug("Received Jira Connect Enterprise App DELETE request");

@@ -60,7 +60,15 @@ const getErrorMessages = (statusCode: number, url?: string): string => {
 	}
 };
 
-export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
+type ResponseType =  Response<
+	{
+		error: string
+	},
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+>;
+export const GithubCreateBranchPost = async (req: Request, res: ResponseType): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
@@ -88,7 +96,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
 		const tags = {
 			name: newBranchName,
-			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
+			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.gitHubAppId)
 		};
 		statsd.increment(metricCreateBranch.created, tags);
 	} catch (err) {
@@ -96,7 +104,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 
 		if (err.status === 403) {
 			const user = await gitHubUserClient.getUser();
-			const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.hostname, owner, repo);
+			const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.gitHubBaseUrl, owner, repo);
 			res.status(err.status).json({ error: getErrorMessages(err.status, gitHubConfigurationLink) });
 		} else {
 			res.status(err.status).json({ error: getErrorMessages(err.status) });

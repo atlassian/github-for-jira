@@ -17,5 +17,7 @@ JiraConnectEnterpriseAppRouter.use("/:uuid", routerWithUUID);
 routerWithUUID.use(GithubServerAppMiddleware);
 routerWithUUID.route("")
 	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
-	.put(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
-	.delete(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
+	//eslint-disable-next-line @typescript-eslint/no-explicit-any
+	.put(JiraContextJwtTokenMiddleware as any, JiraConnectEnterpriseAppPut)
+	//eslint-disable-next-line @typescript-eslint/no-explicit-any
+	.delete(JiraContextJwtTokenMiddleware as any, JiraConnectEnterpriseAppDelete);

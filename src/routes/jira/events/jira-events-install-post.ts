@@ -3,10 +3,14 @@ import { Request, Response } from "express";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 
+type ResponseType =  Response<
+	never,
+	never
+>;
 /**
  * Handle the install webhook from Jira
  */
-export const JiraEventsInstallPost = async (req: Request, res: Response): Promise<void> => {
+export const JiraEventsInstallPost = async (req: Request, res: ResponseType): Promise<void> => {
 	req.log.info("Received installation payload");
 
 	const { baseUrl: host, clientKey, sharedSecret } = req.body;

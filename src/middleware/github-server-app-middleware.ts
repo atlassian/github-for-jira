@@ -2,9 +2,17 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
-import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 
-export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType =  Response<
+	{
+    message: string
+	},
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+>;
+
+export const GithubServerAppMiddleware = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
 
@@ -36,21 +44,22 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 		req.log.info("Found server app for installation. Defining GitHub app config for GitHub Enterprise Server.");
 
 		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
-		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: gitHubServerApp.id,
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
-			hostname: gitHubServerApp.gitHubBaseUrl,
+			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
 		res.locals.gitHubAppConfig = {
 			gitHubAppId: undefined,
-			appId: envVars.APP_ID,
+			appId: Number(envVars.APP_ID),
 			uuid: undefined, //undefined for cloud
-			hostname: GITHUB_CLOUD_BASEURL,
+			gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+			gitHubApiUrl: GITHUB_CLOUD_API_BASEURL,
 			clientId: envVars.GITHUB_CLIENT_ID
 		};
 	}

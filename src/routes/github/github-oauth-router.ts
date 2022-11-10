@@ -45,7 +45,13 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	res.redirect(redirectUrl);
 };
 
-const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+>;
+
+const GithubOAuthCallbackGet = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const {
 		error,
 		error_description,
@@ -80,7 +86,9 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, uuid } = gitHubAppConfig;
+	if (!jiraHost) return next("Missing jiraHost");
+
+	const { gitHubBaseUrl, clientId, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
@@ -100,7 +108,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 			req.session.githubToken = accessToken;
 		} else {
 			const response = await axios.get(
-				`${hostname}/login/oauth/access_token`,
+				`${gitHubBaseUrl}/login/oauth/access_token`,
 				{
 					params: {
 						client_id: clientId,
@@ -137,11 +145,19 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	}
 };
 
-export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+type AuthMiddlewareResponseType =  Response<
+	string,
+	JiraHostVerifiedLocals
+	& GitHubAppVerifiedLocals
+	& GitHubUserTokenVerifiedLocals
+	& { redirect: string }
+>;
+
+export const GithubAuthMiddleware = async (req: Request, res: AuthMiddlewareResponseType, next: NextFunction) => {
 	try {
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
-		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
+		const gitHubAppId = gitHubAppConfig.gitHubAppId;
 
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,

@@ -3,9 +3,15 @@ import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
 import { envVars } from "config/env";
 
+type ResponseType =  Response<
+	{
+		error: string,
+	},
+	JiraJwtVerifiedLocals
+>;
 export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	try {

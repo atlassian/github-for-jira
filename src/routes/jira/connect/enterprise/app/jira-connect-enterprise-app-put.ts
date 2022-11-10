@@ -1,9 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 
+type ResponseType =  Response<
+	{
+		message: string,
+	},
+	GitHubAppVerifiedLocals
+>;
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
-	res: Response,
+	res: ResponseType,
 	next: NextFunction
 ): Promise<void> => {
 	req.log.debug("Received Jira Connect Enterprise App PUT request to update app.");

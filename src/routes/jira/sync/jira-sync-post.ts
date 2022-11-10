@@ -3,7 +3,11 @@ import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 
-export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+type ResponseType =  Response<
+	string,
+	JiraJwtVerifiedLocals
+>;
+export const JiraSyncPost = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType, appId: gitHubAppId } = req.body;
 
 	// A date to start fetching commit history(main and branch) from.
