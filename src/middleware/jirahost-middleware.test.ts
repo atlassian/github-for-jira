@@ -16,7 +16,7 @@ const TEST_JWT_TOKEN = "TO_BE_DETERMINED";
 
 describe("await jirahostMiddleware", () => {
 
-	let req: Request, res: Response, next: NextFunction;
+	let req: Request, res: Response<string, JiraHostVerifiedLocals & JiraJwtVerifiedLocals>, next: NextFunction;
 	let mockJwtVerificationFn: jest.Mock;
 
 	beforeEach(() => {
@@ -258,11 +258,11 @@ const getReq = (): Request => {
 	} as any) as Request;
 };
 
-const getRes = (): Response => {
+const getRes = (): Response<string, JiraHostVerifiedLocals & JiraJwtVerifiedLocals> => {
 	return ({
 		locals: {},
 		clearCookie: jest.fn()
-	} as any) as Response;
+	} as any) as Response<string, JiraHostVerifiedLocals & JiraJwtVerifiedLocals>;
 };
 
 const configureLegitJiraReq = (req: Request) => {

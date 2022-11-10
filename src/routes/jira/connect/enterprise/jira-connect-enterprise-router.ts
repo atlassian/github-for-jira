@@ -17,7 +17,9 @@ JiraConnectEnterpriseRouter.route("/")
 
 JiraConnectEnterpriseRouter.use("/app", JiraConnectEnterpriseAppRouter);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit);
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, JiraJwtTokenMiddleware as any, JiraConnectEnterpriseAppCreateOrEdit);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app", csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseServerAppGet);
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+JiraConnectEnterpriseRouter.get("/:serverUrl/app", csrfMiddleware, JiraJwtTokenMiddleware as any, JiraConnectEnterpriseServerAppGet);
 

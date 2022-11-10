@@ -46,7 +46,6 @@ type ResponseType =  Response<
 	JiraHostVerifiedLocals
 	& JiraJwtVerifiedLocals
 >;
-
 export const jirahostMiddleware = async (req: Request, res: ResponseType, next: NextFunction) => {
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);

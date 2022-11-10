@@ -16,7 +16,8 @@ JiraConnectEnterpriseAppRouter.use("/:uuid", routerWithUUID);
 
 routerWithUUID.use(GithubServerAppMiddleware);
 routerWithUUID.route("")
-	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
+	//eslint-disable-next-line @typescript-eslint/no-explicit-any
+	.get(csrfMiddleware, JiraJwtTokenMiddleware as any, JiraConnectEnterpriseAppCreateOrEdit)
 	//eslint-disable-next-line @typescript-eslint/no-explicit-any
 	.put(JiraContextJwtTokenMiddleware as any, JiraConnectEnterpriseAppPut)
 	//eslint-disable-next-line @typescript-eslint/no-explicit-any

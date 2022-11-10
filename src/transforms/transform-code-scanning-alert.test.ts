@@ -4,7 +4,6 @@ import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");

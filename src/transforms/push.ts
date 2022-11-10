@@ -6,7 +6,7 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
 import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
-import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
+import { PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";

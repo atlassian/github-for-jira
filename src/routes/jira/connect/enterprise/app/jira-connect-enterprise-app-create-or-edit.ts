@@ -4,10 +4,11 @@ import { v4 as newUUID } from "uuid";
 import { envVars } from "config/env";
 
 type ResponseType =  Response<
-	{
+	string | {
 		error: string,
 	},
 	JiraJwtVerifiedLocals
+	& GitHubAppVerifiedLocals
 >;
 export const JiraConnectEnterpriseAppCreateOrEdit = async (
 	req: Request,

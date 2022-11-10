@@ -3,7 +3,13 @@ import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
 import { JiraEventsUninstallPost } from "routes/jira/events/jira-events-uninstall-post";
 
-export const ApiJiraUninstallPost = async (request: Request, response: Response): Promise<void> => {
+type ResponseType =  Response<
+	{
+		message: string
+	},
+	JiraJwtVerifiedLocals
+>;
+export const ApiJiraUninstallPost = async (request: Request, response: ResponseType): Promise<void> => {
 	response.locals.installation = await Installation.findOne({
 		where: { clientKey: request.params.clientKey }
 	});
