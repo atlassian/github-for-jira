@@ -48,7 +48,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: ResponseType,
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
 			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
+			gitHubApiUrl: `${gitHubServerApp.gitHubBaseUrl}/api/v3`,
 			clientId: gitHubServerApp.gitHubClientId
 		};
 	} else {

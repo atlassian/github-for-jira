@@ -126,7 +126,7 @@ describe("github-server-app-middleware", () => {
 			uuid: UUID,
 			clientId: "lvl.1234",
 			gitHubBaseUrl: "http://myinternalserver.com",
-			gitHubApiUrl: "http://myinternalserver.com"
+			gitHubApiUrl: "http://myinternalserver.com/api/v3"
 		});
 	});
 });
