@@ -10,5 +10,6 @@ function openChildWindow(url) {
 }
 
 $("#noConfiguration__ConnectToGH").on("click", () => {
-	openChildWindow("/github/configuration");
+	const configurationUrl = $("#configurationUrl").val();
+	openChildWindow(configurationUrl);
 });

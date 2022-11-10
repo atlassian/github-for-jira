@@ -26,8 +26,10 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
+		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
