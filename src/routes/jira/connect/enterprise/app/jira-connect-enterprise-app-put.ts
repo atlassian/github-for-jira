@@ -7,18 +7,17 @@ export const JiraConnectEnterpriseAppPut = async (
 	next: NextFunction
 ): Promise<void> => {
 	req.log.debug("Received Jira Connect Enterprise App PUT request to update app.");
-
 	try {
-		const verifiedApp = await GitHubServerApp.getForUuidAndInstallationId(req.params.uuid, res.locals.installation.id);
+		const { gitHubAppConfig: verifiedApp } = res.locals;
 
-		if (!verifiedApp || req.params.uuid !== req.body.uuid) {
+		if (!verifiedApp.gitHubAppId || verifiedApp.uuid !== req.body.uuid) {
 			res.status(404).send({ message: "No GitHub App found. Cannot update." });
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
 		}
 
 		const updatedAppPayload = { ...req.body };
 		if (!updatedAppPayload.privateKey) {
-			updatedAppPayload.privateKey = verifiedApp.getDecryptedPrivateKey(); // will be encrypted on save
+			updatedAppPayload.privateKey = undefined;
 		}
 
 		await GitHubServerApp.updateGitHubAppByUUID(req.body);

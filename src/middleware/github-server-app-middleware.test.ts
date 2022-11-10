@@ -17,16 +17,23 @@ describe("github-server-app-middleware", () => {
 
 	let req;
 	let res;
+	let resStatus: Mock;
+	let resJson: Mock;
 	let next: Mock;
 	let installation;
 	let payload;
 
 	beforeEach(async () => {
 		next = jest.fn();
+		resJson = jest.fn();
+		resStatus = jest.fn(()=> ({
+			json: resJson
+		}));
 		res = {
 			locals: {
 				jiraHost: "https://testatlassian.net"
-			}
+			},
+			status: resStatus
 		};
 
 		req = {
@@ -43,9 +50,9 @@ describe("github-server-app-middleware", () => {
 
 	it("should throw an error if an uuid is provided but no GitHub server app is found", async () => {
 		req.params.uuid = UUID;
-		await expect(GithubServerAppMiddleware(req, res, next))
-			.rejects
-			.toThrow("No GitHub app found for provided id.");
+		await GithubServerAppMiddleware(req, res, next);
+		expect(resStatus).toBeCalledWith(404);
+		expect(resJson).toBeCalledWith({ message: "No GitHub app found for provided id." });
 	});
 
 	it("should throw an error if an uuid is provided and a GitHub server app is found but the installation id doesn't match", async () => {
@@ -74,9 +81,9 @@ describe("github-server-app-middleware", () => {
 			.expectCalledWith(UUID)
 			.mockResolvedValue(payload);
 
-		await expect(GithubServerAppMiddleware(req, res, next))
-			.rejects
-			.toThrow("Jira hosts do not match");
+		await GithubServerAppMiddleware(req, res, next);
+		expect(resStatus).toBeCalledWith(401);
+		expect(resJson).toBeCalledWith({ message: "Jira hosts do not match." });
 	});
 
 	it("should call next() when GH app is found and installation id matches", async () => {
@@ -93,20 +100,7 @@ describe("github-server-app-middleware", () => {
 			webhookSecret: "encrypted:mywebhooksecret",
 			privateKey: "encrypted:myprivatekey",
 			installationId: JIRA_INSTALLATION_ID,
-			decrypt: async (s: any) => s,
-
-			getDecryptedGitHubClientSecret: () => {
-				return Promise.resolve("myghsecret");
-			},
-
-			getDecryptedPrivateKey: () => {
-				return Promise.resolve("myprivatekey");
-			},
-
-			getDecryptedWebhookSecret: () => {
-				return Promise.resolve("mywebhooksecret");
-			}
-
+			decrypt: async (s: any) => s
 		};
 
 		installation = {
@@ -132,10 +126,7 @@ describe("github-server-app-middleware", () => {
 			appId: GIT_HUB_SERVER_APP_APP_ID,
 			uuid: UUID,
 			clientId: "lvl.1234",
-			gitHubClientSecret: "myghsecret",
-			hostname: "http://myinternalserver.com",
-			privateKey: "myprivatekey",
-			webhookSecret: "mywebhooksecret"
+			hostname: "http://myinternalserver.com"
 		});
 	});
 });

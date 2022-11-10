@@ -1,6 +1,5 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import { RootRouter } from "routes/router";
-import { Request, Response } from "express";
 import supertest from "supertest";
 
 describe("router", () => {
