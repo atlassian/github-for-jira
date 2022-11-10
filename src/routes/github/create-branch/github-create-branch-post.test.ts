@@ -42,7 +42,7 @@ describe("github-create-branch", () => {
 				jiraHost,
 				githubToken: "abc-token",
 				gitHubAppConfig: {
-					hostname: "omega"
+					gitHubBaseUrl: "omega"
 				}
 			}
 		};

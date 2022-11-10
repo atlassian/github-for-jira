@@ -15,7 +15,6 @@ type ResponseType =  Response<
 export const GithubServerAppMiddleware = async (req: Request, res: ResponseType, next: NextFunction): Promise<void> => {
 	const { jiraHost } = res.locals;
 	const { uuid } = req.params;
-
 	req.addLogFields({ uuid, jiraHost });
 
 	if (uuid) {

@@ -17,12 +17,19 @@ const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
 	const { baseUrl } = req;
-	const { hostname, clientId } = res.locals.gitHubAppConfig;
+	const { gitHubBaseUrl, clientId } = res.locals.gitHubAppConfig;
 	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
-	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+	return `${gitHubBaseUrl}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
-const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
+type OAuthLoginGetResponseType = Response<
+	never,
+	GitHubAppVerifiedLocals
+	& {
+		redirect?: string
+	}
+>
+const GithubOAuthLoginGet = async (req: Request, res: OAuthLoginGetResponseType): Promise<void> => {
 	// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 	// Create unique state for each oauth request
 	const state = crypto.randomBytes(8).toString("hex");

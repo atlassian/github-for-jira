@@ -28,7 +28,9 @@ describe("github-oauth-router", () => {
 		let session = {};
 
 		beforeEach(() => {
-			locals = {};
+			locals = {
+				jiraHost
+			};
 			session = {
 				jiraHost,
 				fooState: "http://myredirect.com"

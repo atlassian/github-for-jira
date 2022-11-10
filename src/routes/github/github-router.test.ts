@@ -115,7 +115,7 @@ describe("GitHub router", () => {
 							githubToken: VALID_TOKEN,
 							jiraHost,
 							gitHubAppConfig: expect.objectContaining({
-								appId: envVars.APP_ID
+								appId: Number(envVars.APP_ID)
 							})
 						})
 					}),
@@ -129,7 +129,7 @@ describe("GitHub router", () => {
 						githubToken: VALID_TOKEN,
 						jiraHost,
 						gitHubAppConfig: expect.objectContaining({
-							appId: envVars.APP_ID
+							appId: Number(envVars.APP_ID)
 						})
 					}));
 			});
@@ -184,8 +184,8 @@ describe("GitHub router", () => {
 						locals: expect.objectContaining({
 							githubToken: VALID_TOKEN,
 							jiraHost,
-							gitHubAppId: gitHubAppId,
 							gitHubAppConfig: expect.objectContaining({
+								gitHubAppId,
 								appId: GITHUB_SERVER_APP_ID,
 								uuid: GITHUB_SERVER_APP_UUID
 							})
