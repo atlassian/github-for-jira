@@ -303,7 +303,8 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			environment: {
 				id: deployment_status.environment,
 				displayName: deployment_status.environment,
-				type: environment
+				type: environment,
+				url: deployment_status.environment_url
 			},
 			associations
 		}]

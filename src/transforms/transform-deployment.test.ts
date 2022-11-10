@@ -71,7 +71,8 @@ const buildJiraPayload = (associations) => {
 			environment: {
 				id: "Production",
 				displayName: "Production",
-				type: "production"
+				type: "production",
+				url: "https://test-repo-url.env-production.company.io"
 			},
 			associations
 		}]

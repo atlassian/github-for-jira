@@ -146,6 +146,7 @@ export interface JiraDeployment {
 		id: string;
 		displayName: string;
 		type: string;
+		url: string;
 	};
 	associations: JiraAssociation[];
 }
