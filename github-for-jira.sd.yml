@@ -655,7 +655,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill dead letter queue too high!"
-            Threshold: 5000 # number is initially high until we start bringing numbers down
+            Threshold: 50 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
@@ -672,7 +672,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for push dead letter queue too high!"
-            Threshold: 5000 # number is initially high until we start bringing numbers down
+            Threshold: 500 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
@@ -689,7 +689,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for deployment dead letter queue too high!"
-            Threshold: 5000 # number is initially high until we start bringing numbers down
+            Threshold: 4000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
               - Name: QueueName
