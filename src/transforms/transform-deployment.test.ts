@@ -58,7 +58,7 @@ const buildJiraPayload = (displayName="testing", associations) => {
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: 1234,
 			updateSequenceNumber: 123456,
-			displayName: displayName,
+			displayName: "foo42",
 			url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 			description: "deploy",
 			lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
