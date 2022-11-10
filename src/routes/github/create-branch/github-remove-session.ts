@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
 type ResponseType =  Response<
-	{
-		baseUrl: string
-	},
+  {
+    baseUrl: string
+  },
 	& GitHubAppVerifiedLocals
 >;
 export const GithubRemoveSession = (req: Request, res: ResponseType) => {
