@@ -4,7 +4,7 @@ type ResponseType =  Response<
   {
     baseUrl: string
   },
-	& GitHubAppVerifiedLocals
+  & GitHubAppVerifiedLocals
 >;
 export const GithubRemoveSession = (req: Request, res: ResponseType) => {
 	const { gitHubAppConfig } = res.locals;
