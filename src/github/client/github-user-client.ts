@@ -9,7 +9,7 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesQuery,
-	GetRepositoriesResponse,
+	GetRepositoriesResponse, SearchedRepositoriesResponse,
 	UserOrganizationsQuery,
 	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
@@ -30,7 +30,8 @@ export class GitHubUserClient extends GitHubClient {
 				headers: {
 					...config.headers,
 					Accept: GITHUB_ACCEPT_HEADER,
-					Authorization: `token ${this.userToken}`
+					// Authorization: `token ${this.userToken}`
+					Authorization: `Bearer ${this.userToken}`
 				}
 			};
 		});
@@ -137,5 +138,22 @@ export class GitHubUserClient extends GitHubClient {
 			}
 		});
 	}
+
+	public async searchRepositories(queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}`, {
+			urlParams: {
+				queryString
+			}
+		});
+	}
+
+	public getUserRepositoriesPage = async (): Promise<AxiosResponse<Octokit.AppsListReposResponse>> => {
+		return await this.get<Octokit.AppsListReposResponse>(`/user/repos`,  {
+			// urlParams: {
+			// 	perPage: 100,
+			// 	page
+			// }
+		});
+	};
 
 }

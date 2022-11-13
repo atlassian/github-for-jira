@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { Request, Response } from "express";
-import { createAppClient, createInstallationClient } from "utils/get-github-client-config";
+import { createAppClient, createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 const MAX_REPOS_RETURNED = 20;
@@ -21,9 +21,9 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 
 	try {
 		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
-		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, req.log);
+		const reposInstallation = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, req.log);
 		res.send({
-			repositories: repos
+			repositories: reposInstallation
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error searching repository");
@@ -31,14 +31,24 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, githubToken:string, logger: Logger): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
+			// TODO - promise all these 4 - orgname username iclient uclient
 			const orgName = await getOrgName(subscription, jiraHost, logger);
-			const searchQueryString = `${repoName} org:${orgName} in:name`;
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
-			const response = await gitHubInstallationClient.searchRepositories(searchQueryString);
-			return response.data?.items;
+			const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId);
+
+			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
+			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
+			// TODO jk PROMISE ALL THESE CALLS
+			const responseInstallationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString);
+			const responseUserSearch = await gitHubUserClient.searchRepositories(searchQueryUserString);
+
+			const userClientSearch =  responseUserSearch.data?.items || [];
+			const userInstallationSearch = responseInstallationSearch.data?.items || [];
+			return [...userClientSearch, ...userInstallationSearch];
 		} catch (err) {
 			logger.error("Create branch - Failed to search repos for installation");
 			throw err;

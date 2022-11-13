@@ -8,10 +8,11 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 // TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { jiraHost: jiraHostLocal } = res.locals;
+	// const { jiraHost } = res.locals;
 	const { issueKey, tenantUrl } = req.query;
 
-	if (!jiraHostLocal && !tenantUrl) {
+
+	if (!tenantUrl) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
@@ -21,7 +22,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = jiraHostLocal || getJiraHostFromTenantUrl(tenantUrl);
+	const jiraHost = getJiraHostFromTenantUrl(tenantUrl);
 
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
