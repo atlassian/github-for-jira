@@ -647,6 +647,7 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+
       - name: github-server-app-secrets
         type: cryptor
         attributes:
