@@ -56,8 +56,8 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
 			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
 			const [responseInstallationSearch, responseUserSearch] = await Promise.all([
-				gitHubInstallationClient.searchRepositories(searchQueryInstallationString),
-				gitHubUserClient.searchRepositories(searchQueryUserString)
+				gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated"),
+				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
 			]);
 
 			const userInstallationSearch = responseInstallationSearch.data?.items || [];

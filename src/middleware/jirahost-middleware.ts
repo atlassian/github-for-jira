@@ -48,8 +48,6 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
 	// any temptation to use it later, let's remove it straight away!
 	const takenFromCookies = unsafeJiraHost === req.cookies.jiraHost;
-
-
 	res.clearCookie("jiraHost");
 
 	if (unsafeJiraHost) {

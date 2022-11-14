@@ -190,7 +190,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	};
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}`,{ },
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
 			{
 				queryString,
 				order

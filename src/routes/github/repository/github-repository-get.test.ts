@@ -61,14 +61,20 @@ describe("GitHub Repository Search", () => {
 
 			const queryStringInstallation = `${randomString} org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringInstallation}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 2 }, { full_name: "second", id: 1 }]
 				});
 
 			const queryStringUser = `${randomString} org:${orgName} org:test-account in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringUser}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 2 }]
 				});
@@ -114,14 +120,20 @@ describe("GitHub Repository Search", () => {
 
 			const queryStringInstallation = `${randomString} org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringInstallation}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
 				});
 
 			const queryStringUser = `${randomString} org:${orgName} org:test-account in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringUser}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
 				});

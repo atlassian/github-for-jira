@@ -50,7 +50,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-
 	const repos = await searchInstallationAndUserRepos("", jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
 
 	res.render("github-create-branch.hbs", {
