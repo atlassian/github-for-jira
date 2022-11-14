@@ -55,12 +55,14 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
+
 			const queryString = `${randomString} org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryString}`)
+				.get(`/search/repositories?q=${queryString}&order=updated`)
 				.reply(200, {
 					items: [{ full_name: "first" }, { full_name: "second" }]
 				});
+
 
 			await supertest(app)
 				.get("/github/repository").set(

@@ -14,10 +14,11 @@ jest.mock("config/feature-flags");
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
 	beforeEach(() => {
+		const tenantUrl = jiraHost.replace("https://", "");
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string" };
+			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
 			req.csrfToken = jest.fn();
 			next();
 		});

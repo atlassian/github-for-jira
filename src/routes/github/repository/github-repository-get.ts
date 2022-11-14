@@ -20,35 +20,52 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
-		const reposInstallation = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, req.log);
+		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
 		res.send({
-			repositories: reposInstallation
+			repositories
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error searching repository");
-		res.sendStatus(500);
+
+		res.status(500).send({
+			repositories: []
+		});
+	}
+};
+
+export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubAppId, githubToken, logger) => {
+	try {
+		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, logger);
+		return repos || [];
+	} catch (err) {
+		logger.log.error({ err }, "Error searching repository");
+		return [];
 	}
 };
 
 const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, githubToken:string, logger: Logger): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
-			// TODO - promise all these 4 - orgname username iclient uclient
-			const orgName = await getOrgName(subscription, jiraHost, logger);
-			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
-			const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId);
-
+			const [orgName, gitHubInstallationClient, gitHubUserClient] = await Promise.all([
+				getOrgName(subscription, jiraHost, logger),
+				createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId),
+				createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId)
+			]);
 			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
 			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
-			// TODO jk PROMISE ALL THESE CALLS
-			const responseInstallationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString);
-			const responseUserSearch = await gitHubUserClient.searchRepositories(searchQueryUserString);
+			const [responseInstallationSearch, responseUserSearch] = await Promise.all([
+				gitHubInstallationClient.searchRepositories(searchQueryInstallationString),
+				gitHubUserClient.searchRepositories(searchQueryUserString)
+			]);
 
 			const userClientSearch =  responseUserSearch.data?.items || [];
 			const userInstallationSearch = responseInstallationSearch.data?.items || [];
-			return [...userClientSearch, ...userInstallationSearch];
+
+			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
+
+			return repos;
 		} catch (err) {
 			logger.error("Create branch - Failed to search repos for installation");
 			throw err;
@@ -58,6 +75,19 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 		.flat()
 		.sort(sortByScoreAndUpdatedAt);
 	return repos.slice(0, MAX_REPOS_RETURNED);
+};
+
+// We want repos that exist in installation client and user client.
+const getIntersectingRepos = (installationRepos, userRepos) => {
+	const intersection: RepositoryNode[] = [];
+	installationRepos.forEach((installationRepo) => {
+		userRepos.forEach((userRepo) => {
+			if (installationRepo.id === userRepo.id) {
+				intersection.push(installationRepo);
+			}
+		});
+	});
+	return intersection;
 };
 
 const sortByScoreAndUpdatedAt = (a, b) => {

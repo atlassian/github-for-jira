@@ -139,21 +139,13 @@ export class GitHubUserClient extends GitHubClient {
 		});
 	}
 
-	public async searchRepositories(queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}`, {
+	public async searchRepositories(queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}?order={order}`, {
 			urlParams: {
-				queryString
+				queryString,
+				order
 			}
 		});
 	}
-
-	public getUserRepositoriesPage = async (): Promise<AxiosResponse<Octokit.AppsListReposResponse>> => {
-		return await this.get<Octokit.AppsListReposResponse>(`/user/repos`,  {
-			// urlParams: {
-			// 	perPage: 100,
-			// 	page
-			// }
-		});
-	};
 
 }
