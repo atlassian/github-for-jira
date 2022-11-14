@@ -60,8 +60,8 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				gitHubUserClient.searchRepositories(searchQueryUserString)
 			]);
 
-			const userClientSearch =  responseUserSearch.data?.items || [];
 			const userInstallationSearch = responseInstallationSearch.data?.items || [];
+			const userClientSearch = responseUserSearch.data?.items || [];
 
 			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
 

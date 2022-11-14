@@ -30,8 +30,8 @@ export class GitHubUserClient extends GitHubClient {
 				headers: {
 					...config.headers,
 					Accept: GITHUB_ACCEPT_HEADER,
-					// Authorization: `token ${this.userToken}`
-					Authorization: `Bearer ${this.userToken}`
+					Authorization: `token ${this.userToken}`
+					// Authorization: `Bearer ${this.userToken}`
 				}
 			};
 		});
@@ -140,7 +140,7 @@ export class GitHubUserClient extends GitHubClient {
 	}
 
 	public async searchRepositories(queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}?order={order}`, {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}`, {
 			urlParams: {
 				queryString,
 				order
