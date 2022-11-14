@@ -596,6 +596,19 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for backfill dead letter queue too high!"
+            Threshold: 50
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
 
       - type: sqs
         name: push
@@ -612,6 +625,19 @@ environmentOverrides:
             EvaluationPeriods: 5
             Period: 300
             ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for push dead letter queue too high!"
+            Threshold: 100
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
             Statistic: Maximum
 
       - type: sqs
@@ -630,6 +656,19 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for deployment dead letter queue too high!"
+            Threshold: 5000 # number is initially high until we start bringing numbers down
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
 
       - type: sqs
         name: branch
@@ -647,6 +686,20 @@ environmentOverrides:
             Period: 300
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+              MetricName: ApproximateNumberOfMessagesVisible
+              Namespace: AWS/SQS
+              Description: "Message count for branch dead letter queue too high!"
+              Threshold: 1000 # number is initially high until we start bringing numbers down
+              Priority: Low
+              Dimensions:
+                - Name: QueueName
+                  Value: { "Ref": "DLQueueName" }
+              EvaluationPeriods: 5
+              Period: 300
+              ComparisonOperator: GreaterThanOrEqualToThreshold
+              Statistic: Maximum
+
       - name: github-server-app-secrets
         type: cryptor
         attributes:
