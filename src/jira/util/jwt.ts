@@ -3,7 +3,7 @@
 // TODO: need some typing for jwt
 import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
 
@@ -29,7 +29,7 @@ export enum TokenType {
 }
 
 
-const extractJwtFromRequest = (req: Request): string | undefined => {
+export const extractJwtFromRequest = (req: Request): string | undefined => {
 
 	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
@@ -115,7 +115,7 @@ export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: 
 	}
 
 	if (verifiedClaims.qsh) {
-		let qshVerified:boolean;
+		let qshVerified: boolean;
 		if (tokenType === TokenType.context) {
 			//If we use context jsw tokens, their qsh will be constant
 			qshVerified = verifiedClaims.qsh === "context-qsh";
@@ -137,13 +137,8 @@ export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: 
 	}
 };
 
-const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
-	const token = extractJwtFromRequest(req);
-	if (!token) {
-		sendError(res, 401, "Could not find authentication data on request");
-		return false;
-	}
 
+export const verifySymmetricJwtAndSetResponseCodeOnError = (token: string, secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
 	const algorithm = getAlgorithm(token);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,7 +179,12 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
  */
 export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction): void => {
 	try {
-		if (!verifySymmetricJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
+		const token = extractJwtFromRequest(req);
+		if (!token) {
+			sendError(res, 401, "Could not find authentication data on request");
+			return;
+		}
+		if (!verifySymmetricJwtAndSetResponseCodeOnError(token, secret, req, res, tokenType)) {
 			return;
 		}
 		req.log.info("JWT Token Verified Successfully!");

@@ -63,7 +63,6 @@ const gitHubAppPostRequest = (data, token) => {
 		data,
 		success: function() {
 			const child = openChildWindow(`/session/github/${data.uuid}/configuration?ghRedirect=to`);
-			child.window.jiraHost = jiraHost;
 			child.window.jwt = token;
 		},
 		error: handleFormErrors
