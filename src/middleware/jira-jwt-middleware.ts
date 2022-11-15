@@ -1,6 +1,6 @@
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
-import { extractJwtFromRequest, TokenType, verifySymmetricJwtAndSetResponseCodeOnError } from "~/src/jira/util/jwt";
+import { extractJwtFromRequest, TokenType, verifySymmetricJwt } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 
 export const jiraHostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
@@ -10,21 +10,23 @@ export const jiraHostMiddleware = async (req: Request, res: Response, next: Next
 	if (!token) {
 		if (req.session.jiraHost) {
 			res.locals.jiraHost = req.session.jiraHost;
-			next();
-			return;
+			return next();
 		}
-		next();
-		return;
+		return next();
 	}
 
-	const installation = await getInstallationAndTokenVerification(token, req, res);
-	if (!installation) {
-		return;
+	let installation;
+	try {
+		installation = await getInstallationAndTokenVerification(token, req);
+	} catch (err) {
+		req.log.info(err);
 	}
 
-	res.locals.installation = installation;
-	res.locals.jiraHost = installation.jiraHost;
-	res.locals.jwtVerified = true;
+	if (installation) {
+		res.locals.installation = installation;
+		res.locals.jiraHost = installation.jiraHost;
+		res.locals.jwtVerified = true;
+	}
 
 	if (req.cookies.jwt) {
 		req.session.jiraHost = installation.jiraHost;
@@ -39,37 +41,29 @@ export const jiraJwtVerifyMiddleware = async (req: Request, res: Response, next:
 	const token = extractJwtFromRequest(req);
 
 	if (!token) {
-		sendError(res, 401, "Could not find authentication data on request");
-		return;
+		return next(new Error("Could not find authentication data on request"));
 	}
 
 	// if token is alreafy verified, skip verification
 	if (res.locals.jwtVerified) {
-		next();
-		return;
+		return next();
 	}
 
-	if (!getInstallationAndTokenVerification(token, req, res)) {
-		return;
+	try {
+		await getInstallationAndTokenVerification(token, req);
+	} catch (err) {
+		return next(err);
 	}
 	next();
 };
 
-const sendError = (res: Response, code: number, msg: string): void => {
-	res.status(code).json({
-		message: msg
-	});
-};
-
-
-const getIssuer = (token: string, res: Response): string | undefined => {
+const getIssuer = (token: string): string | undefined => {
 
 	let unverifiedClaims;
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", getAlgorithm(token), true); // decode without verification;
 	} catch (e) {
-		sendError(res, 401, `Invalid JWT: ${e.message}`);
-		return;
+		throw new Error(`Invalid JWT: ${e.message}`);
 	}
 
 	return unverifiedClaims.iss;
@@ -82,23 +76,19 @@ const detectJwtTokenType = (req: Request): TokenType => {
 	return TokenType.context;
 };
 
-const getInstallationAndTokenVerification = async (token: string, req: Request, res: Response): Promise<Installation | null> => {
-	const issuer = getIssuer(token, res);
+const getInstallationAndTokenVerification = async (token: string, req: Request): Promise<Installation | null> => {
+	const issuer = getIssuer(token);
 	if (!issuer) {
-		sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
-		return null;
+		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
 
 	const installation = await Installation.getForClientKey(issuer);
 	if (!installation) {
-		sendError(res, 401, "No Installation found");
-		return null;
+		throw new Error("No Installation found");
 	}
 
 	const secret = await installation.decrypt("encryptedSharedSecret");
 
-	if (verifySymmetricJwtAndSetResponseCodeOnError(token, secret, req, res, detectJwtTokenType(req))) {
-		return installation;
-	}
-	return null;
+	verifySymmetricJwt(token, secret, req, detectJwtTokenType(req));
+	return installation;
 };

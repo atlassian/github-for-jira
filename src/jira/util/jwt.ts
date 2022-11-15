@@ -104,14 +104,13 @@ const verifyQsh = (qsh: string, req: Request): boolean => {
 	return true;
 };
 
-export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, req: Request, res: Response): boolean => {
+export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, req: Request): boolean => {
 	const expiry = verifiedClaims.exp;
 
 	// TODO: build in leeway?
 	if (expiry && (Date.now() / 1000 >= expiry)) {
 		req.log.info("JWT Verification Failed, token is expired");
-		sendError(res, 401, "Authentication request has expired. Try reloading the page.");
-		return false;
+		throw new Error("Authentication request has expired. Try reloading the page.");
 	}
 
 	if (verifiedClaims.qsh) {
@@ -126,19 +125,18 @@ export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: 
 
 		if (!qshVerified) {
 			req.log.info("JWT Verification Failed, wrong qsh");
-			sendError(res, 401, "Unauthorized");
+			throw new Error("Unauthorized");
 		}
 		return qshVerified;
 
 	} else {
 		req.log.info("JWT Verification Failed, no qsh");
-		sendError(res, 401, "JWT tokens without qsh are not allowed");
-		return false;
+		throw new Error("JWT tokens without qsh are not allowed");
 	}
 };
 
 
-export const verifySymmetricJwtAndSetResponseCodeOnError = (token: string, secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
+export const verifySymmetricJwt = (token: string, secret: string, req: Request, tokenType: TokenType): boolean => {
 	const algorithm = getAlgorithm(token);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,14 +144,12 @@ export const verifySymmetricJwtAndSetResponseCodeOnError = (token: string, secre
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
 	} catch (e) {
-		sendError(res, 401, `Invalid JWT: ${e.message}`);
-		return false;
+		throw new Error(`Invalid JWT: ${e.message}`);
 	}
 
 	const issuer = unverifiedClaims.iss;
 	if (!issuer) {
-		sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
-		return false;
+		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
 
 	/* eslint-disable @typescript-eslint/no-explicit-any*/
@@ -161,11 +157,10 @@ export const verifySymmetricJwtAndSetResponseCodeOnError = (token: string, secre
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (error) {
-		sendError(res, 400, `Unable to decode JWT token: ${error}`);
-		return false;
+		throw new Error(`Unable to decode JWT token: ${error}`);
 	}
 
-	return verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType, req, res);
+	return verifyJwtClaims(verifiedClaims, tokenType, req);
 };
 
 /**
@@ -184,7 +179,10 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 			sendError(res, 401, "Could not find authentication data on request");
 			return;
 		}
-		if (!verifySymmetricJwtAndSetResponseCodeOnError(token, secret, req, res, tokenType)) {
+		try {
+			verifySymmetricJwt(token, secret, req, tokenType);
+		} catch (e) {
+			sendError(res, 401, e.message);
 			return;
 		}
 		req.log.info("JWT Token Verified Successfully!");
@@ -239,10 +237,13 @@ export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Resp
 		}
 
 		const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
-
-		if (verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, TokenType.normal, req, res)) {
+		try {
+			verifyJwtClaims(verifiedClaims, TokenType.normal, req);
 			req.log.info("JWT Token Verified Successfully!");
 			next();
+		} catch (e) {
+			sendError(res, 401, e.message);
+			return;
 		}
 	} catch (e) {
 		req.log.warn({ ...e }, "Error while validating JWT token");

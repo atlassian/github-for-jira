@@ -33,30 +33,6 @@ describe("jiraHostMiddleware", () => {
 
 	});
 
-	it("should return a 401 when issuer missing in token", async () => {
-		const req = buildRequest("secret", "");
-
-		await jiraHostMiddleware(req, res, next);
-
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(res.json).toHaveBeenCalledWith({
-			message: "JWT claim did not contain the issuer (iss) claim"
-		});
-		expect(next).toHaveBeenCalledTimes(0);
-	});
-
-	it("should return a 401 when no installation found", async () => {
-		const req = buildRequest();
-
-		await jiraHostMiddleware(req, res, next);
-
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(res.json).toHaveBeenCalledWith({
-			message: "No Installation found"
-		});
-		expect(next).toHaveBeenCalledTimes(0);
-	});
-
 	it("should call next with a valid token and secret", async () => {
 		jest.mocked(Installation.getForClientKey).mockResolvedValue(installation);
 		const req = buildRequest(testSharedSecret);
@@ -77,30 +53,6 @@ describe("jiraHostMiddleware", () => {
 		expect(res.locals.jiraHost).toEqual(installation.jiraHost);
 	});
 
-	it("should return a 401 when token is wrong", async () => {
-
-		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		const req = buildRequestWrongJwt(testSharedSecret);
-
-		await jiraHostMiddleware(req, res, next);
-
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(next).toHaveBeenCalledTimes(0);
-	});
-
-	it("should return a 401 when secret is wrong", async () => {
-
-		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
-
-		const req = buildRequestWrongJwt("wrong-secret");
-
-		await jiraHostMiddleware(req, res, next);
-
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(next).toHaveBeenCalledTimes(0);
-	});
-
 });
 
 describe("jiraJwtVerifyMiddleware", () => {
@@ -108,7 +60,7 @@ describe("jiraJwtVerifyMiddleware", () => {
 	let next;
 	let installation;
 
-	beforeEach(async() => {
+	beforeEach(async () => {
 		res = {
 			locals: {
 			},
@@ -128,37 +80,48 @@ describe("jiraJwtVerifyMiddleware", () => {
 		};
 	});
 
-	it("should return a 401 when token missing", async () => {
+	it("should throw error when token missing", async () => {
 		const req = buildRequestWithNoToken();
 
 		await jiraJwtVerifyMiddleware(req, res, next);
 
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(res.json).toHaveBeenCalledWith({
-			message: "Could not find authentication data on request"
-		});
-		expect(next).toHaveBeenCalledTimes(0);
+		expect(next).toHaveBeenCalledWith(new Error("Could not find authentication data on request"));
 	});
 
-	it("should return a 401 when token is wrong", async () => {
+	it("should throw error when token is wrong", async () => {
 
 		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 
 		const req = buildRequestWrongJwt(testSharedSecret);
 
-		await jiraHostMiddleware(req, res, next);
+		await jiraJwtVerifyMiddleware(req, res, next);
 
-		expect(res.status).toHaveBeenCalledWith(401);
-		expect(next).toHaveBeenCalledTimes(0);
+		expect(next).toHaveBeenCalledWith(new Error("No Installation found"));
 	});
 
 	it("should call next with a valid token and secret", async () => {
 		jest.mocked(Installation.getForClientKey).mockResolvedValue(installation);
 		const req = buildRequest(testSharedSecret);
 
-		await jiraHostMiddleware(req, res, next);
+		await jiraJwtVerifyMiddleware(req, res, next);
 
 		expect(next).toHaveBeenCalledWith();
+	});
+
+	it("should throw error when issuer missing in token", async () => {
+		const req = buildRequest("secret", "");
+
+		await jiraJwtVerifyMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledWith(new Error("JWT claim did not contain the issuer (iss) claim"));
+	});
+
+	it("should throw error when no installation found", async () => {
+		const req = buildRequest();
+
+		await jiraJwtVerifyMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledWith(new Error("No Installation found"));
 	});
 
 });
