@@ -120,7 +120,7 @@ const updateGithubIssues = async (github: GitHubInstallationClient, context: Web
 	await github.updateIssue(updatedPullRequest);
 };
 
-const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
-	const response = await githubCient.getPullRequestReviews(owner, repo, pull_number);
+const getReviews = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
+	const response = await gitHubInstallationClient.getPullRequestReviews(owner, repo, pull_number);
 	return response.data;
 };
