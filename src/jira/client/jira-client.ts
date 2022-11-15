@@ -33,7 +33,7 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number,
+	gitHubInstallationId: number | undefined,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
@@ -356,6 +356,14 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		appProperties: {
+			create: (appKey: string, isConfiguredState: string) =>
+				instance.put(`/rest/atlassian-connect/1/addons/${appKey}/properties/isConfigured`, {
+					"isConfigured": isConfiguredState
+				}),
+			delete: (appKey: string) =>
+				instance.delete(`/rest/atlassian-connect/1/addons/${appKey}/properties/isConfigured`)
 		}
 	};
 
@@ -369,7 +377,7 @@ export const getJiraClient = async (
 const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
-	installationId: number,
+	installationId: number | undefined,
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);

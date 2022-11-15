@@ -2,6 +2,8 @@ import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
+import { getJiraClient } from "~/src/jira/client/jira-client";
+import { getAppKey } from "utils/save-app-properties";
 
 /**
  * Handle the uninstall webhook from Jira
@@ -15,6 +17,10 @@ export const JiraEventsUninstallPost = async (req: Request, res: Response): Prom
 	}
 
 	statsd.increment(metricHttpRequest.uninstall);
+
+	const jiraClient = await getJiraClient(installation.jiraHost, undefined, undefined, req.log);
+	const appKey = getAppKey();
+	await jiraClient.appProperties.delete(appKey);
 
 	await installation.uninstall();
 
