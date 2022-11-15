@@ -18,7 +18,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 	beforeEach(async ()=>{
 		app = getFrontendApp();
 		installation = await Installation.install({
-			clientKey: "client-key-1",
+			clientKey: "jira",
 			host: jiraHost,
 			sharedSecret: SHARED_SECRET
 		});
@@ -44,10 +44,14 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			});
 			await supertest(app)
 				.get(pathname)
+				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname
+					pathname: `/jira/connect/enterprise/app/${GHE_APP_UUID}`,
+					query: {
+						xdm_e: `${jiraHost}`
+					}
 				})}`)
 				.expect(200);
 			expect(capturedGHEAppConfig).toEqual(expect.objectContaining({
@@ -59,10 +63,14 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${uuid()}`;
 			await supertest(app)
 				.get(pathname)
+				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname
+					pathname,
+					query: {
+						xdm_e: `${jiraHost}`
+					}
 				})}`)
 				.expect(404);
 		});
@@ -89,10 +97,14 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;
 			await supertest(app)
 				.get(pathname)
+				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname
+					pathname,
+					query: {
+						xdm_e: `${jiraHost}`
+					}
 				})}`)
 				.expect(401);
 		});
