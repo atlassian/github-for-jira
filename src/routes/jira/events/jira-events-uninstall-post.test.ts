@@ -43,6 +43,7 @@ describe("Webhook: /events/uninstalled", () => {
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		await JiraEventsUninstallPost(req, res);
+
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 		expect(installation.uninstall).toHaveBeenCalled();
 		expect(subscriptions[0].uninstall).toHaveBeenCalled();
