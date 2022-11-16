@@ -9,6 +9,7 @@ import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -36,7 +37,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
 	try {
-		reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
+		reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 	} catch (err) {
 		context.log.warn(
 			{
@@ -118,9 +119,4 @@ const updateGithubIssues = async (github: GitHubInstallationClient, context: Web
 	};
 
 	await github.updateIssue(updatedPullRequest);
-};
-
-const getReviews = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
-	const response = await gitHubInstallationClient.getPullRequestReviews(owner, repo, pull_number);
-	return response.data;
 };
