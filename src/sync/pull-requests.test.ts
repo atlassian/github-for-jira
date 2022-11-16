@@ -20,6 +20,49 @@ describe("sync/pull-request", () => {
 		mockSystemTime(12345678);
 	});
 
+
+	const reviewsPayload = [
+		{
+			id: 80,
+			node_id: "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3ODA=",
+			user: {
+				login: "test-pull-request-reviewer-login",
+				id: 1,
+				node_id: "MDQ6VXNlcjE=",
+				avatar_url: "test-pull-request-reviewer-avatar",
+				gravatar_id: "",
+				url: "https://api.github.com/users/reviewer",
+				html_url: "https://github.com/reviewer",
+				followers_url: "https://api.github.com/users/reviewer/followers",
+				following_url: "https://api.github.com/users/reviewer/following{/other_user}",
+				gists_url: "https://api.github.com/users/reviewer/gists{/gist_id}",
+				starred_url: "https://api.github.com/users/reviewer/starred{/owner}{/repo}",
+				subscriptions_url: "https://api.github.com/users/reviewer/subscriptions",
+				organizations_url: "https://api.github.com/users/reviewer/orgs",
+				repos_url: "https://api.github.com/users/reviewer/repos",
+				events_url: "https://api.github.com/users/reviewer/events{/privacy}",
+				received_events_url: "https://api.github.com/users/reviewer/received_events",
+				type: "User",
+				site_admin: false
+			},
+			body: "Here is the body for the review.",
+			state: "APPROVED",
+			html_url: "https://github.com/integrations/test-repo-name/pull/1#pullrequestreview-80",
+			pull_request_url: "https://api.github.com/repos/integrations/test-repo-name/pulls/1",
+			_links: {
+				html: {
+					href: "https://github.com/integrations/test-repo-name/pull/1#pullrequestreview-80"
+				},
+				pull_request: {
+					href: "https://api.github.com/repos/integrations/test-repo-name/pulls/1"
+				}
+			},
+			submitted_at: "2019-11-17T17:43:43Z",
+			commit_id: "ecdd80bb57125d7ba9641ffaa4d7d2c19d3f3091",
+			author_association: "COLLABORATOR"
+		}
+	];
+
 	const buildJiraPayload = (repoId: string) => {
 		return {
 			"preventTransitions": true,
@@ -31,28 +74,35 @@ describe("sync/pull-request", () => {
 						"pullRequests":
 							[
 								{
-									"author":
-										{
-											"avatar": "test-pull-request-author-avatar",
-											"name": "test-pull-request-author-login",
-											"email": "test-pull-request-author-login@noreply.user.github.com",
-											"url": "test-pull-request-author-url"
-										},
+									"author": {
+										"avatar": "test-pull-request-author-avatar",
+										"name": "test-pull-request-author-login",
+										"email": "test-pull-request-author-login@noreply.user.github.com",
+										"url": "test-pull-request-author-url"
+									},
 									"commentCount": 10,
 									"destinationBranch": "devel",
-									"destinationBranchUrl": "test-repo-url/tree/devel",
+									"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
 									"displayId": "#51",
 									"id": 51,
-									"issueKeys":
-										[
-											"TES-15"
-										],
+									"issueKeys": [
+										"KEY-15"
+									],
 									"lastUpdate": "2018-05-04T14:06:56Z",
+									"reviewers": [
+										{
+											"avatar": "test-pull-request-reviewer-avatar",
+											"name": "test-pull-request-reviewer-login",
+											"email": "test-pull-request-reviewer-login@noreply.user.github.com",
+											"url": "https://github.com/reviewer",
+											"approvalStatus": "APPROVED"
+										}
+									],
 									"sourceBranch": "use-the-force",
-									"sourceBranchUrl": "test-repo-url/tree/use-the-force",
+									"sourceBranchUrl": "https://github.com/integrations/test/tree/use-the-force",
 									"status": "DECLINED",
 									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "Testing force pushes",
+									"title": "[KEY-15] Testing force pushes",
 									"url": "https://github.com/integrations/test/pull/51",
 									"updateSequenceId": 12345678
 								}
@@ -87,12 +137,15 @@ describe("sync/pull-request", () => {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls")
 					.query(true)
 					.reply(200, pullRequestList)
 					.get("/repos/integrations/test-repo-name/pulls/51")
 					.reply(200, pullRequest)
+					.get("/repos/integrations/test-repo-name/pulls/51/reviews")
+					.reply(200, reviewsPayload)
 					.get("/users/test-pull-request-author-login")
 					.reply(200, {
 						login: "test-pull-request-author-login",
@@ -101,6 +154,7 @@ describe("sync/pull-request", () => {
 					});
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
+
 
 				await expect(processInstallation()({
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
@@ -171,12 +225,15 @@ describe("sync/pull-request", () => {
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
 				.reply(200, pullRequestList)
 				.get("/repos/integrations/test-repo-name/pulls/51")
 				.reply(200, pullRequest)
+				.get("/repos/integrations/test-repo-name/pulls/51/reviews")
+				.reply(200, reviewsPayload)
 				.get("/users/test-pull-request-author-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",

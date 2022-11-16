@@ -4,7 +4,7 @@ import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+// import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
@@ -46,21 +46,20 @@ const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
 
 // TODO: define arguments and return
 export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger, isSync = false) => {
-	// reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
+	const prBody = body;// await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : ""; // TODO BRING BACK THIS FF AND MOCK IT!!!
 	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
 
-	const logPayload = {
-		prTitle: prTitle || "none",
-		repoName: head?.repo?.name || "none",
-		prRef: pullRequest.head.ref || "none"
-	};
-
+	// // This is the same thing we do in transforms, concat'ing these values
+	// const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
 	if (isEmpty(issueKeys) || !head?.repo) {
-		log?.info(logPayload, "Ignoring pullrequest since it has no issue keys or repo");
+		log?.info({
+			pullRequestReference: pullRequest.head.ref,
+			pullRequestNumber: pullRequest.number,
+			pullRequestId: pullRequest.id
+		}, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
 	}
 
