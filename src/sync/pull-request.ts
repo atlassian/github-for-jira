@@ -85,7 +85,6 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				// todo if tests dont take all day refactor this call within a function with try catch then budle up the calls in a prom all
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);

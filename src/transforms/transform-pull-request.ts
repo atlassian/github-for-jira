@@ -52,8 +52,6 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
 	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
 
-	// // This is the same thing we do in transforms, concat'ing these values
-	// const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info({
 			pullRequestReference: pullRequest.head.ref,
