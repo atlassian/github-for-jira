@@ -1,6 +1,7 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import { transformPullRequest } from "../transforms/transform-pull-request";
+import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -11,6 +12,8 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { getGithubUser } from "services/github/user";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 /**
  * Find the next page number from the response headers.
@@ -87,9 +90,22 @@ export const getPullRequestTask = async (
 			edgesWithCursor.map(async (pull) => {
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
-				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
+
+				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM, false)) {
+					const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
+					const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
+					return data?.pullRequests[0];
+				}
+
+				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
+				const data = await transformPullRequestSync(
+					{ pullRequest: pull, repository },
+					prDetails,
+					gitHubInstallationClient.baseUrl,
+					ghUser
+				);
 				return data?.pullRequests[0];
+
 			})
 		)
 	).filter((value) => !!value);

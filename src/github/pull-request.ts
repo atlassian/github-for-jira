@@ -52,7 +52,6 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	}
 
 	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
-
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
