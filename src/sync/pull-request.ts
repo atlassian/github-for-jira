@@ -89,7 +89,7 @@ export const getPullRequestTask = async (
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger, true); //  todo dont like having this maybe find a way to derive the tpye!?!?!?
+				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 			})
 		)

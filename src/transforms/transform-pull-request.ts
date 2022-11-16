@@ -4,7 +4,7 @@ import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
-// import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
@@ -45,11 +45,11 @@ const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
 };
 
 // TODO: define arguments and return
-export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger, isSync = false) => {
+export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const prBody = body;// await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : ""; // TODO BRING BACK THIS FF AND MOCK IT!!!
+	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY, true) ? body : "";
 	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
 
 	// // This is the same thing we do in transforms, concat'ing these values
@@ -65,7 +65,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 
 	return {
 		...await transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
-		branches: await getBranches(gitHubInstallationClient, pullRequest, issueKeys, isSync),
+		branches: await getBranches(gitHubInstallationClient, pullRequest, issueKeys),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
@@ -92,8 +92,8 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[], isSync = false) => {
-	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED" || isSync) {
+const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
+	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
 	return [

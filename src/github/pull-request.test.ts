@@ -21,7 +21,7 @@ jest.mock("config/feature-flags");
 describe("Pull Request Webhook", () => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
-	const issueKeys = ["TEST-123", "TEST-321", "TEST-124"];
+	const issueKeys = ["TEST-123", "TEST-321"];
 
 	const reviewsPayload = [
 		{

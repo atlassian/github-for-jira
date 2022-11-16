@@ -215,7 +215,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	logger.info({ task: nextTask }, "Starting task");
 
 	const processor = tasks[task];
-
 	const execute = async (): Promise<TaskPayload> => {
 
 		for (const perPage of [20, 10, 5, 1]) {

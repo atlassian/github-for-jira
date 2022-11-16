@@ -138,6 +138,7 @@ describe("sync/pull-request", () => {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls")
 					.query(true)
@@ -151,6 +152,12 @@ describe("sync/pull-request", () => {
 						login: "test-pull-request-author-login",
 						avatar_url: "test-pull-request-author-avatar",
 						html_url: "test-pull-request-author-url"
+					})
+					.get("/users/integrations")
+					.reply(200, {
+						login: "integrations",
+						avatar_url: "integrations-avatar",
+						html_url: "integrations-url"
 					});
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
@@ -226,6 +233,7 @@ describe("sync/pull-request", () => {
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -239,6 +247,12 @@ describe("sync/pull-request", () => {
 					login: "test-pull-request-author-login",
 					avatar_url: "test-pull-request-author-avatar",
 					html_url: "test-pull-request-author-url"
+				})
+				.get("/users/integrations")
+				.reply(200, {
+					login: "integrations",
+					avatar_url: "integrations-avatar",
+					html_url: "integrations-url"
 				});
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("6769746875626d79646f6d61696e636f6d-1")).reply(200);
