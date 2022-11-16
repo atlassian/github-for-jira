@@ -26,7 +26,7 @@ describe("GitHub Create Branch Get", () => {
 			});
 		});
 
-		it.skip("should redirect to Github login if unauthorized", async () => {
+		it("should redirect to Github login if unauthorized", async () => {
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
@@ -65,14 +65,20 @@ describe("GitHub Create Branch Get", () => {
 
 			const queryStringInstallation = ` org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringInstallation}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
 				});
 
 			const queryStringUser = ` org:${orgName} org:test-account in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryStringUser}`)
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
 				.reply(200, {
 					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
 				});
