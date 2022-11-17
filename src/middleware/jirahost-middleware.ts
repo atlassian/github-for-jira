@@ -43,7 +43,6 @@ const detectJwtTokenType = (req: Request): TokenType => {
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
-
 	req.addLogFields({ jiraHost: unsafeJiraHost });
 
 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
@@ -64,7 +63,6 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 			// Cleaning up outside of "if" to unblock cookies if they were corrupted somehow
 			// on any other successful validation (e.g. when /jira/configuration is refreshed)
 			res.clearCookie("jwt");
-
 			next();
 		});
 	} else {

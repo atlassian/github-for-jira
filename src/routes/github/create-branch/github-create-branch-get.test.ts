@@ -3,7 +3,6 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 import { Subscription } from "models/subscription";
 
 describe("GitHub Create Branch Get", () => {
@@ -13,7 +12,7 @@ describe("GitHub Create Branch Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string" };
+			req.query = { issueKey: "1", issueSummary: "random-string", jiraHost };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -27,7 +26,7 @@ describe("GitHub Create Branch Get", () => {
 			});
 		});
 
-		it.skip("should redirect to Github login if unauthorized", async () => {
+		it("should redirect to Github login if unauthorized", async () => {
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
@@ -41,19 +40,48 @@ describe("GitHub Create Branch Get", () => {
 		});
 
 		it("should hit the create branch on GET if authorized", async () => {
-			githubUserTokenNock(gitHubInstallationId);
+			const orgName = "orgName";
+
+			githubNock
+				.get("/user")
+				.reply(200, { data: { login: "test-account" } });
 
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
+
 			githubNock
-				// .post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: 'UPDATED_AT' } })
-				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: "UPDATED_AT" } })
-				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+				.get(`/app/installations/${gitHubInstallationId}`)
+				.reply(200, { account: { login: orgName } });
+
+			githubNock
+				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+				.reply(200);
+
 			githubNock
 				.get("/user")
-				.reply(200, { data: { login: "test-account" } });
+				.reply(200, { login: "test-account" });
+
+			const queryStringInstallation = ` org:${orgName} in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
+				.reply(200, {
+					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
+				});
+
+			const queryStringUser = ` org:${orgName} org:test-account in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
+				.reply(200, {
+					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
+				});
 
 			await supertest(app)
 				.get("/github/create-branch").set(
