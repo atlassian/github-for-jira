@@ -9,7 +9,7 @@
 	"number": 51,
 	"state": "closed",
 	"locked": false,
-	"title": "Testing force pushes",
+	"title": "[KEY-15] Testing force pushes",
 	"user": {
 		"login": "test-pull-request-author-login",
 		"id": 173,
