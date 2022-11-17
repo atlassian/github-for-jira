@@ -10,6 +10,7 @@ import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -34,21 +35,25 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
-	try {
+
+	if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM, false)) {
 		reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
-	} catch (err) {
-		context.log.warn(
-			{
-				pullRequestNumber,
-				pullRequestId,
-				repositoryId,
-				repoName,
-				err
-			},
-			"Missing Github Permissions: Can't retrieve reviewers"
-		);
+	} else {
+		try {
+			reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
+		} catch (err) {
+			context.log.warn(
+				{
+					pullRequestNumber,
+					pullRequestId,
+					repositoryId,
+					repoName,
+					err
+				},
+				"Missing Github Permissions: Can't retrieve reviewers"
+			);
+		}
 	}
 
 	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
@@ -118,4 +123,9 @@ const updateGithubIssues = async (github: GitHubInstallationClient, context: Web
 	};
 
 	await github.updateIssue(updatedPullRequest);
+};
+
+const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {
+	const response = await githubCient.getPullRequestReviews(owner, repo, pull_number);
+	return response.data;
 };

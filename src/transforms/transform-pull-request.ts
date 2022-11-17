@@ -54,7 +54,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info({
-			pullRequestReference: pullRequest.head.ref,
+			pullRequestBranchName: pullRequest.head.ref,
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
 		}, "Ignoring pullrequest since it has no issue keys or repo");
