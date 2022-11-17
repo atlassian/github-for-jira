@@ -4,6 +4,13 @@ import { v4 as UUID } from "uuid";
 import { getHashedKey } from "models/sequelize";
 
 describe("Installation", () => {
+	describe("Origin jiraClientKey", () => {
+		it("should also save origin unhashed jiraClientKey", async () => {
+			const inst = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
+			const found = await Installation.findByPk(inst.id);
+			expect(found.jiraClientKey).toBe("1234");
+		});
+	});
 	describe("Decryption with cryptor", () => {
 		it("can decrypted the new safeSharedSecret column successfully", async () => {
 			const clientKey = UUID();

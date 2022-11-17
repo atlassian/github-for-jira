@@ -7,6 +7,7 @@ import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 export class Installation extends EncryptedModel {
 	id: number;
 	jiraHost: string;
+	jiraClientKey: string;
 	encryptedSharedSecret: string;
 	clientKey: string;
 	updatedAt: Date;
@@ -74,6 +75,7 @@ export class Installation extends EncryptedModel {
 			},
 			defaults: {
 				jiraHost: payload.host,
+				jiraClientKey: payload.clientKey,
 				encryptedSharedSecret: payload.sharedSecret //write as plain text, hook will encrypt it
 			}
 		});
@@ -81,6 +83,7 @@ export class Installation extends EncryptedModel {
 			await installation
 				.update({
 					encryptedSharedSecret: payload.sharedSecret,
+					jiraClientKey: payload.clientKey,
 					jiraHost: payload.host
 				})
 				.then(async (record) => {
@@ -123,6 +126,10 @@ Installation.init({
 	clientKey: {
 		type: DataTypes.STRING,
 		allowNull: false
+	},
+	jiraClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
 	},
 	enabled: BOOLEAN,
 	createdAt: DATE,
