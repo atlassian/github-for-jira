@@ -3,26 +3,31 @@ import { Installation } from "models/installation";
 import { getHashedKey } from "models/sequelize";
 import { Op } from "sequelize";
 import safeJsonStringify from "safe-json-stringify";
-import { Axios } from "axios";
+import axios from "axios";
 
-const BATCH_SIZE = 5000;
+const DEFAULT_BATCH_SIZE = 5000;
 
-export const RecoverClientKey = async (req: Request, res: Response): Promise<void> => {
+export const RecoverClientKeyPost = async (req: Request, res: Response): Promise<void> => {
 
-	const { startInstallationId = 0 } = req.query as { startInstallationId: number | undefined };
+	const startInstallationId = Number(req.query.startInstallationId) || 0;
+	const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
+	const overrideExisting = (Number(req.query.overrideExisting) || 0) === 1;
 
-	res.send(`Start recovering client keys for installation starting from ${startInstallationId}\n`);
+	res.status(200);
+
+	res.write(`Start recovering client keys for installation starting from ${startInstallationId}\n`);
 
 	const foundInstallations: Installation[] = await Installation.findAll({
-		limit: BATCH_SIZE,
+		limit: batchSize,
 		where: {
+			... overrideExisting ? undefined : { jiraClientKey: null },
 			"id": {
 				[Op.gte]: startInstallationId
 			}
 		}
 	});
 
-	res.send(`Found ${foundInstallations.length} installations to process.\n`);
+	res.write(`Found ${foundInstallations.length} installations to process.\n`);
 
 	let successCount = 0;
 	let failCount = 0;
@@ -38,26 +43,28 @@ export const RecoverClientKey = async (req: Request, res: Response): Promise<voi
 			successCount++;
 		} catch (e) {
 			failCount++;
-			res.send(`Something wrong when processing installation id: ${installation.id}: ${safeJsonStringify(e)}\n`);
+			res.write(`Something wrong when processing installation id: ${installation.id}: ${safeJsonStringify(e)}\n`);
 		}
 
 	}
 
-	res.send(`All done, found ${successCount} success, ${failCount} fail.`);
+	foundInstallations.sort((a,b)=>a.id - b.id);
+	const lastId = foundInstallations.length === 0 ? NaN : foundInstallations[foundInstallations.length - 1].id;
 
-	res.status(200);
+	res.write(`All done, SUCCESS: ${successCount} - FAILED: ${failCount}, lastId: ${lastId}`);
+
+	res.end();
 
 };
-
-const REGEX_CLIENT_KEY = /<key>([0-9a-z-]+)<\/key>/gmi;
 
 const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClientKeyInDB }: Installation): Promise<string>  => {
 
 	if (!jiraHost) {
 		throw { msg: `Cannot find jiraHost`, id };
 	}
+	if (!jiraHost.endsWith("/")) jiraHost = jiraHost + "/";
 
-	const result = await new Axios().get(`${jiraHost}/plugins/servlet/oauth/consumer-info`);
+	const result = await axios(`${jiraHost}plugins/servlet/oauth/consumer-info`);
 	if (result.status != 200) {
 		throw { msg: `Error fetching consumer-info`, jiraHost, id };
 	}
@@ -67,9 +74,9 @@ const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClie
 		throw { msg: `Response data empty`, jiraHost, id };
 	}
 
-	const [, originClientKey] = REGEX_CLIENT_KEY.exec(text) || [undefined, undefined];
+	const [, originClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
 	if (!originClientKey) {
-		throw { msg: `Cannot extra origin client key`, jiraHost, id, text };
+		throw { msg: `Cannot extract origin client key`, jiraHost, id, text };
 	}
 
 	const hashedOriginClientKey = getHashedKey(originClientKey);
