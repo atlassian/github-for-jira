@@ -1,15 +1,19 @@
 import { Request, Response } from "express";
 import { Installation } from "models/installation";
+import { Subscription } from "models/subscription";
 import { getHashedKey } from "models/sequelize";
 import { Op } from "sequelize";
 import safeJsonStringify from "safe-json-stringify";
 import axios from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { getLogger } from "config/logger";
 
 const DEFAULT_BATCH_SIZE = 5000;
 
 export const RecoverClientKeyPost = async (req: Request, res: Response): Promise<void> => {
+
+	const log = getLogger("RecoverClientKeyPost");
 
 	const startInstallationId = Number(req.query.startInstallationId) || 0;
 	const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
@@ -22,7 +26,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 	const foundInstallations: Installation[] = await Installation.findAll({
 		limit: batchSize,
 		where: {
-			... overrideExisting ? undefined : { jiraClientKey: null },
+			... overrideExisting ? undefined : { plainClientKey: null },
 			"id": {
 				[Op.gte]: startInstallationId
 			}
@@ -36,12 +40,20 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 
 	for (const installation of foundInstallations) {
 		try {
-			const originClientKey = await getAndVerifyOriginClientKey(installation);
-			installation.jiraClientKey = originClientKey;
+			const plainClientKey = await getAndVerifyplainClientKey(installation);
+			installation.plainClientKey = plainClientKey;
 			await installation.save();
+			log.info({ id: installation.id }, `Saved plainClientKey successfully for installation`);
+			const subscriptions: Subscription[] = await Subscription.findAll({ where: { clientKey: installation.clientKey } });
+			for (const sub of subscriptions) {
+				sub.plainClientKey = plainClientKey;
+				await sub.save();
+				log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
+			}
 			successCount++;
 		} catch (e) {
 			failCount++;
+			log.warn({ id: installation.id, err: e }, `Failed at processing installation`);
 			res.write(`SKIPPED: ${safeJsonStringify(e)}\n`);
 		}
 
@@ -56,7 +68,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 
 };
 
-const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClientKeyInDB }: Installation): Promise<string>  => {
+const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClientKeyInDB }: Installation): Promise<string>  => {
 
 	if (!jiraHost) {
 		throw { msg: `JiraHost missing`, id };
@@ -73,7 +85,7 @@ const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClie
 			httpAgent: new HttpProxyAgent(proxy),
 			httpsAgent: new HttpsProxyAgent(proxy),
 			proxy: false
-		}).post("/plugins/servlet/oauth/consumer-info");
+		}).get("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
 	} catch (e) {
 		throw { msg: e.message, jiraHost, id };
@@ -83,17 +95,17 @@ const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClie
 		throw { msg: `Empty consumer-info`, jiraHost, id };
 	}
 
-	const [, originClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
-	if (!originClientKey) {
+	const [, plainClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
+	if (!plainClientKey) {
 		throw { msg: `Client key regex failed`, jiraHost, id, text };
 	}
 
-	const hashedOriginClientKey = getHashedKey(originClientKey);
-	if (hashedClientKeyInDB !== hashedOriginClientKey) {
-		throw { msg: `keys not match after hashing`, jiraHost, id, hashedClientKeyInDB, hashedOriginClientKey, originClientKey };
+	const hashedplainClientKey = getHashedKey(plainClientKey);
+	if (hashedClientKeyInDB !== hashedplainClientKey) {
+		throw { msg: `keys not match after hashing`, jiraHost, id, hashedClientKeyInDB, hashedplainClientKey, plainClientKey };
 	}
 
-	return originClientKey;
+	return plainClientKey;
 };
 
 

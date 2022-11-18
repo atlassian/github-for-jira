@@ -33,6 +33,7 @@ export class Subscription extends Model {
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
+	plainClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
 	totalNumberOfRepos?: number;
@@ -225,6 +226,10 @@ Subscription.init({
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
+	plainClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
 	numberOfSyncedRepos: DataTypes.INTEGER,
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
