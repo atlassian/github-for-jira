@@ -4,6 +4,8 @@ import { getHashedKey } from "models/sequelize";
 import { Op } from "sequelize";
 import safeJsonStringify from "safe-json-stringify";
 import axios from "axios";
+import { HttpProxyAgent } from "http-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 const DEFAULT_BATCH_SIZE = 5000;
 
@@ -59,11 +61,19 @@ const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClie
 	if (!jiraHost) {
 		throw { msg: `JiraHost missing`, id };
 	}
-	if (!jiraHost.endsWith("/")) jiraHost = jiraHost + "/";
 
 	let text: string | undefined;
 	try {
-		const result = await axios(`${jiraHost}plugins/servlet/oauth/consumer-info`);
+		//https://hello.atlassian.net/wiki/spaces/EDGE/pages/315794033/Whitelist+Proxy+-+Usage
+		//use whitelist proxy so that we can hit xxx.jira-dev.com
+		//Unless we don't care about those records in db?
+		const proxy = `http://${process.env.WHITELIST_PROXY_HOST}:${process.env.WHITELIST_PROXY_PORT}`;
+		const result = await axios.create({
+			baseURL: jiraHost,
+			httpAgent: new HttpProxyAgent(proxy),
+			httpsAgent: new HttpsProxyAgent(proxy),
+			proxy: false
+		}).post("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
 	} catch (e) {
 		throw { msg: e.message, jiraHost, id };
