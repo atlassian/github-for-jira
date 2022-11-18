@@ -46,6 +46,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 			host: "http://github.com",
 			installationId: 1234,
 			clientKey: "client-key",
+			plainClientKey: "client-key",
 			gitHubAppId: undefined
 		});
 
@@ -53,6 +54,7 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 			host: "http://github.com",
 			installationId: 4711,
 			clientKey: "client-key",
+			plainClientKey: "client-key",
 			gitHubAppId: undefined
 		});
 

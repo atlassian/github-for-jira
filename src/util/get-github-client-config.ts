@@ -110,9 +110,10 @@ const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): P
 	};
 };
 
-export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, logger: Logger, jiraHost: string, jiraClientKey: string): Promise<GitHubClientConfig> => {
+export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, logger: Logger, jiraHost: string, jiraClientKey: string | undefined): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
+		if (!jiraClientKey) throw new Error("Jira cilent key is empty when creating github server app client config");
 		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost, jiraClientKey, logger);
 	}
 	return buildGitHubClientCloudConfig(jiraHost, logger);
@@ -122,7 +123,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, jiraClientKey: string): Promise<GitHubAppClient> => {
+export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, jiraClientKey: string | undefined): Promise<GitHubAppClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	return new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 };
@@ -131,7 +132,7 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to get
  * information specific to an organization.
  */
-export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined, jiraClientKey: string): Promise<GitHubInstallationClient> => {
+export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined, jiraClientKey: string | undefined): Promise<GitHubInstallationClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);

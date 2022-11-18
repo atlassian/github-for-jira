@@ -306,6 +306,7 @@ describe("sync/branches", () => {
 
 	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
 		const nockBranchRequest = (response: object, variables?: Record<string, unknown>) =>
 			gheNock
@@ -328,6 +329,7 @@ describe("sync/branches", () => {
 				.repoSyncStatePendingForBranches()
 				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
+			clientKey = builderResult.installation.plainClientKey;
 
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
@@ -346,7 +348,8 @@ describe("sync/branches", () => {
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api",
+					clientKey
 				}
 			};
 

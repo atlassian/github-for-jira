@@ -36,6 +36,7 @@ describe("code_scanning_alert transform", () => {
 	});
 	const gitHubInstallationId = 1234;
 	const jiraHost = "testHost";
+	const plainClientKey = "key";
 
 	it("code_scanning_alert is transformed into a remote link for Cloud", async () => {
 		const remoteLinks = await transformCodeScanningAlert(buildContext(codeScanningPayload), gitHubInstallationId, jiraHost);
@@ -75,7 +76,8 @@ describe("code_scanning_alert transform", () => {
 			clientId: gitHubServerApp.gitHubClientId,
 			gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 			gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/api",
-			uuid: gitHubServerApp.uuid
+			uuid: gitHubServerApp.uuid,
+			clientKey: plainClientKey
 		}), gitHubInstallationId, jiraHost);
 
 		expect(remoteLinks).toMatchObject({

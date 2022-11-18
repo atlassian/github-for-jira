@@ -585,15 +585,17 @@ describe("Push Webhook", () => {
 	describe("server", () => {
 
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
-		const createMessageProcessingContext = (payload): SQSMessageContext<PushQueueMessagePayload> => ({
+		const createMessageProcessingContext = (payload, clientKey: string): SQSMessageContext<PushQueueMessagePayload> => ({
 			payload: createJobData(updateInstallationId(payload), jiraHost, {
 				gitHubAppId: gitHubServerApp.id,
 				appId: gitHubServerApp.appId,
 				clientId: gitHubServerApp.gitHubClientId,
 				gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 				gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/api",
-				uuid: gitHubServerApp.uuid
+				uuid: gitHubServerApp.uuid,
+				clientKey
 			}),
 			log: getLogger("test"),
 			message: {} as Message,
@@ -619,6 +621,7 @@ describe("Push Webhook", () => {
 				.create();
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
+			clientKey = builderOutput.installation.plainClientKey;
 
 			mockSystemTime(12345678);
 		});
@@ -633,7 +636,7 @@ describe("Push Webhook", () => {
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", createJiraPayloadNoUsername("6769746875626d79646f6d61696e636f6d-test-repo-id")).reply(200);
 
-				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload))).toResolve();
+				await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload, clientKey))).toResolve();
 			});
 
 		});

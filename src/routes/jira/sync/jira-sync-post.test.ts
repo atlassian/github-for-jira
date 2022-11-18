@@ -29,6 +29,7 @@ describe("sync", () => {
 			installationId: installationIdForCloud,
 			host: jiraHost,
 			clientKey: installation.clientKey,
+			plainClientKey: installation.clientKey,
 			gitHubAppId: undefined
 		});
 		gitHubServerApp = await GitHubServerApp.install({
@@ -41,11 +42,12 @@ describe("sync", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: installation.id
-		});
+		}, installation.plainClientKey);
 		await Subscription.install({
 			installationId: installationIdForServer,
 			host: jiraHost,
 			clientKey: installation.clientKey,
+			plainClientKey: installation.clientKey,
 			gitHubAppId: gitHubServerApp.id
 		});
 		app = express();

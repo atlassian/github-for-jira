@@ -12,8 +12,8 @@ export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = a
 		gitHubInstallationId: installationId
 	});
 
-	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId);
+	const { gitHubAppId, clientKey } = messagePayload.gitHubAppConfig || {};
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId, clientKey);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	context.log.info({ gitHubProduct }, "Handling branch message from the SQS queue");

@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware, LOGGER_NAME } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
+import { Installation } from "models/installation";
 import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
@@ -30,7 +31,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
+		const { webhookSecret, gitHubServerApp, plainClientKey } = await getWebhookSecret(uuid);
 		const verification = createHash(request.rawBody, webhookSecret);
 
 		if (verification != signatureSHA256) {
@@ -47,6 +48,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			gitHubAppConfig: {
 				...(!gitHubServerApp ? {
 					gitHubAppId: undefined,
+					clientKey: plainClientKey,
 					appId: parseInt(envVars.APP_ID),
 					clientId: envVars.GITHUB_CLIENT_ID,
 					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
@@ -54,6 +56,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 					uuid: undefined
 				} : {
 					gitHubAppId: gitHubServerApp.id,
+					clientKey: plainClientKey,
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
@@ -128,14 +131,18 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
+const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp, plainClientKey?: string }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
-		return { webhookSecret, gitHubServerApp };
+		const installation: Installation = await Installation.findByPk(gitHubServerApp.installationId);
+		if (!installation) {
+			throw new Error(`Installation not found for git hub server app: uuid ${uuid}`);
+		}
+		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret(installation.plainClientKey);
+		return { webhookSecret, gitHubServerApp, plainClientKey: installation.plainClientKey };
 	}
 	if (!envVars.WEBHOOK_SECRET) {
 		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");

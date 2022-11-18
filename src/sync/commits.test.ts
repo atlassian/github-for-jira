@@ -307,6 +307,7 @@ describe("sync/commits", () => {
 		};
 
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
@@ -323,6 +324,7 @@ describe("sync/commits", () => {
 				.repoSyncStatePendingForCommits()
 				.create();
 			gitHubServerApp = builderResult.gitHubServerApp!;
+			clientKey = builderResult.installation.plainClientKey;
 
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
@@ -360,7 +362,8 @@ describe("sync/commits", () => {
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api",
+					clientKey
 				}
 			};
 

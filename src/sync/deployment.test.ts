@@ -426,6 +426,7 @@ describe("sync/deployments", () => {
 		};
 
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
 		beforeEach(async () => {
 
@@ -446,6 +447,7 @@ describe("sync/deployments", () => {
 				.create();
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
+			clientKey = builderOutput.installation.plainClientKey;
 
 			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			gheUserTokenNock(installationId);
@@ -468,7 +470,8 @@ describe("sync/deployments", () => {
 				clientId: gitHubServerApp.gitHubClientId,
 				gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 				gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/api/v3",
-				uuid: gitHubServerApp.uuid
+				uuid: gitHubServerApp.uuid,
+				clientKey
 			} };
 
 			gheUserTokenNock(installationId);

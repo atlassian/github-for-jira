@@ -178,6 +178,9 @@ export class Subscription extends Model {
 				jiraHost: payload.host,
 				jiraClientKey: payload.clientKey,
 				gitHubAppId: payload.gitHubAppId || null
+			},
+			defaults: {
+				plainClientKey: payload.plainClientKey
 			}
 		});
 
@@ -250,4 +253,5 @@ export interface SubscriptionPayload {
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
 	clientKey: string;
+	plainClientKey: string;
 }

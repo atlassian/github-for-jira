@@ -11,6 +11,7 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 		gitHubInstallationId: installationId
 	});
 	context.log.info("Handling push message from the SQS queue");
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log, payload.gitHubAppConfig?.gitHubAppId);
+	const { gitHubAppId, clientKey } = payload.gitHubAppConfig || {};
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log, gitHubAppId, clientKey);
 	await processPush(gitHubInstallationClient, payload, log);
 };

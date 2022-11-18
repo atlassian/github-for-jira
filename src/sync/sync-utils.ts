@@ -124,13 +124,14 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
 		throw new Error("Error duing find and start sync. Reason: Cannot find ghes record from subscription.");
 	}
-	return ghesGitHubAppConfig(gitHubServerApp);
+	return ghesGitHubAppConfig(gitHubServerApp, subscription.plainClientKey);
 
 };
 
 const cloudGitHubAppConfig = () => {
 	return {
 		gitHubAppId: undefined,
+		clientKey: undefined,
 		appId: parseInt(envVars.APP_ID),
 		clientId: envVars.GITHUB_CLIENT_ID,
 		gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
@@ -139,8 +140,9 @@ const cloudGitHubAppConfig = () => {
 	};
 };
 
-const ghesGitHubAppConfig = (app: GitHubServerApp): GitHubAppConfig => {
+const ghesGitHubAppConfig = (app: GitHubServerApp, clientKey: string): GitHubAppConfig => {
 	return {
+		clientKey,
 		gitHubAppId: app.id,
 		appId: app.appId,
 		uuid: app.uuid,

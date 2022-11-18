@@ -18,6 +18,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
 
 	let gitHubServerApp: GitHubServerApp;
+	let clientKey: string;
 
 	beforeAll(async () => {
 		await sqsQueues.backfill.purgeQueue();
@@ -28,7 +29,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		const GHE_PEM = fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" });
 
 		await createWebhookApp();
-		const clientKey = "client-key";
+		clientKey = "client-key";
 		const installation = await Installation.create({
 			clientKey,
 			encryptedSharedSecret: "shared-secret",
@@ -45,7 +46,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			privateKey: GHE_PEM,
 			gitHubAppName: "ghe_app_name",
 			installationId: installation.id
-		});
+		}, clientKey);
 
 
 		//Cloud
@@ -107,7 +108,8 @@ describe("Discovery Queue Test - GitHub Client", () => {
 				clientId: gitHubServerApp.gitHubClientId,
 				gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
 				gitHubApiUrl: gitHubServerApp.gitHubBaseUrl,
-				uuid: gitHubServerApp.uuid
+				uuid: gitHubServerApp.uuid,
+				clientKey
 			}
 		});
 		await waitUntil(async () => {

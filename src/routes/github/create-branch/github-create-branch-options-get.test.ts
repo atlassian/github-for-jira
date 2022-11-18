@@ -44,6 +44,7 @@ describe("GitHub Create Branch Options Get", () => {
 			host: jiraHost,
 			installationId: 1234,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 		await supertest(app)
@@ -71,11 +72,12 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, "key-123");
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		when(booleanFlag).calledWith(
@@ -109,7 +111,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, "key-123");
 		const serverApp2 = await GitHubServerApp.install({
 			uuid: uuid2,
 			appId: 234,
@@ -120,17 +122,19 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, "key-123");
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 123,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 234,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: serverApp2.id
 		});
 
@@ -158,17 +162,19 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, "key-123");
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
 			clientKey: "key-123",
+			plainClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 

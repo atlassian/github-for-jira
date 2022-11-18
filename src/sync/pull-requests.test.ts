@@ -312,6 +312,7 @@ describe("sync/pull-request", () => {
 
 	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
@@ -332,6 +333,7 @@ describe("sync/pull-request", () => {
 				.repoSyncStatePendingForPrs()
 				.create();
 			gitHubServerApp = buildResult.gitHubServerApp!;
+			clientKey = buildResult.installation.clientKey;
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
@@ -374,7 +376,8 @@ describe("sync/pull-request", () => {
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api",
+					clientKey
 				}
 			};
 
@@ -466,6 +469,7 @@ describe("sync/pull-request", () => {
 	describe("server - false ff use-shared-pr-transform", () => {
 
 		let gitHubServerApp: GitHubServerApp;
+		let clientKey: string;
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
@@ -483,6 +487,7 @@ describe("sync/pull-request", () => {
 				.repoSyncStatePendingForPrs()
 				.create();
 			gitHubServerApp = buildResult.gitHubServerApp!;
+			clientKey = buildResult.installation.plainClientKey;
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
@@ -516,7 +521,8 @@ describe("sync/pull-request", () => {
 					appId: gitHubServerApp.appId,
 					clientId: gitHubServerApp.gitHubClientId,
 					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api",
+					clientKey
 				}
 			};
 

@@ -44,7 +44,7 @@ export const updateRepoConfig = async (
 				return;
 			}
 
-			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId);
+			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId, subscription.plainClientKey);
 		} catch (err) {
 			logger.error({
 				err,
@@ -72,7 +72,7 @@ export const getRepoConfig = async (
 	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
-		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId);
+		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId, subscription.plainClientKey);
 		return await convertYamlToUserConfig(yamlConfig);
 	}
 
@@ -83,8 +83,8 @@ export const getRepoConfig = async (
 /**
  * Fetches contents from CONFIG_PATH from GitHub via GitHub's API, transforms it from base64 to ascii and returns the transformed string.
  */
-const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId?: number): Promise<string | undefined> => {
-	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, logger, gitHubAppId);
+const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId: number | undefined, clientKey: string): Promise<string | undefined> => {
+	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, logger, gitHubAppId, clientKey);
 	const contents = await client.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
 
 	if (!contents) {
@@ -151,8 +151,8 @@ const convertYamlToUserConfig = async (input?: string): Promise<Config> => {
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
-	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, clientKey: string): Promise<void> => {
+	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId, clientKey);
 	const config = await convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
 };
@@ -166,9 +166,9 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubIn
  * @param jiraHost
  * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
  */
-export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, clientKey: string): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
-		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId)
+		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId, clientKey)
 			.catch(err => logger.error({
 				err,
 				githubInstallationId,

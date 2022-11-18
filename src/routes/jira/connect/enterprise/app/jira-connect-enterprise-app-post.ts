@@ -30,7 +30,7 @@ export const JiraConnectEnterpriseAppPost = async (
 			webhookSecret,
 			privateKey,
 			installationId: installation.id
-		});
+		}, installation.plainClientKey);
 
 		res.status(202).send();
 

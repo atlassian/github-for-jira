@@ -62,6 +62,7 @@ describe("Models", () => {
 				host: installation.jiraHost,
 				installationId: 1234,
 				clientKey: installation.clientKey,
+				plainClientKey: installation.plainClientKey,
 				gitHubAppId: undefined
 			});
 
@@ -69,6 +70,7 @@ describe("Models", () => {
 				host: installation.jiraHost,
 				installationId: 2345,
 				clientKey: installation.clientKey,
+				plainClientKey: installation.plainClientKey,
 				gitHubAppId: undefined
 			});
 		});

@@ -24,7 +24,8 @@ describe("Enqueue push", () => {
 			clientId: "clientId",
 			gitHubBaseUrl: "https://whatever.url",
 			gitHubApiUrl: "https://api.whatever.url",
-			uuid: "xxx-xxx-xxx"
+			uuid: "xxx-xxx-xxx",
+			clientKey: "1234"
 		});
 		expect(sqsQueues.push.sendMessage).toBeCalledWith(expect.objectContaining({
 			gitHubAppConfig: {
@@ -33,7 +34,8 @@ describe("Enqueue push", () => {
 				clientId: "clientId",
 				gitHubBaseUrl: "https://whatever.url",
 				gitHubApiUrl: "https://api.whatever.url",
-				uuid: "xxx-xxx-xxx"
+				uuid: "xxx-xxx-xxx",
+				clientKey: "1234"
 			}
 		}));
 	});

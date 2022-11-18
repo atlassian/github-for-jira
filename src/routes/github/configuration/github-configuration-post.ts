@@ -65,6 +65,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		const subscription = await Subscription.install({
 			clientKey: getHashedKey(req.body.clientKey),
+			plainClientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
 			gitHubAppId

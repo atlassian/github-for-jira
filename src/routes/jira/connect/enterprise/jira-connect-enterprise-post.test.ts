@@ -93,7 +93,7 @@ describe("POST /jira/connect/enterprise", () => {
 			privateKey: "dragon",
 			gitHubAppName: "Monkey D. Dragon",
 			installationId: installation.id
-		});
+		}, installation.plainClientKey);
 
 		const response = mockResponse();
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);

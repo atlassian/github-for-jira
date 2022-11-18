@@ -289,7 +289,8 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 			});
 			it("should install subscription", async () => {
@@ -307,7 +308,8 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 				expect(cloudSub.id).toBe(cloudSub2.id);
 				expect((await Subscription.findAll()).length).toBe(1);
@@ -321,7 +323,8 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 			});
 			it("should install a new sub even with same gitHubInstallationId", async ()=>{
@@ -329,7 +332,8 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 				expect(cloudSub.id).not.toBe(ghesSub.id);
 				expect((await Subscription.findAll()).length).toBe(2);
@@ -345,13 +349,15 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 				const ghesSub2 = await Subscription.install({
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
-					clientKey: "cloud_client_key"
+					clientKey: "cloud_client_key",
+					plainClientKey: "cloud_client_key"
 				});
 				expect(ghesSub1.id).toBe(ghesSub2.id);
 				expect((await Subscription.findAll()).length).toBe(2);

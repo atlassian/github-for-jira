@@ -34,7 +34,8 @@ describe("sync/installation", () => {
 			clientId: "client_id",
 			gitHubBaseUrl: "http://ghes.server",
 			gitHubApiUrl: "http://ghes.server",
-			uuid: UUID()
+			uuid: UUID(),
+			clientKey: "blah"
 		}
 	};
 
