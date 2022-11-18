@@ -73,7 +73,7 @@ const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClie
 			httpAgent: new HttpProxyAgent(proxy),
 			httpsAgent: new HttpsProxyAgent(proxy),
 			proxy: false
-		}).post("/plugins/servlet/oauth/consumer-info");
+		}).get("/plugins/servlet/oauth/consumer-info");
 		text = result.data;
 	} catch (e) {
 		throw { msg: e.message, jiraHost, id };
