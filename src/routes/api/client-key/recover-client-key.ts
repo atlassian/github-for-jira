@@ -33,17 +33,14 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 	let failCount = 0;
 
 	for (const installation of foundInstallations) {
-
 		try {
-
 			const originClientKey = await getAndVerifyOriginClientKey(installation);
 			installation.jiraClientKey = originClientKey;
 			await installation.save();
-
 			successCount++;
 		} catch (e) {
 			failCount++;
-			res.write(`Something wrong when processing installation id: ${installation.id}: ${safeJsonStringify(e)}\n`);
+			res.write(`SKIPPED: ${safeJsonStringify(e)}\n`);
 		}
 
 	}
@@ -60,23 +57,25 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 const getAndVerifyOriginClientKey = async ({ id, jiraHost, clientKey: hashedClientKeyInDB }: Installation): Promise<string>  => {
 
 	if (!jiraHost) {
-		throw { msg: `Cannot find jiraHost`, id };
+		throw { msg: `JiraHost missing`, id };
 	}
 	if (!jiraHost.endsWith("/")) jiraHost = jiraHost + "/";
 
-	const result = await axios(`${jiraHost}plugins/servlet/oauth/consumer-info`);
-	if (result.status != 200) {
-		throw { msg: `Error fetching consumer-info`, jiraHost, id };
+	let text: string | undefined;
+	try {
+		const result = await axios(`${jiraHost}plugins/servlet/oauth/consumer-info`);
+		text = result.data;
+	} catch (e) {
+		throw { msg: e.message, jiraHost, id };
 	}
 
-	const text = result.data;
 	if (!text) {
-		throw { msg: `Response data empty`, jiraHost, id };
+		throw { msg: `Empty consumer-info`, jiraHost, id };
 	}
 
 	const [, originClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
 	if (!originClientKey) {
-		throw { msg: `Cannot extract origin client key`, jiraHost, id, text };
+		throw { msg: `Client key regex failed`, jiraHost, id, text };
 	}
 
 	const hashedOriginClientKey = getHashedKey(originClientKey);
