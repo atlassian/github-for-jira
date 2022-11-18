@@ -23,8 +23,8 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-export const getGitHubApiUrl = async (jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+export const getGitHubApiUrl = async (jiraHost: string, gitHubAppId: number | undefined, logger: Logger, jiraClientKey: string) => {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.apiUrl}`
 		: GITHUB_CLOUD_API_BASEURL;
@@ -84,14 +84,14 @@ const buildGitHubCloudConfig = async (jiraHost: string, logger: Logger): Promise
 	};
 };
 
-const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => (
+const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string, jiraClientKey: string, logger: Logger): Promise<GitHubClientConfig> => (
 	{
 		...(await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl, jiraHost, logger)),
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
-		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(jiraClientKey),
+		privateKey: await gitHubServerApp.getDecryptedPrivateKey(jiraClientKey)
 	}
 );
 
@@ -110,10 +110,10 @@ const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): P
 	};
 };
 
-export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, logger: Logger, jiraHost: string): Promise<GitHubClientConfig> => {
+export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, logger: Logger, jiraHost: string, jiraClientKey: string): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
-		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost, logger);
+		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost, jiraClientKey, logger);
 	}
 	return buildGitHubClientCloudConfig(jiraHost, logger);
 };
@@ -122,8 +122,8 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to
  * get all installation or get more info for the app
  */
-export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, jiraClientKey: string): Promise<GitHubAppClient> => {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	return new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 };
 
@@ -131,8 +131,8 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to get
  * information specific to an organization.
  */
-export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined, jiraClientKey: string): Promise<GitHubInstallationClient> => {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);
 	} else {
@@ -143,8 +143,8 @@ export const createInstallationClient = async (gitHubInstallationId: number, jir
 /**
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
-export const createUserClient = async (githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+export const createUserClient = async (githubToken: string, jiraHost: string, logger: Logger, gitHubAppId: number | undefined, jiraClientKey: string): Promise<GitHubUserClient> => {
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	return new GitHubUserClient(githubToken, gitHubClientConfig, logger);
 };
 
@@ -152,7 +152,7 @@ export const createAnonymousClient = async (gitHubBaseUrl: string, jiraHost: str
 	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
 };
 
-export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
-	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number, jiraHost: string, logger: Logger, jiraClientKey: string): Promise<GitHubAnonymousClient> => {
+	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost, jiraClientKey);
 	return new GitHubAnonymousClient(config);
 };

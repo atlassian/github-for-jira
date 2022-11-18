@@ -50,6 +50,9 @@ export class GitHubServerApp extends Model {
 	updatedAt: Date;
 	createdAt: Date;
 
+  public save(options?: SaveOptions): Promise<this> {
+		return super.save(options);
+	}
 	getDecryptedGitHubClientSecret(jiraClientKey: string): Promise<string> {
 		return EncryptionClient.decrypt(this.gitHubClientSecret, getEncryptContext(jiraClientKey));
 	}

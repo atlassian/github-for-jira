@@ -11,6 +11,7 @@ describe("get-github-client-config", () => {
 	const uuid = newUUID();
 	const APP_ID = 123;
 	const GHES_HOSTNAME = "myinternalserver.com:8090";
+	const jiraClientKey = "jiraClientKey1";
 	let gitHubServerApp: GitHubServerApp;
 	beforeEach(async () => {
 		const payload = {
@@ -25,7 +26,7 @@ describe("get-github-client-config", () => {
 			installationId: 10
 		};
 
-		gitHubServerApp = await GitHubServerApp.install(payload);
+		gitHubServerApp = await GitHubServerApp.install(payload, jiraClientKey);
 
 	});
 
@@ -38,7 +39,7 @@ describe("get-github-client-config", () => {
 			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 			.mockResolvedValue(GHES_HOSTNAME);
 
-		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost, jiraClientKey);
 		expect(config.proxyBaseUrl).toBeUndefined();
 	});
 
@@ -47,7 +48,7 @@ describe("get-github-client-config", () => {
 			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 			.mockResolvedValue(new URL("http://" + GHES_HOSTNAME).hostname);
 
-		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost, jiraClientKey);
 		expect(config.proxyBaseUrl).toBeUndefined();
 	});
 
@@ -56,7 +57,7 @@ describe("get-github-client-config", () => {
 			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 			.mockResolvedValue("http://" + GHES_HOSTNAME);
 
-		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost, jiraClientKey);
 		expect(config.proxyBaseUrl).toBeUndefined();
 	});
 
@@ -65,7 +66,7 @@ describe("get-github-client-config", () => {
 			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 			.mockResolvedValue("some-other-instance.com");
 
-		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost, jiraClientKey);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 
@@ -74,7 +75,7 @@ describe("get-github-client-config", () => {
 			.calledWith(StringFlags.OUTBOUND_PROXY_SKIPLIST, expect.anything(), jiraHost)
 			.mockResolvedValue("github.com,api.github.com");
 
-		const config = await getGitHubClientConfigFromAppId(undefined, getLogger("test"), jiraHost);
+		const config = await getGitHubClientConfigFromAppId(undefined, getLogger("test"), jiraHost, jiraClientKey);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 });

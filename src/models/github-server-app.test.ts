@@ -116,55 +116,6 @@ describe("GitHubServerApp", () => {
 					expect(existApp.gitHubClientSecret).toBe("encrypted:new-client-secret-plain-text");
 				});
 
-				it("should convert plain text into encrypted text when calling FIND OR CREATE", async () => {
-					const uuid = newUUID();
-					const [app, created] = await GitHubServerApp.findOrCreate({
-						where: {
-							uuid: uuid
-						},
-						defaults: {
-							...defaults(uuid)
-						}
-					});
-					expect(created).toBe(true);
-					expect(app.privateKey).toBe("encrypted:private-key-plain-text");
-					expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
-					expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
-				});
-
-				it("should convert plain text into encrypted text when calling BUILD and SAVE", async () => {
-					const uuid = newUUID();
-					const app = GitHubServerApp.build({ ...defaults(uuid) });
-					await app.save();
-					expect(app.privateKey).toBe("encrypted:private-key-plain-text");
-					expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
-					expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
-				});
-			});
-
-			describe("Bulk opreations", () => {
-				it("should convert plain text into encrypted text when calling BULK CREATE", async () => {
-					const uuid1 = newUUID();
-					const uuid2 = newUUID();
-					const apps = await GitHubServerApp.bulkCreate([{ ...defaults(uuid1, "-0") }, { ...defaults(uuid2, "-1") }]);
-					for (const [i, app] of apps.entries()) {
-						expect(app.privateKey).toBe("encrypted:private-key-plain-text-" + i);
-						expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text-" + i);
-						expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text-" + i);
-					}
-				});
-
-				it("should convert plain text into encrypted text when calling BULK BUILD", async () => {
-					const uuid1 = newUUID();
-					const uuid2 = newUUID();
-					const apps = GitHubServerApp.bulkBuild([{ ...defaults(uuid1, "-0") }, { ...defaults(uuid2, "-1") }]);
-					await Promise.all(apps.map(app => app.save()));
-					for (const [i, app] of apps.entries()) {
-						expect(app.privateKey).toBe("encrypted:private-key-plain-text-" + i);
-						expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text-" + i);
-						expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text-" + i);
-					}
-				});
 			});
 
 			describe("GitHubServerApp creation", ()=>{
