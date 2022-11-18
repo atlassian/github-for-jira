@@ -123,7 +123,7 @@ describe("Deployment Webhook", () => {
 							"schemaVersion": "1.0",
 							"deploymentSequenceNumber": 1234,
 							"updateSequenceNumber": 123456,
-							"displayName": "deploy",
+							"displayName": "[TEST-123] test-commit-message",
 							"url": "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 							"description": "deploy",
 							"lastUpdated": "2021-06-28T12:15:18.000Z",
