@@ -4,6 +4,7 @@ import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
+import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -40,20 +41,10 @@ describe("GitHub Create Branch Get", () => {
 		});
 
 		it("should hit the create branch on GET if authorized", async () => {
-			const orgName = "orgName";
-
-			githubNock
-				.get("/user")
-				.reply(200, { data: { login: "test-account" } });
-
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
-
-			githubNock
-				.get(`/app/installations/${gitHubInstallationId}`)
-				.reply(200, { account: { login: orgName } });
 
 			githubNock
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
@@ -63,25 +54,9 @@ describe("GitHub Create Branch Get", () => {
 				.get("/user")
 				.reply(200, { login: "test-account" });
 
-			const queryStringInstallation = ` org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories`)
-				.query({
-					q: queryStringInstallation,
-					order: "updated" })
-				.reply(200, {
-					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
-				});
-
-			const queryStringUser = ` org:${orgName} org:test-account in:name`;
-			githubNock
-				.get(`/search/repositories`)
-				.query({
-					q: queryStringUser,
-					order: "updated" })
-				.reply(200, {
-					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
-				});
+				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: "UPDATED_AT" } })
+				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
 
 			await supertest(app)
 				.get("/github/create-branch").set(
