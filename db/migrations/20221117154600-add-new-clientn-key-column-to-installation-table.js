@@ -1,16 +1,13 @@
 "use strict";
 
-const tableName = "Installations";
-
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		await queryInterface.addColumn(tableName, "jiraClientKey", {
-			type: Sequelize.STRING,
-			allowNull: true
-		});
+		await queryInterface.addColumn("Installations", "plainClientKey", { type: Sequelize.STRING, allowNull: true });
+		await queryInterface.addColumn("Subscriptions", "plainClientKey", { type: Sequelize.STRING, allowNull: true });
 	},
 
 	down: async (queryInterface) => {
-		await queryInterface.removeColumn(tableName, "jiraClientKey");
+		await queryInterface.removeColumn("Installations", "plainClientKey");
+		await queryInterface.removeColumn("Subscriptions", "plainClientKey");
 	}
 };
