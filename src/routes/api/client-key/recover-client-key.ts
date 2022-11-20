@@ -44,7 +44,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 			installation.plainClientKey = plainClientKey;
 			await installation.save();
 			log.info({ id: installation.id }, `Saved plainClientKey successfully for installation`);
-			const subscriptions: Subscription[] = await Subscription.findAll({ where: { clientKey: installation.clientKey } });
+			const subscriptions: Subscription[] = await Subscription.getAllForClientKey(installation.clientKey);
 			for (const sub of subscriptions) {
 				sub.plainClientKey = plainClientKey;
 				await sub.save();
