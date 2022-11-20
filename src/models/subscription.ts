@@ -1,6 +1,6 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize } from "models/sequelize";
+import { sequelize, getHashedKey } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -176,8 +176,11 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey,
+				jiraClientKey: getHashedKey(payload.clientKey),
 				gitHubAppId: payload.gitHubAppId || null
+			},
+			defaults: {
+				plainClientKey: payload.clientKey
 			}
 		});
 

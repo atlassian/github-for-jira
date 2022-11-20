@@ -1,6 +1,5 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
-import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
@@ -64,7 +63,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		}
 
 		const subscription = await Subscription.install({
-			clientKey: getHashedKey(req.body.clientKey),
+			clientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
 			gitHubAppId
