@@ -51,21 +51,21 @@ const createUrlForGH = (issueKey, issueSummary, uuid) => {
     `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
 };
 
-const goToCreateBranch = (url, isRedirect) => {
-  AP.context.getToken(token => {
-    const child = window.open(url);
-    child.window.jiraHost = jiraHost;
-    child.window.jwt = token;
-    if (isRedirect) {
-      const childWindowTimer = setInterval(() => {
-        if (child.closed) {
-          AP.navigator.go("issue", { issueKey: params.get("issueKey") });
-          clearInterval(childWindowTimer);
-        }
-      }, 500);
-    }
-  });
-};
+const goToCreateBranch = () => {
+	document.location.href = getCreateBranchTargetUrl();
+}
+
+const getCreateBranchTargetUrl = () => {
+	const searchParams = new URLSearchParams(window.location.search.substring(1));
+	const issueKey = searchParams.get("issueKey");
+	const jiraHost = $("#jiraHost").val();
+	const issueSummary = searchParams.get("issueSummary");
+	if ($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
+		return`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}`;
+	}
+	const uuid = $("#ghServers").select2("val");
+	return `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&ghRedirect=to`;
+}
 
 /**
  * Checks the number of cloud & enterprise servers and returns if the page should be redirected or not,
@@ -97,5 +97,3 @@ const isAutoRedirect = () => {
     isRedirect: false
   };
 };
-
-

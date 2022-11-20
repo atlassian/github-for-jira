@@ -200,9 +200,11 @@ const createBranchPost = () => {
   }
   const repo = getRepoDetails();
   const newBranchName = $("#branchNameText").val();
+  const jiraHost = $("#jiraHost").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
+		jiraHostEncoded: encodeURIComponent(jiraHost),
     sourceBranchName: $("#ghParentBranch").select2("val"),
     newBranchName,
     _csrf: $("#_csrf").val(),

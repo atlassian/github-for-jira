@@ -1,20 +1,17 @@
 import { NextFunction, Request, Response } from "express";
-import axios from "axios";
-import Logger from "bunyan";
 import { Errors } from "config/errors";
 import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { getGitHubApiUrl } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
+// TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { jiraHost } = res.locals;
-	const { issueKey } = req.query;
-	const { githubToken } = req.session;
+	const { issueKey, tenantUrl } = req.query;
 
-	if (!jiraHost) {
+
+	if (!tenantUrl) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
@@ -24,10 +21,16 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
+	const jiraHost = getJiraHostFromTenantUrl(tenantUrl);
+
+	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
+
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
+		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
@@ -38,28 +41,23 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return;
 	}
 
-	try {
-		const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+	const encodedJiraHost = encodeURIComponent(jiraHost);
+	// Only has cloud instance
 
-		if (githubToken && servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-			await validateGitHubToken(jiraHost, githubToken, req.log);
-			res.redirect(`/github/create-branch${url.search}`);
-			return;
-		}
-		// Only single GitHub Enterprise connected
-		if (githubToken && !servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-			const gitHubServerApp = await GitHubServerApp.findForUuid(servers.gheServerInfos[0].uuid);
-			const gitHubAppId = gitHubServerApp?.id || undefined;
-			await validateGitHubToken(jiraHost, githubToken, req.log, gitHubAppId);
-			res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
-			return;
-		}
-	} catch (err) {
-		req.log.error("Invalid github token");
+	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
+		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		return;
+	}
+	// Only single GitHub Enterprise connected
+	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
+		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		return;
 	}
 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
+		jiraHost,
 		servers
 	});
 
@@ -69,13 +67,9 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	});
 };
 
-const validateGitHubToken = async (jiraHost: string, githubToken: string, logger: Logger, gitHubAppId?: number) => {
-	const githubUrl = await getGitHubApiUrl(jiraHost, gitHubAppId, logger);
-	await axios.get(githubUrl, {
-		headers: {
-			Authorization: `Bearer ${githubToken}`
-		}
-	});
+const getJiraHostFromTenantUrl = (jiraHostParam) =>  {
+	const siteName = jiraHostParam?.substring(0, jiraHostParam?.indexOf("."));
+	return `https://${siteName}.atlassian.net`;
 };
 
 const getGitHubServers = async (jiraHost: string) => {
