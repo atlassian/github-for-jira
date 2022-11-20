@@ -24,9 +24,17 @@
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
 <input type="hidden" id="gitHubHostname" name="hostname" value="{{hostname}}" />
 
-<div class="gitHubCreateBranch__userDetails">
-  <div>GitHub account: <b>{{gitHubUser}}</b></div>
-  <div><a href="#" id="changeLogin">Change GitHub login</a></div>
+<div class="gitHubCreateBranch__contextContainer">
+  {{#if multiGHInstance}}
+  <div class="gitHubCreateBranch__changeInstance">
+    <div>GitHub Cloud</b></div>
+    <div><a href="#" id="changeInstance">Change GitHub instance</a></div>
+  </div>
+  {{/if}}
+  <div class="gitHubCreateBranch__userDetails">
+    <div>GitHub account: <b>{{gitHubUser}}</b></div>
+    <div><a href="#" id="changeLogin">Change GitHub login</a></div>
+  </div>
 </div>
 <section class="gitHubCreateBranch">
   <div class="headerImage">
