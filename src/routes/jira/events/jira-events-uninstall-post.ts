@@ -21,7 +21,6 @@ export const JiraEventsUninstallPost = async (req: Request, res: Response): Prom
 	const jiraClient = await getJiraClient(installation.jiraHost, undefined, undefined, req.log);
 	const appKey = getAppKey();
 	await jiraClient.appProperties.delete(appKey);
-
 	await installation.uninstall();
 
 	req.log.info("App uninstalled on Jira.");
