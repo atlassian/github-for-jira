@@ -12,7 +12,7 @@ import { extractClientKey } from "./client-key-regex";
 import { chunk } from "lodash";
 
 const DEFAULT_BATCH_SIZE = 5000;
-const DEFAULT_PARALEL_SIZE = 10;
+const DEFAULT_PARALLEL_SIZE = 10;
 
 export const RecoverClientKeyPost = async (req: Request, res: Response): Promise<void> => {
 
