@@ -103,6 +103,10 @@ $(document).ready(() => {
   });
 });
 
+$("#changeInstance").click(function (event) {
+	event.preventDefault();
+	changeGitHubInstance();
+});
 
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
@@ -315,7 +319,10 @@ const changeGitHubLogin = () => {
     error: (error) => {
       console.log(error);
     }
-
   });
-
 };
+
+const changeGitHubInstance = () => {
+	const url = new URL(window.location.href);
+	document.location.href = `/create-branch-options${url.search}`;
+}
