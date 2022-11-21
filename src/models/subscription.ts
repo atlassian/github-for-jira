@@ -1,6 +1,6 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize } from "models/sequelize";
+import { sequelize, getHashedKey } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -33,6 +33,7 @@ export class Subscription extends Model {
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
+	plainClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
 	totalNumberOfRepos?: number;
@@ -175,8 +176,11 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey,
+				jiraClientKey: getHashedKey(payload.clientKey),
 				gitHubAppId: payload.gitHubAppId || null
+			},
+			defaults: {
+				plainClientKey: payload.clientKey
 			}
 		});
 
@@ -225,6 +229,10 @@ Subscription.init({
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
+	plainClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
 	numberOfSyncedRepos: DataTypes.INTEGER,
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
