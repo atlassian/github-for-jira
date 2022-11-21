@@ -61,10 +61,10 @@ describe("Webhook: /events/uninstalled", () => {
 
 	it("Existing Installation", async () => {
 		when(jest.mocked(getJiraClient))
-			.calledWith(jiraHost, undefined, undefined, expect.anything())
+			.calledWith(installation.jiraHost, undefined, undefined, expect.anything())
 			.mockResolvedValue(mockJiraClient);
 
-		const req = {} as any;
+		const req = { log: getLogger("test") } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		await JiraEventsUninstallPost(req, res);
@@ -75,10 +75,10 @@ describe("Webhook: /events/uninstalled", () => {
 
 	it("Existing Installation, no Subscriptions", async () => {
 		when(jest.mocked(getJiraClient))
-			.calledWith(jiraHost, undefined, undefined, expect.anything())
+			.calledWith(installation.jiraHost, undefined, undefined, expect.anything())
 			.mockResolvedValue(mockJiraClient);
 
-		const req = {} as any;
+		const req = { log: getLogger("test") } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		subscriptions = [];
