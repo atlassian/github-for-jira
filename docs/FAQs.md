@@ -17,6 +17,11 @@
 
 When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
+<h3>Q: Why can't I see the Author/Reviewer names and/or icons in the Dev Dialog in Jira?</h3>
+
+**A:** The author/reviewer names/icon will no longer be shown if the email address does not correspond with a valid atlassian account. The behaviour is now similar to the smart commits, which also don't work if the commit email address is different from your atlassian account.
+![Not seeing names/icons](./images/author-icons-in-jira-for-non-matching-atlassian-emails.png)
+
 ## Permissions
 
 <h3>Q: The permission scope for code and metadata suggests data is read to synchronize development information. Is code stored on Jira? Should I be concerned that, were the app to be compromised, an actor could exfiltrate all our code from GitHub?</h3>
@@ -132,3 +137,4 @@ When an organization contains a small amount of data, the backfilling process is
 <h3>Q: Do I have to wait for all data to complete backfilling before I can start using the GitHub for Jira integration?</h3>
 
 **A:** No :) The job of backfilling is to pull in all your historical data so that, if any issue keys were referenced before you installed the app, you will eventually see that data in Jira. This means you can start using the app with your team immediately as the app will start listening and responding to webhook events (real-time data) straight away.
+
