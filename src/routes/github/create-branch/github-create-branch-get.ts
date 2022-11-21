@@ -4,17 +4,16 @@ import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
-import { Subscription } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
-import { RepositoryNode } from "~/src/github/client/github-queries";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
-		jiraHost,
 		githubToken,
 		gitHubAppConfig
 	} = res.locals;
+	const jiraHost = req.query?.jiraHost as string;
 
 	if (!githubToken) {
 		req.log.warn(Errors.MISSING_GITHUB_TOKEN);
@@ -33,17 +32,19 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
+	// TODO move to middleware or shared for create-branch-options-get
 	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
+		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
 			jiraHost
 		});
-
 		return;
 	}
 
@@ -79,7 +80,7 @@ const sortByDateString = (a, b) => {
 	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
 };
 
-const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
@@ -93,7 +94,8 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 
 	const repos = (await Promise.all(repoTasks))
 		.flat()
-		.sort(sortByDateString);
+		.sort(sortByDateString)
+		.map(repo => repo.node);
 
 	return repos.slice(0, MAX_REPOS_RETURNED);
 };

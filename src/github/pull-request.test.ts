@@ -18,7 +18,7 @@ import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
-describe("Pull Request Webhook", () => {
+describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 	const issueKeys = ["TEST-123", "TEST-321"];
@@ -78,6 +78,10 @@ describe("Pull Request Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_SHARED_PR_TRANSFORM,
+			expect.anything()
+		).mockResolvedValue(useSharedPrFlag);
 
 	});
 
