@@ -9,9 +9,9 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { issueKey, tenantUrl } = req.query;
+	const jiraHostQuery = req.query.jiraHost as string;
 
-
-	if (!tenantUrl) {
+	if (!tenantUrl && !jiraHostQuery) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
@@ -21,7 +21,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = getJiraHostFromTenantUrl(tenantUrl);
+	const jiraHost = getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
 
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
@@ -67,7 +67,10 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	});
 };
 
-const getJiraHostFromTenantUrl = (jiraHostParam) =>  {
+const getJiraHostFromTenantUrl = (jiraHostParam): string | undefined =>  {
+	if (!jiraHostParam) {
+		return undefined;
+	}
 	const siteName = jiraHostParam?.substring(0, jiraHostParam?.indexOf("."));
 	return `https://${siteName}.atlassian.net`;
 };
