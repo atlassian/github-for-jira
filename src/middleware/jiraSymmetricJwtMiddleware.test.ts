@@ -1,4 +1,6 @@
 import { encodeSymmetric } from "atlassian-jwt";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { getLogger } from "~/src/config/logger";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
 import { Installation } from "~/src/models/installation";
@@ -6,6 +8,7 @@ import { Installation } from "~/src/models/installation";
 
 const logger = getLogger("jira-jwt-verify-middleware.test");
 jest.mock("models/installation");
+jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
 
 describe("jiraSymmetricJwtMiddleware", () => {
@@ -47,12 +50,18 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			return null;
 		});
 
+		when(booleanFlag).calledWith(
+			BooleanFlags.NEW_JWT_VALIDATION,
+			expect.anything()
+		).mockResolvedValue(true);
+
 	});
 
 	it("should throw error when token is missing and no jiraHost in session", async () => {
 		const req = buildRequestWithNoToken();
 
 		await jiraSymmetricJwtMiddleware(req, res, next);
+
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(res.send).toBeCalledWith("Unauthorised");
 		expect(next).toBeCalledTimes(0);
