@@ -64,7 +64,6 @@ RootRouter.use(jirahostMiddleware);
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
 
-//Todo: remove jiraSymmetricJwtMiddleware and set jirahost to session in GithubCreateBranchOptionsGet
 RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
