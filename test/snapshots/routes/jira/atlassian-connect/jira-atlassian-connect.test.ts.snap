@@ -46,14 +46,6 @@ Object {
     ],
     "generalPages": Array [
       Object {
-        "key": "create-branch-options",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Create Branch",
-        },
-        "url": "/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}",
-      },
-      Object {
         "conditions": Array [
           Object {
             "condition": "user_is_admin",
@@ -264,14 +256,6 @@ Object {
       },
     ],
     "generalPages": Array [
-      Object {
-        "key": "create-branch-options",
-        "location": "none",
-        "name": Object {
-          "value": "GitHub Create Branch",
-        },
-        "url": "/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}",
-      },
       Object {
         "conditions": Array [
           Object {

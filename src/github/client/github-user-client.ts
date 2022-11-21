@@ -9,7 +9,7 @@ import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
 	GetRepositoriesQuery,
-	GetRepositoriesResponse,
+	GetRepositoriesResponse, SearchedRepositoriesResponse,
 	UserOrganizationsQuery,
 	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
@@ -134,6 +134,15 @@ export class GitHubUserClient extends GitHubClient {
 			urlParams: {
 				owner,
 				repo
+			}
+		});
+	}
+
+	public async searchRepositories(queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`, {
+			urlParams: {
+				queryString,
+				order
 			}
 		});
 	}

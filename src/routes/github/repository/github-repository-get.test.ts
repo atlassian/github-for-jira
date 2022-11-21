@@ -55,11 +55,28 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			const queryString = `${randomString} org:${orgName} in:name`;
 			githubNock
-				.get(`/search/repositories?q=${queryString}`)
+				.get("/user")
+				.reply(200, { login: "test-account" });
+
+			const queryStringInstallation = `${randomString} org:${orgName} in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
 				.reply(200, {
-					items: [{ full_name: "first" }, { full_name: "second" }]
+					items: [{ full_name: "first", id: 2 }, { full_name: "second", id: 1 }]
+				});
+
+			const queryStringUser = `${randomString} org:${orgName} org:test-account in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
+				.reply(200, {
+					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 2 }]
 				});
 
 			await supertest(app)
@@ -72,6 +89,66 @@ describe("GitHub Repository Search", () => {
 				.expect(res => {
 					expect(res.status).toBe(200);
 					expect(res.body?.repositories).toHaveLength(2);
+				});
+		});
+
+		it("should only return repos that user and installation have access too", async () => {
+			const gitHubInstallationId = 15;
+			const orgName = "orgName";
+
+			await Subscription.create({
+				gitHubInstallationId,
+				jiraHost
+			});
+
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
+
+			githubNock
+				.get(`/app/installations/${gitHubInstallationId}`)
+				.reply(200, { account: { login: orgName } });
+
+			githubNock
+				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+				.reply(200);
+
+			githubNock
+				.get("/user")
+				.reply(200, { login: "test-account" });
+
+			const queryStringInstallation = `${randomString} org:${orgName} in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringInstallation,
+					order: "updated" })
+				.reply(200, {
+					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
+				});
+
+			const queryStringUser = `${randomString} org:${orgName} org:test-account in:name`;
+			githubNock
+				.get(`/search/repositories`)
+				.query({
+					q: queryStringUser,
+					order: "updated" })
+				.reply(200, {
+					items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
+				});
+
+			await supertest(app)
+				.get("/github/repository").set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}))
+				.expect(res => {
+					expect(res.status).toBe(200);
+					expect(res.body?.repositories).toHaveLength(1);
+					expect(res.body?.repositories[0].id).toEqual(1);
 				});
 		});
 	});

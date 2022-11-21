@@ -290,7 +290,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: deployment.id,
 			updateSequenceNumber: deployment_status.id,
-			displayName: deployment.task,
+			displayName: message.substring(0, 255),
 			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: new Date(deployment_status.updated_at),
