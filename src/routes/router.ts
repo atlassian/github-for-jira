@@ -16,7 +16,8 @@ import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
-import { jiraHostMiddleware } from "~/src/middleware/jira-jwt-middleware";
+import { jirahostMiddleware } from "~/src/middleware/jirahost-middleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
 
 export const RootRouter = Router();
 
@@ -58,18 +59,19 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 RootRouter.use(cookieSessionMiddleware);
 
 // Set the jiraHost to the res.locals and also to secure session if available
-RootRouter.use(jiraHostMiddleware);
+RootRouter.use(jirahostMiddleware);
 
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
 
-RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
+//Todo: remove jiraSymmetricJwtMiddleware and set jirahost to session in GithubCreateBranchOptionsGet
+RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", async (req: Request, res: Response) => {
+RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 	const { data: info } = await gitHubAppClient.getApp();

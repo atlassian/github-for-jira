@@ -13,6 +13,7 @@ import { UUID_REGEX } from "~/src/util/regex";
 import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -23,6 +24,8 @@ subRouter.post("/webhooks",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
+
+subRouter.use(jiraSymmetricJwtMiddleware);
 
 //Have an cover all middleware to extract the optional gitHubAppId
 //subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);

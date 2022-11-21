@@ -1,0 +1,161 @@
+import { encodeSymmetric } from "atlassian-jwt";
+import { getLogger } from "~/src/config/logger";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
+import { Installation } from "~/src/models/installation";
+
+
+const logger = getLogger("jira-jwt-verify-middleware.test");
+jest.mock("models/installation");
+const testSharedSecret = "test-secret";
+
+describe("jiraSymmetricJwtMiddleware", () => {
+	let res;
+	let next;
+	let installation;
+
+	beforeEach(async () => {
+		res = {
+			locals: {
+			},
+			status: jest.fn(),
+			json: jest.fn(),
+			send: jest.fn()
+		};
+		res.status.mockReturnValue(res);
+		next = jest.fn();
+
+		installation = {
+			id: 19,
+			jiraHost,
+			clientKey: "jira-client-key",
+			enabled: true,
+			decrypt: jest.fn(() => testSharedSecret),
+			subscriptions: jest.fn().mockResolvedValue([])
+		};
+
+		jest.mocked(Installation.getForClientKey).mockImplementation((clientKey) => {
+			if (clientKey == installation.clientKey)	{
+				return installation;
+			}
+			return null;
+		});
+
+		jest.mocked(Installation.getForHost).mockImplementation((host) => {
+			if (host == installation.jiraHost)	{
+				return installation;
+			}
+			return null;
+		});
+
+	});
+
+	it("should throw error when token is missing and no jiraHost in session", async () => {
+		const req = buildRequestWithNoToken();
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+		expect(res.status).toHaveBeenCalledWith(401);
+		expect(res.send).toBeCalledWith("Unauthorised");
+		expect(next).toBeCalledTimes(0);
+	});
+
+	it("should throw error when issuer is missing in wrong", async () => {
+
+		const req = buildRequest(testSharedSecret, "");
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(res.status).toHaveBeenCalledWith(401);
+		expect(res.send).toBeCalledWith("Unauthorised");
+		expect(next).toBeCalledTimes(0);
+	});
+
+	it("should throw error when no installation is found", async () => {
+
+		const req = buildRequest(testSharedSecret, "jira-worng-key");
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(res.status).toHaveBeenCalledWith(401);
+		expect(res.send).toBeCalledWith("Unauthorised");
+		expect(next).toBeCalledTimes(0);
+	});
+
+	it("should call next with a valid token", async () => {
+		const req = buildRequest(testSharedSecret);
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledWith();
+	});
+
+	it("should set res.locals and req.session with a valid token", async () => {
+		const req = buildRequest(testSharedSecret);
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(res.locals.installation).toEqual(installation);
+		expect(res.locals.jiraHost).toEqual(installation.jiraHost);
+		expect(req.session.jiraHost).toEqual(installation.jiraHost);
+	});
+
+	it("should throw error when token is wrong", async () => {
+		const req = buildRequest("wrong-secret");
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(res.status).toHaveBeenCalledWith(401);
+		expect(res.send).toBeCalledWith("Unauthorised");
+		expect(next).toBeCalledTimes(0);
+	});
+
+	it("should call next when jiraHost set in session", async () => {
+		const req = buildRequestWithNoToken();
+		req.session.jiraHost = installation.jiraHost;
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledWith();
+	});
+
+	it("should set res.locals and req.session when jiraHost set in session", async () => {
+		const req = buildRequestWithNoToken();
+		req.session.jiraHost = installation.jiraHost;
+
+		await jiraSymmetricJwtMiddleware(req, res, next);
+
+		expect(next).toHaveBeenCalledTimes(1);
+		expect(res.locals.installation).toEqual(installation);
+		expect(res.locals.jiraHost).toEqual(installation.jiraHost);
+	});
+
+});
+
+
+const buildRequestWithNoToken = (): any => {
+	return {
+		query: {
+		},
+		addLogFields: jest.fn(),
+		log: logger,
+		session : { }
+	};
+};
+
+const buildRequest = (secret = "secret", iss = "jira-client-key"): any => {
+	const jwtValue = encodeSymmetric({
+		qsh: "context-qsh",
+		iss
+	}, secret);
+
+	return {
+		query: {
+			jwt: jwtValue
+		},
+		cookies: {
+		},
+		addLogFields: jest.fn(),
+		log: logger,
+		session: { }
+	};
+};

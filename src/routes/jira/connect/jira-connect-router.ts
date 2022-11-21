@@ -2,11 +2,12 @@ import { Router } from "express";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraConnectGet } from "./jira-connect-get";
 import { JiraConnectEnterpriseRouter } from "./enterprise/jira-connect-enterprise-router";
-import { jiraJwtVerifyMiddleware } from "~/src/middleware/jira-jwt-middleware";
+import { JiraJwtTokenMiddleware } from "~/src/middleware/jira-jwt-middleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
 
 export const JiraConnectRouter = Router();
 
 JiraConnectRouter.route("/")
-	.get(csrfMiddleware, jiraJwtVerifyMiddleware, JiraConnectGet);
+	.get(csrfMiddleware, JiraJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraConnectGet);
 
 JiraConnectRouter.use("/enterprise", JiraConnectEnterpriseRouter);

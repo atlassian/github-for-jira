@@ -9,12 +9,13 @@ import { JiraDelete } from "routes/jira/jira-delete";
 import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
-import { jiraJwtVerifyMiddleware } from "~/src/middleware/jira-jwt-middleware";
+import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "~/src/middleware/jira-jwt-middleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
 
 export const JiraRouter = Router();
 
 // TODO: The params `installationId` needs to be replaced by `subscriptionId`
-JiraRouter.delete("/subscription/:installationId", jiraJwtVerifyMiddleware, JiraDelete);
+JiraRouter.delete("/subscription/:installationId", JiraContextJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraDelete);
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 
@@ -23,12 +24,13 @@ JiraRouter.use("/connect", JiraConnectRouter);
 JiraRouter.post("/sync",
 	body("commitsFromDate").optional().isISO8601(),
 	returnOnValidationError,
-	jiraJwtVerifyMiddleware,
+	JiraContextJwtTokenMiddleware,
+	jiraSymmetricJwtMiddleware,
 	JiraSyncPost);
 
 JiraRouter.use("/events", JiraEventsRouter);
 
-JiraRouter.get("/", csrfMiddleware, jiraJwtVerifyMiddleware, JiraGet);
+JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraGet);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`

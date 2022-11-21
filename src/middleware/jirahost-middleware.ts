@@ -4,6 +4,7 @@ import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
 import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "utils/match-route-with-pattern";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
@@ -41,6 +42,10 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //
 //
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+
+	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION, false)) {
+		return next();
+	}
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
 	req.addLogFields({ jiraHost: unsafeJiraHost });
