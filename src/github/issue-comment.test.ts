@@ -34,6 +34,7 @@ describe("Issue Comment Webhook", () => {
 	});
 
 	describe("issue_comment", () => {
+		const ISSUE_ID = 5678;
 		describe("created", () => {
 			it("FF ON - should update the GitHub issue with a linked Jira ticket and add PR comment as comment in Jira issue", async () => {
 				turnFF_OnOff(true);
@@ -56,7 +57,7 @@ describe("Issue Comment Webhook", () => {
 							{
 								key: "gitHubId",
 								value: {
-									gitHubId: "5678"
+									gitHubId: `${ISSUE_ID}`
 								}
 							}
 						]
@@ -88,6 +89,26 @@ describe("Issue Comment Webhook", () => {
 							summary: "Example Issue"
 						}
 					});
+
+				await expect(app.receive(issueCommentBasic as any)).toResolve();
+			});
+
+			it("no Write perms case should be tolerated", async () => {
+				githubUserTokenNock(gitHubInstallationId);
+
+				// Mocks for updating GitHub with a linked Jira ticket
+				jiraNock
+					.get("/rest/api/latest/issue/TEST-123?fields=summary")
+					.reply(200, {
+						key: "TEST-123",
+						fields: {
+							summary: "Example Issue"
+						}
+					});
+
+				githubNock.patch(`/repos/test-repo-owner/test-repo-name/issues/comments/${ISSUE_ID}`).reply(401, {
+					error: "AccessDenied"
+				});
 
 				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});

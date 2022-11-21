@@ -2,6 +2,7 @@
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
+import { getHashedKey } from "models/sequelize";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
@@ -386,7 +387,7 @@ describe("Github Configuration", () => {
 				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationAdminResponse);
 
-			const jiraClientKey = "a-unique-client-key";
+			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
@@ -403,6 +404,14 @@ describe("Github Configuration", () => {
 					})
 				)
 				.expect(200);
+
+			const subInDB = await Subscription.getAllForClientKey(getHashedKey(jiraClientKey));
+			expect(subInDB.length).toBe(1);
+			expect(subInDB[0]).toEqual(expect.objectContaining({
+				gitHubInstallationId: 1,
+				jiraClientKey: getHashedKey(jiraClientKey),
+				plainClientKey: jiraClientKey
+			}));
 		});
 	});
 });
