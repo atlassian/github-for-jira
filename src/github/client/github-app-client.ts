@@ -5,9 +5,9 @@ import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
 import { GitHubClient, GitHubConfig } from "./github-client";
+import { AppTokenKey } from "./app-token-key";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -16,17 +16,21 @@ import { GitHubClient, GitHubConfig } from "./github-client";
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
 export class GitHubAppClient extends GitHubClient {
-	private readonly appToken: AuthToken;
+
+	private readonly appTokenHolder:  AppTokenHolder;
+	private readonly appTokenKey: AppTokenKey;
+	private readonly gitHubAppId: number | undefined;
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		logger: Logger,
-		appId: string,
-		privateKey: string
+		appTokenKey: AppTokenKey,
+		gitHubAppId: number | undefined,
+		logger: Logger
 	) {
 		super(gitHubConfig, logger);
-		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
-
+		this.appTokenKey = appTokenKey;
+		this.appTokenHolder = AppTokenHolder.getInstance();
+		this.gitHubAppId = gitHubAppId;
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
 		this.axios.interceptors.request.use(urlParamsMiddleware);
@@ -39,12 +43,12 @@ export class GitHubAppClient extends GitHubClient {
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 
-		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
+		this.axios.interceptors.request.use(async (config: AxiosRequestConfig) => {
 			return {
 				...config,
 				headers: {
 					...config.headers,
-					...this.appAuthenticationHeaders()
+					...await this.appAuthenticationHeaders()
 				}
 			};
 		});
@@ -66,10 +70,11 @@ export class GitHubAppClient extends GitHubClient {
 	/**
 	 * Use this config in a request to authenticate with the app token.
 	 */
-	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
+	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestHeaders>> {
+		const token = await this.appTokenHolder.getAppToken(this.appTokenKey, this.gitHubAppId);
 		return {
 			Accept: GITHUB_ACCEPT_HEADER,
-			Authorization: `Bearer ${this.appToken.token}`
+			Authorization: `Bearer ${token}`
 		};
 	}
 

@@ -1,7 +1,7 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
 import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
 import LRUCache from "lru-cache";
-import { InstallationId } from "./installation-id";
+import { AppTokenKey } from "./app-token-key";
 import { keyLocator } from "~/src/github/client/key-locator";
 
 /**
@@ -31,7 +31,7 @@ export class AppTokenHolder {
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	public static createAppJwt(key: string, appId: string): AuthToken {
+	private static createAppJwt(key: string, appId: string): AuthToken {
 
 		const expirationDate = new Date(Date.now() + TEN_MINUTES);
 
@@ -53,15 +53,15 @@ export class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
-		let currentToken = this.appTokenCache.get(appId.toString());
+	public async getAppToken(appTokenKey: AppTokenKey, ghsaId?: number): Promise<AuthToken> {
+		let currentToken = this.appTokenCache.get(appTokenKey.toString());
 		if (!currentToken || currentToken.isAboutToExpire()) {
 			const key = await keyLocator(ghsaId);
 			if (!key) {
-				throw new Error(`No private key found for GitHub app ${appId.toString}`);
+				throw new Error(`No private key found for GitHub app ${appTokenKey.toString}`);
 			}
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
-			this.appTokenCache.set(appId.toString(), currentToken);
+			currentToken = AppTokenHolder.createAppJwt(key, appTokenKey.appId.toString());
+			this.appTokenCache.set(appTokenKey.toString(), currentToken);
 		}
 		return currentToken;
 	}

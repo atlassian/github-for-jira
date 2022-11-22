@@ -1,12 +1,12 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId } from "../github/client/installation-id";
+import { getAppTokenKey } from "../github/client/app-token-key";
 import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL, stringFlag, StringFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { envVars } from "~/src/config/env";
-import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
 
@@ -16,11 +16,9 @@ export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
 export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
 
 interface GitHubClientConfig extends GitHubConfig {
-	serverId?: number;
+	gitHubAppId?: number;
 	appId: number;
-	privateKey: string;
 	gitHubClientId: string;
-	gitHubClientSecret: string;
 }
 
 export const getGitHubApiUrl = async (jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
@@ -87,26 +85,17 @@ const buildGitHubCloudConfig = async (jiraHost: string, logger: Logger): Promise
 const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => (
 	{
 		...(await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl, jiraHost, logger)),
-		serverId: gitHubServerApp.id,
+		gitHubAppId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
-		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
-		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+		gitHubClientId: gitHubServerApp.gitHubClientId
 	}
 );
 
 const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
-	const privateKey = await keyLocator(undefined);
-
-	if (!privateKey) {
-		throw new Error("Private key not found for github cloud");
-	}
 	return {
 		...(await buildGitHubCloudConfig(jiraHost, logger)),
 		appId: parseInt(envVars.APP_ID),
-		gitHubClientId: envVars.GITHUB_CLIENT_ID,
-		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-		privateKey: privateKey
+		gitHubClientId: envVars.GITHUB_CLIENT_ID
 	};
 };
 
@@ -124,7 +113,8 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  */
 export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined): Promise<GitHubAppClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAppClient(gitHubClientConfig, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
+	const appTokenKey = getAppTokenKey(gitHubClientConfig.baseUrl, gitHubClientConfig.appId);
+	return new GitHubAppClient(gitHubClientConfig, appTokenKey, gitHubAppId, logger);
 };
 
 /**
@@ -134,7 +124,7 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
 export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.gitHubAppId);
 	} else {
 		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, logger);
 	}
