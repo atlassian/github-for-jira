@@ -71,6 +71,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 			log.warn({ id, err }, `Failed at processing installation`);
 			res.write(`SKIPPED: ${safeJsonStringify(err)}\n`);
 		}
+		res.write(".".repeat(parallelSize) + "\n");
 	}
 
 	foundInstallations.sort((a,b)=>a.id - b.id);
