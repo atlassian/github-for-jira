@@ -21,7 +21,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 	const startInstallationId = Number(req.query.startInstallationId) || 0;
 	const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
 	const overrideExisting = (Number(req.query.overrideExisting) || 0) === 1;
-	const parallelSize = Number(req.query.parallelSize) || DEFAULT_PARALEL_SIZE;
+	const parallelSize = Number(req.query.parallelSize) || DEFAULT_PARALLEL_SIZE;
 
 	res.status(200);
 
