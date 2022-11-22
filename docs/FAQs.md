@@ -19,7 +19,7 @@ When an organization contains a small amount of data, the backfilling process is
 
 <h3>Q: Why can't I see the author, reviewer names, and/or icons in my Jira issue?</h3>
 
-**A:** In order for the author, reviewer names, and/or icons to appear in the development panel of your Jira issue, the email address associated with your Github account should match the address in your Jira account. If these two email addresses are different, then the account names and icons will not show up in Jira. This behavior is similar to smart commits, which also require matching emails.
+**A:** In order for the author, reviewer names, and/or icons to appear in the development panel of your Jira issue, the email address associated with your GitHub account should match the address in your Jira account. If these two email addresses are different, then the account names and icons will not show up in Jira. This behavior is similar to smart commits, which also require matching emails.
 ![Not seeing names/icons](./images/author-icons-in-jira-for-non-matching-atlassian-emails.png)
 
 ## Permissions
