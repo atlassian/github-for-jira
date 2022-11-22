@@ -53,11 +53,11 @@ export class GitHubServerApp extends Model {
 		return this.decrypt(jiraHost, "gitHubClientSecret");
 	}
 
-	getDecryptedPrivateKey(): Promise<string>  {
+	getDecryptedPrivateKey(jiraHost: string): Promise<string>  {
 		return this.decrypt(jiraHost, "privateKey");
 	}
 
-	getDecryptedWebhookSecret(): Promise<string>  {
+	getDecryptedWebhookSecret(jiraHost: string): Promise<string>  {
 		return this.decrypt(jiraHost, "webhookSecret");
 	}
 
@@ -181,7 +181,7 @@ export class GitHubServerApp extends Model {
 		});
 	}
 
-	static async updateGitHubAppByUUID(payload: GitHubServerAppUpdatePayload): Promise<void> {
+	static async updateGitHubAppByUUID(payload: GitHubServerAppUpdatePayload, jiraHost: string): Promise<void> {
 		const {
 			uuid,
 			appId,
