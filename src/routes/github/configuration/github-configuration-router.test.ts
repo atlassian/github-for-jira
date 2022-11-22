@@ -2,6 +2,7 @@
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
+import { getHashedKey } from "models/sequelize";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
@@ -400,7 +401,7 @@ describe("Github Configuration", () => {
 				.put("/rest/atlassian-connect/1/addons/testappkey/properties/isConfigured", { "isConfigured": "true" })
 				.reply(200, "OK");
 
-			const jiraClientKey = "a-unique-client-key";
+			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
 			await client.appProperties.create("testappkey", "true");
 
 			await supertest(frontendApp)
@@ -418,6 +419,14 @@ describe("Github Configuration", () => {
 					})
 				)
 				.expect(200);
+
+			const subInDB = await Subscription.getAllForClientKey(getHashedKey(jiraClientKey));
+			expect(subInDB.length).toBe(1);
+			expect(subInDB[0]).toEqual(expect.objectContaining({
+				gitHubInstallationId: 1,
+				jiraClientKey: getHashedKey(jiraClientKey),
+				plainClientKey: jiraClientKey
+			}));
 		});
 	});
 });

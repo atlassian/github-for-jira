@@ -190,6 +190,40 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 		await expect(app.receive(pullRequestBasic as any)).toResolve();
 	});
 
+	it("no Write perms case should be tolerated", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get("/users/test-pull-request-user-login")
+			.reply(200, {
+				login: "test-pull-request-author-login",
+				avatar_url: "test-pull-request-author-avatar",
+				html_url: "test-pull-request-author-url"
+			});
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
+			.reply(200, reviewsPayload);
+
+		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
+			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
+		}).reply(401);
+
+		jiraNock
+			.get("/rest/api/latest/issue/TEST-124?fields=summary")
+			.reply(200, {
+				key: "TEST-124",
+				fields: {
+					summary: "Example Issue"
+				}
+			});
+
+		jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+		mockSystemTime(12345678);
+
+		await expect(app.receive(pullRequestBasic as any)).toResolve();
+	});
+
 	it("should delete the reference to a pull request when issue keys are removed from the title for cloud", async () => {
 		const { repository, pull_request: pullRequest } = pullRequestRemoveKeys.payload;
 
