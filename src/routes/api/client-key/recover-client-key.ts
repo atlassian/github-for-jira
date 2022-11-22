@@ -8,6 +8,7 @@ import axios from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { getLogger } from "config/logger";
+import { extractClientKey } from "./client-key-regex";
 
 const DEFAULT_BATCH_SIZE = 5000;
 
@@ -30,7 +31,8 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 			"id": {
 				[Op.gte]: startInstallationId
 			}
-		}
+		},
+		order: [ ["createdAt", "ASC"] ]
 	});
 
 	res.write(`Found ${foundInstallations.length} installations to process.\n`);
@@ -95,7 +97,7 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 		throw { msg: `Empty consumer-info`, jiraHost, id };
 	}
 
-	const [, plainClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
+	const plainClientKey = extractClientKey(text);
 	if (!plainClientKey) {
 		throw { msg: `Client key regex failed`, jiraHost, id, text };
 	}
