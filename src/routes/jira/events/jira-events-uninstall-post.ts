@@ -18,6 +18,7 @@ export const JiraEventsUninstallPost = async (req: Request, res: Response): Prom
 	statsd.increment(metricHttpRequest.uninstall);
 
 	const jiraClient = await getJiraClient(installation.jiraHost, undefined, undefined, req.log);
+
 	await jiraClient.appProperties.delete();
 	await installation.uninstall();
 

@@ -360,11 +360,11 @@ export const getJiraClient = async (
 		},
 		appProperties: {
 			create: (isConfiguredState: string) =>
-				instance.put(`/rest/atlassian-connect/1/addons/${getAppKey()}/properties/isConfigured`, {
+				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
 					"isConfigured": isConfiguredState
 				}),
 			delete: () =>
-				instance.delete(`/rest/atlassian-connect/1/addons/${getAppKey()}/properties/isConfigured`)
+				instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
 		}
 	};
 

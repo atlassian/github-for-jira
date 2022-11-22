@@ -180,7 +180,7 @@ describe("Github Configuration", () => {
 				});
 
 			jiraNock
-				.put("/rest/atlassian-connect/1/addons/com.github.integration.test-atlassian-instance/properties/isConfigured", { "isConfigured": "false" })
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "false" })
 				.reply(200, "OK");
 
 			await client.appProperties.create("false");
@@ -398,7 +398,7 @@ describe("Github Configuration", () => {
 				.reply(200, organizationAdminResponse);
 
 			jiraNock
-				.put("/rest/atlassian-connect/1/addons/com.github.integration.test-atlassian-instance/properties/isConfigured", { "isConfigured": "true" })
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "true" })
 				.reply(200, "OK");
 
 			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
