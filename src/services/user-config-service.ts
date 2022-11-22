@@ -73,7 +73,7 @@ export const getRepoConfig = async (
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
 		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId);
-		return await convertYamlToUserConfig(yamlConfig);
+		return await convertYamlToUserConfig(yamlConfig, subscription.jiraHost);
 	}
 
 	// Standard case: we return the config from our database.
@@ -109,7 +109,7 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 /**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
-const convertYamlToUserConfig = async (input?: string): Promise<Config> => {
+const convertYamlToUserConfig = async (input?: string, jiraHost?: string): Promise<Config> => {
 
 	if (!input) {
 		return {};
@@ -128,7 +128,7 @@ const convertYamlToUserConfig = async (input?: string): Promise<Config> => {
 				production: configDeployments.environmentMapping.production
 			};
 		}
-		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false, jiraHost)) {
 			if (configDeployments.services?.ids) {
 				deployments["services"] = {
 					ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
@@ -153,7 +153,7 @@ const convertYamlToUserConfig = async (input?: string): Promise<Config> => {
 
 const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
 	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
-	const config = await convertYamlToUserConfig(yamlConfig);
+	const config = await convertYamlToUserConfig(yamlConfig, jiraHost);
 	await repoSyncState.update({ config });
 };
 
