@@ -2,10 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { defaultLogLevel, getLogger } from "config/logger";
+import { getUnvalidatedJiraHost } from "middleware/jirahost-middleware";
 import { merge } from "lodash";
 import { v4 as newUUID } from "uuid";
-import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
-import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 
 /*
 
@@ -65,21 +64,4 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		}
 	});
 	next();
-};
-
-const getUnvalidatedJiraHost = (req: Request): string | undefined =>
-	req.session?.jiraHost || extractUnsafeJiraHost(req);
-
-const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
-
-const extractUnsafeJiraHost = (req: Request): string | undefined => {
-	if (checkPathValidity(req.path) && req.method == "GET") {
-		// Only save xdm_e query when on the GET post install url (iframe url)
-		return req.query.xdm_e as string;
-	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
-		return req.body?.jiraHost;
-	} else if (req.cookies.jiraHost) {
-		return req.cookies.jiraHost;
-	}
-	return undefined;
 };

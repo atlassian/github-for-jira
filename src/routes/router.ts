@@ -17,7 +17,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jirahostMiddleware } from "~/src/middleware/jirahost-middleware";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const RootRouter = Router();
 

@@ -13,7 +13,7 @@ import { UUID_REGEX } from "~/src/util/regex";
 import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });

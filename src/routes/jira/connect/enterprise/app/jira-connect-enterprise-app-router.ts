@@ -6,7 +6,7 @@ import { JiraConnectEnterpriseAppPut } from "routes/jira/connect/enterprise/app/
 import { JiraConnectEnterpriseAppPost } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-post";
 import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-create-or-edit";
 import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "~/src/middleware/jira-jwt-middleware";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const JiraConnectEnterpriseAppRouter = Router();
 

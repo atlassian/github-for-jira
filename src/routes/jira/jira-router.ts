@@ -10,7 +10,7 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "~/src/middleware/jira-jwt-middleware";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jiraSymmetricJwtMiddleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const JiraRouter = Router();
 
