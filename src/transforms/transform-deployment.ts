@@ -175,7 +175,8 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	issueIds: string[],
 	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[],
-	config?: Config
+	config?: Config,
+	jiraHost?: string
 ): Promise<JiraAssociation[] | undefined> => {
 
 	const associations: JiraAssociation[] = [];
@@ -193,7 +194,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 		totalAssociationCount += issues.length;
 	}
 
-	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false, jiraHost)) {
 		if (config?.deployments?.services?.ids) {
 			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 			const services = config.deployments.services.ids
@@ -269,7 +270,8 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
 		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries,
-		config
+		config,
+		jiraHost
 	);
 
 	if (!associations?.length) {
