@@ -71,20 +71,20 @@ describe("GitHubServerApp", () => {
 		describe("cryptor decryption", () => {
 			it("should return encrypted text when reading the field properties", async () => {
 				const uuid = newUUID();
-				const app = await GitHubServerApp.create({
+				const app = await GitHubServerApp.install({
 					...defaults(uuid)
-				});
+				}, jiraHost);
 
 				expect(app.privateKey).toBe("encrypted:private-key-plain-text");
-				const decryptedPrivateKey = await app.decrypt("privateKey");
+				const decryptedPrivateKey = await app.getDecryptedPrivateKey(jiraHost);
 				expect(decryptedPrivateKey).toBe("private-key-plain-text");
 
 				expect(app.webhookSecret).toBe("encrypted:webhook-secret-plain-text");
-				const decryptedWebhookSecret = await app.decrypt("webhookSecret");
+				const decryptedWebhookSecret = await app.getDecryptedWebhookSecret(jiraHost);
 				expect(decryptedWebhookSecret).toBe("webhook-secret-plain-text");
 
 				expect(app.gitHubClientSecret).toBe("encrypted:client-secret-plain-text");
-				const decryptedGitHubClient = await app.decrypt("gitHubClientSecret");
+				const decryptedGitHubClient = await app.getDecryptedGitHubClientSecret(jiraHost);
 				expect(decryptedGitHubClient).toBe("client-secret-plain-text");
 
 			});
@@ -168,7 +168,7 @@ describe("GitHubServerApp", () => {
 				let gitHubServerApp;
 
 				beforeEach(async () => {
-					gitHubServerApp = await GitHubServerApp.create({
+					gitHubServerApp = await GitHubServerApp.install({
 						uuid,
 						appId: 1,
 						gitHubAppName: "my awesome app",
@@ -178,7 +178,7 @@ describe("GitHubServerApp", () => {
 						webhookSecret: originalWebhookSecret,
 						privateKey: originalPrivateKey,
 						installationId
-					});
+					}, jiraHost);
 				});
 
 				it("should update GitHub app when uuid is found", async () => {

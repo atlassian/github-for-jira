@@ -45,7 +45,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 	let gheAppOne: GitHubServerApp;
 
 	beforeEach(async () => {
-		gheAppOne = await GitHubServerApp.create({
+		gheAppOne = await GitHubServerApp.install({
 			uuid: appOneUuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -55,8 +55,8 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
-		await GitHubServerApp.create({
+		}, jiraHost);
+		await GitHubServerApp.install({
 			uuid: appTwoUuid,
 			appId: 2,
 			gitHubAppName: "my awesome app",
@@ -66,7 +66,7 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
+		}, jiraHost);
 	});
 
 	it("should delete GitHub app when uuid is found", async () => {

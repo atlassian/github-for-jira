@@ -1,5 +1,6 @@
 import { createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 import { GitHubServerApp } from "models/github-server-app";
+import { Installation } from "models/installation";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
@@ -60,6 +61,12 @@ describe("webhook-receiver-post", () => {
 			sendStatus: jest.fn()
 		};
 
+		const installation = await Installation.install({
+			clientKey: "clientKey123",
+			host:  jiraHost,
+			sharedSecret: "secrete123"
+		});
+
 		const payload = {
 			uuid: EXIST_GHES_UUID,
 			appId: 123,
@@ -69,9 +76,11 @@ describe("webhook-receiver-post", () => {
 			gitHubClientSecret: "myghsecret",
 			webhookSecret: GHES_WEBHOOK_SECRET,
 			privateKey: "myprivatekey",
-			installationId: 10
+			installationId: installation.id
 		};
 		gitHubApp = await GitHubServerApp.install(payload, jiraHost);
+
+
 	});
 
 	it("should throw an error if github app not found", async () => {
