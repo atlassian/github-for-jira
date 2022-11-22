@@ -65,6 +65,16 @@ lifecycleEvents:
   timeout: 30
 
 resources:
+  - type: api-gateway
+    name: api-gateway
+    attributes:
+      swaggerConfig:
+        configFile: api-gateway.yml
+        configParams:
+          GithubQueueARN: '_Ref sqs.github-webhooks.queuearn'
+          JiraQueueARN: '_Ref sqs.jira-webhooks.queuearn'
+      stageName: production
+
   - type: redisx
     name: cache
     attributes:
@@ -76,6 +86,28 @@ resources:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+
+  - type: sqs
+    name: github_webhooks
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier
+
+  - type: sqs
+    name: jira_webhooks
+    attributes:
+      MaxReceiveCount: 5
+      MessageRetentionPeriod: 1209600
+      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
+      dataType:
+        - UGC/Label                # name of GitHub org, URL/name of Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/PrimaryIdentifier
 
   - type: sqs
     name: backfill

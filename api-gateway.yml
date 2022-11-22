@@ -1,0 +1,84 @@
+info:
+  title: Github for Jira Gateway
+  description: It routes things
+  version: "0.0.1"
+
+schemes:
+  - https
+
+paths:
+  /github/webhooks:
+    post:
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "Empty"
+          required: true
+          schema:
+            $ref: "#/definitions/Empty"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        credentials: "{{RoleARN}}"
+        uri: "{{GithubQueueARN}}?Action=SendMessage"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
+        passthroughBehavior: "never"
+        httpMethod: "POST"
+        type: "aws"
+
+  /jira/events:
+    post:
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "Empty"
+          required: true
+          schema:
+            $ref: "#/definitions/Empty"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        credentials: "{{RoleARN}}"
+        uri: "{{JiraQueueARN}}?Action=SendMessage"
+        responses:
+          default:
+            statusCode: "200"
+        requestParameters:
+          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
+        passthroughBehavior: "never"
+        httpMethod: "POST"
+        type: "aws"
+
+  $default:
+    all:
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Empty"
+      x-amazon-apigateway-integration:
+        uri: "https://www.google.com"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "GET"
+        type: "http"
