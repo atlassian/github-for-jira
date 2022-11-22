@@ -13,7 +13,6 @@ const testSharedSecret = "test-secret";
 describe("jiraSymmetricJwtMiddleware", () => {
 	let res;
 	let next;
-	//	let installation;
 
 	beforeEach(async () => {
 		res = {
@@ -25,15 +24,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 		};
 		res.status.mockReturnValue(res);
 		next = jest.fn();
-
-		/* 	installation = {
-			id: 19,
-			jiraHost,
-			clientKey: "jira-client-key",
-			enabled: true,
-			decrypt: jest.fn(() => testSharedSecret),
-			subscriptions: jest.fn().mockResolvedValue([])
-		}; */
 
 		await Installation.install({
 			clientKey: "jira-client-key",
