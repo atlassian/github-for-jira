@@ -70,8 +70,12 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			gitHubAppId
 		});
 
-		await saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req, "true");
-		await findOrStartSync(subscription, req.log);
+		await Promise.all(
+			[
+				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req, "true"),
+				findOrStartSync(subscription, req.log)
+			]
+		);
 
 		res.sendStatus(200);
 	} catch (err) {

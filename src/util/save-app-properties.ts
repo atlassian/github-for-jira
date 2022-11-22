@@ -9,8 +9,7 @@ export const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
 
 	try {
-		const appKey = getAppKey();
-		await jiraClient.appProperties.create(appKey, isConfiguredState);
+		await jiraClient.appProperties.create(isConfiguredState);
 	} catch (err) {
 		req.log.error({ err }, "Set app properties failed");
 	}

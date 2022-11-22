@@ -183,7 +183,7 @@ describe("Github Configuration", () => {
 				.put("/rest/atlassian-connect/1/addons/testappkey/properties/isConfigured", { "isConfigured": "false" })
 				.reply(200, "OK");
 
-			await client.appProperties.create("testappkey", "false");
+			await client.appProperties.create("false");
 
 			await supertest(frontendApp)
 				.get("/github/configuration")
@@ -402,7 +402,7 @@ describe("Github Configuration", () => {
 				.reply(200, "OK");
 
 			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
-			await client.appProperties.create("testappkey", "true");
+			await client.appProperties.create("true");
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
