@@ -8,8 +8,11 @@ import axios from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { getLogger } from "config/logger";
+import { extractClientKey } from "./client-key-regex";
+import { chunk } from "lodash";
 
 const DEFAULT_BATCH_SIZE = 5000;
+const DEFAULT_PARALLEL_SIZE = 10;
 
 export const RecoverClientKeyPost = async (req: Request, res: Response): Promise<void> => {
 
@@ -18,6 +21,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 	const startInstallationId = Number(req.query.startInstallationId) || 0;
 	const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
 	const overrideExisting = (Number(req.query.overrideExisting) || 0) === 1;
+	const parallelSize = Number(req.query.parallelSize) || DEFAULT_PARALLEL_SIZE;
 
 	res.status(200);
 
@@ -30,7 +34,8 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 			"id": {
 				[Op.gte]: startInstallationId
 			}
-		}
+		},
+		order: [ ["createdAt", "ASC"] ]
 	});
 
 	res.write(`Found ${foundInstallations.length} installations to process.\n`);
@@ -38,25 +43,35 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 	let successCount = 0;
 	let failCount = 0;
 
-	for (const installation of foundInstallations) {
-		try {
-			const plainClientKey = await getAndVerifyplainClientKey(installation);
-			installation.plainClientKey = plainClientKey;
-			await installation.save();
-			log.info({ id: installation.id }, `Saved plainClientKey successfully for installation`);
-			const subscriptions: Subscription[] = await Subscription.getAllForClientKey(installation.clientKey);
-			for (const sub of subscriptions) {
-				sub.plainClientKey = plainClientKey;
-				await sub.save();
-				log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
-			}
-			successCount++;
-		} catch (e) {
-			failCount++;
-			log.warn({ id: installation.id, err: e }, `Failed at processing installation`);
-			res.write(`SKIPPED: ${safeJsonStringify(e)}\n`);
-		}
+	const parallelChunks: Installation[][] = chunk(foundInstallations, parallelSize);
 
+	for (const chunks of parallelChunks) {
+		const errors: { id: number, err: object }[] = [];
+		await Promise.all(chunks.map((installation: Installation) => {
+			return (async () => {
+				try {
+					const plainClientKey = await getAndVerifyplainClientKey(installation);
+					installation.plainClientKey = plainClientKey;
+					await installation.save();
+					log.info({ id: installation.id }, `Saved plainClientKey successfully for installation`);
+					const subscriptions: Subscription[] = await Subscription.getAllForClientKey(installation.clientKey);
+					for (const sub of subscriptions) {
+						sub.plainClientKey = plainClientKey;
+						await sub.save();
+						log.info({ id: installation.id, subId: sub.id }, `Saved plainClientKey successfully for subscription`);
+					}
+					successCount++;
+				} catch (e) {
+					errors.push({ id: installation.id, err: e });
+				}
+			})();
+		}));
+		failCount += errors.length;
+		for (const { id, err } of errors) {
+			log.warn({ id, err }, `Failed at processing installation`);
+			res.write(`SKIPPED: ${safeJsonStringify(err)}\n`);
+		}
+		res.write(".".repeat(chunks.length) + "\n");
 	}
 
 	foundInstallations.sort((a,b)=>a.id - b.id);
@@ -95,7 +110,7 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 		throw { msg: `Empty consumer-info`, jiraHost, id };
 	}
 
-	const [, plainClientKey] = /<key>([0-9a-z-]+)<\/key>/gmi.exec(text) || [undefined, undefined];
+	const plainClientKey = extractClientKey(text);
 	if (!plainClientKey) {
 		throw { msg: `Client key regex failed`, jiraHost, id, text };
 	}
