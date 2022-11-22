@@ -65,16 +65,6 @@ lifecycleEvents:
   timeout: 30
 
 resources:
-  - type: api-gateway
-    name: api-gateway
-    attributes:
-      swaggerConfig:
-        configFile: api-gateway.yml
-        configParams:
-          GithubQueueARN: '_Ref sqs.github-webhooks.queuearn'
-          JiraQueueARN: '_Ref sqs.jira-webhooks.queuearn'
-      stageName: production
-
   - type: redisx
     name: cache
     attributes:
@@ -384,6 +374,9 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          upstream_address:
+            - address: '_Ref api-gateway.gateway.Host'
+              region: us-east-1 # The region that your endpoint is configured
           ip_whitelist:
             - public
           routes: &blackholeSpammingIPs
@@ -393,6 +386,17 @@ environmentOverrides:
                   - 94.156.174.137
               route:
                 cluster: blackhole # Deny by sending traffic to blackhole
+
+      - type: api-gateway
+        name: gateway
+        attributes:
+          swaggerConfig:
+            configFile: api-gateway.yml
+            configParams:
+              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
+              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              ProxyUri: 'https://services.github-for-jira.ddev.jira-dev.com'
+          stageName: $default
 
       - &cryptorGithubServerAppSecrets
         name: github-server-app-secrets
@@ -504,22 +508,35 @@ environmentOverrides:
           max: 5
           metrics: *CpuMemAndQueuesScalingRules
     resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          domain:
+            - github.stg.atlassian.com
+          ip_whitelist:
+            - public
+          upstream_address:
+            - address: '_Ref api-gateway.gateway.Host'
+              region: us-east-1 # The region that your endpoint is configured
+          routes: *blackholeSpammingIPs
+
+      - type: api-gateway
+        name: gateway
+        attributes:
+          swaggerConfig:
+            configFile: api-gateway.yml
+            configParams:
+              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
+              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              ProxyUri: 'https://services.github-for-jira.stg-west.jira-dev.com'
+          stageName: $default
+
       - name: rds
         type: dedicated-rds
         attributes:
           parameters:
             # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
-
-      - type: globaledge
-        name: proxy
-        attributes:
-          default_vanity_dns: false
-          domain:
-            - github.stg.atlassian.com
-          ip_whitelist:
-            - public
-          routes: *blackholeSpammingIPs
 
       - *cryptorGithubServerAppSecrets
 
@@ -569,6 +586,29 @@ environmentOverrides:
 #          ComparisonOperator: GreaterThanThreshold
 #          Statistic: Average
     resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          domain:
+            - github.atlassian.com
+          ip_whitelist:
+            - public
+          upstream_address:
+            - address: '_Ref api-gateway.gateway.Host'
+              region: us-east-1 # The region that your endpoint is configured
+          routes: *blackholeSpammingIPs
+
+      - type: api-gateway
+        name: gateway
+        attributes:
+          swaggerConfig:
+            configFile: api-gateway.yml
+            configParams:
+              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
+              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              ProxyUri: 'https://services.github-for-jira.prod-west.jira-dev.com'
+          stageName: $default
+
       - type: redisx
         name: cache
         attributes:
@@ -601,16 +641,6 @@ environmentOverrides:
             ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
-
-      - type: globaledge
-        name: proxy
-        attributes:
-          default_vanity_dns: false
-          domain:
-            - github.atlassian.com
-          ip_whitelist:
-            - public
-          routes: *blackholeSpammingIPs
 
       - type: sqs
         name: backfill

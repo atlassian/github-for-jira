@@ -2,7 +2,6 @@ import { Router } from "express";
 import { JiraConfigurationRouter } from "./configuration/jira-configuration-router";
 import { JiraSyncPost } from "./sync/jira-sync-post";
 import { JiraAtlassianConnectGet } from "./atlassian-connect/jira-atlassian-connect-get";
-import { JiraEventsRouter } from "./events/jira-events-router";
 import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "middleware/jira-jwt-middleware";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { JiraGet } from "routes/jira/jira-get";
@@ -26,7 +25,7 @@ JiraRouter.post("/sync",
 	JiraContextJwtTokenMiddleware,
 	JiraSyncPost);
 
-JiraRouter.use("/events", JiraEventsRouter);
+// JiraRouter.use("/events", JiraEventsRouter);
 
 JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
 
