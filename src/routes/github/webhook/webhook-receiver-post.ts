@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware, LOGGER_NAME } from "~/src/middleware/github-webhook-middleware";
 import { GitHubServerApp } from "models/github-server-app";
+import { Installation } from "models/installation";
 import { WebhookContext } from "./webhook-context";
 import { webhookTimeout } from "~/src/util/webhook-timeout";
 import { issueCommentWebhookHandler } from "~/src/github/issue-comment";
@@ -134,7 +135,11 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret();
+		const installation: Installation = await Installation.findByPk(gitHubServerApp.installationId);
+		if (!installation) {
+			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
+		}
+		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret(installation.jiraHost);
 		return { webhookSecret, gitHubServerApp };
 	}
 	if (!envVars.WEBHOOK_SECRET) {

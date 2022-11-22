@@ -28,9 +28,9 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 					uuid: gheAppOne.uuid,
 					hostname: gheAppOne.gitHubBaseUrl,
 					clientId: gheAppOne.gitHubClientId,
-					gitHubClientSecret: await gheAppOne.getDecryptedGitHubClientSecret(),
-					webhookSecret: await gheAppOne.getDecryptedWebhookSecret(),
-					privateKey: await gheAppOne.getDecryptedPrivateKey()
+					gitHubClientSecret: await gheAppOne.getDecryptedGitHubClientSecret(jiraHost),
+					webhookSecret: await gheAppOne.getDecryptedWebhookSecret(jiraHost),
+					privateKey: await gheAppOne.getDecryptedPrivateKey(jiraHost)
 				}
 			},
 			render: jest.fn().mockReturnValue({}),

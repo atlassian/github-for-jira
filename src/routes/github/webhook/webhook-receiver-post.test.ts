@@ -71,7 +71,7 @@ describe("webhook-receiver-post", () => {
 			privateKey: "myprivatekey",
 			installationId: 10
 		};
-		gitHubApp = await GitHubServerApp.install(payload);
+		gitHubApp = await GitHubServerApp.install(payload, jiraHost);
 	});
 
 	it("should throw an error if github app not found", async () => {

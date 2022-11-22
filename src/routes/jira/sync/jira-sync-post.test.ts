@@ -41,7 +41,7 @@ describe("sync", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 		await Subscription.install({
 			installationId: installationIdForServer,
 			host: jiraHost,
