@@ -43,8 +43,6 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 	return allTaskTypes;
 };
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	const tasks = getTargetTasks(targetTasks);
-
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
@@ -53,6 +51,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 			cursor: subscription.repositoryCursor || undefined
 		};
 	}
+
+	const tasks = getTargetTasks(targetTasks);
 
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 

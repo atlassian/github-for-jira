@@ -85,6 +85,14 @@ describe("User Config Service", () => {
 			});
 	};
 
+	const givenGitHubReturnsAccessNotAllowed = (repoOwner: string = repoSyncState.repoOwner, repoName = repoSyncState.repoName) => {
+		// see https://docs.github.com/en/rest/repos/contents#get-repository-content
+		githubNock.get(`/repos/${repoOwner}/${repoName}/contents/.jira/config.yml`)
+			.reply(401, {
+				content: "not allowed"
+			});
+	};
+
 	it("should not update config in database when config file hasn't been touched", async () => {
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
 		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
@@ -98,6 +106,14 @@ describe("User Config Service", () => {
 		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
+	});
+
+	it("no Write perms case should be tolerated", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+		givenGitHubReturnsAccessNotAllowed();
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		expect(config).toBeFalsy();
 	});
 
 	it("should get service ids behind ff", async () => {
@@ -122,6 +138,5 @@ describe("User Config Service", () => {
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
-
 
 });

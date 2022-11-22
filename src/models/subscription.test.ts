@@ -1,5 +1,6 @@
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
+import { getHashedKey } from "models/sequelize";
 
 const GITHUB_INSTALLATION_ID = 123;
 
@@ -298,7 +299,8 @@ describe("Subscription", () => {
 					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					jiraHost: "http://normal-cloud.atlassian.net",
 					gitHubAppId: null,
-					jiraClientKey: "cloud_client_key"
+					jiraClientKey: getHashedKey("cloud_client_key"),
+					plainClientKey: "cloud_client_key"
 				}));
 			});
 			it("should override existing record if found", async () => {
@@ -337,7 +339,8 @@ describe("Subscription", () => {
 					gitHubInstallationId: GITHUB_INSTALLATION_ID,
 					jiraHost: "http://normal-cloud.atlassian.net",
 					gitHubAppId: GHES_GITHUB_SERVER_APP_PK_ID,
-					jiraClientKey: "cloud_client_key"
+					jiraClientKey: getHashedKey("cloud_client_key"),
+					plainClientKey: "cloud_client_key"
 				}));
 			});
 			it("should override existing ghes sub when found", async ()=>{

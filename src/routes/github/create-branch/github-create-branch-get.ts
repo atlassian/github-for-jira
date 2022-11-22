@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
 import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
-import { createUserClient } from "utils/get-github-client-config";
+import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
-import { Subscription } from "models/subscription";
-import { searchInstallationAndUserRepos } from "routes/github/repository/github-repository-get";
+import { Repository, Subscription } from "models/subscription";
+import Logger from "bunyan";
+const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
@@ -25,7 +26,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { issueKey, issueSummary } = req.query;
+	const { issueKey, issueSummary, multiGHInstance } = req.query;
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
@@ -50,7 +51,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-	const repos = await searchInstallationAndUserRepos("", jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
+	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
 
 	res.render("github-create-branch.hbs", {
 		csrfToken: req.csrfToken(),
@@ -64,7 +65,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		repos,
 		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
-		gitHubUser
+		gitHubUser,
+		multiGHInstance
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
@@ -73,4 +75,28 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
 		jiraHost
 	});
+};
+
+const sortByDateString = (a, b) => {
+	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
+};
+
+const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<Repository[]> => {
+	const repoTasks = subscriptions.map(async (subscription) => {
+		try {
+			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
+			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
+			return response.viewer.repositories.edges;
+		} catch (err) {
+			logger.error("Create branch - Failed to fetch repos for installation");
+			throw err;
+		}
+	});
+
+	const repos = (await Promise.all(repoTasks))
+		.flat()
+		.sort(sortByDateString)
+		.map(repo => repo.node);
+
+	return repos.slice(0, MAX_REPOS_RETURNED);
 };

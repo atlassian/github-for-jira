@@ -57,6 +57,29 @@ describe("Issue Webhook", () => {
 				// should not throw
 				await expect(app.receive(issueNullBody as any)).toResolve();
 			});
+
+			it("no Write perms case should be tolerated", async () => {
+				githubUserTokenNock(gitHubInstallationId);
+
+				jiraNock
+					.get("/rest/api/latest/issue/TEST-123?fields=summary")
+					.reply(200, {
+						key: "TEST-123",
+						fields: {
+							summary: "Example Issue"
+						}
+					});
+
+				githubNock
+					.patch("/repos/test-repo-owner/test-repo-name/issues/123456789", {
+						body: `Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
+					})
+					.reply(401, {
+						error: "AccessDenied"
+					});
+
+				await expect(app.receive(issueBasic as any)).toResolve();
+			});
 		});
 	});
 });
