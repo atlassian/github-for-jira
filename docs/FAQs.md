@@ -17,9 +17,9 @@
 
 When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
-<h3>Q: Why can't I see the Author/Reviewer names and/or icons in the Dev Dialog in Jira?</h3>
+<h3>Q: Why can't I see the author, reviewer names, and/or icons in my Jira issue?</h3>
 
-**A:** The author/reviewer names/icon will no longer be shown if the email address does not correspond with a valid atlassian account. The behaviour is now similar to the smart commits, which also don't work if the commit email address is different from your atlassian account.
+**A:** In order for the author, reviewer names, and/or icons to appear in the development panel of your Jira issue, the email address associated with your Github account should match the address in your Jira account. If these two email addresses are different, then the account names and icons wont' show up in Jira.This behavior is similar to smart commits.
 ![Not seeing names/icons](./images/author-icons-in-jira-for-non-matching-atlassian-emails.png)
 
 ## Permissions
