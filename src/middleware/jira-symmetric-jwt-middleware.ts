@@ -88,7 +88,7 @@ const verifySymmetricJwt = (token: string, secret: string, req: Request, tokenTy
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (err) {
 		logger.warn({ err }, "Invalid JWT");
-		throw new Error(`Unable to decode JWT token: ${err}`);
+		throw new Error(`Unable to decode JWT token: ${err.message}`);
 	}
 
 	return verifyJwtClaims(verifiedClaims, tokenType, req);
