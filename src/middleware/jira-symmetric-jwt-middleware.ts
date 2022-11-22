@@ -35,7 +35,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		try {
 			verifySymmetricJwt(token, secret, req, tokenType, req.log);
 		} catch (err) {
-			req.log.warn({ err }, err.message);
+			req.log.warn({ err }, "Could not verify symmetric JWT");
 			return res.status(401).send("Unauthorised");
 		}
 
