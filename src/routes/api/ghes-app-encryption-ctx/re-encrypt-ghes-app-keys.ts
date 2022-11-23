@@ -7,10 +7,10 @@ import safeJsonStringify from "safe-json-stringify";
 
 const log = getLogger("ReEncryptGitHubServerAppKeys");
 
-const decryptWithJiraHost = async (app: GitHubServerApp, field: string, jiraHost: string): Promise<boolean> => {
+const isAlreadyEncryptedWithJiraHost = async (app: GitHubServerApp, field: string, jiraHost: string): Promise<boolean> => {
 	try {
-		const secret = await EncryptionClient.decrypt(app[field], { jiraHost });
-		return !!secret;
+		await EncryptionClient.decrypt(app[field], { jiraHost });
+		return true;
 	} catch (e) {
 		return false;
 	}
@@ -24,7 +24,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 
 	const targetAppId = Number(req.query.targetAppId) || undefined;
 
-	const allExistingGHESApps: GitHubServerApp[] = await GitHubServerApp.findAll({
+	const targetApps: GitHubServerApp[] = await GitHubServerApp.findAll({
 		... !targetAppId ? undefined : {
 			where: { id: targetAppId }
 		}
@@ -34,7 +34,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 
 	let count = 0;
 
-	for (const app of allExistingGHESApps) {
+	for (const app of targetApps) {
 
 		try {
 
@@ -54,11 +54,19 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			}
 
 			const jiraHost = installation.jiraHost;
-			const alreadyWithJiraHost = await decryptWithJiraHost(app, "gitHubClientSecret", jiraHost);
+			if (!jiraHost) {
+				const errMsg = `jiraHost not found for app id ${app.id}\n`;
+				log.error(errMsg);
+				res.write(errMsg);
+				continue;
+			}
+
+			const alreadyWithJiraHost = await isAlreadyEncryptedWithJiraHost(app, "gitHubClientSecret", jiraHost);
 			if (alreadyWithJiraHost) {
 				const msg = `Skipping app ${app.id} as already encrypted with jiraHost\n`;
 				log.info(msg);
 				res.write(msg);
+				continue;
 			}
 
 			const originWebhookSecret = await decryptWithEmptyContext(app, "webhookSecret");
@@ -89,7 +97,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 				const msg = `
 						== !! ERROR !! === \n
 						secrets after update not match origin value for app ${app.id}\n
-						This is SERIOUS, need to abort now. Reverting app secrets...
+						This is SERIOUS, need to abort now.
 				`;
 				res.write(msg);
 				res.end();
