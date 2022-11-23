@@ -33,16 +33,16 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 
 		if (!app.installationId) {
 			const errMsg = `Installation id is empty for app id ${app.id}\n`;
-			res.write(errMsg);
 			log.error(errMsg);
+			res.write(errMsg);
 			continue;
 		}
 
 		const installation = await Installation.findByPk(app.installationId);
 		if (!installation) {
 			const errMsg = `Installation not found for app id ${app.id}\n`;
-			res.write(errMsg);
 			log.error(errMsg);
+			res.write(errMsg);
 			continue;
 		}
 
@@ -58,7 +58,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			const gitHubClientSecret = await decryptWithEmptyContext(app, "gitHubClientSecret");
 
 			if (!webhookSecret || !privateKey || !gitHubClientSecret) {
-				const errMsg = `Some secrets is empty for app ${app.id}`;
+				const errMsg = `Some secrets is empty for app ${app.id}\n`;
 				log.error(errMsg);
 				res.write(errMsg);
 				continue;
@@ -73,13 +73,18 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			}, jiraHost);
 
 			count++;
-			const msg = `Successfully update secrets for app ${app.id}`;
+			const msg = `Successfully update secrets for app ${app.id}\n`;
+			log.info(msg);
+			res.write(msg);
+		} else {
+			const msg = `Skipping app ${app.id} as already encrypted with jiraHost\n`;
 			log.info(msg);
 			res.write(msg);
 		}
 	}
 
-	res.write(`Successfully process ${count} github server apps`);
+	res.write(`Successfully process ${count} github server apps\n`);
+	res.end();
 
 };
 
