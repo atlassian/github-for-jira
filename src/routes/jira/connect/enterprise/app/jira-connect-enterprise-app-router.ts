@@ -10,13 +10,15 @@ import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-
 
 export const JiraConnectEnterpriseAppRouter = Router();
 
-JiraConnectEnterpriseAppRouter.post("/", JiraContextJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseAppPost);
+JiraConnectEnterpriseAppRouter.use(jiraSymmetricJwtMiddleware);
+
+JiraConnectEnterpriseAppRouter.post("/", JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPost);
 
 const routerWithUUID = Router({ mergeParams: true });
 JiraConnectEnterpriseAppRouter.use("/:uuid", routerWithUUID);
 
 routerWithUUID.use(GithubServerAppMiddleware);
 routerWithUUID.route("")
-	.get(csrfMiddleware, JiraJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
-	.put(JiraContextJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseAppPut)
-	.delete(JiraContextJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseAppDelete);
+	.get(csrfMiddleware, JiraJwtTokenMiddleware, JiraConnectEnterpriseAppCreateOrEdit)
+	.put(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppPut)
+	.delete(JiraContextJwtTokenMiddleware, JiraConnectEnterpriseAppDelete);
