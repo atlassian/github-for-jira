@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-// import { Subscription } from "models/subscription";
+import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
+import { saveConfiguredAppProperties } from "utils/save-app-properties";
 
 // This will update JIRA APP Properties for the GH4J installation to set isConfigured;
 export const ApiSyncConfigured = async (req: Request, res: Response): Promise<void> => {
@@ -18,16 +19,13 @@ export const ApiSyncConfigured = async (req: Request, res: Response): Promise<vo
 
 	const logger = getLogger("api-sync-configured");
 	const tasks = jiraHosts.map(jiraHost => {
-		// create jiraclient
-		// call
-		// look up subscription
-		return jiraHost;
-		// const subscription = Subscription.getSingleInstallation(jiraHost);
-		// // We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
-		// if (!subscription) {
-		// 	return;
-		// }
-		// return saveConfiguredAppProperties(jiraHost, undefined, undefined, logger, true);
+		// need to confirm that passed in value is configured. Existing on subscription table satisfies this.
+		const subscription = Subscription.getSingleInstallation(jiraHost);
+		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
+		if (!subscription) {
+			return;
+		}
+		return saveConfiguredAppProperties(jiraHost, undefined, undefined, logger, true);
 	});
 
 	try {
