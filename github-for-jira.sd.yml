@@ -1,5 +1,4 @@
 buildNumber: 0.0.0
-name: Github For Jira
 description: Connect app for integrating GitHub into Jira
 organization: Engineering-DevOps
 notifications:
@@ -65,6 +64,11 @@ lifecycleEvents:
   timeout: 30
 
 resources:
+  - type: globaledge
+    name: vanity
+    attributes:
+      default_vanity_dns: true
+
   - type: redisx
     name: cache
     attributes:
@@ -78,7 +82,7 @@ resources:
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
   - type: sqs
-    name: github_webhooks
+    name: github-webhooks
     attributes:
       MaxReceiveCount: 5
       MessageRetentionPeriod: 1209600
@@ -89,7 +93,7 @@ resources:
         - UGC/PrimaryIdentifier
 
   - type: sqs
-    name: jira_webhooks
+    name: jira-webhooks
     attributes:
       MaxReceiveCount: 5
       MessageRetentionPeriod: 1209600
@@ -348,8 +352,8 @@ environmentOverrides:
 #      remoteDebug: true
     config:
       environmentVariables:
-        APP_URL: https://github-for-jira.dev.services.atlassian.com
-        WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com
+        APP_URL: https://github-for-jira.dev.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-for-jira.dev.atlassian.com
         INSTANCE_NAME: development
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
@@ -374,6 +378,9 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
+          domain:
+            - github-for-jira.dev.atlassian.com
           upstream_address:
             - address: '_Ref api-gateway.gateway.Host'
               region: us-east-1 # The region that your endpoint is configured
@@ -395,8 +402,15 @@ environmentOverrides:
             configParams:
               GithubQueueARN: '_Ref sqs.github-webhooks.arn'
               JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
-              ProxyUri: 'https://services.github-for-jira.ddev.jira-dev.com'
+              ServerUri: 'https://github-for-jira.dev.services.atlassian.com'
           stageName: $default
+          dataType:
+            - UGC/Label                # name of GitHub org / Jira site
+            - PII/IndirectConfidential # name of GitHub org
+            - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+            - Security/Secret          # shared Connect secret
+            - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+            - UGC/Primary
 
       - &cryptorGithubServerAppSecrets
         name: github-server-app-secrets
@@ -511,6 +525,7 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
           domain:
             - github.stg.atlassian.com
           ip_whitelist:
@@ -528,8 +543,15 @@ environmentOverrides:
             configParams:
               GithubQueueARN: '_Ref sqs.github-webhooks.arn'
               JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
-              ProxyUri: 'https://services.github-for-jira.stg-west.jira-dev.com'
+              ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
           stageName: $default
+          dataType:
+            - UGC/Label                # name of GitHub org / Jira site
+            - PII/IndirectConfidential # name of GitHub org
+            - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+            - Security/Secret          # shared Connect secret
+            - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+            - UGC/Primary
 
       - name: rds
         type: dedicated-rds
@@ -589,6 +611,7 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
           domain:
             - github.atlassian.com
           ip_whitelist:
@@ -606,8 +629,15 @@ environmentOverrides:
             configParams:
               GithubQueueARN: '_Ref sqs.github-webhooks.arn'
               JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
-              ProxyUri: 'https://services.github-for-jira.prod-west.jira-dev.com'
+              ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
           stageName: $default
+          dataType:
+            - UGC/Label                # name of GitHub org / Jira site
+            - PII/IndirectConfidential # name of GitHub org
+            - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+            - Security/Secret          # shared Connect secret
+            - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+            - UGC/Primary
 
       - type: redisx
         name: cache
