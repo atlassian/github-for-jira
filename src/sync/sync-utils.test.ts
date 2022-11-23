@@ -63,7 +63,7 @@ describe("findOrStartSync", () => {
 					privateKey: GHES_GITHUB_APP_PRIVATE_KEY,
 					gitHubAppName: GHES_GITHUB_APP_NAME,
 					installationId: JIRA_INSTALLATION_ID
-				});
+				}, jiraHost);
 				subscription = await Subscription.install({
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,

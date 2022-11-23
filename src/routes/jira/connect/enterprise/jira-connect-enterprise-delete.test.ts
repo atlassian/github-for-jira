@@ -23,7 +23,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			sharedSecret: "12345"
 		});
 		installationId1 = installation1.id;
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
 			appId: 1,
 			gitHubAppName: "my awesome app1",
@@ -33,8 +33,8 @@ describe("DELETE /jira/connect/enterprise", () => {
 			webhookSecret: "anothersecret1",
 			privateKey: "privatekey1",
 			installationId: installationId1
-		});
-		await GitHubServerApp.create({
+		}, JIRA_HOST_1);
+		await GitHubServerApp.install({
 			uuid: "9eaf28d5-fe18-42d8-a76d-eba80adc2295",
 			appId: 2,
 			gitHubAppName: "my awesome app 2",
@@ -44,8 +44,8 @@ describe("DELETE /jira/connect/enterprise", () => {
 			webhookSecret: "anothersecret2",
 			privateKey: "privatekey2",
 			installationId: installationId1
-		});
-		await GitHubServerApp.create({
+		}, JIRA_HOST_1);
+		await GitHubServerApp.install({
 			uuid: "7eaf28d5-fe12-42d8-a76d-eba80adc227a",
 			appId: 3,
 			gitHubAppName: "my awesome app 3",
@@ -55,7 +55,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			webhookSecret: "anothersecret3",
 			privateKey: "privatekey3",
 			installationId: installationId1
-		});
+		}, JIRA_HOST_1);
 		//One GHE app for first installation for JIRA_HOST_1
 		installation2 = await Installation.install({
 			clientKey: "clientKey2",
@@ -63,7 +63,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			sharedSecret: "78990"
 		});
 		installationId2 = installation2.id;
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid: "22e568d5-fe12-42d8-a76d-eba4aabc223d",
 			appId: 1,
 			gitHubAppName: "my awesome app 1",
@@ -73,7 +73,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			webhookSecret: "anothersecret3",
 			privateKey: "privatekey3",
 			installationId: installationId2
-		});
+		}, JIRA_HOST_2);
 	});
 
 	it("should delete all gh apps for a server", async () => {

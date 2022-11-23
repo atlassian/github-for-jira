@@ -28,9 +28,9 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 					uuid: gheAppOne.uuid,
 					hostname: gheAppOne.gitHubBaseUrl,
 					clientId: gheAppOne.gitHubClientId,
-					gitHubClientSecret: await gheAppOne.getDecryptedGitHubClientSecret(),
-					webhookSecret: await gheAppOne.getDecryptedWebhookSecret(),
-					privateKey: await gheAppOne.getDecryptedPrivateKey()
+					gitHubClientSecret: await gheAppOne.getDecryptedGitHubClientSecret(jiraHost),
+					webhookSecret: await gheAppOne.getDecryptedWebhookSecret(jiraHost),
+					privateKey: await gheAppOne.getDecryptedPrivateKey(jiraHost)
 				}
 			},
 			render: jest.fn().mockReturnValue({}),
@@ -45,28 +45,28 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 	let gheAppOne: GitHubServerApp;
 
 	beforeEach(async () => {
-		gheAppOne = await GitHubServerApp.create({
+		gheAppOne = await GitHubServerApp.install({
 			uuid: appOneUuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
 			gitHubBaseUrl,
-			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientId: "lvl.1n111111111",
 			gitHubClientSecret: "secret",
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
-		await GitHubServerApp.create({
+		}, jiraHost);
+		await GitHubServerApp.install({
 			uuid: appTwoUuid,
 			appId: 2,
 			gitHubAppName: "my awesome app",
 			gitHubBaseUrl,
-			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientId: "lvl.1n222222222",
 			gitHubClientSecret: "secret",
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
+		}, jiraHost);
 	});
 
 	it("should delete GitHub app when uuid is found", async () => {
