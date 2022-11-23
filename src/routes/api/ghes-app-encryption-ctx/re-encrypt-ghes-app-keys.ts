@@ -3,6 +3,7 @@ import { getLogger } from "config/logger";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { EncryptionClient } from "utils/encryption-client";
+import safeJsonStringify from "safe-json-stringify";
 
 const log = getLogger("ReEncryptGitHubServerAppKeys");
 
@@ -21,9 +22,13 @@ const decryptWithEmptyContext = async (app: GitHubServerApp, field: string): Pro
 
 export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Response): Promise<void> => {
 
-	const overrideExisting = req.query.overrideExisting === "true";
+	const targetAppId = Number(req.query.targetAppId) || undefined;
 
-	const allExistingGHESApps: GitHubServerApp[] = await GitHubServerApp.findAll();
+	const allExistingGHESApps: GitHubServerApp[] = await GitHubServerApp.findAll({
+		... !targetAppId ? undefined : {
+			where: { id: targetAppId }
+		}
+	});
 
 	res.status(200);
 
@@ -31,33 +36,36 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 
 	for (const app of allExistingGHESApps) {
 
-		if (!app.installationId) {
-			const errMsg = `Installation id is empty for app id ${app.id}\n`;
-			log.error(errMsg);
-			res.write(errMsg);
-			continue;
-		}
+		try {
 
-		const installation = await Installation.findByPk(app.installationId);
-		if (!installation) {
-			const errMsg = `Installation not found for app id ${app.id}\n`;
-			log.error(errMsg);
-			res.write(errMsg);
-			continue;
-		}
+			if (!app.installationId) {
+				const errMsg = `Installation id is empty for app id ${app.id}\n`;
+				log.error(errMsg);
+				res.write(errMsg);
+				continue;
+			}
 
-		const jiraHost = installation.jiraHost;
+			const installation = await Installation.findByPk(app.installationId);
+			if (!installation) {
+				const errMsg = `Installation not found for app id ${app.id}\n`;
+				log.error(errMsg);
+				res.write(errMsg);
+				continue;
+			}
 
-		const alreadyWithJiraHost = await decryptWithJiraHost(app, "webhookSecret", jiraHost);
-		const shouldReEncrypt = overrideExisting || !alreadyWithJiraHost;
+			const jiraHost = installation.jiraHost;
+			const alreadyWithJiraHost = await decryptWithJiraHost(app, "gitHubClientSecret", jiraHost);
+			if (alreadyWithJiraHost) {
+				const msg = `Skipping app ${app.id} as already encrypted with jiraHost\n`;
+				log.info(msg);
+				res.write(msg);
+			}
 
-		if (shouldReEncrypt) {
+			const originWebhookSecret = await decryptWithEmptyContext(app, "webhookSecret");
+			const originPrivateKey = await decryptWithEmptyContext(app, "privateKey");
+			const originGitHubClientSecret = await decryptWithEmptyContext(app, "gitHubClientSecret");
 
-			const webhookSecret = await decryptWithEmptyContext(app, "webhookSecret");
-			const privateKey = await decryptWithEmptyContext(app, "privateKey");
-			const gitHubClientSecret = await decryptWithEmptyContext(app, "gitHubClientSecret");
-
-			if (!webhookSecret || !privateKey || !gitHubClientSecret) {
+			if (!originPrivateKey || !originGitHubClientSecret) {
 				const errMsg = `Some secrets is empty for app ${app.id}\n`;
 				log.error(errMsg);
 				res.write(errMsg);
@@ -67,18 +75,36 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			await GitHubServerApp.updateGitHubAppByUUID({
 				appId: app.appId,
 				uuid: app.uuid,
-				webhookSecret,
-				privateKey,
-				gitHubClientSecret
+				webhookSecret: originWebhookSecret,
+				privateKey: originPrivateKey,
+				gitHubClientSecret: originGitHubClientSecret
 			}, jiraHost);
 
-			count++;
+			const updatedApp: GitHubServerApp = await GitHubServerApp.findByPk(app.id);
+			if (
+				originWebhookSecret !== await updatedApp.getDecryptedWebhookSecret(jiraHost)
+				|| originPrivateKey !== await updatedApp.getDecryptedPrivateKey(jiraHost)
+				|| originGitHubClientSecret !== await updatedApp.getDecryptedGitHubClientSecret(jiraHost)
+			) {
+				const msg = `
+						== !! ERROR !! === \n
+						secrets after update not match origin value for app ${app.id}\n
+						This is SERIOUS, need to abort now. Reverting app secrets...
+				`;
+				res.write(msg);
+				res.end();
+				return;
+			}
+
 			const msg = `Successfully update secrets for app ${app.id}\n`;
 			log.info(msg);
 			res.write(msg);
-		} else {
-			const msg = `Skipping app ${app.id} as already encrypted with jiraHost\n`;
-			log.info(msg);
+
+			count++;
+
+		} catch (wrapE) {
+			const msg = `Skipping app ${app.id}, found error ${safeJsonStringify(wrapE)}\n`;
+			log.error(msg);
 			res.write(msg);
 		}
 	}
