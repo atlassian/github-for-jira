@@ -515,7 +515,7 @@ environmentOverrides:
         scaling:
           instance: c5.2xlarge
           min: 3
-          max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          max: 35 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE # Temp update from 15 to 35 while backfilling
           metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
