@@ -58,7 +58,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should throw error when no installation is found", async () => {
 
-		const token = getToken(testSharedSecret, "jira-worng-key");
+		const token = getToken(testSharedSecret, "jira-wrong-key");
 
 		await supertest(app)
 			.get(`/test`)
