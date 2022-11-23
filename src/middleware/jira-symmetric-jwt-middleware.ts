@@ -33,7 +33,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		const secret = await installation.decrypt("encryptedSharedSecret");
 
-		const tokenType = checkPathValidity(req.originalUrl) ? TokenType.normal : TokenType.context;
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
 		try {
 			verifySymmetricJwt(token, secret, req, tokenType, req.log);
 		} catch (err) {
