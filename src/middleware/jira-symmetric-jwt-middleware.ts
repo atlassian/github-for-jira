@@ -16,9 +16,12 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 	const token = req.query?.["jwt"] || req.cookies?.["jwt"];
 
 	if (token) {
-		const issuer = getIssuer(token, req.log);
-		if (!issuer) {
-			req.log.warn("JWT claim did not contain the issuer (iss) claim");
+
+		let issuer;
+		try {
+			issuer = getIssuer(token, req.log);
+		} catch (err) {
+			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
 
@@ -60,7 +63,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.info("No Token found");
+	req.log.warn("No token found and session cookie has not jiraHost");
 	return res.status(401).send("Unauthorised");
 
 };
@@ -73,6 +76,10 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	} catch (err) {
 		logger.warn({ err }, "Invalid JWT");
 		throw new Error(`Invalid JWT: ${err.message}`);
+	}
+
+	if (!unverifiedClaims.iss) {
+		throw new Error("JWT claim did not contain the issuer (iss) claim");
 	}
 
 	return unverifiedClaims.iss;
