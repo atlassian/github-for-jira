@@ -13,6 +13,8 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 		let config;
 		const uuid = req.params.uuid;
 
+		const { jiraHost } = res.locals;
+
 		if (uuid) {
 			// TODO: add tests!!!
 			const app = await GitHubServerApp.getForUuidAndInstallationId(uuid, res.locals.installation.id);
@@ -25,8 +27,8 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 			}
 			config = {
 				app,
-				decryptedWebhookSecret: await app.getDecryptedWebhookSecret(),
-				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(),
+				decryptedWebhookSecret: await app.getDecryptedWebhookSecret(jiraHost),
+				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(jiraHost),
 				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
 				uuid,

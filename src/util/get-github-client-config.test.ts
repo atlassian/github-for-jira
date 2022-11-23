@@ -25,7 +25,7 @@ describe("get-github-client-config", () => {
 			installationId: 10
 		};
 
-		gitHubServerApp = await GitHubServerApp.install(payload);
+		gitHubServerApp = await GitHubServerApp.install(payload, jiraHost);
 
 	});
 

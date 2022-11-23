@@ -90,13 +90,13 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
-		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(jiraHost),
+		privateKey: await gitHubServerApp.getDecryptedPrivateKey(jiraHost)
 	}
 );
 
 const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
-	const privateKey = await keyLocator(undefined);
+	const privateKey = await keyLocator(undefined, jiraHost);
 
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
@@ -134,9 +134,9 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
 export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
 	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, jiraHost, logger, gitHubClientConfig.serverId);
 	} else {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, logger);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, jiraHost, logger);
 	}
 };
 

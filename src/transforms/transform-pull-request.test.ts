@@ -11,7 +11,7 @@ describe("pull_request transform", () => {
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
-		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, getLogger("test"));
+		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {

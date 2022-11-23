@@ -40,7 +40,7 @@ const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 		privateKey: "privateKey",
 		gitHubAppName: "test-app-name",
 		installationId: jiraInstallaionId
-	});
+	}, jiraHost);
 };
 
 const setupGitHubCloudPingNock = () => {

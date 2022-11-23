@@ -35,7 +35,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			webhookSecret: gitHubAppConfig.webhook_secret,
 			privateKey:  gitHubAppConfig.pem,
 			installationId: installation.id
-		});
+		}, jiraHost);
 		req.session.temp = undefined;
 		res.redirect(`/github/${uuid}/configuration`);
 	} catch (error) {

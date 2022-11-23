@@ -175,7 +175,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	describe("cloud", () => {
 
 		beforeEach(async () => {
-			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
+			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, getLogger("test"));
 
 			await new DatabaseStateCreator().create();
 		});
@@ -702,6 +702,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					apiUrl: gheApiUrl,
 					graphqlUrl: gheApiUrl + "/graphql"
 				},
+				jiraHost,
 				getLogger("test"),
 				builderOutput.gitHubServerApp!.id
 			);
