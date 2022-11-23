@@ -9,12 +9,14 @@ import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
+import { getJiraClient } from "~/src/jira/client/jira-client";
 
 jest.mock("config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: Subscription;
+	let client: any;
 
 	const authenticatedUserResponse = { login: "test-user" };
 	const adminUserResponse = { login: "admin-user" };
@@ -42,6 +44,8 @@ describe("Github Configuration", () => {
 			next();
 		});
 		frontendApp.use(getFrontendApp());
+
+		client = await getJiraClient(jiraHost, 15, undefined, undefined);
 	});
 
 	describe("Github Token Validation", () => {
@@ -174,6 +178,12 @@ describe("Github Configuration", () => {
 						}
 					}
 				});
+
+			jiraNock
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "false" })
+				.reply(200, "OK");
+
+			await client.appProperties.create("false");
 
 			await supertest(frontendApp)
 				.get("/github/configuration")
@@ -387,7 +397,12 @@ describe("Github Configuration", () => {
 				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationAdminResponse);
 
+			jiraNock
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "true" })
+				.reply(200, "OK");
+
 			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
+			await client.appProperties.create("true");
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
