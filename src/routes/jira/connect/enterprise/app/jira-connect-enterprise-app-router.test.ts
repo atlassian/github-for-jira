@@ -48,10 +48,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname: `/jira/connect/enterprise/app/${GHE_APP_UUID}`,
-					query: {
-						xdm_e: `${jiraHost}`
-					}
+					pathname
 				})}`)
 				.expect(200);
 			expect(capturedGHEAppConfig).toEqual(expect.objectContaining({
@@ -67,10 +64,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname,
-					query: {
-						xdm_e: `${jiraHost}`
-					}
+					pathname
 				})}`)
 				.expect(404);
 		});
@@ -101,10 +95,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
-					pathname,
-					query: {
-						xdm_e: `${jiraHost}`
-					}
+					pathname
 				})}`)
 				.expect(401);
 		});
