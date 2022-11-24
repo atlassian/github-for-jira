@@ -22,9 +22,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	}
 
 	const jiraHost = getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
-	// This is a temporary workaround as jiraHost is currently fetched from tenantUrl which is not secure.
-	// JiraHost will be fetched from JWT instead of tenatUrl. This will be implemented soon.
-	req.session.jiraHost = jiraHost;
 
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
