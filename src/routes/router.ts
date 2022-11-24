@@ -58,7 +58,7 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
 
-// Set the jiraHost to the res.locals and also to secure session if available
+// Saves the jiraHost cookie to the secure session if available
 RootRouter.use(jirahostMiddleware);
 
 // App Manifest flow route
