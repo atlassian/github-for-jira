@@ -127,6 +127,8 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 
 	if (!hasConnections) {
 		await saveConfiguredAppProperties(jiraHost, undefined, undefined, req, "false");
+	} else {
+		await saveConfiguredAppProperties(jiraHost, undefined, undefined, req, "true");
 	}
 
 	res.render("jira-configuration.hbs", {
@@ -191,6 +193,8 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	if (!hasConnections) {
 		await saveConfiguredAppProperties(jiraHost, undefined, undefined, req, "false");
+	} else {
+		await saveConfiguredAppProperties(jiraHost, undefined, undefined, req, "true");
 	}
 
 	res.render("jira-configuration-new.hbs", {
