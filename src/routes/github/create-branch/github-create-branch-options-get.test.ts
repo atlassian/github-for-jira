@@ -71,7 +71,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
@@ -109,7 +109,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		const serverApp2 = await GitHubServerApp.install({
 			uuid: uuid2,
 			appId: 234,
@@ -120,7 +120,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 123,
@@ -158,7 +158,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,

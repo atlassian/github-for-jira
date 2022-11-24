@@ -17,6 +17,7 @@ import { ApiResyncPost } from "routes/api/api-resync-post";
 import { UUID_REGEX } from "~/src/util/regex";
 import { DBMigrationsRouter } from "./db-migrations/db-migration-router";
 import { RecoverClientKeyPost } from "./client-key/recover-client-key";
+import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
 
 export const ApiRouter = Router();
 
@@ -120,6 +121,7 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 });
 ApiRouter.use("/db-migration", DBMigrationsRouter);
 ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
+ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

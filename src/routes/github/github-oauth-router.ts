@@ -89,7 +89,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig);
+	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
 	if (!gitHubClientSecret) return next("Missing GitHubApp client secret from uuid");
 
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
@@ -191,7 +191,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	}
 };
 
-const getCloudOrGHESAppClientSecret = async (gitHubAppConfig) => {
+const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) => {
 
 	if (!gitHubAppConfig.gitHubAppId) {
 		return envVars.GITHUB_CLIENT_SECRET;
@@ -200,7 +200,7 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig) => {
 	const ghesApp = await GitHubServerApp.findForUuid(gitHubAppConfig.uuid);
 	if (!ghesApp) return undefined;
 
-	return ghesApp.getDecryptedGitHubClientSecret();
+	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
 };
 
 // IMPORTANT: We need to keep the login/callback/middleware functions

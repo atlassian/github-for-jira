@@ -90,11 +90,11 @@ describe("github-manifest-complete-get", () => {
 			gitHubClientId: "client_id_test",
 			gitHubBaseUrl: "https://github.mydomain.com"
 		}));
-		const webhookSecret = await githubServerApp?.decrypt("webhookSecret");
+		const webhookSecret = await githubServerApp?.getDecryptedWebhookSecret(jiraHost);
 		expect(webhookSecret).toEqual("webhook_secret_test");
-		const clientSecret = await githubServerApp?.decrypt("gitHubClientSecret");
+		const clientSecret = await githubServerApp?.getDecryptedGitHubClientSecret(jiraHost);
 		expect(clientSecret).toEqual("client_secret_test");
-		const privateKey = await githubServerApp?.decrypt("privateKey");
+		const privateKey = await githubServerApp?.getDecryptedPrivateKey(jiraHost);
 		expect(privateKey).toEqual("private_key_test");
 		expect(res.redirect).toBeCalled();
 	});

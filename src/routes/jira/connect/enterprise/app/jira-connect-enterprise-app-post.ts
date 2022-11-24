@@ -8,7 +8,7 @@ export const JiraConnectEnterpriseAppPost = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App POST request");
 
-		const { installation } = res.locals;
+		const { installation, jiraHost } = res.locals;
 		const {
 			uuid,
 			appId,
@@ -30,7 +30,7 @@ export const JiraConnectEnterpriseAppPost = async (
 			webhookSecret,
 			privateKey,
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 		res.status(202).send();
 
