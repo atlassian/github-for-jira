@@ -398,7 +398,7 @@ environmentOverrides:
         name: gateway
         attributes:
           swaggerConfig:
-            configFile: api-gateway.yml
+            configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
               GithubQueueARN: '_Ref sqs.github-webhooks.arn'
               JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
