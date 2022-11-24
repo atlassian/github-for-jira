@@ -19,7 +19,7 @@ build/
 node_modules/
 
 # Coverage
-coverage
+coverage/
 
 # log
 log/
