@@ -59,6 +59,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
         run: yarn test
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-coverage
+          retention-days: 14
+          path: |
+            coverage/
 
   e2e-test:
     runs-on: ubuntu-22.04
@@ -117,7 +124,6 @@ jobs:
           retention-days: 14
           path: |
             test/e2e/test-results/
-            coverage/
             *.log
 
   docker:
