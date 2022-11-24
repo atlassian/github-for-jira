@@ -44,7 +44,6 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			});
 			await supertest(app)
 				.get(pathname)
-				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
@@ -60,7 +59,6 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${uuid()}`;
 			await supertest(app)
 				.get(pathname)
-				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
@@ -91,7 +89,6 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;
 			await supertest(app)
 				.get(pathname)
-				.query({ xdm_e: jiraHost })
 				.set("Cookie", getSignedCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
