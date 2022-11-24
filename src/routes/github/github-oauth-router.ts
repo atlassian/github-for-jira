@@ -16,7 +16,12 @@ const scopes = ["user", "repo"];
 const callbackPath = "/callback";
 
 const getRedirectUrl = async (req, res, state) => {
-	const { baseUrl } = req;
+	const basePaths = req.originalUrl.split("/");
+	let baseUrl  = basePaths.length > 0 ? `/${basePaths[1]}` : req.originalUrl;
+	if (res.locals?.gitHubAppConfig?.uuid) {
+		baseUrl += `/${res.locals.gitHubAppConfig.uuid}`;
+	}
+
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
 	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
