@@ -117,6 +117,7 @@ jobs:
           retention-days: 14
           path: |
             test/e2e/test-results/
+            coverage/
             *.log
 
   docker:
