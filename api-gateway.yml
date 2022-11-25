@@ -8,7 +8,7 @@ paths:
   /github/webhooks:
     post:
       responses:
-        default:
+        '200':
           description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
         integrationSubtype: "SQS-SendMessage"
@@ -20,12 +20,13 @@ paths:
           QueueUrl: "{{GithubQueueUrl}}"
         payloadFormatVersion: "1.0"
         type: "aws_proxy"
+        httpMethod: "POST"
         connectionType: "INTERNET"
 
   /jira/events:
     post:
       responses:
-        default:
+        '200':
           description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
         integrationSubtype: "SQS-SendMessage"
@@ -36,6 +37,7 @@ paths:
           MessageSystemAttributes: "$request.body.MessageSystemAttributes"
           QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
+        httpMethod: "POST"
         type: "aws_proxy"
         connectionType: "INTERNET"
 
