@@ -400,8 +400,8 @@ environmentOverrides:
           swaggerConfig:
             configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
-              GithubQueueUrl: '_Ref sqs.github-webhooks.url'
-              JiraQueueUrl: '_Ref sqs.jira-webhooks.url'
+              GithubQueueUrl: '_Ref sqs.github-webhooks.queue-url'
+              JiraQueueUrl: '_Ref sqs.jira-webhooks.queue-url'
               ServerUri: 'https://github-for-jira.dev.services.atlassian.com'
           stageName: $default
           dataType:
@@ -541,8 +541,8 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
-              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
-              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              GithubQueueUrl: '_Ref sqs.github-webhooks.queue-url'
+              JiraQueueUrl: '_Ref sqs.jira-webhooks.queue-url'
               ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
           stageName: $default
           dataType:
@@ -627,9 +627,9 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
-              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
-              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
-              ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
+              GithubQueueUrl: '_Ref sqs.github-webhooks.queue-url'
+              JiraQueueUrl: '_Ref sqs.jira-webhooks.queue-url'
+              ServerUri: 'https://github-for-jira.prod-west.services.atlassian.com'
           stageName: $default
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
