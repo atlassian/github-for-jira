@@ -20,7 +20,7 @@ paths:
           QueueUrl: "{{GithubQueueUrl}}"
         payloadFormatVersion: "1.0"
         type: "aws_proxy"
-        httpMethod: "POST"
+#        httpMethod: "POST"
         connectionType: "INTERNET"
 
   /jira/events:
@@ -37,7 +37,7 @@ paths:
           MessageSystemAttributes: "$request.body.MessageSystemAttributes"
           QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
-        httpMethod: "POST"
+#        httpMethod: "POST"
         type: "aws_proxy"
         connectionType: "INTERNET"
 
