@@ -9,6 +9,7 @@ import { JiraDelete } from "routes/jira/jira-delete";
 import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
+import { JiraEventsRouter } from "routes/jira/events/jira-events-router";
 
 export const JiraRouter = Router();
 
@@ -25,7 +26,7 @@ JiraRouter.post("/sync",
 	JiraContextJwtTokenMiddleware,
 	JiraSyncPost);
 
-// JiraRouter.use("/events", JiraEventsRouter);
+JiraRouter.use("/events", JiraEventsRouter);
 
 JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, JiraGet);
 

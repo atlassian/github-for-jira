@@ -1,99 +1,52 @@
+openapi: "3.0.1"
 info:
   title: Github for Jira Gateway
   description: It routes things
   version: "0.0.1"
 
-schemes:
-  - https
-
 paths:
   /github/webhooks:
     post:
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "body"
-          name: "Empty"
-          required: true
-          schema:
-            $ref: "#/definitions/Empty"
-        - in: header
-          name: "x-github-event"
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: "x-hub-signature-256"
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: "x-github-delivery"
-          required: true
-          schema:
-            type: string
       responses:
-        200:
-          description: "200 response"
-          schema:
-            $ref: "#/definitions/Empty"
+        default:
+          description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
+        integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
-        uri: "{{GithubQueueARN}}?Action=SendMessage"
-        responses:
-          default:
-            statusCode: "200"
         requestParameters:
-          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
-        passthroughBehavior: "never"
-        httpMethod: "POST"
-        type: "aws"
+          MessageBody: "$request.body.MessageBody"
+          MessageAttributes: "$request.body.MessageAttributes"
+          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
+          QueueUrl: "{{GithubQueueUrl}}"
+        payloadFormatVersion: "1.0"
+        type: "aws_proxy"
+        connectionType: "INTERNET"
 
   /jira/events:
     post:
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "body"
-          name: "Empty"
-          required: true
-          schema:
-            $ref: "#/definitions/Empty"
       responses:
-        200:
-          description: "200 response"
-          schema:
-            $ref: "#/definitions/Empty"
+        default:
+          description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
+        integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
-        uri: "{{JiraQueueARN}}?Action=SendMessage"
-        responses:
-          default:
-            statusCode: "200"
         requestParameters:
-          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
-        passthroughBehavior: "never"
-        httpMethod: "POST"
-        type: "aws"
+          MessageBody: "$request.body.MessageBody"
+          MessageAttributes: "$request.body.MessageAttributes"
+          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
+          QueueUrl: "{{JiraQueueUrl}}"
+        payloadFormatVersion: "1.0"
+        type: "aws_proxy"
+        connectionType: "INTERNET"
 
-  $default:
-    all:
-      produces:
-        - "application/json"
-      responses:
-        200:
-          description: "200 response"
-          schema:
-            $ref: "#/definitions/Empty"
+  /$default:
+    x-amazon-apigateway-any-method:
+      isDefaultRoute: true
       x-amazon-apigateway-integration:
+        payloadFormatVersion: "1.0"
+        type: "http_proxy"
+        httpMethod: "ANY"
         uri: "{{ServerUri}}"
-        responses:
-          default:
-            statusCode: "200"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "ALL"
-        type: "http"
+        connectionType: "INTERNET"
+
+x-amazon-apigateway-importexport-version: "1.0"

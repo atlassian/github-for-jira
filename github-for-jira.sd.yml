@@ -400,8 +400,8 @@ environmentOverrides:
           swaggerConfig:
             configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
-              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
-              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              GithubQueueUrl: '_Ref sqs.github-webhooks.url'
+              JiraQueueUrl: '_Ref sqs.jira-webhooks.url'
               ServerUri: 'https://github-for-jira.dev.services.atlassian.com'
           stageName: $default
           dataType:

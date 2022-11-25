@@ -10,16 +10,19 @@ import { UUID_REGEX } from "~/src/util/regex";
 import { GithubCreateBranchRouter } from "routes/github/create-branch/github-create-branch-router";
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
+import { returnOnValidationError } from "routes/api/api-utils";
+import { WebhookReceiverPost } from "routes/github/webhook/webhook-receiver-post";
+import { header } from "express-validator";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
 // Webhook Route
-// subRouter.post("/webhooks",
-// 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
-// 	returnOnValidationError,
-// 	WebhookReceiverPost);
+subRouter.post("/webhooks",
+	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+	returnOnValidationError,
+	WebhookReceiverPost);
 
 //Have an cover all middleware to extract the optional gitHubAppId
 //subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);
