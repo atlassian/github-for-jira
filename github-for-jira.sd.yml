@@ -403,7 +403,7 @@ environmentOverrides:
               GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
               ServerUri: 'https://github-for-jira.dev.services.atlassian.com'
-          stageName: $default
+          stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
             - PII/IndirectConfidential # name of GitHub org
@@ -544,7 +544,7 @@ environmentOverrides:
               GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
               ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
-          stageName: $default
+          stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
             - PII/IndirectConfidential # name of GitHub org
@@ -630,7 +630,7 @@ environmentOverrides:
               GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
               ServerUri: 'https://github-for-jira.prod-west.services.atlassian.com'
-          stageName: $default
+          stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
             - PII/IndirectConfidential # name of GitHub org
