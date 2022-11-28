@@ -3,18 +3,18 @@
 """
 Script to set isConfigured value against Jira App properties from CSV of JiraHosts.
 
-Takes an jirahosts.csv with jirahosts.
+Takes an installationIds.csv with installationIds.
 Keeps track of processed entries in a separate file, so that script can be stopped
 and resumed without having to change the input file.
 
 Input file format:
-    jirahost
-    https://jirahostname.attlassian.net
+    installationId
+    https://installationIdname.attlassian.net
 
 Running the script:
-    $ python3 ./sync-configured-state-from-csv.py --env [ dev | staging | prod ] --sleep [ sleep-duration ] --input [ input-file-name.csv ] --output [ output-file-name.csv ]
+    $ python3 ./sync-configured-state-from-csv.py --env [ local | dev | staging | prod ] --sleep [ sleep-duration ] --input [ input-file-name.csv ] --output [ output-file-name.csv ]
 Example
-    $ python3 ./sync-configured-state-from-csv.py --env prod --sleep 10 --input jirahosts-current.csv --output output.csv
+    $ python3 ./sync-configured-state-from-csv.py --env local --sleep 10 --input installationIds-current.csv --output configurationOutput.csv
 
 First time setup:
 
@@ -91,7 +91,7 @@ def create_environment(env: str) -> Environment:
     print("Running for env", env)
     if env == 'dev':
         return Environment(
-            github_for_jira_url='https://github-for-jira.ap-southwest-2.dev.atl-paas.net',
+            github_for_jira_url='https://jkay-tunnel.public.atlastunnel.com',
             github_for_jira_auth=create_slauth(env))
     elif env == 'staging':
         return Environment(
@@ -105,38 +105,38 @@ def create_environment(env: str) -> Environment:
         raise ValueError(f'Invalid environment {env}')
 
 @dataclass(frozen=True)
-class Jirahost:
-    jirahost: str
+class Installation:
+    installationId: str
 
     @staticmethod
     def from_dict(d):
-        return Jirahost(d['jirahost'])
+        return Installation(d['installation_id'])
 
-def process_jirahost(env: Environment, jirahosts) -> bool:
-    url = '{}/api/sync-configured'.format(env.github_for_jira_url)
+def process_installation(env: Environment, installations) -> bool:
+    url = '{}/api/configured'.format(env.github_for_jira_url)
 
-    LOG.debug('Starting rotation of %s with url: %s', jirahosts, url)
+    LOG.debug('Starting rotation of %s with url: %s', installations, url)
     response = session.post(url,
       auth=env.github_for_jira_auth,
       json={
-        "jirahosts": list(jirahosts)
+        "installationIds": list(installations)
       },
       headers = {"Content-Type": "application/json"})
 
     if response.ok:
         LOG.info('Sync of %s successfully started: (%s).',
-                 jirahosts, response.status_code)
+                 installations, response.status_code)
         return 'success'
     else:
         LOG.error('Sync of %s failed (%s): %s',
-                  jirahosts, response.status_code, response.text)
+                  installations, response.status_code, response.text)
         return 'error'
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env', choices=('dev', 'staging', 'prod'), required=True)
-    parser.add_argument('--batchsize', default=10, type=float, help='How many jirahosts to process each iteration')
+    parser.add_argument('--batchsize', default=10, type=float, help='How many installations to process each iteration')
     parser.add_argument('--input', type=argparse.FileType('r'), required=True)
     parser.add_argument('--output', type=argparse.FileType('a+'), required=True)
     parser.add_argument('--sleep', type=float, help='How long to wait between requests in seconds', required=True)
@@ -151,36 +151,36 @@ def main():
 
     processed = set()
     output_file.seek(0)
-    output_reader = csv.DictReader(output_file, fieldnames=['jirahost'])
+    output_reader = csv.DictReader(output_file, fieldnames=['installation_id'])
     for row in output_reader:
-        processed.add(Jirahost.from_dict(row))
-    output_writer = csv.DictWriter(output_file, fieldnames=['jirahost', 'status'])
-    input_reader = csv.DictReader(input_file, fieldnames=['jirahost'])
+        processed.add(Installation.from_dict(row))
+    output_writer = csv.DictWriter(output_file, fieldnames=['installation_id', 'status'])
+    input_reader = csv.DictReader(input_file, fieldnames=['installation_id'])
 
-    jirahosts = []
+    installationIds = []
     for row in input_reader:
-        jirahost = Jirahost.from_dict(row)
-        if jirahost.jirahost == 'jirahost':
+        installation = Installation.from_dict(row)
+        if installation.installationId == 'installation_id':
             # Skip header
             continue
 
-        if jirahost in processed:
+        if installation in processed:
             # Skip already processed
             continue
 
-        jirahosts.append(int(jirahost.jirahost))
+        installationIds.append(int(installation.installationId))
 
-    for i in range(0, len(jirahosts), args.batchsize):
-        jirahostBatch = jirahosts[i:i+args.batchsize]
-        print("processing batch: ", jirahostBatch)
-        status = process_jirahost(env, jirahostBatch)
+    for i in range(0, len(installationIds), args.batchsize):
+        installationBatch = installationIds[i:i+args.batchsize]
+        print("processing batch: ", installationBatch)
+        status = process_installation(env, installationBatch)
         if status == 'error':
-            LOG.error('Stopping due to error. To skip a particular jirahost, add a row to output file')
+            LOG.error('Stopping due to error. To skip a particular installation, add a row to output file')
             sys.exit(1)
 
-        processed.add(jirahost)
-        for jirahostEntry in jirahostBatch:
-            output_writer.writerow({'jirahost': jirahostEntry, 'status': status})
+        processed.add(installation)
+        for installationEntry in installationBatch:
+            output_writer.writerow({'installation_id': installationEntry, 'status': status})
 
         time.sleep(args.sleep)
 

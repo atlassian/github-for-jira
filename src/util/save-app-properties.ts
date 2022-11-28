@@ -5,12 +5,24 @@ export const getAppKey = (): string => {
 	return `com.github.integration${instance ? `.${instance}` : ""}`;
 };
 
-export const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, req, isConfiguredState) => {
-	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
+// TYPE YO TODO
+export const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, logger, isConfiguredState) => {
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
 
 	try {
 		await jiraClient.appProperties.create(isConfiguredState);
 	} catch (err) {
-		req.log.error({ err }, "Set app properties failed");
+		logger.error({ err }, "Set app properties failed");
+	}
+};
+
+
+// TODO TYPES YP
+export const getConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, logger) => {
+	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
+	try {
+		return await jiraClient.appProperties.get();
+	} catch (err) {
+		logger.error({ err }, "Set app properties failed");
 	}
 };
