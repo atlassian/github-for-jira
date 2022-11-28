@@ -5,6 +5,16 @@ info:
   version: "0.0.1"
 
 paths:
+  /$default:
+    x-amazon-apigateway-any-method:
+      isDefaultRoute: true
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "1.0"
+        type: "http_proxy"
+        httpMethod: "ANY"
+        uri: "{{ServerUri}}"
+        connectionType: "INTERNET"
+
   /github/webhooks:
     post:
       responses:
@@ -20,8 +30,8 @@ paths:
           QueueUrl: "{{GithubQueueUrl}}"
         payloadFormatVersion: "1.0"
         type: "aws_proxy"
-        httpMethod: "POST"
         connectionType: "INTERNET"
+#        httpMethod: "POST"
 
   /jira/events:
     post:
@@ -37,18 +47,7 @@ paths:
           MessageSystemAttributes: "$request.body.MessageSystemAttributes"
           QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
-        httpMethod: "POST"
         type: "aws_proxy"
         connectionType: "INTERNET"
-
-  /$default:
-    x-amazon-apigateway-any-method:
-      isDefaultRoute: true
-      x-amazon-apigateway-integration:
-        payloadFormatVersion: "1.0"
-        type: "http_proxy"
-        httpMethod: "ANY"
-        uri: "{{ServerUri}}"
-        connectionType: "INTERNET"
-
+#        httpMethod: "POST"
 x-amazon-apigateway-importexport-version: "1.0"
