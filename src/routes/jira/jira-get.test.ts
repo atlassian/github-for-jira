@@ -15,7 +15,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 jest.mock("config/feature-flags");
-jest.mock("utils/save-app-properties");
+jest.mock("utils/app-properties-utils");
 
 describe("Jira Configuration Suite", () => {
 	let frontendApp: Application;
