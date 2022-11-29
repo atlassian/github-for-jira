@@ -10,8 +10,11 @@ import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
 	if (!await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION, false)) {
+		req.log.info("Skipping jiraSymmetricJwtMiddleware...");
 		return next();
 	}
+
+	req.log.info("Executing jiraSymmetricJwtMiddleware...");
 
 	const token = req.query?.["jwt"] || req.cookies?.["jwt"];
 
