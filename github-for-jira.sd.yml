@@ -386,13 +386,18 @@ environmentOverrides:
               region: us-east-1 # The region that your endpoint is configured
           ip_whitelist:
             - public
-          routes: &blackholeSpammingIPs
+          routes: &globalEdgeRoutes
             - match: # Blackhole IP that keeps spamming us
                 prefix: /
                 external_address_header_match:
                   - 94.156.174.137
               route:
                 cluster: blackhole # Deny by sending traffic to blackhole
+            - match: # Default
+                prefix: /
+              route:
+                prefix_rewrite: '/'
+                cluster: stargate2_upstream
 
       - type: api-gateway
         name: gateway
@@ -533,7 +538,7 @@ environmentOverrides:
           upstream_address:
             - address: '_Ref api-gateway.gateway.Host'
               region: us-east-1 # The region that your endpoint is configured
-          routes: *blackholeSpammingIPs
+          routes: *globalEdgeRoutes
 
       - type: api-gateway
         name: gateway
@@ -619,7 +624,7 @@ environmentOverrides:
           upstream_address:
             - address: '_Ref api-gateway.gateway.Host'
               region: us-east-1 # The region that your endpoint is configured
-          routes: *blackholeSpammingIPs
+          routes: *globalEdgeRoutes
 
       - type: api-gateway
         name: gateway
