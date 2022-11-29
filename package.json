@@ -4,7 +4,7 @@
 	"description": "GitHub integration for Atlassian Jira",
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
-		"node": ">= 14.16 <15",
+		"node": ">= 16.18 <17",
 		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
@@ -161,7 +161,7 @@
 		"@atlassiansox/analytics-node-client": "^3.1.1"
 	},
 	"volta": {
-		"node": "14.17.0",
+		"node": "16.18.1",
 		"yarn": "1.22.18"
 	}
 }

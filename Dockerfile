@@ -1,4 +1,4 @@
-FROM node:14.19-alpine3.16 as build
+FROM node:16.18-alpine3.16 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
