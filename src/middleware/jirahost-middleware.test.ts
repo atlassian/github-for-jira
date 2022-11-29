@@ -259,6 +259,9 @@ const getReq = (): Request => {
 		body: {},
 		addLogFields: jest.fn(),
 		session: {},
+		log: {
+			info: jest.fn()
+		},
 		cookies: {}
 	} as any) as Request;
 };
