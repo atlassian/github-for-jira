@@ -11,16 +11,22 @@ export const ApiConfiguredGet = async (req: Request, res: Response): Promise<voi
 	const logger = getLogger("api-configured-get");
 	const installationId = req.params.installationId as unknown as number;
 
-	const subscription = await Subscription.findOneForGitHubInstallationId(installationId, undefined);
+	if (!installationId) {
+		req.log.warn("no installationId");
+		res.sendStatus(400);
+		return;
+	}
 
+	const subscription = await Subscription.findOneForGitHubInstallationId(installationId, undefined);
 	if (!subscription) {
-		res.status(404).send("Subscription not found");
+		req.log.warn("no subscription");
+		res.sendStatus(404);
 		return;
 	}
 
 	const { jiraHost, gitHubInstallationId, gitHubAppId } = subscription;
 	const isConfigured = await getConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, logger);
-
 	const configStatus = isConfigured.data;
-	res.status(200).send({ configStatus });
+	res.status(200);
+	res.send({ configStatus });
 };

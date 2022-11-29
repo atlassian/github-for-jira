@@ -23,6 +23,6 @@ export const getConfiguredAppProperties = async (jiraHost, gitHubInstallationId,
 	try {
 		return await jiraClient.appProperties.get();
 	} catch (err) {
-		logger.error({ err }, "Set app properties failed");
+		logger.error({ err }, "Get app properties failed");
 	}
 };

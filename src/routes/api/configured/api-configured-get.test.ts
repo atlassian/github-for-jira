@@ -2,21 +2,23 @@
 import { getLogger } from "config/logger";
 import { ApiConfiguredGet } from "./api-configured-get";
 import { Subscription } from "models/subscription";
-import { getJiraClient } from "~/src/jira/client/jira-client";
-import { when } from "jest-when";
+import { getConfiguredAppProperties } from "utils/save-app-properties";
+
+jest.mock("utils/save-app-properties", ()=> ({
+	getConfiguredAppProperties: jest.fn()
+}));
 
 describe("GitHub Configured Get", () => {
 
 	let req, res;
 	const INSTALLATION_ID = 123;
-	let mockJiraClient;
 	beforeEach(async () => {
+		jest.mocked(getConfiguredAppProperties).mockResolvedValue({ data: "things" });
 
 		req = {
 			log: getLogger("request"),
 			params: {
-				owner: "ARC",
-				repo: "repo-1"
+				installationId: INSTALLATION_ID
 			}
 		};
 
@@ -38,38 +40,24 @@ describe("GitHub Configured Get", () => {
 			gitHubAppId: undefined,
 			clientKey: "key"
 		});
-
-		mockJiraClient = {
-			devinfo: {
-				appProperties: {
-					get: jest.fn()
-				}
-			}
-		};
 	});
 
 	it("Should get configured state", async () => {
-		when(jest.mocked(getJiraClient))
-			.calledWith(jiraHost, INSTALLATION_ID, expect.anything(), expect.anything())
-			.mockResolvedValue(mockJiraClient);
-
 		await ApiConfiguredGet(req, res);
 		expect(res.status).toBeCalledWith(200);
-		expect(mockJiraClient.devinfo.appProperties.get).toBeCalled();
 	});
 
-	// it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
-	// 	delete res.locals[attribute];
-	// 	await ApiConfiguredGet(req, res);
-	// 	expect(res.sendStatus).toHaveBeenCalledWith(401);
-	// });
-	//
-	// it.each(["owner", "repo"])("Should 400 when missing required fields", async (attribute) => {
-	// 	res.status.mockReturnValue(res);
-	// 	delete req.params[attribute];
-	// 	await ApiConfiguredGet(req, res);
-	// 	expect(res.status).toHaveBeenCalledWith(400);
-	// });
+	it("Should 400 without required fields", async () => {
+		delete req.params.installationId;
+		await ApiConfiguredGet(req, res);
+		expect(res.sendStatus).toHaveBeenCalledWith(400);
+	});
+
+	it("Should 404 when subscription can't be found", async () => {
+		req.params.installationId = "0";
+		await ApiConfiguredGet(req, res);
+		expect(res.sendStatus).toHaveBeenCalledWith(404);
+	});
 
 });
 

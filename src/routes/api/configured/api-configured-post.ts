@@ -11,12 +11,14 @@ export const ApiConfiguredPost = async (req: Request, res: Response): Promise<vo
 	const installationIds = req.body.installationIds as number[];
 
 	if (installationIds?.length === 0) {
-		res.status(400).send("please provide installation ids to update!");
+		res.status(400);
+		res.send("please provide installation ids to update!");
 		return;
 	}
 	// Upper limit of installationIds per call
 	if (installationIds.length > MAX_INSTALLATIONS_BATCH) {
-		res.status(400).send("Calm down Cowboy, keep it under 500 at a time!");
+		res.status(400);
+		res.send("Calm down Cowboy, keep it under 500 at a time!");
 		return;
 	}
 
@@ -27,7 +29,6 @@ export const ApiConfiguredPost = async (req: Request, res: Response): Promise<vo
 		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
 		if (!subscription) {
 			return;
-			// look up the installation on installation table to get jirahist and app id then set configured to falllsss
 		}
 		const { jiraHost, gitHubAppId } = subscription;
 		return await saveConfiguredAppProperties(jiraHost, installationId, gitHubAppId, logger, true);
