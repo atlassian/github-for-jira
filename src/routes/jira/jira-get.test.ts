@@ -6,16 +6,19 @@ import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import express from "express";
+import express, { Application } from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { saveConfiguredAppProperties } from "utils/save-app-properties";
 
 jest.mock("config/feature-flags");
+jest.mock("utils/save-app-properties");
 
 describe("Jira Configuration Suite", () => {
+	let frontendApp: Application;
 	let subscription: Subscription;
 	let installation: Installation;
 
@@ -49,6 +52,12 @@ describe("Jira Configuration Suite", () => {
 			encryptedSharedSecret: "ghi345"
 		});
 
+		frontendApp = express();
+		frontendApp.use((request, _, next) => {
+			request.log = getLogger("test");
+			next();
+		});
+		frontendApp.use(getFrontendApp());
 	});
 
 	const mockRequest = (): any => ({
@@ -84,10 +93,15 @@ describe("Jira Configuration Suite", () => {
 			.reply(200, singleInstallation);
 
 		await JiraGet(mockRequest(), response, jest.fn());
-		const data = response.render.mock.calls[0][1];
-		expect(data.hasConnections).toBe(true);
-		expect(data.ghCloud.failedCloudConnections.length).toBe(0);
-		expect(data.ghCloud.successfulCloudConnections.length).toBe(1);
+
+		expect(saveConfiguredAppProperties).toHaveBeenCalled();
+		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
+			hasConnections: true,
+			ghCloud: {
+				failedCloudConnections: [],
+				successfulCloudConnections: [expect.anything()]
+			}
+		}));
 	});
 
 	describe("getInstallations", () => {
