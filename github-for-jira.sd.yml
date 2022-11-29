@@ -380,7 +380,7 @@ environmentOverrides:
         attributes:
           default_vanity_dns: false
           domain:
-            - github-for-jira.dev.atlassian.com
+            - github.dev.atlassian.com
           upstream_address:
             - address: '_Ref api-gateway.gateway.Host'
               region: us-east-1 # The region that your endpoint is configured
