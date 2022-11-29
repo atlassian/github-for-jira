@@ -12,7 +12,7 @@ describe("ApiInstallationDelete", ()=>{
 		const GHES_GITHUB_INSTALLATION_ID = 123;
 		const GHES_GITHUB_APP_ID = 456;
 		let mockJiraClient;
-		beforeEach(async ()=> {
+		beforeEach(async ()=>{
 			await Subscription.install({
 				installationId: GHES_GITHUB_INSTALLATION_ID,
 				host: jiraHost,

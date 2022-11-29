@@ -9,7 +9,7 @@ and resumed without having to change the input file.
 
 Input file format:
     installationId
-    https://installationIdname.attlassian.net
+    12345
 
 Running the script:
     $ python3 ./sync-configured-state-from-csv.py --env [ local | dev | staging | prod ] --sleep [ sleep-duration ] --input [ input-file-name.csv ] --output [ output-file-name.csv ]

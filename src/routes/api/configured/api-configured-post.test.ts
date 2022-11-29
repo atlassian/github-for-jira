@@ -84,7 +84,7 @@ describe("GitHub Configured Get", () => {
 		req.body.installationIds = Array.from(Array(100).keys());
 		await ApiConfiguredPost(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);
-		expect(res.send).toHaveBeenCalledWith("Calm down Cowboy, keep it under 500 at a time!");
+		expect(res.send).toHaveBeenCalledWith("Calm down Cowboy, keep it under 50 at a time!");
 	});
 
 });

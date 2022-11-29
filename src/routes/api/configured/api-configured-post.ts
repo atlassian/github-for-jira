@@ -18,7 +18,7 @@ export const ApiConfiguredPost = async (req: Request, res: Response): Promise<vo
 	// Upper limit of installationIds per call
 	if (installationIds.length > MAX_INSTALLATIONS_BATCH) {
 		res.status(400);
-		res.send("Calm down Cowboy, keep it under 500 at a time!");
+		res.send(`Calm down Cowboy, keep it under ${MAX_INSTALLATIONS_BATCH} at a time!`);
 		return;
 	}
 
