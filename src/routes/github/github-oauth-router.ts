@@ -18,6 +18,7 @@ const callbackPathCloud = `/github${callbackSubPath}`;
 const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
 
 const getRedirectUrl = async (res, state) => {
+	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
 	let callbackPath = callbackPathCloud;
 	if (res.locals?.gitHubAppConfig?.uuid) {
 		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);

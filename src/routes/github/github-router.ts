@@ -25,9 +25,12 @@ subRouter.post("/webhooks",
 	returnOnValidationError,
 	WebhookReceiverPost);
 
-
 //Have an cover all middleware to extract the optional gitHubAppId
 //subRouter.use(param("uuid").isUUID('all'), GithubServerAppMiddleware);
+
+// TODO: use jiraSymmetricJwtMiddleware and GithubServerAppMiddleware for all paths below once "create branch" supports JWT
+// subRouter.use(jiraSymmetricJwtMiddleware);
+// subRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
 subRouter.use(jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuthRouter);
@@ -36,6 +39,9 @@ subRouter.use(jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuth
 subRouter.use(csrfMiddleware);
 
 subRouter.use("/setup", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubSetupRouter);
+
+// TODO: use GithubAuthMiddleware for all paths below once "create branch" supports JWT
+// subRouter.use(GithubAuthMiddleware);
 
 // App Manifest flow routes
 subRouter.use("/manifest", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubManifestRouter);
