@@ -109,6 +109,19 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			});
 	});
 
+	it("should throw error when token expired", async () => {
+
+		const token = getToken(testSharedSecret, "jira-client-key", Date.now() / 1000 - 1000);
+
+		await supertest(app)
+			.get(`/test`)
+			.query({ jwt: token })
+			.then((res) => {
+				expect(res.status).toEqual(401);
+				expect(res.text).toEqual("Unauthorised");
+			});
+	});
+
 	it("should return valid response when jiraHost set in session", async () => {
 
 		session.jiraHost = jiraHost;
@@ -125,8 +138,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 		await supertest(app)
 			.get(`/test`)
-			.then((res) => {
-				expect(res.status).toEqual(200);
+			.then(() => {
 				expect(locals.installation.jiraHost).toEqual(jiraHost);
 				expect(locals.jiraHost).toEqual(jiraHost);
 				expect(session.jiraHost).toEqual(jiraHost);
@@ -142,6 +154,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			.then((res) => {
 				expect(res.status).toEqual(401);
 				expect(res.text).toEqual("Unauthorised");
+				expect(session.jiraHost).toEqual(undefined);
 			});
 	});
 
@@ -164,9 +177,10 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 });
 
-const getToken = (secret = "secret", iss = "jira-client-key"): any => {
+const getToken = (secret = "secret", iss = "jira-client-key", exp = Date.now() / 1000 + 10000): any => {
 	return encodeSymmetric({
 		qsh: "context-qsh",
-		iss
+		iss,
+		exp
 	}, secret);
 };

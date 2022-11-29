@@ -58,6 +58,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
 			req.log.warn("No Installation found");
+			req.session.jiraHost = undefined;
 			return res.status(401).send("Unauthorised");
 		}
 
@@ -113,7 +114,7 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
 	if (verifiedClaims.qsh) {
 		let qshVerified: boolean;
 		if (tokenType === TokenType.context) {
-			//If we use context jsw tokens, their qsh will be constant
+			//If we use context jwt tokens, their qsh will be constant
 			qshVerified = verifiedClaims.qsh === "context-qsh";
 		} else {
 			//validate query string hash
