@@ -48,7 +48,7 @@ ApiRouter.use(
 		});
 
 		if (!mechanism || mechanism === "open") {
-			// req.log.warn("Attempt to access Admin API without authentication");
+			req.log.warn("Attempt to access Admin API without authentication");
 			res.status(401).json({ error: "Open access not allowed" });
 			return;
 		}
@@ -126,7 +126,4 @@ ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);
-
 ApiRouter.use("/configured", ApiConfiguredRouter);
-
-

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getLogger } from "config/logger";
-import { getConfiguredAppProperties } from "utils/save-app-properties";
+import { getConfiguredAppProperties } from "utils/app-properties-utils";
 import { Subscription } from "models/subscription";
 
 /**

@@ -1,12 +1,12 @@
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import Logger from "bunyan";
 
 export const getAppKey = (): string => {
 	const instance = process.env.INSTANCE_NAME;
 	return `com.github.integration${instance ? `.${instance}` : ""}`;
 };
 
-// TYPE YO TODO
-export const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, logger, isConfiguredState) => {
+export const saveConfiguredAppProperties = async (jiraHost: string, gitHubInstallationId: number | undefined, gitHubAppId: number | undefined, logger: Logger, isConfiguredState: boolean) => {
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
 
 	try {
@@ -16,9 +16,7 @@ export const saveConfiguredAppProperties = async (jiraHost, gitHubInstallationId
 	}
 };
 
-
-// TODO TYPES YP
-export const getConfiguredAppProperties = async (jiraHost, gitHubInstallationId, gitHubAppId, logger) => {
+export const getConfiguredAppProperties = async (jiraHost: string, gitHubInstallationId: number | undefined, gitHubAppId: number | undefined, logger: Logger) => {
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, logger);
 	try {
 		return await jiraClient.appProperties.get();

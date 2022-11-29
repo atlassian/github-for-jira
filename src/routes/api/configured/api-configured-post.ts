@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
-import { saveConfiguredAppProperties } from "utils/save-app-properties";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 const MAX_INSTALLATIONS_BATCH = 50;
 /**

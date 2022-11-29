@@ -1,10 +1,10 @@
 
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
-import { saveConfiguredAppProperties } from "utils/save-app-properties";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { ApiConfiguredPost } from "routes/api/configured/api-configured-post";
 
-jest.mock("utils/save-app-properties", ()=> ({
+jest.mock("utils/app-properties-utils", ()=> ({
 	saveConfiguredAppProperties: jest.fn()
 }));
 
