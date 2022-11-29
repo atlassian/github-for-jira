@@ -1,4 +1,4 @@
-import { Router, NextFunction, Request, Response } from "express";
+import { Router } from "express";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
@@ -45,21 +45,10 @@ subRouter.use("/configuration", jiraSymmetricJwtMiddleware, GithubServerAppMiddl
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubSubscriptionRouter);
 
-subRouter.use("/create-branch", (req: Request, res: Response, next: NextFunction) => {
-	if (req.session?.jiraHost) {
-		res.locals.jiraHost = req.session.jiraHost;
-	}
-	next();
-},
-GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubRepositoryRouter);
 
-subRouter.use("/branch", (req: Request, res: Response, next: NextFunction) => {
-	if (req.session?.jiraHost) {
-		res.locals.jiraHost = req.session.jiraHost;
-	}
-	next();
-}, GithubServerAppMiddleware, GithubAuthMiddleware, GithubBranchRouter);
+subRouter.use("/branch", GithubServerAppMiddleware, GithubAuthMiddleware, GithubBranchRouter);
 
 
