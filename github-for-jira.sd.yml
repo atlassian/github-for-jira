@@ -386,6 +386,7 @@ environmentOverrides:
               region: us-east-1 # The region that your endpoint is configured
           ip_whitelist:
             - public
+          ignore_stargate_dependency_error: true
           routes: &globalEdgeRoutes
             - match: # Blackhole IP that keeps spamming us
                 prefix: /
