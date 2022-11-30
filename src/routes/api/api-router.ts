@@ -62,7 +62,7 @@ ApiRouter.use(rateLimit({
 	store: new RedisStore({
 		client: new IORedis(getRedisInfo("express-rate-limit"))
 	}),
-	windowMs: 60 * 1000, // 1 minutesUpper limit of installationIds per cal
+	windowMs: 60 * 1000, // 1 minutes
 	max: 60 // limit each IP to 60 requests per windowMs
 }));
 
