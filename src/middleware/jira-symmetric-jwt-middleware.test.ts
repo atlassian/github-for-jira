@@ -1,4 +1,4 @@
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { when } from "jest-when";
 import supertest from "supertest";
@@ -45,7 +45,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should throw error when issuer is missing", async () => {
 
-		const token = getToken(testSharedSecret, "");
+		const token = getToken({ secret: testSharedSecret, iss: "" });
 
 		await supertest(app)
 			.get(`/test`)
@@ -58,7 +58,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should throw error when no installation is found", async () => {
 
-		const token = getToken(testSharedSecret, "jira-wrong-key");
+		const token = getToken({ secret: testSharedSecret, iss: "jira-wrong-key" });
 
 		await supertest(app)
 			.get(`/test`)
@@ -71,7 +71,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should return valid response when token is valid", async () => {
 
-		const token = getToken(testSharedSecret);
+		const token = getToken({ secret: testSharedSecret });
 
 		await supertest(app)
 			.get(`/test`)
@@ -83,7 +83,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 		locals = {};
 		session = {};
-		const token = getToken(testSharedSecret);
+		const token = getToken({ secret: testSharedSecret });
 
 		await supertest(app)
 			.get(`/test`)
@@ -98,7 +98,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should throw error when token secret mismatch", async () => {
 
-		const token = getToken("wrong-secret");
+		const token = getToken({ secret: "wrong-secret" });
 
 		await supertest(app)
 			.get(`/test`)
@@ -111,7 +111,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should throw error when token expired", async () => {
 
-		const token = getToken(testSharedSecret, "jira-client-key", Date.now() / 1000 - 1000);
+		const token = getToken({ secret: testSharedSecret, iss: "jira-client-key", exp: Date.now() / 1000 - 1000 });
 
 		await supertest(app)
 			.get(`/test`)
@@ -158,6 +158,52 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			});
 	});
 
+	it("should throw error when invalid qsh in token", async () => {
+
+		const token = getToken({ secret: testSharedSecret, qsh: "wrong-qsh" });
+
+		await supertest(app)
+			.get(`/test`)
+			.query({ jwt: token })
+			.then((res) => {
+				expect(res.status).toEqual(401);
+				expect(res.text).toEqual("Unauthorised");
+			});
+	});
+
+	it("should throw error when computed qsh doesn't match", async () => {
+
+		app.get("/jira/configuration", (_req, res) => {
+			res.send("ok");
+		});
+
+		const token = getToken({ secret: testSharedSecret });
+
+		await supertest(app)
+			.get(`/jira/configuration`)
+			.query({ jwt: token })
+			.then((res) => {
+				expect(res.status).toEqual(401);
+				expect(res.text).toEqual("Unauthorised");
+			});
+	});
+
+	it("should return valid response when token having computed qsh", async () => {
+
+		app.get("/jira/configuration", (_req, res) => {
+			res.send("ok");
+		});
+
+		const qsh = createQueryStringHash({ method: "GET", pathname: "/jira/configuration" });
+		const token = getToken({ secret: testSharedSecret, qsh });
+
+
+		await supertest(app)
+			.get("/jira/configuration")
+			.query({ jwt: token })
+			.expect(200);
+	});
+
 
 	const createApp = () => {
 		const app = express();
@@ -177,9 +223,13 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 });
 
-const getToken = (secret = "secret", iss = "jira-client-key", exp = Date.now() / 1000 + 10000): any => {
+const getToken = ({
+	secret = "secret",
+	iss = "jira-client-key",
+	exp = Date.now() / 1000 + 10000,
+	qsh = "context-qsh" }): any => {
 	return encodeSymmetric({
-		qsh: "context-qsh",
+		qsh,
 		iss,
 		exp
 	}, secret);
