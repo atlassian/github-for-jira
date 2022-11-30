@@ -91,7 +91,7 @@ def create_environment(env: str) -> Environment:
     print("Running for env", env)
     if env == 'dev':
         return Environment(
-            github_for_jira_url='https://jkay-tunnel.public.atlastunnel.com',
+            github_for_jira_url='https://github-for-jira.ap-southwest-2.dev.atl-paas.net',
             github_for_jira_auth=create_slauth(env))
     elif env == 'staging':
         return Environment(
@@ -124,7 +124,7 @@ def process_installation(env: Environment, installations) -> bool:
       headers = {"Content-Type": "application/json"})
 
     if response.ok:
-        LOG.info('Sync of %s successfully started: (%s).',
+        LOG.info('Sync of %s successfully synced: (%s).',
                  installations, response.status_code)
         return 'success'
     else:
