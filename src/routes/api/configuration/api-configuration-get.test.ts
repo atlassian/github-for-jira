@@ -1,6 +1,6 @@
 
 import { getLogger } from "config/logger";
-import { ApiConfiguredGet } from "./api-configured-get";
+import { ApiConfigurationGet } from "./api-configuration-get";
 import { Subscription } from "models/subscription";
 import { getConfiguredAppProperties } from  "utils/app-properties-utils";
 
@@ -43,19 +43,19 @@ describe("GitHub Configured Get", () => {
 	});
 
 	it("Should get configured state", async () => {
-		await ApiConfiguredGet(req, res);
+		await ApiConfigurationGet(req, res);
 		expect(res.status).toBeCalledWith(200);
 	});
 
 	it("Should 400 without required fields", async () => {
 		delete req.params.installationId;
-		await ApiConfiguredGet(req, res);
+		await ApiConfigurationGet(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(400);
 	});
 
 	it("Should 404 when subscription can't be found", async () => {
 		req.params.installationId = "0";
-		await ApiConfiguredGet(req, res);
+		await ApiConfigurationGet(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(404);
 	});
 
