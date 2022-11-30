@@ -11,17 +11,17 @@ jest.mock("utils/app-properties-utils", ()=> ({
 describe("GitHub Configured Get", () => {
 
 	let req, res;
-	const INSTALLATION_ID_A = 123;
-	const INSTALLATION_ID_B = 456;
-	const INSTALLATION_ID_C = 789;
+	const JIRAHOST_A = "HOST1";
+	const JIRAHOST_B = "HOST2";
+	const JIRAHOST_C = "HOST3";
 	beforeEach(async () => {
 		jest.mocked(saveConfiguredAppProperties).mockResolvedValue();
 
 		req = {
 			log: getLogger("request"),
 			body: {
-				installationIds: [
-					INSTALLATION_ID_A
+				jiraHosts: [
+					JIRAHOST_A
 				]
 			}
 		};
@@ -39,15 +39,15 @@ describe("GitHub Configured Get", () => {
 		};
 
 		await Subscription.install({
-			installationId: INSTALLATION_ID_A,
-			host: jiraHost,
+			installationId: 1,
+			host: JIRAHOST_A,
 			gitHubAppId: undefined,
 			clientKey: "key"
 		});
 
 		await Subscription.install({
-			installationId: INSTALLATION_ID_B,
-			host: jiraHost,
+			installationId: 2,
+			host: JIRAHOST_B,
 			gitHubAppId: undefined,
 			clientKey: "key"
 		});
@@ -59,29 +59,36 @@ describe("GitHub Configured Get", () => {
 		expect(res.status).toBeCalledWith(200);
 	});
 
-	it("Should save multiple installations configured state", async () => {
-		req.body.installationIds = [ INSTALLATION_ID_A, INSTALLATION_ID_B ];
+	it("Should save multiple installations configured state regardless of subscription existance", async () => {
+		req.body.jiraHosts = [ JIRAHOST_A, JIRAHOST_C ];
 		await ApiConfigurationPost(req, res);
 		expect(saveConfiguredAppProperties).toBeCalledTimes(2);
 		expect(res.status).toBeCalledWith(200);
 	});
 
-	it("Should only save valid multiple installations configured state", async () => {
-		req.body.installationIds = [ INSTALLATION_ID_A, INSTALLATION_ID_B, INSTALLATION_ID_C ];
+	it("Should save false for no subscriptions", async () => {
+		req.body.jiraHosts = [ JIRAHOST_C ];
 		await ApiConfigurationPost(req, res);
-		expect(saveConfiguredAppProperties).toBeCalledTimes(2);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, undefined, undefined, expect.anything(), false);
+		expect(res.status).toBeCalledWith(200);
+	});
+
+	it("Should save true for subscription present", async () => {
+		req.body.jiraHosts = [ JIRAHOST_A ];
+		await ApiConfigurationPost(req, res);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_A, undefined, undefined, expect.anything(), true);
 		expect(res.status).toBeCalledWith(200);
 	});
 
 	it("Should 400 when no installationid's are provided", async () => {
-		req.body.installationIds = [];
+		req.body.jiraHosts = [];
 		await ApiConfigurationPost(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);
 		expect(res.send).toHaveBeenCalledWith("please provide installation ids to update!");
 	});
 
 	it("Should 400 when too many installationid's are provided", async () => {
-		req.body.installationIds = Array.from(Array(100).keys());
+		req.body.jiraHosts = Array.from(Array(100).keys());
 		await ApiConfigurationPost(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);
 		expect(res.send).toHaveBeenCalledWith("Calm down Cowboy, keep it under 50 at a time!");

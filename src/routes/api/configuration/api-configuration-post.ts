@@ -16,7 +16,7 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 		res.send("please provide installation ids to update!");
 		return;
 	}
-	// Upper limit of installationIds per call
+	// Upper limit of jorahists per call
 	if (jiraHosts.length > MAX_INSTALLATIONS_BATCH) {
 		res.status(400);
 		res.send(`Calm down Cowboy, keep it under ${MAX_INSTALLATIONS_BATCH} at a time!`);
@@ -29,7 +29,6 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
 		return await saveConfiguredAppProperties(jiraHost, undefined, gitHubAppId, logger, subscriptions?.length > 0 ? true : false);
-		// return await saveConfiguredAppProperties(jiraHost, undefined, gitHubAppId, logger, false);
 	});
 
 	try {
@@ -41,8 +40,3 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 	}
 
 };
-
-// atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
-// -v https://jkay-tunnel.public.atlastunnel.com/api/configuration/123 \
-// -H "Content-Type: application/json" \
-// -d '{ "jiraHosts": ["https://joshkayjira.atlassian.net]'

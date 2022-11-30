@@ -30,11 +30,3 @@ export const ApiConfigurationGet = async (req: Request, res: Response): Promise<
 	res.status(200);
 	res.send({ configStatus });
 };
-
-// atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
-// -v https://jkay-tunnel.public.atlastunnel.com/api/configuration/31342166
-//
-// atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- \
-// -v https://jkay-tunnel.public.atlastunnel.com/api/configuration/123 \
-// 	-H "Content-Type: application/json" \
-// -d '{"syncType": "full", "installationIds": [1111,2222], "statusTypes": ["FAILED", "PENDING", "ACTIVE", "COMPLETE"]}'
