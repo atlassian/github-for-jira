@@ -3,7 +3,8 @@ import { jirahostMiddleware } from "./jirahost-middleware";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { postInstallUrl } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { TokenType } from "~/src/jira/util/jwt";
-import { booleanFlag } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("middleware/jira-jwt-middleware");
 const mockVerifyJiraJwtMiddleware = (verifyJiraJwtMiddleware as any) as jest.Mock<typeof verifyJiraJwtMiddleware>;
@@ -26,6 +27,10 @@ describe("await jirahostMiddleware", () => {
 		mockJwtVerificationFn = jest.fn().mockImplementation((_, __, n) => n());
 		mockVerifyJiraJwtMiddleware.mockReturnValue(mockJwtVerificationFn);
 		mockBooleanFlag.mockReturnValue(async () => true);
+		when(booleanFlag).calledWith(
+			BooleanFlags.NEW_JWT_VALIDATION,
+			expect.anything()
+		).mockResolvedValue(false);
 	});
 
 	describe("jiraHost is provided in session", ()=>{
@@ -254,6 +259,9 @@ const getReq = (): Request => {
 		body: {},
 		addLogFields: jest.fn(),
 		session: {},
+		log: {
+			info: jest.fn()
+		},
 		cookies: {}
 	} as any) as Request;
 };

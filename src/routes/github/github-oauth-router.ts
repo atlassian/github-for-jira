@@ -13,12 +13,19 @@ import { GitHubServerApp } from "models/github-server-app";
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
 const scopes = ["user", "repo"];
-const callbackPath = "/callback";
+const callbackSubPath = "/callback";
+const callbackPathCloud = `/github${callbackSubPath}`;
+const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
 
-const getRedirectUrl = async (req, res, state) => {
-	const { baseUrl } = req;
+const getRedirectUrl = async (res, state) => {
+	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
+	let callbackPath = callbackPathCloud;
+	if (res.locals?.gitHubAppConfig?.uuid) {
+		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
+	}
+
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
+	const callbackURI = `${appUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
@@ -34,7 +41,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
-	const redirectUrl = await getRedirectUrl(req, res, state);
+	const redirectUrl = await getRedirectUrl(res, state);
 	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
@@ -202,4 +209,4 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
 GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);
+GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);

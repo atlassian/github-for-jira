@@ -18,7 +18,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 	beforeEach(async ()=>{
 		app = getFrontendApp();
 		installation = await Installation.install({
-			clientKey: "client-key-1",
+			clientKey: "jira",
 			host: jiraHost,
 			sharedSecret: SHARED_SECRET
 		});
