@@ -299,7 +299,7 @@ describe.each([
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: testSharedSecret,
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 		frontendApp = express();
 		frontendApp.use((request, res, next) => {
@@ -309,7 +309,7 @@ describe.each([
 				xdm_e: jiraHost,
 				jwt: encodeSymmetric({
 					qsh: testQsh,
-					iss: "jira"
+					iss: "jira-client-key"
 				}, testSharedSecret)
 			};
 			request.addLogFields = jest.fn();

@@ -195,7 +195,6 @@ describe("GitHub router", () => {
 				);
 			});
 			it("should not match route, return empty if uuid present but invalid", async ()=>{
-				setupGitHubCloudPingNock(); //since uuid invalid, this fallsback to cloud
 				await supertest(app)
 					.get(`/github/${GITHUB_SERVER_APP_UUID + "random-gibberish"}/configuration`)
 					.set(

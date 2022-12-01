@@ -27,7 +27,8 @@ export enum BooleanFlags {
 	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
 	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
-	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform"
+	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
+	NEW_JWT_VALIDATION = "new-jwt-validation"
 }
 
 export enum StringFlags {
