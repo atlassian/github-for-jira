@@ -4,7 +4,7 @@ import { getJiraClient } from "~/src/jira/client/jira-client";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {
 	const gitHubInstallationId = req.params.installationId;
-	const gitHubAppId = Number(req.params.gitHubAppId) || Number(req.query.gitHubAppId) || undefined;
+	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
 	if (!jiraHost || !gitHubInstallationId) {
