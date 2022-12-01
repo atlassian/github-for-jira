@@ -27,7 +27,7 @@ describe("ApiInstallationDelete", ()=>{
 				}
 			};
 		});
-		it("should get subcription with gitHubAppid", async ()=>{
+		it("should get subcription with gitHubAppid in param", async ()=>{
 			when(jest.mocked(getJiraClient))
 				.calledWith(jiraHost, GHES_GITHUB_INSTALLATION_ID, GHES_GITHUB_APP_ID, expect.anything())
 				.mockResolvedValue(mockJiraClient);
@@ -46,12 +46,36 @@ describe("ApiInstallationDelete", ()=>{
 			expect(res.status).toBeCalledWith(200);
 			expect(mockJiraClient.devinfo.installation.delete).toBeCalledWith(GHES_GITHUB_INSTALLATION_ID.toString());
 		});
+		it("should get subcription with gitHubAppid in query string", async ()=>{
+			when(jest.mocked(getJiraClient))
+				.calledWith(jiraHost, GHES_GITHUB_INSTALLATION_ID, GHES_GITHUB_APP_ID, expect.anything())
+				.mockResolvedValue(mockJiraClient);
+
+			const res = getRes();
+			await ApiInstallationDelete(getReq({
+				params: {
+					jiraHost,
+					installationId: GHES_GITHUB_INSTALLATION_ID.toString()
+				},
+				query: {
+					gitHubAppId: GHES_GITHUB_APP_ID.toString()
+				},
+				body: {
+					jiraHost
+				}
+			}), res);
+			expect(res.status).toBeCalledWith(200);
+			expect(mockJiraClient.devinfo.installation.delete).toBeCalledWith(GHES_GITHUB_INSTALLATION_ID.toString());
+		});
 	});
 	const getReq = (opts: any = {}): any => {
 		return {
 			log: getLogger("test"),
 			params: {
 				...opts.params
+			},
+			query: {
+				...opts.query
 			},
 			body: {
 				...opts.body
