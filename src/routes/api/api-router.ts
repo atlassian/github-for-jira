@@ -88,6 +88,13 @@ ApiRouter.post("/ping", ApiPingPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
+ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
 	param("installationId").isInt(),
 	param("jiraHost").isString(),
