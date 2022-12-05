@@ -6,6 +6,9 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
 import { getLogger } from "config/logger";
+import { ApiInstallationDelete } from "./installation/api-installation-delete";
+
+jest.mock("./installation/api-installation-delete");
 
 describe("API Router", () => {
 	let app: Application;
@@ -367,6 +370,41 @@ describe("API Router", () => {
 					});
 			});
 
+		});
+	});
+
+	describe("Delete installation", () => {
+		let params = {};
+		beforeEach(()=> {
+			jest.mocked(ApiInstallationDelete).mockImplementation(async (req, res)=> {
+				params = req.params;
+				res.status(200).end("ok");
+			});
+		});
+		it("should ignore gitHubAppId if not present", async () => {
+			await supertest(app)
+				.delete(`/api/deleteInstallation/1/${encodeURIComponent(jiraHost)}`)
+				.set("host", "127.0.0.1")
+				.set("X-Slauth-Mechanism", "slauthtoken")
+				.send()
+				.expect(200);
+			expect(params).toEqual(expect.objectContaining({
+				installationId: "1",
+				jiraHost,
+			}));
+		});
+		it("should pickup gitHubAppId if present", async () => {
+			await supertest(app)
+				.delete(`/api/deleteInstallation/1/${encodeURIComponent(jiraHost)}/github-app-id/123`)
+				.set("host", "127.0.0.1")
+				.set("X-Slauth-Mechanism", "slauthtoken")
+				.send()
+				.expect(200);
+			expect(params).toEqual(expect.objectContaining({
+				installationId: "1",
+				jiraHost,
+				gitHubAppId: "123"
+			}));
 		});
 	});
 });

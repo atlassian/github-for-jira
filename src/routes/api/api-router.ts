@@ -91,6 +91,13 @@ ApiRouter.delete(
 	returnOnValidationError,
 	ApiInstallationDelete
 );
+ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
 
 // TODO: remove the debug endpoint
 /*
