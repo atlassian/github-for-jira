@@ -390,7 +390,7 @@ describe("API Router", () => {
 				.expect(200);
 			expect(params).toEqual(expect.objectContaining({
 				installationId: "1",
-				jiraHost,
+				jiraHost
 			}));
 		});
 		it("should pickup gitHubAppId if present", async () => {
