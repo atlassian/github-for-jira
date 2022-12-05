@@ -142,8 +142,8 @@ export class Subscription extends Model {
 	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId: number | undefined,
-		gitHubAppId: number | undefined
+		gitHubInstallationId?: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {

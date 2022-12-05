@@ -12,7 +12,7 @@ import { uniq } from "lodash";
 import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
-import { getAppKey } from "utils/save-app-properties";
+import { getAppKey } from "utils/app-properties-utils";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -363,8 +363,8 @@ export const getJiraClient = async (
 				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
 					"isConfigured": isConfiguredState
 				}),
-			delete: () =>
-				instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
+			get: () => instance.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`),
+			delete: () => instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
 		}
 	};
 

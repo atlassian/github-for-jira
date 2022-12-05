@@ -12,10 +12,10 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { saveConfiguredAppProperties } from "utils/save-app-properties";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 jest.mock("config/feature-flags");
-jest.mock("utils/save-app-properties");
+jest.mock("utils/app-properties-utils");
 
 describe("Jira Configuration Suite", () => {
 	let frontendApp: Application;

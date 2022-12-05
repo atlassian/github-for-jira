@@ -18,6 +18,7 @@ import { UUID_REGEX } from "~/src/util/regex";
 import { DBMigrationsRouter } from "./db-migrations/db-migration-router";
 import { RecoverClientKeyPost } from "./client-key/recover-client-key";
 import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
+import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 
 export const ApiRouter = Router();
 
@@ -28,7 +29,6 @@ ApiRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
-
 ApiRouter.use(
 	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
@@ -69,6 +69,9 @@ ApiRouter.use(rateLimit({
 ApiRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
 });
+
+ApiRouter.use("/configuration", ApiConfigurationRouter);
+
 
 ApiRouter.post(
 	`/:uuid(${UUID_REGEX})?/resync`,
