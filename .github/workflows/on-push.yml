@@ -1,12 +1,12 @@
 name: Push
 
 on:
+  # Only build on main branch when pushed (when PR is merged)
   push:
     branches:
       - main
+  # Only build in PR on creation/update
   pull_request:
-    branches:
-      - main
 
 jobs:
   build:
