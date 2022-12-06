@@ -71,6 +71,8 @@ jobs:
   e2e-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    # This will prevent multiple e2e tests from running concurrently, only one at a time to prevent collisions
+    concurrency: e2e
     steps:
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v4
