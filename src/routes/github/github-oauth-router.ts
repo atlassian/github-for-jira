@@ -99,7 +99,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	try {
 
-		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
 			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
 				clientId, clientSecret: gitHubClientSecret, code, state
@@ -162,7 +162,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
 			await gitHubAnonymousClient.checkGitHubToken(githubToken);
 		} else {

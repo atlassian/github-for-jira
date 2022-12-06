@@ -59,7 +59,7 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 	req.addLogFields({ id: newUUID() });
 
 	res.once("finish", async () => {
-		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false))) {
+		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE))) {
 			req.log.warn({ res, req }, `Returning HTTP response of '${res.statusCode}' for path '${req.path}'`);
 		}
 	});

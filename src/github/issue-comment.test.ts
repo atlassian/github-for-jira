@@ -10,7 +10,7 @@ jest.mock("config/feature-flags");
 
 const turnFF_OnOff = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 

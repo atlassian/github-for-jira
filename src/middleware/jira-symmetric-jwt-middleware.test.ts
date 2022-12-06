@@ -27,10 +27,8 @@ describe("jiraSymmetricJwtMiddleware", () => {
 		});
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.NEW_JWT_VALIDATION,
-			expect.anything()
+			BooleanFlags.NEW_JWT_VALIDATION
 		).mockResolvedValue(true);
-
 	});
 
 	it("should throw error when token is missing and no jiraHost in session", async () => {

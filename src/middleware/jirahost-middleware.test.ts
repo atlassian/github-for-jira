@@ -28,8 +28,7 @@ describe("await jirahostMiddleware", () => {
 		mockVerifyJiraJwtMiddleware.mockReturnValue(mockJwtVerificationFn);
 		mockBooleanFlag.mockReturnValue(async () => true);
 		when(booleanFlag).calledWith(
-			BooleanFlags.NEW_JWT_VALIDATION,
-			expect.anything()
+			BooleanFlags.NEW_JWT_VALIDATION
 		).mockResolvedValue(false);
 	});
 

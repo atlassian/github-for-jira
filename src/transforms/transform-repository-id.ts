@@ -31,7 +31,7 @@ const calculatePrefix = (url: string) => {
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
 export const transformRepositoryId = async (repositoryId: number, gitHubBaseUrl?: string): Promise<TransformedRepositoryId> => {
-	if (!await booleanFlag(BooleanFlags.USE_REPO_ID_TRANSFORMER, false)) {
+	if (!await booleanFlag(BooleanFlags.USE_REPO_ID_TRANSFORMER)) {
 		return ("" + repositoryId) as TransformedRepositoryId;
 	}
 

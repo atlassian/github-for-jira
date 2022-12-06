@@ -315,11 +315,11 @@ describe("sync/branches", () => {
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
 				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()

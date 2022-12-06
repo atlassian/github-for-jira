@@ -128,7 +128,7 @@ const convertYamlToUserConfig = async (input?: string, jiraHost?: string): Promi
 				production: configDeployments.environmentMapping.production
 			};
 		}
-		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
 			if (configDeployments.services?.ids) {
 				deployments["services"] = {
 					ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
