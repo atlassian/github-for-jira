@@ -15,6 +15,23 @@ paths:
         uri: "{{ServerUri}}"
         connectionType: "INTERNET"
 
+  /healthcheck:
+    get:
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "OK"
+      x-amazon-apigateway-integration:
+        type: "mock"
+        responses:
+          default:
+            statusCode: "200"
+            responseTemplates:
+              application/json: "{\"status\": \"ok\"}"
+        requestTemplates:
+          application/json: "{\"statusCode\": 200}"
+
   /github/webhooks:
     post:
       responses:
