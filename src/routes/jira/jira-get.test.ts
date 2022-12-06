@@ -85,7 +85,6 @@ describe("Jira Configuration Suite", () => {
 		const response = mockResponse();
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 		githubNock

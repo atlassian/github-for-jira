@@ -10,7 +10,7 @@ jest.mock("config/feature-flags");
 
 const turnFF_OnOff_service = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 

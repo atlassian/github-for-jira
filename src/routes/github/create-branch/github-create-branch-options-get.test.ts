@@ -80,7 +80,6 @@ describe("GitHub Create Branch Options Get", () => {
 		});
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 		await supertest(app)
