@@ -91,7 +91,7 @@ export const getPullRequestTask = async (
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
-				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM, false)) {
+				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
 					const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
 					const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
 					return data?.pullRequests[0];

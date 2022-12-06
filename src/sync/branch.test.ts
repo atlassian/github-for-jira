@@ -315,7 +315,7 @@ describe("sync/branches", () => {
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))

@@ -16,7 +16,7 @@ const setupAppAndRouter = () => {
 
 const turnOnGHESFF = () => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 		.mockResolvedValue(true);
 };
 

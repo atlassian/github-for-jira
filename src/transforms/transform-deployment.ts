@@ -194,7 +194,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 		totalAssociationCount += issues.length;
 	}
 
-	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false, jiraHost)) {
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
 		if (config?.deployments?.services?.ids) {
 			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 			const services = config.deployments.services.ids

@@ -19,7 +19,7 @@ const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
 const GITHUB_SERVER_CLIENT_ID = "client-id";
 const turnGHE_FF_OnOff = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 

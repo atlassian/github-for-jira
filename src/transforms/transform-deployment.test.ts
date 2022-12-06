@@ -16,7 +16,7 @@ jest.mock("services/user-config-service");
 
 const turnFF_OnOff_service = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 
@@ -48,7 +48,7 @@ const mockGetRepoConfig = () => {
 
 const turnOnGHESFF = () => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 		.mockResolvedValue(true);
 };
 

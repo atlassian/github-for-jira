@@ -14,7 +14,6 @@ describe("Maintenance", () => {
 	const whenMaintenanceMode = (value: boolean, jiraHost?: string) =>
 		when(booleanFlag).calledWith(
 			BooleanFlags.MAINTENANCE_MODE,
-			expect.anything(),
 			jiraHost
 		).mockResolvedValue(Promise.resolve(value));
 

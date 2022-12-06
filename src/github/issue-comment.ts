@@ -32,7 +32,7 @@ export const issueCommentWebhookHandler = async (
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
-	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, false, jiraHost)){
+	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
 		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 	}
 

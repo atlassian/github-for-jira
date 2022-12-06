@@ -66,12 +66,12 @@ interface Author {
 
 let regexFixFeature = false;
 onFlagChange(BooleanFlags.REGEX_FIX, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX, false);
+	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX);
 });
 
 let issueKeyRegexCharLimitFeature = false;
 onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
-	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, false);
+	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT);
 });
 /**
  * Parses strings for Jira issue keys for commit messages,

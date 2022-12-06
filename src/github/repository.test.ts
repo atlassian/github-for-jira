@@ -13,7 +13,6 @@ describe("deleteRepositoryWebhookHandler", () => {
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 

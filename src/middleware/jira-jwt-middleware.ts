@@ -9,7 +9,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	next: NextFunction
 ): Promise<void> => {
 
-	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION, false)) {
+	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
 		req.log.info("Skipping verifyJiraJwtMiddleware...");
 		return next();
 	}

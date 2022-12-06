@@ -604,7 +604,6 @@ describe("Push Webhook", () => {
 		beforeEach(async () => {
 			when(booleanFlag).calledWith(
 				BooleanFlags.GHE_SERVER,
-				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
