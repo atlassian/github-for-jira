@@ -319,7 +319,7 @@ describe("sync/branches", () => {
 				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
 				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()

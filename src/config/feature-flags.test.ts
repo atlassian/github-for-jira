@@ -20,12 +20,12 @@ describe("Feature Flag", () => {
 
 	it("returns true when LaunchDarkly returns true", async () => {
 		await mockFeatureFlagValue(true);
-		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, expect.anything(), "https://myjira.atlassian.net")).toBeTruthy();
+		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, "https://myjira.atlassian.net")).toBeTruthy();
 	});
 
 	it("returns false when LaunchDarkly returns false", async () => {
 		await mockFeatureFlagValue(false);
-		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, expect.anything(), "https://myjira.atlassian.net")).toBeFalsy();
+		expect(await featureFlags.booleanFlag(featureFlags.BooleanFlags.MAINTENANCE_MODE, "https://myjira.atlassian.net")).toBeFalsy();
 	});
 
 });

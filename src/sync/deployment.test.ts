@@ -434,7 +434,7 @@ describe("sync/deployments", () => {
 				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
 				.mockResolvedValue(true);
 
 			mockSystemTime(12345678);

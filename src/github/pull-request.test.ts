@@ -244,8 +244,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 		).mockResolvedValue(true);
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER,
-			expect.anything()
+			BooleanFlags.USE_REPO_ID_TRANSFORMER
 		).mockResolvedValue(true);
 
 		mockSystemTime(12345678);
