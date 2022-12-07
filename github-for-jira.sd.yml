@@ -396,7 +396,8 @@ environmentOverrides:
             - match: # Default
                 prefix: /
               route:
-                prefix_rewrite: '/live/'
+                prefix_rewrite: /live/
+                cluster: github-for-jira_ingress_micros_elb
 
       - type: api-gateway
         name: gateway
