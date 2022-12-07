@@ -180,6 +180,7 @@
               <div class="jiraConfiguration__cloudConnections">
                 {{> jira-configuration-table
                     id=id
+                    host=host
                     elementIdPrefix="ghCloud-"
                     html_url=html_url
                     csrfToken=csrfToken
@@ -252,6 +253,7 @@
                           {{#if app.installations.total}}
                             {{> jira-configuration-table
                                 id=id
+                                host=../../host
                                 hideAvatar=true
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
