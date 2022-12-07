@@ -430,6 +430,7 @@ const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	if (!resources) return true;
 	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values?.length || 0);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+
 };
 
 /**
