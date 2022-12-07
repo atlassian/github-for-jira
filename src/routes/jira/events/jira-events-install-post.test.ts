@@ -29,19 +29,7 @@ describe("Webhook: /events/installed", () => {
 	});
 
 	it("Install", async () => {
-		const req = {
-			log: {
-				info: jest.fn(),
-				debugger: jest.fn(),
-				error: jest.fn(),
-				child: () => ({
-					warn: jest.fn(),
-					info: jest.fn(),
-					errors: jest.fn()
-				})
-			},
-			body
-		};
+		const req = { log: { info: jest.fn() }, body };
 		const res = { sendStatus: jest.fn(), on: jest.fn() };
 
 		await JiraEventsInstallPost(req as any, res as any);
