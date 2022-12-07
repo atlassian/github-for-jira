@@ -11,7 +11,6 @@ export const saveConfiguredAppProperties = async (jiraHost: string, gitHubInstal
 
 	try {
 		await jiraClient.appProperties.create(isConfiguredState);
-		logger.debug("App properties set to ", isConfiguredState);
 	} catch (err) {
 		logger.error({ err }, "Set app properties failed");
 	}
