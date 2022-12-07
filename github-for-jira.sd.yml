@@ -397,7 +397,7 @@ environmentOverrides:
                 prefix: /
               route:
                 prefix_rewrite: /live/
-#                host_rewrite: '_Ref api-gateway.gateway.Host'
+                host_rewrite: '_Ref api-gateway.gateway.Host'
                 cluster: github-for-jira_proxy_micros-elb
 
       - type: api-gateway
