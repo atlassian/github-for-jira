@@ -397,7 +397,6 @@ environmentOverrides:
                 prefix: /
               route:
                 prefix_rewrite: '/live/'
-                cluster: stargate2_upstream
 
       - type: api-gateway
         name: gateway
