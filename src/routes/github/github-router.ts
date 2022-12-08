@@ -19,16 +19,13 @@ import { NextFunction, Request, Response } from "express";
 
 // TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
 const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const jiraHostQuery = req.query?.jiraHost as string;
-	const jiraHostSession = req.session?.jiraHost as string;
-	const jiraHost = jiraHostQuery || jiraHostSession;
+	const jiraHost = req.query?.jiraHost as string;
 	if (!jiraHost) {
 		req.log.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
 	}
 	res.locals.jiraHost = jiraHost;
-	req.session.jiraHost = jiraHost;
 	next();
 };
 
@@ -53,7 +50,7 @@ subRouter.post("/webhooks",
 subRouter.use(GithubOAuthRouter);
 
 // CSRF Protection Middleware for all following routes
-subRouter.use(csrfMiddleware);
+subRouter.use(csrfMiddleware, GithubServerAppMiddleware);
 
 subRouter.use("/setup", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubSetupRouter);
 

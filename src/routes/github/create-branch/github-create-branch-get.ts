@@ -20,6 +20,12 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
+	if (!jiraHost) {
+		req.log.warn(Errors.MISSING_JIRA_HOST);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return next();
+	}
+
 	const { issueKey, issueSummary, multiGHInstance } = req.query;
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));

@@ -127,9 +127,10 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
-  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+	const jiraHost = $("#jiraHost").val();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   }
   $.ajax({
     type: "GET",
