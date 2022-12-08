@@ -10,6 +10,7 @@ import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
+import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -208,5 +209,5 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
-GithubOAuthRouter.get("/login", GithubServerAppMiddleware, GithubOAuthLoginGet);
+GithubOAuthRouter.get("/login", GithubServerAppMiddleware, jiraSymmetricJwtMiddleware, GithubOAuthLoginGet);
 GithubOAuthRouter.get(callbackSubPath, GithubServerAppMiddleware, GithubOAuthCallbackGet);

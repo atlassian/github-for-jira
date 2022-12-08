@@ -199,13 +199,13 @@ const hideValidationErrorMessage = (id) => {
 };
 
 const createBranchPost = () => {
-  let url = "/github/create-branch";
+	const jiraHost = $("#jiraHost").val();
+	let url = `/github/create-branch?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch`;
+    url = `/github/${uuid}/create-branch?jiraHost=${jiraHost}`;
   }
   const repo = getRepoDetails();
   const newBranchName = $("#branchNameText").val();
-  const jiraHost = $("#jiraHost").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
