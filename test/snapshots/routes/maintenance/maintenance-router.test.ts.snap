@@ -12,6 +12,8 @@ Object {
   },
   "description": "Connect your code and your project with ease.",
   "lifecycle": Object {
+    "disabled": "/jira/events/disabled",
+    "enabled": "/jira/events/enabled",
     "installed": "/jira/events/installed",
     "uninstalled": "/jira/events/uninstalled",
   },

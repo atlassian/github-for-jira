@@ -189,6 +189,8 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",
+			enabled: "/jira/events/enabled",
+			disabled: "/jira/events/disabled",
 			uninstalled: "/jira/events/uninstalled"
 		},
 		vendor: {
