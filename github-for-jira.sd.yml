@@ -68,6 +68,8 @@ resources:
     name: vanity
     attributes:
       default_vanity_dns: true
+      ip_whitelist:
+        - public
 
   - type: redisx
     name: cache
