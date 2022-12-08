@@ -12,7 +12,6 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { saveConfiguredAppProperties } from  "~/src/util/app-properties-utils";
 
 interface FailedConnection {
 	id: number;
@@ -125,8 +124,6 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
 	const hasConnections = !!installations.total;
 
-	await saveConfiguredAppProperties(jiraHost, undefined, undefined, req.log, hasConnections ? true : false);
-
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		successfulConnections,
@@ -186,8 +183,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		})).value();
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
-
-	await saveConfiguredAppProperties(jiraHost, undefined, undefined, req.log, hasConnections ? true : false);
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,

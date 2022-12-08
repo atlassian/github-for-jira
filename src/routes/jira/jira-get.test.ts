@@ -12,7 +12,6 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
@@ -93,7 +92,6 @@ describe("Jira Configuration Suite", () => {
 
 		await JiraGet(mockRequest(), response, jest.fn());
 
-		expect(saveConfiguredAppProperties).toHaveBeenCalled();
 		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
 			hasConnections: true,
 			ghCloud: {
