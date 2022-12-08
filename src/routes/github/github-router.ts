@@ -14,6 +14,23 @@ import { GithubCreateBranchRouter } from "routes/github/create-branch/github-cre
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { Errors } from "config/errors";
+import { NextFunction, Request, Response } from "express";
+
+// TODO - Once JiraHost is passed from Jira for create branch this midddleware is obsolete.
+const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+	const jiraHostQuery = req.query?.jiraHost as string;
+	const jiraHostSession = req.session?.jiraHost as string;
+	const jiraHost = jiraHostQuery || jiraHostSession;
+	if (!jiraHost) {
+		req.log.warn(Errors.MISSING_JIRA_HOST);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+	res.locals.jiraHost = jiraHost;
+	req.session.jiraHost = jiraHost;
+	next();
+};
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -33,7 +50,7 @@ subRouter.post("/webhooks",
 // subRouter.use(GithubServerAppMiddleware);
 
 // OAuth Routes
-subRouter.use(jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuthRouter);
+subRouter.use(GithubOAuthRouter);
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
@@ -51,10 +68,8 @@ subRouter.use("/configuration", jiraSymmetricJwtMiddleware, GithubServerAppMiddl
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubSubscriptionRouter);
 
-subRouter.use("/create-branch", GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch" , JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubRepositoryRouter);
 
 subRouter.use("/branch", GithubServerAppMiddleware, GithubAuthMiddleware, GithubBranchRouter);
-
-

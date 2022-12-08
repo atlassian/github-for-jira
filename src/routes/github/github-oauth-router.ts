@@ -9,6 +9,7 @@ import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/
 import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -33,7 +34,6 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 	// Create unique state for each oauth request
 	const state = crypto.randomBytes(8).toString("hex");
-
 	req.session["timestamp_before_oauth"] = Date.now();
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
@@ -87,6 +87,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
+
 	const { hostname, clientId, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
@@ -149,7 +150,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
 		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
-
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
 		 * to trigger another GitHub Login and fetch new githubToken.
@@ -208,5 +208,5 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
-GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);
+GithubOAuthRouter.get("/login", GithubServerAppMiddleware, GithubOAuthLoginGet);
+GithubOAuthRouter.get(callbackSubPath, GithubServerAppMiddleware, GithubOAuthCallbackGet);

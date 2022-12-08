@@ -4,6 +4,7 @@ import { createUserClient } from "~/src/util/get-github-client-config";
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
 
+	// While we are depending on non JWT token hosts we need to sometimes fetch from
 	if (!githubToken || !gitHubAppConfig) {
 		res.sendStatus(401);
 		return;
