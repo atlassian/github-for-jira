@@ -17,7 +17,7 @@ import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-
 import { Errors } from "config/errors";
 import { NextFunction, Request, Response } from "express";
 
-// TODO - Once JiraHost is passed from Jira for create branch this midddleware is obsolete.
+// TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
 const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const jiraHostQuery = req.query?.jiraHost as string;
 	const jiraHostSession = req.session?.jiraHost as string;
@@ -68,7 +68,7 @@ subRouter.use("/configuration", jiraSymmetricJwtMiddleware, GithubServerAppMiddl
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubSubscriptionRouter);
 
-subRouter.use("/create-branch" , JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubRepositoryRouter);
 
