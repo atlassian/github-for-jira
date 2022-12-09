@@ -12,8 +12,10 @@ paths:
         payloadFormatVersion: "1.0"
         type: "http_proxy"
         httpMethod: "ANY"
-        uri: "{{ServerUri}}"
+        uri: "https://{{ServerHost}}"
         connectionType: "INTERNET"
+        requestParameters:
+          integration.request.header.host: "{{ServerHost}}"
 
   /healthcheck:
     get:
