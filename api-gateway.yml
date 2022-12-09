@@ -49,22 +49,6 @@ paths:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         passthroughBehavior: "never"
         connectionType: "INTERNET"
-#      x-amazon-apigateway-integration:
-#        payloadFormatVersion: "1.0"
-#        credentials: "{{RoleARN}}"
-#        type: "http_proxy"
-#        httpMethod: "POST"
-#        uri: "{{ServerUri}}?SendMessage"
-#        connectionType: "INTERNET"
-
-#        integrationSubtype: "SQS-SendMessage"
-#        requestParameters:
-#          MessageBody: "$request.body.MessageBody"
-#          MessageAttributes: "$request.body.MessageAttributes"
-#          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
-#          QueueUrl: "{{GithubQueueUrl}}"
-#        type: "aws_proxy"
-#        integrationHttpMethod: "POST"
 
   /jira/events:
     post:
