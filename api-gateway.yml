@@ -9,12 +9,13 @@ paths:
     x-amazon-apigateway-any-method:
       isDefaultRoute: true
       x-amazon-apigateway-integration:
+        credentials: "{{RoleARN}}"
         payloadFormatVersion: "1.0"
         type: "http_proxy"
         httpMethod: "ANY"
         requestParameters:
           integration.request.header.Host: "'{{ServerHost}}'"
-        uri: "https://{{ServerHost}}"
+        uri: "https://google.com"
         connectionType: "INTERNET"
 
   /healthcheck:
