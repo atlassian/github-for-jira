@@ -35,6 +35,11 @@ export enum AnalyticsTrackEventsEnum {
 	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess"
 }
 
+export enum AnalyticsTrackSource {
+	GitHubEnterprise = "gitHubEnterprise",
+	CreateBranch = "createBranch"
+}
+
 // Adding session information to express Request type
 declare global {
 	// eslint-disable-next-line @typescript-eslint/no-namespace
