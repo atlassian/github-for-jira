@@ -31,6 +31,17 @@ paths:
         uri: "https://{{ServerHost}}/version"
         connectionType: "INTERNET"
 
+  /{proxy+}:
+    x-amazon-apigateway-any-method:
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "1.0"
+        type: "http_proxy"
+        httpMethod: "ANY"
+        requestParameters:
+          integration.request.header.Host: "'{{ServerHost}}'"
+        uri: "https://{{ServerHost}}/{proxy}"
+        connectionType: "INTERNET"
+
   /healthcheck:
     get:
       produces:
