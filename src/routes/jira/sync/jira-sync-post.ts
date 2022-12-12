@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType, appId: gitHubAppId } = req.body;
@@ -34,6 +34,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: true,
+			source: AnalyticsTrackSource.Default,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -44,6 +45,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: false,
+			source: AnalyticsTrackSource.Default,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});

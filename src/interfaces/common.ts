@@ -48,6 +48,7 @@ export enum AnalyticsTrackEventsEnum {
 }
 
 export enum AnalyticsTrackSource {
+	Default = "default",
 	GitHubEnterprise = "gitHubEnterprise",
 	CreateBranch = "createBranch"
 }

@@ -9,7 +9,7 @@ import { createAppClient, createUserClient } from "~/src/util/get-github-client-
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -81,6 +81,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			source: AnalyticsTrackSource.Default,
 			jiraHost,
 			success: true,
 			gitHubProduct
@@ -91,6 +92,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			source: AnalyticsTrackSource.Default,
 			jiraHost,
 			success: true,
 			gitHubProduct

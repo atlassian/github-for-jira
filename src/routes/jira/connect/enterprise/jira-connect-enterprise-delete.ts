@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraConnectEnterpriseDelete = async (
 	req: Request,
@@ -17,6 +17,7 @@ export const JiraConnectEnterpriseDelete = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			success: true
 		});
 
@@ -26,6 +27,7 @@ export const JiraConnectEnterpriseDelete = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			success: false
 		});
 

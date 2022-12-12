@@ -12,7 +12,8 @@ let analyticsNodeClient;
 
 export const sendAnalytics: {
 	(eventType: "screen", attributes: { name: string } & Record<string, unknown>);
-	(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>);
+	(eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
+	(eventType: "ui" | "operational", attributes: Record<string, unknown>);
 } = (eventType: string, attributes: Record<string, unknown> = {}): void => {
 
 	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
