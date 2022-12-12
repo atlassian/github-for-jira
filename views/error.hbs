@@ -6,6 +6,13 @@
     <title>{{title}}</title>
     <link rel="stylesheet" href="/public/primer/build.css" media="all" />
     <link rel="stylesheet" href="/public/css/error.css" media="all" />
+    <link
+        rel="stylesheet"
+        href="/public/aui/aui-prototyping.css"
+        integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
   <body class="githubError">
@@ -16,28 +23,32 @@
         alt="Error"
       />
 
-      <h3 class="error-header">Looks like something went wrong!</h3>
+      <h3 class="error-header">Something went wrong.</h3>
 
       {{#if message}}
-      <p class="error-message">{{{message}}}</p>
+        <p class="error-message">{{{message}}}</p>
       {{/if}}
 
       {{#if errorReference}}
-      <p>Error reference: {{{errorReference}}}</p>
+        <p>Error reference: {{{errorReference}}}</p>
       {{/if}}
 
-      <p class="error-message">
-        We track these errors automatically, but if the problem persists feel
-        free to
-        <a
-          href="https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product"
-        >contact us</a>. In the meantime, try adding an organization again in
-        Jira.
-      </p>
+      {{#if ctaUrl}}
+          <a class="aui-button aui-button-primary m-4" href="{{ctaUrl}}">Retry</a>
+        {{else}}
+          <p class="error-message">
+            We track these errors automatically, but if the problem persists feel
+            free to
+            <a
+              href="https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=third-party-product"
+            >contact us</a>. In the meantime, try adding an organization again in
+            Jira.
+          </p>
 
-      <a
-        href="{{githubRepoUrl}}/blob/main/README.md"
-      >Learn how</a>
+          <a
+            href="{{githubRepoUrl}}/blob/main/README.md"
+          >Learn how</a>
+      {{/if}}
     </section>
   </body>
 </html>

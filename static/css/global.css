@@ -114,6 +114,7 @@ a:focus {
 }
 
 .jiraConfiguration__retryMsg,
+.jiraConfiguration__syncWarningMessage,
 .gitHubConfiguration__notAdminMsg,
 .gitHubConfiguration__manageSubscriptions,
 .gitHubConfiguration__manageSubscriptions--notAdmin,
@@ -154,21 +155,29 @@ a:focus {
 
 /* Modals */
 .jiraConfiguration__syncRetryModalOverlay,
-.githubSetup__newJiraSiteModalOverlay {
+.jiraConfiguration__restartBackfillModalOverlay,
+.githubSetup__newJiraSiteModalOverlay,
+.modal__modalOverlay {
   background: #091e42;
   opacity: 54%;
   z-index: 100;
 }
 
 .jiraConfiguration__syncRetryModal,
-.githubSetup__newJiraSiteModal {
+.jiraConfiguration__restartBackfillModal,
+.githubSetup__newJiraSiteModal,
+.modal {
   display: none;
 }
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__restartBackfillModal,
+.jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModal,
-.githubSetup__newJiraSiteModalOverlay {
+.githubSetup__newJiraSiteModalOverlay,
+.modal,
+.modal__modalOverlay {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -177,10 +186,12 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
-.githubSetup__newJiraSiteModalContent {
+.jiraConfiguration__restartBackfillModalContent,
+.githubSetup__newJiraSiteModalContent,
+.modal__modalContent {
   -webkit-transform: translateX(-50%);
   background-color: #fff;
-  box-shadow: 0px 3px 5px rgb(9 30 66 / 20%), 0px 0px 1px rgb(9 30 66 / 31%);
+  box-shadow: 0 3px 5px rgb(9 30 66 / 20%), 0 0 1px rgb(9 30 66 / 31%);
   border-radius: 3px;
   left: 50%;
   padding: 2em;
@@ -189,19 +200,170 @@ a:focus {
   z-index: 1000;
 }
 
-.jiraConfiguration__syncRetryModalContent {
+.jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__restartBackfillModalContent {
   top: 15%;
   width: 56%;
 }
 
+.jiraConfiguration__restartBackfillModalContent {
+  max-width: 540px;
+}
+
 .githubSetup__newJiraSiteModalContent {
   top: 30%;
-  width: 30%;
+  width: 60%;
 }
 
 .jiraConfiguration__syncRetryModalOverlay,
-.githubSetup__newJiraSiteModalOverlay {
+.jiraConfiguration__restartBackfillModalOverlay,
+.githubSetup__newJiraSiteModalOverlay,
+.modal__modalOverlay {
   background: #091e42;
   opacity: 54%;
   z-index: 100;
+}
+
+.modal__modalContent {
+  top: 35%;
+  width: 50%;
+}
+
+.modal__additionalContent {
+  margin-top: 1em;
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: end;
+  margin-top: 1em;
+}
+
+.modal__footer__actionBtn {
+  --aui-btn-bg: #FFAB00;
+  --aui-btn-text: #172B4D;
+}
+
+.modal__header__container {
+  align-items: center;
+  display: flex;
+  margin-bottom: 1em;
+}
+
+.modal__header__title {
+  margin: 0 0 0 0.5em;
+}
+
+/* Navigation */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  padding: 2em;
+  align-items: center;
+}
+
+.navigation.no-back-btn {
+  justify-content: flex-end;
+}
+
+.navigation__backButton__container {
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  height: 24px;
+  width: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.navigation__link {
+  color: inherit;
+}
+
+.navigation__icon {
+  transform: scale(1.3);
+}
+
+.navigation__help__container {
+  align-items: center;
+  display: flex;
+  padding: 0.25em 0.75em;
+}
+
+.navigation__help__container > :last-child {
+  margin-left: 0.2em;
+}
+
+.navigation__help__message {
+  font-size: 1.2rem;
+}
+
+.navigation__link:hover {
+  background: #091E4208;
+  border-radius: 3px;
+  color: inherit;
+}
+
+.jira-and-github-header-container {
+  margin-top: 4em;
+  text-align: center;
+}
+
+.jira-and-github-header-title {
+  font-size: 2rem;
+  font-weight: 500;
+  margin-top: 1.5em;
+}
+
+.aui-iconfont-warning {
+  color: #FFAB00;
+}
+
+.headerImageLogo {
+  height: 40px;
+  transition: all 1.5s ease;
+}
+
+/******************************
+Skeleton element styling
+*******************************/
+.skeleton {
+  animation: 1s loading ease-in-out infinite;
+  animation-delay: .06s;
+  background: linear-gradient(
+          100deg,
+          rgba(255, 255, 255, 0) 40%,
+          rgba(255, 255, 255, .5) 50%,
+          rgba(255, 255, 255, 0) 60%
+  ) #ebecf0;
+  background-size: 200% 100%;
+  background-position-x: 180%;
+  border-radius: 4px;
+}
+
+.skeleton,
+.skeleton > label,
+.skeleton > a {
+/* Override AUI styling */
+  color: transparent !important;
+}
+
+.skeleton-element {
+  height: 1.5em;
+}
+
+.skeleton-input {
+  height: 2.5em;
+}
+
+@keyframes loading {
+  to {
+    background-position-x: -20%;
+  }
+}
+
+.loaded {
+  /* Override AUI styling */
+  display: none !important;
 }

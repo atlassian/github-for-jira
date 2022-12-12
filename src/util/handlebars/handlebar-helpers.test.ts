@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { replaceSpaceWithHyphenHelper, toLowercaseHelper } from "./handlebar-helpers";
+import {
+	replaceSpaceWithHyphenHelper,
+	toLowercaseHelper,
+	concatStringHelper
+} from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
 	describe("toLowercaseHelper", () => {
@@ -38,6 +42,18 @@ describe("Handlebar Helpers", () => {
 			expect(replaceSpaceWithHyphenHelper("baR")).toEqual("baR");
 			expect(replaceSpaceWithHyphenHelper(10943 as any)).toEqual("10943");
 			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970");
+		});
+	});
+
+	describe("concatStringHelper", () => {
+		it("should return empty string with no parameter", () => {
+			expect(concatStringHelper()).toEqual("");
+		});
+
+		it("should return concatenated string of all the parameters separated by space", () => {
+			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
+			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
+			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
 		});
 	});
 });

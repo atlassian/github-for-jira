@@ -1,20 +1,24 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import { transformPullRequest } from "./transforms/pull-request";
+import { transformPullRequest } from "../transforms/transform-pull-request";
+import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
-import { GitHubAPI } from "probot";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getGithubUser } from "services/github/user";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { AxiosResponseHeaders } from "axios";
 import { Octokit } from "@octokit/rest";
+import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
+import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { getGithubUser } from "services/github/user";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 /**
  * Find the next page number from the response headers.
  */
-export const getNextPage = (logger: LoggerWithTarget, headers: Headers = {}): number | undefined => {
+export const getNextPage = (logger: Logger, headers: Headers = {}): number | undefined => {
 	const nextUrl = ((headers.link || "").match(/<([^>]+)>;\s*rel="next"/) ||
 		[])[1];
 	if (!nextUrl) {
@@ -39,15 +43,14 @@ type Headers = AxiosResponseHeaders & {
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
-	logger: LoggerWithTarget,
-	_oldGithub: GitHubAPI,
-	newGithub: GitHubInstallationClient,
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
 	perPage?: number
 ) => {
-	logger.info("Syncing PRs: started");
+	logger.debug("Syncing PRs: started");
 
 	cursor = Number(cursor);
 	const startTime = Date.now();
@@ -55,8 +58,9 @@ export const getPullRequestTask = async (
 	const {
 		data: edges,
 		status,
-		headers
-	} =	await newGithub
+		headers,
+		request
+	} =	await gitHubInstallationClient
 		.getPullRequests(repository.owner.login, repository.name,
 			{
 				per_page: perPage,
@@ -64,9 +68,14 @@ export const getPullRequestTask = async (
 				state: PullRequestState.ALL,
 				sort: PullRequestSort.CREATED,
 				direction: SortDirection.DES
-			})
+			});
 
-	statsd.timing(metricHttpRequest.syncPullRequest, Date.now() - startTime, 1, [`status:${status}`]);
+	const gitHubProduct = getCloudOrServerFromHost(request.host);
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
@@ -79,33 +88,38 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				const prResponse = await newGithub.getPullRequest(repository.owner.login, repository.name, pull.number)
+				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
-				const ghUser = await getGithubUser(newGithub, prDetails?.user.login
-				);
-				const data = await transformPullRequest(
+
+				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
+					const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
+					const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
+					return data?.pullRequests[0];
+				}
+
+				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
+				const data = await transformPullRequestSync(
 					{ pullRequest: pull, repository },
 					prDetails,
+					gitHubInstallationClient.baseUrl,
 					ghUser
 				);
 				return data?.pullRequests[0];
+
 			})
 		)
 	).filter((value) => !!value);
 
-	logger.info("Syncing PRs: finished");
+	logger.debug("Syncing PRs: finished");
 
 	return {
 		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length
 				? {
-					id: repository.id.toString(),
-					name: repository.full_name,
-					pullRequests,
-					url: repository.html_url,
-					updateSequenceId: Date.now()
+					... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+					pullRequests
 				}
 				: undefined
 	};
-}
+};

@@ -16,10 +16,34 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	window.AP.context.getToken(function() {
-		const child = openChildWindow("/session/github/configuration");
+	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
+	AP.context.getToken(function(token) {
+		const child = openChildWindow("/session/github/configuration" + queryParameter);
+		// Remove below line on cleaning up NEW_JWT_VALIDATION flag
 		child.window.jiraHost = jiraHost;
+		child.window.jwt = token;
 	});
+});
+
+$(".add-enterprise-link").click(function(event) {
+	event.preventDefault();
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-list-servers-page"
+		}
+	);
+});
+
+$(".select-github-product-link").click(function(event) {
+	event.preventDefault();
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-select-product-page"
+		}
+	);
 });
 
 $(".configure-connection-link").click(function(event) {
@@ -27,60 +51,87 @@ $(".configure-connection-link").click(function(event) {
 	openChildWindow($(event.target).data("installation-link"));
 });
 
-$(".delete-connection-link").click(function(event) {
-	event.preventDefault();
+const initializeBackfillDateInput = function () {
+	const dateElement = document.getElementById('backfill-date-picker');
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - 1);
+	dateElement.value = date.toISOString().split('T')[0];
+	dateElement.max = new Date().toISOString().split('T')[0];
+}
 
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "DELETE",
-			url: "/jira/configuration",
-			data: {
-				installationId: $(event.target).data("installation-id"),
-				jwt: token,
-				jiraHost: jiraHost
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			}
+const setDisabledStatus = (el, status) => {
+	el.prop("disabled", status);
+	el.attr("aria-disabled", status.toString());
+}
+
+const restartBackfillPost = (data, url = "/jira/sync") => {
+	setDisabledStatus($("#submit-backfill-data"), true);
+	$.post(url, data)
+		.done(() => {
+			AP.navigator.reload();
+		})
+		.fail(() => {
+			setDisabledStatus($("#submit-backfill-data"), false);
+		});
+};
+
+$("#cancel-backfill").click(() => {
+	document.getElementById("restart-backfill-modal").style.display = "none";
+});
+
+$(".sync-connection-link").click(event => {
+	const installationId = $(event.target).data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+	const appId = $(event.target).data("app-id");
+	const csrfToken = document.getElementById("_csrf").value;
+
+	document.getElementById("restart-backfill-modal").style.display = "block";
+
+	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
+		event.preventDefault();
+		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
 		});
 	});
 });
 
-$(".sync-connection-link").click(function(event) {
+initializeBackfillDateInput();
+
+$('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
-	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const csrfToken = document.getElementById("_csrf").value;
-	const $el = $("#restart-backfill");
+	$('.jiraConfiguration__option').removeClass('jiraConfiguration__selected');
+	$(event.target).addClass('jiraConfiguration__selected');
 
-	$el.prop("disabled", true);
-	$el.attr("aria-disabled", "true");
+	switch ($(event.target).attr('id')) {
+		case 'jiraConfiguration__optionCloud':
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').hide();
+			break;
+		case 'jiraConfiguration__optionEnterprise':
+			$('.jiraConfiguration__enterpriseContainer').show();
+			$('.jiraConfiguration__cloudContainer').hide();
+			break;
+		default:
+			$('.jiraConfiguration__cloudContainer').show();
+			$('.jiraConfiguration__enterpriseContainer').show();
+	}
+});
 
-	window.AP.context.getToken(function(token) {
-		$.ajax({
-			type: "POST",
-			url: "/jira/sync",
-			data: {
-				installationId,
-				jiraHost,
-				syncType: "full",
-				jwt: token,
-				_csrf: csrfToken
-			},
-			success: function(data) {
-				AP.navigator.reload();
-			},
-			error: function(error) {
-				$el.prop("disabled", false);
-				$el.attr("aria-disabled", "false");
-			}
-		});
-	});
+$(".jiraConfiguration__connectNewApp").click((event) => {
+	event.preventDefault();
+	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
 const syncStatusModal = document.getElementById("sync-status-modal");
 const syncStatusCloseBtn = document.getElementById("status-close");
+const genericModal = document.getElementById("modal");
+const genericModalClose = document.getElementById("modal-close-btn");
+const genericModalAction = document.getElementById("modal-action-btn");
+const disconnectServerBtn = document.getElementsByClassName("disconnect-server-btn");
+const disconnectAppBtn = document.getElementsByClassName("disconnect-app-btn");
+const disconnectOrgBtn = document.getElementsByClassName("delete-connection-link");
 
 if (syncStatusBtn != null) {
 	syncStatusBtn.onclick = function() {
@@ -94,9 +145,139 @@ if (syncStatusCloseBtn != null) {
 	};
 }
 
+const handleDisconnectRequest = (path, data) => {
+	$.ajax({
+		type: "DELETE",
+		url: path,
+		data,
+		success: function() {
+			AP.navigator.reload();
+		},
+		error: function (error) {
+			// TODO - we should render an error here when the app fails to delete
+		},
+	});
+}
+
+const mapDisconnectRequest = (disconnectType, data) => {
+	AP.context.getToken(function(token) {
+		let payload = {
+			jwt: token,
+			jiraHost
+		}
+
+		switch (disconnectType) {
+			case "server":
+				payload.serverUrl = data.disconnectData;
+				handleDisconnectRequest(`/jira/connect/enterprise`, payload);
+				return;
+			case "app":
+				payload.uuid = data.disconnectData;
+				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload);
+				return;
+			default:
+				payload.gitHubInstallationId = data.disconnectData;
+				payload.appId = data.optionalDisconnectData;
+				handleDisconnectRequest("/jira/configuration", payload);
+				return;
+		}
+	});
+};
+
+if (genericModalAction != null) {
+	$(genericModalAction).click((event) => {
+		event.preventDefault();
+		const disconnectType = $(event.target).data("disconnect-type");
+		const disconnectData = $(event.target).data("modal-data");
+		const optionalDisconnectData = $(event.target).data("optional-modal-data");
+		const data = { disconnectData, optionalDisconnectData }
+		mapDisconnectRequest(disconnectType, data);
+	});
+}
+
+const handleModalDisplay = (title, info, type, data) => {
+	$(genericModal).show();
+	$(".modal__header__icon").addClass("aui-iconfont-warning").empty().append("Warning icon");
+	$(".modal__header__title").empty().append(title);
+	$(".modal__information").empty().append(info);
+	$(".modal__footer__actionBtn")
+		.empty()
+		.append("Disconnect")
+		.attr("data-disconnect-type", type)
+		.attr("data-modal-data", data.modalData)
+		.attr("data-optional-modal-data", data.appId);
+}
+
+if (disconnectServerBtn != null) {
+	$(disconnectServerBtn).click((event) => {
+		event.preventDefault();
+		const serverUrl = $(event.target).data("server-baseurl");
+		const modalTitle = "Disconnect server?";
+		const modalInfo = "Are you sure you want to disconnect your server? You'll need to recreate your GitHub apps and backfill historical data from your GitHub organisations and repositories again if you ever want to reconnect."
+		const disconnectType = "server";
+		const data = { modalData: serverUrl }
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
+		$(".modal__additionalContent").append(serverUrl).css('font-weight', 'bold');
+	});
+}
+
+if (disconnectAppBtn != null) {
+	$(disconnectAppBtn).click((event) => {
+		event.preventDefault();
+		const appName = $(event.target).data("app-name");
+		const uuid = $(event.target).data("app-uuid");
+		const modalTitle = `Disconnect ${appName}?`;
+		const modalInfo = `Are you sure you want to delete your application, ${appName}? You’ll need to backfill your historical data again if you ever want to reconnect.`;
+		const disconnectType = "app";
+		const data = { modalData: uuid }
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
+	});
+}
+
+if (disconnectOrgBtn != null) {
+	$(disconnectOrgBtn).click((event) => {
+		event.preventDefault();
+		const orgName = $(event.target).data("org-name");
+		const gitHubInstallationId = $(event.target).data("installation-id");
+		const appId = $(event.target).data("app-id");
+		const displayName = orgName || `App ID: ${appId}`;
+		const modalTitle = `Disconnect ${displayName}?`;
+		const modalInfo = `Are you sure you want to disconnect your organization ${displayName}? This means that you will have to redo the backfill of historical data if you ever want to reconnect.`;
+		const disconnectType = "org";
+		const data = { modalData: gitHubInstallationId, appId };
+		handleModalDisplay(modalTitle, modalInfo, disconnectType, data);
+	});
+}
+
+if (genericModalClose != null) {
+	$(genericModalClose).click((event) => {
+		event.preventDefault();
+		$(genericModal).hide();
+		$(".modal__footer__actionBtn").removeAttr("data-disconnect-type");
+		$(".modal__additionalContent").empty();
+	});
+}
+
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function(event) {
 	if (event.target.className === "jiraConfiguration__syncRetryModalOverlay") {
 		syncStatusModal.style.display = "none";
+	} else if (event.target.className === "jiraConfiguration__restartBackfillModalOverlay") {
+		restartBackfillModal.style.display = "none";
 	}
 };
+
+$(".jiraConfiguration__editGitHubApp").click(function(event) {
+	event.preventDefault();
+	const uuid = $(event.target).data("app-uuid");
+
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "github-edit-app-page",
+			customData: { uuid }
+		}
+	);
+});
+
+

@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}">
+  <meta name="public-url" content="{{APP_URL}}">
+  <title>{{title}}</title>
+  <link
+      rel="stylesheet"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/no-configuration.css" media="all" />
+</head>
+<body class="aui-page-hybrid">
+<input type="hidden" id="configurationUrl" name="configurationUrl" value="{{configurationUrl}}" />
+<div class="noConfiguration__container">
+  <div class="noConfiguration__content">
+    <div>
+      <h2>Almost there!</h2>
+      <p>
+        We need access to your GitHub repositories to create a GitHub branch. To enable this feature, pelase connect a GitHub organization to Jira.
+      </p>
+      <button class="aui-button aui-button-primary" id="noConfiguration__ConnectToGH">Connect GitHub organization</button>
+    </div>
+    <img src="/public/assets/configure.svg" alt="">
+  </div>
+</div>
+
+<script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+<script src="/public/js/no-configuration.js" nonce="{{nonce}}"></script>
+<!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+<!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+<script
+    src="https://connect-cdn.atl-paas.net/all.js"
+    nonce="{{nonce}}"
+></script>
+<script
+    src="/public/aui/aui-prototyping.js"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    nonce="{{nonce}}"
+></script>
+</body>
+</html>

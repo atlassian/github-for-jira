@@ -1,37 +1,31 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
+import { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
 import { metricHttpRequest } from "config/metric-names";
-import { getLogger } from "config/logger";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { InstallationId } from "./installation-id";
+import { AuthToken } from "~/src/github/client/auth-token";
+import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
+import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
+ * This is the top level app API: get all installations of this app, or get more info on this app
  *
  * @see https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps
  */
-export class GitHubAppClient {
-	private readonly axios: AxiosInstance;
-	private readonly appTokenHolder: AppTokenHolder;
-	private readonly githubInstallationId: InstallationId;
-	private readonly logger: Logger;
+export class GitHubAppClient extends GitHubClient {
+	private readonly appToken: AuthToken;
 
 	constructor(
-		githubInstallationId: InstallationId,
+		gitHubConfig: GitHubConfig,
 		logger: Logger,
-		appTokenHolder: AppTokenHolder = AppTokenHolder.getInstance()
+		appId: string,
+		privateKey: string
 	) {
-		this.logger = logger || getLogger("github.app.client");
-
-		this.axios = axios.create({
-			baseURL: githubInstallationId.githubBaseUrl,
-			transitional: {
-				clarifyTimeoutError: true
-			}
-		});
+		super(gitHubConfig, logger);
+		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
@@ -41,8 +35,8 @@ export class GitHubAppClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github),
-			instrumentFailedRequest(metricHttpRequest.github)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
@@ -54,8 +48,6 @@ export class GitHubAppClient {
 				}
 			};
 		});
-		this.appTokenHolder = appTokenHolder;
-		this.githubInstallationId = githubInstallationId;
 	}
 
 	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
@@ -75,16 +67,12 @@ export class GitHubAppClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private appAuthenticationHeaders(): Partial<AxiosRequestHeaders> {
-		const appToken = this.appTokenHolder.getAppToken(this.githubInstallationId);
 		return {
-			Accept: "application/vnd.github.v3+json",
-			Authorization: `Bearer ${appToken.token}`
+			Accept: GITHUB_ACCEPT_HEADER,
+			Authorization: `Bearer ${this.appToken.token}`
 		};
 	}
 
-	/**
-	 * This path requires JWT, therefore passing the token directly into the header.
-	 */
 	public getInstallation = async (installationId: number): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations/{installationId}`, {
 			urlParams: {
@@ -93,8 +81,7 @@ export class GitHubAppClient {
 		});
 	};
 
-	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse>> => {
-		return await this.axios.get<Octokit.AppsGetInstallationResponse>(`/app/installations`, {});
+	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse[]>> => {
+		return await this.axios.get<Octokit.AppsGetInstallationResponse[]>(`/app/installations`, {});
 	};
-
 }

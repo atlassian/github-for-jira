@@ -3,10 +3,11 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {
-	const githubInstallationId = req.params.installationId;
+	const gitHubInstallationId = req.params.installationId;
+	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
-	if (!jiraHost || !githubInstallationId) {
+	if (!jiraHost || !gitHubInstallationId) {
 		const msg = "Missing Jira Host or Installation ID";
 		req.log.warn({ req, res }, msg);
 		res.status(400).send(msg);
@@ -15,20 +16,21 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
-		Number(githubInstallationId)
+		Number(gitHubInstallationId),
+		gitHubAppId
 	);
 
 	if (!subscription) {
-		req.log.info("no subscription");
+		req.log.debug("no subscription");
 		res.sendStatus(404);
 		return;
 	}
 
 	try {
-		const jiraClient = await getJiraClient(jiraHost, Number(githubInstallationId), req.log);
-		req.log.info({jiraHost, githubInstallationId}, `Deleting DevInfo`);
-		await jiraClient.devinfo.installation.delete(githubInstallationId);
-		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} githubInstallationId: ${githubInstallationId}`);
+		const jiraClient = await getJiraClient(jiraHost, Number(gitHubInstallationId), gitHubAppId, req.log);
+		req.log.info({ jiraHost, gitHubInstallationId }, `Deleting DevInfo`);
+		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
 	} catch (err) {
 		res.status(500).json(err);
 	}

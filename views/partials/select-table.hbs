@@ -1,0 +1,27 @@
+<div class="selectTable__content">
+  <div class="selectTable__contentHead">
+    <div class="selectTable__contentHeadTitle">
+      <img class="selectTable__contentImg" src="{{contentImgURL}}" alt="GitHub"/>
+      <span class="selectTable__contentTitle">{{contentTitle}}</span>
+    </div>
+    <a class="selectTable__addNew aui-button aui-button-subtle" data-qs-for-path={{queryStringForPath}} data-path="{{pathNameForAddNew}}">
+      <i class="aui-icon aui-iconfont-add"></i>
+      {{textForAddNew}}
+    </a>
+  </div>
+
+  <div class="selectTable__list">
+    {{#each list as |item|}}
+      <div class="selectTable__itemContainer">
+        <div class="selectTable__identifier">{{item.identifier}}</div>
+        <button
+          class="aui-button aui-button-label select-server"
+          data-identifier="{{item.uuid}}"
+          type="submit"
+        >
+          Select
+        </button>
+      </div>
+    {{/each}}
+  </div>
+</div>

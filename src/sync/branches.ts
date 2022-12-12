@@ -1,28 +1,32 @@
 import { transformBranches } from "./transforms/branch";
-import { GitHubAPI } from "probot";
 import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { NumberFlags } from "config/feature-flags";
+import { getCommitSinceDate } from "~/src/sync/sync-utils";
 
 // TODO: better typings
 export const getBranchTask = async (
-	logger: LoggerWithTarget,
-	_github: GitHubAPI,
-	newGithub: GitHubInstallationClient,
-	_jiraHost: string,
+	logger: Logger,
+	gitHubClient: GitHubInstallationClient,
+	jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
-	perPage?: number) => {
+	perPage?: number,
+	messagePayload?: BackfillMessagePayload) => {
 	// TODO: fix typings for graphql
-	logger.info("Syncing branches: started");
+	logger.debug("Syncing branches: started");
 	perPage = perPage || 20;
-	const result = await newGithub.getBranchesPage(repository.owner.login, repository.name, perPage, cursor as string);
+
+	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
+	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
-	logger.info("Syncing branches: finished");
+	logger.debug("Syncing branches: finished");
 
-	const jiraPayload = await transformBranches({ branches, repository });
+	const jiraPayload = await transformBranches({ branches, repository }, messagePayload?.gitHubAppConfig?.gitHubBaseUrl);
 
 	return {
 		edges,

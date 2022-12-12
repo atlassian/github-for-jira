@@ -3,9 +3,9 @@ import { verifyJiraInstallation } from "./verify-installation";
 import { getLogger } from "config/logger";
 import { Installation } from "models/installation";
 import { getAxiosInstance } from "./client/axios";
-import { mocked } from "ts-jest/utils";
 
 jest.mock("./client/axios");
+jest.mock("config/feature-flags");
 
 describe("verify-installation", () => {
 	let installation: Installation;
@@ -13,28 +13,28 @@ describe("verify-installation", () => {
 	beforeEach(async () => {
 		installation = await Installation.install({
 			host: jiraHost,
-			sharedSecret: "shared-secret",
+			sharedSecret: "new-encrypted-shared-secret",
 			clientKey: "client-key"
 		});
 	});
 
-	function mockJiraResponse(status: number) {
+	const mockJiraResponse = (status: number) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		mocked(getAxiosInstance).mockReturnValue({
+		jest.mocked(getAxiosInstance).mockReturnValue({
 			"get": () => Promise.resolve<any>({
 				status
 			})
 		});
-	}
+	};
 
-	function mockJiraResponseException(error: Error) {
+	const mockJiraResponseException = (error: Error) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		mocked(getAxiosInstance).mockReturnValue({
+		jest.mocked(getAxiosInstance).mockReturnValue({
 			"get": () => Promise.reject(error)
 		});
-	}
+	};
 
 	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
@@ -49,5 +49,11 @@ describe("verify-installation", () => {
 	it("returns false when Jira client throws an exception", async () => {
 		mockJiraResponseException(new Error("boom"));
 		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeFalsy();
+	});
+
+	it("should use new encryptedSharedSecret", async ()=>{
+		mockJiraResponse(200);
+		await verifyJiraInstallation(installation, getLogger("test"))();
+		expect(getAxiosInstance).toHaveBeenCalledWith(expect.anything(), "new-encrypted-shared-secret", expect.anything());
 	});
 });

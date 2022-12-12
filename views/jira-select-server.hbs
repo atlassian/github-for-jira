@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <meta name="public-url" content="{{APP_URL}}" />
+    <title>{{title}}</title>
+    <link
+      href="/public/aui/aui-prototyping.css"
+      rel="stylesheet"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/atlassian-ui-kit/bundle.css"
+      media="all"
+    />
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/jira-select-server.css" media="all" />
+    <link rel="stylesheet" href="/public/css/select-server-header.css" media="all" />
+    <link rel="stylesheet" href="/public/css/select-table.css" media="all" />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+  </head>
+
+  <body class="aui-page-hybrid">
+    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
+    <input
+      type="hidden"
+      id="clientKey"
+      name="clientKey"
+      value="{{clientKey}}"
+    />
+    <div class="jiraSelectServer">
+      <header class="jiraSelectServer__header">
+         {{> navigation }}
+      </header>
+
+      <section class="jiraSelectServer__content">
+        {{> select-server-header
+            headerImgURL="/public/assets/jira-enterprise-server-connection.svg"
+            header="Select a GitHub Server"
+            subHeader="We found the following GitHub servers"
+        }}
+        <!-- servers refer to the array of GHE apps-->
+        {{> select-table
+            installationId=id
+            contentImgURL="/public/assets/github-logo.svg"
+            contentTitle="GitHub Enterprise Servers"
+            textForAddNew="Connect a new server"
+            pathNameForAddNew="github-server-url-page"
+            queryStringForPath=queryStringForPath
+            list=list
+        }}
+      </section>
+
+    </div>
+
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script
+      src="https://connect-cdn.atl-paas.net/all.js"
+      nonce="{{nonce}}"
+    ></script>
+    <script
+      src="/public/aui/aui-prototyping.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
+    ></script>
+    <script src="/public/js/jira-select-server.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/select-table.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+  </body>
+</html>

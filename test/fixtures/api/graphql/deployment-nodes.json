@@ -1,0 +1,41 @@
+{
+  "data": {
+    "repository": {
+      "deployments": {
+        "edges": [
+          {
+            "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
+            "node": {
+              "repository": {
+								"id": 19,
+								"node_id": "AyMi0wMi0wM1QyMjo0NT",
+                "name": "test-repo-name",
+                "owner": {
+                  "login": "test-repo-owner"
+                }
+              },
+              "databaseId": 500226426,
+              "commitOid": "51e16759cdac67b0d2a94e0674c9603b75a840f6",
+              "task": "deploy",
+              "ref": {
+                "name": "main",
+                "id": "REF_kwDOGtdD569yZWZzL2hlYWRzL21haW4"
+              },
+              "environment": "prod",
+              "description": "",
+              "latestStatus": {
+                "environmentUrl": "",
+                "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+                "state": "success",
+                "id": "DES_kwDOGtdD5840PkSo",
+                "updatedAt": "2022-02-03T22:45:04Z"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
+
+

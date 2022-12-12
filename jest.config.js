@@ -3,6 +3,7 @@ const { compilerOptions } = require("./tsconfig.json");
 
 module.exports = {
 	"testEnvironment": "node",
+	"testTimeout": 10000,
 	"setupFilesAfterEnv": [
 		"<rootDir>/test/setup/setup.ts"
 	],
@@ -19,6 +20,7 @@ module.exports = {
 		"node"
 	],
 	"testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$",
+	"collectCoverage": true,
 	"coverageDirectory": "coverage",
 	"collectCoverageFrom": [
 		"src/**/*.{ts,tsx}",

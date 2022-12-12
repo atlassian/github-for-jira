@@ -1,0 +1,32 @@
+<div
+    class="jiraSelectAppCreation__options__card optionsCard {{appCreationOption}} {{#if isRecommended}}selected{{/if}}"
+    data-type="{{appCreationOption}}"
+>
+    {{#if isRecommended}}
+        <span
+            class="aui-lozenge aui-lozenge-subtle aui-lozenge-new jiraSelectAppCreation__options__recommended"
+        >
+            Recommended
+        </span>
+    {{/if}}
+    <div class="jiraSelectAppCreation__options__card__iconContainer" data-type="{{appCreationOption}}">
+        <img
+            class="jiraSelectAppCreation__options__card__icon"
+            src={{appCreationIcon}}
+            alt={{appCreationIconAlt}}
+        />
+    </div>
+
+    <div class="jiraSelectAppCreation__options__card__contentContainer" data-type="{{appCreationOption}}">
+      <h4
+        class="jiraSelectAppCreation__options__card__title"
+      >
+        {{appCreationTitle}}
+      </h4>
+      <p
+        class="jiraSelectAppCreation__options__card__info"
+      >
+        {{appCreationDescription}}
+      </p>
+    </div>
+</div>

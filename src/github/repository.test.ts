@@ -1,79 +1,56 @@
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
-import { Installation } from "models/installation";
-import { Subscription } from "models/subscription";
-import repositoryWebhook from "fixtures/repository-webhook.json";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
+import { getLogger } from "config/logger";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-describe("Repository Webhook", () => {
-	let app: Application;
-	const gitHubInstallationId = 1234;
+jest.mock("config/feature-flags");
 
-	beforeEach(async () => {
-		app = await createWebhookApp();
+describe("deleteRepositoryWebhookHandler", () => {
 
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
-		});
+	beforeEach(() => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.GHE_SERVER,
+			expect.anything()
+		).mockResolvedValue(true);
 
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
-
-		githubUserTokenNock(gitHubInstallationId);
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_REPO_ID_TRANSFORMER
+		).mockResolvedValue(true);
 	});
 
-	it("should work", async () => {
-		app.receive(repositoryWebhook)
-	});
+	it("should call delete repository endpoint for server", async () => {
 
-	// it("should update the Jira issue with the linked GitHub workflow_run", async () => {
-	//
-	// 	jiraNock.post("/rest/builds/0.1/bulk", {
-	// 		builds:
-	// 			[
-	// 				{
-	// 					schemaVersion: "1.0",
-	// 					pipelineId: 9751894,
-	// 					buildNumber: 84,
-	// 					updateSequenceNumber: 12345678,
-	// 					displayName: "My Deployment flow",
-	// 					url: "test-repo-url",
-	// 					state: "in_progress",
-	// 					lastUpdated: "2021-06-28T03:53:34Z",
-	// 					issueKeys: ["TES-123"],
-	// 					references:
-	// 						[
-	// 							{
-	// 								commit:
-	// 									{
-	// 										id: "ec26c3e57ca3a959ca5aad62de7213c562f8c821",
-	// 										repositoryUri: "https://api.github.com/repos/test-repo-owner/test-repo-name"
-	// 									},
-	// 								ref:
-	// 									{
-	// 										name: "changes",
-	// 										uri: "https://api.github.com/repos/test-repo-owner/test-repo-name/tree/changes"
-	// 									}
-	// 							}
-	// 						]
-	// 				}
-	// 			],
-	// 		properties:
-	// 			{
-	// 				gitHubInstallationId: 1234,
-	// 				repositoryId: "test-repo-id"
-	// 			},
-	// 		providerMetadata:
-	// 			{
-	// 				product: "GitHub Actions"
-	// 			}
-	// 	}).reply(200);
-	//
-	// 	mockSystemTime(12345678);
-	//
-	// 	await expect(app.receive(workflowBasicFixture)).toResolve();
-	// });
+		const builderResult = await new DatabaseStateCreator()
+			.forServer()
+			.create();
+		const gitHubServerApp = builderResult.gitHubServerApp!;
+
+		const jiraClientDevinfoRepositoryDeleteMock = jest.fn();
+
+		await deleteRepositoryWebhookHandler(new WebhookContext({
+			id: "my-id",
+			name: pullRequestRemoveKeys.name,
+			payload: pullRequestRemoveKeys.payload,
+			log: getLogger("test"),
+			gitHubAppConfig: {
+				gitHubAppId: gitHubServerApp.id,
+				appId: gitHubServerApp.appId,
+				clientId: gitHubServerApp.gitHubClientId,
+				gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
+				gitHubApiUrl: gheApiUrl,
+				uuid: gitHubServerApp.uuid
+			}
+		}), {
+			baseURL: jiraHost,
+			devinfo: {
+				repository: {
+					delete: jiraClientDevinfoRepositoryDeleteMock
+				}
+			}
+		}, jest.fn(), DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-test-repo-id");
+	});
 });

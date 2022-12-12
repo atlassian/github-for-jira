@@ -3,7 +3,8 @@
     "dialect": "postgres",
     "use_env_variable": "DATABASE_URL",
 		"pool": {
-			"max": 1,
+			"acquire": 60000,
+			"max": 15,
 			"min": 0,
 			"idle": 10000
 		}
@@ -12,6 +13,16 @@
     "dialect": "postgres",
     "use_env_variable": "DATABASE_URL"
   },
+	"e2e": {
+		"dialect": "postgres",
+		"use_env_variable": "DATABASE_URL",
+		"pool": {
+			"acquire": 60000,
+			"max": 15,
+			"min": 0,
+			"idle": 10000
+		}
+	},
   "production": {
     "dialect": "postgres",
     "use_env_variable": "DATABASE_URL",

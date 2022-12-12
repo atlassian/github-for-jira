@@ -1,0 +1,26 @@
+<div
+    class="jiraSelectGitHubProduct__options__card {{#if verticalLayout}}vertical{{else}}horizontal{{/if}} optionsCard {{gitHubProduct}}"
+    data-type="{{gitHubProduct}}"
+>
+    {{#if verticalLayout}}
+      <h4 class="jiraSelectGitHubProduct__options__card__title">{{cardTitle}}</h4>
+      <img
+        class="jiraSelectGitHubProduct__options__card__img vertical {{gitHubProduct}}"
+        src={{cardImagePath}}
+        alt={{cardImageAlt}}
+       />
+      <p class="jiraSelectGitHubProduct__options__card__info">{{cardContent}}</p>
+    {{else}}
+        <div class="jiraSelectGitHubProduct__options__card__imageContainer">
+          <img
+            class="jiraSelectGitHubProduct__options__card__img horizontal {{gitHubProduct}}"
+            src={{cardImagePath}}
+            alt={{cardImageAlt}}
+           />
+       </div>
+       <div class="jiraSelectGitHubProduct__options__card__contentContainer">
+         <h4 class="jiraSelectGitHubProduct__options__card__title">{{cardTitle}}</h4>
+         <p class="jiraSelectGitHubProduct__options__card__info">{{cardContent}}</p>
+       </div>
+    {{/if}}
+</div>

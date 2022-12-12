@@ -1,28 +1,16 @@
-import { Context, MessageHandler } from "./sqs";
 import { processPush } from "../transforms/push";
-import { wrapLogger } from "probot/lib/wrap-logger";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { MessageHandler, PushQueueMessagePayload, SQSMessageContext } from "./sqs.types";
 
-export type PayloadRepository = {
-	id: number,
-	name: string,
-	full_name: string,
-	html_url: string,
-	owner: { name: string, login: string },
-}
-
-export type PushQueueMessagePayload = {
-	repository: PayloadRepository,
-	shas: { id: string, issueKeys: string[] }[],
-	jiraHost: string,
-	installationId: number,
-	webhookId: string,
-	webhookReceived?: number,
-}
-
-export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: Context<PushQueueMessagePayload>) => {
+export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = async (context: SQSMessageContext<PushQueueMessagePayload>) => {
+	const { payload, log } = context;
+	const { webhookId, installationId, jiraHost } = payload;
+	context.log = context.log.child({
+		webhookId,
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
 	context.log.info("Handling push message from the SQS queue");
-	const github = new GitHubInstallationClient(getCloudInstallationId(context.payload.installationId), context.log);
-	await processPush(github, context.payload, wrapLogger(context.log));
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, log, payload.gitHubAppConfig?.gitHubAppId);
+	await processPush(gitHubInstallationClient, payload, log);
 };

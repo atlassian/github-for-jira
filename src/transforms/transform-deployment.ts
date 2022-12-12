@@ -1,41 +1,42 @@
-import { JiraDeploymentData } from "interfaces/jira";
-import { GitHubAPI } from "probot";
+import Logger from "bunyan";
+import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
 import { Octokit } from "@octokit/rest";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
+import {
+	CommitSummary,
+	extractMessagesFromCommitSummaries,
+	getAllCommitsBetweenReferences
+} from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { AxiosResponse } from "axios";
-import { deburr, isEmpty } from "lodash";
+import _, { deburr } from "lodash";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { Config } from "interfaces/common";
+import { Subscription } from "models/subscription";
+import minimatch from "minimatch";
+import { getRepoConfig } from "services/user-config-service";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
 // https://docs.github.com/en/rest/reference/repos#list-deployments
-async function getLastSuccessfulDeployCommitSha(
+const getLastSuccessfulDeployCommitSha = async (
 	owner: string,
 	repoName: string,
-	github: GitHubAPI,
-	newGitHubClient: GitHubInstallationClient,
-	useNewClient: boolean,
+	githubInstallationClient: GitHubInstallationClient,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
-	logger?: LoggerWithTarget
-): Promise<string> {
+	logger?: Logger
+): Promise<string> => {
 
 	try {
 		for (const deployment of deployments) {
 			// Get each deployment status for this environment so we can have their statuses' ids
-			const listDeploymentStatusResponse: Octokit.Response<Octokit.ReposListDeploymentStatusesResponse> | AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> = useNewClient
-				? await newGitHubClient.listDeploymentStatuses(owner, repoName, deployment.id, 100)
-				: await github.repos.listDeploymentStatuses({
-					owner: owner,
-					repo: repoName,
-					deployment_id: deployment.id,
-					per_page: 100 // Default is 30, max we can request is 100
-				});
-
+			const listDeploymentStatusResponse: AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> =
+				await githubInstallationClient.listDeploymentStatuses(owner, repoName, deployment.id, 100);
 			// Find the first successful one
-			const lastSuccessful: Octokit.ReposListDeploymentStatusesResponseItem | undefined = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
-			if (lastSuccessful !== undefined) {
+			const lastSuccessful = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
+			if (lastSuccessful) {
 				return deployment.sha;
 			}
 		}
@@ -43,32 +44,23 @@ async function getLastSuccessfulDeployCommitSha(
 		logger?.error(`Failed to get deployment statuses.`);
 	}
 
-
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
 	return deployments[deployments.length - 1].sha;
-}
+};
 
-async function getCommitMessagesSinceLastSuccessfulDeployment(
+const getCommitsSinceLastSuccessfulDeployment = async (
 	owner: string,
 	repoName: string,
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
-	github: GitHubAPI,
-	newGitHubClient: GitHubInstallationClient,
-	useNewClient: boolean,
-	logger: LoggerWithTarget
-): Promise<string | void | undefined> {
+	githubInstallationClient: GitHubInstallationClient,
+	logger: Logger
+): Promise<CommitSummary[] | undefined> => {
 
 	// Grab the last 10 deployments for this repo
-	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> = useNewClient
-		? await newGitHubClient.listDeployments(owner, repoName, currentDeployEnv, 10)
-		: await github.repos.listDeployments({
-			owner: owner,
-			repo: repoName,
-			environment: currentDeployEnv,
-			per_page: 10 // Default is 30, max we can request is 100
-		});
+	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
+		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
 
 	// Filter per current environment and exclude itself
 	const filteredDeployments = deployments.data
@@ -79,7 +71,7 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		return undefined;
 	}
 
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, github, newGitHubClient, useNewClient, filteredDeployments, logger);
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 
 	const compareCommitsPayload = {
 		owner: owner,
@@ -88,20 +80,20 @@ async function getCommitMessagesSinceLastSuccessfulDeployment(
 		head: currentDeploySha
 	};
 
-	return await getAllCommitMessagesBetweenReferences(
+	return await getAllCommitsBetweenReferences(
 		compareCommitsPayload,
-		useNewClient ? newGitHubClient : github,
+		githubInstallationClient,
 		logger
 	);
-}
+};
 
 // We need to map the state of a GitHub deployment back to a valid deployment state in Jira.
 // https://docs.github.com/en/rest/reference/repos#list-deployments
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-function mapState(state: string): string {
-	switch (state) {
+const mapState = (state: string | undefined): string => {
+	switch (state?.toLowerCase()) {
 		case "queued":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
@@ -117,13 +109,30 @@ function mapState(state: string): string {
 		default:
 			return "unknown";
 	}
-}
+};
+
+const matchesEnvironment = (environment: string, globPatterns: string[] = []): boolean => {
+	for (const glob of globPatterns) {
+		if (minimatch(environment, glob)) {
+			return true;
+		}
+	}
+	return false;
+};
+
+/**
+ * Maps a given environment name to a Jira environment name using the custom mapping defined in a Config.
+ */
+export const mapEnvironmentWithConfig = (environment: string, config: Config): string | undefined => {
+	return _.keys(config?.deployments?.environmentMapping)
+		.find(jiraEnvironmentType => matchesEnvironment(environment, config.deployments?.environmentMapping?.[jiraEnvironmentType]));
+};
 
 // We need to map the environment of a GitHub deployment back to a valid deployment environment in Jira.
 // https://docs.github.com/en/actions/reference/environments
 // GitHub: does not have pre-defined values and users can name their environments whatever they like. We try to map as much as we can here and log the unmapped ones.
 // Jira: Can be one of unmapped, development, testing, staging, production
-export function mapEnvironment(environment: string): string {
+export const mapEnvironment = (environment: string, config?: Config): string => {
 	const isEnvironment = (envNames: string[]): boolean => {
 		// Matches any of the input names exactly
 		const exactMatch = envNames.join("|");
@@ -138,60 +147,139 @@ export function mapEnvironment(environment: string): string {
 		return envNamesPattern.test(deburr(environment));
 	};
 
+	// if there is a user-defined config, we use that config for the mapping
+	if (config) {
+		const environmentType = mapEnvironmentWithConfig(environment, config);
+		if (environmentType) {
+			return environmentType;
+		}
+	}
+
+	// if there is no user-defined config (or the user-defined config didn't match anything),
+	// we fall back to hardcoded mapping
+
 	const environmentMapping = {
 		development: ["development", "dev", "trunk"],
-		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality"],
+		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
 	};
 
-	const jiraEnv = Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key]));
+	return Object.keys(environmentMapping).find(key => isEnvironment(environmentMapping[key])) || "unmapped";
+};
 
-	if (!jiraEnv) {
-		return "unmapped";
+
+// Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).
+// Returns undefined when there are no issue ids to map.
+const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
+	issueIds: string[],
+	transformedRepositoryId: TransformedRepositoryId,
+	commitSummaries?: CommitSummary[],
+	config?: Config,
+	jiraHost?: string
+): Promise<JiraAssociation[] | undefined> => {
+
+	const associations: JiraAssociation[] = [];
+	let totalAssociationCount = 0;
+	if (issueIds?.length) {
+		const maximumIssuesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const issues = issueIds
+			.slice(0, maximumIssuesToSubmit);
+		associations.push(
+			{
+				associationType: "issueIdOrKeys",
+				values: issues
+			}
+		);
+		totalAssociationCount += issues.length;
 	}
 
-	return jiraEnv;
-}
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
+		if (config?.deployments?.services?.ids) {
+			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+			const services = config.deployments.services.ids
+				.slice(0, maximumServicesToSubmit);
+			associations.push(
+				{
+					associationType: "serviceIdOrKeys",
+					values: services
+				}
+			);
+			totalAssociationCount += config.deployments.services.ids.length;
+		}
+	}
 
-export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: LoggerWithTarget): Promise<JiraDeploymentData | undefined> => {
+	if (commitSummaries?.length) {
+		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const commitKeys = commitSummaries
+			.slice(0, maximumCommitsToSubmit)
+			.map((commitSummary) => {
+				return {
+					commitHash: commitSummary.sha,
+					repositoryId: transformedRepositoryId
+				};
+			});
+		if (commitKeys.length) {
+			associations.push(
+				{
+					associationType: "commit",
+					values: commitKeys
+				}
+			);
+		}
+	}
+
+	return associations;
+};
+
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
+	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
-	const useNewGitHubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS, false, jiraHost);
-	const { data: { commit: { message } } } = useNewGitHubClient ?
-		await newGitHubClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha) :
-		await githubClient.repos.getCommit({
-			owner: payload.repository.owner.login,
-			repo: payload.repository.name,
-			ref: deployment.sha
-		});
+	const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
+		payload.repository.owner.login,
+		payload.repository.name,
+		deployment.sha,
+		deployment.id,
+		deployment_status.environment,
+		githubInstallationClient,
+		logger
+	);
 
 
-	let issueKeys;
-	if (await booleanFlag(BooleanFlags.SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS, false, jiraHost)) {
-		const allCommitsMessages = await getCommitMessagesSinceLastSuccessfulDeployment(
+	let config: Config | undefined;
+
+	const subscription = await Subscription.getSingleInstallation(jiraHost, githubInstallationClient.githubInstallationId.installationId, gitHubAppId);
+	if (subscription) {
+		config = await getRepoConfig(
+			subscription,
+			githubInstallationClient.githubInstallationId,
+			payload.repository.id,
 			payload.repository.owner.login,
-			payload.repository.name,
-			deployment.sha,
-			deployment.id,
-			deployment_status.environment,
-			githubClient,
-			newGitHubClient,
-			useNewGitHubClient,
-			logger
-		);
-
-		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`);
+			payload.repository.name);
 	} else {
-		issueKeys = jiraIssueKeyParser(`${deployment.ref}\n${message}`);
+		logger.warn({
+			jiraHost,
+			githubInstallationId: githubInstallationClient.githubInstallationId.installationId
+		}, "could not find subscription - not using user config to map environments!");
 	}
 
-	if (isEmpty(issueKeys)) {
+	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
+	const associations = await mapJiraIssueIdsCommitsAndServicesToAssociationArray(
+		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
+		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
+		commitSummaries,
+		config,
+		jiraHost
+	);
+
+	if (!associations?.length) {
 		return undefined;
 	}
 
-	const environment = mapEnvironment(deployment_status.environment);
+	const environment = mapEnvironment(deployment_status.environment, config);
+
 	if (environment === "unmapped") {
 		logger?.info({
 			environment: deployment_status.environment,
@@ -204,8 +292,7 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: deployment.id,
 			updateSequenceNumber: deployment_status.id,
-			issueKeys,
-			displayName: deployment.task,
+			displayName: message.substring(0, 255),
 			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: new Date(deployment_status.updated_at),
@@ -219,7 +306,8 @@ export const transformDeployment = async (githubClient: GitHubAPI, newGitHubClie
 				id: deployment_status.environment,
 				displayName: deployment_status.environment,
 				type: environment
-			}
+			},
+			associations
 		}]
 	};
 };

@@ -5,16 +5,19 @@ import Logger from "bunyan";
 
 export const verifyJiraInstallation = (installation: Installation, log: Logger) => {
 	return async (): Promise<boolean> => {
-		const instance = getAxiosInstance(installation.jiraHost, installation.sharedSecret, log);
-
+		const instance = getAxiosInstance(
+			installation.jiraHost,
+			await installation.decrypt("encryptedSharedSecret"),
+			log
+		);
 		try {
 			const result = await instance.get("/rest/devinfo/0.10/existsByProperties?fakeProperty=1");
 			if (result.status === 200) {
 				log.info(`Installation id=${installation.id} enabled on Jira`);
 				return true;
 			} else {
-				const message = `Unable to verify Jira installation: ${installation.jiraHost} responded with ${result.status}`;
-				log.warn(message);
+				const message = `Unable to verify Jira installation: responded with ${result.status}`;
+				log.warn({ jiraHost: installation.jiraHost }, message);
 				Sentry.captureMessage(message);
 				return false;
 			}

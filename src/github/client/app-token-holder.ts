@@ -1,20 +1,8 @@
 import { AsymmetricAlgorithm, encodeAsymmetric } from "atlassian-jwt";
 import { AuthToken, ONE_MINUTE, TEN_MINUTES } from "./auth-token";
-
-//TODO: Remove Probot dependency to find privateKey
-import * as PrivateKey from "probot/lib/private-key";
 import LRUCache from "lru-cache";
 import { InstallationId } from "./installation-id";
-
-
-export type KeyLocator = (installationId: InstallationId) => string;
-
-/**
- * By default, we just look for a key in the `PRIVATE_KEY` env var.
- */
-export const cloudKeyLocator: KeyLocator = () => {
-	return PrivateKey.findPrivateKey() || "";
-};
+import { keyLocator } from "~/src/github/client/key-locator";
 
 /**
  * Holds app tokens for all GitHub apps that are connected and creates new tokens if necessary.
@@ -27,12 +15,10 @@ export const cloudKeyLocator: KeyLocator = () => {
 export class AppTokenHolder {
 
 	private static instance: AppTokenHolder;
-	private readonly privateKeyLocator: KeyLocator;
 	private readonly appTokenCache: LRUCache<string, AuthToken>;
 
-	constructor(keyLocator?: KeyLocator) {
+	constructor() {
 		this.appTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
-		this.privateKeyLocator = keyLocator || cloudKeyLocator;
 	}
 
 	public static getInstance(): AppTokenHolder {
@@ -45,7 +31,7 @@ export class AppTokenHolder {
 	/**
 	 * Generates a JWT using the private key of the GitHub app to authorize against the GitHub API.
 	 */
-	private static createAppJwt(key: string, appId: number): AuthToken {
+	public static createAppJwt(key: string, appId: string): AuthToken {
 
 		const expirationDate = new Date(Date.now() + TEN_MINUTES);
 
@@ -55,7 +41,7 @@ export class AppTokenHolder {
 			// expiration date, GitHub allows max 10 minutes
 			exp: Math.floor(expirationDate.getTime() / 1000),
 			// issuer is the GitHub app ID
-			iss: appId.toString()
+			iss: appId
 		};
 
 		return new AuthToken(
@@ -67,12 +53,14 @@ export class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public getAppToken(appId: InstallationId): AuthToken {
+	public async getAppToken(appId: InstallationId, jiraHost: string, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
-
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = this.privateKeyLocator(appId);
-			currentToken = AppTokenHolder.createAppJwt(key, appId.appId);
+			const key = await keyLocator(ghsaId, jiraHost);
+			if (!key) {
+				throw new Error(`No private key found for GitHub app ${appId.toString}`);
+			}
+			currentToken = AppTokenHolder.createAppJwt(key, appId.appId.toString());
 			this.appTokenCache.set(appId.toString(), currentToken);
 		}
 		return currentToken;

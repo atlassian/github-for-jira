@@ -86,9 +86,17 @@ organizations in the Jira app.
 
 > :warning: If you are not directed, navigate to the Apps page of your Jira instance and click **Configure integration** under the ”GitHub” heading. If you do not see this, click on **Manage your apps** and **Get started** under GitHub for Jira (only visible for Jira admins). This will bring you to the app's configuration screen.
 
-Click **Connect GitHub organization** and select the organization and repositories that you would like to connect.
+Select **Connect GitHub organization**, then select either **GitHub Cloud** or **GitHub Enterprise Server**.
+
+- If you select **GitHub Cloud**, you’ll be redirected to a page where you can connect to organizations in GitHub.
+
+- If you select **GitHub Enterprise Server**, you’ll need to provide the URL for your server and create a GitHub app.
+
+On the Connect a GitHub organization page, select the organization and repositories you'd like to connect.
 
 > :warning: If you don’t see your organization click **Install Jira on a new organization** and follow the steps to [install the app on GitHub](#install-app) and allow it permission to view your repositories. You can also manage existing connections or add additional organizations at any time on this same screen.
+
+For detailed instructions on how to connect to Cloud or Server, read our [support documentation](https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/).
 
 ### Connect new GitHub repositories
 If you originally gave the GitHub for Jira app access to "All repositories", and you've created a new repository on GitHub after configuration, your new repository will automatically work with the integration. However, if you installed the app on a subset of repositories, you will need to manually edit your repository selection by:
@@ -109,36 +117,39 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 
 ##### Repository Permissions
 
-|**Permission scope**|**Why the app needs it**|
-|---|---|
-|**Read** access to contents & metadata |**Contents** (aka code) and **metadata** are needed to sync development information to Jira. <br><br> **Medadata:** All GitHub apps have read-only metadata permission set by default. This is a [mandatory requirement by GitHub](https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#metadata-permissions) and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not provide sensitive private repository information. Read-only metadata permissions are used for the following webhook: <br> - repository (all events excluding `deleted`) <br><br> **Contents:** Read-only content permissions are used for the following webhooks: <br> - commit comment <br> - create <br> - delete <br> - push <br> - workflow run|
-|**Read** access to actions and deployments|If you want to see build and deployment information in Jira, the app will need read permissions for deployments. This will allow the integration to listen to the webhook `deployment_status` event which occurs when a deployment is created. <br><br> **Deployments:** Read deployment permissions are used for the following webhooks: <br> - deployment status|
-|**Read** and **write** access to issues and pull requests|**Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. "Unfurling" means that the app looks for Jira issue keys like `[ABC-123]` in pull request or issue comments and then replaces those issue keys with a link to the respective Jira issue. <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> - issue comment <br> - issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> - pull request <br> - pull request review|
-|**Read** access to Security events| If you want to see links to GitHub code scanning alerts in Jira, the app will need read permissions to Security events. The GitHub App will listen to [`code_scanning_alert`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#code_scanning_alert) webhooks and send details of the Security reports to Jira. These will appear under the "Other links" tab of the Development Panel on Jira issues. |
+| **Permission scope**                                          | **Why the app needs it**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|---------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Read-only** access to actions                               | Read-only access to actions exposes the `workflow_run` webhook event. This event includes information such as artifacts_url, check_suite_id, conclusion, head_branch, and head_sha.                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Read-only** access to code scanning alerts / security events| If you want to see links to GitHub code scanning alerts in Jira, the app will need read permissions to Security events. The GitHub App will listen to [`code_scanning_alert`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#code_scanning_alert) webhooks and send details of the Security reports to Jira. These will appear under the "Other links" tab of the Development Panel on Jira issues.                                                                                                                                                     |
+| **Read-only** access to deployments                           | If you want to see build and deployment information in Jira, the app will need read permissions for deployments. This will allow the integration to listen to the webhook `deployment_status` event which occurs when a deployment is created. Read-only deployment permissions are used for the following webhooks: <br> - deployment status                                                                                                                                                                                                                                                           |
+| **Read-only** access to metadata                              | **Metadata** All GitHub apps have read-only metadata permission set by default. This is a [mandatory requirement by GitHub](https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#metadata-permissions) and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not provide sensitive private repository information. Read-only metadata permissions are used for the following webhook: <br> - repository                                                                                              |
+| **Read** and **write** access to issues and pull requests     | **Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. "Unfurling" means that the app looks for Jira issue keys like `[ABC-123]` in pull request or issue comments and then replaces those issue keys with a link to the respective Jira issue. <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> - issue comment <br> - issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> - pull request <br> - pull request review. <br> <br> *Note:* for GitHub Enterprise integration (where the user owns the GitHub app) "Write" permission is optional. When not provided, the "unfurl" logic is gently skipped. |
+| **Read** and **write** access to contents                     | **Contents (aka code):** Read-only permissions are needed to sync development information to Jira for the following webhooks: <br> - commit comment <br> - delete <br> - push <br> - workflow run <br><br> We need write permissions for the **create** webhook so you have the ability to create a branch from an issue's dev panel.
 
 ##### Organization permissions
 
-|**Permission scope**|**Why the app needs it**|
-|---|---|
-|**Read** access to members | To determine if you have admin access to a GitHub organization.|
+| **Permission scope**         |**Why the app needs it**|
+|------------------------------|---|
+| **Read-only** access to members | To determine if you have admin access to a GitHub organization.|
 
 ##### Events Our App Subscribes To
 
-|**Event**|**When this event occurs**|
-|---|---|
-|Commit comment|A commit comment is created|
-|Create|A Git branch or tag is created|
-|Delete|A Git branch or tag is deleted|
-|Deployment status|A deployment is created|
-|Issue comment|Activity related to an issue or pull request comment|
-|Issues|Activity related to an issue|
-|Pull request|Activity related to pull requests|
-|Pull request review|Activity related to pull request reviews|
-|Push|One or more commits are pushed to a repository branch or tag|
-|Repository|Activity related to a repository|
-|Workflow run|When a GitHub Actions workflow run is requested or completed|
+| **Event**                            | **When this event occurs**                                   |
+|--------------------------------------|--------------------------------------------------------------|
+| Code scanning alert /security events | Code Scanning alert created, fixed in branch, or closed                                                            |
+| Commit comment                       | A commit comment is created                                  |
+| Create                               | A Git branch or tag is created                               |
+| Delete                               | A Git branch or tag is deleted                               |
+| Deployment status                    | A deployment is created                                      |
+| Issue comment                        | Activity related to an issue or pull request comment         |
+| Issues                               | Activity related to an issue                                 |
+| Pull request                         | Activity related to pull requests                            |
+| Pull request review                  | Activity related to pull request reviews                     |
+| Push                                 | One or more commits are pushed to a repository branch or tag |
+| Repository                           | Activity related to a repository                             |
+| Workflow run                         | When a GitHub Actions workflow run is requested or completed |
 
-Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/ARC-677-permissions-doc-update/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
+Have more questions about permissions? Please see our [FAQ documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/FAQs.md). If you can’t find the answer to a question, please feel free to [open an issue](https://github.com/atlassian/github-for-jira/issues/new) and send your question to our team. We’ll be more than happy to answer and will update our FAQ doc accordingly.
 
 ### Manage Jira subscriptions
 Additionally, admins of an installation can view and delete GitHub subscriptions to other Jira instances, without having to log in to the Jira instance itself. This is useful if your installation is set up to send Development information to a Jira instance you no longer have access to, or to audit instances that other admins in your org may have previously configured.

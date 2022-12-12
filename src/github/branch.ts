@@ -1,24 +1,27 @@
 import { transformBranch } from "../transforms/transform-branch";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { WebhookPayloadCreate, WebhookPayloadDelete } from "@octokit/webhooks";
 import { sqsQueues } from "../sqs/queues";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import Logger from "bunyan";
 import { getJiraClient } from "../jira/client/jira-client";
 import { GitHubInstallationClient } from "./client/github-installation-client";
+import { JiraBranchBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
-export const createBranchWebhookHandler = async (context: CustomContext, jiraClient, _util, githubInstallationId: number): Promise<void> => {
+export const createBranchWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 
 	const webhookPayload: WebhookPayloadCreate = context.payload;
 
 	await sqsQueues.branch.sendMessage({
 		jiraHost: jiraClient.baseURL,
-		installationId: githubInstallationId,
+		installationId: gitHubInstallationId,
 		webhookReceived: Date.now(),
 		webhookId: context.id,
-		webhookPayload
+		webhookPayload,
+		gitHubAppConfig: context.gitHubAppConfig
 	});
 };
 
@@ -28,16 +31,18 @@ export const processBranch = async (
 	webhookPayload: WebhookPayloadCreate,
 	webhookReceivedDate: Date,
 	jiraHost: string,
-	installationId: number,
-	rootLogger: LoggerWithTarget
+	gitHubInstallationId: number,
+	rootLogger: Logger,
+	gitHubAppId: number | undefined
 ) => {
 	const logger = rootLogger.child({
 		webhookId: webhookId,
-		installationId,
+		gitHubInstallationId,
+		jiraHost,
 		webhookReceived: webhookReceivedDate
 	});
 
-	const jiraPayload = await transformBranch(github, webhookPayload);
+	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, logger);
 
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");
@@ -48,7 +53,8 @@ export const processBranch = async (
 
 	const jiraClient = await getJiraClient(
 		jiraHost,
-		installationId,
+		gitHubInstallationId,
+		gitHubAppId,
 		logger
 	);
 
@@ -58,31 +64,34 @@ export const processBranch = async (
 		webhookReceivedDate.getTime(),
 		"create",
 		logger,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
 
-export const deleteBranchWebhookHandler = async (context: CustomContext, jiraClient): Promise<void> => {
+export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraClient): Promise<void> => {
 	const payload: WebhookPayloadDelete = context.payload;
 	const issueKeys = jiraIssueKeyParser(payload.ref);
 
 	if (isEmpty(issueKeys)) {
-		context.log({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
+		context.log.info({ noop: "no_issue_keys" }, "Halting further execution for deleteBranch since issueKeys is empty");
 		return;
 	}
 
-	context.log(`Deleting branch for repo ${context.payload.repository?.id} with ref ${context.payload.ref}`);
+	context.log.info({ prRef: context.payload.ref }, `Deleting branch for repo ${context.payload.repository?.id}`);
 
 	const jiraResponse = await jiraClient.devinfo.branch.delete(
-		`${payload.repository?.id}`,
+		await transformRepositoryId(payload.repository?.id, context.gitHubAppConfig?.gitHubBaseUrl),
 		payload.ref
 	);
 	const { webhookReceived, name, log } = context;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };

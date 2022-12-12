@@ -1,0 +1,42 @@
+{
+	"name": "push",
+	"payload": {
+		"action": "created",
+		"commits": [
+			{
+				"id": "test-commit-id",
+				"hash": "test-commit-hash",
+				"author": {
+					"username": "test-commit-author-username"
+				},
+				"message": "Example commit #comment This is a comment",
+				"added": [
+					"test-added",
+					".jira/config.yml"
+				],
+				"modified": [
+					"test-modified"
+				],
+				"removed": [
+					"test-removal"
+				]
+			}
+		],
+		"repository": {
+			"id": "test-repo-id",
+			"name": "test-repo-name",
+			"full_name": "example/test-repo-name",
+			"html_url": "test-repo-url",
+			"owner": {
+				"login": "test-repo-owner"
+			}
+		},
+		"sender": {
+			"type": "User",
+			"login": "TestUser"
+		},
+		"installation": {
+			"id": 1234
+		}
+	}
+}

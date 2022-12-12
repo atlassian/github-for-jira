@@ -1,0 +1,93 @@
+.jiraAppCreation__content {
+    font-size: 1.2rem;
+    margin: auto;
+    width: 700px;
+}
+
+.jiraAppCreation__content__container > .jiraAppCreation__options__prompt {
+    font-weight: 500;
+    margin: 2.5em 1em;
+}
+
+.jiraAppCreation__options__prompt,
+.jiraAppCreation__versionDisclaimer__prompt {
+    color: #344563;
+}
+
+.jiraAppCreation__options__container {
+    background-color: #FAFBFC;
+    border-radius: 12px;
+    padding: 1em;
+}
+
+.jiraAppCreation__options__cardPrompt {
+    color: #5E6C84;
+    font-weight: 600;
+    margin-bottom: 1em;
+}
+
+.jiraAppCreation__options__cardsContainer {
+    display: flex;
+    justify-content: space-between;
+}
+
+.jiraSelectAppCreation__options__card {
+    background: #fff;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+    display: flex;
+    padding: 2em 1.5em;
+    position: relative;
+    width: 41.5%;
+    border: 2px solid transparent;
+}
+
+.jiraSelectAppCreation__options__card:hover {
+    box-shadow: 0 3px 5px rgba(9, 30, 66, 0.2), 0 0 1px rgba(9, 30, 66, 0.31);
+    cursor: pointer;
+}
+
+.jiraSelectAppCreation__options__card__iconContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.jiraSelectAppCreation__options__card__icon {
+    height: 30px;
+}
+
+.jiraSelectAppCreation__options__card__contentContainer {
+    margin-left: 1.5em;
+}
+
+.jiraSelectAppCreation__options__recommended {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+}
+
+.jiraSelectAppCreation__options__card__info {
+    color: #6B778C;
+    font-size: 0.9rem;
+}
+
+.jiraAppCreation__versionDisclaimer__container {
+    margin: 2em 1em;
+}
+
+.jiraAppCreation__versionDisclaimer__version {
+    font-weight: bold;
+}
+
+.jiraAppCreation__actionBtn__container {
+    text-align: right;
+}
+
+.jiraAppCreation__actionBtn {
+    font-size: 1.2rem;
+}
+
+.selected {
+    border: 2px solid #0065FF;
+}

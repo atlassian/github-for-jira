@@ -1,0 +1,141 @@
+.jiraSelectGitHubProduct__content {
+    margin: auto;
+    max-width: 725px;
+}
+
+.jiraSelectGitHubProduct__content {
+    margin-top: 2em;
+}
+
+.jiraSelectGitHubProduct__content__title {
+    color: #42526E;
+    font-size: 24px;
+    margin-bottom: 3em;
+    text-align: center;
+}
+
+.jiraSelectGitHubProduct__options__container {
+    background: #FAFBFC;
+    border-radius: 12px;
+    padding: 1.5em;
+}
+
+.jiraSelectGitHubProduct__options__prompt {
+    color: #5E6C84;
+    font-size: 1.2rem;
+    margin-bottom: 1em;
+}
+
+.jiraSelectGitHubProduct__options__cardsContainer {
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.jiraSelectGitHubProduct__options__card {
+    background: #fff;
+    border: 4px solid transparent;
+    border-radius: 10px;
+    box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+    display: flex;
+    flex-direction: row;
+    max-width: 330px;
+}
+
+.jiraSelectGitHubProduct__options__card.vertical {
+    flex-direction: column;
+    padding: 2em;
+}
+
+.jiraSelectGitHubProduct__options__card.horizontal {
+    flex-direction: row;
+    padding: 1em;
+}
+
+.jiraSelectGitHubProduct__options__card:hover {
+    box-shadow: 0 3px 5px rgba(9, 30, 66, 0.2), 0 0 1px rgba(9, 30, 66, 0.31);
+    cursor: pointer;
+}
+
+.jiraSelectGitHubProduct__options__card__title {
+    color: #253858;
+    font-size: 1.3rem;
+}
+
+.jiraSelectGitHubProduct__options__card__img.vertical.cloud {
+    margin: 2em auto;
+}
+
+.jiraSelectGitHubProduct__options__card__img.vertical.server {
+    transform: scale(0.7);
+    margin: 0.5em auto;
+}
+
+.jiraSelectGitHubProduct__options__card__imageContainer {
+    align-items: center;
+    display: flex;
+}
+
+.jiraSelectGitHubProduct__options__card__img.horizontal.cloud {
+    width: 25px;
+}
+
+.jiraSelectGitHubProduct__options__card__img.horizontal.server {
+    width: 20px;
+}
+
+.jiraSelectGitHubProduct__options__card__contentContainer {
+    margin-left: 2em;
+    text-align: left;
+}
+
+.jiraSelectGitHubProduct__options__card__contentContainer > .jiraSelectGitHubProduct__options__card__title {
+    font-size: 1.2rem;
+    margin-bottom: 0.5em;
+}
+
+.jiraSelectGitHubProduct__options__card__contentContainer > .jiraSelectGitHubProduct__options__card__info {
+    font-size: 1rem;
+}
+
+.jiraSelectGitHubProduct__options__card__info {
+    color: #5E6C84;
+    font-size: 1.15rem;
+    line-height: 1.5;
+}
+
+.jiraSelectGitHubProduct__actionBtn__container.centered {
+    margin-top: 3em;
+    text-align: center;
+}
+
+.jiraSelectGitHubProduct__actionBtn__container.left-aligned {
+    margin-top: 3em;
+    text-align: right;
+}
+
+.jiraSelectGitHubProduct__actionBtn {
+    font-size: 1.2rem;
+}
+
+.selected {
+    border: 4px solid #0065FF;
+}
+
+.jiraSelectGitHubProduct__selectServerInstance {
+    display: none;
+}
+
+.jiraSelectGitHubProduct__selectServerInstance__form > #serverInstance__fieldGroup {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.jiraSelectGitHubProduct__selectServerInstance__form > .field-group > #serverInstance__label {
+    margin: 0 auto 0.3em;
+    text-align: left;
+    width: 100%;
+}
+

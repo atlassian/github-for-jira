@@ -1,464 +1,97 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from "nock";
-import { createJobData } from "../transforms/push";
-import { createWebhookApp } from "test/utils/probot";
+import { pushWebhookHandler } from "./push";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { Installation } from "models/installation";
+import { GitHubCommit, GitHubPushData, GitHubRepository } from "../interfaces/github";
+import { enqueuePush } from "../transforms/push";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { envVars } from "config/env";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
-import { waitUntil } from "test/utils/wait-until";
-import { pushQueueMessageHandler, PushQueueMessagePayload } from "../sqs/push";
-import { Context } from "../sqs/sqs";
-import { Message } from "aws-sdk/clients/sqs";
-import { sqsQueues } from "../sqs/queues";
 
-import pushNonMergeCommit from "fixtures/push-non-merge-commit.json";
-import pushNoUsername from "fixtures/push-no-username.json";
-import commitNoUsername from "fixtures/api/commit-no-username.json";
-import pushMultiple from "fixtures/push-multiple.json";
-import moreThanTenFiles from "fixtures/more-than-10-files.json";
-import pushNoIssues from "fixtures/push-no-issues.json";
-import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
-import pushMergeCommit from "fixtures/push-merge-commit.json";
+jest.mock("../transforms/push");
 
-const createMessageProcessingContext = (payload, jiraHost: string): Context<PushQueueMessagePayload> => ({
-	payload: createJobData(payload, jiraHost),
-	log: getLogger("test"),
-	message: {} as Message,
-	receiveCount: 1,
-	lastAttempt: false
-});
+const GHES_GITHUB_INSTALLATION_ID = 1234;
+const GHES_GITHUB_APP_ID = 111;
+const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";
+const GHES_GITHUB_APP_APP_ID = 1;
+const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 
-describe("Push Webhook", () => {
-
-	let app: Application;
-	beforeEach(async () => {
-		app = await createWebhookApp();
-		const clientKey = "client-key";
-		await Installation.create({
-			clientKey,
-			sharedSecret: "shared-secret",
-			jiraHost
-		});
-		await Subscription.create({
-			jiraHost,
-			gitHubInstallationId: 1234,
-			jiraClientKey: clientKey
+describe("PushWebhookHandler", ()=>{
+	let jiraClient: any;
+	let util: any;
+	let subscription: Subscription;
+	beforeEach(() => {
+		jiraClient = { baseURL: jiraHost };
+		util = null;
+		subscription = Subscription.build({
+			gitHubInstallationId: 123,
+			jiraHost: jiraHost,
+			jiraClientKey: "client-key"
 		});
 	});
-
-	describe("process push payloads", () => {
-
-		beforeEach(async () => {
-			mockSystemTime(12345678);
-			await Subscription.create({
-				gitHubInstallationId: 1234,
-				jiraHost,
-				jiraClientKey: "myClientKey"
-			});
-		});
-
-		it("should update the Jira issue when no username is present", async () => {
-			githubUserTokenNock(1234);
-			githubNock
-				.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, commitNoUsername);
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						commits: [
-							{
-								hash: "commit-no-username",
-								message: "[TEST-123] Test commit.",
-								author: {
-									name: "test-commit-name",
-									email: "test-email@example.com"
-								},
-								authorTimestamp: "test-commit-date",
-								displayId: "commit",
-								fileCount: 3,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-removal",
-										changeType: "DELETED",
-										linesAdded: 0,
-										linesRemoved: 4,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-									}
-								],
-								id: "commit-no-username",
-								issueKeys: ["TEST-123"],
-								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-								updateSequenceId: 12345678
-							}
-						],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: {
-					installationId: 1234
-				}
-			}).reply(200);
-
-			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload, jiraHost))).toResolve();
-		});
-
-		it("should only send 10 files if push contains more than 10 files changed", async () => {
-			githubUserTokenNock(1234);
-			githubNock
-				.get("/repos/test-repo-owner/test-repo-name/commits/test-commit-id")
-				.reply(200, moreThanTenFiles);
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						commits: [
-							{
-								hash: "test-commit-id",
-								message: "TEST-123 TEST-246 #comment This is a comment",
-								author: {
-									email: "test-email@example.com",
-									name: "test-commit-name"
-								},
-								displayId: "test-c",
-								fileCount: 12,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added-1",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-2",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-3",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-4",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-5",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-6",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-7",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-8",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-added-9",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									}
-								],
-								id: "test-commit-id",
-								issueKeys: ["TEST-123", "TEST-246"],
-								updateSequenceId: 12345678
-							}
-						],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: {
-					installationId: 1234
-				}
-			}).reply(200);
-
-			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushMultiple.payload, jiraHost))).toResolve();
-		});
-
-		it("should not run a command without a Jira issue", async () => {
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
-
-			await expect(app.receive(pushNoIssues as any)).toResolve();
-			expect(scope).not.toBeDone();
-			nock.removeInterceptor(interceptor);
-		});
-
-		it("should not send anything to Jira if there's", async () => {
-			// match any post calls for jira and github
-			jiraNock.post(/.*/).reply(200);
-			githubNock.get(/.*/).reply(200);
-
-			await expect(app.receive(pushNoIssuekeyCommits as any)).toResolve();
-			// Since no issues keys are found, there should be no calls to github's or jira's API
-			expect(nock).not.toBeDone();
-			// Clean up all nock mocks
-			nock.cleanAll();
-		});
-
-		it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
-			githubUserTokenNock(1234);
-			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, pushMergeCommit);
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						commits: [
-							{
-								hash: "commit-no-username",
-								message: "[TEST-123] Test commit.",
-								author: {
-									email: "test-email@example.com",
-									name: "test-commit-name"
-								},
-								authorTimestamp: "test-commit-date",
-								displayId: "commit",
-								fileCount: 3,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-removal",
-										changeType: "DELETED",
-										linesAdded: 0,
-										linesRemoved: 4,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-									}
-								],
-								id: "commit-no-username",
-								issueKeys: ["TEST-123"],
-								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-								updateSequenceId: 12345678,
-								flags: ["MERGE_COMMIT"]
-							}
-						],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: { installationId: 1234 }
-			}).reply(200);
-
-			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload, jiraHost))).toResolve();
-		});
-
-		it("should not add the MERGE_COMMIT flag when a commit is not a merge commit", async () => {
-			githubUserTokenNock(1234);
-			githubNock.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
-				.reply(200, pushNonMergeCommit);
-
-			// flag property should not be present
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						commits: [
-							{
-								hash: "commit-no-username",
-								message: "[TEST-123] Test commit.",
-								author: {
-									email: "test-email@example.com",
-									name: "test-commit-name"
-								},
-								authorTimestamp: "test-commit-date",
-								displayId: "commit",
-								fileCount: 3,
-								files: [
-									{
-										path: "test-modified",
-										changeType: "MODIFIED",
-										linesAdded: 10,
-										linesRemoved: 2,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-									},
-									{
-										path: "test-added",
-										changeType: "ADDED",
-										linesAdded: 4,
-										linesRemoved: 0,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-									},
-									{
-										path: "test-removal",
-										changeType: "DELETED",
-										linesAdded: 0,
-										linesRemoved: 4,
-										url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-									}
-								],
-								id: "commit-no-username",
-								issueKeys: ["TEST-123"],
-								url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-								updateSequenceId: 12345678
-							}
-						],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: { installationId: 1234 }
-			}).reply(200);
-
-			await expect(pushQueueMessageHandler(createMessageProcessingContext(pushNoUsername.payload, jiraHost))).toResolve();
-		});
-	});
-
-	describe("end 2 end tests with queue", () => {
-		beforeAll(async () => {
-			await sqsQueues.branch.purgeQueue();
-		});
-
-		beforeEach(async () => {
-			mockSystemTime(12345678);
-			await sqsQueues.push.start();
-		});
-
-		afterEach(async () => {
-			await sqsQueues.push.stop();
-			await sqsQueues.push.purgeQueue();
-		});
-
-		it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
-			githubUserTokenNock(1234);
-
-			githubNock
-				.get(`/repos/test-repo-owner/test-repo-name/commits/commit-no-username`)
-				.reply(200, pushNonMergeCommit);
-
-			// flag property should not be present
-			jiraNock.post("/rest/devinfo/0.10/bulk", {
-				preventTransitions: false,
-				repositories: [
-					{
-						name: "test-repo-name",
-						url: "test-repo-url",
-						id: "test-repo-id",
-						commits: [{
-							hash: "commit-no-username",
-							message: "[TEST-123] Test commit.",
-							author: {
-								name: "test-commit-name",
-								email: "test-email@example.com"
-							},
-							authorTimestamp: "test-commit-date",
-							displayId: "commit",
-							fileCount: 3,
-							files: [
-								{
-									path: "test-modified",
-									changeType: "MODIFIED",
-									linesAdded: 10,
-									linesRemoved: 2,
-									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-modified"
-								},
-								{
-									path: "test-added",
-									changeType: "ADDED",
-									linesAdded: 4,
-									linesRemoved: 0,
-									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-added"
-								},
-								{
-									path: "test-removal",
-									changeType: "DELETED",
-									linesAdded: 0,
-									linesRemoved: 4,
-									url: "https://github.com/octocat/Hello-World/blob/7ca483543807a51b6079e54ac4cc392bc29ae284/test-removal"
-								}
-							],
-							id: "commit-no-username",
-							issueKeys: ["TEST-123"],
-							url: "https://github.com/octokit/Hello-World/commit/commit-no-username",
-							updateSequenceId: 12345678
-						}],
-						updateSequenceId: 12345678
-					}
-				],
-				properties: { installationId: 1234 }
-			}).reply(200);
-
-			await expect(app.receive(pushNoUsername as any)).toResolve();
-
-			await waitUntil(async () => {
-				expect(githubNock).toBeDone();
-				expect(jiraNock).toBeDone();
+	describe("GitHub Cloud", ()=>{
+		it("should be called with cloud GitHubAppConfig", async ()=>{
+			await pushWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
+			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
+				uuid: undefined,
+				gitHubAppId: undefined,
+				appId: parseInt(envVars.APP_ID),
+				clientId: envVars.GITHUB_CLIENT_ID,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
 			});
 		});
 	});
+	describe("GitHub Enterprise Server", ()=>{
+		it("should be called with GHES GitHubAppConfig", async ()=>{
+			await pushWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GHES_GITHUB_INSTALLATION_ID, subscription);
+			expect(enqueuePush).toBeCalledWith(expect.anything(), expect.anything(), {
+				uuid: GHES_GITHUB_UUID,
+				gitHubAppId: GHES_GITHUB_APP_ID,
+				appId: GHES_GITHUB_APP_APP_ID,
+				clientId: GHES_GITHUB_APP_CLIENT_ID,
+				gitHubBaseUrl: gheUrl,
+				gitHubApiUrl: gheUrl
+			});
+		});
+	});
+	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
+		const payload: GitHubPushData = {
+			installation: {
+				id: GHES_GITHUB_INSTALLATION_ID,
+				node_id: 123
+			},
+			webhookId: "aaa-bbb-ccc",
+			webhookReceived: Date.now(),
+			repository: {} as GitHubRepository, //force it as not required in test
+			commits: [{
+				id: "commit-1",
+				message: "ARC-0001 some commit message",
+				added: [],
+				modified: [],
+				removed: []
+			} as unknown as GitHubCommit]
+		};
+		return new WebhookContext({
+			id: "1",
+			name: "push",
+			log: getLogger("test"),
+			payload,
+			gitHubAppConfig: cloud ? {
+				uuid: undefined,
+				gitHubAppId: undefined,
+				appId: parseInt(envVars.APP_ID),
+				clientId: envVars.GITHUB_CLIENT_ID,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
+			} : {
+				uuid: GHES_GITHUB_UUID,
+				gitHubAppId: GHES_GITHUB_APP_ID,
+				appId: GHES_GITHUB_APP_APP_ID,
+				clientId: GHES_GITHUB_APP_CLIENT_ID,
+				gitHubBaseUrl: gheUrl,
+				gitHubApiUrl: gheUrl
+			}
+		});
+	};
 });
+

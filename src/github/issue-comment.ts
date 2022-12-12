@@ -1,18 +1,40 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
-import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
+import { GitHubIssue, GitHubIssueCommentData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraClient } from "~/src/jira/client/jira-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const issueCommentWebhookHandler = async (
-	context: CustomContext,
-	_jiraClient,
+	context: WebhookContext,
+	jiraClient,
 	util,
-	githubInstallationId: number
+	gitHubInstallationId: number
 ): Promise<void> => {
-	const { comment, repository } = context.payload;
-	let linkifiedBody;
+	const {
+		comment,
+		repository: {
+			name: repoName,
+			owner: { login: owner }
+		}
+	} = context.payload;
 
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
+	const jiraHost = jiraClient.baseURL;
+
+	context.log = context.log.child({
+		gitHubInstallationId,
+		jiraHost
+	});
+
+	let linkifiedBody;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
+
+	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
+		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
+	}
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -28,19 +50,91 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	context.log(`Updating comment in GitHub with ID ${comment.id}`);
-	const githubResponse = await githubClient.updateIssueComment({
+	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
+	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
-		owner: repository.owner.login,
-		repo: repository.name,
+		owner,
+		repo: repoName,
 		comment_id: comment.id
-	});
+	};
+
+	let status;
+	try {
+		const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
+		status = githubResponse.status;
+	} catch (err) {
+		context.log.warn({ err }, "Cannot modify issue comment");
+	}
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		githubResponse?.status
+		status,
+		gitHubAppId
 	);
+};
+
+const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
+	const { comment, repository, issue } = context.payload;
+	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
+	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
+	// Note: we are only considering the branch name here. Should we also check for pr titles?
+	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
+	const jiraClient = await getJiraClient(
+		jiraHost,
+		gitHubInstallationClient.githubInstallationId.installationId,
+		context.gitHubAppConfig?.gitHubAppId,
+		context.log
+	);
+
+	switch (context.action) {
+		case "created": {
+			await jiraClient.issues.comments.addForIssue(issueKey, {
+				body: gitHubMessage + " - " + gitHubCommentUrl,
+				properties: [
+					{
+						key: "gitHubId",
+						value: {
+							gitHubId
+						}
+					}
+				]
+			});
+			break;
+		}
+		case "edited": {
+			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
+				body: gitHubMessage + " - " + gitHubCommentUrl
+			});
+			break;
+		}
+		case "deleted":
+			await jiraClient.issues.comments.deleteForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId));
+			break;
+		default:
+			context.log.error("This shouldn't happen", context);
+			break;
+	}
+};
+
+const getCommentId = async (jiraClient, issueKey: string, gitHubId: string) => {
+
+	// TODO - this currently only fetchs 50, do we want to loop de loop and find everything!?!?!?
+	const listOfComments = await jiraClient.issues.comments.list(issueKey);
+
+	// TODO Tidy up the getting of the githubid from comment props
+	const mappedResults = listOfComments.data.comments.map(comment => {
+		return {
+			commentId: comment.id,
+			gitHubId: comment.properties?.find(prop => {
+				return prop.key === "gitHubId";
+			})?.value?.gitHubId
+		};
+	});
+
+	return mappedResults.find(comment => {
+		return comment.gitHubId === gitHubId;
+	})?.commentId;
 };

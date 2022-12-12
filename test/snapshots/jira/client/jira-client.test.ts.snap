@@ -2,6 +2,11 @@
 
 exports[`Test getting a jira client Installation exists 1`] = `
 Object {
+  "appProperties": Object {
+    "create": [Function],
+    "delete": [Function],
+    "get": [Function],
+  },
   "baseURL": "https://test-atlassian-instance.atlassian.net",
   "deployment": Object {
     "delete": [Function],
@@ -13,21 +18,21 @@ Object {
     },
     "installation": Object {
       "delete": [Function],
-      "exists": [Function],
     },
     "pullRequest": Object {
       "delete": [Function],
     },
     "repository": Object {
       "delete": [Function],
-      "get": [Function],
       "update": [Function],
     },
   },
   "issues": Object {
     "comments": Object {
       "addForIssue": [Function],
-      "getForIssue": [Function],
+      "deleteForIssue": [Function],
+      "list": [Function],
+      "updateForIssue": [Function],
     },
     "get": [Function],
     "getAll": [Function],
@@ -38,7 +43,6 @@ Object {
     },
     "worklogs": Object {
       "addForIssue": [Function],
-      "getForIssue": [Function],
     },
   },
   "remoteLink": Object {

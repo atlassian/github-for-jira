@@ -1,16 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { Application } from "probot";
 
 import issueNullBody from "fixtures/issue-null-body.json";
 import issueBasic from "fixtures/issue-basic.json";
-
-jest.mock("config/feature-flags");
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 describe("Issue Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {
@@ -24,7 +21,7 @@ describe("Issue Webhook", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			sharedSecret: "shared-secret"
+			encryptedSharedSecret: "shared-secret"
 		});
 	});
 
@@ -59,6 +56,29 @@ describe("Issue Webhook", () => {
 			it("should not break if the issue has a null body", async () => {
 				// should not throw
 				await expect(app.receive(issueNullBody as any)).toResolve();
+			});
+
+			it("no Write perms case should be tolerated", async () => {
+				githubUserTokenNock(gitHubInstallationId);
+
+				jiraNock
+					.get("/rest/api/latest/issue/TEST-123?fields=summary")
+					.reply(200, {
+						key: "TEST-123",
+						fields: {
+							summary: "Example Issue"
+						}
+					});
+
+				githubNock
+					.patch("/repos/test-repo-owner/test-repo-name/issues/123456789", {
+						body: `Test example issue with linked Jira issue: [TEST-123]\n\n[TEST-123]: ${jiraHost}/browse/TEST-123`
+					})
+					.reply(401, {
+						error: "AccessDenied"
+					});
+
+				await expect(app.receive(issueBasic as any)).toResolve();
 			});
 		});
 	});

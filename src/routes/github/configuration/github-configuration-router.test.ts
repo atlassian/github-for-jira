@@ -2,20 +2,21 @@
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
+import { getHashedKey } from "models/sequelize";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getJiraClient } from "~/src/jira/client/jira-client";
 
 jest.mock("config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: Subscription;
+	let client: any;
 
 	const authenticatedUserResponse = { login: "test-user" };
 	const adminUserResponse = { login: "admin-user" };
@@ -31,8 +32,10 @@ describe("Github Configuration", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
-			secrets: "def234",
-			sharedSecret: "ghi345"
+			//TODO: why? Comment this out make test works?
+			//setting both fields make sequelize confused as it internally storage is just the "secrets"
+			//secrets: "def234",
+			encryptedSharedSecret: "ghi345"
 		});
 
 		frontendApp = express();
@@ -40,10 +43,9 @@ describe("Github Configuration", () => {
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "token",
-			getInstallationAccessToken: async () => "access-token"
-		}));
+		frontendApp.use(getFrontendApp());
+
+		client = await getJiraClient(jiraHost, 15, undefined, undefined);
 	});
 
 	describe("Github Token Validation", () => {
@@ -112,17 +114,7 @@ describe("Github Configuration", () => {
 		});
 	});
 
-	describe.each([true, false])("#GET - GithubClient - %s", (useNewGithubClient) => {
-
-		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
-		});
-
-
+	describe("#GET - GithubClient - %s", () => {
 		it("should return 200 when calling with valid Github Token", async () => {
 			githubNock
 				.get("/")
@@ -137,7 +129,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(200, {
 					"id": 1,
 					"account": {
@@ -188,6 +179,11 @@ describe("Github Configuration", () => {
 					}
 				});
 
+			jiraNock
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "false" })
+				.reply(200, "OK");
+
+			await client.appProperties.create("false");
 
 			await supertest(frontendApp)
 				.get("/github/configuration")
@@ -215,7 +211,6 @@ describe("Github Configuration", () => {
 
 			githubNock
 				.get(`/app/installations/${sub.gitHubInstallationId}`)
-				.twice()
 				.reply(403, {
 					message: "Although you appear to have the correct authorization credentials, the `Fusion-Arc` organization has an IP allow list enabled, and 13.52.4.51 is not permitted to access this resource."
 				});
@@ -257,14 +252,14 @@ describe("Github Configuration", () => {
 					"Cookie",
 					getSignedCookieHeader({
 						jiraHost,
-						githubToken: "token"
+						githubToken: "token2"
 					})
 				)
 				.expect(200);
 		});
 	});
 
-	describe("#POST", () => {
+	describe("#POST - GitHub Client is %s", () => {
 		it("should return a 401 if no GitHub token present in session", async () => {
 			await supertest(frontendApp)
 				.post("/github/configuration")
@@ -302,6 +297,10 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
+				.get("/user")
+				.reply(200, { login: "test-user" });
+
+			githubNock
 				.get("/app/installations/2")
 				.reply(404);
 
@@ -319,7 +318,7 @@ describe("Github Configuration", () => {
 						jiraHost
 					})
 				)
-				.expect(404);
+				.expect(401);
 		});
 
 		it("should return a 401 if the user is not an admin of the Org", async () => {
@@ -330,14 +329,17 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, authenticatedUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/test-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationMembershipResponse);
+
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
@@ -384,16 +386,23 @@ describe("Github Configuration", () => {
 				.reply(200);
 
 			githubNock
-				.get("/app/installations/1")
-				.reply(200, installationResponse);
-			githubNock
 				.get("/user")
 				.reply(200, adminUserResponse);
+
 			githubNock
-				.get("/orgs/fake-account/memberships/admin-user")
+				.get("/app/installations/1")
+				.reply(200, installationResponse);
+
+			githubNock
+				.get("/user/memberships/orgs/fake-account")
 				.reply(200, organizationAdminResponse);
 
-			const jiraClientKey = "a-unique-client-key";
+			jiraNock
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "true" })
+				.reply(200, "OK");
+
+			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
+			await client.appProperties.create("true");
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
@@ -410,6 +419,14 @@ describe("Github Configuration", () => {
 					})
 				)
 				.expect(200);
+
+			const subInDB = await Subscription.getAllForClientKey(getHashedKey(jiraClientKey));
+			expect(subInDB.length).toBe(1);
+			expect(subInDB[0]).toEqual(expect.objectContaining({
+				gitHubInstallationId: 1,
+				jiraClientKey: getHashedKey(jiraClientKey),
+				plainClientKey: jiraClientKey
+			}));
 		});
 	});
 });

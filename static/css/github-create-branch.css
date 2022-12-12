@@ -1,0 +1,155 @@
+.gitHubCreateBranch {
+  margin: 10% auto;
+  max-width: 480px;
+}
+
+#createBranchForm .field-group {
+  margin-bottom: 1em;
+}
+
+#createBranchForm input[type=text],
+#createBranchForm .select2-choice  {
+  height: 2.5em;
+  line-height: 1.7rem;
+  background: #ebecf0;
+  color: #172B4D;
+}
+
+#createBranchForm input[type=text] {
+  padding-left: 10px;
+}
+
+#createBranchForm input[type=text]:focus {
+  background-color: #FAFBFC;
+}
+
+.headerImage {
+  position: relative;
+}
+
+.headerImageLogo-lg {
+  height: 146px;
+}
+
+.gitHubCreateBranch__spinner {
+  display: none;
+  position: absolute;
+  top: 62px;
+  left: 230px;
+  color: #fff;
+}
+
+.gitHubCreateBranch__title {
+  color: #6B778C;
+  margin: 1.8em 0 4em;
+  text-align: center;
+}
+
+.gitHubCreateBranch__header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 0.5em;
+}
+
+.gitHubCreateBranch__subHeaderIcon {
+  height: 0.8em;
+}
+
+.gitHubCreateBranch__actions {
+  text-align: right;
+  margin-top: 2.5em;
+}
+
+.gitHubCreateBranch__issueLink {
+  font-weight: bold;
+}
+
+/** Customizing styling for Select2 **/
+.select2-drop {
+  /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
+  margin-top: -34px;
+}
+.aui-select2-drop.aui-dropdown2 .select2-search {
+  padding: 0;
+}
+.aui-select2-drop .select2-search:before {
+  content: "\f15b";
+  font-weight: 400;
+  right: 4px;
+}
+.select2-loader {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+.select2-loader-for-input {
+  position: absolute;
+  top: 37px;
+  z-index: 2;
+  left: 8px;
+  padding: 0;
+}
+
+.hidden {
+  display: none;
+}
+
+.gitHubCreateBranch__serverError {
+  display: none;
+  margin-top: 2.5em;
+}
+
+.aui-icon.aui-iconfont-error {
+  margin-top: 10px;
+}
+.gitHubCreateBranch__contextContainer {
+  display: flex;
+}
+
+.gitHubCreateBranch__changeInstance {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: start;
+  margin: 16px 0px 0px 23px
+}
+
+.gitHubCreateBranch__userDetails {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 16px 23px 0px 0px;
+  flex: 1;
+}
+
+.has-errors {
+  border: 2px solid #DE350B!important;
+}
+
+.error-message {
+  color: #DE350B;
+  font-size: 0.9rem;
+}
+
+.no-repo-container {
+  display: none;
+  margin: 4px 0 0;
+}
+
+.no-repo-link:hover {
+  text-decoration: underline;
+}
+
+.configure-link {
+  margin: 8px 0;
+  display: inline-block;
+}
+
+.gitHubCreateBranch__createdLinks {
+  display: none;
+  justify-content: space-evenly;
+}
+
+.aui-select2-container.select2-container .select2-choice:after {
+  color: #42526E;
+}

@@ -1,342 +1,73 @@
 /* eslint-disable jest/no-standalone-expect */
-import { getLogger } from "config/logger";
-import { GitHubInstallationClient } from "./github-installation-client";
-import { statsd }  from "config/statsd";
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
-import { getCloudInstallationId, InstallationId } from "./installation-id";
-import nock from "nock";
-import { AppTokenHolder } from "./app-token-holder";
-import fs from "fs";
-import { envVars }  from "config/env";
-import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import "config/env";
 
-jest.mock("config/feature-flags");
+import * as axios from "axios";
+import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
+
+jest.mock("axios");
+
+class TestGitHubClient extends GitHubClient {
+	constructor(config: GitHubConfig) {
+		super(config);
+	}
+	public doTestGraphqlCall() {
+		return this.graphql("foo", {});
+	}
+}
 
 describe("GitHub Client", () => {
-	const githubInstallationId = 17979017;
-	let statsdHistogramSpy, statsdIncrementSpy;
-	beforeEach(() => {
-		// Lock Time
-		statsdHistogramSpy = jest.spyOn(statsd, "histogram");
-		statsdIncrementSpy = jest.spyOn(statsd, "increment");
+	const mockedAxiosPost = jest.fn();
+
+	beforeEach(async () => {
+		const mockedAxiosCreate = {
+			interceptors: {
+				request: {
+					use: jest.fn()
+				},
+				response: {
+					use: jest.fn()
+				}
+			},
+			post: mockedAxiosPost
+		};
+		(axios.default.create as jest.Mock).mockReturnValue(mockedAxiosCreate);
+		mockedAxiosPost.mockReset();
+		mockedAxiosPost.mockResolvedValue({});
 	});
 
-	afterEach(() => {
-		// Unlock Time
-		statsdHistogramSpy.mockRestore();
+	it("uses proxy when provided", async () => {
+		new TestGitHubClient({
+			... gitHubCloudConfig,
+			proxyBaseUrl: "http://proxy.com"
+		});
+		const calls = (axios.default.create as jest.Mock).mock.calls[0];
+		expect(calls[0].proxy).toBeFalsy();
+		expect(calls[0].httpAgent.proxy.host).toEqual("proxy.com");
+		expect(calls[0].httpsAgent.proxy.host).toEqual("proxy.com");
 	});
 
-	function givenGitHubReturnsPullrequests(
-		owner: string,
-		repo: string,
-		perPage: number,
-		page: number,
-		expectedInstallationTokenInHeader?: string,
-		scope: nock.Scope = githubNock
-	) {
-		scope
-			.get(`/repos/${owner}/${repo}/pulls`)
-			.query({
-				per_page: perPage,
-				page,
-				installationId: /^.*$/
-			})
-			.matchHeader(
-				"Authorization",
-				expectedInstallationTokenInHeader
-					? `Bearer ${expectedInstallationTokenInHeader}`
-					: /^Bearer .+$/
-			)
-			.matchHeader("Accept", "application/vnd.github.v3+json")
-			.reply(200, [
-				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
-			]);
-	}
+	describe("config object", () => {
+		const TEST_API_URL = "http://api.myBaseUrl.com";
+		const TEST_GRAPHQL_URL = "http://graphql.myBaseUrl.com";
 
-	function givenGitHubReturnsCommit(
-		owner: string,
-		repo: string,
-		ref: string,
-		expectedInstallationTokenInHeader?: string,
-		scope: nock.Scope = githubNock
-	) {
-		scope
-			.get(`/repos/${owner}/${repo}/commits/${ref}`)
-			.query({
-				installationId: /^.*$/
-			})
-			.matchHeader(
-				"Authorization",
-				expectedInstallationTokenInHeader
-					? `Bearer ${expectedInstallationTokenInHeader}`
-					: /^Bearer .+$/
-			)
-			.matchHeader("Accept", "application/vnd.github.v3+json")
-			.reply(200, [
-				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
-			]);
-	}
+		const TEST_GITHUB_CONFIG = {
+			hostname: "myHostname",
+			baseUrl: "http://myBaseUrl.com",
+			apiUrl: TEST_API_URL,
+			graphqlUrl: TEST_GRAPHQL_URL
+		};
 
-
-	it("lists pull requests", async () => {
-		const owner = "owner";
-		const repo = "repo";
-		const pageSize = 5;
-		const page = 1;
-
-		githubUserTokenNock(githubInstallationId, "installation token");
-		givenGitHubReturnsPullrequests(
-			owner,
-			repo,
-			pageSize,
-			page,
-			"installation token"
-		);
-
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		const pullrequests = await client.getPullRequests(owner, repo, {
-			per_page: pageSize,
-			page
+		it("gitHubConfig.apiUrl is used", async () => {
+			new TestGitHubClient(TEST_GITHUB_CONFIG);
+			const calls = (axios.default.create as jest.Mock).mock.calls[0];
+			expect(calls[0].baseURL).toEqual(TEST_API_URL);
 		});
 
-		expect(pullrequests).toBeTruthy();
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "200");
-	});
-
-	it("fetches a commit", async () => {
-		const owner = "owner";
-		const repo = "repo";
-		const sha = "84fdc9346f43f829f88fb4b1d240b1aaaa5250da";
-
-		githubUserTokenNock(githubInstallationId, "installation token");
-		givenGitHubReturnsCommit(
-			owner,
-			repo,
-			sha,
-			"installation token"
-		);
-
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		const commit = await client.getCommit(owner, repo, sha);
-
-		expect(commit).toBeTruthy();
-		verifyMetricsSent("/repos/{owner}/{repo}/commits/{ref}", "200");
-	});
-
-	function verifyMetricsSent(path: string, status) {
-		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
-			client: "axios",
-			method: "GET",
-			path,
-			status
-		}));
-	}
-
-	function verifyMetricStatus(status) {
-		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
-			client: "axios",
-			status
-		}));
-	}
-
-
-	it("should handle rate limit error from Github when X-RateLimit-Reset not specified", async () => {
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).reply(
-			403, { message: "API rate limit exceeded for xxx.xxx.xxx.xxx." },
-			{
-				"X-RateLimit-Remaining": "0"
-			}
-		);
-		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(RateLimitingError);
-		expect(error.rateLimitReset).toBe(4600);
-
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
-
-	});
-
-	it("should handle rate limit error from Github when X-RateLimit-Reset specified", async () => {
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).reply(
-			403, [{ number: 1 }],
-			{
-				"X-RateLimit-Remaining": "0",
-				"X-RateLimit-Reset": "2000"
-			}
-		);
-		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(RateLimitingError);
-		expect(error.rateLimitReset).toBe(2000);
-
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
-
-	});
-
-	it("should handle blocked IP error from Github when specified", async () => {
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).reply(
-			403, { message: "Org has an IP allow list enabled" }
-		);
-		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(BlockedIpError);
-		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist");
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
-	});
-
-	it("should handle rate limit on 403", async () => {
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).reply(
-			403, [{ number: 1 }],
-			{
-				"X-RateLimit-Remaining": "0",
-				"X-RateLimit-Reset": "2000"
-			}
-		);
-		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(RateLimitingError);
-		expect(error.rateLimitReset).toBe(2000);
-
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
-
-	});
-
-	it("should transform error properly on 404", async () => {
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).reply(
-			404, [{ number: 1 }],
-			{
-				"X-RateLimit-Remaining": "0"
-			}
-		);
-		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"));
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(GithubClientError);
-		expect(error.status).toBe(404);
-
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "404");
-	});
-
-	/**
-	 * One test against a non-cloud GitHub URL to prove that the client will be working against an on-premise
-	 * GHE installation.
-	 */
-	it("works with a non-cloud installation", async () => {
-		const owner = "owner";
-		const repo = "repo";
-		const pageSize = 5;
-		const page = 1;
-
-		gheUserTokenNock(githubInstallationId, "installation token");
-		givenGitHubReturnsPullrequests(
-			owner,
-			repo,
-			pageSize,
-			page,
-			"installation token",
-			gheNock
-		);
-
-		const appTokenHolder = new AppTokenHolder((installationId: InstallationId) => {
-			switch (installationId.githubBaseUrl) {
-				case gheUrl:
-					return fs.readFileSync(envVars.PRIVATE_KEY_PATH, { encoding: "utf8" });
-				default:
-					throw new Error("unknown github instance!");
-			}
+		it("gitHubConfig.graphqlUrl is used", async () => {
+			const client = new TestGitHubClient(TEST_GITHUB_CONFIG);
+			await client.doTestGraphqlCall();
+			expect(mockedAxiosPost.mock.calls[0][0]).toEqual(TEST_GRAPHQL_URL);
 		});
 
-		const client = new GitHubInstallationClient(
-			new InstallationId(gheUrl, 4711, githubInstallationId),
-			getLogger("test"),
-			appTokenHolder
-		);
-		const pullrequests = await client.getPullRequests(owner, repo, {
-			per_page: pageSize,
-			page
-		});
-
-		expect(pullrequests).toBeTruthy();
-		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "200");
 	});
-
-
-	it("should throw timeout exception if request took longer than timeout", async () => {
-
-		when(numberFlag).calledWith(
-			NumberFlags.GITHUB_CLIENT_TIMEOUT,
-			expect.anything()
-		).mockResolvedValue(100);
-
-		githubUserTokenNock(githubInstallationId, "installation token");
-		githubNock.get(`/repos/owner/repo/pulls`).query({
-			installationId: /^.*$/
-		}).delay(2000).reply(
-			200, [{ number: 1 }]
-		);
-
-		const client = await new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), getLogger("test"), AppTokenHolder.getInstance());
-		let error: any = undefined;
-		try {
-			await client.getPullRequests("owner", "repo", {});
-		} catch (e) {
-			error = e;
-		}
-
-		expect(error).toBeInstanceOf(GithubClientTimeoutError);
-
-		verifyMetricStatus("timeout");
-
-	});
-
 });

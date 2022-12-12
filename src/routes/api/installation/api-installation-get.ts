@@ -1,13 +1,19 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import format from "date-fns/format";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
-	const { installationId } = req.params;
-	const { client } = res.locals;
+	const { installationId, gitHubAppId: gitHubAppIdStr } = req.params;
+
+	const gitHubAppId = parseInt(gitHubAppIdStr) || undefined;
+
+	const { client, jiraHost } = res.locals;
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 	try {
-		const subscriptions = await Subscription.getAllForInstallation(Number(installationId));
+		const subscriptions = await Subscription.getAllForInstallation(Number(installationId), gitHubAppId);
 
 		if (!subscriptions.length) {
 			res.sendStatus(404);
@@ -19,7 +25,10 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			subscriptions.map(async (subscription) => {
 				const id = subscription.gitHubInstallationId;
 				try {
-					const response = await client.apps.getInstallation({ installation_id: id });
+					const response = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API) ?
+						await gitHubAppClient.getInstallation(id) :
+						await client.apps.getInstallation({ installation_id: id });
+
 					response.data.syncStatus = subscription.syncStatus;
 					return response.data;
 				} catch (err) {
@@ -40,7 +49,6 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			req.log.error({ ...response }, "Failed installation");
 			return response.error;
 		});
-
 		res.json({
 			host: jiraHost,
 			installationId,

@@ -69,9 +69,80 @@
   line-height: 1.6;
 }
 
-.jiraConfiguration_content > .jiraConfiguration__table {
-  color: #172b4d;
+
+.jiraConfiguration__syncRetryModal__headerContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.2em;
+}
+
+.jiraConfiguration__syncRetryModal__header {
+  font-size: 20px;
+}
+
+.jiraConfiguration__syncRetryModal__closeBtn {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.jiraConfiguration__syncRetryModal__table {
+  border-collapse: separate;
+  border-spacing: 0 15px;
+}
+
+.jiraConfiguration__syncRetryModal__tableBody {
+  border-bottom: none;
+}
+
+.jiraConfiguration__syncRetryModal__tableRow {
+  margin-bottom: 1em;
+}
+
+.jiraConfiguration__syncRetryModal__syncStatus__type {
+  display: flex;
+  text-transform: uppercase;
+  width: 9em;
+}
+
+.jiraConfiguration__syncRetryModal__syncStatus__details {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.jiraConfiguration__restartBackfillModal__header__container {
+  margin-bottom: 1.3em;
+}
+
+.jiraConfiguration__restartBackfillModal__header__content {
+  color: #344563;
+  font-size: 1.01rem;
+  margin-bottom: 1.2em;
+}
+
+.jiraConfiguration__restartBackfillModal__date {
+  padding: 0.2em;
+  min-height: 40px;
+  width: 100%;
+}
+
+.jiraConfiguration__restartBackfillModal__required {
+  color: #bf2600;
+}
+
+.jiraConfiguration__restartBackfillModal__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1em;
+}
+
+.jiraConfiguration_content > .jiraConfiguration__tableContainer {
+  overflow: auto;
+  height: calc(100% - 175px);
   margin-top: 2.5em;
+}
+
+.jiraConfiguration_content > .jiraConfiguration__tableContainer > .jiraConfiguration__table {
+  color: #172b4d;
   table-layout: fixed;
   width: 100%;
 }
@@ -111,7 +182,7 @@
   padding: 0.8em 0;
 }
 
-.jiraConfiguration__retryContainer {
+.jiraConfiguration__retryContainer, .jiraConfiguration__retryContainer {
   font-size: 1.5rem;
   position: relative;
 }
@@ -143,6 +214,71 @@
 
 .jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
   display: block;
+}
+
+.jiraConfiguration__syncWarning {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: 8px;
+  position: relative;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0.2rem;
+}
+
+/* Hit box */
+.jiraConfiguration__syncWarning:before {
+  content: '';
+  padding: 1.25em;
+  position: absolute;
+}
+
+.jiraConfiguration__syncWarning:hover {
+  background: #0914E208;
+}
+
+.warning-popup {
+  display: block;
+  box-sizing: border-box;
+  z-index: 400;
+  flex: 1 1 auto;
+  background-color: var(--ds-surface-overlay,#FFFFFF);
+  border-radius: 3px;
+  box-shadow: var(--ds-shadow-overlay,0 4px 8px -2px rgba(9,30,66,0.25),0 0 1px rgba(9,30,66,0.31));
+  overflow: auto;
+}
+
+.warning-popup div {
+  padding: 15px;
+  line-height: 20px;
+}
+
+.jiraConfiguration__syncWarningMessage {
+  border-radius: 3px;
+  display: none;
+  font-size: 1rem;
+  left: -15em;
+  right: -15em;
+  padding: 0.3em;
+  position: absolute;
+  top: -7.5em;
+}
+
+/*
+The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
+so changing the position of the tooltips for the first two rows to bottom
+ */
+.jiraConfiguration__table__row:nth-child(-n+2) .jiraConfiguration__syncWarningMessage {
+  top: 1.9em;
+}
+
+.jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
+  display: block;
+}
+
+.jiraConfiguration__syncWarning__connectFailed__warningIcon {
+  color: #ff9b20;
 }
 
 .jiraConfiguration__table__body
@@ -356,6 +492,27 @@
 .jiraConfiguration__empty__image {
   width: 100%;
   max-width: 332px;
+}
+
+.jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncRetryModal__closeBtn {
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0.45em;
+  position: relative;
+}
+.jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncRetryModal__closeBtn:hover {
+  background: #091E4208;
+}
+
+.learn-more-link {
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.learn-more-link:hover {
+  color: inherit;
 }
 
 /*  NOTE: We can't use standard breakpoints on GitHub config page

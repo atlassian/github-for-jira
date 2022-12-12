@@ -1,7 +1,8 @@
-import { BOOLEAN, CountOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING } from "sequelize";
-import { Subscription, Repositories, RepositoryData, RepoSyncStateObject, TaskStatus } from "./subscription";
-import { merge, pickBy } from "lodash";
+import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions, JSON } from "sequelize";
+import { Subscription, TaskStatus } from "./subscription";
+import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
+import { Config } from "interfaces/common";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -25,11 +26,12 @@ export class RepoSyncState extends Model {
 	buildCursor?: string;
 	deploymentCursor?: string;
 	forked?: boolean;
-	repoPushedAt?: Date;
-	repoUpdatedAt?: Date;
-	repoCreatedAt?: Date;
+	repoPushedAt: Date;
+	repoUpdatedAt: Date;
+	repoCreatedAt: Date;
 	syncUpdatedAt?: Date;
 	syncCompletedAt?: Date;
+	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
 
@@ -51,7 +53,9 @@ export class RepoSyncState extends Model {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
-				commitStatus: "complete"
+				commitStatus: "complete",
+				buildStatus: "complete",
+				deploymentStatus: "complete"
 			}
 		});
 	}
@@ -62,10 +66,16 @@ export class RepoSyncState extends Model {
 				[Op.or]: {
 					pullStatus: "failed",
 					branchStatus: "failed",
-					commitStatus: "failed"
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
 				}
 			}
 		});
+	}
+
+	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
+		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
 	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
@@ -76,12 +86,21 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async findByRepoId(subscription: Subscription, repoId: number): Promise<RepoSyncState | null> {
+		return RepoSyncState.findOneFromSubscription(subscription, {
+			where: {
+				repoId
+			}
+		});
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
-		return RepoSyncState.findAll(merge(options, {
+		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
 			}
 		}));
+		return result || [];
 	}
 
 	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
@@ -91,6 +110,22 @@ export class RepoSyncState extends Model {
 			},
 			order: [["repoUpdatedAt", "DESC"]]
 		} as FindOptions));
+	}
+
+	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+		return RepoSyncState.update(values, merge(options || {}, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		} as UpdateOptions));
+	}
+
+	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+		return RepoSyncState.updateFromSubscription(subscription, values, merge(options, {
+			where: {
+				repoId
+			}
+		} as UpdateOptions));
 	}
 
 	static async deleteFromSubscription(subscription: Subscription, options: DestroyOptions = {}): Promise<number> {
@@ -110,124 +145,15 @@ export class RepoSyncState extends Model {
 			commitStatus: null,
 			commitCursor: null,
 			pullStatus: null,
-			pullCursor: null
+			pullCursor: null,
+			buildStatus: null,
+			buildCursor: null,
+			deploymentStatus: null,
+			deploymentCursor: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
 			}
-		});
-	}
-
-	static async updateFromRepoJson(subscription: Subscription, json: RepoSyncStateObject = {}): Promise<RepoSyncState[]> {
-		const repoIds = Object.keys(json.repos || {});
-
-		// Get states that are already in DB
-		const states: RepoSyncState[] = await RepoSyncState.findAll({
-			where: {
-				subscriptionId: subscription.id,
-				repoId: {
-					[Op.in]: repoIds
-				}
-			}
-		});
-
-		return RepoSyncState.sequelize?.transaction(async (transaction) => {
-			// Delete all repos that's not in state anymore
-			await RepoSyncState.destroy({
-				where: {
-					subscriptionId: subscription.id,
-					repoId: {
-						[Op.notIn]: repoIds
-					}
-				},
-				transaction
-			});
-
-			return Promise.all(
-				repoIds.map(id => {
-					const repo = json.repos?.[id];
-					const model = states.find(s => s.repoId === Number(id)) || RepoSyncState.buildFromRepositoryData(subscription, repo);
-					return model?.setFromRepositoryData(repo).save({ transaction });
-				})
-			);
-		});
-	}
-
-	static async toRepoJson(subscription: Subscription): Promise<RepoSyncStateObject> {
-		const repos = await RepoSyncState.findAllFromSubscription(subscription);
-		return {
-			installationId: subscription.gitHubInstallationId,
-			jiraHost: subscription.jiraHost,
-			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
-			repos: repos.reduce<Repositories>((acc, repo) => {
-				acc[repo.repoId] = repo.toRepositoryData();
-				return acc;
-			}, {})
-		};
-	}
-
-	static buildFromRepositoryData(subscription: Subscription, repo?: RepositoryData): RepoSyncState | undefined {
-		const repoId = Number(repo?.repository?.id);
-		if (!repoId) {
-			return undefined;
-		}
-		return RepoSyncState.build({
-			repoId,
-			subscriptionId: subscription.id,
-			repoName: repo?.repository?.name,
-			repoOwner: repo?.repository?.owner?.login,
-			repoFullName: repo?.repository?.full_name,
-			repoUrl: repo?.repository?.html_url
-		});
-	}
-
-	// TODO: need to redo this in a better fashion
-	static async updateRepoForSubscription(subscription: Subscription, repoId: number, key: keyof RepositoryData, value: unknown): Promise<RepoSyncState | undefined> {
-		const model: RepoSyncState | undefined = await RepoSyncState.findOne({
-			where: {
-				subscriptionId: subscription.id,
-				repoId
-			}
-		});
-		const repo = merge(model?.toRepositoryData() || {}, {
-			[key]: value
-		});
-		return model?.setFromRepositoryData(repo)?.save();
-	}
-
-	// TODO: revert this back to not using 'lastSomethingCursor'
-	setFromRepositoryData(repo?: RepositoryData): RepoSyncState {
-		if (repo) {
-			this.repoUpdatedAt = new Date(repo.repository?.updated_at ?? Date.now());
-			this.branchStatus = repo.branchStatus;
-			this.branchCursor = repo.lastBranchCursor;
-			this.commitStatus = repo.commitStatus;
-			this.commitCursor = repo.lastCommitCursor;
-			this.pullStatus = repo.pullStatus;
-			this.pullCursor = repo.lastPullCursor?.toString();
-		}
-		return this;
-	}
-
-	toRepositoryData(): RepositoryData {
-		return pickBy<RepositoryData>({
-			repository: {
-				id: this.repoId,
-				name: this.repoName,
-				full_name: this.repoFullName,
-				owner: {
-					login: this.repoOwner
-				},
-				html_url: this.repoUrl,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				updated_at: (this.repoUpdatedAt ?? new Date(0)) as any
-			},
-			pullStatus: this.pullStatus,
-			lastPullCursor: this.pullCursor ? Number(this.pullCursor) : undefined,
-			commitStatus: this.commitStatus,
-			lastCommitCursor: this.commitCursor,
-			branchStatus: this.branchStatus,
-			lastBranchCursor: this.branchCursor
 		});
 	}
 }
@@ -282,6 +208,7 @@ RepoSyncState.init({
 	repoCreatedAt: DATE,
 	syncUpdatedAt: DATE,
 	syncCompletedAt: DATE,
+	config: JSON,
 	createdAt: DATE,
 	updatedAt: DATE
 }, { sequelize });

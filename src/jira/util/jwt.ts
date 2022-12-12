@@ -28,10 +28,10 @@ export enum TokenType {
 	context = "context"
 }
 
-export function extractJwtFromRequest(req: Request): string | undefined {
-	const tokenInQuery = req.query?.[JWT_PARAM];
 
-	// JWT appears in both parameter and body will result query hash being invalid.
+const extractJwtFromRequest = (req: Request): string | undefined => {
+
+	const tokenInQuery = req.query?.[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {
 		req.log.info("JWT token can only appear in either query parameter or request body.");
@@ -39,7 +39,6 @@ export function extractJwtFromRequest(req: Request): string | undefined {
 	}
 	let token = tokenInQuery || tokenInBody;
 
-	// if there was no token in the query-string then fall back to checking the Authorization header
 	const authHeader = req.headers?.[AUTH_HEADER];
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
@@ -50,32 +49,50 @@ export function extractJwtFromRequest(req: Request): string | undefined {
 		}
 	}
 
+	if (!token) {
+		token = req.cookies?.[JWT_PARAM];
+		if (token) {
+			req.log.info("JWT token found in cookies (last resort)");
+		}
+	}
+
 	// JWT is missing in query and we don't have a valid body.
 	if (!token) {
 		req.log.info("JWT token is missing in the request");
 	}
 
 	return token;
-}
+};
 
-export function sendError(res: Response, code: number, msg: string): void {
+export const sendError = (res: Response, code: number, msg: string): void => {
 	res.status(code).json({
 		message: msg
 	});
-}
+};
 
-function decodeAsymmetricToken(token: string, publicKey: string, noVerify: boolean): any {
+//disable eslint rule as decodeAsymmetric return any
+/*eslint-disable @typescript-eslint/no-explicit-any*/
+const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boolean): any => {
 	return decodeAsymmetric(
 		token,
 		publicKey,
 		getAlgorithm(token),
 		noVerify
 	);
-}
+};
 
-function verifyQsh(qsh: string, req: Request): boolean {
+export const verifyQsh = (qsh: string, req: Request): boolean => {
 	// to get full path from express request, we need to add baseUrl with path
-	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + req.path };
+	/**
+	 * TODO: Remove `decodeURIComponent` later
+	 * This has been added here as a temporarily until the `qsh` bug is fixed
+	 *
+	 * Bug: This method `createQueryStringHash` doesn't handle the decoded URI strings passed along the path
+	 * For e.g. If we pass a string `http%3A%2F%2Fabc.com`, it doesn't encode it to `http://abc.com`,
+	 * but uses the original string, which returns a different `qsh` value.
+	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
+	 */
+	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + decodeURIComponent(req.path) };
 	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
 	const signatureHashVerified = qsh === expectedHash;
 
@@ -85,9 +102,9 @@ function verifyQsh(qsh: string, req: Request): boolean {
 		return qsh === expectedHash;
 	}
 	return true;
-}
+};
 
-export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType: TokenType, req: Request, res: Response): boolean {
+export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, req: Request, res: Response): boolean => {
 	const expiry = verifiedClaims.exp;
 
 	// TODO: build in leeway?
@@ -118,7 +135,7 @@ export function verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenTy
 		sendError(res, 401, "JWT tokens without qsh are not allowed");
 		return false;
 	}
-}
+};
 
 const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
 	const token = extractJwtFromRequest(req);
@@ -144,7 +161,8 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 		return false;
 	}
 
-	let verifiedClaims;
+	/* eslint-disable @typescript-eslint/no-explicit-any*/
+	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (error) {

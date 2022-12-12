@@ -1,42 +1,36 @@
 /* globals $ */
 $('.install-link').click(function (event) {
-  event.preventDefault()
+  event.preventDefault();
 
-  $.post('/github/configuration', {
+  $.post(window.location.href, {
     installationId: $(event.target).data('installation-id'),
     _csrf: document.getElementById('_csrf').value,
     clientKey: document.getElementById('clientKey').value
   }, function (data) {
     if (data.err) {
-      return console.log(data.err)
+      console.log(data.err);
     }
-    window.close()
+    window.close();
   })
 })
 
 $('.delete-link').click(function (event) {
-  event.preventDefault()
+  event.preventDefault();
+	const gitHubInstallationId = $(event.target).data("github-installation-id");
+	const csrfToken = document.getElementById("_csrf").value;
+	const uuid = $(event.target).data("github-app-uuid");
+	const path = uuid ? `/github/${uuid}/subscription` : "/github/subscription"
 
-  $.post('/github/subscription', {
-    installationId: $(event.target).data('installation-id'),
-    jiraHost: $(event.target).data('jira-host'),
-    _csrf: document.getElementById('_csrf').value
-  }, function (data) {
+	$.post(path, {
+		installationId: gitHubInstallationId,
+		_csrf: csrfToken
+	}, function (data) {
     if (data.err) {
       return console.log(data.err)
     }
+		window.opener.postMessage({moduleKey: "github-post-install-page"}, window.location.origin);
     window.close()
   })
-})
-
-$('.logout-link').click(function (event) {
-  event.preventDefault();
-
-	window.open('https://github.com/logout','_blank');
-
-	window.setTimeout(function() {
-		this.close()
-	}, 100)
 })
 
 $(".sync-connection-link").click(function (event) {

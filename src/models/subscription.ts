@@ -1,7 +1,6 @@
-import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
-import { RepoSyncState } from "./reposyncstate";
-import { merge, uniq } from "lodash";
-import { sequelize } from "models/sequelize";
+import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
+import { uniq } from "lodash";
+import { sequelize, getHashedKey } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -10,33 +9,9 @@ export enum SyncStatus {
 	FAILED = "FAILED",
 }
 
-export interface RepoSyncStateObject {
-	installationId?: number;
-	jiraHost?: string;
-	numberOfSyncedRepos?: number;
-	repos?: Repositories;
-}
-
 interface SyncStatusCount {
 	syncStatus: string;
 	count: number;
-}
-
-export interface Repositories {
-	[id: string]: RepositoryData;
-}
-
-export interface RepositoryData {
-	repository?: Repository;
-	pullStatus?: TaskStatus;
-	branchStatus?: TaskStatus;
-	commitStatus?: TaskStatus;
-	lastBranchCursor?: string;
-	lastCommitCursor?: string;
-	lastPullCursor?: number;
-
-	// TODO: need to get concrete typing
-	[key: string]: unknown;
 }
 
 export type TaskStatus = "pending" | "complete" | "failed";
@@ -58,32 +33,50 @@ export class Subscription extends Model {
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
+	plainClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
 	totalNumberOfRepos?: number;
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
+	gitHubAppId: number | undefined;
 
-	static async getAllForHost(host: string): Promise<Subscription[]> {
+	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				jiraHost: host
+				...(gitHubAppId !== undefined && { gitHubAppId }), // Add gitHubAppId only if passed
+				jiraHost
 			}
 		});
 	}
 
 	static getAllForInstallation(
-		installationId: number
+		gitHubInstallationId: number,
+		gitHubAppId: number | undefined
 	): Promise<Subscription[]> {
 		return this.findAll({
 			where: {
-				gitHubInstallationId: installationId
+				gitHubInstallationId,
+				gitHubAppId: gitHubAppId || null
+			}
+		});
+	}
+
+	static findOneForGitHubInstallationId(
+		gitHubInstallationId: number,
+		gitHubAppId: number | undefined
+	): Promise<Subscription | null> {
+		return this.findOne({
+			where: {
+				gitHubInstallationId,
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
 
 	static getAllFiltered(
+		gitHubAppId: number | undefined,
 		installationIds: number[] = [],
 		statusTypes: string[] = ["FAILED", "PENDING", "ACTIVE"],
 		offset = 0,
@@ -120,6 +113,10 @@ export class Subscription extends Model {
 			});
 		}
 
+		andFilter.push({
+			gitHubAppId: gitHubAppId || null
+		});
+
 		return this.findAll({
 			where: {
 				[Op.and]: andFilter
@@ -138,47 +135,65 @@ export class Subscription extends Model {
 		});
 	}
 
+	// TODO: currently, this function returns the first subscription that matches the jiraHost
+	// and installationId. Theoretically, the same Jira instance can have two subscriptions
+	// with the same installation ID (for example, when they have multiple GitHub Enterprise Servers
+	// connected). All calls of this function must be changed to pass in an additional appId parameter
+	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId: number
+		gitHubInstallationId?: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
 				jiraHost,
-				gitHubInstallationId
+				gitHubInstallationId: gitHubInstallationId || null,
+				gitHubAppId: gitHubAppId || null
 			}
 		});
 	}
 
-	static async getInstallationForClientKey(
-		clientKey: string,
-		installationId: string
-	): Promise<Subscription | null> {
-		return this.findOne({
-			where: {
-				jiraClientKey: clientKey,
-				gitHubInstallationId: installationId
+	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoName\" = :repoName " +
+			"AND rss.\"repoOwner\" = :repoOwner",
+			{
+				replacements: { jiraHost, repoName, repoOwner },
+				type: QueryTypes.SELECT
 			}
-		});
+		);
+		return results[0] as Subscription;
 	}
 
+	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await this.findOrCreate({
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey
+				jiraClientKey: getHashedKey(payload.clientKey),
+				gitHubAppId: payload.gitHubAppId || null
+			},
+			defaults: {
+				plainClientKey: payload.clientKey
 			}
 		});
 
 		return subscription;
 	}
 
+	// TODO: Change name to 'destroy' to follow sequelize standards
 	static async uninstall(payload: SubscriptionPayload): Promise<void> {
 		await this.destroy({
 			where: {
 				gitHubInstallationId: payload.installationId,
-				jiraHost: payload.host
+				jiraHost: payload.host,
+				gitHubAppId: payload.gitHubAppId || null
 			}
 		});
 	}
@@ -187,7 +202,7 @@ export class Subscription extends Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const results = await this.sequelize?.query(
+		const results = await this.sequelize!.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
@@ -195,23 +210,7 @@ export class Subscription extends Model {
 		return results[0] as SyncStatusCount[];
 	}
 
-	// TODO: need to remove "RepoJSON" as old code is now removed.  We can now just use RepoSyncState directly
-	async updateSyncState(updatedState: RepoSyncStateObject): Promise<Subscription> {
-		const state = merge(await RepoSyncState.toRepoJson(this), updatedState);
-		await RepoSyncState.updateFromRepoJson(this, state);
-		return this;
-	}
-
-	async updateRepoSyncStateItem(repositoryId: number, key: keyof RepositoryData | "repositoryCursor" | "repositoryStatus", value: unknown) {
-		// TODO: this is temporary until we redo sync
-		if (key === "repositoryStatus" || key === "repositoryCursor") {
-			await this.update({ [key]: value });
-		} else {
-			await RepoSyncState.updateRepoForSubscription(this, Number(repositoryId), key, value);
-		}
-		return this;
-	}
-
+	// TODO: remove this, not necessary - just use destroy directly
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
@@ -230,17 +229,26 @@ Subscription.init({
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
+	plainClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
 	numberOfSyncedRepos: DataTypes.INTEGER,
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,
 	repositoryStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	gitHubAppId: {
+		type: DataTypes.INTEGER,
+		allowNull: true
+	}
 }, { sequelize });
 
 export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
+	gitHubAppId: number | undefined;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

@@ -18,17 +18,11 @@
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
   </head>
 
-  <body class="pageContent">
-    <section class="gitHubSetup__getJira__container">
-      <p class="gitHubSetup__getJira__message">Don't have a Jira site?</p>
-      <a
-        class="gitHubSetup__getJira__link"
-        href="https://www.atlassian.com/software/jira"
-        target="_blank"
-      >Get Jira</a>
-    </section>
+  <body>
 
-    <div class="headerImage">
+  {{> navigation }}
+
+  <div class="headerImage">
       <img
         src="/public/assets/jira-and-github.png"
         alt="Jira and GitHub logos"
@@ -59,13 +53,15 @@
             </p>
             {{#if orgName}}
               <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-                <img
-                  class="githubSetup__githubOrgConfirmation__avatar"
-                  src="{{avatar}}"
-                  height="24"
-                  width="24"
-                  data-installation-id="{{id}}"
-                />
+                {{#if isGitHubCloudApp}}
+                    <img
+                      class="githubSetup__githubOrgConfirmation__avatar"
+                      src="{{avatar}}"
+                      height="24"
+                      width="24"
+                      data-installation-id="{{id}}"
+                    />
+                {{/if}}
                 <span
                   class="githubSetup__githubOrgConfirmation__orgName"
                 >{{orgName}}</span>
@@ -99,13 +95,23 @@
                   value="{{clientKey}}"
                 />
               </div>
-              <button
-                class="githubSetup__orgContent__connectBtn aui-button install-link"
-                data-installation-id="{{id}}"
-                type="submit"
-              >
-                Connect
-              </button>
+              {{#if clientKey}}
+                <button
+                  class="githubSetup__orgContent__connectBtn aui-button install-link"
+                  data-installation-id="{{id}}"
+                  type="submit"
+                >
+                  Connect
+                </button>
+              {{else}}
+                <button
+                  class="githubSetup__orgContent__connectBtn aui-button install-app"
+                  data-jirahost="{{jiraHost}}"
+                  type="submit"
+                >
+                  Install App
+                </button>
+              {{/if}}
             </div>
           </div>
 
@@ -125,13 +131,15 @@
             </p>
             {{#if orgName}}
               <div class="githubSetup__githubOrgConfirmation__selectedOrgContainer">
-                <img
-                  class="githubSetup__githubOrgConfirmation__avatar"
-                  src="{{avatar}}"
-                  height="24"
-                  width="24"
-                  data-installation-id="{{id}}"
-                />
+                {{#if isGitHubCloudApp}}
+                  <img
+                    class="githubSetup__githubOrgConfirmation__avatar"
+                    src="{{avatar}}"
+                    height="24"
+                    width="24"
+                    data-installation-id="{{id}}"
+                  />
+                {{/if}}
                 <span
                   class="githubSetup__githubOrgConfirmation__orgName"
                 >{{orgName}}</span>
@@ -143,6 +151,8 @@
         {{> github-setup-form csrfToken=csrfToken error=error id="jiraDomainMain" className="inputMain" }}
       {{/if}}
   </section>
+  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   <script src="/public/js/github-setup.js" nonce="{{nonce}}"></script>
   </body>
 </html>

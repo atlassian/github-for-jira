@@ -35,6 +35,7 @@
         {{#if hasConnections}}
           <button
             class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
+            data-gh-cloud="true"
           >Connect GitHub organization</button>
         {{/if}}
       </header>
@@ -58,7 +59,7 @@
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
                 <h4 class="jiraConfiguration__syncRetryModal__header">Backfill status</h4>
-                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn">&times;</span>
+                <span id="status-close" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
               </div>
 
               <table class="jiraConfiguration__syncRetryModal__table">
@@ -106,7 +107,38 @@
             <div class="jiraConfiguration__syncRetryModalOverlay"></div>
           </div>
 
+          <!-- Restart backfill modal-->
+          <div class='jiraConfiguration__restartBackfillModal'  id="restart-backfill-modal">
+            <div class='jiraConfiguration__restartBackfillModalContent'>
+              <div class="jiraConfiguration__restartBackfillModal__header__container">
+                <h3>Backfill your data</h3>
+              </div>
+              <div class="jiraConfiguration__restartBackfillModal__header__content">
+                <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+              </div>
+              <form id="jiraConfiguration__restartBackfillModal__form" class="aui top-label">
+                <div class="field-group">
+                  <label for="backfill-date-picker">
+                    Backfill commits from <span class="jiraConfiguration__restartBackfillModal__required">*</span>
+                  </label>
+                  <input class="jiraConfiguration__restartBackfillModal__date text full-width-field"
+                         type="date"
+                         id="backfill-date-picker"
+                         data-aui-validation-field required
+                         name="backfill-date-picker"
+                  />
+                </div>
+                <div class="jiraConfiguration__restartBackfillModal__actions">
+                  <button class="aui-button aui-button-secondary" type="button" id="cancel-backfill">Cancel</button>
+                  <button type="submit" id="submit-backfill-data" class="aui-button aui-button-primary">Backfill data</button>
+                </div>
+              </form>
+            </div>
+            <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
+          </div>
+
           {{#if successfulConnections}}
+          <div class="jiraConfiguration__tableContainer">
             <table class="jiraConfiguration__table aui">
               <thead class="jiraConfiguration__table__head">
                 <tr class="jiraConfiguration__table__head_row">
@@ -127,11 +159,11 @@
                     {{! Organization }}
                     <td class="jiraConfiguration__table__cell">
                       <img
-                        class="jiraConfiguration__table__cell__avatar"
-                        src="{{account.avatar_url}}"
-                        height="24"
-                        width="24"
-                        data-installation-id="{{id}}"
+                          class="jiraConfiguration__table__cell__avatar"
+                          src="{{account.avatar_url}}"
+                          height="24"
+                          width="24"
+                          data-installation-id="{{id}}"
                       />
                       <span
                         class="jiraConfiguration__table__cell__orgName"
@@ -154,8 +186,8 @@
                         }}
                       </span>
                       {{/if}}
-
                       <a
+                        class="jiraConfiguration__table__editContainer"
                         href="{{html_url}}"
                         data-installation-link="{{html_url}}"
                         target="_blank"
@@ -179,6 +211,22 @@
                       >
                         {{syncStatus}}
                       </span>
+                      {{!-- Display any sync warnings --}}
+                      {{#if (isMissingPermissions syncWarning)}}
+                        <div class="jiraConfiguration__syncWarning">
+                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
+                            Sync failed warnings
+                          </span>
+                          <div class="jiraConfiguration__syncWarningMessage warning-popup">
+                            <div>Some tasks have not been backfilled. Please
+                              <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+                                  href="{{html_url}}"
+                                  data-installation-link="{{html_url}}"
+                                  target="_blank">accept permissions</a>
+                               on GitHub (you must be the admin of your organization), then retry backfill.</div>
+                            </div>
+                        </div>
+                      {{/if}}
                       {{#if (inProgressOrPendingSync syncStatus)}}
                         <div class="jiraConfiguration__loaderContainer">
                           <aui-spinner size="small"></aui-spinner>
@@ -199,7 +247,6 @@
                         </div>
                       {{/if}}
                     </td>
-
                     {{! Settings }}
                     <td class="jiraConfiguration__table__cell__settings">
                       <button
@@ -239,7 +286,13 @@
                             </button>
                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                           </div>
-                          <button class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link" data-installation-id="{{ id }}">Disconnect</button>
+                          <button
+                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
+                            data-installation-id="{{ id }}"
+                            data-org-name="{{account.login}}"
+                          >
+                            Disconnect
+                          </button>
                         </aui-section>
                       </aui-dropdown-menu>
                     </td>
@@ -247,6 +300,7 @@
                 {{/each}}
               </tbody>
             </table>
+          </div>
           {{/if}}
 
         {{#each failedConnections}}
@@ -290,11 +344,27 @@
               organization to connect and start including issue keys in
               branches, commit messages or pull requests to see development
               insights in Jira.</p>
+            <a
+              href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/"
+              class="ak-button ak-button__appearance-default learn-more-link"
+              target="_blank"
+            >
+              Learn more
+              <span
+                class="aui-icon aui-iconfont-shortcut"
+              >
+                Shortcut
+              </span>
+            </a>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
             <button
-              class="ak-button ak-button__appearance-primary add-organization-link"
+              class="ak-button ak-button__appearance-primary add-organization-link".
+              data-gh-cloud="true"
             >Connect GitHub organization</button>
           </div>
         {{/if}}
+
+        {{> modal }}
       </section>
 
     </div>

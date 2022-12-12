@@ -72,6 +72,55 @@ describe("Jira axios instance", () => {
 				const serialisedError = JSON.stringify(error);
 				expect(serialisedError).not.toContain(requestPayload);
 			});
+
 		});
 	});
+
+	it("should return original 503 error from failed request if Jira is active", async () => {
+		const requestPayload = "TestRequestPayload";
+		jiraNock.post("/foo/bar", requestPayload).reply(503);
+		jiraNock.get("/status").reply(200);
+
+		let error;
+		try {
+			await getAxiosInstance(jiraHost, "secret").post("/foo/bar", requestPayload);
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error?.status).toEqual(503);
+	});
+
+	it("should return 404 from failed request if Jira is deactivated", async () => {
+		const requestPayload = "TestRequestPayload";
+		jiraNock.post("/foo/bar", requestPayload).reply(503);
+		jiraNock.get("/status").reply(503);
+
+		let error;
+		try {
+			await getAxiosInstance(jiraHost, "secret").post("/foo/bar", requestPayload);
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error?.status).toEqual(404);
+		expect(error?.message).toEqual("Error executing Axios Request HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.");
+	});
+
+	it("should return 404 from failed request if Jira has been renamed", async () => {
+		const requestPayload = "TestRequestPayload";
+		jiraNock.post("/foo/bar", requestPayload).reply(405);
+		jiraNock.get("/status").reply(302);
+
+		let error;
+		try {
+			await getAxiosInstance(jiraHost, "secret").post("/foo/bar", requestPayload);
+		} catch (e) {
+			error = e;
+		}
+
+		expect(error?.status).toEqual(404);
+		expect(error?.message).toEqual("Error executing Axios Request HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.");
+	});
+
 });

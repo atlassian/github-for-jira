@@ -1,0 +1,45 @@
+{
+    "commits": [
+        {
+          "sha": "fe95093c049660b4696852e94e78435b6d5915b1",
+          "node_id": "C_kwDOGtdD59oAKGZlOTUwOTNjMDQ5NjYwYjQ2OTY4NTJlOTRlNzg0MzViNmQ1OTE1YjE",
+          "commit": {
+            "author": {
+              "name": "Josh Kay",
+              "email": "joshk@atlassian.com",
+              "date": "2022-03-10T21:41:12Z"
+            },
+            "committer": {
+              "name": "Josh Kay",
+              "email": "joshk@atlassian.com",
+              "date": "2022-03-10T21:41:12Z"
+            },
+            "message": "DEP-12",
+            "tree": {
+              "sha": "2f1bfc793c60982d52a870513d6d5597312a7806",
+              "url": "https://api.github.com/repos/integrations/integration-test-jira/git/trees/2f1bfc793c60982d52a870513d6d5597312a7806"
+            },
+            "url": "https://api.github.com/repos/integrations/integration-test-jira/git/commits/fe95093c049660b4696852e94e78435b6d5915b1",
+            "comment_count": 0,
+            "verification": {
+              "verified": false,
+              "reason": "unsigned",
+              "signature": null,
+              "payload": null
+            }
+          },
+          "url": "https://api.github.com/repos/integrations/integration-test-jira/commits/fe95093c049660b4696852e94e78435b6d5915b1",
+          "html_url": "https://github.com/integrations/integration-test-jira/commit/fe95093c049660b4696852e94e78435b6d5915b1",
+          "comments_url": "https://api.github.com/repos/integrations/integration-test-jira/commits/fe95093c049660b4696852e94e78435b6d5915b1/comments",
+          "author": null,
+          "committer": null,
+          "parents": [
+            {
+              "sha": "9fd58124a444e19156cefb1e5db68f564d82a9fb",
+              "url": "https://api.github.com/repos/integrations/integration-test-jira/commits/9fd58124a444e19156cefb1e5db68f564d82a9fb",
+              "html_url": "https://github.com/integrations/integration-test-jira/commit/9fd58124a444e19156cefb1e5db68f564d82a9fb"
+            }
+          ]
+        }
+    ]
+}

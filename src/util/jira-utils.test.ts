@@ -1,12 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { envVars } from "config/env";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraIssueKeyParser } from "./jira-utils";
+import {
+	getJiraAppUrl,
+	getJiraMarketplaceUrl,
+	isGitHubCloudApp,
+	jiraIssueKeyParser
+} from "./jira-utils";
+import { mocked } from "ts-jest/utils";
+import { GitHubServerApp } from "models/github-server-app";
+
+jest.mock("models/github-server-app");
 
 describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
 		let instanceName: string;
 		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
-		afterEach(() => envVars.INSTANCE_NAME = instanceName);
+		afterEach(() => process.env.INSTANCE_NAME = instanceName);
 
 		it("should return the correct default URL", () => {
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.test-atlassian-instance/github-post-install-page`);
@@ -14,7 +23,7 @@ describe("Jira Utils", () => {
 		});
 
 		it("should return the correct URL for different INSTANCE_NAME", () => {
-			envVars.INSTANCE_NAME = "foo";
+			process.env.INSTANCE_NAME = "foo";
 			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.foo/github-post-install-page`);
 		});
 
@@ -85,8 +94,7 @@ describe("Jira Utils", () => {
 				});
 		});
 
-		// Skipping for now until we're using the correct regex or parsing API
-		it.skip("should extract issue keys with unicode characters including non-latin based", () => {
+		it("should extract issue keys with unicode characters including non-latin based", () => {
 			// Latin (french)
 			expect(jiraIssueKeyParser("tête-123")).toEqual(["TÊTE-123"]);
 			// Arabic - because of RTL, using unicode version to not change direction of text
@@ -109,13 +117,48 @@ describe("Jira Utils", () => {
 				"prefix-kebab-JRA-123",
 				"JRA-123-suffix-kebab",
 				"JRA-123 with suffix spaces",
-				"prefix spaces with JRA-123",
+				"prefix spaces with JRA-123"
 			]
 				.forEach(value => expect(jiraIssueKeyParser(value)).toEqual(["JRA-123"]));
 		});
 
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
+		});
+
+		it("should not extract issue keys longer than 256 characters for project key or number", () => {
+			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10)}-1234567890`)).toEqual([]);
+			// this is the exception since it'll cut off the end of the number
+			expect(jiraIssueKeyParser(`ABCDEFGHIJKLMNOPQRSTUVWXYZ-${"1234567890".repeat(26)}`)).toEqual(["ABCDEFGHIJKLMNOPQRSTUVWXYZ-123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"]);
+			expect(jiraIssueKeyParser(`${"ABCDEFGHIJKLMNOPQRSTUVWXYZ".repeat(10)}-${"1234567890".repeat(26)}`)).toEqual([]);
+		});
+	});
+
+	describe("isGitHubCloudApp", () => {
+
+		let payload;
+
+		it("should return true if no gitHubAppId is provided", async () => {
+			expect(await isGitHubCloudApp(undefined)).toBeTruthy();
+		});
+
+		it("should return true if gitHubAppId is provided but no GitHub app is found", async () => {
+			expect(await isGitHubCloudApp(1)).toBeTruthy();
+		});
+
+		it("should return false if gitHubAppId is provided and a GitHub app is found", async () => {
+			payload = {
+				uuid: "97da6b0e-ec61-11ec-8ea0-0242ac120002",
+				gitHubAppName: "My GitHub Server App",
+				gitHubBaseUrl: "http://myinternalserver.com",
+				gitHubClientId: "lvl.1234",
+				gitHubClientSecret: "myghsecret",
+				webhookSecret: "mywebhooksecret",
+				privateKey: "myprivatekey",
+				installationId: 2
+			};
+			mocked(GitHubServerApp.getForGitHubServerAppId).mockResolvedValue(payload);
+			expect(await isGitHubCloudApp(1)).toBeFalsy();
 		});
 	});
 });

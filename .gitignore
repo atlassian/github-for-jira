@@ -1,13 +1,16 @@
-# DB Config
-db/config.json
-
 # Environment Files
-.env*
+.env
+.env.local
+.env.local.*
+.env.*.local
+.env.*.local.*
 !.env.example
-!.env.test
+!.env.local.example
+!.env.*.local.example
 
 # DB Secret File
 *.pem
+**/*.pem
 
 # Transpiled files
 build/
@@ -16,11 +19,11 @@ build/
 node_modules/
 
 # Coverage
-coverage
+coverage/
 
 # log
 log/
-npm-debug.log
+*.log
 
 # new relic
 newrelic_agent.log
@@ -47,3 +50,6 @@ test/**/*.js.map
 
 #Deployments
 .nebulae/
+
+# e2e tests
+test/e2e/test-results/

@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { logger } from "probot/lib/logger";
+import { getLogger } from "config/logger";
 import { JiraClient } from "./jira-client";
 
 describe("JiraClient", () => {
 	describe("isAuthorized()", () => {
 		let jiraClient: any;
 
-		beforeEach(() => {
+		beforeEach(async () => {
 			const installation: any = {
 				jiraHost,
-				sharedSecret: "secret"
+				decrypt: jest.fn(()=> "secret")
 			};
 
-			jiraClient = new JiraClient(installation, logger);
+			jiraClient = await JiraClient.getNewClient(installation, getLogger("test"));
 		});
 
 		it("is true when response is 200", async () => {

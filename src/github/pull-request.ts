@@ -1,50 +1,62 @@
 import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { CustomContext } from "middleware/github-webhook-middleware";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { getCloudInstallationId } from "./client/installation-id";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
+import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
+import { GitHubIssueData } from "interfaces/github";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-export const pullRequestWebhookHandler = async (context: CustomContext, jiraClient, util, githubInstallationId: number): Promise<void> => {
+export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
 			id: repositoryId,
-			name: repo,
+			name: repoName,
 			owner: { login: owner }
 		},
 		changes
 	} = context.payload;
+
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
 	const baseUrl = jiraClient.baseUrl || "none";
-	const githubClient = new GitHubInstallationClient(getCloudInstallationId(githubInstallationId), context.log);
-
 	context.log = context.log.child({
-		jiraHostName: jiraClient.baseURL,
-		installationId: githubInstallationId,
+		jiraHost: jiraClient.baseURL,
+		gitHubInstallationId,
+		orgName: owner,
 		pullRequestNumber,
 		pullRequestId
 	});
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let reviews: any = {};
-	try {
-		reviews = await getReviews(githubClient, owner, repo, pull_request.number);
-	} catch (err) {
-		context.log.warn(
-			{
-				err,
-				payload: context.payload,
-				pull_request
-			},
-			"Missing Github Permissions: Can't retrieve reviewers"
-		);
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
+	let reviews: Octokit.PullsListReviewsResponse = [];
+
+	if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
+		reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
+	} else {
+		try {
+			reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
+		} catch (err) {
+			context.log.warn(
+				{
+					pullRequestNumber,
+					pullRequestId,
+					repositoryId,
+					repoName,
+					err
+				},
+				"Missing Github Permissions: Can't retrieve reviewers"
+			);
+		}
 	}
 
-	const jiraPayload = await transformPullRequest(githubClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
@@ -58,7 +70,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				repositoryId,
+				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 
@@ -67,7 +79,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 	}
 
 	try {
-		await updateGithubIssues(githubClient, context, util, repo, owner, pull_request);
+		await updateGithubIssues(gitHubInstallationClient, context, util, repoName, owner, pull_request);
 	} catch (err) {
 		context.log.warn(
 			{ err },
@@ -80,7 +92,7 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		return;
 	}
 
-	context.log(`Sending pull request update to Jira ${baseUrl}`);
+	context.log.info({ jiraHost : baseUrl }, `Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
@@ -89,27 +101,28 @@ export const pullRequestWebhookHandler = async (context: CustomContext, jiraClie
 		webhookReceived,
 		name,
 		log,
-		jiraResponse?.status
+		jiraResponse?.status,
+		gitHubAppId
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: CustomContext, util, repo, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient, context: WebhookContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
+
 	if (!linkifiedBody) {
 		return;
 	}
 
-	context.log("Updating pull request");
-	const updatedPullRequest = {
+	context.log.info("Updating pull request");
+
+	const updatedPullRequest: GitHubIssueData = {
 		body: linkifiedBody,
 		owner,
-		repo,
+		repo: repoName,
 		issue_number: pullRequest.number
 	};
 
-	github instanceof GitHubInstallationClient ?
-		await github.updateIssue(updatedPullRequest) :
-		await github.issues.update(updatedPullRequest);
+	await github.updateIssue(updatedPullRequest);
 };
 
 const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {

@@ -1,35 +1,31 @@
-import { WebhookPayloadCreate } from "@octokit/webhooks";
-import { Context, MessageHandler } from "./sqs";
 import { processBranch } from "../github/branch";
-import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { getCloudInstallationId } from "../github/client/installation-id";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { BranchMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-export type BranchMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	webhookReceived: number,
-	webhookId: string,
-
-	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
-	// that payload size for deployment_status webhooks maxes out at 9KB.
-	webhookPayload: WebhookPayloadCreate,
-}
-
-export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: Context<BranchMessagePayload>) => {
-
-	context.log.info("Handling branch message from the SQS queue");
-
+export const branchQueueMessageHandler: MessageHandler<BranchMessagePayload> = async (context: SQSMessageContext<BranchMessagePayload>) => {
 	const messagePayload: BranchMessagePayload = context.payload;
-	const gitHubClient = new GitHubInstallationClient(getCloudInstallationId(messagePayload.installationId), context.log);
+	const { webhookId, installationId, jiraHost } = context.payload;
+	context.log = context.log.child({
+		webhookId,
+		jiraHost,
+		gitHubInstallationId: installationId
+	});
+
+	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+
+	context.log.info({ gitHubProduct }, "Handling branch message from the SQS queue");
 
 	await processBranch(
-		gitHubClient,
+		gitHubInstallationClient,
 		messagePayload.webhookId,
 		messagePayload.webhookPayload,
 		new Date(messagePayload.webhookReceived),
 		messagePayload.jiraHost,
 		messagePayload.installationId,
-		context.log
+		context.log,
+		messagePayload.gitHubAppConfig?.gitHubAppId
 	);
-
 };

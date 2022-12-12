@@ -1,12 +1,20 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
 import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
-const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
+export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
+
+	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
+		req.log.info("Skipping verifyJiraJwtMiddleware...");
+		return next();
+	}
+	req.log.info("Executing verifyJiraJwtMiddleware...");
+
 	const { jiraHost } = res.locals;
 
 	if (!jiraHost) {
@@ -29,7 +37,7 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	});
 
 	verifySymmetricJwtTokenMiddleware(
-		installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		tokenType,
 		req,
 		res,
@@ -38,7 +46,3 @@ const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 
 export const JiraJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.normal);
 export const JiraContextJwtTokenMiddleware = verifyJiraJwtMiddleware(TokenType.context);
-
-export const authenticateJiraEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	verifySymmetricJwtTokenMiddleware(res.locals.installation.sharedSecret, TokenType.normal, req, res, next);
-};

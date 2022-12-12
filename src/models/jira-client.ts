@@ -7,9 +7,19 @@ import Logger from "bunyan";
 export class JiraClient {
 	axios: AxiosInstance;
 
-	constructor(installation: Installation, log: Logger) {
-		this.axios = getAxiosInstance(installation.jiraHost, installation.sharedSecret, log);
+	static async getNewClient(installation: Installation, log: Logger) {
+		const jiraClient = new JiraClient();
+		jiraClient.axios = getAxiosInstance(
+			installation.jiraHost,
+			await installation.decrypt("encryptedSharedSecret"),
+			log
+		);
+		return jiraClient;
 	}
+
+	// Prevent constructing from outside
+	// eslint-disable-next-line @typescript-eslint/no-empty-function
+	private constructor() { }
 
 	/*
 	 * Tests credentials by making a request to the Jira API

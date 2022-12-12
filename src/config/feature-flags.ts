@@ -1,10 +1,10 @@
 import LaunchDarkly, { LDUser } from "launchdarkly-node-server-sdk";
 import { getLogger } from "./logger";
-import { envVars }  from "./env";
-import crypto from "crypto";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
+import { envVars } from "./env";
+import { createHashWithSharedSecret } from "utils/encryption";
+import Logger from "bunyan";
 
-const logger = getLogger("feature-flags");
+const logger = getLogger("feature-flags", { level: "warn" });
 
 const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 	offline: !envVars.LAUNCHDARKLY_KEY,
@@ -13,48 +13,52 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	SUPPORT_BRANCH_AND_MERGE_WORKFLOWS_FOR_DEPLOYMENTS = "support-branch-and-merge-workflows-for-deployments",
-	TRACE_LOGGING = "trace-logging",
 	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	SEND_CODE_SCANNING_ALERTS_AS_REMOTE_LINKS = "send-code-scanning-alerts-as-remote-links",
-	USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS = "use-new-github-client-for-deployments",
-	USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION = "use-new-github-client-for-delete-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_SUBSCRIPTION = "use-new-github-client-for-get-subscription",
-	USE_NEW_GITHUB_CLIENT_FOR_GET_INSTALLATION = "use-new-github-client-for-get-installation",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_CONFIG = "use-new-github-client-for-github-config",
-	USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP = "use-new-github-client-for-github-setup",
 	REGEX_FIX = "regex-fix",
-	REPO_DISCOVERY_BACKFILL = "repo-discovery-backfill"
+	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
+	RETRY_ALL_ERRORS = "retry-all-errors",
+	GHE_SERVER = "ghe_server",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
+	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
+	CREATE_BRANCH = "create-branch",
+	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
+	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
+	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
+	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
+	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
+	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
+	NEW_JWT_VALIDATION = "new-jwt-validation"
 }
 
 export enum StringFlags {
-	BLOCKED_INSTALLATIONS = "blocked-installations"
+	BLOCKED_INSTALLATIONS = "blocked-installations",
+	LOG_LEVEL = "log-level",
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
 }
 
 export enum NumberFlags {
-	GITHUB_CLIENT_TIMEOUT = "github-client-timeout"
+	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
+	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
+	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 }
 
-const createLaunchdarklyUser = (jiraHost?: string): LDUser => {
-	if (!jiraHost) {
+const createLaunchdarklyUser = (key?: string): LDUser => {
+	if (!key) {
 		return {
 			key: "global"
 		};
 	}
 
-	const hash = crypto.createHash("sha1");
-	hash.update(jiraHost);
-
 	return {
-		key: hash.digest("hex")
+		key: createHashWithSharedSecret(key)
 	};
 };
 
-const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: boolean | string | number, jiraHost?: string): Promise<boolean | string | number> => {
+const getLaunchDarklyValue = async <T = boolean | string | number>(flag: BooleanFlags | StringFlags | NumberFlags, defaultValue: T, key?: string): Promise<T> => {
 	try {
 		await launchdarklyClient.waitForInitialization();
-		const user = createLaunchdarklyUser(jiraHost);
+		const user = createLaunchdarklyUser(key);
 		return launchdarklyClient.variation(flag, user, defaultValue);
 	} catch (err) {
 		logger.error({ flag, err }, "Error resolving value for feature flag");
@@ -63,20 +67,21 @@ const getLaunchDarklyValue = async (flag: BooleanFlags | StringFlags | NumberFla
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, defaultValue: boolean, jiraHost?: string): Promise<boolean> =>
-	Boolean(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> =>
+	// Always use the default value as false to prevent issues
+	await getLaunchDarklyValue(flag, false, key);
 
-export const stringFlag = async (flag: StringFlags, defaultValue: string, jiraHost?: string): Promise<string> =>
-	String(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
+	await getLaunchDarklyValue<T>(flag, defaultValue, key);
 
-export const numberFlag = async (flag: NumberFlags, defaultValue: number, jiraHost?: string): Promise<number> =>
-	Number(await getLaunchDarklyValue(flag, defaultValue, jiraHost));
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
-export const onFlagChange =  (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void):void => {
+export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
-}
+};
 
-export const isBlocked = async (installationId: number, logger: LoggerWithTarget): Promise<boolean> => {
+export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
@@ -85,4 +90,8 @@ export const isBlocked = async (installationId: number, logger: LoggerWithTarget
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
+};
+
+export const shouldTagBackfillRequests = async (): Promise<boolean> => {
+	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS);
 };

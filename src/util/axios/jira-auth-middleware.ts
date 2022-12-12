@@ -40,13 +40,12 @@ export const jiraAuthMiddleware = (secret: string, instance: AxiosInstance) =>
  * Query String Hashing (QSH) to prevent URL tampering. IAT, or issued-at-time,
  * is a Unix-style timestamp of when the token was issued. EXP, or expiration
  * time, is a Unix-style timestamp of when the token expires and must be no
- * more than three minutes after the IAT. Since our tokens are per-request and
- * short-lived, we use a timeout of 30 seconds.
+ * more than three minutes after the IAT.
  */
 const getExpirationInSeconds = () => {
 	const nowInSeconds = Math.floor(Date.now() / 1000);
 	return {
 		iat: nowInSeconds,
-		exp: nowInSeconds + 30
+		exp: nowInSeconds + 3 * 60 // 3 minutes
 	};
 };

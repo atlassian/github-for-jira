@@ -1,12 +1,12 @@
 import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
-import { BackfillMessagePayload, backfillQueueMessageHandler } from "./backfill";
-import { pushQueueMessageHandler, PushQueueMessagePayload } from "./push";
+import { backfillQueueMessageHandler } from "./backfill";
+import { pushQueueMessageHandler } from "./push";
 import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
-import { DiscoveryMessagePayload, discoveryQueueMessageHandler } from "./discovery";
-import { DeploymentMessagePayload, deploymentQueueMessageHandler } from "./deployment";
-import { BranchMessagePayload, branchQueueMessageHandler } from "./branch";
+import { deploymentQueueMessageHandler } from "./deployment";
+import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
+import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload } from "./sqs.types";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
@@ -33,18 +33,6 @@ export const sqsQueues = {
 		timeoutSec: 60,
 		maxAttempts: 5
 	}, pushQueueMessageHandler, webhookMetricWrapper(jiraAndGitHubErrorsHandler, "push")),
-
-	discovery: new SqsQueue<DiscoveryMessagePayload>({
-		queueName: "discovery",
-		queueUrl: envVars.SQS_DISCOVERY_QUEUE_URL,
-		queueRegion: envVars.SQS_DISCOVERY_QUEUE_REGION,
-		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
-		timeoutSec: 10 * 60,
-		maxAttempts: 3
-	},
-	discoveryQueueMessageHandler,
-	jiraAndGitHubErrorsHandler
-	),
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({
 		queueName: "deployment",
@@ -74,7 +62,6 @@ export const sqsQueues = {
 		logger.info("Starting queues");
 		sqsQueues.backfill.start();
 		sqsQueues.push.start();
-		sqsQueues.discovery.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
 		logger.info("All queues started");
@@ -85,7 +72,6 @@ export const sqsQueues = {
 		await Promise.all([
 			sqsQueues.backfill.stop(),
 			sqsQueues.push.stop(),
-			sqsQueues.discovery.stop(),
 			sqsQueues.deployment.stop(),
 			sqsQueues.branch.stop()
 		]);

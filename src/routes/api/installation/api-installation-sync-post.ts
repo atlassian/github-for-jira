@@ -4,6 +4,8 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 
 export const ApiInstallationSyncPost = async (req: Request, res: Response): Promise<void> => {
 	const githubInstallationId = Number(req.params.installationId);
+	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
+
 	req.log.debug({ body: req.body }, "Sync body");
 	const { jiraHost, resetType } = req.body;
 
@@ -11,7 +13,8 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 		req.log.info(jiraHost, githubInstallationId);
 		const subscription = await Subscription.getSingleInstallation(
 			jiraHost,
-			githubInstallationId
+			githubInstallationId,
+			gitHubAppId
 		);
 
 		if (!subscription) {

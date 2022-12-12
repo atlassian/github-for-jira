@@ -1,156 +1,30 @@
 import AWS from "aws-sdk";
 import Logger from "bunyan";
-import { getLogger } from "config/logger";
+import { defaultLogLevel, getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
-import { statsd }  from "config/statsd";
+import { statsd } from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
-import { LoggerWithTarget } from "probot/lib/wrap-logger";
-
-const logger = getLogger("sqs");
+import { stringFlag, StringFlags } from "config/feature-flags";
+import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, SqsTimeoutError } from "~/src/sqs/sqs.types";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
 const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
 
 //Maximum SQS Visibility Timeout according to docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html
 const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12 * 60 * 60 - 1;
-/**
- * Message processing context, which will be passed to message handler to handle the received message
- */
-export type Context<MessagePayload> = {
-
-	/**
-	 * Message payload
-	 */
-	payload: MessagePayload;
-
-	/**
-	 * Original SQS Mesage
-	 */
-	message: Message;
-
-	/**
-	 * Context logger, which has parameters for the processing context (like message id, execution id, etc)
-	 */
-	log: LoggerWithTarget;
-
-	/**
-	 * How many times this messages attempted to be processed, including the current attempt (always greater 0)
-	 */
-	receiveCount: number;
-
-
-	/**
-	 * Indicates if it is the last attempt to process this message
-	 */
-	lastAttempt: boolean;
-}
-
-export type QueueSettings = {
-
-	readonly queueName: string,
-
-	readonly queueUrl: string,
-
-	readonly queueRegion: string,
-
-	readonly longPollingIntervalSec?: number,
-
-	/**
-	 * Timeout for processing a single message in seconds.
-	 * If non-integer value passed then the timeout will be rounded to the closest integer
-	 */
-	readonly timeoutSec: number;
-
-	/**
-	 * Defines how many times the message can be attempted to be executed
-	 */
-	readonly maxAttempts: number;
-
-	//TODO Add batching
-
-}
-
 const DEFAULT_LONG_POLLING_INTERVAL = 4;
-
 const PROCESSING_DURATION_HISTOGRAM_BUCKETS = "10_100_500_1000_2000_3000_5000_10000_30000_60000";
-
-/**
- * Error indicating a timeout
- */
-export class SqsTimeoutError extends Error {
-}
-
-/**
- * Handler for the queue messages
- */
-export type MessageHandler<MessagePayload> = (context: Context<MessagePayload>) => Promise<void>;
-
-export type ErrorHandler<MessagePayload> = (error: Error, context: Context<MessagePayload>) => Promise<ErrorHandlingResult>;
-
-/**
- * Trivial error handler which classifies all errors as retryable
- */
-export const defaultErrorHandler = async () => ({ retryable: true });
-
-export type ErrorHandlingResult = {
-
-
-	/**
-	 * Indicates if the message should be deleted or retried
-	 */
-	retryable?: boolean;
-
-	/**
-	 * Indicates if the error should be treated like a message processing failure.
-	 * If it is set to "false" we consider message being processed successfully.
-	 */
-	isFailure: boolean;
-
-	/**
-	 * Number in seconds of the retry delay
-	 */
-	retryDelaySec?: number;
-
-	/**
-	 * If set to true, the message will be deleted when the maximum amount of retries reacched
-	 */
-	skipDlq?: boolean;
-
-}
-
-type ListenerContext = {
-	/**
-	 * Indicates if this listener should stop processing messages.
-	 *
-	 * If it is "true" the listener won't take new messages for processing, however, it might
-	 * still be finishing with the current message.
-	 */
-	stopped: boolean;
-	/**
-	 * Indicates if this listener stopped processing messages.
-	 *
-	 * If it is "false" that mean that the listener was stopped and it is done with its last
-	 * message.
-	 */
-	listenerRunning: boolean;
-
-	/**
-	 * Logger which contains listener debug parameters
-	 */
-	log: LoggerWithTarget;
-}
-
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
 
-function isNotAFailure(errorHandlingResult: ErrorHandlingResult) {
+const isNotAFailure = (errorHandlingResult: ErrorHandlingResult) => {
 	return !errorHandlingResult.isFailure;
-}
+};
 
-function isNotRetryable(errorHandlingResult: ErrorHandlingResult) {
+const isNotRetryable = (errorHandlingResult: ErrorHandlingResult) => {
 	return !errorHandlingResult.retryable;
-}
+};
 
 /**
  * Class which represents an SQS client for a single SQS queue.
@@ -167,13 +41,13 @@ export class SqsQueue<MessagePayload> {
 	readonly errorHandler: ErrorHandler<MessagePayload>;
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
-	readonly log: LoggerWithTarget;
+	readonly log: Logger;
 	readonly metricsTags: Tags;
 
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
 	 */
-	listenerContext: ListenerContext;
+	listenerContext: SQSContext;
 
 	public constructor(settings: QueueSettings, messageHandler: MessageHandler<MessagePayload>, errorHandler: ErrorHandler<MessagePayload>) {
 		this.queueUrl = settings.queueUrl;
@@ -185,17 +59,16 @@ export class SqsQueue<MessagePayload> {
 		this.maxAttempts = settings.maxAttempts;
 		this.messageHandler = messageHandler;
 		this.errorHandler = errorHandler;
-		this.log = logger.child({ queue: this.queueName });
+		this.log = getLogger("sqs", {
+			fields: { queue: this.queueName }
+		});
 		this.metricsTags = { queue: this.queueName };
 	}
 
 	/**
 	 * Send message to the queue
-	 * @param payload Message payload
-	 * @param delaySec Delay in seconds after which the message will be ready to be processed
-	 * @param log Logger to be used to log message sending status
 	 */
-	public async sendMessage(payload: MessagePayload, delaySec = 0, log: Logger | LoggerWithTarget = this.log) {
+	public async sendMessage(payload: MessagePayload, delaySec = 0, logger: Logger = this.log) {
 		if (delaySec >= MAX_MESSAGE_DELAY_SEC) {
 			delaySec = MAX_MESSAGE_DELAY_SEC - 1;
 		}
@@ -208,7 +81,7 @@ export class SqsQueue<MessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		log.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		logger.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
 	}
 
@@ -229,8 +102,10 @@ export class SqsQueue<MessagePayload> {
 		this.listenerContext = { stopped: false, log: this.log.child({ sqsListenerId: uuidv4() }), listenerRunning: true };
 		this.listenerContext.log.info({
 			queueUrl: this.queueUrl,
-			queueRegion: this.queueRegion, longPollingInterval: this.longPollingIntervalSec
+			queueRegion: this.queueRegion,
+			longPollingInterval: this.longPollingIntervalSec
 		}, "Starting the queue");
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.listen(this.listenerContext);
 	}
 
@@ -261,7 +136,7 @@ export class SqsQueue<MessagePayload> {
 		return Number(response.Attributes?.ApproximateNumberOfMessages || 0);
 	}
 
-	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: ListenerContext) {
+	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: SQSContext) {
 		if (!data.Messages) {
 			listenerContext.log.trace("Nothing to process");
 			return;
@@ -270,9 +145,7 @@ export class SqsQueue<MessagePayload> {
 		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
 
 		listenerContext.log.trace("Processing messages batch");
-		await Promise.all(data.Messages.map(async message => {
-			await this.executeMessage(message, listenerContext);
-		}));
+		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));
 		listenerContext.log.trace("Messages batch processed");
 	}
 
@@ -289,7 +162,7 @@ export class SqsQueue<MessagePayload> {
 		return new Promise<void>((resolve, reject) => {
 			const startTime = Date.now();
 
-			function checkFlag() {
+			const checkFlag = () => {
 				if (!listenerContext.listenerRunning) {
 					listenerContext.log.info("Awaited listener stop");
 					resolve();
@@ -298,7 +171,7 @@ export class SqsQueue<MessagePayload> {
 				} else {
 					setTimeout(checkFlag, 10);
 				}
-			}
+			};
 
 			checkFlag();
 		});
@@ -312,7 +185,7 @@ export class SqsQueue<MessagePayload> {
 	 * running at the same time
 	 *
 	 */
-	private async listen(listenerContext: ListenerContext) {
+	private async listen(listenerContext: SQSContext) {
 		if (listenerContext.stopped) {
 			listenerContext.listenerRunning = false;
 			listenerContext.log.info("Queue has been stopped. Not processing further messages.");
@@ -338,55 +211,63 @@ export class SqsQueue<MessagePayload> {
 			//In case of aws client error we wait for the long polling interval to prevent bombarding the queue with failing requests
 			await new Promise(resolve => setTimeout(resolve, this.longPollingIntervalSec * 1000));
 		} finally {
+			// Don't add `await` here, we need to ignore this promise
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.listen(listenerContext);
 		}
 	}
 
-	private async deleteMessage(message: Message, log: Logger) {
+	private async deleteMessage(context: SQSMessageContext<MessagePayload>) {
+		context.log.debug({ context }, "deleting the message");
 
-		log.debug({ message }, "deleting the message");
-
-		if (!message.ReceiptHandle) {
-			log.error({ message }, "Unable to delete message, ReceiptHandle parameter is missing");
+		if (!context.message.ReceiptHandle) {
+			context.log.error({ context }, "Unable to delete message, ReceiptHandle parameter is missing");
 			return;
 		}
 
 		const deleteParams: DeleteMessageRequest = {
 			QueueUrl: this.queueUrl,
-			ReceiptHandle: message.ReceiptHandle || ""
+			ReceiptHandle: context.message.ReceiptHandle || ""
 		};
 
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise();
 			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags);
-			log.debug("Successfully deleted message from queue");
+			context.log.debug("Successfully deleted message from queue");
 		} catch (err) {
-			log.warn({ err }, "Error deleting message from the queue");
+			context.log.warn({ err }, "Error deleting message from the queue");
 		}
 	}
 
-	private async executeMessage(message: Message, listenerContext: ListenerContext): Promise<void> {
+	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
 		const payload = message.Body ? JSON.parse(message.Body) : {};
 
-		const log = listenerContext.log.child({
-			id: message.MessageId,
-			executionId: uuidv4(),
-			queue: this.queueName
-		});
+		// Sets the log level depending on FF for the specific jira host
+		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
-		const context: Context<MessagePayload> = { message, payload, log, receiveCount: receiveCount, lastAttempt: receiveCount >= this.maxAttempts };
+		const context: SQSMessageContext<MessagePayload> = {
+			message,
+			payload,
+			log: listenerContext.log.child({
+				messageId: message.MessageId,
+				executionId: uuidv4(),
+				queue: this.queueName
+			}),
+			receiveCount,
+			lastAttempt: receiveCount >= this.maxAttempts
+		};
 
-		log.info(`SQS message received. Receive count: ${receiveCount}`);
+		context.log.info(`SQS message received. Receive count: ${receiveCount}`);
 
 		try {
 			const messageProcessingStartTime = Date.now();
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
-			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, log);
+			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, context.log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec * 1000)
@@ -396,37 +277,41 @@ export class SqsQueue<MessagePayload> {
 
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
 			this.sendProcessedMetrics(messageProcessingDuration);
-			await this.deleteMessage(message, log);
+			await this.deleteMessage(context);
 		} catch (err) {
-			await this.handleSqsMessageExecutionError(err, context, log, message);
+			await this.handleSqsMessageExecutionError(err, context);
 		}
 	}
 
-	private async handleSqsMessageExecutionError(err, context: Context<MessagePayload>, log: LoggerWithTarget, message: SQS.Message) {
+	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
+		const unsafeLogger = getLogger("message-error-handler-unsafe", { level: "warn", unsafe: true });
 		try {
+			unsafeLogger.warn({ err, context }, "Failed message");
 			const errorHandlingResult = await this.errorHandler(err, context);
 
 			if (errorHandlingResult.isFailure) {
-				log.error({ err }, "Error while executing SQS message");
+				context.log.error({ err }, "Error while executing SQS message");
 				statsd.increment(sqsQueueMetrics.failed, this.metricsTags);
 			} else {
-				log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
+				context.log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
 			}
 
 			if (isNotAFailure(errorHandlingResult)) {
-				log.info("Deleting the message because the error is not a failure");
-				await this.deleteMessage(message, log);
+				context.log.info("Deleting the message because the error is not a failure");
+				await this.deleteMessage(context);
 			} else if (isNotRetryable(errorHandlingResult)) {
-				log.warn("Deleting the message because the error is not retryable");
-				await this.deleteMessage(message, log);
+				context.log.warn("Deleting the message because the error is not retryable");
+				await this.deleteMessage(context);
 			} else if (errorHandlingResult.skipDlq && this.isMessageReachedRetryLimit(context)) {
-				log.warn("Deleting the message because it has reached the maximum amount of retries");
-				await this.deleteMessage(message, log);
+				context.log.warn("Deleting the message because it has reached the maximum amount of retries");
+				await this.deleteMessage(context);
 			} else {
-				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, message, log);
+				unsafeLogger.error({ errorHandlingResult, err, context }, "SQS message visibility timeout changed");
+				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling");
+			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
+			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
 
@@ -438,7 +323,7 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-	private isMessageReachedRetryLimit(context: Context<MessagePayload>) {
+	private isMessageReachedRetryLimit(context: SQSMessageContext<MessagePayload>) {
 		return context.receiveCount >= this.maxAttempts;
 	}
 

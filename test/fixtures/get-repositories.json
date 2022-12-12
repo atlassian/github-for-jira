@@ -1,0 +1,37 @@
+{
+	"viewer": {
+		"repositories": {
+			"totalCount": 2,
+			"pageInfo": {
+				"endCursor": null,
+				"hasNextPage": false
+			},
+			"edges": [
+				{
+					"node": {
+						"id": 1296269,
+						"name": "Hello-World",
+						"full_name": "octocat/Hello-World",
+						"owner": {
+							"login": "octocat"
+						},
+						"html_url": "https://github.com/octocat/Hello-World",
+						"updated_at": "2011-01-26T19:14:43Z"
+					}
+				},
+				{
+					"node": {
+						"id": 1234567,
+						"name": "Hello-World-2",
+						"full_name": "octocat/Hello-World-2",
+						"owner": {
+							"login": "octocat"
+						},
+						"html_url": "https://github.com/octocat/Hello-World",
+						"updated_at": "2011-01-26T19:14:43Z"
+					}
+				}
+			]
+		}
+	}
+}

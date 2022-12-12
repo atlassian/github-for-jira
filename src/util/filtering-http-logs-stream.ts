@@ -15,20 +15,14 @@ import { Writable } from "stream";
  * @param out {Stream} original stream
  * @return {WritableStream} that you can pipe bunyan output into
  */
-export const filteringHttpLogsStream = (filteringLoggerName: string, out) => {
-	//TODO Remove this code when there will be convenient way to do it in Probot.
-	//See https://github.com/probot/probot/issues/1577
-	const shouldBeFiltered = (chunk: any): boolean => {
-		return !!chunk.toString().match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`);
-	};
-
-	const writable = new Writable({
-		write: function(chunk, encoding, next) {
-			if (!shouldBeFiltered(chunk)) {
+export const filteringHttpLogsStream = (filteringLoggerName: string, out: Writable = process.stdout) =>
+	new Writable({
+		write: (chunk, encoding, next) => {
+			//TODO Remove this code when there will be convenient way to do it in Probot.
+			//See https://github.com/probot/probot/issues/1577
+			if (!chunk.toString().match(`${filteringLoggerName}.*(GET|POST|DELETE|PUT|PATCH) /`)) {
 				out.write(chunk, encoding);
 			}
 			next();
 		}
 	});
-	return writable;
-};

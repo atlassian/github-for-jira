@@ -30,4 +30,4 @@ export const extractInstallationFromJiraCallback = async (req: Request, res: Res
 	});
 	res.locals.installation = installation;
 	next();
-}
+};

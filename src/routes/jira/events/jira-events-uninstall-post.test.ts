@@ -3,12 +3,20 @@ import { getHashedKey } from "models/sequelize";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "models/subscription";
 import { JiraEventsUninstallPost } from "./jira-events-uninstall-post";
+import express, { Application } from "express";
+import { getLogger } from "config/logger";
+import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
+import { getJiraClient } from "~/src/jira/client/jira-client";
 
 jest.mock("models/subscription");
+jest.mock("~/src/jira/client/jira-client");
 
 describe("Webhook: /events/uninstalled", () => {
 	let installation;
 	let subscriptions;
+	let frontendApp: Application;
+	let mockJiraClient;
 
 	beforeEach(async () => {
 		subscriptions = [
@@ -24,8 +32,6 @@ describe("Webhook: /events/uninstalled", () => {
 			jiraHost: "https://test-host.jira.com",
 			clientKey: getHashedKey("abc123"),
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: "ghi345",
 			uninstall: jest
 				.fn()
 				.mockName("uninstall")
@@ -36,12 +42,29 @@ describe("Webhook: /events/uninstalled", () => {
 				.mockResolvedValue(subscriptions)
 		};
 
+		frontendApp = express();
+		frontendApp.use((request, _, next) => {
+			request.log = getLogger("test");
+			next();
+		});
+		frontendApp.use(getFrontendApp());
+
+		mockJiraClient = {
+			appProperties: {
+				delete: jest.fn()
+			}
+		};
+
 		// Allows us to modify subscriptions before it's finally called
 		mocked(Subscription.getAllForHost).mockImplementation(() => subscriptions);
 	});
 
 	it("Existing Installation", async () => {
-		const req = { log: { info: jest.fn() } } as any;
+		when(jest.mocked(getJiraClient))
+			.calledWith(installation.jiraHost, undefined, undefined, expect.anything())
+			.mockResolvedValue(mockJiraClient);
+
+		const req = { log: getLogger("test") } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		await JiraEventsUninstallPost(req, res);
@@ -51,7 +74,11 @@ describe("Webhook: /events/uninstalled", () => {
 	});
 
 	it("Existing Installation, no Subscriptions", async () => {
-		const req = { log: { info: jest.fn() } } as any;
+		when(jest.mocked(getJiraClient))
+			.calledWith(installation.jiraHost, undefined, undefined, expect.anything())
+			.mockResolvedValue(mockJiraClient);
+
+		const req = { log: getLogger("test") } as any;
 		const res = { locals: { installation }, sendStatus: jest.fn() } as any;
 
 		subscriptions = [];

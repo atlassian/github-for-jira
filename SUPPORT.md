@@ -13,7 +13,7 @@ If you're still having troubles after reading through this file, look up your pr
 - [Workflow transitions are not running](#workflow-transitions-are-not-running)
 - [Unmapped deployment environments](#my-deployments-are-showing-up-as-unmapped)
 
-## App is not responding
+## The app is not responding
 
 After installing the integration, clicking "Getting started" in Jira can lead to a page that shows a GitHub error page with the message `App is not responding. Wait or cancel.`
 
@@ -44,14 +44,19 @@ The time it takes to complete the sync will depend on the size of your GitHub or
 
 Because everyone's repository histories are different, it's difficult to determine how long the scan should take for a specific installation, but on average the sync can process around 100 commits per second. If it's still stuck in `IN PROGRESS` after a few hours, please check your installation for any large repositories first and attempt a full re-sync:
 
-1. Open the GitHub Apps settings in GitHub.
-2. Click **Configure** in Jira.
+1. Check that you have given permission to the repositories you want to access from Jira:
+   a. For GitHub Cloud customers, open the GitHub app settings in GitHub.
+   b. For GitHub Enterprise Server customers, navigate to the settings of the GitHub app in your GitHub Enterprise Server account.
+2. From the settings page, select **Install App** in the left panel. Then select the **gear icon** for the organization where you want to modify repository access.
 3. In Repository access, select only the repositories you wish to sync to Jira.
-4. Click **Save**
+4. Select **Save**.
 5. Open the integration settings: **Apps** -> **Manage apps** -> **GitHub for Jira** -> **Get started**
-6. Under **Retry**, click the dropdown and select "Full", then click **Submit**
+6. To restart a backfill:
+   a. For GitHub Cloud connections, select the **more options icon** under Settings.
+   b. For GitHub Enterprise Server connections, find the GitHub App under the connected server, select the **expand icon**, then select the **more options** icon.
+7. Select **Restart backfill**.
 
-This will rediscover all repositories in your installation and start a new sync.
+This will rediscover all repositories in your installation and start backfilling historical data.
 
 #### Referencing too many issues
 
@@ -76,6 +81,8 @@ The email address used for the commit in GitHub that has the transition in the c
 You can check the email address on GitHub by adding `.patch` to the end of a commit URL. For example:
 
 `https://github.com/atom/atom/commit/834f8f3d73d84e98a423fe0720abd833d5ca7a87.patch`
+
+> :warning: If you're a GitHub Enterprise Server customer, your GitHub version must be 3.1.x or higher. Otherwise, you won’t be able to receive data for workflow run, deployment status, and code scanning alert events. For more information read our [FAQs documentation](https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/#FAQs).
 
 ## My deployments are showing up as unmapped
 

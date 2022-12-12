@@ -21,8 +21,6 @@ describe("Webhook: /events/installed", () => {
 			jiraHost: body.baseUrl,
 			clientKey: body.clientKey,
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: body.sharedSecret,
 			subscriptions: jest.fn().mockResolvedValue([])
 		};
 

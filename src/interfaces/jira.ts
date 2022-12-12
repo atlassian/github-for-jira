@@ -1,12 +1,43 @@
-export interface JiraPullRequest {
-	commit: {
-		id: string;
-		repositoryUri: string;
-	};
-	ref: {
-		name: string;
-		uri: string;
-	};
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+
+interface JiraPullRequestCommit {
+	id: string;
+	repositoryUri: string;
+}
+
+interface JiraPullRequestRef {
+	name: string;
+	uri: string;
+}
+
+export interface BulkSubmitRepositoryInfo {
+	id: TransformedRepositoryId;
+	name: string;
+	url: string;
+	updateSequenceId: number;
+}
+
+export interface JiraPullRequestHead {
+	commit: JiraPullRequestCommit;
+	ref: JiraPullRequestRef;
+}
+
+interface JiraPullRequest {
+	author: JiraAuthor;
+	commentCount: number;
+	destinationBranch: string;
+	displayId: string;
+	id: number;
+	issueKeys: string[];
+	lastUpdate: string;
+	reviewers: JiraReview[];
+	sourceBranch: string;
+	sourceBranchUrl: string;
+	status: string;
+	timestamp: string;
+	title: string;
+	url: string;
+	updateSequenceId: number;
 }
 
 export interface JiraBuild {
@@ -19,30 +50,26 @@ export interface JiraBuild {
 	state: string;
 	lastUpdated: string;
 	issueKeys: string[];
-	references?: JiraPullRequest[];
+	references?: JiraPullRequestHead[];
 }
 
-export interface JiraBuildData {
-	product: string;
+export interface JiraBuildBulkSubmitData {
+	product: string; // TODO: doesn't match with data depot API docs (must be under providerMetadata), check with Saiyans
 	builds: JiraBuild[];
 }
 
 export interface JiraBranch {
-	createPullRequestUrl: string,
-	lastCommit: JiraCommit,
-	id: string,
-	issueKeys: string[],
-	name: string,
-	url: string,
-	updateSequenceId: number
+	createPullRequestUrl?: string;
+	lastCommit: JiraCommit;
+	id: string;
+	issueKeys: string[];
+	name: string;
+	url: string;
+	updateSequenceId: number;
 }
 
-export interface JiraBranchData {
-	id: number,
-	name: string,
-	url: string,
-	branches: JiraBranch[],
-	updateSequenceId: number
+export interface JiraBranchBulkSubmitData {
+	branches: JiraBranch[];
 }
 
 export interface JiraCommit {
@@ -72,10 +99,19 @@ export interface JiraIssue {
 
 export interface JiraCommitFile {
 	path: string;
-	changeType: string;
-	linesAdded?: string[];
-	linesRemoved?: string[];
+	changeType: JiraCommitFileChangeTypeEnum;
+	linesAdded: number;
+	linesRemoved: number;
 	url: string;
+}
+
+export enum JiraCommitFileChangeTypeEnum {
+	ADDED = "ADDED",
+	COPIED = "COPIED",
+	DELETED = "DELETED",
+	MODIFIED = "MODIFIED",
+	MOVED = "MOVED",
+	UNKNOWN = "UNKNOWN"
 }
 
 export interface JiraAuthor {
@@ -84,20 +120,18 @@ export interface JiraAuthor {
 	name: string;
 	url?: string;
 }
+export interface JiraReview extends JiraAuthor {
+	approvalStatus: string;
+}
 
-export interface JiraCommitData {
+export interface JiraCommitBulkSubmitData extends BulkSubmitRepositoryInfo {
 	commits: JiraCommit[];
-	id: string;
-	name: string;
-	url: string;
-	updateSequenceId: number;
 }
 
 export interface JiraDeployment {
 	schemaVersion: string;
 	deploymentSequenceNumber: number;
 	updateSequenceNumber: number;
-	issueKeys: string[],
 	displayName: string;
 	url: string;
 	description: string;
@@ -107,24 +141,35 @@ export interface JiraDeployment {
 		id: string;
 		displayName: string;
 		url: string;
-	},
+	};
 	environment: {
 		id: string;
 		displayName: string;
 		type: string;
-	},
+	};
+	associations: JiraAssociation[];
 }
 
-export interface JiraDeploymentData {
+export interface JiraDeploymentBulkSubmitData {
 	deployments: JiraDeployment[];
 }
 
-export interface JiraAssociation {
-	associationType: string;
-	values: string[];
+export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo {
+	branches: JiraBranch[];
+	pullRequests: JiraPullRequest[];
 }
 
-export interface JiraRemoteLinkData {
+export interface JiraAssociation {
+	associationType: "issueKeys" | "issueIdOrKeys" | "commit" | "serviceIdOrKeys";
+	values: string[] | JiraCommitKey[];
+}
+
+export interface JiraCommitKey {
+	commitHash: string;
+	repositoryId: TransformedRepositoryId;
+}
+
+export interface JiraRemoteLinkBulkSubmitData {
 	remoteLinks: JiraRemoteLink[];
 }
 
@@ -149,3 +194,10 @@ export interface JiraRemoteLinkStatus {
 // These align with Atlaskit's lozenge values:
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
+
+export type JiraOperationType = "NORMAL" | "BACKFILL"
+
+export interface JiraSubmitOptions {
+	preventTransitions: boolean;
+	operationType: JiraOperationType;
+}

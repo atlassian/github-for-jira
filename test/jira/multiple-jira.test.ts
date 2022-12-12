@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "../utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
+import { createWebhookApp } from "test/utils/create-webhook-app";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("config/feature-flags");
 
 const githubPullReviewsResponse = [
 	{
@@ -59,10 +62,12 @@ const jiraMatchingIssuesKeysBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{
-					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-222%20TEST-321%20TEST-124%20TEST-223%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
+					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-321-test-pull-request-head-ref&quick_pull=1",
 					lastCommit: {
 						author: {
 							avatar: "https://github.com/ghost.png",
@@ -130,10 +135,12 @@ const jiraMultipleJiraBulkResponse = {
 	preventTransitions: false,
 	repositories: [
 		{
+			id:"321806393",
+			name: "bgvozdev/day2-test-empy-repo-before-connect",
 			url: "test-pull-request-base-url",
 			branches: [
 				{
-					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-123%20TEST-321%20TEST-124%20-%20TEST-321-test-pull-request-head-ref&quick_pull=1",
+					createPullRequestUrl: "test-pull-request-head-url/compare/TEST-321-test-pull-request-head-ref?title=TEST-321-test-pull-request-head-ref&quick_pull=1",
 					lastCommit: {
 						author: {
 							avatar: "https://github.com/ghost.png",
@@ -198,7 +205,7 @@ const jiraMultipleJiraBulkResponse = {
 };
 
 describe("multiple Jira instances", () => {
-	let app: Application;
+	let app: any;
 	const gitHubInstallationId = 1234;
 	const jira2Host = "https://test2-atlassian-instance.atlassian.net";
 	const jira2Nock = nock(jira2Host);
@@ -208,7 +215,7 @@ describe("multiple Jira instances", () => {
 		const clientKey = "client-key";
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost
 		});
 		await Subscription.create({
@@ -218,7 +225,7 @@ describe("multiple Jira instances", () => {
 		});
 		await Installation.create({
 			clientKey,
-			sharedSecret: "shared-secret",
+			encryptedSharedSecret: "shared-secret",
 			jiraHost: jira2Host
 		});
 		await Subscription.create({
@@ -226,6 +233,10 @@ describe("multiple Jira instances", () => {
 			jiraHost: jira2Host,
 			jiraClientKey: clientKey
 		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
+		).mockResolvedValue(true);
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {

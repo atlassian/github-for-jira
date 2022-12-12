@@ -1,14 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import {JiraBuildData, JiraCommit, JiraDeploymentData, JiraIssue , JiraRemoteLink} from "interfaces/jira";
+
+import {
+	JiraAssociation,
+	JiraBuildBulkSubmitData,
+	JiraCommit,
+	JiraDeploymentBulkSubmitData,
+	JiraIssue,
+	JiraRemoteLink,
+	JiraSubmitOptions
+} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
+import { shouldTagBackfillRequests } from "config/feature-flags";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getAppKey } from "utils/app-properties-utils";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -30,18 +43,21 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number,
+	gitHubInstallationId: number | undefined,
+	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
-	const logger = log.child({ jiraHost, gitHubInstallationId });
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
+
 	if (!installation) {
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		installation.sharedSecret,
+		await installation.decrypt("encryptedSharedSecret"),
 		logger
 	);
 
@@ -75,17 +91,30 @@ export const getJiraClient = async (
 			},
 			comments: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/{issue_id}/comment", {
+				list: (issue_id: string) =>
+					instance.get("/rest/api/latest/issue/{issue_id}/comment?expand=properties", {
 						urlParams: {
 							issue_id
 						}
 					}),
-				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/comment", payload, {
 						urlParams: {
 							issue_id
+						}
+					}),
+				updateForIssue: (issue_id: string, comment_id: string, payload) =>
+					instance.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
+						urlParams: {
+							issue_id,
+							comment_id
+						}
+					}),
+				deleteForIssue: (issue_id: string, comment_id: string) =>
+					instance.delete("rest/api/latest/issue/{issue_id}/comment/{comment_id}", {
+						urlParams: {
+							issue_id,
+							comment_id
 						}
 					})
 			},
@@ -115,13 +144,6 @@ export const getJiraClient = async (
 			},
 			worklogs: {
 				// eslint-disable-next-line camelcase
-				getForIssue: (issue_id: string) =>
-					instance.get("/rest/api/latest/issue/{issue_id}/worklog", {
-						urlParams: {
-							issue_id
-						}
-					}),
-				// eslint-disable-next-line camelcase
 				addForIssue: (issue_id: string, payload) =>
 					instance.post("/rest/api/latest/issue/{issue_id}/worklog", payload, {
 						urlParams: {
@@ -132,15 +154,15 @@ export const getJiraClient = async (
 		},
 		devinfo: {
 			branch: {
-				delete: (repositoryId: string, branchRef: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, branchRef: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/branch/{branchJiraId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/branch/{branchJiraId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								branchJiraId: getJiraId(branchRef)
 							}
 						}
@@ -148,15 +170,6 @@ export const getJiraClient = async (
 			},
 			// Add methods for handling installationId properties that exist in Jira
 			installation: {
-				exists: (gitHubInstallationId: string | number) =>
-					instance.get(
-						`/rest/devinfo/0.10/existsByProperties`,
-						{
-							params: {
-								installationId: gitHubInstallationId
-							}
-						}
-					),
 				delete: async (gitHubInstallationId: string | number) =>
 					Promise.all([
 
@@ -192,49 +205,48 @@ export const getJiraClient = async (
 					])
 			},
 			pullRequest: {
-				delete: (repositoryId: string, pullRequestId: string) =>
+				delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) =>
 					instance.delete(
-						"/rest/devinfo/0.10/repository/{repositoryId}/pull_request/{pullRequestId}",
+						"/rest/devinfo/0.10/repository/{transformedRepositoryId}/pull_request/{pullRequestId}",
 						{
 							params: {
 								_updateSequenceId: Date.now()
 							},
 							urlParams: {
-								repositoryId,
+								transformedRepositoryId,
 								pullRequestId
 							}
 						}
 					)
 			},
 			repository: {
-				get: (repositoryId: string) =>
-					instance.get("/rest/devinfo/0.10/repository/{repositoryId}", {
-						urlParams: { repositoryId }
-					}),
-				delete: (repositoryId: string) =>
-					instance.delete("/rest/devinfo/0.10/repository/{repositoryId}", {
+				delete: (transformedRepositoryId: TransformedRepositoryId) =>
+					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
 						params: {
 							_updateSequenceId: Date.now()
 						},
 						urlParams: {
-							repositoryId
+							transformedRepositoryId
 						}
 					}),
-				update: async (data, options?: { preventTransitions: boolean }) => {
-					dedupIssueKeys(data, logger);
+				update: async (data, options?: JiraSubmitOptions) => {
+					dedupIssueKeys(data);
 
 					if (
 						!withinIssueKeyLimit(data.commits) ||
-						!withinIssueKeyLimit(data.branches)
+						!withinIssueKeyLimit(data.branches) ||
+						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
-							truncatedCommits: getTruncatedIssuekeys(data.commits),
-							truncatedBranches: getTruncatedIssuekeys(data.branches)
+							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
+							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
+							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
 							jiraHost,
-							gitHubInstallationId
+							gitHubInstallationId,
+							gitHubAppId
 						);
 						await subscription?.update({ syncWarning: issueKeyLimitWarning });
 					}
@@ -249,28 +261,43 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data: JiraBuildData, repositoryId: string) => {
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
 						truncatedBuilds: getTruncatedIssuekeys(data.builds)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.builds, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					builds: data.builds,
-					properties: {
-						gitHubInstallationId,
-						repositoryId
-					},
-					providerMetadata: {
-						product: data.product
-					}
-				};
-				logger?.debug(`Sending builds payload to jira. Payload: ${payload}`);
-				logger?.info("Sending builds payload to jira.");
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						builds: data.builds,
+						properties: {
+							gitHubInstallationId,
+							repositoryId
+						},
+						providerMetadata: {
+							product: data.product
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						builds: data.builds,
+						properties: {
+							gitHubInstallationId,
+							repositoryId
+						},
+						providerMetadata: {
+							product: data.product
+						}
+					};
+				}
+				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			},
 			delete: async (repositoryId: string) => {
@@ -282,25 +309,37 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data: JiraDeploymentData, repositoryId: string): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
 						truncatedDeployments: getTruncatedIssuekeys(data.deployments)
 					}, issueKeyLimitWarning);
 					updateIssueKeysFor(data.deployments, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					deployments: data.deployments,
-					properties: {
-						gitHubInstallationId,
-						repositoryId
-					}
-				};
-				logger?.debug(`Sending deployments payload to jira. Payload: ${payload}`);
-				logger?.info("Sending deployments payload to jira.");
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						deployments: data.deployments,
+						properties: {
+							gitHubInstallationId,
+							repositoryId
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						deployments: data.deployments,
+						properties: {
+							gitHubInstallationId,
+							repositoryId
+						}
+					};
+				}
+				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 				return {
 					status: response.status,
@@ -316,28 +355,48 @@ export const getJiraClient = async (
 			}
 		},
 		remoteLink: {
-			submit: async (data) => {
+			submit: async (data, options?: JiraSubmitOptions) => {
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
-				updateIssueKeyAssociationValuesFor(data.remoteLinks, dedup);
+				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
 					updateIssueKeyAssociationValuesFor(data.remoteLinks, truncate);
-					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId);
+					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const payload = {
-					remoteLinks: data.remoteLinks,
-					properties: {
-						gitHubInstallationId
-					}
-				};
+				let payload;
+				if (await shouldTagBackfillRequests()) {
+					payload = {
+						remoteLinks: data.remoteLinks,
+						properties: {
+							gitHubInstallationId
+						},
+						preventTransitions: options?.preventTransitions || false,
+						operationType: options?.operationType || "NORMAL"
+					};
+				} else {
+					payload = {
+						remoteLinks: data.remoteLinks,
+						properties: {
+							gitHubInstallationId
+						}
+					};
+				}
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		appProperties: {
+			create: (isConfiguredState: string) =>
+				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
+					"isConfigured": isConfiguredState
+				}),
+			get: () => instance.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`),
+			delete: () => instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
 		}
 	};
 
 	return client;
-}
+};
 
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests
@@ -346,8 +405,8 @@ export const getJiraClient = async (
 const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
-	installationId: number,
-	options?: { preventTransitions: boolean }
+	installationId: number | undefined,
+	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
 
@@ -357,29 +416,46 @@ const batchedBulkUpdate = async (
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
 
+	const shouldTagBackfillRequestsValue = await shouldTagBackfillRequests();
 	const batchedUpdates = commitChunks.map((commitChunk) => {
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
-		const body = {
-			preventTransitions: options?.preventTransitions || false,
-			repositories: [data],
-			properties: {
-				installationId
-			}
-		};
+		let body;
+		if (shouldTagBackfillRequestsValue) {
+			body = {
+				preventTransitions: options?.preventTransitions || false,
+				operationType: options?.operationType || "NORMAL",
+				repositories: [data],
+				properties: {
+					installationId
+				}
+			};
+		} else {
+			body = {
+				preventTransitions: options?.preventTransitions || false,
+				repositories: [data],
+				properties: {
+					installationId
+				}
+			};
+		}
+
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);
 };
 
+const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>
+	resource.associations?.find(a => a.associationType == "issueIdOrKeys");
+
 /**
  * Returns if the max length of the issue
  * key field is within the limit
  */
-const withinIssueKeyLimit = (resources: { issueKeys: string[] }[]): boolean => {
+const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	if (!resources) return true;
-	const issueKeyCounts = resources.map((resource) => resource.issueKeys.length);
+	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values?.length || 0);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
@@ -395,7 +471,7 @@ const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean =
 
 	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
-}
+};
 
 /**
  * Deduplicates commits by ID field for a repository payload
@@ -409,12 +485,12 @@ const dedupCommits = (commits: JiraCommit[] = []): JiraCommit[] =>
 /**
  * Deduplicates issueKeys field for branches and commits
  */
-const dedupIssueKeys = (repositoryObj, logger?) => {
-	updateRepositoryIssueKeys(repositoryObj, logger);
+const dedupIssueKeys = (repositoryObj) => {
+	updateRepositoryIssueKeys(repositoryObj, uniq);
 };
 
 /**
- * Truncates branches and commits to first 100 issue keys for branch or commit
+ * Truncates branches, commits and PRs to their first 100 issue keys
  */
 const truncateIssueKeys = (repositoryObj) => {
 	updateRepositoryIssueKeys(repositoryObj, truncate);
@@ -422,50 +498,62 @@ const truncateIssueKeys = (repositoryObj) => {
 
 interface IssueKeyObject {
 	issueKeys?: string[];
+	associations?: JiraAssociation[];
 }
 
+// TODO: add unit tests
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		// Filter out anything that doesn't have issue keys or are not over the limit
-		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
-			// Create copy of object and add the issue keys that are truncated
+		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			acc.push({
-				...value,
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
+			});
+		}
+		const association = findIssueKeyAssociation(value);
+		if (association?.values && association.values.length > ISSUE_KEY_API_LIMIT) {
+			acc.push({
+				// TODO: Shouldn't it be association.values.slice(ISSUE_KEY_API_LIMIT), just as for issue key?!
+				associations: [association]
 			});
 		}
 		return acc;
 	}, []);
 
 /**
- * Runs a mutating function on all branches and commits
+ * Runs a mutating function on all branches, commits and PRs
  * with issue keys in a Jira Repository object
  */
-const updateRepositoryIssueKeys = (repositoryObj, logger?) => {
+const updateRepositoryIssueKeys = (repositoryObj, mutatingFunc) => {
 	if (repositoryObj.commits) {
-		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, uniq);
+		repositoryObj.commits = updateIssueKeysFor(repositoryObj.commits, mutatingFunc);
 	}
 
 	if (repositoryObj.branches) {
-		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, uniq);
+		repositoryObj.branches = updateIssueKeysFor(repositoryObj.branches, mutatingFunc);
 		repositoryObj.branches.forEach((branch) => {
 			if (branch.lastCommit) {
-				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], uniq)[0];
+				branch.lastCommit = updateIssueKeysFor([branch.lastCommit], mutatingFunc)[0];
 			}
 		});
 	}
 
-	if (!repositoryObj.commits && !repositoryObj.branches) {
-		logger?.warn("No branches or commits found. Cannot update.");
+	if (repositoryObj.pullRequests) {
+		repositoryObj.pullRequests = updateIssueKeysFor(repositoryObj.pullRequests, mutatingFunc);
 	}
 };
 
 /**
- * Runs the mutatingFunc on the issue keys field for each branch or commit
+ * Runs the mutatingFunc on the issue keys field for each branch, commit or PR
  */
 const updateIssueKeysFor = (resources, func) => {
-	resources.forEach((resource) => {
-		resource.issueKeys = func(resource.issueKeys);
+	resources.forEach((r) => {
+		if (r.issueKeys) {
+			r.issueKeys = func(r.issueKeys);
+		}
+		const association = findIssueKeyAssociation(r);
+		if (association) {
+			association.values = func(association.values);
+		}
 	});
 	return resources;
 };
@@ -477,19 +565,13 @@ const updateIssueKeysFor = (resources, func) => {
  */
 const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
 	resources?.forEach(resource => {
-		if(resource.associations?.length > 0){
-			resource.associations[0].values = mutatingFunc(resource.associations[0].values)
+		const association = findIssueKeyAssociation(resource);
+		if (association) {
+			association.values = mutatingFunc(resource.associations[0].values);
 		}
-	})
-
-
+	});
 	return resources;
 };
-
-/**
- * Deduplicates elements in an array
- */
-const dedup = (array) => [...new Set(array)];
 
 /**
  * Truncates to 100 elements in an array

@@ -1,0 +1,38 @@
+.jiraServerUrl__content {
+  margin: 4em auto 0;
+  max-width: 560px;
+}
+.jiraServerUrl__content__title {
+  text-align: center;
+  margin-bottom: 2em;
+}
+
+.jiraServerUrl__options__subTitle {
+  font-size: 1.2rem;
+  margin-bottom: 0.5em;
+  display: inline-flex;
+}
+
+.jiraServerUrl__prompt {
+  color: #344563;
+  font-size: 1.01rem;
+  margin-bottom: 1.2em;
+}
+
+.jiraServerUrl__actionBtn {
+  margin-top: 1.25em;
+  float: right;
+}
+
+#jiraServerUrl__form input {
+  height: 40px;
+}
+
+#gheServerBtnSpinner {
+  display: none;
+  color: #fff;
+}
+
+.jiraServerUrl__validationError {
+  display: none;
+}

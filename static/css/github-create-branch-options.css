@@ -1,0 +1,85 @@
+.gitHubCreateBranchOptions {
+  margin: 10% auto;
+}
+
+#createBranchOptionsForm .field-group {
+  margin-bottom: 1em;
+}
+
+#createBranchOptionsForm input[type=text],
+#createBranchOptionsForm .select2-choice  {
+  height: 2.5em;
+  line-height: 1.7rem;
+  background: #ebecf0;
+  color: #7a869a;
+}
+
+.gitHubCreateBranchOptions__title {
+  color: #6B778C;
+  margin: 1.8em 0 4em;
+  text-align: center;
+}
+
+.gitHubCreateBranchOptions__header {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 0.5em;
+}
+
+.gitHubCreateBranchOptions__actions {
+  text-align: right;
+  margin-top: 2.5em;
+}
+
+/** Customizing styling for Select2 **/
+.select2-drop {
+  /* The position(top, left) of this dropdown is calculated from JS, so to move it up a bit more used negative margin */
+  margin-top: -34px;
+}
+.aui-select2-drop.aui-dropdown2 .select2-search {
+  padding: 0;
+}
+.aui-select2-drop .select2-search:before {
+  content: "\f15b";
+  font-weight: 400;
+  right: 4px;
+}
+.select2-loader {
+  position: absolute;
+  right: 20px;
+}
+
+
+.gitHubCreateBranchOptions__optionContainer {
+  display: flex;
+  margin-top: 1.5em;
+}
+
+.gitHubCreateBranchOptions__option {
+  padding: 0.5em 1em;
+  height: 40px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gitHubCreateBranchOptions__Icon {
+  width: 24px;
+  height: 17px;
+  margin-right: 0.25em;
+}
+
+.gitHubCreateBranchOptions__selected {
+  background-color: #DEEBFF;
+  color: #0052CC;
+  font-weight: 600;
+}
+
+.gitHubCreateBranchOptions__serversContainer {
+  display: none;
+}
+
+.jiraSelectGitHubProduct__selectServerInstance {
+  margin-top: 16px;
+}

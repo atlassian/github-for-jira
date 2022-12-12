@@ -1,20 +1,29 @@
-import { BOOLEAN, DataTypes, DATE, Model } from "sequelize";
+import { BOOLEAN, DataTypes, DATE } from "sequelize";
 import { Subscription } from "./subscription";
-import { encrypted, getHashedKey, sequelize } from "models/sequelize";
+import { getHashedKey, sequelize } from "models/sequelize";
+import { EncryptedModel } from "models/encrypted-model";
+import { EncryptionSecretKeyEnum } from "utils/encryption-client";
 
-// TODO: this should not be there.  Should only check once a function is called
-if (!process.env.STORAGE_SECRET) {
-	throw new Error("STORAGE_SECRET is not defined.");
-}
-
-export class Installation extends Model {
+export class Installation extends EncryptedModel {
 	id: number;
 	jiraHost: string;
-	secrets: string;
-	sharedSecret: string;
+	plainClientKey: string;
+	encryptedSharedSecret: string;
 	clientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
+
+	getEncryptionSecretKey() {
+		return EncryptionSecretKeyEnum.JIRA_INSTANCE_SECRETS;
+	}
+
+	async getEncryptContext() {
+		return { };
+	}
+
+	getSecretFields() {
+		return ["encryptedSharedSecret"] as const;
+	}
 
 	static async getForClientKey(
 		clientKey: string
@@ -66,14 +75,14 @@ export class Installation extends Model {
 			},
 			defaults: {
 				jiraHost: payload.host,
-				sharedSecret: payload.sharedSecret
+				plainClientKey: payload.clientKey,
+				encryptedSharedSecret: payload.sharedSecret //write as plain text, hook will encrypt it
 			}
 		});
-
 		if (!created) {
 			await installation
 				.update({
-					sharedSecret: payload.sharedSecret,
+					encryptedSharedSecret: payload.sharedSecret,
 					jiraHost: payload.host
 				})
 				.then(async (record) => {
@@ -89,7 +98,6 @@ export class Installation extends Model {
 					return installation;
 				});
 		}
-
 		return installation;
 	}
 
@@ -110,23 +118,39 @@ Installation.init({
 		autoIncrement: true
 	},
 	jiraHost: DataTypes.STRING,
-	secrets: encrypted.vault("secrets"),
-	sharedSecret: encrypted.field("sharedSecret", {
-		type: DataTypes.STRING,
-		allowNull: false
-	}),
+	encryptedSharedSecret: {
+		type: DataTypes.TEXT,
+		allowNull: true
+	},
 	clientKey: {
 		type: DataTypes.STRING,
 		allowNull: false
 	},
+	plainClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
 	enabled: BOOLEAN,
 	createdAt: DATE,
 	updatedAt: DATE
-}, { sequelize });
+}, {
+	hooks: {
+		beforeSave: async (instance: Installation, opts) => {
+			if (!opts.fields) return;
+			await instance.encryptChangedSecretFields(opts.fields);
+		},
+		beforeBulkCreate: async (instances: Installation[], opts) => {
+			for (const instance of instances) {
+				if (!opts.fields) return;
+				await instance.encryptChangedSecretFields(opts.fields);
+			}
+		}
+	},
+	sequelize
+});
 
 export interface InstallationPayload {
 	host: string;
 	clientKey: string;
-	// secret: string;
 	sharedSecret: string;
 }

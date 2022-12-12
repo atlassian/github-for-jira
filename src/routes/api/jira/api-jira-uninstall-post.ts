@@ -12,7 +12,7 @@ export const ApiJiraUninstallPost = async (request: Request, response: Response)
 		response.sendStatus(404);
 		return;
 	}
-	const jiraClient = new JiraClient(
+	const jiraClient = await JiraClient.getNewClient(
 		response.locals.installation,
 		request.log
 	);

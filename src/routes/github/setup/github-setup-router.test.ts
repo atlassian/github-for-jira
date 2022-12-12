@@ -6,14 +6,10 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
-describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithubClient) => {
+describe("Github Setup", () => {
 	let frontendApp: Application;
 
 	beforeEach(async () => {
@@ -22,10 +18,7 @@ describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithub
 			request.log = getLogger("test");
 			next();
 		});
-		frontendApp.use(getFrontendApp({
-			getSignedJsonWebToken: () => "",
-			getInstallationAccessToken: async () => "access-token"
-		}));
+		frontendApp.use(getFrontendApp());
 	});
 
 	describe("#GET", () => {
@@ -34,18 +27,17 @@ describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithub
 			await Installation.create({
 				jiraHost,
 				clientKey: "abc123",
-				secrets: "def234",
-				sharedSecret: "ghi345"
+				//TODO: why? Comment this out make test works?
+				//setting both fields make sequelize confused as it internally storage is just the "secrets"
+				//secrets: "def234",
+				//secrets: "def234",
+				encryptedSharedSecret: "ghi345"
 			});
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(useNewGithubClient);
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
+			githubAppTokenNock();
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.expect(422);
@@ -117,8 +109,7 @@ describe.each([true, false])("Github Setup - GitHub Client is %s", (useNewGithub
 		it("should return a 200 with the redirect url to the app if a valid domain is given and an installation already exists", async () => {
 			await Installation.create({
 				jiraHost,
-				secrets: "secret",
-				sharedSecret: "sharedSecret",
+				encryptedSharedSecret: "sharedSecret",
 				clientKey: "clientKey"
 			});
 

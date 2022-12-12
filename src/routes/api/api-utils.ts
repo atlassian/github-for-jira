@@ -1,6 +1,6 @@
 import { JiraClient } from "models/jira-client";
 import { Subscription } from "models/subscription";
-import {Installation } from "models/installation";
+import { Installation } from "models/installation";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
@@ -23,7 +23,7 @@ interface SerializedInstallation extends Pick<Installation, "clientKey"> {
 }
 
 export const serializeJiraInstallation = async (jiraInstallation: Installation, log: Logger): Promise<SerializedInstallation> => {
-	const jiraClient = new JiraClient(jiraInstallation, log);
+	const jiraClient = await JiraClient.getNewClient(jiraInstallation, log);
 
 	return {
 		clientKey: jiraInstallation.clientKey,

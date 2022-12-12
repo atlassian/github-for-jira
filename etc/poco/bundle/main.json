@@ -1,7 +1,7 @@
 {
   "allow": [
     {
-      "description": "Open version and healthcehck endpoints",
+      "description": "Open version and healthcheck endpoints",
       "paths": [
         "/version",
         "/healthcheck",
@@ -12,41 +12,51 @@
       ],
       "principals": {
         "open": {
-          "reason": "Allow all requests to Version and healthcecheck endpoints"
+          "reason": "Allow requests for version and healthcheck endpoints"
         }
       }
     },
-		{
-			"description": "Open all endpoints used in the App logic",
-			"paths": [
-				"/",
-				"/github/**",
-				"/jira/**",
-				"/maintenance",
-				"/public/**",
-				"/session/**",
-				"/setup"
-			],
-			"methods": [
-				"GET","POST","PUT","DELETE"
-			],
-			"principals": {
-				"open": {
-					"reason": "Allow requests to the app endpoints because authentication is handled on the app side"
-				}
-			}
-		},
+    {
+      "description": "Open all endpoints used in the App logic",
+      "paths": [
+        "/",
+        "/github/**",
+        "/github-manifest",
+        "/create-branch-options",
+        "/jira",
+        "/jira/**",
+        "/maintenance",
+        "/public/**",
+        "/session",
+        "/session/**",
+        "/error",
+        "/error/**",
+        "/setup"
+      ],
+      "methods": [
+        "*"
+      ],
+      "principals": {
+        "open": {
+          "reason": "Allow requests to the app endpoints because authentication is handled on the app side"
+        }
+      }
+    },
     {
       "description": "Allow service team to call API endpoints",
       "paths": [
         "/api/**"
       ],
       "methods": [
-        "GET","POST","PUT","DELETE"
+        "*"
       ],
       "principals": {
-				"staff":{"groups": ["micros-sv--github-for-jira-dl-admins"]}
-			}
+        "staff": {
+          "groups": [
+            "micros-sv--github-for-jira-dl-admins"
+          ]
+        }
+      }
     }
   ]
 }

@@ -28,23 +28,25 @@ Create a new [free developer instance](https://developer.atlassian.com/platform/
 
 Create a new [GitHub App](https://github.com/settings/apps), setting the following config:
 
-- **GitHub App name**: Anything you want, but it must be unique across GitHub.
-- **Homepage URL**: `https://DOMAIN`
+**Domain** refers to the URL for the local domain obtained after tunneling. If the tunnel is created from `atlas`, then it would be something like `https://__MYDOMAIN__.public.atlastunnel.com`. But if the tunnel is created from `ngrok`, then `https://XXXX-XXX-XXX-XXX-xX.ngrok.io`.
+
+- **GitHub App name**: Anything you want, but it must be unique across GitHub
+- **Homepage URL**: `https://github.com/apps/GITHUB_APP_NAME` (The full URL to your GitHub App’s website)
 - **Callback URL**: `https://DOMAIN/github/callback`
 - **Setup URL**: `https://DOMAIN/github/setup`
-- **Webhook URL**: `https://DOMAIN/github/events`
+- **Webhook URL**: `https://DOMAIN/github/webhooks`
 - **Webhook Secret**: `development`
 
 Your new GitHub app will need the following repository permissions & events:
 
 **Repository Permissions**:
-+ Actions: Read & write
-+ Contents: Read & write
-+ Deployments: Read & write
++ Actions: Read-only
++ Code scanning alerts: Read-only
++ Contents: Read & Write
++ Deployments: Read-only
 + Issues: Read & write
 + Metadata: Read-only
 + Pull requests: Read & write
-+ Security events: Read-only
 
 **Organization Permissions**:
 + Members: Read-Only
@@ -60,22 +62,23 @@ Your new GitHub app will need the following repository permissions & events:
 + Pull request
 + Pull request review
 + Push
-+ Workflow run
 + Repository
++ Workflow run
 
-### Setting up your `.env` file
+### Setting up your environment file
 
-Once you've set up your GitHub app and cloned this repo, copy the content from `.env.example` and paste it to a new file called `.env`, with the following configuration:
+The environment files work in a fairly standardized way of having a "global" `.env` that holds information needed across all environments but is not committed. Then we have `NODE_ENV` specific environment files like `.env.development`, `.env.test`, etc, as they are non-sensitive default variables needed for those environments to work.  Since they are committed, please be careful not to add sensitive information to these files - if you need to add sensitive information or you want to overwrite the environment defaults, you can create a `.local` version of that file and that will never be committed. 
+
+Once you've set up your GitHub app and cloned this repo, copy the file `.env.development.local-example` to a new file called `.env.development.local`.  Fill in the blank fields in the file:
 
 + `APP_ID` and `GITHUB_CLIENT_ID`: Copy these values over from your new GitHub app page.
-+ `APP_URL`: `https://DOMAIN`
 + `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
-+ `TUNNEL_SUBDOMAIN`: the subdomain you want to use to allow access from the internet to your local machine
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
-+ `ATLASSIAN_URL`: The URL for the Jira instance you're testing it. If you don't have one now, please set the value of this variable after going through the step 1 of "Configuring the Jira instance" section of this document.
-+ `STORAGE_SECRET`: It needs to be set to a 32 char secret (anything else fails). You can generate one by running `openssl rand -hex 32` in your terminal and paste directly to your .env file.
-+ `INSTANCE_NAME`: Your Jira app name - will show as "GitHub (instance-name)"
-+ `WEBHOOK_PROXY_URL`: `https://DOMAIN/github/events`
++ `ATLASSIAN_URL`: The URL for the Jira instance you're testing on. If you don't have one now, [please set the value of this variable from the steps mentioned here](#create-your-jira-instance).
++ `INSTANCE_NAME`: Your Jira app name - will show as "GitHub for Jira (instance-name)"
+
+Lastly, you need to replace the value of the follow variables in the global `.env` file:
+
 + `NGROK_AUTHTOKEN`: Your ngrok authtoken.  If you want to use ngrok as a tunnel to test it on your Jira instance, you need an authtoken. Simply [login/signup to ngrok](https://dashboard.ngrok.com/get-started/setup), copy & paste the authtoken into this var.
 
 ### Running the app
@@ -85,7 +88,6 @@ The first time you run the app, simply run:
 ```
 yarn install # installs node modules
 docker-compose up # Spin up docker containers
-yarn run init # Creates DBs and initializes tables, creates sqs queues
 ```
 
 That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).

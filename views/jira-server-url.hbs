@@ -1,0 +1,111 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <meta name="public-url" content="{{APP_URL}}" />
+    <title>{{title}}</title>
+    <link
+      href="/public/aui/aui-prototyping.css"
+      rel="stylesheet"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/atlassian-ui-kit/bundle.css"
+      media="all"
+    />
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/css/jira-server-url.css"
+      media="all"
+    />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+  </head>
+
+  <body class="aui-page-hybrid">
+    <div class="jiraServerUrl">
+      <header class="jiraServerUrl__header">
+         {{> navigation }}
+      </header>
+
+      <section class="jiraServerUrl__content">
+        <div class="headerImage">
+          <img
+            src="/public/assets/jira-and-github.png"
+            alt="Jira and GitHub logos"
+          />
+        </div>
+        <h2 class="jiraServerUrl__content__title">GitHub Enterprise Server</h2>
+
+        <div class="jiraServerUrl__prompt">
+            Connecting GitHub Enterprise Server to Jira requires opening a hole in your firewall,
+            as Atlassian’s IP addresses must be able to call your GitHub Enterprise Server.
+            <a
+                href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#How-the-GitHub-for-Jira-app-fetches-data"
+                target="_blank"
+            >
+                Learn more about network configuration for GitHub for Jira.
+            </a>
+        </div>
+
+        <div>
+          <h3 class="jiraServerUrl__options__subTitle">
+            GitHub Enterprise Server URL
+          </h3>
+          <div class="jiraServerUrl__prompt">
+            Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
+          </div>
+          <form id="jiraServerUrl__form" class="aui top-label">
+            <div class="field-group">
+              <label for="gheServerURL">Server URL</label>
+              <input class="text full-width-field" type="text"
+                     data-aui-validation-field
+                     data-aui-validation-ghe-url
+                     data-aui-validation-when="keyup"
+                     placeholder="https://example.com"
+                     id="gheServerURL" name="gheServerURL" />
+            </div>
+
+            <div class="jiraServerUrl__validationError">
+                {{> server-error-message-box }}
+            </div>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+            <button
+                type="submit"
+                id="gheServerBtn"
+                disabled
+                class="aui-button aui-button-primary jiraServerUrl__actionBtn"
+                data-installation-id={{installationId}}
+            >
+              <span id="gheServerBtnText">Next</span>
+              <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script
+      src="https://connect-cdn.atl-paas.net/all.js"
+      nonce="{{nonce}}"
+    ></script>
+
+    <script
+      src="/public/aui/aui-prototyping.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
+    ></script>
+    <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+  </body>
+</html>

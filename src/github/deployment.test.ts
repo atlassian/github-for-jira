@@ -1,54 +1,46 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
-import { Installation } from "models/installation";
-import { Subscription } from "models/subscription";
+import { deploymentWebhookHandler } from "./deployment";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { getLogger } from "config/logger";
 import { waitUntil } from "test/utils/wait-until";
+import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { WebhookApp } from "test/utils/create-webhook-app";
 
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
 
-jest.mock("config/feature-flags");
+jest.mock("../sqs/queues");
 
-describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
-	let app: Application;
-	const gitHubInstallationId = 1234;
+const GITHUB_INSTALLATION_ID = 1234;
+const GHES_GITHUB_APP_ID = 111;
+const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";
+const GHES_GITHUB_APP_APP_ID = 1;
+const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 
-	beforeAll(async () => {
-		await sqsQueues.deployment.purgeQueue();
+describe("DeploymentWebhookHandler", () => {
+	let jiraClient: any;
+	let util: any;
+	let app: WebhookApp;
+
+	beforeEach(() => {
+		jiraClient = { baseURL: jiraHost };
+		util = null;
 	});
 
-	beforeEach(async () => {
-		app = await createWebhookApp();
-
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
+	describe("GitHub Cloud", () => {
+		it("should be called with cloud GitHubAppConfig", async () => {
+			await deploymentWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
+				gitHubAppConfig: {
+					uuid: undefined,
+					gitHubAppId: undefined,
+					appId: parseInt(envVars.APP_ID),
+					clientId: envVars.GITHUB_CLIENT_ID,
+					gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+					gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
+				}
+			}));
 		});
-
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
-
-		await sqsQueues.deployment.start();
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DEPLOYMENTS,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(useNewGithubClient);
-	});
-
-	afterEach(async () => {
-		await sqsQueues.deployment.stop();
-		await sqsQueues.deployment.purgeQueue();
-	});
-
-	describe("deployment_status", () => {
 
 		it("should queue and process a deployment event", async () => {
 			const sha = deploymentStatusBasic.payload.deployment.sha;
@@ -113,4 +105,44 @@ describe.each([true, false])("Deployment Webhook", (useNewGithubClient) => {
 			});
 		});
 	});
+
+	describe("GitHub Enterprise Server", () => {
+		it("should be called with GHES GitHubAppConfig", async () => {
+			await deploymentWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
+				gitHubAppConfig: {
+					uuid: GHES_GITHUB_UUID,
+					gitHubAppId: GHES_GITHUB_APP_ID,
+					appId: GHES_GITHUB_APP_APP_ID,
+					clientId: GHES_GITHUB_APP_CLIENT_ID,
+					gitHubBaseUrl: gheUrl,
+					gitHubApiUrl: gheUrl
+				}
+			}));
+		});
+	});
+
+	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
+		return new WebhookContext({
+			id: "1",
+			name: "created",
+			log: getLogger("test"),
+			payload: {},
+			gitHubAppConfig: cloud ? {
+				uuid: undefined,
+				gitHubAppId: undefined,
+				appId: parseInt(envVars.APP_ID),
+				clientId: envVars.GITHUB_CLIENT_ID,
+				gitHubBaseUrl: GITHUB_CLOUD_BASEURL,
+				gitHubApiUrl: GITHUB_CLOUD_API_BASEURL
+			} : {
+				uuid: GHES_GITHUB_UUID,
+				gitHubAppId: GHES_GITHUB_APP_ID,
+				appId: GHES_GITHUB_APP_APP_ID,
+				clientId: GHES_GITHUB_APP_CLIENT_ID,
+				gitHubBaseUrl: gheUrl,
+				gitHubApiUrl: gheUrl
+			}
+		});
+	};
 });

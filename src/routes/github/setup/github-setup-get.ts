@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
 import Logger from "bunyan";
-import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
+import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraSiteExists } from "utils/jira-utils";
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { getCloudInstallationId } from "~/src/github/client/installation-id";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { GitHubAPI } from "probot";
+import { createAppClient } from "~/src/util/get-github-client-config";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -18,19 +16,14 @@ import { GitHubAPI } from "probot";
 		- Otherwise, render the setup page (POST).
 */
 
-const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI, githubInstallationId: number, logger: Logger) => {
+const getInstallationData = async (githubAppClient: GitHubAppClient, githubInstallationId: number, logger: Logger) => {
 	let githubInstallation;
 
-	const { data: info } = githubAppClient instanceof GitHubAppClient ? 
-		await githubAppClient.getApp() :
-		await githubAppClient.apps.getAuthenticated();
+	const { data: info } = await githubAppClient.getApp();
 
 	// We want to proceed even if no installation is found.
 	try {
-		const installationRequest = githubAppClient instanceof GitHubAppClient ?
-			await githubAppClient.getInstallation(githubInstallationId) :
-			await githubAppClient.apps.getInstallation({ installation_id: githubInstallationId });
-
+		const installationRequest = await githubAppClient.getInstallation(githubInstallationId);
 		githubInstallation = installationRequest.data;
 	} catch (err) {
 		logger.warn("Cannot retrieve Github Installation from API");
@@ -43,14 +36,13 @@ const getInstallationData = async (githubAppClient: GitHubAppClient | GitHubAPI,
 };
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost, client } = res.locals;
+	const { jiraHost, gitHubAppId } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
-	const githubAppClient = new GitHubAppClient(getCloudInstallationId(githubInstallationId), req.log);
-	const useNewGithubClient = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_GITHUB_SETUP, false, jiraHost);
-	const { githubInstallation, info } = await getInstallationData(useNewGithubClient ? githubAppClient : client, githubInstallationId, req.log);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
 
 	req.addLogFields({ githubInstallationId, appInfo: info });
-	req.log.info("Received get github setup page request");
+	req.log.debug("Received get github setup page request");
 
 	// If we know enough about user and site, redirect to the app
 	const [siteExists, jiraInstallation] = await Promise.all([
@@ -68,6 +60,7 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		orgName: githubInstallation?.account?.login,
 		avatar: githubInstallation?.account?.avatar_url,
 		html_url: info.html_url,
-		id: githubInstallationId
+		id: githubInstallationId,
+		isGitHubCloudApp: await isGitHubCloudApp(gitHubAppId)
 	});
 };

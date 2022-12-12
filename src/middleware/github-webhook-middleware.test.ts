@@ -1,12 +1,9 @@
 import { mocked } from "ts-jest/utils";
-import { Installation} from "models/installation";
+import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { GithubAPI } from "config/github-api";
 import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
-import { wrapLogger } from "probot/lib/wrap-logger";
 import { createLogger } from "bunyan";
-import { Writable } from "stream";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 
 jest.mock("models/installation");
@@ -15,23 +12,13 @@ jest.mock("utils/webhook-utils");
 
 describe("Probot event middleware", () => {
 	let context;
-	let loggedStuff = "";
 	beforeEach(async () => {
 		context = {
 			payload: {
 				sender: { type: "not bot" },
 				installation: { id: 1234 }
 			},
-			github: GithubAPI(),
-			log: wrapLogger(createLogger({
-				name: "test",
-				stream: new Writable({
-					write: function(chunk, _, next) {
-						loggedStuff += chunk.toString();
-						next();
-					}
-				})
-			}))
+			log: createLogger({ name: "test" })
 		};
 
 		const subscriptions = [...mockModels.Subscription.getAllForInstallation];
@@ -102,7 +89,6 @@ describe("Probot event middleware", () => {
 		context.log = context.log.child({ foo: 123 });
 		await GithubWebhookMiddleware(jest.fn())(context);
 		context.log.info("test");
-		expect(loggedStuff).toContain("foo");
-		expect(loggedStuff).toContain("123");
+		expect(context.log.fields.foo).toBe(123);
 	});
 });

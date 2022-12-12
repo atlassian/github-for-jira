@@ -1,4 +1,4 @@
-import { validJiraDomains } from "utils/validations";
+import { validJiraDomain } from "utils/validations";
 import { Request, Response } from "express";
 import { getJiraAppUrl, getJiraMarketplaceUrl, jiraSiteExists } from "utils/jira-utils";
 import { Installation } from "models/installation";
@@ -24,18 +24,16 @@ const validateJiraSite = async (
 };
 
 export const GithubSetupPost = async (req: Request, res: Response): Promise<void> => {
-	const { jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
+	const { jiraHost, jiraDomain, jiraDomainMain, jiraDomainModal } = req.body;
+	const domain = jiraDomain || jiraDomainMain || jiraDomainModal || "";
+	const url = jiraHost || `https://${domain}.atlassian.net`;
 
-	const domain = jiraDomain || jiraDomainMain || jiraDomainModal;
-	const topLevelDomain = "atlassian.net";
-	const jiraHost = `https://${domain}.${topLevelDomain}`;
+	req.log.debug({ jiraHost: url }, `Received github setup page request for jira`);
 
-	req.log.info(`Received github setup page request for jira ${jiraHost}`);
-
-	if (!validJiraDomains(domain, topLevelDomain)) {
-		res.status(400).send({ error: "The entered Jira Cloud site is not valid.", url: jiraHost });
+	if (!validJiraDomain(url)) {
+		res.status(400).send({ error: "The entered Jira Cloud site is not valid.", url });
 		return;
 	}
 
-	await validateJiraSite(req, res, jiraHost);
+	await validateJiraSite(req, res, url);
 };

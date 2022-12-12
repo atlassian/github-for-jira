@@ -3,24 +3,33 @@ import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { Tracer } from "config/tracer";
-import { envVars }  from "config/env";
-import { GithubAPI } from "config/github-api";
+import { envVars } from "config/env";
 import { Errors } from "config/errors";
+import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
+import { createHashWithSharedSecret } from "utils/encryption";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { GitHubServerApp } from "models/github-server-app";
 
 const logger = getLogger("github-oauth");
-
-const githubClient = envVars.GITHUB_CLIENT_ID;
-const githubSecret = envVars.GITHUB_CLIENT_SECRET;
-const baseURL = envVars.APP_URL;
+const appUrl = envVars.APP_URL;
 const scopes = ["user", "repo"];
-const callbackPath = "/callback";
+const callbackSubPath = "/callback";
+const callbackPathCloud = `/github${callbackSubPath}`;
+const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
+
+const getRedirectUrl = async (res, state) => {
+	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
+	let callbackPath = callbackPathCloud;
+	if (res.locals?.gitHubAppConfig?.uuid) {
+		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
+	}
+
+	const { hostname, clientId } = res.locals.gitHubAppConfig;
+	const callbackURI = `${appUrl}${callbackPath}`;
+	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
+};
 
 const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(logger, "login", traceLogsEnabled);
-
 	// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 	// Create unique state for each oauth request
 	const state = crypto.randomBytes(8).toString("hex");
@@ -31,16 +40,15 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 	req.session[state] =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
-
 	// Find callback URL based on current url of this route
-	const callbackURI = new URL(`${req.baseUrl + req.path}/..${callbackPath}`, baseURL).toString();
+	const redirectUrl = await getRedirectUrl(res, state);
+	req.log.info("redirectUrl:", redirectUrl);
 
-	const redirectUrl = `https://${envVars.GITHUB_HOSTNAME}/login/oauth/authorize?client_id=${githubClient}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 	req.log.info({
 		redirectUrl,
 		postLoginUrl: req.session[state]
 	}, `Received request for ${req.url}, redirecting to Github OAuth flow`);
-	tracer.trace(`redirecting to ${redirectUrl}`);
+	req.log.debug(`redirecting to ${redirectUrl}`);
 	res.redirect(redirectUrl);
 };
 
@@ -53,18 +61,15 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 		state
 	} = req.query as Record<string, string>;
 
-	const traceLogsEnabled = await booleanFlag(BooleanFlags.TRACE_LOGGING, false);
-	const tracer = new Tracer(logger, "callback", traceLogsEnabled);
-
 	const timestampBefore = req.session["timestamp_before_oauth"] as number;
 	if (timestampBefore) {
 		const timestampAfter = Date.now();
-		tracer.trace(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
+		req.log.debug(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
 	}
 
 	// Show the oauth error if there is one
 	if (error) {
-		tracer.trace(`OAuth Error: ${error}`);
+		req.log.debug(`OAuth Error: ${error}`);
 		return next(`OAuth Error: ${error}
       URL: ${error_uri}
       ${error_description}`);
@@ -74,81 +79,111 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	const redirectUrl = req.session[state] as string;
 	delete req.session[state];
 
-	tracer.trace(`extracted redirectUrl from session: ${redirectUrl}`);
+	req.log.debug(`extracted redirectUrl from session: ${redirectUrl}`);
 	req.log.info({ query: req.query }, `Received request to ${req.url}`);
 
 	// Check if state is available and matches a previous request
 	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
 	if (!code) return next("Missing OAuth Code");
 
-	const { jiraHost } = res.locals;
-
+	const { jiraHost, gitHubAppConfig } = res.locals;
+	const { hostname, clientId, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
-	tracer.trace(`extracted jiraHost from redirect url: ${jiraHost}`);
+	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
+
+	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
+	if (!gitHubClientSecret) return next("Missing GitHubApp client secret from uuid");
+
+	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
+
 
 	try {
-		const response = await axios.get(
-			`https://${envVars.GITHUB_HOSTNAME}/login/oauth/access_token`,
-			{
-				params: {
-					client_id: githubClient,
-					client_secret: githubSecret,
-					code,
-					state
-				},
-				headers: {
-					accept: "application/json",
-					"content-type": "application/json"
-				},
-				responseType: "json"
-			}
-		);
 
-		// Saving it to session be used later
-		req.session.githubToken = response.data.access_token;
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
+				clientId, clientSecret: gitHubClientSecret, code, state
+			});
+			req.session.githubToken = accessToken;
+		} else {
+			const response = await axios.get(
+				`${hostname}/login/oauth/access_token`,
+				{
+					params: {
+						client_id: clientId,
+						client_secret: gitHubClientSecret,
+						code,
+						state
+					},
+					headers: {
+						accept: "application/json",
+						"content-type": "application/json"
+					},
+					responseType: "json"
+				}
+			);
+			// Saving it to session be used later
+			req.session.githubToken = response.data.access_token;
+		}
+
+		// Saving UUID for each GitHubServerApp
+		req.session.gitHubUuid = uuid;
 
 		if (!req.session.githubToken) {
-			tracer.trace(`didn't get access token from GitHub`);
+			req.log.debug(`didn't get access token from GitHub`);
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
 		}
 
-		tracer.trace(`got access token from GitHub, redirecting to ${redirectUrl}`);
+		req.log.debug(`got access token from GitHub, redirecting to ${redirectUrl}`);
 
 		req.log.info({ redirectUrl }, "Github OAuth code valid, redirecting to internal URL");
 		return res.redirect(redirectUrl);
 	} catch (e) {
-		tracer.trace(`Cannot retrieve access token from Github`);
+		req.log.debug(`Cannot retrieve access token from Github`);
 		return next(new Error("Cannot retrieve access token from Github"));
 	}
 };
 
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		const { githubToken } = req.session;
-		if (!githubToken) {
+		const { githubToken, gitHubUuid } = req.session;
+		const { jiraHost, gitHubAppConfig } = res.locals;
+		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
+
+		/**
+		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
+		 * to trigger another GitHub Login and fetch new githubToken.
+		 * This is done because the `user/installations` endpoint is based upon the githubToken
+		 * and to fetch new list of installations we need separate githubTokens
+		 */
+		if (!githubToken || gitHubUuid !== gitHubAppConfig.uuid) {
 			req.log.info("github token missing, calling login()");
 			throw "Missing github token";
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		await axios.get(`https://api.${envVars.GITHUB_HOSTNAME}`, {
-			headers: {
-				Authorization: `Bearer ${githubToken}`
-			}
-		});
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			await gitHubAnonymousClient.checkGitHubToken(githubToken);
+		} else {
+			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
+			await axios.get(url, {
+				headers: {
+					Authorization: `Bearer ${githubToken}`
+				}
+			});
+		}
 
 		req.log.debug(`Github token is valid, continuing...`);
 
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
-		// TODO: Not a great place to put this, but it'll do for now
-		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
 		// If it's a GET request, we can redirect to login and try again
 		if (req.method == "GET") {
-			req.log.info(`Trying to get new Github token...`);
+			req.log.debug(`Trying to get new Github token...`);
 			res.locals.redirect = req.originalUrl;
 			return GithubOAuthLoginGet(req, res);
 		}
@@ -158,8 +193,20 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	}
 };
 
+const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) => {
+
+	if (!gitHubAppConfig.gitHubAppId) {
+		return envVars.GITHUB_CLIENT_SECRET;
+	}
+
+	const ghesApp = await GitHubServerApp.findForUuid(gitHubAppConfig.uuid);
+	if (!ghesApp) return undefined;
+
+	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
+};
+
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
 GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);
+GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);

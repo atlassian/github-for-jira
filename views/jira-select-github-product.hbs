@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+    <meta name="public-url" content="{{APP_URL}}" />
+    <title>{{title}}</title>
+    <link
+      rel="stylesheet"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/atlassian-ui-kit/bundle.css"
+      media="all"
+    />
+    <link rel="stylesheet" href="/public/css/global.css" media="all" />
+    <link
+      rel="stylesheet"
+      href="/public/css/jira-select-github-product.css"
+      media="all"
+    />
+    <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+  </head>
+
+  <body class="aui-page-hybrid">
+    <div class="jiraSelectGitHubProduct">
+      <header class="jiraSelectGitHubProduct__header">
+         {{> navigation }}
+      </header>
+
+      <section class="jiraSelectGitHubProduct__content">
+        <h2 class="jiraSelectGitHubProduct__content__title">Select your GitHub product</h2>
+        <div class="jiraSelectGitHubProduct__options__container">
+            <p class="jiraSelectGitHubProduct__options__prompt">Which GitHub product do you want to connect?</h2>
+
+            <div class="jiraSelectGitHubProduct__options__cardsContainer">
+                {{> select-github-product-card
+                    cardTitle='GitHub Cloud'
+                    cardContent='Choose this if the URL of your GitHub organization contains the domain name "github.com". This encompasses “Free”, “Team” and “GitHub Cloud Enterprise” accounts.'
+                    cardImagePath='/public/assets/cloud.svg'
+                    cardImageAlt='Cloud'
+                    gitHubProduct='cloud'
+                    verticalLayout=true
+                }}
+                {{> select-github-product-card
+                    cardTitle='GitHub Enterprise Server'
+                    cardContent='Choose this if the URL of your GitHub organization does not contain the domain name "github.com". It instead points to a GitHub Enterprise Server installed into your own infrastructure.'
+                    cardImagePath='/public/assets/server.svg'
+                    cardImageAlt='Server'
+                    gitHubProduct='server'
+                    verticalLayout=true
+                }}
+            </div>
+        </div>
+
+        <div class="jiraSelectGitHubProduct__actionBtn__container centered">
+            <button
+                class="aui-button jiraSelectGitHubProduct__actionBtn optionBtn"
+                aria-disabled="true"
+                disabled
+            >
+                Continue
+            </button>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script
+      src="https://connect-cdn.atl-paas.net/all.js"
+      nonce="{{nonce}}"
+    ></script>
+    <script
+      src="/public/aui/aui-prototyping.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+      nonce="{{nonce}}"
+    ></script>
+    <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+  </body>
+</html>

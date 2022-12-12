@@ -2,10 +2,11 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { GithubSubscriptionDelete } from "./github-subscription-delete";
+import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
-jest.mock("config/feature-flags");
+jest.mock("models/github-server-app");
 
 const createGitHubNockGet = (url, status, response) => {
 	githubNock
@@ -13,77 +14,10 @@ const createGitHubNockGet = (url, status, response) => {
 		.reply(status, response);
 };
 
-describe("POST /github/subscription - octokit", () => {
-
-	const gitHubInstallationId = 15;
-
-	beforeEach(async () => {
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost
-		});
-
-		await Installation.create({
-			jiraHost,
-			clientKey: "client-key",
-			sharedSecret: "shared-secret"
-		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(false);
-
-	});
-
-	test("Delete GitHub Subscription", async () => {
-
-		const req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn()}) },
-			body: {
-				installationId: gitHubInstallationId,
-				jiraHost
-			}
-		};
-
-		const login = "test-user";
-		const role = "admin";
-
-		const getAuthenticated = jest.fn().mockResolvedValue({ data: { login } });
-		const getMembershipForOrg = jest.fn().mockResolvedValue({ data: { role, user: { login } } });
-		const getInstallation = jest.fn().mockResolvedValue({
-			data: {
-				id: gitHubInstallationId,
-				target_type: "User",
-				account: { login }
-			}
-		});
-		const res = {
-			sendStatus: jest.fn(),
-			status: jest.fn(),
-			locals: {
-				jiraHost,
-				githubToken: "abc-token",
-				client: {
-					apps: { getInstallation }
-				},
-				github: {
-					orgs: { getMembershipForOrg },
-					users: { getAuthenticated }
-				}
-			}
-		};
-
-		await GithubSubscriptionDelete(req as any, res as any);
-		expect(res.sendStatus).toHaveBeenCalledWith(202);
-		expect(await Subscription.count()).toEqual(0);
-	});
-});
-
 describe("delete-github-subscription", () => {
 	const gitHubInstallationId = 15;
-	let req, res;
+	const gitHubAppId = 1;
+	let req, res, gitHubApp;
 
 	beforeEach(async () => {
 		await Subscription.create({
@@ -94,21 +28,16 @@ describe("delete-github-subscription", () => {
 		await Installation.create({
 			jiraHost,
 			clientKey: "client-key",
-			sharedSecret: "shared-secret"
+			encryptedSharedSecret: "shared-secret"
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_DELETE_SUBSCRIPTION,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn() }) },
+			log: getLogger("test"),
 			body: {
 				installationId: gitHubInstallationId,
 				jiraHost
-			}
+			},
+			params: {}
 		};
 
 		res = {
@@ -117,14 +46,13 @@ describe("delete-github-subscription", () => {
 			json: jest.fn(),
 			locals: {
 				jiraHost,
-				githubToken: "abc-token"
+				githubToken: "abc-token",
+				gitHubAppConfig: {}
 			}
 		};
-
 	});
 
-	it("Should delete GitHub Subscription as an Org admin - installation type Org", async () => {
-		
+	it("Should delete GitHub Subscription as an Org admin - installation type Org | Cloud", async () => {
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
 		});
@@ -140,8 +68,49 @@ describe("delete-github-subscription", () => {
 		expect(await Subscription.count()).toEqual(0);
 	});
 
-	it("Should delete GitHub Subscription as an User - installation type User", async () => {
-		
+	it("Should delete GitHub Subscription as an Org admin - installation type Org | Server", async () => {
+		res.locals.gitHubAppConfig.gitHubAppId = gitHubAppId;
+
+		gitHubApp = {
+			id: gitHubAppId,
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app1",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret1",
+			webhookSecret: "anothersecret1",
+			privateKey: "privatekey1",
+			installationId: 1,
+			decrypt: async (s: any) => s
+		};
+
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			gitHubAppId
+		});
+
+		when(GitHubServerApp.findForUuid)
+			.expectCalledWith(uuid)
+			.mockResolvedValue(gitHubApp);
+
+		createGitHubNockGet("/app/installations/15", 200, {
+			account: { login: "test-org" }, target_type: "Org"
+		});
+		createGitHubNockGet("/user", 200, {
+			login: "test-org"
+		});
+		createGitHubNockGet("/user/memberships/orgs/test-org", 200, {
+			role: "admin", user: { login: "test-org" }
+		});
+
+		await GithubSubscriptionDelete(req as any, res as any);
+		expect(res.sendStatus).toHaveBeenCalledWith(202);
+		expect(await Subscription.count()).toEqual(1);
+	});
+
+	it("Should delete GitHub Subscription as an User - installation type User | Cloud", async () => {
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-user" }, target_type: "User"
 		});
@@ -154,8 +123,48 @@ describe("delete-github-subscription", () => {
 		expect(await Subscription.count()).toEqual(0);
 	});
 
+	it("Should delete GitHub Subscription as an User - installation type User | Server", async () => {
+		const gitHubAppId = 1;
+		res.locals.gitHubAppConfig.gitHubAppId = gitHubAppId;
+		req.params.uuid = uuid;
+
+		gitHubApp = {
+			id: gitHubAppId,
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app1",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret1",
+			webhookSecret: "anothersecret1",
+			privateKey: "privatekey1",
+			installationId: 1,
+			decrypt: async (s: any) => s
+		};
+
+		await Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			gitHubAppId
+		});
+
+		when(GitHubServerApp.findForUuid)
+			.expectCalledWith(uuid)
+			.mockResolvedValue(gitHubApp);
+
+		createGitHubNockGet("/app/installations/15", 200, {
+			account: { login: "test-user" }, target_type: "User"
+		});
+		createGitHubNockGet("/user", 200, {
+			login: "test-user"
+		});
+
+		await GithubSubscriptionDelete(req as any, res as any);
+		expect(res.sendStatus).toHaveBeenCalledWith(202);
+		expect(await Subscription.count()).toEqual(1);
+	});
+
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type Org", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "test-org" }, target_type: "Org"
 		});
@@ -172,7 +181,6 @@ describe("delete-github-subscription", () => {
 	});
 
 	it("Shoud 401 when trying to delete GitHub Subscription without delete rights - installation type User", async () => {
-		
 		createGitHubNockGet("/app/installations/15", 200, {
 			account: { login: "something-something-test-user" }, target_type: "user"
 		});

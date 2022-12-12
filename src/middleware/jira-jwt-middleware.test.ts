@@ -1,12 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { encodeSymmetric } from "atlassian-jwt";
-import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 import { JiraContextJwtTokenMiddleware } from "./jira-jwt-middleware";
 import { getLogger } from "config/logger";
 
 const logger = getLogger("jwt-middleware.test");
 jest.mock("models/installation");
+
+jest.mock("config/feature-flags", ()=>({
+	...jest.requireActual("config/feature-flags"),
+	booleanFlag: jest.fn()
+}));
 
 describe("#verifyJiraMiddleware", () => {
 	let res;
@@ -32,8 +36,7 @@ describe("#verifyJiraMiddleware", () => {
 			jiraHost,
 			clientKey: "abc123",
 			enabled: true,
-			secrets: "def234",
-			sharedSecret: testSharedSecret,
+			decrypt: jest.fn(() => testSharedSecret),
 			subscriptions: jest.fn().mockResolvedValue([])
 		};
 	});
@@ -94,7 +97,7 @@ describe("#verifyJiraMiddleware", () => {
 	describe("GET request", () => {
 
 		it("should call next with a valid token and secret", async () => {
-			mocked(Installation.getForHost).mockResolvedValue(installation);
+			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("test-host", testSharedSecret);
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
@@ -103,7 +106,7 @@ describe("#verifyJiraMiddleware", () => {
 		});
 
 		it("sets res.locals to installation", async () => {
-			mocked(Installation.getForHost).mockResolvedValue(installation);
+			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
@@ -120,13 +123,13 @@ describe("#verifyJiraMiddleware", () => {
 		});
 
 		it("adds installation details to log", async () => {
-			mocked(Installation.getForHost).mockResolvedValue(installation);
+			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
-			const addLogFieldsSpy = jest.spyOn(req, "addLogFields");
+			const logChildSpy = jest.spyOn(req, "addLogFields");
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
 
-			expect(addLogFieldsSpy).toHaveBeenCalledWith({
+			expect(logChildSpy).toHaveBeenCalledWith({
 				jiraHost,
 				jiraClientKey: "abc12***" // should be the shortened key
 			});
@@ -154,7 +157,7 @@ describe("#verifyJiraMiddleware", () => {
 		};
 
 		it("pulls jiraHost and token from body", async () => {
-			mocked(Installation.getForHost).mockResolvedValue(installation);
+			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 			const req = buildRequest("host", testSharedSecret);
 
 			await JiraContextJwtTokenMiddleware(req, res, next);
@@ -172,8 +175,26 @@ describe("#verifyJiraMiddleware", () => {
 
 	});
 
+	describe("decyrpting installation encryptedSharedSecret", ()=>{
+		let installation: Installation;
+		beforeEach(()=>{
+			installation = {
+				id: 19,
+				jiraHost,
+				clientKey: "abc123",
+				decrypt: async (f: string) => f === "encryptedSharedSecret" ? "new-cryptor-shared-secret" : null
+			} as any as Installation;
+		});
+		it("should read new field (encryptedSharedSecret) via decrypt method", async () => {
+			jest.mocked(Installation.getForHost).mockResolvedValue(installation);
+			const req = buildRequest(jiraHost, "new-cryptor-shared-secret");
+			await JiraContextJwtTokenMiddleware(req, res, next);
+			expect(next).toBeCalled();
+		});
+	});
+
 	it("should return a 401 for an undecodable jwt", async () => {
-		mocked(Installation.getForHost).mockResolvedValue(installation);
+		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 		const req = buildRequest("good-host", "wrong-secret");
 
 		await JiraContextJwtTokenMiddleware(req, res, next);
@@ -183,7 +204,7 @@ describe("#verifyJiraMiddleware", () => {
 
 	it("is unauthorized when token missing", async () => {
 
-		mocked(Installation.getForHost).mockResolvedValue(installation);
+		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 
 		const req = buildRequestWithNoToken("host");
 
@@ -195,7 +216,7 @@ describe("#verifyJiraMiddleware", () => {
 
 	it("is unauthorized when token is wrong", async () => {
 
-		mocked(Installation.getForHost).mockResolvedValue(installation);
+		jest.mocked(Installation.getForHost).mockResolvedValue(installation);
 
 		const req = buildRequestWrongJwt("host", testSharedSecret);
 
@@ -204,6 +225,5 @@ describe("#verifyJiraMiddleware", () => {
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(next).toHaveBeenCalledTimes(0);
 	});
-
 
 });
