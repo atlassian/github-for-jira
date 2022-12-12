@@ -64,6 +64,9 @@ export const sendAnalytics: {
 			sendEvent(analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
+					source: attributes["source"],
+					action: attributes["action"] || attributes.name,
+					actionSubject: attributes["actionSubject"] || attributes.name,
 					attributes
 				}
 			}));
