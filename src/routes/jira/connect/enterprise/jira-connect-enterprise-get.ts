@@ -22,14 +22,14 @@ export const JiraConnectEnterpriseGet = async (
 				uuid: key
 			})).value();
 
-			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerListScreenEventName });
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerListScreenEventName });
 			res.render("jira-select-server.hbs", {
 				list: servers,
 				// Passing these query parameters for the route when clicking `Connect a new server`
 				queryStringForPath: JSON.stringify({ new: 1 })
 			});
 		} else {
-			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
 				installationId: res.locals.installation.id
@@ -42,10 +42,9 @@ export const JiraConnectEnterpriseGet = async (
 	}
 };
 
-const sendScreenAnalytics = ({ jiraHost, isNew, gheServers, name }) => {
+const sendScreenAnalytics = ({ isNew, gheServers, name }) => {
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name,
-		jiraHost,
 		createNew: isNew,
 		existingServerAppsCount: gheServers?.length || 0
 	});

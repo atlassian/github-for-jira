@@ -38,8 +38,7 @@ export const JiraConnectEnterpriseAppPost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			success: true,
-			jiraHost
+			success: true
 		});
 
 		res.status(202).send();
@@ -49,8 +48,7 @@ export const JiraConnectEnterpriseAppPost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			success: false,
-			jiraHost
+			success: false
 		});
 
 		req.log.warn({ err }, "Could not create the app");

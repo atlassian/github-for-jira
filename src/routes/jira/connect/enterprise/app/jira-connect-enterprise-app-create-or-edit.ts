@@ -47,7 +47,6 @@ export const JiraConnectEnterpriseAppCreateOrEdit = async (
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.CreateOrEditGitHubServerAppScreenEventName,
-			jiraHost,
 			isNew: !!uuid
 		});
 

@@ -26,8 +26,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			success: true,
-			jiraHost
+			success: true
 		});
 
 		res.status(202).send();
@@ -36,8 +35,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			success: false,
-			jiraHost
+			success: false
 		});
 
 		res.status(404).send({ message: "Failed to update GitHub App." });

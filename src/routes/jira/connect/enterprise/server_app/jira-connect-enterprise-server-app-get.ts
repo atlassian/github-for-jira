@@ -24,7 +24,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 
-			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
 			res.render("jira-select-github-cloud-app.hbs", {
 				list: serverApps,
 				// Passing these query parameters for the route when clicking `Create new application`
@@ -32,7 +32,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 				serverUrl: baseUrl
 			});
 		} else {
-			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
 			res.render("jira-select-app-creation.hbs", { baseUrl });
 		}
 
@@ -42,10 +42,9 @@ export const JiraConnectEnterpriseServerAppGet = async (
 	}
 };
 
-const sendScreenAnalytics = ({ jiraHost, isNew, gheServers, name }) => {
+const sendScreenAnalytics = ({ isNew, gheServers, name }) => {
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name,
-		jiraHost,
 		createNew: isNew,
 		existingServerAppsCount: gheServers?.length || 0
 	});

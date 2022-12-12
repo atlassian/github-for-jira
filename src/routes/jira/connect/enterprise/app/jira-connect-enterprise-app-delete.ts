@@ -21,8 +21,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
-			success: true,
-			jiraHost
+			success: true
 		});
 
 		res.status(200).json({ success: true });
@@ -31,8 +30,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
-			success: false,
-			jiraHost
+			success: false
 		});
 
 		req.log.error({ error }, "Failed to delete app due error");
