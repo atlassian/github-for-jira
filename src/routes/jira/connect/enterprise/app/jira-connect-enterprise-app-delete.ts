@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 export const JiraConnectEnterpriseAppDelete = async (
 	req: Request,
@@ -17,9 +19,22 @@ export const JiraConnectEnterpriseAppDelete = async (
 
 		await GitHubServerApp.uninstallApp(gitHubAppConfig.uuid);
 
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
+			success: true,
+			jiraHost
+		});
+
 		res.status(200).json({ success: true });
 		req.log.debug("Jira Connect Enterprise App deleted successfully.");
 	} catch (error) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
+			success: false,
+			jiraHost
+		});
+
 		req.log.error({ error }, "Failed to delete app due error");
 		res.status(200).json({ success: false, message: "Failed to delete GitHub App." });
 		return;

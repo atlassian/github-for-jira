@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { chain, groupBy } from "lodash";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
@@ -20,12 +22,14 @@ export const JiraConnectEnterpriseGet = async (
 				uuid: key
 			})).value();
 
+			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerListScreenEventName });
 			res.render("jira-select-server.hbs", {
 				list: servers,
 				// Passing these query parameters for the route when clicking `Connect a new server`
 				queryStringForPath: JSON.stringify({ new: 1 })
 			});
 		} else {
+			sendScreenAnalytics({ jiraHost, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
 				installationId: res.locals.installation.id
@@ -36,4 +40,13 @@ export const JiraConnectEnterpriseGet = async (
 	} catch (error) {
 		return next(new Error(`Failed to render Jira Connect Enterprise GET page: ${error}`));
 	}
+};
+
+const sendScreenAnalytics = ({ jiraHost, isNew, gheServers, name }) => {
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name,
+		jiraHost,
+		createNew: isNew,
+		existingServerAppsCount: gheServers?.length || 0
+	});
 };

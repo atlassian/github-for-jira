@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -22,9 +24,22 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		await GitHubServerApp.updateGitHubAppByUUID(req.body, jiraHost);
 
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			success: true,
+			jiraHost
+		});
+
 		res.status(202).send();
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
 	} catch (error) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			success: false,
+			jiraHost
+		});
+
 		res.status(404).send({ message: "Failed to update GitHub App." });
 		return next(new Error(`Failed to update GitHub app: ${error}`));
 	}
