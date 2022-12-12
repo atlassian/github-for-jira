@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraConnectEnterpriseAppPost = async (
 	req: Request,
 	res: Response
 ): Promise<void> => {
+
+	const { installation, jiraHost } = res.locals;
+
 	try {
 		req.log.debug("Received Jira Connect Enterprise App POST request");
 
-		const { installation, jiraHost } = res.locals;
 		const {
 			uuid,
 			appId,
@@ -32,10 +36,23 @@ export const JiraConnectEnterpriseAppPost = async (
 			installationId: installation.id
 		}, jiraHost);
 
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
+			success: true
+		});
+
 		res.status(202).send();
 
 		req.log.debug("Jira Connect Enterprise App added successfully.");
 	} catch (err) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
+			success: false
+		});
+
 		req.log.warn({ err }, "Could not create the app");
 		res.status(500).send({ message: "Failed to create GitHub App." });
 	}

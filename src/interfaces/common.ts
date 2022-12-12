@@ -25,14 +25,32 @@ export enum AnalyticsScreenEventsEnum {
 	NotConfiguredScreenEventName = "notConfiguredScreen",
 	GitHubConfigScreenEventName = "gitHubConfigurationScreen",
 	ConnectAnOrgScreenEventName = "connectAnOrgProductCount",
-	SelectGitHubProductEventName = "selectGitHubProductScreen"
+	SelectGitHubProductEventName = "selectGitHubProductScreen",
+	SelectGitHubServerUrlScreenEventName = "selectGitHubServerUrlScreen",
+	SelectGitHubServerListScreenEventName = "selectGitHubServerListScreen",
+	SelectGitHubAppsCreationScreenEventName = "selectGitHubAppsCreationScreen",
+	SelectGitHubAppsListScreenEventName = "selectGitHubAppsListScreen",
+	CreateOrEditGitHubServerAppScreenEventName = "createOrEditGitHubServerAppScreen"
 }
 
 export enum AnalyticsTrackEventsEnum {
 	GitHubServerUrlErrorTrackEventName = "gitHubServerUrlSubmittedError",
 	GitHubServerUrlTrackEventName = "gitHubServerUrlSubmitted",
 	CreateBranchErrorTrackEventName = "createBranchSubmittedError",
-	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess"
+	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess",
+	CreateGitHubServerAppTrackEventName = "createGitHubServerApp",
+	DeleteGitHubServerAppTrackEventName = "deleteGitHubServerApp",
+	UpdateGitHubServerAppTrackEventName = "updateGitHubServerApp",
+	ConnectToOrgTrackEventName = "connectOrg",
+	DisconnectToOrgTrackEventName = "disconnectOrg",
+	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
+	RemoveGitHubServerTrackEventName = "removeGitHubServer"
+}
+
+export enum AnalyticsTrackSource {
+	Cloud = "cloud",
+	GitHubEnterprise = "gitHubEnterprise",
+	CreateBranch = "createBranch"
 }
 
 // Adding session information to express Request type
