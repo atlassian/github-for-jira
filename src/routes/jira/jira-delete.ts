@@ -2,7 +2,7 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Request, Response } from "express";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 /**
@@ -50,6 +50,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.DisconnectToOrgTrackEventName,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 		gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppId)
 	});
 

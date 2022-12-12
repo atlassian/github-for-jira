@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -26,6 +26,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			success: true
 		});
 
@@ -35,6 +36,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			success: false
 		});
 
