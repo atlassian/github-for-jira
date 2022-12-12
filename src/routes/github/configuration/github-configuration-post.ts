@@ -81,7 +81,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-			source: AnalyticsTrackSource.Default,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost,
 			success: true,
 			gitHubProduct
@@ -92,7 +92,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-			source: AnalyticsTrackSource.Default,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost,
 			success: true,
 			gitHubProduct

@@ -34,7 +34,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: true,
-			source: AnalyticsTrackSource.Default,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -45,7 +45,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: false,
-			source: AnalyticsTrackSource.Default,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});

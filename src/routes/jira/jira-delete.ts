@@ -50,7 +50,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.DisconnectToOrgTrackEventName,
-		source: AnalyticsTrackSource.Default,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 		gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppId)
 	});
 
