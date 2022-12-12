@@ -41,9 +41,10 @@ export const sendAnalytics: {
 
 	logger.debug({ eventType }, "Sending analytics");
 
+	const name = attributes.name || "";
 	switch (eventType) {
 		case "screen":
-			sendEvent(analyticsNodeClient.sendScreenEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes.name,
 				screenEvent: {
@@ -53,7 +54,7 @@ export const sendAnalytics: {
 			}));
 			break;
 		case "ui":
-			sendEvent(analyticsNodeClient.sendUIEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendUIEvent({
 				...baseAttributes,
 				uiEvent: {
 					attributes
@@ -61,7 +62,7 @@ export const sendAnalytics: {
 			}));
 			break;
 		case "track":
-			sendEvent(analyticsNodeClient.sendTrackEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
 					source: attributes["source"],
@@ -72,7 +73,7 @@ export const sendAnalytics: {
 			}));
 			break;
 		case "operational":
-			sendEvent(analyticsNodeClient.sendOperationalEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendOperationalEvent({
 				...baseAttributes,
 				operationalEvent: {
 					attributes
@@ -85,8 +86,8 @@ export const sendAnalytics: {
 	}
 };
 
-const sendEvent = (promise: Promise<unknown>) => {
+const sendEvent = (eventType: string, name: unknown, promise: Promise<unknown>) => {
 	promise.catch((error) => {
-		logger.warn(`Cannot sendAnalytics event: ${error}`);
+		logger.warn(`Cannot sendAnalytics event ${eventType} - ${name}, error: ${error}`);
 	});
 };
