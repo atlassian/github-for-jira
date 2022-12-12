@@ -8,6 +8,8 @@ import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -77,8 +79,23 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			]
 		);
 
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			jiraHost,
+			success: true,
+			gitHubProduct
+		});
+
 		res.sendStatus(200);
 	} catch (err) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			jiraHost,
+			success: true,
+			gitHubProduct
+		});
+
 		req.log.error({ err, gitHubProduct }, "Error processing subscription add request");
 		res.sendStatus(500);
 	}
