@@ -40,7 +40,10 @@ subRouter.post("/webhooks",
 	WebhookReceiverPost);
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+
+// OAuth Routes
+subRouter.use(GithubOAuthRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
