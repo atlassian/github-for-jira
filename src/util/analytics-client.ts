@@ -16,9 +16,10 @@ export const sendAnalytics: {
 	(eventType: "ui" | "operational", attributes: Record<string, unknown>);
 } = (eventType: string, attributes: Record<string, unknown> = {}): void => {
 
-	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
+		logger.warn("No analyticsClient or skipping sending analytics");
 		return;
 	}
 
@@ -65,9 +66,9 @@ export const sendAnalytics: {
 			sendEvent(eventType, name, analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
-					source: attributes["source"],
-					action: attributes["action"] || attributes.name,
-					actionSubject: attributes["actionSubject"] || attributes.name,
+					source: attributes.source,
+					action: attributes.action || attributes.name,
+					actionSubject: attributes.actionSubject || attributes.name,
 					attributes
 				}
 			}));
