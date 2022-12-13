@@ -39,10 +39,8 @@ subRouter.post("/webhooks",
 	returnOnValidationError,
 	WebhookReceiverPost);
 
-//create-branch is dealt with specially
 subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, GithubCreateBranchRouter);
 
-//rest of the routes needs jwt and gitHubApp (optional)
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
 
@@ -60,14 +58,12 @@ subRouter.use("/setup", GithubSetupRouter);
 // App Manifest flow routes
 subRouter.use("/manifest", GithubManifestRouter);
 
-subRouter.use(GithubAuthMiddleware);
-
-subRouter.use("/configuration", GithubConfigurationRouter);
+subRouter.use("/configuration", GithubAuthMiddleware, GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-subRouter.use("/subscriptions?", GithubSubscriptionRouter);
+subRouter.use("/subscriptions?", GithubAuthMiddleware, GithubSubscriptionRouter);
 
 
-subRouter.use("/repository", GithubRepositoryRouter);
+subRouter.use("/repository", GithubAuthMiddleware, GithubRepositoryRouter);
 
-subRouter.use("/branch", GithubBranchRouter);
+subRouter.use("/branch", GithubAuthMiddleware, GithubBranchRouter);
