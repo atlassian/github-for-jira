@@ -56,7 +56,7 @@ subRouter.use("/setup", GithubSetupRouter);
 // App Manifest flow routes
 subRouter.use("/manifest", GithubManifestRouter);
 
-subRouter.use(GithubServerAppMiddleware);
+subRouter.use(GithubAuthMiddleware);
 
 subRouter.use("/configuration", GithubConfigurationRouter);
 
