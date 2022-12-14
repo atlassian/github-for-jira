@@ -18,17 +18,8 @@ $(document).ready(() => {
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
+    formatNoMatches: () => "No search results",
     dropdownCssClass: "ghRepo-dropdown", // this classname is used for displaying spinner
-    createSearchChoice: (term) => {
-      const exists = queriedRepos.find(repo => repo.id.indexOf(term) > 1);
-
-      if (!exists) {
-        return {
-          text: term,
-          id: term
-        }
-      }
-    },
     _ajaxQuery: Select2.query.ajax({
       dataType: "json",
       quietMillis: 500,
@@ -45,7 +36,6 @@ $(document).ready(() => {
               text: repository.full_name
             };
             queriedRepos.unshift(additionalRepo);
-            totalRepos.unshift(additionalRepo);
           }
         });
         showLoaderInsideSelect2Dropdown("ghRepo", false);
@@ -74,6 +64,11 @@ $(document).ready(() => {
     }
   })
     .on("select2-close", () => {
+      if ($("#ghRepo").val().length) {
+        $(".no-repo-container").hide();
+      } else {
+        $(".no-repo-container").show();
+      }
       showLoaderInsideSelect2Dropdown("ghRepo", false);
     });
 
@@ -82,13 +77,12 @@ $(document).ready(() => {
     data: []
   });
 
+	$("#ghParentBranch").on("change", function (e) {
+		validateSourceBranch(e.val);
+	});
+
   $("#ghRepo").on("change", () => {
-    if(queriedRepos.length) {
-      $(".no-repo-container").hide();
-      loadBranches();
-    } else {
-      $(".no-repo-container").show();
-    }
+    loadBranches();
   });
 
   $("#createBranchForm").on("aui-valid-submit", (event) => {
@@ -98,18 +92,9 @@ $(document).ready(() => {
     }
   });
 
-  $("#cancelBtn").click(function (event) {
-    event.preventDefault();
-    window.close();
-  });
-
   $("#changeLogin").click(function (event) {
     event.preventDefault();
     changeGitHubLogin();
-  });
-
-  $("#copyGitCheckout").click(function () {
-    navigator.clipboard.writeText("git checkout " + $("#branchNameText").val());
   });
 
   $("#openGitBranch").click(function () {
@@ -117,6 +102,24 @@ $(document).ready(() => {
     window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
   });
 });
+
+$("#changeInstance").click(function (event) {
+	event.preventDefault();
+	changeGitHubInstance();
+});
+
+const validateSourceBranch = (branchName) => {
+	hideValidationErrorMessage("ghParentBranch");
+	const repo = getRepoDetails();
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+
+	$.get(url)
+		.fail((err) => {
+			if (err.status === 404) {
+				showValidationErrorMessage("ghParentBranch", "Could not find this branch on GitHub.");
+			}
+		});
+}
 
 const loadBranches = () => {
   showLoaderOnSelect2Input("ghParentBranch", true);
@@ -188,6 +191,12 @@ const showValidationErrorMessage = (id, message) => {
   }
 };
 
+const hideValidationErrorMessage = (id) => {
+  const DOM = $(`#s2id_${ id }`);
+  DOM.find("a.select2-choice").removeClass("has-errors");
+	DOM.find(".error-message").remove();
+};
+
 const createBranchPost = () => {
   let url = "/github/create-branch";
   if(uuid) {
@@ -195,9 +204,11 @@ const createBranchPost = () => {
   }
   const repo = getRepoDetails();
   const newBranchName = $("#branchNameText").val();
+  const jiraHost = $("#jiraHost").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
+		jiraHostEncoded: encodeURIComponent(jiraHost),
     sourceBranchName: $("#ghParentBranch").select2("val"),
     newBranchName,
     _csrf: $("#_csrf").val(),
@@ -212,7 +223,7 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage(error.responseJSON);
+      showErrorMessage(error.responseJSON.error);
       hideLoading();
     });
 };
@@ -220,20 +231,16 @@ const createBranchPost = () => {
 const showLoading = () => {
   $("#createBranchForm").hide();
   $(".headerImageLogo").addClass("headerImageLogo-lg");
-  $(".gitHubCreateBranch__spinner").show();
+  setTimeout(() => {
+    $(".gitHubCreateBranch__spinner").show();
+  }, 750);
 };
 
 const showSuccessScreen = (repo) => {
   $(".gitHubCreateBranch__spinner").hide();
   $(".headerImageLogo").attr("src", "/public/assets/jira-github-connection-success.svg");
   $(".gitHubCreateBranch__header").html("GitHub branch created");
-  $(".gitHubCreateBranch__subHeader").html(`Branch created in ${repo.owner}/${repo.name}`);
-  setTimeout(showSuccessWithActions, 1500);
-};
-
-const showSuccessWithActions = () => {
-  $(".headerImageLogo").removeClass("headerImageLogo-lg");
-  $(".headerImageLogo").attr("src", "/public/assets/jira-and-github.png");
+  $(".gitHubCreateBranch__subHeader").html(`Branch <b>${$("#branchNameText").val()}</b> created in ${repo.owner}/${repo.name}`);
   $(".gitHubCreateBranch__createdLinks").css("display", "flex");
 };
 
@@ -312,7 +319,10 @@ const changeGitHubLogin = () => {
     error: (error) => {
       console.log(error);
     }
-
   });
-
 };
+
+const changeGitHubInstance = () => {
+	const url = new URL(window.location.href);
+	document.location.href = `/create-branch-options${url.search}`;
+}

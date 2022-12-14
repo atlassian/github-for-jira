@@ -2,7 +2,6 @@ import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { GitHubAPI } from "probot";
 import { Octokit } from "@octokit/rest";
 import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
@@ -10,6 +9,8 @@ import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
@@ -34,25 +35,28 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let reviews: Octokit.PullsListReviewsResponse = [];
-	try {
-		reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
-	} catch (err) {
-		context.log.warn(
-			{
-				pullRequestNumber,
-				pullRequestId,
-				repositoryId,
-				repoName,
-				err
-			},
-			"Missing Github Permissions: Can't retrieve reviewers"
-		);
+
+	if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
+		reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
+	} else {
+		try {
+			reviews = await getReviews(gitHubInstallationClient, owner, repoName, pull_request.number);
+		} catch (err) {
+			context.log.warn(
+				{
+					pullRequestNumber,
+					pullRequestId,
+					repositoryId,
+					repoName,
+					err
+				},
+				"Missing Github Permissions: Can't retrieve reviewers"
+			);
+		}
 	}
 
 	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
-
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
@@ -102,7 +106,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	);
 };
 
-const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, context: WebhookContext, util, repoName, owner, pullRequest) => {
+const updateGithubIssues = async (github: GitHubInstallationClient, context: WebhookContext, util, repoName, owner, pullRequest) => {
 	const linkifiedBody = await util.unfurl(pullRequest.body);
 
 	if (!linkifiedBody) {
@@ -118,9 +122,7 @@ const updateGithubIssues = async (github: GitHubInstallationClient | GitHubAPI, 
 		issue_number: pullRequest.number
 	};
 
-	github instanceof GitHubInstallationClient ?
-		await github.updateIssue(updatedPullRequest) :
-		await github.issues.update(updatedPullRequest);
+	await github.updateIssue(updatedPullRequest);
 };
 
 const getReviews = async (githubCient: GitHubInstallationClient, owner: string, repo: string, pull_number: number): Promise<Octokit.PullsListReviewsResponse> => {

@@ -2,7 +2,7 @@ import { Installation } from "~/src/models/installation";
 import { GithubManifestCompleteGet } from "~/src/routes/github/manifest/github-manifest-complete-get";
 import { v4 as UUID } from "uuid";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-
+import { getLogger } from "config/logger";
 
 const createGheNockPost = (url, status, response) => {
 	gheApiNock
@@ -22,6 +22,7 @@ describe("github-manifest-complete-get", () => {
 			query: {
 				code: "ABCDEFGH"
 			},
+			log: getLogger("test"),
 			session: {
 				temp: {
 					gheHost: "https://github.mydomain.com"
@@ -89,11 +90,11 @@ describe("github-manifest-complete-get", () => {
 			gitHubClientId: "client_id_test",
 			gitHubBaseUrl: "https://github.mydomain.com"
 		}));
-		const webhookSecret = await githubServerApp?.decrypt("webhookSecret");
+		const webhookSecret = await githubServerApp?.getDecryptedWebhookSecret(jiraHost);
 		expect(webhookSecret).toEqual("webhook_secret_test");
-		const clientSecret = await githubServerApp?.decrypt("gitHubClientSecret");
+		const clientSecret = await githubServerApp?.getDecryptedGitHubClientSecret(jiraHost);
 		expect(clientSecret).toEqual("client_secret_test");
-		const privateKey = await githubServerApp?.decrypt("privateKey");
+		const privateKey = await githubServerApp?.getDecryptedPrivateKey(jiraHost);
 		expect(privateKey).toEqual("private_key_test");
 		expect(res.redirect).toBeCalled();
 	});

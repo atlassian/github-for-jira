@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "../utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
+import { createWebhookApp } from "test/utils/create-webhook-app";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+
+jest.mock("config/feature-flags");
 
 const githubPullReviewsResponse = [
 	{
@@ -202,7 +205,7 @@ const jiraMultipleJiraBulkResponse = {
 };
 
 describe("multiple Jira instances", () => {
-	let app: Application;
+	let app: any;
 	const gitHubInstallationId = 1234;
 	const jira2Host = "https://test2-atlassian-instance.atlassian.net";
 	const jira2Nock = nock(jira2Host);
@@ -230,6 +233,10 @@ describe("multiple Jira instances", () => {
 			jiraHost: jira2Host,
 			jiraClientKey: clientKey
 		});
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
+		).mockResolvedValue(true);
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {

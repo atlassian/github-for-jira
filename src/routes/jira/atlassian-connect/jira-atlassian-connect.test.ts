@@ -21,10 +21,7 @@ describe("Atlassian Connect", () => {
 
 	describe("Frontend", () => {
 		beforeEach(() => {
-			app.use(getFrontendApp({
-				getSignedJsonWebToken: () => "",
-				getInstallationAccessToken: async () => ""
-			}));
+			app.use(getFrontendApp());
 		});
 
 		describe.each([true, false])("Atlassian Connect", (createBranch) => {
@@ -32,7 +29,6 @@ describe("Atlassian Connect", () => {
 			beforeEach(() => {
 				when(booleanFlag).calledWith(
 					BooleanFlags.CREATE_BRANCH,
-					expect.anything(),
 					expect.anything()
 				).mockResolvedValue(createBranch);
 			});
@@ -53,4 +49,5 @@ describe("Atlassian Connect", () => {
 
 		});
 	});
+
 });

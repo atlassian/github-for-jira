@@ -1,20 +1,19 @@
 name: Push
 
 on:
+  # Only build on main branch when pushed (when PR is merged)
   push:
+    branches:
+      - main
+  # Only build in PR on creation/update
   pull_request:
-    types: [ opened ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 14
-      - uses: volta-cli/action@v1
+      - uses: volta-cli/action@v4
       - uses: actions/cache@v2
         with:
           path: '**/node_modules'
@@ -23,35 +22,115 @@ jobs:
       - run: yarn run lint
       - run: yarn run build:release
 
-  test:
-    runs-on: ubuntu-latest
-
+  unit-test:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 14
-      - run: docker-compose up -d app
-      - uses: volta-cli/action@v1
+      - uses: volta-cli/action@v4
       - uses: actions/cache@v2
         with:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
+      - name: create .env file
+        run: |
+          echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-test.pem
+          echo "APP_URL=http://localhost" > .env
+          echo "WEBHOOK_PROXY_URL=http://localhost" >> .env
+          echo "INSTANCE_NAME=fusion-test" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "APP_NAME=jira" >> .env
+          echo "APP_ID=${{ secrets.E2E_GITHUB_APP_ID }}" >> .env
+          echo "WEBHOOK_SECRET=${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}" >> .env
+          echo "GITHUB_CLIENT_ID=${{ secrets.E2E_GITHUB_CLIENT_ID }}" >> .env
+          echo "GITHUB_CLIENT_SECRET=${{ secrets.E2E_GITHUB_CLIENT_SECRET }}" >> .env
+          echo "PRIVATE_KEY_PATH=jira-test.pem" >> .env
+          echo "ATLASSIAN_URL=${{ secrets.E2E_ATLASSIAN_URL }}" >> .env
+      - run: docker-compose up -d app
+      - name: wait for app to be ready
+        run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run db:test
       - name: Run tests
         env:
           REDISX_CACHE_HOST: localhost
-          REDISX_CACHE_PORT: ${{ job.services.redis.ports[6379] }}
-          DATABASE_URL: postgres://postgres:postgres@localhost:${{ job.services.postgres.ports[5432] }}/jira-test
+          REDISX_CACHE_PORT: 6379
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/jira-test
           AWS_DEFAULT_REGION: us-west-1
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
         run: yarn test
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-coverage
+          retention-days: 14
+          path: |
+            coverage/
+
+  e2e-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    # This will prevent multiple e2e tests from running concurrently, only one at a time to prevent collisions
+    concurrency: e2e
+    steps:
+      - uses: actions/checkout@v1
+      - uses: volta-cli/action@v4
+      - uses: docker-practice/actions-setup-docker@master
+      - uses: actions/cache@v2
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+      - run: yarn install --frozen-lockfile
+      - name: create .env file
+        run: |
+          echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-e2e-test.pem
+          echo "APP_URL=http://localhost" > .env
+          echo "WEBHOOK_PROXY_URL=http://localhost" >> .env
+          echo "NGROK_AUTHTOKEN=${{ secrets.E2E_NGROK_AUTHTOKEN }}" >> .env
+          echo "INSTANCE_NAME=fusion-arc-e2e" >> .env
+          echo "NODE_ENV=e2e" >> .env
+          echo "APP_NAME=jira-e2e" >> .env
+          echo "APP_ID=${{ secrets.E2E_GITHUB_APP_ID }}" >> .env
+          echo "WEBHOOK_SECRET=${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}" >> .env
+          echo "GITHUB_CLIENT_ID=${{ secrets.E2E_GITHUB_CLIENT_ID }}" >> .env
+          echo "GITHUB_CLIENT_SECRET=${{ secrets.E2E_GITHUB_CLIENT_SECRET }}" >> .env
+          echo "PRIVATE_KEY_PATH=jira-e2e-test.pem" >> .env
+          echo "ATLASSIAN_URL=${{ secrets.E2E_ATLASSIAN_URL }}" >> .env
+          echo "JIRA_ADMIN_USERNAME=${{ secrets.E2E_JIRA_USERNAME }}" >> .env
+          echo "JIRA_ADMIN_PASSWORD=${{ secrets.E2E_JIRA_PASSWORD }}" >> .env
+          echo "GITHUB_USERNAME=${{ secrets.E2E_GITHUB_USERNAME }}" >> .env
+          echo "GITHUB_PASSWORD=${{ secrets.E2E_GITHUB_PASSWORD }}" >> .env
+          echo "GITHUB_URL=https://github.com" >> .env
+          echo "LOG_LEVEL=debug" >> .env
+      - run: docker-compose up -d
+      - name: wait for app to be ready
+        run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
+      - run: yarn run test:e2e
+      - name: export system logs
+        if: always()
+        run: |
+          free -h > memory.log
+          top -c -b -n 1 > processes.log
+          cat /var/log/syslog > sys.log
+          journalctl -k > journal.log
+      - name: export docker logs
+        if: always()
+        run: |
+          docker ps -a > docker-ps.log
+          docker stats --no-stream > docker-stats.log
+          docker-compose logs --no-color > docker-compose.log
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-output
+          retention-days: 14
+          path: |
+            test/e2e/test-results/
+            *.log
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v1
       - name: Build Docker image

@@ -1,69 +1,87 @@
-const params = new URLSearchParams(window.location.search.substring(1));
-const jiraHost = params.get("xdm_e");
-
-function goToCreateBranch() {
-	AP.context.getToken(function(token) {
-		const child = window.open(getCreateBranchTargetUrl());
-		child.window.jiraHost = jiraHost;
-		child.window.jwt = token;
-	});
-}
-
-const getCreateBranchTargetUrl = () => {
-	const searchParams = new URLSearchParams(window.location.search.substring(1));
-	const issueKey = searchParams.get("issueKey");
-	const issueSummary = searchParams.get("issueSummary");
-	if ($("#gitHubCreateBranchOptions__cloud").hasClass("gitHubCreateBranchOptions__selected")) {
-		return`session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
-	}
-	const uuid = $("#ghServers").select2("val");
-	return `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
-}
+// `params` and `jiraHost` are already defined in the `jira-select-card-option.js`
+const issueKey = params.get("issueKey");
+const issueSummary = params.get("issueSummary");
 
 $(document).ready(() => {
-
   $("#ghServers").auiSelect2();
+  const {isRedirect, url} = isAutoRedirect();
 
-  $(".gitHubCreateBranchOptions__option").click((event) => {
+  if(isRedirect) {
+    goToCreateBranch(url);
+  } else {
+    $(".gitHubCreateBranchOptions").show();
+    $(".gitHubCreateBranchOptions__loading").hide();
+
+   // When there are no cloud servers but multiple enterprise servers
+    const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
+    const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
+    if (!hasCloudServer && gheServersCount > 1) {
+      $(".jiraSelectGitHubProduct__options__container").hide();
+      $(".jiraSelectGitHubProduct__selectServerInstance").show();
+      $(".optionBtn").prop("disabled", false).attr("aria-disabled", "false").addClass("aui-button-primary");
+    }
+  }
+
+  $(".jiraSelectGitHubProduct__options__card.horizontal.server").click((event) => {
     event.preventDefault();
-    ghServerOptionHandler(event);
+    $(".jiraSelectGitHubProduct__selectServerInstance").show();
   });
 
-  $("#createBranchOptionsForm").submit((event) => {
+  $(".jiraSelectGitHubProduct__options__card.horizontal.cloud").click((event) => {
     event.preventDefault();
-		goToCreateBranch();
-	});
+    $(".jiraSelectGitHubProduct__selectServerInstance").hide();
+  });
 
-  if(isAutoRedirect()) {
-    goToCreateBranch();
-  }
+  $(".gitHubCreateBranchOptions__actionBtn").click((event) => {
+    event.preventDefault();
+    const uuid = $("#ghServers").select2("val");
+
+    if ($(".optionsCard.selected").data('type') === "cloud") {
+      goToCreateBranch(createUrlForGH(undefined, true));
+    } else {
+      goToCreateBranch(createUrlForGH(uuid, true));
+    }
+  });
 });
 
-const ghServerOptionHandler = (event) => {
-  event.preventDefault();
-  $(".gitHubCreateBranchOptions__option").removeClass("gitHubCreateBranchOptions__selected");
-  $(event.target).addClass("gitHubCreateBranchOptions__selected");
-
-  if ($(event.target).attr("id") == "gitHubCreateBranchOptions__enterprise") {
-    $(".gitHubCreateBranchOptions__serversContainer").show();
-  } else {
-    $(".gitHubCreateBranchOptions__serversContainer").hide();
-  }
+const createUrlForGH = (uuid, multiGHInstance) => {
+	const jiraHost = $("#jiraHost").val();
+  return uuid ?
+    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&ghRedirect=to&multiGHInstance=${multiGHInstance}` :
+    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&multiGHInstance=${multiGHInstance}`;
 };
 
+const goToCreateBranch = (url) => {
+	document.location.href = url;
+}
+
+/**
+ * Checks the number of cloud & enterprise servers and returns if the page should be redirected or not,
+ * with the corresponding url for creating branch
+ * @returns {{isRedirect: boolean, url: string | null}}
+ */
 const isAutoRedirect = () => {
-  const hasCloudServer = $("#createBranchOptionsForm").attr("data-has-cloud-server");
-  const gheServersCount = $("#createBranchOptionsForm").attr("data-ghe-servers-count");
+  const hasCloudServer = parseInt($(".gitHubCreateBranchOptions").attr("data-has-cloud-server"));
+  const gheServersCount = parseInt($(".gitHubCreateBranchOptions").attr("data-ghe-servers-count"));
   // Only GitHub cloud server connected
-	if (hasCloudServer && gheServersCount == 0) {
-		return true;
+	if (hasCloudServer && gheServersCount === 0) {
+		return {
+      url: createUrlForGH(),
+      isRedirect: true
+    };
 	}
 	// Only single GitHub Enterprise connected
-	if (!hasCloudServer && gheServersCount == 1) {
-		return true;
+	if (!hasCloudServer && gheServersCount === 1) {
+    const uuid = $("#ghServers").select2("val");
+
+    return {
+      url: createUrlForGH(uuid),
+      isRedirect: true
+    };
 	}
 
-  return false;
-
+  return {
+    url: null,
+    isRedirect: false
+  };
 };
-

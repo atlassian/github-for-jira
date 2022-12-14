@@ -19,41 +19,54 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 		csrfToken: jest.fn().mockReturnValue({})
 	});
 
-	const mockResponse = (): any => {
+	const mockResponse = async (): Promise<any> => {
 		const response = {
-			locals: {},
+			locals: {
+				gitHubAppConfig: {
+					gitHubAppId: gheAppOne.id,
+					appId: gheAppOne.appId,
+					uuid: gheAppOne.uuid,
+					hostname: gheAppOne.gitHubBaseUrl,
+					clientId: gheAppOne.gitHubClientId,
+					gitHubClientSecret: await gheAppOne.getDecryptedGitHubClientSecret(jiraHost),
+					webhookSecret: await gheAppOne.getDecryptedWebhookSecret(jiraHost),
+					privateKey: await gheAppOne.getDecryptedPrivateKey(jiraHost)
+				}
+			},
 			render: jest.fn().mockReturnValue({}),
 			status: jest.fn(),
-			send: jest.fn().mockReturnValue({})
+			json: jest.fn().mockReturnValue({})
 		};
 		response.status = response.status.mockReturnValue(response);
 
 		return response;
 	};
 
+	let gheAppOne: GitHubServerApp;
+
 	beforeEach(async () => {
-		await GitHubServerApp.create({
+		gheAppOne = await GitHubServerApp.install({
 			uuid: appOneUuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
 			gitHubBaseUrl,
-			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientId: "lvl.1n111111111",
 			gitHubClientSecret: "secret",
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
-		await GitHubServerApp.create({
-			uuid: "9eaf28d5-fe18-42d8-a76d-eba80adc2295",
+		}, jiraHost);
+		await GitHubServerApp.install({
+			uuid: appTwoUuid,
 			appId: 2,
 			gitHubAppName: "my awesome app",
 			gitHubBaseUrl,
-			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientId: "lvl.1n222222222",
 			gitHubClientSecret: "secret",
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId
-		});
+		}, jiraHost);
 	});
 
 	it("should delete GitHub app when uuid is found", async () => {
@@ -69,18 +82,19 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 	});
 
 	it("should send a successful response when app is deleted", async () => {
-		const response = mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest("95980446-16e1-11ed-861d-0242ac120002"), response, jest.fn());
+		const response = await mockResponse();
+		await JiraConnectEnterpriseAppDelete(mockRequest(appOneUuid), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true });
+		expect(response.json).toHaveBeenCalledWith({ success: true });
 	});
 
 	it("should send a failure response when unable to delete app", async () => {
-		const response = mockResponse();
-		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response, jest.fn());
+		const response = await mockResponse();
+		delete response.locals.gitHubAppConfig;
+		await JiraConnectEnterpriseAppDelete(mockRequest("this is not a uuid"), response);
 
-		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: false, message: "Failed to delete GitHub App." });
+		expect(response.status).toHaveBeenCalledWith(404);
+		expect(response.json).toHaveBeenCalledWith({ message: "No GitHub App found. Cannot delete." });
 	});
 });

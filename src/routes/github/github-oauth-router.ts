@@ -4,20 +4,28 @@ import { NextFunction, Request, Response, Router } from "express";
 import axios from "axios";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { GithubAPI } from "config/github-api";
 import { Errors } from "config/errors";
-import { getGitHubApiUrl } from "~/src/util/get-github-client-config";
+import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { GitHubServerApp } from "models/github-server-app";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
 const scopes = ["user", "repo"];
-const callbackPath = "/callback";
+const callbackSubPath = "/callback";
+const callbackPathCloud = `/github${callbackSubPath}`;
+const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
 
-const getRedirectUrl = async (req, res, state) => {
-	const { baseUrl } = req;
+const getRedirectUrl = async (res, state) => {
+	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
+	let callbackPath = callbackPathCloud;
+	if (res.locals?.gitHubAppConfig?.uuid) {
+		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
+	}
+
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = `${appUrl}${baseUrl}${callbackPath}`;
+	const callbackURI = `${appUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
@@ -33,7 +41,7 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 		res.locals.redirect ||
 		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
 	// Find callback URL based on current url of this route
-	const redirectUrl = await getRedirectUrl(req, res, state);
+	const redirectUrl = await getRedirectUrl(res, state);
 	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
@@ -79,32 +87,44 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, gitHubClientSecret, uuid } = gitHubAppConfig;
+	const { hostname, clientId, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
+	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
+	if (!gitHubClientSecret) return next("Missing GitHubApp client secret from uuid");
+
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
 
-	try {
-		const response = await axios.get(
-			`${hostname}/login/oauth/access_token`,
-			{
-				params: {
-					client_id: clientId,
-					client_secret: gitHubClientSecret,
-					code,
-					state
-				},
-				headers: {
-					accept: "application/json",
-					"content-type": "application/json"
-				},
-				responseType: "json"
-			}
-		);
 
-		// Saving it to session be used later
-		req.session.githubToken = response.data.access_token;
+	try {
+
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
+				clientId, clientSecret: gitHubClientSecret, code, state
+			});
+			req.session.githubToken = accessToken;
+		} else {
+			const response = await axios.get(
+				`${hostname}/login/oauth/access_token`,
+				{
+					params: {
+						client_id: clientId,
+						client_secret: gitHubClientSecret,
+						code,
+						state
+					},
+					headers: {
+						accept: "application/json",
+						"content-type": "application/json"
+					},
+					responseType: "json"
+				}
+			);
+			// Saving it to session be used later
+			req.session.githubToken = response.data.access_token;
+		}
 
 		// Saving UUID for each GitHubServerApp
 		req.session.gitHubUuid = uuid;
@@ -142,19 +162,22 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
-		await axios.get(url, {
-			headers: {
-				Authorization: `Bearer ${githubToken}`
-			}
-		});
+		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+			await gitHubAnonymousClient.checkGitHubToken(githubToken);
+		} else {
+			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
+			await axios.get(url, {
+				headers: {
+					Authorization: `Bearer ${githubToken}`
+				}
+			});
+		}
 
 		req.log.debug(`Github token is valid, continuing...`);
 
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
-		// TODO: Not a great place to put this, but it'll do for now
-		res.locals.github = GithubAPI({ auth: githubToken });
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
@@ -170,8 +193,20 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	}
 };
 
+const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) => {
+
+	if (!gitHubAppConfig.gitHubAppId) {
+		return envVars.GITHUB_CLIENT_SECRET;
+	}
+
+	const ghesApp = await GitHubServerApp.findForUuid(gitHubAppConfig.uuid);
+	if (!ghesApp) return undefined;
+
+	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
+};
+
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router();
 GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackPath, GithubOAuthCallbackGet);
+GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);

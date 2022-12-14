@@ -4,7 +4,7 @@ import { validateUrl } from "utils/validate-url";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
@@ -15,11 +15,11 @@ enum ErrorResponseCode {
 	CANNOT_CONNECT = "GHE_ERROR_CANNOT_CONNECT"
 }
 
-function isInteger(n: string) {
+const isInteger = (n: string) => {
 	return !isNaN(Number(n));
-}
+};
 
-function sendErrorMetricAndAnalytics(jiraHost: string, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) {
+const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) => {
 	const errorCodeAndStatusObj: { errorCode: string, status?: string } = { errorCode };
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
@@ -28,10 +28,11 @@ function sendErrorMetricAndAnalytics(jiraHost: string, errorCode: ErrorResponseC
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		source: AnalyticsTrackSource.CreateBranch,
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
-}
+};
 
 export const JiraConnectEnterprisePost = async (
 	req: Request,
@@ -84,6 +85,7 @@ export const JiraConnectEnterprisePost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost: jiraHost
 		});
 	} catch (err) {

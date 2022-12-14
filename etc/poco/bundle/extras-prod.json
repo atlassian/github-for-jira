@@ -11,8 +11,11 @@
       "principals": {
         "asap": {
           "issuers": [
+						"pollinator-check/9d09aa37-c3e7-4b85-b86d-4d299ad54954",
 						"pollinator-check/d99d882f-74a9-4093-822a-9ddf38b5e523",
-						"pollinator-check/713bec45-18fb-48c7-b6c2-46e6e824caec"
+						"pollinator-check/713bec45-18fb-48c7-b6c2-46e6e824caec",
+						"pollinator-check/ccf05819-f0a7-4c55-8b42-8d3db0c11bce",
+						"pollinator-check/b33f33a7-c308-468e-a2a2-06c1f2443bfb"
 					]
         }
       }

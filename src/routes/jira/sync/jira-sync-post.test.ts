@@ -23,7 +23,7 @@ describe("sync", () => {
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 		await Subscription.install({
 			installationId: installationIdForCloud,
@@ -41,7 +41,7 @@ describe("sync", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 		await Subscription.install({
 			installationId: installationIdForServer,
 			host: jiraHost,
@@ -59,7 +59,7 @@ describe("sync", () => {
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
-			iss: jiraHost
+			iss: "jira-client-key"
 		}, await installation.decrypt("encryptedSharedSecret"));
 	});
 

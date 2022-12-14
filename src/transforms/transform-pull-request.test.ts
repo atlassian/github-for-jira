@@ -4,20 +4,28 @@ import transformPullRequestList from "fixtures/api/transform-pull-request-list.j
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("pull_request transform", () => {
+	const gitHubInstallationId = 100403908;
 	let client: GitHubInstallationClient;
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
-		client = new GitHubInstallationClient(getInstallationId(100403908), gitHubCloudConfig, getLogger("test"));
+		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		when(booleanFlag).calledWith(
+			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
+		).mockResolvedValue(true);
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
 		const fixture = transformPullRequestList[0];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		githubUserTokenNock(100403908);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
@@ -67,14 +75,14 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[1];
 		fixture.title = "[TES-123] Branch payload Test";
 
-		githubUserTokenNock(100403908);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
-		githubUserTokenNock(100403908);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,
@@ -151,14 +159,14 @@ describe("pull_request transform", () => {
 		const fixture = pullRequestList[2];
 		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
 
-		githubUserTokenNock(100403908);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.user.login}`)
 			.reply(200, {
 				...fixture.user,
 				name: "Some User Name"
 			});
 
-		githubUserTokenNock(100403908);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${fixture.head.user.login}`)
 			.reply(200, {
 				...fixture.head.user,

@@ -6,7 +6,6 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
-import { Context } from "probot/lib/context";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
@@ -16,6 +15,8 @@ import { defaultLogLevel, getLogger } from "config/logger";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const warnOnErrorCodes = ["401", "403", "404"];
+
+export const LOGGER_NAME = "github.webhooks";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -55,12 +56,6 @@ const isStateChangeOrDeploymentAction = (action) =>
 	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(
 		action
 	);
-
-export class CustomContext<E = any> extends Context<E> {
-	sentry?: Sentry.Hub;
-	timedout?: number;
-	webhookReceived?: number;
-}
 
 const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
 	let webhookEvent = context.name;
@@ -103,11 +98,12 @@ export const GithubWebhookMiddleware = (
 
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
-		context.log = getLogger("github.webhooks", {
+		context.log = getLogger(LOGGER_NAME, {
 			level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, jiraHost),
 			fields: {
 				webhookId,
 				gitHubInstallationId,
+				gitHubServerAppIdPk: "" + gitHubAppId,
 				event: webhookEvent,
 				webhookReceived,
 				repoName,
@@ -115,6 +111,8 @@ export const GithubWebhookMiddleware = (
 				...context.log.fields
 			}
 		});
+
+		context.log.info("Processing webhook");
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
@@ -183,7 +181,7 @@ export const GithubWebhookMiddleware = (
 			context.log = context.log.child({ jiraHost });
 			context.log.info("Processing event for Jira Host");
 
-			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, jiraHost)) {
 				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`

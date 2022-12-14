@@ -8,22 +8,20 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
-describe('deleteRepositoryWebhookHandler', () => {
+describe("deleteRepositoryWebhookHandler", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER,
-			expect.anything()
+			BooleanFlags.USE_REPO_ID_TRANSFORMER
 		).mockResolvedValue(true);
 	});
 
-	it('should call delete repository endpoint for server', async () => {
+	it("should call delete repository endpoint for server", async () => {
 
 		const builderResult = await new DatabaseStateCreator()
 			.forServer()

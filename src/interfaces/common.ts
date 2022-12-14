@@ -1,7 +1,8 @@
 export enum EnvironmentEnum {
-	test = "test",
-	development = "development",
 	production = "production",
+	development = "development",
+	test = "test",
+	e2e = "e2e",
 }
 
 export enum BooleanEnum {
@@ -20,16 +21,36 @@ export enum AnalyticsEventTypes {
 // All variables below were defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 export enum AnalyticsScreenEventsEnum {
 	CreateBranchScreenEventName = "createBranchScreen",
+	CreateBranchOptionsScreenEventName = "createBranchOptionsScreen",
+	NotConfiguredScreenEventName = "notConfiguredScreen",
 	GitHubConfigScreenEventName = "gitHubConfigurationScreen",
 	ConnectAnOrgScreenEventName = "connectAnOrgProductCount",
-	SelectGitHubProductEventName = "selectGitHubProductScreen"
+	SelectGitHubProductEventName = "selectGitHubProductScreen",
+	SelectGitHubServerUrlScreenEventName = "selectGitHubServerUrlScreen",
+	SelectGitHubServerListScreenEventName = "selectGitHubServerListScreen",
+	SelectGitHubAppsCreationScreenEventName = "selectGitHubAppsCreationScreen",
+	SelectGitHubAppsListScreenEventName = "selectGitHubAppsListScreen",
+	CreateOrEditGitHubServerAppScreenEventName = "createOrEditGitHubServerAppScreen"
 }
 
 export enum AnalyticsTrackEventsEnum {
 	GitHubServerUrlErrorTrackEventName = "gitHubServerUrlSubmittedError",
 	GitHubServerUrlTrackEventName = "gitHubServerUrlSubmitted",
 	CreateBranchErrorTrackEventName = "createBranchSubmittedError",
-	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess"
+	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess",
+	CreateGitHubServerAppTrackEventName = "createGitHubServerApp",
+	DeleteGitHubServerAppTrackEventName = "deleteGitHubServerApp",
+	UpdateGitHubServerAppTrackEventName = "updateGitHubServerApp",
+	ConnectToOrgTrackEventName = "connectOrg",
+	DisconnectToOrgTrackEventName = "disconnectOrg",
+	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
+	RemoveGitHubServerTrackEventName = "removeGitHubServer"
+}
+
+export enum AnalyticsTrackSource {
+	Cloud = "cloud",
+	GitHubEnterprise = "gitHubEnterprise",
+	CreateBranch = "createBranch"
 }
 
 // Adding session information to express Request type
@@ -42,9 +63,11 @@ declare global {
 				githubToken?: string;
 				gitHubUuid?: string;
 				temp?:  {
-					[key: string]: any;
+					[key: string]: string;
 				}
 			};
+
+			rawBody?: string;
 		}
 	}
 }
@@ -65,6 +88,10 @@ export interface Config {
 			testing?: string[];
 			staging?: string[];
 			production?: string[];
+		}
+
+		services?: {
+			ids?: string[];
 		}
 	}
 }

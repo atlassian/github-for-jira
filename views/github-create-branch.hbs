@@ -12,8 +12,8 @@
     referrerpolicy="no-referrer"
   />
   <link rel="stylesheet" href="/public/primer/build.css" media="all" />
-  <link rel="stylesheet" href="/public/css/github-create-branch.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/github-create-branch.css" media="all" />
   <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
@@ -24,9 +24,17 @@
 <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
 <input type="hidden" id="gitHubHostname" name="hostname" value="{{hostname}}" />
 
-<div class="gitHubCreateBranch__userDetails">
-  <div>GitHub account: <b>{{gitHubUser}}</b></div>
-  <div><a href="#" id="changeLogin">Change GitHub login</a></div>
+<div class="gitHubCreateBranch__contextContainer">
+  {{#if multiGHInstance}}
+  <div class="gitHubCreateBranch__changeInstance">
+    <div>GitHub: <b>{{hostname}}</b></div>
+    <div><a href="#" id="changeInstance">Change GitHub instance</a></div>
+  </div>
+  {{/if}}
+  <div class="gitHubCreateBranch__userDetails">
+    <div>GitHub account: <b>{{gitHubUser}}</b></div>
+    <div><a href="#" id="changeLogin">Change GitHub login</a></div>
+  </div>
 </div>
 <section class="gitHubCreateBranch">
   <div class="headerImage">
@@ -36,12 +44,13 @@
 
   <div class="gitHubCreateBranch__title">
     <div class="gitHubCreateBranch__header">Create GitHub Branch</div>
-    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">Creating a branch for <b>{{issue.key}}</b></div>
+    <div class="gitHubCreateBranch__subHeader skeleton skeleton-element">
+      Creating a branch for <a href="{{issueUrl}}" target="_blank" class="gitHubCreateBranch__issueLink">{{issue.key}}</a>
+    </div>
   </div>
 
   <div class="gitHubCreateBranch__createdLinks">
-    <div class="aui-button aui-button-light" id="copyGitCheckout">Copy git checkout</div>
-    <a class="aui-button aui-button-light" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
+    <a class="aui-button aui-button-label" id="openGitBranch">View branch in GitHub <i class="aui-icon aui-iconfont-open"></i></a>
   </div>
 
   <form id="createBranchForm" class="aui top-label" data-ghe-uuid="{{uuid}}">
@@ -50,7 +59,7 @@
       <div class="skeleton skeleton-input"></div>
       <input type="hidden" id="ghRepo" class="loaded">
       {{#each repos}}
-        <div class="hidden default-repos">{{node.full_name}}</div>
+        <div class="hidden default-repos">{{full_name}}</div>
       {{/each}}
 
       <div class="no-repo-container">
@@ -59,8 +68,7 @@
         </a>
         <aui-inline-dialog id="show-no-repo-popup" alignment="bottom left" responds-to="hover">
           <div>You need to configure your GitHub repositories to your Jira site to see them here.</div>
-          <!--TODO: Add URL after confirmation-->
-          <a href="#" class="configure-link">Configure GitHub Integration</a>
+          <a href="{{jiraHost}}/plugins/servlet/ac/com.github.integration.production/github-post-install-page" target="_blank" class="configure-link">Configure GitHub integration</a>
         </aui-inline-dialog>
       </div>
     </div>
@@ -87,11 +95,10 @@
           />
     </div>
 
-        <div class="gitHubCreateBranch__serverError">
-          {{> server-error-message-box }}
-        </div>
+    <div class="gitHubCreateBranch__serverError">
+      {{> server-error-message-box }}
+    </div>
     <div class="gitHubCreateBranch__actions">
-      <button class="aui-button aui-button-light skeleton" id="cancelBtn" type="button">Cancel</button>
       <button class="aui-button aui-button-primary skeleton" id="createBranchBtn" type="submit">Create branch</button>
     </div>
   </form>

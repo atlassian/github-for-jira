@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import { mocked } from "ts-jest/utils";
 import { processInstallation } from "./installation";
@@ -27,6 +26,7 @@ jest.mock("config/feature-flags");
 
 describe("sync/branches", () => {
 
+	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
 	beforeEach(() => {
@@ -119,7 +119,7 @@ describe("sync/branches", () => {
 				});
 		};
 
-		const nockBranchRequest = (response, variables?: Record<string, any>) =>
+		const nockBranchRequest = (response: object, variables?: Record<string, unknown>) =>
 			githubNock
 				.post("/graphql", branchesNoLastCursor(variables))
 				.query(true)
@@ -307,7 +307,7 @@ describe("sync/branches", () => {
 	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
-		const nockBranchRequest = (response, variables?: Record<string, any>) =>
+		const nockBranchRequest = (response: object, variables?: Record<string, unknown>) =>
 			gheNock
 				.post("/api/graphql", branchesNoLastCursor(variables))
 				.query(true)
@@ -315,11 +315,11 @@ describe("sync/branches", () => {
 
 		beforeEach(async () => {
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
+				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
 				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()

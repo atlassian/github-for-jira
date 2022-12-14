@@ -3,7 +3,6 @@ import { Installation } from "models/installation";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { sqsQueues } from "./queues";
-import { createWebhookApp } from "test/utils/probot";
 import { waitUntil } from "test/utils/wait-until";
 
 import getRepositories from "fixtures/get-repositories.json";
@@ -13,6 +12,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { v4 as UUID } from "uuid";
 import fs from "fs";
 import path from "path";
+import { createWebhookApp } from "test/utils/create-webhook-app";
 
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
@@ -45,7 +45,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			privateKey: GHE_PEM,
 			gitHubAppName: "ghe_app_name",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 
 		//Cloud

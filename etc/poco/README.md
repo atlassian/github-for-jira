@@ -39,12 +39,12 @@ to the deployment stack already in service without needing to redeploy.
 
 ```shell
 # Publish into dev
-atlas poco bundle publish -s github-for-jira -e ddev \
+atlas poco bundle publish -s github-for-jira -e dev \
   -b etc/poco/bundle/main.json \
   -t etc/poco/bundle/main-test.json 
 
 # Publish into staging
-atlas poco bundle publish -s github-for-jira -e stg-west \
+atlas poco bundle publish -s github-for-jira -e staging \
   -b etc/poco/bundle/main.json \
   -b etc/poco/bundle/extras-stg.json \
   -t etc/poco/bundle/main-test.json \

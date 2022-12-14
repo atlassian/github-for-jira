@@ -21,6 +21,26 @@
 			"allowed": true
 		},
 		{
+			"name": "Allow pollinator GHE test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net/github-app-id/123",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/f69a7641-a541-4996-adef-0a3516da26d2"
+			],
+			"allowed": true
+		},
+		{
+			"name": "Allow pollinator GHE backfill test to call Delete Installation endpoints",
+			"path": "/api/deleteInstallation/21266506/https%3A%2F%2Ffusion-arc-pollinator-staging-app.atlassian.net/github-app-id/123",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/72b41d2e-7612-4ad2-afa1-6affe7e527b9"
+			],
+			"allowed": true
+		},
+		{
 			"name": "Not allow Pollinator tests to call other Admin endpoints",
 			"path": "/api/jira/13453453/verify",
 			"method": "DELETE",
@@ -37,6 +57,26 @@
 			"mechanism": "asap",
 			"principals": [
 				"pollinator-check/fea5d423-e21f-465b-aa67-54c8367b7777"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Pollinator GHE tests to call other Admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/f69a7641-a541-4996-adef-0a3516da26d2"
+			],
+			"allowed": false
+		},
+		{
+			"name": "Not allow Pollinator GHE backfill tests to call other Admin endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"pollinator-check/72b41d2e-7612-4ad2-afa1-6affe7e527b9"
 			],
 			"allowed": false
 		}

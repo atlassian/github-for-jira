@@ -12,16 +12,19 @@
   height: 2.5em;
   line-height: 1.7rem;
   background: #ebecf0;
-  color: #7a869a;
+  color: #172B4D;
+}
+
+#createBranchForm input[type=text] {
+  padding-left: 10px;
+}
+
+#createBranchForm input[type=text]:focus {
+  background-color: #FAFBFC;
 }
 
 .headerImage {
   position: relative;
-}
-
-.headerImageLogo {
-  height: 40px;
-  transition: all 1.5s ease;
 }
 
 .headerImageLogo-lg {
@@ -56,6 +59,10 @@
 .gitHubCreateBranch__actions {
   text-align: right;
   margin-top: 2.5em;
+}
+
+.gitHubCreateBranch__issueLink {
+  font-weight: bold;
 }
 
 /** Customizing styling for Select2 **/
@@ -96,12 +103,23 @@
 .aui-icon.aui-iconfont-error {
   margin-top: 10px;
 }
+.gitHubCreateBranch__contextContainer {
+  display: flex;
+}
+
+.gitHubCreateBranch__changeInstance {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: start;
+  margin: 16px 0px 0px 23px
+}
 
 .gitHubCreateBranch__userDetails {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
   margin: 16px 23px 0px 0px;
+  flex: 1;
 }
 
 .has-errors {
@@ -130,4 +148,8 @@
 .gitHubCreateBranch__createdLinks {
   display: none;
   justify-content: space-evenly;
+}
+
+.aui-select2-container.select2-container .select2-choice:after {
+  color: #42526E;
 }

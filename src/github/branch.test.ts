@@ -40,8 +40,7 @@ describe("BranchhWebhookHandler", () => {
 
 		beforeEach(() => {
 			when(booleanFlag).calledWith(
-				BooleanFlags.USE_REPO_ID_TRANSFORMER,
-				expect.anything()
+				BooleanFlags.USE_REPO_ID_TRANSFORMER
 			).mockResolvedValue(true);
 		});
 
@@ -59,8 +58,8 @@ describe("BranchhWebhookHandler", () => {
 			}));
 		});
 
-		describe('deleteBranchWebhookHandler', () => {
-			it('should transform repo id', async () => {
+		describe("deleteBranchWebhookHandler", () => {
+			it("should transform repo id", async () => {
 				const jiraClient = {
 					devinfo: {
 						branch: {
@@ -83,7 +82,7 @@ describe("BranchhWebhookHandler", () => {
 				repository: {
 					id: 1
 				},
-				ref: 'TEST-1'
+				ref: "TEST-1"
 			},
 			gitHubAppConfig: cloud ? {
 				uuid: undefined,

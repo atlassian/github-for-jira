@@ -3,10 +3,8 @@ import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
 import IORedis from "ioredis";
-import { Subscription } from "models/subscription";
-import { returnOnValidationError, serializeSubscription } from "./api-utils";
+import { returnOnValidationError } from "./api-utils";
 import { getRedisInfo } from "config/redis-info";
-import { findOrStartSync } from "~/src/sync/sync-utils";
 import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
@@ -15,11 +13,12 @@ import { ApiInstallationDelete } from "./installation/api-installation-delete";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
-import { TaskType } from "~/src/sync/sync.types";
-import { GitHubServerApp } from "~/src/models/github-server-app";
+import { ApiResyncPost } from "routes/api/api-resync-post";
 import { UUID_REGEX } from "~/src/util/regex";
 import { DBMigrationsRouter } from "./db-migrations/db-migration-router";
-
+import { RecoverClientKeyPost } from "./client-key/recover-client-key";
+import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
+import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 
 export const ApiRouter = Router();
 
@@ -30,7 +29,6 @@ ApiRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
-
 ApiRouter.use(
 	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
@@ -72,58 +70,15 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
 });
 
-// RESYNC ALL INSTANCES
+ApiRouter.use("/configuration", ApiConfigurationRouter);
+
+
 ApiRouter.post(
 	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
 	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
-	async (req: Request, res: Response): Promise<void> => {
-		// Partial by default, can be made full
-		const syncType = req.body.syncType || "partial";
-		// Defaults to anything not completed
-		const statusTypes = req.body.statusTypes as string[];
-		// Defaults to any installation
-		const installationIds = req.body.installationIds as number[];
-		// Can be limited to a certain amount if needed to not overload system
-		const limit = Number(req.body.limit) || undefined;
-		// Needed for 'pagination'
-		const offset = Number(req.body.offset) || 0;
-		// only resync installations whose "updatedAt" date is older than x seconds
-		const inactiveForSeconds = Number(req.body.inactiveForSeconds) || undefined;
-		// A date to start fetching commit history(main and branch) from.
-		const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
-		// restrict sync to a subset of tasks
-		const targetTasks = req.body.targetTasks as TaskType[];
-
-		if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
-			res.status(400).send("please provide at least one of the filter parameters!");
-			return;
-		}
-
-		if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
-			res.status(400).send("Invalid date value, cannot select a future date!");
-			return;
-		}
-		const { uuid } = req.params;
-		let gitHubServerApp;
-		if (uuid) {
-			gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
-			if (!gitHubServerApp) {
-				res.status(400).json("No GitHub app found for provided uuid");
-				return;
-			}
-		}
-
-		const gitHubAppId = gitHubServerApp?.id;
-		const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
-
-		await Promise.all(subscriptions.map((subscription) =>
-			findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks)
-		));
-
-		res.json(subscriptions.map(serializeSubscription));
-	}
+	ApiResyncPost
 );
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
@@ -132,6 +87,13 @@ ApiRouter.post("/hash", ApiHashPost);
 ApiRouter.post("/ping", ApiPingPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
+ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
 	param("installationId").isInt(),
@@ -168,6 +130,8 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 	}
 });
 ApiRouter.use("/db-migration", DBMigrationsRouter);
+ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
+ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

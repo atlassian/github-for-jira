@@ -9,7 +9,6 @@ import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { SessionGet } from "./session/session-get";
-import { jirahostMiddleware } from "middleware/jirahost-middleware";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
@@ -17,6 +16,8 @@ import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
+import { jirahostMiddleware } from "~/src/middleware/jirahost-middleware";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const RootRouter = Router();
 
@@ -25,7 +26,13 @@ RootRouter.use(Sentry.Handlers.requestHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
 RootRouter.use(urlencoded({ extended: false }));
-RootRouter.use(json());
+RootRouter.use(json({
+	limit: "30mb", //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
+	verify: (req: Request, _: Response, buf) => {
+		req.rawBody = buf.toString();
+	}
+}));
+
 RootRouter.use(cookieParser());
 
 // Add pertinent information to logger for all subsequent routes
@@ -63,7 +70,7 @@ RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", async (req: Request, res: Response) => {
+RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 	const { data: info } = await gitHubAppClient.getApp();

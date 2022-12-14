@@ -3,6 +3,7 @@ import { Subscription } from "models/subscription";
 import { GithubSubscriptionGet } from "routes/github/subscription/github-subscription-get";
 import { when } from "jest-when";
 import { GitHubServerApp } from "models/github-server-app";
+import { getLogger } from "config/logger";
 
 jest.mock("models/github-server-app");
 
@@ -26,7 +27,7 @@ describe("github-subscription-get", () => {
 		next = jest.fn();
 
 		req = {
-			log: { child:() => ({ error: jest.fn(), info: jest.fn(), debug: jest.fn() }) },
+			log: getLogger("test"),
 			params: {
 				installationId: gitHubInstallationId
 			},

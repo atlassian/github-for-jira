@@ -12,6 +12,7 @@ import { uniq } from "lodash";
 import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getAppKey } from "utils/app-properties-utils";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -33,7 +34,7 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number,
+	gitHubInstallationId: number | undefined,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
@@ -356,6 +357,14 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		appProperties: {
+			create: (isConfiguredState: string) =>
+				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
+					"isConfigured": isConfiguredState
+				}),
+			get: () => instance.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`),
+			delete: () => instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
 		}
 	};
 
@@ -369,7 +378,7 @@ export const getJiraClient = async (
 const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
-	installationId: number,
+	installationId: number | undefined,
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
@@ -404,6 +413,7 @@ const batchedBulkUpdate = async (
 				}
 			};
 		}
+
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);

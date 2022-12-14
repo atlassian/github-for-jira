@@ -37,7 +37,7 @@ export const getRepositoryTask = async (
 	let hasNextPage: boolean;
 	let edges: RepositoryNode[];
 	let repositories: Repository[];
-	if (await booleanFlag(BooleanFlags.USE_REST_API_FOR_DISCOVERY, false, jiraHost)) {
+	if (await booleanFlag(BooleanFlags.USE_REST_API_FOR_DISCOVERY, jiraHost)) {
 		const page = Number(cursor) || 1;
 		const response = await newGithub.getRepositoriesPageOld(page);
 		hasNextPage = response.hasNextPage;
@@ -49,6 +49,7 @@ export const getRepositoryTask = async (
 			cursor: nextCursor
 		}));
 	} else {
+		logger.info({ cursor }, "joshkay temp logging - Start fetch of Repos");
 		const response = await newGithub.getRepositoriesPage(perPage, cursor as string);
 		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 		totalCount = response.viewer.repositories.totalCount;

@@ -5,7 +5,9 @@ import { getInstallationId } from "./installation-id";
 import { keyLocator } from "./key-locator";
 import { mocked } from "ts-jest/utils";
 import { Subscription } from "~/src/models/subscription";
-import * as PrivateKey from "probot/lib/private-key";
+import { envVars } from "config/env";
+import fs from "fs";
+import path from "path";
 
 jest.mock("./key-locator");
 jest.mock("~/src/config/feature-flags");
@@ -37,7 +39,9 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 	});
 
 	it("should not cache any tokens when testing AppTokenHolder", async () => {
-		mocked(keyLocator).mockImplementation(async () => PrivateKey.findPrivateKey() || "");
+		mocked(keyLocator).mockImplementation(async () => {
+			return fs.readFileSync(path.resolve(process.cwd(), envVars.PRIVATE_KEY_PATH)).toString();
+		});
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,
@@ -54,12 +58,12 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 
 		const appTokenHolder = new AppTokenHolder();
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234));
+		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234), jiraHost);
 		expect(token1).toBeTruthy();
-		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711));
+		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711), jiraHost);
 		expect(token2).toBeTruthy();
-		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), 1);
+		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), jiraHost, 1);
 		expect(token3).toBeTruthy();
-		expect(keyLocator).toHaveBeenCalledTimes(1);
+		expect(keyLocator).toHaveBeenCalledTimes(3);
 	});
 });

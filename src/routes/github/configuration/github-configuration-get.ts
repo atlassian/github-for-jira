@@ -182,7 +182,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
 		}
 
@@ -190,15 +190,15 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
 		req.log.debug(`got user's installations with admin status from GitHub`);
-		const { data: info } = await gitHubAppClient.getApp(); //(client as GitHubAPI).apps.getAuthenticated();
+		const { data: info } = await gitHubAppClient.getApp();
 		req.log.debug(`got user's authenticated apps from GitHub`);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ info }, `verbose logging: getAuthenticated`);
 		}
 
@@ -213,7 +213,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		const rankInstallation = (i: MergedInstallation) => Number(i.isAdmin) - Number(i.isIPBlocked) + 3 * Number(i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING");
 		const sortedInstallation = connectedInstallations.sort((a, b) => rankInstallation(b) - rankInstallation(a));
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
 

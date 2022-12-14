@@ -1,22 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createWebhookApp } from "test/utils/probot";
-import { Application } from "probot";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import issueCommentBasic from "fixtures/issue-comment-basic.json";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
+import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
 const turnFF_OnOff = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 
 describe("Issue Comment Webhook", () => {
-	let app: Application;
+	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 
 	beforeEach(async () => {
@@ -35,6 +34,7 @@ describe("Issue Comment Webhook", () => {
 	});
 
 	describe("issue_comment", () => {
+		const ISSUE_ID = 5678;
 		describe("created", () => {
 			it("FF ON - should update the GitHub issue with a linked Jira ticket and add PR comment as comment in Jira issue", async () => {
 				turnFF_OnOff(true);
@@ -57,7 +57,7 @@ describe("Issue Comment Webhook", () => {
 							{
 								key: "gitHubId",
 								value: {
-									gitHubId: "5678"
+									gitHubId: `${ISSUE_ID}`
 								}
 							}
 						]
@@ -89,6 +89,26 @@ describe("Issue Comment Webhook", () => {
 							summary: "Example Issue"
 						}
 					});
+
+				await expect(app.receive(issueCommentBasic as any)).toResolve();
+			});
+
+			it("no Write perms case should be tolerated", async () => {
+				githubUserTokenNock(gitHubInstallationId);
+
+				// Mocks for updating GitHub with a linked Jira ticket
+				jiraNock
+					.get("/rest/api/latest/issue/TEST-123?fields=summary")
+					.reply(200, {
+						key: "TEST-123",
+						fields: {
+							summary: "Example Issue"
+						}
+					});
+
+				githubNock.patch(`/repos/test-repo-owner/test-repo-name/issues/comments/${ISSUE_ID}`).reply(401, {
+					error: "AccessDenied"
+				});
 
 				await expect(app.receive(issueCommentBasic as any)).toResolve();
 			});
