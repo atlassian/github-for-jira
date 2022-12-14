@@ -102,12 +102,16 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	try {
 
 		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
+			console.log('====================');
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
 			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
 				clientId, clientSecret: gitHubClientSecret, code, state
 			});
+			console.log('====================', { accessToken });
 			req.session.githubToken = accessToken;
 		} else {
+
+			console.log('-----------------------');
 			const response = await axios.get(
 				`${hostname}/login/oauth/access_token`,
 				{
@@ -124,8 +128,10 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 					responseType: "json"
 				}
 			);
+			console.log('-----------------------', { data: response.data });
 			// Saving it to session be used later
 			req.session.githubToken = response.data.access_token;
+
 		}
 
 		// Saving UUID for each GitHubServerApp
@@ -208,6 +214,6 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
-export const GithubOAuthRouter = Router();
+export const GithubOAuthRouter = Router( { mergeParams: true });
 GithubOAuthRouter.get("/login", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuthLoginGet);
 GithubOAuthRouter.get(callbackSubPath, GithubServerAppMiddleware, GithubOAuthCallbackGet);
