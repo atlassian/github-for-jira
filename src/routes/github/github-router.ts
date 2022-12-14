@@ -48,26 +48,22 @@ subRouter.use(GithubOAuthRouter);
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
 
-// OAuth Routes
-subRouter.use(GithubOAuthRouter);
-
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
 
 subRouter.use("/setup", GithubSetupRouter);
 
-// TODO: use GithubAuthMiddleware for all paths below once "create branch" supports JWT
-// subRouter.use(GithubAuthMiddleware);
-
 // App Manifest flow routes
 subRouter.use("/manifest", GithubManifestRouter);
 
-subRouter.use("/configuration", GithubAuthMiddleware, GithubConfigurationRouter);
+subRouter.use(GithubServerAppMiddleware);
+
+subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
-subRouter.use("/subscriptions?", GithubAuthMiddleware, GithubSubscriptionRouter);
+subRouter.use("/subscriptions?", GithubSubscriptionRouter);
 
 
-subRouter.use("/repository", GithubAuthMiddleware, GithubRepositoryRouter);
+subRouter.use("/repository", GithubRepositoryRouter);
 
-subRouter.use("/branch", GithubAuthMiddleware, GithubBranchRouter);
+subRouter.use("/branch", GithubBranchRouter);
