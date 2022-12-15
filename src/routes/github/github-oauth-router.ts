@@ -223,7 +223,7 @@ const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, 
 	let url;
 	try {
 		let redirectUrl = req.session[stateKey];
-		if (!redirectUrl.startsWith("https")) {
+		if (!redirectUrl.startsWith("http")) {
 			redirectUrl = "https://dummy.domain" + redirectUrl;
 		}
 		url = new URL(redirectUrl);
