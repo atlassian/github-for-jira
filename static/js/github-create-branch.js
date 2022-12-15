@@ -127,9 +127,10 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
-  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+	const jiraHost = $("#jiraHost").val();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   }
   $.ajax({
     type: "GET",
@@ -198,13 +199,13 @@ const hideValidationErrorMessage = (id) => {
 };
 
 const createBranchPost = () => {
-  let url = "/github/create-branch";
+	const jiraHost = $("#jiraHost").val();
+	let url = `/github/create-branch?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch`;
+    url = `/github/${uuid}/create-branch?jiraHost=${jiraHost}`;
   }
   const repo = getRepoDetails();
   const newBranchName = $("#branchNameText").val();
-  const jiraHost = $("#jiraHost").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
