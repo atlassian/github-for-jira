@@ -410,6 +410,8 @@ environmentOverrides:
             configParams:
               GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
+              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
+              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
           stageName: live
           dataType:

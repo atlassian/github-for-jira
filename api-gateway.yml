@@ -39,77 +39,35 @@ paths:
         uri: "https://{{ServerHost}}/{proxy}"
         connectionType: "INTERNET"
 
-  /version:
-    get:
-      produces:
-        - "application/json"
-      responses:
-        200:
-          description: "OK"
+  /github/webhooks:
+    post:
       x-amazon-apigateway-integration:
-        payloadFormatVersion: "1.0"
-        type: "http_proxy"
-        httpMethod: "GET"
-        uri: "https://{{ServerHost}}/version"
-        connectionType: "INTERNET"
-
-  /healthcheck:
-    get:
-      produces:
-        - "application/json"
-      responses:
-        200:
-          description: "OK"
-      x-amazon-apigateway-integration:
-        type: "mock"
+        credentials: "{{RoleARN}}"
+        httpMethod: "POST"
+        uri: "{{GithubQueueARN}}"
         responses:
           default:
             statusCode: "200"
-            responseTemplates:
-              application/json: "{\"status\": \"ok\"}"
-        requestTemplates:
-          application/json: "{\"statusCode\": 200}"
-
-  /github/webhooks:
-    post:
-      responses:
-        '200':
-          description: "Default response for POST /github/webhooks"
-      x-amazon-apigateway-integration:
-        payloadFormatVersion: "1.0"
-        type: "http_proxy"
-        httpMethod: "POST"
-        credentials: "{{RoleARN}}"
-        uri: "{{GithubQueueUrl}}?Action=SendMessage&MessageBody=$input.body"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body"
         passthroughBehavior: "never"
-        connectionType: "INTERNET"
+        type: "aws"
 
   /jira/events:
     post:
-      responses:
-        '200':
-          description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
-        payloadFormatVersion: "1.0"
-        type: "http_proxy"
-        httpMethod: "POST"
         credentials: "{{RoleARN}}"
-        uri: "{{JiraQueueUrl}}?Action=SendMessage&MessageBody=$input.body"
+        httpMethod: "POST"
+        uri: "{{JiraQueueARN}}"
+        responses:
+          default:
+            statusCode: "200"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body"
         passthroughBehavior: "never"
-        connectionType: "INTERNET"
-#        integrationSubtype: "SQS-SendMessage"
-#        credentials: "{{RoleARN}}"
-#        requestParameters:
-#          MessageBody: "$request.body.MessageBody"
-#          MessageAttributes: "$request.body.MessageAttributes"
-#          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
-#          QueueUrl: "{{JiraQueueUrl}}"
-#        payloadFormatVersion: "1.0"
-#        type: "aws_proxy"
-#        connectionType: "INTERNET"
-#        integrationHttpMethod: "POST"
+        type: "aws"
 x-amazon-apigateway-importexport-version: "1.0"
