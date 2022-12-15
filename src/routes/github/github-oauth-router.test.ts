@@ -63,7 +63,7 @@ describe("github-oauth-router", () => {
 			// @ts-ignore
 			expect(session.githubToken).toEqual("behold!");
 			expect(response.status).toEqual(302);
-			expect(response.headers.location).toEqual(`http://myredirect.com?${jiraHost}`);
+			expect(response.headers.location).toEqual(`http://myredirect.com?jiraHost=${jiraHost}`);
 		});
 	});
 
