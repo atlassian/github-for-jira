@@ -9,7 +9,6 @@ import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/
 import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
-import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 const logger = getLogger("github-oauth");
@@ -102,16 +101,13 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	try {
 
 		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
-			console.log('====================');
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
 			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
 				clientId, clientSecret: gitHubClientSecret, code, state
 			});
-			console.log('====================', { accessToken });
 			req.session.githubToken = accessToken;
 		} else {
 
-			console.log('-----------------------');
 			const response = await axios.get(
 				`${hostname}/login/oauth/access_token`,
 				{
@@ -128,7 +124,6 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 					responseType: "json"
 				}
 			);
-			console.log('-----------------------', { data: response.data });
 			// Saving it to session be used later
 			req.session.githubToken = response.data.access_token;
 
@@ -212,8 +207,45 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
 };
 
+const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, next: NextFunction) => {
+
+	const stateKey = req.query.state as string;
+	if (!stateKey) {
+		req.log.warn("State key is empty");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+	if (!req.session[stateKey]) {
+		req.log.warn("State is empty in req.session for callback redirect");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+
+	let url;
+	try {
+		let redirectUrl = req.session[stateKey];
+		if (!redirectUrl.startsWith("https")) {
+			redirectUrl = "https://dummy.domain" + redirectUrl;
+		}
+		url = new URL(redirectUrl);
+	} catch (e) {
+		req.log.warn("Error passing redirect url in callback", e);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+	const jiraHost = url.searchParams.get("jiraHost");
+	if (!jiraHost) {
+		req.log.warn("jiraHost is missing in state redirect uri");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+
+	res.locals.jiraHost = jiraHost;
+	next();
+};
+
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
-export const GithubOAuthRouter = Router( { mergeParams: true });
-GithubOAuthRouter.get("/login", jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackSubPath, GithubServerAppMiddleware, GithubOAuthCallbackGet);
+export const GithubOAuthRouter = Router({ mergeParams: true });
+GithubOAuthRouter.get("/login", GithubServerAppMiddleware, GithubOAuthLoginGet);
+GithubOAuthRouter.get(callbackSubPath, TempGetJiraHostFromStateMiddleware, GithubServerAppMiddleware, GithubOAuthCallbackGet);
