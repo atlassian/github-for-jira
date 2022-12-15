@@ -35,6 +35,7 @@ paths:
         httpMethod: "ANY"
         requestParameters:
           integration.request.header.Host: "'{{ServerHost}}'"
+          integration.request.path.proxy: "method.request.path.proxy"
         uri: "https://{{ServerHost}}/{proxy}"
         connectionType: "INTERNET"
 
