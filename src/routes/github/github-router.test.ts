@@ -194,19 +194,6 @@ describe("GitHub router", () => {
 					expect.anything()
 				);
 			});
-			it("should not match route, return empty if uuid present but invalid", async ()=>{
-				await supertest(app)
-					.get(`/github/${GITHUB_SERVER_APP_UUID + "random-gibberish"}/configuration`)
-					.set(
-						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
-						})
-					)
-					.expect(404);
-				expect(GithubConfigurationGet).not.toHaveBeenCalled();
-			});
 		});
 	});
 });
