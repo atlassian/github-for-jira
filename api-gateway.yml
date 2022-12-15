@@ -5,16 +5,37 @@ info:
   version: "0.0.1"
 
 paths:
-  /$default:
+#  /$default:
+#    x-amazon-apigateway-any-method:
+#      isDefaultRoute: true
+#      x-amazon-apigateway-integration:
+#        payloadFormatVersion: "1.0"
+#        type: "http_proxy"
+#        httpMethod: "ANY"
+#        requestParameters:
+#          integration.request.header.Host: "'{{ServerHost}}'"
+#        uri: "https://{{ServerHost}}"
+#        connectionType: "INTERNET"
+
+  /{proxy+}:
+    parameters:
+      - name: "proxy+"
+        in: "path"
+        description: "Generated path parameter for proxy+"
+        required: true
+        schema:
+          type: "string"
     x-amazon-apigateway-any-method:
-      isDefaultRoute: true
+      responses:
+        default:
+          description: "Default response for ANY /{proxy+}"
       x-amazon-apigateway-integration:
         payloadFormatVersion: "1.0"
         type: "http_proxy"
         httpMethod: "ANY"
         requestParameters:
           integration.request.header.Host: "'{{ServerHost}}'"
-        uri: "https://{{ServerHost}}"
+        uri: "https://{{ServerHost}}/{proxy}"
         connectionType: "INTERNET"
 
   /version:
