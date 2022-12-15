@@ -39,8 +39,8 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
-		res.locals.redirect ||
-		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
+		appendJiraHostIfNeeded(res.locals.redirect ||
+		`/github/configuration${url.parse(req.originalUrl).search || ""}`, res.locals.jiraHost);
 	// Find callback URL based on current url of this route
 	const redirectUrl = await getRedirectUrl(res, state);
 	req.log.info("redirectUrl:", redirectUrl);
@@ -241,6 +241,13 @@ const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, 
 
 	res.locals.jiraHost = jiraHost;
 	next();
+};
+
+const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
+	if (!jiraHost) return url;
+	if (url.indexOf("?") === -1) url = url + "?";
+	if (url.indexOf("&jiraHost") === -1) url = url + "&jiraHost=" + jiraHost;
+	return url;
 };
 
 // IMPORTANT: We need to keep the login/callback/middleware functions
