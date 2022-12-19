@@ -11,9 +11,10 @@ $(document).ready(() => {
   })).toArray();
 
   uuid = $("#createBranchForm").attr("data-ghe-uuid");
-  let url = "/github/repository";
+	const jiraHost = $("#jiraHost").val();
+  let url = `/github/repository?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/repository`;
+    url = `/github/${uuid}/repository?jiraHost=${jiraHost}`;
   }
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
