@@ -26,9 +26,6 @@ paths:
         schema:
           type: "string"
     x-amazon-apigateway-any-method:
-      responses:
-        default:
-          description: "Default response for ANY /{proxy+}"
       x-amazon-apigateway-integration:
         payloadFormatVersion: "1.0"
         type: "http_proxy"
@@ -44,14 +41,15 @@ paths:
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
-        uri: "{{GithubQueueARN}}"
+        uri: "{{GithubQueueARN}}?Action=SendMessage"
         responses:
           default:
             statusCode: "200"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-        requestTemplates:
-          application/json: "Action=SendMessage&MessageBody=$input.body"
+          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
+#        requestTemplates:
+#          application/json: "Action=SendMessage&MessageBody=$input.body"
         passthroughBehavior: "never"
         type: "aws"
 
@@ -60,14 +58,15 @@ paths:
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
-        uri: "{{JiraQueueARN}}"
+        uri: "{{JiraQueueARN}}?Action=SendMessage"
         responses:
           default:
             statusCode: "200"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-        requestTemplates:
-          application/json: "Action=SendMessage&MessageBody=$input.body"
+          integration.request.querystring.MessageBody: "method.request.body.MessageBody"
+#        requestTemplates:
+#          application/json: "Action=SendMessage&MessageBody=$input.body"
         passthroughBehavior: "never"
         type: "aws"
 x-amazon-apigateway-importexport-version: "1.0"
