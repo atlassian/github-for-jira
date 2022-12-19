@@ -45,7 +45,7 @@ paths:
         integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
         httpMethod : "POST"
-        uri: "{{GithubQueueUrl}}"
+        uri: "{{GithubQueueARN}}"
         requestParameters:
           MessageAttributes: "$request.body.MessageAttributes"
           MessageSystemAttributes: "$request.body.MessageSystemAttributes"
@@ -79,7 +79,7 @@ paths:
         httpMethod: "POST"
         integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
-        uri: "{{JiraQueueUrl}}"
+        uri: "{{JiraQueueARN}}"
         requestParameters:
           MessageAttributes: "$request.body.MessageAttributes"
           MessageSystemAttributes: "$request.body.MessageSystemAttributes"
