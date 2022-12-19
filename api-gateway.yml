@@ -38,6 +38,9 @@ paths:
 
   /github/webhooks:
     post:
+      responses:
+        200:
+          description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
         integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
@@ -48,6 +51,7 @@ paths:
           QueueUrl: "{{GithubQueueUrl}}"
         payloadFormatVersion: "1.0"
         type: "aws_proxy"
+        httpMethod : "POST"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
 #      x-amazon-apigateway-integration:
@@ -67,6 +71,9 @@ paths:
 
   /jira/events:
     post:
+      responses:
+        200:
+          description: "Default response for POST /jira/webhooks"
       x-amazon-apigateway-integration:
         integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
@@ -77,6 +84,7 @@ paths:
           QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
         type: "aws_proxy"
+        httpMethod : "POST"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
 #      x-amazon-apigateway-integration:
