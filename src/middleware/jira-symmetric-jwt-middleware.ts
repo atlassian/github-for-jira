@@ -16,7 +16,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 	req.log.info("Executing jiraSymmetricJwtMiddleware...");
 
-	const token = req.query?.["jwt"] || req.cookies?.["jwt"];
+	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
 
 	if (token) {
 
