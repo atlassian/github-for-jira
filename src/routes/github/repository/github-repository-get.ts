@@ -6,8 +6,10 @@ import { Subscription } from "~/src/models/subscription";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
+	const { githubToken, jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
+	const { jiraHost: jiraHostParam } = req.query;
 	const repoName = req.query?.repoName as string;
+	const jiraHost = jiraHostLocals || jiraHostParam;
 
 	if (!githubToken) {
 		res.sendStatus(401);
@@ -26,7 +28,6 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error searching repository");
-
 		res.status(500).send({
 			repositories: []
 		});
