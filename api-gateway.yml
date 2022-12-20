@@ -42,16 +42,12 @@ paths:
         200:
           description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
-        integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
-        httpMethod : "POST"
         uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}/?Action=SendMessage"
-        requestParameters:
-          MessageAttributes: "$request.body.MessageAttributes"
-          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
-          MessageBody: "$request.body.MessageBody"
-          QueueUrl: "{{GithubQueueUrl}}"
-        payloadFormatVersion: "1.0"
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
         type: "aws"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
