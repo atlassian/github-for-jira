@@ -408,10 +408,13 @@ environmentOverrides:
           swaggerConfig:
             configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
+              AccountNumber: 936664463856
               GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
+              GithubQueueName: '_Ref sqs.github-webhooks.queuename'
+              GithubQueueRegion: '_Ref sqs.github-webhooks.queueregion'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
-              GithubQueueARN: '_Ref sqs.github-webhooks.arn'
-              JiraQueueARN: '_Ref sqs.jira-webhooks.arn'
+              JiraQueueName: '_Ref sqs.jira-webhooks.queuename'
+              JiraQueueRegion: '_Ref sqs.jira-webhooks.queuename'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
           stageName: live
           dataType:
