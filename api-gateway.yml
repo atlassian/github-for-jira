@@ -52,7 +52,7 @@ paths:
           MessageBody: "$request.body.MessageBody"
           QueueUrl: "{{GithubQueueUrl}}"
         payloadFormatVersion: "1.0"
-        type: "aws_proxy"
+        type: "aws"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
 #      x-amazon-apigateway-integration:
@@ -86,7 +86,7 @@ paths:
           MessageBody: "$request.body.MessageBody"
           QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
-        type: "aws_proxy"
+        type: "aws"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
 #      x-amazon-apigateway-integration:
