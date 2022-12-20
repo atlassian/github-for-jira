@@ -2,7 +2,7 @@ import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 
-function censorUrl(url) {
+const censorUrl = (url) => {
 	if (!url) {
 		return url;
 	}
@@ -16,7 +16,7 @@ function censorUrl(url) {
 		}
 	}
 	return url;
-}
+};
 
 const responseConfigSerializer = (config) => {
 	if (!config) {
@@ -94,6 +94,7 @@ interface LoggerOptions {
 	serializers?: Serializers;
 	src?: boolean;
 	filterHttpRequests?: boolean;
+	unsafe?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {

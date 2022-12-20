@@ -3,7 +3,8 @@ import { jirahostMiddleware } from "./jirahost-middleware";
 import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { postInstallUrl } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { TokenType } from "~/src/jira/util/jwt";
-import { booleanFlag } from "../config/feature-flags";
+import { booleanFlag, BooleanFlags } from "../config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("middleware/jira-jwt-middleware");
 const mockVerifyJiraJwtMiddleware = (verifyJiraJwtMiddleware as any) as jest.Mock<typeof verifyJiraJwtMiddleware>;
@@ -26,6 +27,9 @@ describe("await jirahostMiddleware", () => {
 		mockJwtVerificationFn = jest.fn().mockImplementation((_, __, n) => n());
 		mockVerifyJiraJwtMiddleware.mockReturnValue(mockJwtVerificationFn);
 		mockBooleanFlag.mockReturnValue(async () => true);
+		when(booleanFlag).calledWith(
+			BooleanFlags.NEW_JWT_VALIDATION
+		).mockResolvedValue(false);
 	});
 
 	describe("jiraHost is provided in session", ()=>{
@@ -247,34 +251,37 @@ describe("await jirahostMiddleware", () => {
 
 });
 
-function getReq(): Request {
+const getReq = (): Request => {
 	return ({
 		path: "/",
 		query: {},
 		body: {},
 		addLogFields: jest.fn(),
 		session: {},
+		log: {
+			info: jest.fn()
+		},
 		cookies: {}
 	} as any) as Request;
-}
+};
 
-function getRes(): Response {
+const getRes = (): Response => {
 	return ({
 		locals: {},
 		clearCookie: jest.fn()
 	} as any) as Response;
-}
+};
 
-function configureLegitJiraReq(req: Request) {
+const configureLegitJiraReq = (req: Request) => {
 	req.path = postInstallUrl;
 	req.method = "GET",
 	req.query = { xdm_e: LEGIT_JIRA_HOST };
 	req.body = {};
-}
+};
 
-function configureLegitFrontendReq(req: Request) {
+const configureLegitFrontendReq = (req: Request) => {
 	req.path = postInstallUrl;
 	req.method = "POST";
 	req.query = {};
 	req.body = { jiraHost: LEGIT_JIRA_HOST };
-}
+};

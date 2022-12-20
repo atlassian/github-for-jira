@@ -29,7 +29,6 @@ describe("Atlassian Connect", () => {
 			beforeEach(() => {
 				when(booleanFlag).calledWith(
 					BooleanFlags.CREATE_BRANCH,
-					expect.anything(),
 					expect.anything()
 				).mockResolvedValue(createBranch);
 			});

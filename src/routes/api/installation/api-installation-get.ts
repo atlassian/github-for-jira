@@ -25,7 +25,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			subscriptions.map(async (subscription) => {
 				const id = subscription.gitHubInstallationId;
 				try {
-					const response = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API, false) ?
+					const response = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API) ?
 						await gitHubAppClient.getInstallation(id) :
 						await client.apps.getInstallation({ installation_id: id });
 

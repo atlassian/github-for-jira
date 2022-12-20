@@ -43,8 +43,6 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 	return allTaskTypes;
 };
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	const tasks = getTargetTasks(targetTasks);
-
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
@@ -53,6 +51,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 			cursor: subscription.repositoryCursor || undefined
 		};
 	}
+
+	const tasks = getTargetTasks(targetTasks);
 
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
 
@@ -142,7 +142,7 @@ export const updateJobStatus = async (
  * @param err the error thrown by Octokit.
  */
 export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
-	if (await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS, false)) {
+	if (await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS)) {
 		return err?.isRetryable || false;
 	}
 	if (err?.errors) {
@@ -331,6 +331,7 @@ export const handleBackfillError = async (err,
 	logger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
+	logger.info({ err, data, nextTask }, "joshkay temp logging - handleBackfillError");
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -376,7 +377,6 @@ export const handleBackfillError = async (err,
 	}
 
 	logger.error({ err }, "Task failed, continuing with next task");
-
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
@@ -386,6 +386,10 @@ export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Sub
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
+	if (nextTask.task === "repository") {
+		await subscription.update({ syncStatus: SyncStatus.FAILED });
+		return;
+	}
 	// queueing the job again to pick up the next task
 	scheduleNextTask(0);
 };

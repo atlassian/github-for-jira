@@ -1,9 +1,16 @@
 import { Installation } from "./installation";
-import Sequelize from "sequelize";
+import { QueryTypes } from "sequelize";
 import { v4 as UUID } from "uuid";
 import { getHashedKey } from "models/sequelize";
 
 describe("Installation", () => {
+	describe("Retrieving plainClientKey", () => {
+		it("should also save origin unhashed plainClientKey", async () => {
+			const inst = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
+			const found = await Installation.findByPk(inst.id);
+			expect(found.plainClientKey).toBe("1234");
+		});
+	});
 	describe("Decryption with cryptor", () => {
 		it("can decrypted the new safeSharedSecret column successfully", async () => {
 			const clientKey = UUID();
@@ -66,7 +73,7 @@ describe("Installation", () => {
 					values
 					('xxxxx', 'encrypted:some-plain-text', '${clientKey}', now(), now())
 				`, {
-			type: Sequelize.QueryTypes.INSERT
+			type: QueryTypes.INSERT
 		});
 	};
 

@@ -1,13 +1,15 @@
-import { DataTypes, Sequelize } from "sequelize";
+import { DataTypes, Sequelize, Model } from "sequelize";
 import { sequelize } from "models/sequelize";
-import { EncryptionSecretKeyEnum } from "utils/encryption-client";
-import { EncryptedModel } from "./encrypted-model";
+import { EncryptionSecretKeyEnum, EncryptionClient } from "utils/encryption-client";
+import { getLogger } from "config/logger";
 
 import EncryptedField from "sequelize-encrypted";
 
 const encrypted = EncryptedField(Sequelize, process.env.STORAGE_SECRET);
 
-export interface GitHubServerAppPayload {
+const log = getLogger("GitHubServerApp");
+
+interface GitHubServerAppPayload {
 	uuid: string;
 	appId: number;
 	gitHubBaseUrl: string;
@@ -19,7 +21,21 @@ export interface GitHubServerAppPayload {
 	installationId: number;
 }
 
-export class GitHubServerApp extends EncryptedModel {
+interface GitHubServerAppUpdatePayload {
+	uuid: string;
+	appId: number;
+	gitHubBaseUrl?: string;
+	gitHubClientId?: string;
+	gitHubClientSecret?: string;
+	webhookSecret?: string;
+	privateKey?: string;
+	gitHubAppName?: string;
+	installationId?: number;
+}
+
+type SECRETE_FIELD = "gitHubClientSecret" | "webhookSecret" | "privateKey";
+
+export class GitHubServerApp extends Model {
 	id: number;
 	uuid: string;
 	appId: number;
@@ -33,16 +49,40 @@ export class GitHubServerApp extends EncryptedModel {
 	updatedAt: Date;
 	createdAt: Date;
 
-	getEncryptionSecretKey() {
-		return EncryptionSecretKeyEnum.GITHUB_SERVER_APP;
+	getDecryptedGitHubClientSecret(jiraHost: string): Promise<string> {
+		return this.decrypt(jiraHost, "gitHubClientSecret");
 	}
 
-	async getEncryptContext() {
-		return {};
+	getDecryptedPrivateKey(jiraHost: string): Promise<string>  {
+		return this.decrypt(jiraHost, "privateKey");
 	}
 
-	getSecretFields() {
-		return ["gitHubClientSecret", "privateKey", "webhookSecret"] as const;
+	getDecryptedWebhookSecret(jiraHost: string): Promise<string>  {
+		return this.decrypt(jiraHost, "webhookSecret");
+	}
+
+	private async decrypt(jiraHost: string, field: SECRETE_FIELD): Promise<string> {
+		try {
+			return await EncryptionClient.decrypt(this[field], GitHubServerApp.getEncryptContext(jiraHost));
+		} catch (e1) {
+			try {
+				const plainText = await EncryptionClient.decrypt(this[field], {});
+				log.warn(`Fail to decrypt ${field} with jiraHost as encryptionContext, but empty encryptionContext success`);
+				return plainText;
+			} catch (e2) {
+				log.error({ e1, e2 }, `Fail to decrypt ${field}`);
+				throw e2;
+			}
+		}
+
+	}
+
+	private static async encrypt(jiraHost: string, plainText: string) {
+		return await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, plainText, GitHubServerApp.getEncryptContext(jiraHost));
+	}
+
+	private static getEncryptContext(jiraHost: string) {
+		return { jiraHost };
 	}
 
 	static async getForGitHubServerAppId(
@@ -97,7 +137,7 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	static async install(payload: GitHubServerAppPayload): Promise<GitHubServerApp> {
+	static async install(payload: GitHubServerAppPayload, jiraHost: string): Promise<GitHubServerApp> {
 		const {
 			uuid,
 			appId,
@@ -118,9 +158,9 @@ export class GitHubServerApp extends EncryptedModel {
 			defaults: {
 				uuid,
 				appId,
-				gitHubClientSecret,
-				webhookSecret,
-				privateKey,
+				gitHubClientSecret: await GitHubServerApp.encrypt(jiraHost, gitHubClientSecret),
+				webhookSecret: await GitHubServerApp.encrypt(jiraHost, webhookSecret),
+				privateKey: await GitHubServerApp.encrypt(jiraHost, privateKey),
 				gitHubAppName,
 				installationId
 			}
@@ -135,13 +175,13 @@ export class GitHubServerApp extends EncryptedModel {
 		});
 	}
 
-	static async uninstallServer(gitHubBaseUrl: string): Promise<void> {
+	static async uninstallServer(gitHubBaseUrl: string, installationId: number): Promise<void> {
 		await this.destroy({
-			where: { gitHubBaseUrl }
+			where: { gitHubBaseUrl, installationId }
 		});
 	}
 
-	static async updateGitHubAppByUUID(payload: GitHubServerAppPayload): Promise<void> {
+	static async updateGitHubAppByUUID(payload: GitHubServerAppUpdatePayload, jiraHost: string): Promise<void> {
 		const {
 			uuid,
 			appId,
@@ -160,9 +200,9 @@ export class GitHubServerApp extends EncryptedModel {
 				appId,
 				gitHubClientId,
 				gitHubBaseUrl,
-				gitHubClientSecret,
-				webhookSecret,
-				privateKey,
+				gitHubClientSecret: gitHubClientSecret ? await GitHubServerApp.encrypt(jiraHost, gitHubClientSecret) : undefined,
+				webhookSecret: webhookSecret ? await GitHubServerApp.encrypt(jiraHost, webhookSecret) : undefined,
+				privateKey: privateKey ? await GitHubServerApp.encrypt(jiraHost, privateKey) : undefined,
 				gitHubAppName,
 				installationId
 			});
@@ -229,15 +269,5 @@ GitHubServerApp.init({
 		allowNull: false
 	}
 }, {
-	hooks: {
-		beforeSave: async (app: GitHubServerApp, opts) => {
-			await app.encryptChangedSecretFields(opts.fields);
-		},
-		beforeBulkCreate: async (apps: GitHubServerApp[], opts) => {
-			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields);
-			}
-		}
-	},
 	sequelize
 });

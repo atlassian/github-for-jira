@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-standalone-expect */
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
@@ -12,7 +11,7 @@ jest.mock("config/feature-flags");
 
 describe("GitHub Client", () => {
 	const githubInstallationId = 17979017;
-	let statsdHistogramSpy, statsdIncrementSpy;
+	let statsdHistogramSpy: jest.SpyInstance, statsdIncrementSpy: jest.SpyInstance;
 	beforeEach(() => {
 		// Lock Time
 		statsdHistogramSpy = jest.spyOn(statsd, "histogram");
@@ -24,14 +23,14 @@ describe("GitHub Client", () => {
 		statsdHistogramSpy.mockRestore();
 	});
 
-	function givenGitHubReturnsPullrequests(
+	const givenGitHubReturnsPullrequests = (
 		owner: string,
 		repo: string,
 		perPage: number,
 		page: number,
 		expectedInstallationTokenInHeader?: string,
 		scope: nock.Scope = githubNock
-	) {
+	) => {
 		scope
 			.get(`/repos/${owner}/${repo}/pulls`)
 			.query({
@@ -49,15 +48,15 @@ describe("GitHub Client", () => {
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
 			]);
-	}
+	};
 
-	function givenGitHubReturnsCommit(
+	const givenGitHubReturnsCommit = (
 		owner: string,
 		repo: string,
 		ref: string,
 		expectedInstallationTokenInHeader?: string,
 		scope: nock.Scope = githubNock
-	) {
+	) => {
 		scope
 			.get(`/repos/${owner}/${repo}/commits/${ref}`)
 			.query({
@@ -73,7 +72,7 @@ describe("GitHub Client", () => {
 			.reply(200, [
 				{ number: 1 } // we don't really care about the shape of this response because it's in GitHub's hands anyways
 			]);
-	}
+	};
 
 
 	it("lists pull requests", async () => {
@@ -91,7 +90,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -114,14 +113,14 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
 		verifyMetricsSent("/repos/{owner}/{repo}/commits/{ref}", "200");
 	});
 
-	function verifyMetricsSent(path: string, status) {
+	const verifyMetricsSent = (path: string, status: string) => {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
 			gitHubProduct: "cloud",
@@ -129,15 +128,15 @@ describe("GitHub Client", () => {
 			path,
 			status
 		}));
-	}
+	};
 
-	function verifyMetricStatus(status) {
+	const verifyMetricStatus = (status: string) => {
 		expect(statsdHistogramSpy).toBeCalledWith("app.server.http.request.github", expect.anything(), expect.objectContaining({
 			client: "axios",
 			gitHubProduct: "cloud",
 			status
 		}));
-	}
+	};
 
 
 	it("should handle rate limit error from Github when X-RateLimit-Reset not specified", async () => {
@@ -151,7 +150,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -178,7 +177,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -201,7 +200,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -226,7 +225,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -252,7 +251,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -280,7 +279,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = await new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});

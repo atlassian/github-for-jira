@@ -71,7 +71,7 @@ export class DatabaseStateCreator {
 			clientKey: "client-key"
 		});
 
-		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.create({
+		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({
 			uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
@@ -81,7 +81,7 @@ export class DatabaseStateCreator {
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
 			gitHubAppName: "app-name",
 			installationId: installation.id
-		}) : undefined;
+		}, jiraHost) : undefined;
 
 		const subscription = await Subscription.create({
 			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,

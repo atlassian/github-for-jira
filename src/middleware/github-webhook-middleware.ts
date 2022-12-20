@@ -16,7 +16,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const warnOnErrorCodes = ["401", "403", "404"];
 
-export const LOGGER_NAME = 'github.webhooks';
+export const LOGGER_NAME = "github.webhooks";
 
 // Returns an async function that reports errors errors to Sentry.
 // This works similar to Sentry.withScope but works in an async context.
@@ -103,7 +103,7 @@ export const GithubWebhookMiddleware = (
 			fields: {
 				webhookId,
 				gitHubInstallationId,
-				gitHubServerAppIdPk: '' + gitHubAppId,
+				gitHubServerAppIdPk: "" + gitHubAppId,
 				event: webhookEvent,
 				webhookReceived,
 				repoName,
@@ -181,7 +181,7 @@ export const GithubWebhookMiddleware = (
 			context.log = context.log.child({ jiraHost });
 			context.log.info("Processing event for Jira Host");
 
-			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, jiraHost)) {
 				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`

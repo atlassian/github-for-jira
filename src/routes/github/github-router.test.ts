@@ -19,7 +19,7 @@ const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
 const GITHUB_SERVER_CLIENT_ID = "client-id";
 const turnGHE_FF_OnOff = (newStatus: boolean) => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 		.mockResolvedValue(newStatus);
 };
 
@@ -40,7 +40,7 @@ const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 		privateKey: "privateKey",
 		gitHubAppName: "test-app-name",
 		installationId: jiraInstallaionId
-	});
+	}, jiraHost);
 };
 
 const setupGitHubCloudPingNock = () => {
@@ -115,9 +115,7 @@ describe("GitHub router", () => {
 							githubToken: VALID_TOKEN,
 							jiraHost,
 							gitHubAppConfig: expect.objectContaining({
-								appId: envVars.APP_ID,
-								gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-								webhookSecret: envVars.WEBHOOK_SECRET
+								appId: envVars.APP_ID
 							})
 						})
 					}),
@@ -131,9 +129,7 @@ describe("GitHub router", () => {
 						githubToken: VALID_TOKEN,
 						jiraHost,
 						gitHubAppConfig: expect.objectContaining({
-							appId: envVars.APP_ID,
-							gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-							webhookSecret: envVars.WEBHOOK_SECRET
+							appId: envVars.APP_ID
 						})
 					}));
 			});
@@ -191,29 +187,12 @@ describe("GitHub router", () => {
 							gitHubAppId: gitHubAppId,
 							gitHubAppConfig: expect.objectContaining({
 								appId: GITHUB_SERVER_APP_ID,
-								uuid: GITHUB_SERVER_APP_UUID,
-								gitHubClientSecret: "gitHubClientSecret",
-								webhookSecret: "webhookSecret",
-								privateKey: "privateKey"
+								uuid: GITHUB_SERVER_APP_UUID
 							})
 						})
 					}),
 					expect.anything()
 				);
-			});
-			it("should not match route, return empty if uuid present but invalid", async ()=>{
-				setupGitHubCloudPingNock(); //since uuid invalid, this fallsback to cloud
-				await supertest(app)
-					.get(`/github/${GITHUB_SERVER_APP_UUID + "random-gibberish"}/configuration`)
-					.set(
-						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
-						})
-					)
-					.expect(404);
-				expect(GithubConfigurationGet).not.toHaveBeenCalled();
 			});
 		});
 	});

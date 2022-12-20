@@ -53,10 +53,10 @@ export class AppTokenHolder {
 	/**
 	 * Gets the current app token or creates a new one if the old is about to expire.
 	 */
-	public async getAppToken(appId: InstallationId, ghsaId?: number): Promise<AuthToken> {
+	public async getAppToken(appId: InstallationId, jiraHost: string, ghsaId?: number): Promise<AuthToken> {
 		let currentToken = this.appTokenCache.get(appId.toString());
 		if (!currentToken || currentToken.isAboutToExpire()) {
-			const key = await keyLocator(ghsaId);
+			const key = await keyLocator(ghsaId, jiraHost);
 			if (!key) {
 				throw new Error(`No private key found for GitHub app ${appId.toString}`);
 			}

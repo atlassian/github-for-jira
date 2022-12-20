@@ -4,6 +4,7 @@ import { verifyJiraJwtMiddleware } from "middleware/jira-jwt-middleware";
 import { TokenType } from "~/src/jira/util/jwt";
 import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "utils/match-route-with-pattern";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
@@ -42,8 +43,13 @@ const detectJwtTokenType = (req: Request): TokenType => {
 //
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
-	const unsafeJiraHost = extractUnsafeJiraHost(req);
+	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
+		req.log.info("Skipping jirahostMiddleware...");
+		return next();
+	}
+	req.log.info("Executing jirahostMiddleware...");
 
+	const unsafeJiraHost = extractUnsafeJiraHost(req);
 	req.addLogFields({ jiraHost: unsafeJiraHost });
 
 	// JWT validation makes sure "res.locals.jiraHost" is legit, not the cookie value. To avoid
@@ -64,7 +70,6 @@ export const jirahostMiddleware = async (req: Request, res: Response, next: Next
 			// Cleaning up outside of "if" to unblock cookies if they were corrupted somehow
 			// on any other successful validation (e.g. when /jira/configuration is refreshed)
 			res.clearCookie("jwt");
-
 			next();
 		});
 	} else {

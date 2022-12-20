@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { envVars } from "config/env";
-import { keyLocator } from "../github/client/key-locator";
 import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
 export const GithubServerAppMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -18,14 +17,20 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		if (!gitHubServerApp) {
 			req.log.error("No GitHub app found for provided uuid.");
-			throw new Error("No GitHub app found for provided id.");
+			res.status(404).json({
+				message: "No GitHub app found for provided id."
+			});
+			return;
 		}
 
 		const installation = await Installation.findByPk(gitHubServerApp.installationId);
 
 		if (installation?.jiraHost !== jiraHost) {
 			req.log.error({ uuid, jiraHost }, "Jira hosts do not match");
-			throw new Error("Jira hosts do not match.");
+			res.status(401).json({
+				message: "Jira hosts do not match."
+			});
+			return;
 		}
 
 		req.log.info("Found server app for installation. Defining GitHub app config for GitHub Enterprise Server.");
@@ -37,10 +42,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			appId: gitHubServerApp.appId,
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
-			clientId: gitHubServerApp.gitHubClientId,
-			gitHubClientSecret: await gitHubServerApp.decrypt("gitHubClientSecret"),
-			webhookSecret: await gitHubServerApp.decrypt("webhookSecret"),
-			privateKey: await gitHubServerApp.decrypt("privateKey")
+			clientId: gitHubServerApp.gitHubClientId
 		};
 	} else {
 		req.log.info("Defining GitHub app config for GitHub Cloud.");
@@ -49,10 +51,7 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 			appId: envVars.APP_ID,
 			uuid: undefined, //undefined for cloud
 			hostname: GITHUB_CLOUD_BASEURL,
-			clientId: envVars.GITHUB_CLIENT_ID,
-			gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
-			webhookSecret: envVars.WEBHOOK_SECRET,
-			privateKey: await keyLocator(undefined)
+			clientId: envVars.GITHUB_CLIENT_ID
 		};
 	}
 

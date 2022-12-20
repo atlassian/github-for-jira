@@ -1,6 +1,6 @@
-import { DataTypes, DATE, Model, Op, WhereOptions } from "sequelize";
+import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize } from "models/sequelize";
+import { sequelize, getHashedKey } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -33,6 +33,7 @@ export class Subscription extends Model {
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
 	jiraClientKey: string;
+	plainClientKey: string;
 	updatedAt: Date;
 	createdAt: Date;
 	totalNumberOfRepos?: number;
@@ -141,16 +142,32 @@ export class Subscription extends Model {
 	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId: number,
-		gitHubAppId: number | undefined
+		gitHubInstallationId?: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
 				jiraHost,
-				gitHubInstallationId,
+				gitHubInstallationId: gitHubInstallationId || null,
 				gitHubAppId: gitHubAppId || null
 			}
 		});
+	}
+
+	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoName\" = :repoName " +
+			"AND rss.\"repoOwner\" = :repoOwner",
+			{
+				replacements: { jiraHost, repoName, repoOwner },
+				type: QueryTypes.SELECT
+			}
+		);
+		return results[0] as Subscription;
 	}
 
 	// TODO: Change name to 'create' to follow sequelize standards
@@ -159,8 +176,11 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: payload.clientKey,
+				jiraClientKey: getHashedKey(payload.clientKey),
 				gitHubAppId: payload.gitHubAppId || null
+			},
+			defaults: {
+				plainClientKey: payload.clientKey
 			}
 		});
 
@@ -182,7 +202,7 @@ export class Subscription extends Model {
 	 * Returns array with sync status counts. [ { syncStatus: 'COMPLETED', count: 123 }, ...]
 	 */
 	static async syncStatusCounts(): Promise<SyncStatusCount[]> {
-		const results = await this.sequelize?.query(
+		const results = await this.sequelize!.query(
 			`SELECT "syncStatus", COUNT(*)
 			 FROM "Subscriptions"
 			 GROUP BY "syncStatus"`
@@ -209,6 +229,10 @@ Subscription.init({
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
 	jiraClientKey: DataTypes.STRING,
+	plainClientKey: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
 	numberOfSyncedRepos: DataTypes.INTEGER,
 	totalNumberOfRepos: DataTypes.INTEGER,
 	repositoryCursor: DataTypes.STRING,

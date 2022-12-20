@@ -21,7 +21,7 @@ const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContex
 
 const turnOnGHESFF = () => {
 	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
+		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
 		.mockResolvedValue(true);
 };
 
@@ -30,8 +30,7 @@ describe("code_scanning_alert transform", () => {
 		Date.now = jest.fn(() => 12345678);
 
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER,
-			expect.anything()
+			BooleanFlags.USE_REPO_ID_TRANSFORMER
 		).mockResolvedValue(true);
 	});
 	const gitHubInstallationId = 1234;

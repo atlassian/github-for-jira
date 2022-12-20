@@ -1,13 +1,15 @@
 import Logger from "bunyan";
 import { Request, Response } from "express";
-import { createAppClient, createInstallationClient } from "utils/get-github-client-config";
+import { createAppClient, createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
+	const { githubToken, jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
+	const { jiraHost: jiraHostParam } = req.query;
 	const repoName = req.query?.repoName as string;
+	const jiraHost = jiraHostLocals || jiraHostParam;
 
 	if (!githubToken) {
 		res.sendStatus(401);
@@ -20,25 +22,51 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
-		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, req.log);
+		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
 		res.send({
-			repositories: repos
+			repositories
 		});
 	} catch (err) {
 		req.log.error({ err }, "Error searching repository");
-		res.sendStatus(500);
+		res.status(500).send({
+			repositories: []
+		});
 	}
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<RepositoryNode[]> => {
+export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubAppId, githubToken, logger) => {
+	try {
+		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, logger);
+		return repos || [];
+	} catch (err) {
+		logger.log.error({ err }, "Error searching repository");
+		return [];
+	}
+};
+
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, githubToken:string, logger: Logger): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
-			const orgName = await getOrgName(subscription, jiraHost, logger);
-			const searchQueryString = `${repoName} org:${orgName} in:name`;
-			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
-			const response = await gitHubInstallationClient.searchRepositories(searchQueryString);
-			return response.data?.items;
+			const [orgName, gitHubInstallationClient, gitHubUserClient] = await Promise.all([
+				getOrgName(subscription, jiraHost, logger),
+				createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId),
+				createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId)
+			]);
+			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
+			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
+			const [responseInstallationSearch, responseUserSearch] = await Promise.all([
+				gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated"),
+				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
+			]);
+
+			const userInstallationSearch = responseInstallationSearch.data?.items || [];
+			const userClientSearch = responseUserSearch.data?.items || [];
+
+			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
+
+			return repos;
 		} catch (err) {
 			logger.error("Create branch - Failed to search repos for installation");
 			throw err;
@@ -48,6 +76,19 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 		.flat()
 		.sort(sortByScoreAndUpdatedAt);
 	return repos.slice(0, MAX_REPOS_RETURNED);
+};
+
+// We want repos that exist in installation client and user client.
+const getIntersectingRepos = (installationRepos, userRepos) => {
+	const intersection: RepositoryNode[] = [];
+	installationRepos.forEach((installationRepo) => {
+		userRepos.forEach((userRepo) => {
+			if (installationRepo.id === userRepo.id) {
+				intersection.push(installationRepo);
+			}
+		});
+	});
+	return intersection;
 };
 
 const sortByScoreAndUpdatedAt = (a, b) => {

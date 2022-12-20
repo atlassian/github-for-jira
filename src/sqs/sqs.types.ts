@@ -170,9 +170,6 @@ export type GitHubAppConfig = {
 	gitHubBaseUrl: string, // GITHUB_CLOUD_BASEURL for cloud
 	gitHubApiUrl: string,
 	uuid: string | undefined,
-	//gitHubClientSecret: string,
-	//webhookSecret: string,
-	//privateKey: string
 }
 
 //refer from https://docs.github.com/en/rest/repos/repos#get-a-repository

@@ -45,7 +45,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			privateKey: GHE_PEM,
 			gitHubAppName: "ghe_app_name",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 
 		//Cloud

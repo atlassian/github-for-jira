@@ -11,9 +11,10 @@ $(document).ready(() => {
   })).toArray();
 
   uuid = $("#createBranchForm").attr("data-ghe-uuid");
-  let url = "/github/repository";
+	const jiraHost = $("#jiraHost").val();
+  let url = `/github/repository?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/repository`;
+    url = `/github/${uuid}/repository?jiraHost=${jiraHost}`;
   }
   $("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
@@ -103,6 +104,10 @@ $(document).ready(() => {
   });
 });
 
+$("#changeInstance").click(function (event) {
+	event.preventDefault();
+	changeGitHubInstance();
+});
 
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
@@ -123,9 +128,10 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
-  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
+	const jiraHost = $("#jiraHost").val();
+  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
+    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   }
   $.ajax({
     type: "GET",
@@ -194,15 +200,17 @@ const hideValidationErrorMessage = (id) => {
 };
 
 const createBranchPost = () => {
-  let url = "/github/create-branch";
+	const jiraHost = $("#jiraHost").val();
+	let url = `/github/create-branch?jiraHost=${jiraHost}`;
   if(uuid) {
-    url = `/github/${uuid}/create-branch`;
+    url = `/github/${uuid}/create-branch?jiraHost=${jiraHost}`;
   }
   const repo = getRepoDetails();
   const newBranchName = $("#branchNameText").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
+		jiraHostEncoded: encodeURIComponent(jiraHost),
     sourceBranchName: $("#ghParentBranch").select2("val"),
     newBranchName,
     _csrf: $("#_csrf").val(),
@@ -217,7 +225,7 @@ const createBranchPost = () => {
     })
     .fail((error) => {
       toggleSubmitDisabled(false);
-      showErrorMessage(error.responseJSON);
+      showErrorMessage(error.responseJSON.error);
       hideLoading();
     });
 };
@@ -313,7 +321,10 @@ const changeGitHubLogin = () => {
     error: (error) => {
       console.log(error);
     }
-
   });
-
 };
+
+const changeGitHubInstance = () => {
+	const url = new URL(window.location.href);
+	document.location.href = `/create-branch-options${url.search}`;
+}

@@ -7,7 +7,7 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -122,12 +122,13 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
+	const hasConnections = !!installations.total;
 
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		successfulConnections,
 		failedConnections,
-		hasConnections: !!installations.total,
+		hasConnections,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
@@ -141,14 +142,15 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		connectedOrgCount: installations.total,
 		failedCloudBackfillCount: countStatus(successfulConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
+		hasConnections
 	});
 };
 
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const gheServers = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
+	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
 	// Separating the subscriptions for GH cloud and GHE servers
 	const ghCloudSubscriptions = subscriptions.filter(subscription => !subscription.gitHubAppId);
@@ -162,7 +164,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	} = await getConnectionsAndInstallations(ghCloudSubscriptions, req);
 
 	// Connections for GH Enterprise
-	const gheServersWithConnections = await Promise.all(gheServers.map(async (server) => {
+	const gheServersWithConnections = await Promise.all(gheServers.map(async (server: GitHubServerApp) => {
 		const subscriptionsForServer = gheServerSubscriptions.filter(subscription => subscription.gitHubAppId === server.id);
 		const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptionsForServer, req, server.id);
 
@@ -180,13 +182,15 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			applications: value
 		})).value();
 
+	const hasConnections =  !!(installations.total || gheServers?.length);
+
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
-		hasConnections: !!(installations.total || gheServers?.length),
+		hasConnections,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
@@ -207,7 +211,8 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		failedServerBackfillCount: countStatus(gheServersWithConnections, "FAILED"),
 		successfulCloudBackfillCount: countStatus(successfulCloudConnections, "FINISHED"),
 		successfulServerBackfillCount: countStatus(gheServersWithConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections)
+		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
+		hasConnections
 	});
 };
 
@@ -227,7 +232,7 @@ export const JiraGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.GHE_SERVER, jiraHost)) {
 			await renderJiraCloudAndEnterpriseServer(res, req);
 		} else {
 			await renderJiraCloud(res, req);

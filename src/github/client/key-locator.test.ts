@@ -18,16 +18,16 @@ describe("key-locator", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 
-		const privateKey = await keyLocator(gitHubServerApp.id);
+		const privateKey = await keyLocator(gitHubServerApp.id, jiraHost);
 		expect(privateKey).toBe("myprivatekey");
 
 	});
 
 	it("should return cloud app private key using PRIVATE_KEY_PATH", async () => {
 		const privateKeyContents = readFileSync(`${process.cwd()}/test/setup/test-key.pem`, "utf-8");
-		const privateKey = await keyLocator(undefined);
+		const privateKey = await keyLocator(undefined, jiraHost);
 		expect(privateKey).toBe(privateKeyContents);
 
 	});
@@ -36,7 +36,7 @@ describe("key-locator", () => {
 		const envPrivateKeyPath = envVars.PRIVATE_KEY_PATH;
 		process.env.PRIVATE_KEY_PATH = "cloud-private-key-invalid-path.pem";
 
-		await expect(keyLocator(undefined)).rejects.toThrow("Private key does not exists");
+		await expect(keyLocator(undefined, jiraHost)).rejects.toThrow("Private key does not exists");
 		process.env.PRIVATE_KEY_PATH = envPrivateKeyPath;
 
 	});
@@ -47,7 +47,7 @@ describe("key-locator", () => {
 		-----END RSA PRIVATE KEY-----`;
 		const envPrivateKey = envVars.PRIVATE_KEY;
 		process.env.PRIVATE_KEY = privateKetCert;
-		const privateKey = await keyLocator(undefined);
+		const privateKey = await keyLocator(undefined, jiraHost);
 		expect(privateKey).toBe(privateKetCert);
 		process.env.PRIVATE_KEY = envPrivateKey;
 	});
@@ -59,7 +59,7 @@ describe("key-locator", () => {
 		const encodedPrivateKey = Buffer.from(privateKetCert).toString("base64");
 		const envPrivateKey = envVars.PRIVATE_KEY;
 		process.env.PRIVATE_KEY = encodedPrivateKey;
-		const privateKey = await keyLocator(undefined);
+		const privateKey = await keyLocator(undefined, jiraHost);
 		expect(privateKey).toBe(privateKetCert);
 		process.env.PRIVATE_KEY = envPrivateKey;
 	});

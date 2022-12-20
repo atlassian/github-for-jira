@@ -3,9 +3,11 @@ import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
+import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
 import { getLogger } from "config/logger";
+import { v4 as uuid } from "uuid";
 
 describe("API Router", () => {
 	let app: Application;
@@ -14,6 +16,7 @@ describe("API Router", () => {
 	const gitHubInstallationId = 1234;
 	let installation: Installation;
 	let subscription: Subscription;
+	let gitHubServerApp: GitHubServerApp;
 
 	const createApp = () => {
 		const app = express();
@@ -48,6 +51,25 @@ describe("API Router", () => {
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key"
+		});
+
+		gitHubServerApp = await GitHubServerApp.install({
+			uuid: uuid(),
+			appId: 123,
+			installationId: installation.id,
+			gitHubAppName: "test-github-server-app",
+			gitHubBaseUrl: gheUrl,
+			gitHubClientId: "client-id",
+			gitHubClientSecret: "client-secret",
+			privateKey: "private-key",
+			webhookSecret: "webhook-secret"
+		}, jiraHost);
+
+		Subscription.create({
+			gitHubInstallationId,
+			jiraHost,
+			jiraClientKey: "client-key",
+			gitHubAppId: gitHubServerApp.id
 		});
 	});
 
@@ -289,6 +311,17 @@ describe("API Router", () => {
 					});
 			});
 
+			it("Should work with old delete installation route with gitHubAppId", () => {
+				return supertest(app)
+					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/github-app-id/${gitHubServerApp.id}`)
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
@@ -369,4 +402,5 @@ describe("API Router", () => {
 
 		});
 	});
+
 });

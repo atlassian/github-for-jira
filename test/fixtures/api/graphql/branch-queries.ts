@@ -1,6 +1,6 @@
 import { getBranchesQueryWithChangedFiles } from "~/src/github/client/github-queries";
 
-export const branchesNoLastCursor = (variables?: Record<string, any>) => ({
+export const branchesNoLastCursor = (variables?: Record<string, unknown>) => ({
 	query: getBranchesQueryWithChangedFiles,
 	variables: {
 		owner: "integrations",

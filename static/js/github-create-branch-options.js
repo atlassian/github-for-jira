@@ -7,7 +7,7 @@ $(document).ready(() => {
   const {isRedirect, url} = isAutoRedirect();
 
   if(isRedirect) {
-    goToCreateBranch(url, true);
+    goToCreateBranch(url);
   } else {
     $(".gitHubCreateBranchOptions").show();
     $(".gitHubCreateBranchOptions__loading").hide();
@@ -19,7 +19,6 @@ $(document).ready(() => {
       $(".jiraSelectGitHubProduct__options__container").hide();
       $(".jiraSelectGitHubProduct__selectServerInstance").show();
       $(".optionBtn").prop("disabled", false).attr("aria-disabled", "false").addClass("aui-button-primary");
-
     }
   }
 
@@ -38,34 +37,23 @@ $(document).ready(() => {
     const uuid = $("#ghServers").select2("val");
 
     if ($(".optionsCard.selected").data('type') === "cloud") {
-      goToCreateBranch(createUrlForGH(issueKey, issueSummary), false);
+      goToCreateBranch(createUrlForGH(undefined, true));
     } else {
-      goToCreateBranch(createUrlForGH(issueKey, issueSummary, uuid), false);
+      goToCreateBranch(createUrlForGH(uuid, true));
     }
   });
 });
 
-const createUrlForGH = (issueKey, issueSummary, uuid) => {
+const createUrlForGH = (uuid, multiGHInstance) => {
+	const jiraHost = $("#jiraHost").val();
   return uuid ?
-    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to` :
-    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}`;
+    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&ghRedirect=to&multiGHInstance=${multiGHInstance}` :
+    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&multiGHInstance=${multiGHInstance}`;
 };
 
-const goToCreateBranch = (url, isRedirect) => {
-  AP.context.getToken(token => {
-    const child = window.open(url);
-    child.window.jiraHost = jiraHost;
-    child.window.jwt = token;
-    if (isRedirect) {
-      const childWindowTimer = setInterval(() => {
-        if (child.closed) {
-          AP.navigator.go("issue", { issueKey: params.get("issueKey") });
-          clearInterval(childWindowTimer);
-        }
-      }, 500);
-    }
-  });
-};
+const goToCreateBranch = (url) => {
+	document.location.href = url;
+}
 
 /**
  * Checks the number of cloud & enterprise servers and returns if the page should be redirected or not,
@@ -78,7 +66,7 @@ const isAutoRedirect = () => {
   // Only GitHub cloud server connected
 	if (hasCloudServer && gheServersCount === 0) {
 		return {
-      url: createUrlForGH(issueKey, issueSummary),
+      url: createUrlForGH(),
       isRedirect: true
     };
 	}
@@ -87,7 +75,7 @@ const isAutoRedirect = () => {
     const uuid = $("#ghServers").select2("val");
 
     return {
-      url: createUrlForGH(issueKey, issueSummary, uuid),
+      url: createUrlForGH(uuid),
       isRedirect: true
     };
 	}
@@ -97,5 +85,3 @@ const isAutoRedirect = () => {
     isRedirect: false
   };
 };
-
-

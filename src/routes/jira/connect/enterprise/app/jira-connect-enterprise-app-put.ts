@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -7,24 +9,38 @@ export const JiraConnectEnterpriseAppPut = async (
 	next: NextFunction
 ): Promise<void> => {
 	req.log.debug("Received Jira Connect Enterprise App PUT request to update app.");
-
 	try {
-		const verifiedApp = await GitHubServerApp.getForUuidAndInstallationId(req.params.uuid, res.locals.installation.id);
+		const { gitHubAppConfig: verifiedApp, jiraHost } = res.locals;
 
-		if (!verifiedApp || req.params.uuid !== req.body.uuid) {
-			res.status(200).send({ success: false, message: "No GitHub App found. Cannot update." });
+		if (!verifiedApp.gitHubAppId || verifiedApp.uuid !== req.body.uuid) {
+			res.status(404).send({ message: "No GitHub App found. Cannot update." });
 			return next(new Error("No GitHub App found for provided UUID and installationId."));
 		}
 
 		const updatedAppPayload = { ...req.body };
-		!updatedAppPayload.privateKey && (updatedAppPayload.privateKey = verifiedApp.privateKey);
+		if (!updatedAppPayload.privateKey) {
+			updatedAppPayload.privateKey = undefined;
+		}
 
-		await GitHubServerApp.updateGitHubAppByUUID(req.body);
+		await GitHubServerApp.updateGitHubAppByUUID(req.body, jiraHost);
 
-		res.status(200).send({ success: true });
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
+			success: true
+		});
+
+		res.status(202).send();
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
 	} catch (error) {
-		res.status(200).send({ success: false, message: "Failed to update GitHub App." });
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
+			success: false
+		});
+
+		res.status(404).send({ message: "Failed to update GitHub App." });
 		return next(new Error(`Failed to update GitHub app: ${error}`));
 	}
 };

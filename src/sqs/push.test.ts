@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import nock from "nock";
+import nock, { removeInterceptor, cleanAll } from "nock";
 import { createJobData } from "../transforms/push";
 import { getLogger } from "config/logger";
 import { waitUntil } from "test/utils/wait-until";
@@ -24,14 +23,16 @@ import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
-function updateInstallationId(payload) {
+import { GitHubPushData } from "interfaces/github";
+
+const updateInstallationId = (payload: GitHubPushData): GitHubPushData  => {
 	payload.installation.id = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
 	return payload;
-}
+};
 
 jest.mock("config/feature-flags");
 
-function createJiraPayloadNoUsername(transofmedRepoId) {
+const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
 	return {
 		preventTransitions: false,
 		operationType: "NORMAL",
@@ -87,13 +88,13 @@ function createJiraPayloadNoUsername(transofmedRepoId) {
 			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID
 		}
 	};
-}
+};
 
 describe("Push Webhook", () => {
 
-	describe('cloud',  () => {
+	describe("cloud",  () => {
 
-		const createMessageProcessingContext = (payload): SQSMessageContext<PushQueueMessagePayload> => ({
+		const createMessageProcessingContext = (payload: any): SQSMessageContext<PushQueueMessagePayload> => ({
 			payload: createJobData(updateInstallationId(payload), jiraHost),
 			log: getLogger("test"),
 			message: {} as Message,
@@ -354,7 +355,7 @@ describe("Push Webhook", () => {
 
 				await expect(app.receive(pushNoIssues as any)).toResolve();
 				expect(scope).not.toBeDone();
-				nock.removeInterceptor(interceptor);
+				removeInterceptor(interceptor);
 			});
 
 			it("should not send anything to Jira if there's", async () => {
@@ -366,7 +367,7 @@ describe("Push Webhook", () => {
 				// Since no issues keys are found, there should be no calls to github's or jira's API
 				expect(nock).not.toBeDone();
 				// Clean up all nock mocks
-				nock.cleanAll();
+				cleanAll();
 			});
 
 			it("should add the MERGE_COMMIT flag when a merge commit is made", async () => {
@@ -503,7 +504,7 @@ describe("Push Webhook", () => {
 
 			beforeEach(async () => {
 				mockSystemTime(12345678);
-				await sqsQueues.push.start();
+				sqsQueues.push.start();
 			});
 
 			afterEach(async () => {
@@ -581,7 +582,7 @@ describe("Push Webhook", () => {
 		});
 	});
 
-	describe('server', () => {
+	describe("server", () => {
 
 		let gitHubServerApp: GitHubServerApp;
 
@@ -603,13 +604,11 @@ describe("Push Webhook", () => {
 		beforeEach(async () => {
 			when(booleanFlag).calledWith(
 				BooleanFlags.GHE_SERVER,
-				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(true);
 
 			when(booleanFlag).calledWith(
-				BooleanFlags.USE_REPO_ID_TRANSFORMER,
-				expect.anything()
+				BooleanFlags.USE_REPO_ID_TRANSFORMER
 			).mockResolvedValue(true);
 
 			jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);

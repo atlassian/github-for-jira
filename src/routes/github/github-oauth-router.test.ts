@@ -12,17 +12,16 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
-describe('github-oauth-router', () => {
+describe("github-oauth-router", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 	});
 
-	describe('GithubOAuthCallbackGet', () => {
+	describe("GithubOAuthCallbackGet", () => {
 
 		let locals = {};
 		let session = {};
@@ -31,7 +30,7 @@ describe('github-oauth-router', () => {
 			locals = {};
 			session = {
 				jiraHost,
-				fooState: 'http://myredirect.com'
+				fooState: `http://myredirect.com?jiraHost=${jiraHost}`
 			};
 		});
 
@@ -49,13 +48,13 @@ describe('github-oauth-router', () => {
 			return app;
 		};
 
-		it('populates session with github token', async () => {
+		it("populates session with github token", async () => {
 			nock("https://github.com")
 				.get(`/login/oauth/access_token?client_id=${envVars.GITHUB_CLIENT_ID}&client_secret=${envVars.GITHUB_CLIENT_SECRET}&code=barCode&state=fooState`)
 				.matchHeader("accept", "application/json")
-				.matchHeader('content-type', 'application/json')
+				.matchHeader("content-type", "application/json")
 				.reply(200, {
-					access_token: 'behold!'
+					access_token: "behold!"
 				});
 
 			const app = await createApp();
@@ -64,15 +63,15 @@ describe('github-oauth-router', () => {
 			// @ts-ignore
 			expect(session.githubToken).toEqual("behold!");
 			expect(response.status).toEqual(302);
-			expect(response.headers.location).toEqual("http://myredirect.com");
+			expect(response.headers.location).toEqual(`http://myredirect.com?jiraHost=${jiraHost}`);
 		});
 	});
 
-	describe('GithubAuthMiddleware', () => {
-		describe('cloud', () => {
-			it('with token', async () => {
+	describe("GithubAuthMiddleware", () => {
+		describe("cloud", () => {
+			it("with token", async () => {
 				githubNock.get("/")
-					.matchHeader('Authorization', 'Bearer the-token')
+					.matchHeader("Authorization", "Bearer the-token")
 					.reply(200, {});
 
 				const next = jest.fn();
@@ -97,7 +96,7 @@ describe('github-oauth-router', () => {
 			});
 		});
 
-		describe('server', () => {
+		describe("server", () => {
 			let gitHubServerApp: GitHubServerApp;
 			beforeEach(async () => {
 				const creatorResult = await new DatabaseStateCreator().forServer().create();
@@ -105,14 +104,13 @@ describe('github-oauth-router', () => {
 
 				when(booleanFlag).calledWith(
 					BooleanFlags.GHE_SERVER,
-					expect.anything(),
 					expect.anything()
 				).mockResolvedValue(true);
 			});
 
-			it('with token', async () => {
+			it("with token", async () => {
 				gheApiNock.get("")
-					.matchHeader('Authorization', 'Bearer the-token')
+					.matchHeader("Authorization", "Bearer the-token")
 					.reply(200, {});
 
 				const next = jest.fn();

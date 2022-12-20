@@ -3,8 +3,8 @@ import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 import { Subscription } from "models/subscription";
+import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -13,7 +13,7 @@ describe("GitHub Create Branch Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string" };
+			req.query = { issueKey: "1", issueSummary: "random-string", jiraHost };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -27,7 +27,7 @@ describe("GitHub Create Branch Get", () => {
 			});
 		});
 
-		it.skip("should redirect to Github login if unauthorized", async () => {
+		it("should redirect to Github login if unauthorized", async () => {
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
@@ -41,19 +41,22 @@ describe("GitHub Create Branch Get", () => {
 		});
 
 		it("should hit the create branch on GET if authorized", async () => {
-			githubUserTokenNock(gitHubInstallationId);
-
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
 				.reply(200);
+
 			githubNock
-				// .post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: 'UPDATED_AT' } })
-				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: 'UPDATED_AT' } })
-				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
+				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+				.reply(200);
+
 			githubNock
 				.get("/user")
-				.reply(200, { data: { login: "test-account" } });
+				.reply(200, { login: "test-account" });
+
+			githubNock
+				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: "UPDATED_AT" } })
+				.reply(200, { data: { viewer: { repositories: { edges: [] } } } });
 
 			await supertest(app)
 				.get("/github/create-branch").set(
