@@ -17,7 +17,6 @@ const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12 * 60 * 60 - 1;
 const DEFAULT_LONG_POLLING_INTERVAL = 4;
 const PROCESSING_DURATION_HISTOGRAM_BUCKETS = "10_100_500_1000_2000_3000_5000_10000_30000_60000";
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
-const UNRETRYABLE_STATUS_CODES = [401, 404, 403];
 
 const isNotAFailure = (errorHandlingResult: ErrorHandlingResult) => {
 	return !errorHandlingResult.isFailure;
@@ -300,7 +299,7 @@ export class SqsQueue<MessagePayload> {
 			if (isNotAFailure(errorHandlingResult)) {
 				context.log.info("Deleting the message because the error is not a failure");
 				await this.deleteMessage(context);
-			} else if (isNotRetryable(errorHandlingResult) || UNRETRYABLE_STATUS_CODES.includes(err.status)) {
+			} else if (isNotRetryable(errorHandlingResult)) {
 				context.log.warn("Deleting the message because the error is not retryable");
 				await this.deleteMessage(context);
 			} else if (errorHandlingResult.skipDlq && this.isMessageReachedRetryLimit(context)) {
