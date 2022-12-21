@@ -5,18 +5,6 @@ info:
   version: "0.0.1"
 
 paths:
-#  /$default:
-#    x-amazon-apigateway-any-method:
-#      isDefaultRoute: true
-#      x-amazon-apigateway-integration:
-#        payloadFormatVersion: "1.0"
-#        type: "http_proxy"
-#        httpMethod: "ANY"
-#        requestParameters:
-#          integration.request.header.Host: "'{{ServerHost}}'"
-#        uri: "https://{{ServerHost}}"
-#        connectionType: "INTERNET"
-
   /{proxy+}:
     parameters:
       - name: "proxy+"
@@ -49,10 +37,7 @@ paths:
           default:
             statusCode: "200"
         passthroughBehavior: "when_no_match"
-        payloadFormatVersion: "1.0"
         type: "aws"
-        connectionType: "INTERNET"
-        timeoutInMillis: 30000
 
   /jira/events:
     post:
@@ -63,9 +48,5 @@ paths:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
         uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}/?Action=SendMessage"
-        payloadFormatVersion: "1.0"
         passthroughBehavior: "when_no_match"
         type: "aws"
-        connectionType: "INTERNET"
-        timeoutInMillis: 30000
-x-amazon-apigateway-importexport-version: "1.0"
