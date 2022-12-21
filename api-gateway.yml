@@ -33,9 +33,9 @@ paths:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
         uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}/?Action=SendMessage"
-        responses:
-          default:
-            statusCode: "200"
+        requestParameters:
+          MessageBody: "$request.body"
+          QueueUrl: "{{GithubQueueUrl}}"
         passthroughBehavior: "when_no_match"
         type: "aws"
 
@@ -48,5 +48,8 @@ paths:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
         uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}/?Action=SendMessage"
+        requestParameters:
+          MessageBody: "$request.body"
+          QueueUrl: "{{JiraQueueUrl}}"
         passthroughBehavior: "when_no_match"
         type: "aws"
