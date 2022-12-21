@@ -414,7 +414,7 @@ environmentOverrides:
               GithubQueueRegion: '_Ref sqs.github-webhooks.queueregion'
               JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
               JiraQueueName: '_Ref sqs.jira-webhooks.queuename'
-              JiraQueueRegion: '_Ref sqs.jira-webhooks.queuename'
+              JiraQueueRegion: '_Ref sqs.jira-webhooks.queueregion'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
           stageName: live
           dataType:
