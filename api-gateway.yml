@@ -43,11 +43,13 @@ paths:
           description: "Default response for POST /github/webhooks"
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
+        httpMethod: "POST"
         uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}/?Action=SendMessage"
         responses:
           default:
             statusCode: "200"
         passthroughBehavior: "when_no_match"
+        payloadFormatVersion: "1.0"
         type: "aws"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
@@ -59,15 +61,10 @@ paths:
           description: "Default response for POST /jira/webhooks"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
-        integrationSubtype: "SQS-SendMessage"
         credentials: "{{RoleARN}}"
         uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}/?Action=SendMessage"
-        requestParameters:
-          MessageAttributes: "$request.body.MessageAttributes"
-          MessageSystemAttributes: "$request.body.MessageSystemAttributes"
-          MessageBody: "$request.body.MessageBody"
-          QueueUrl: "{{JiraQueueUrl}}"
         payloadFormatVersion: "1.0"
+        passthroughBehavior: "when_no_match"
         type: "aws"
         connectionType: "INTERNET"
         timeoutInMillis: 30000
