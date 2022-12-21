@@ -5,6 +5,7 @@ import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
+import { generateBranchName } from "routes/github/create-branch/github-create-branch-get";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -69,6 +70,15 @@ describe("GitHub Create Branch Get", () => {
 					expect(res.status).toBe(200);
 					expect(res.text).toContain("<div class=\"gitHubCreateBranch__header\">Create GitHub Branch</div>");
 				});
+		});
+	});
+
+	describe("GenerateBranchName", () => {
+		it("should replace spaces with hyphens", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue summary with spaces")).toBe("ISSUEKEY-issue-summary-with-spaces");
+		});
+		it("should replace slashes with hyphens", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue/summary/with/spaces")).toBe("ISSUEKEY-issue-summary-with-spaces");
 		});
 	});
 });

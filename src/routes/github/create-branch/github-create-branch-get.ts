@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
+import { replaceSpaceWithHyphenHelper, replaceSlashWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -26,7 +26,10 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { issueKey, issueSummary, multiGHInstance } = req.query;
+	const { multiGHInstance } = req.query;
+	const  issueKey = req.query.issueKey as string;
+	const  issueSummary = req.query.issueSummary as string;
+
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
@@ -48,7 +51,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return;
 	}
 
-	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
@@ -58,7 +60,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		issue: {
-			branchName: `${issueKey}-${branchSuffix}`,
+			branchName: generateBranchName(issueKey, issueSummary),
 			key: issueKey
 		},
 		issueUrl: `${jiraHost}/browse/${issueKey}`,
@@ -75,6 +77,18 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
 		jiraHost
 	});
+};
+
+export const generateBranchName = (issueKey: string, issueSummary: string) => {
+	if (!issueSummary) {
+		return `${issueKey}-`;
+	}
+
+	let branchSuffix = issueSummary;
+	branchSuffix = replaceSpaceWithHyphenHelper(branchSuffix);
+	branchSuffix = replaceSlashWithHyphenHelper(branchSuffix);
+
+	return `${issueKey}-${branchSuffix}`;
 };
 
 const sortByDateString = (a, b) => {
