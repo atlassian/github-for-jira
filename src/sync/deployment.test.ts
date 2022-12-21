@@ -593,5 +593,3 @@ describe("sync/deployments", () => {
 	});
 
 });
-
-
