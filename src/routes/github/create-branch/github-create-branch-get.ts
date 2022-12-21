@@ -26,9 +26,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { multiGHInstance } = req.query;
-	const  issueKey = req.query.issueKey as string;
-	const  issueSummary = req.query.issueSummary as string;
+	const multiGHInstance = req.query.multiGHInstance;
+	const issueKey = req.query.issueKey as string;
+	const issueSummary = req.query.issueSummary as string;
 
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
