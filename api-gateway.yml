@@ -32,11 +32,12 @@ paths:
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
-        uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}/?Action=SendMessage"
+        uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}"
         requestParameters:
-          MessageBody: "$request.body"
-          QueueUrl: "{{GithubQueueUrl}}"
-        passthroughBehavior: "when_no_match"
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body"
+        passthroughBehavior: "never"
         type: "aws"
 
   /jira/events:
@@ -47,9 +48,10 @@ paths:
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
-        uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}/?Action=SendMessage"
+        uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}"
         requestParameters:
-          MessageBody: "$request.body"
-          QueueUrl: "{{JiraQueueUrl}}"
-        passthroughBehavior: "when_no_match"
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: "Action=SendMessage&MessageBody=$input.body"
+        passthroughBehavior: "never"
         type: "aws"
