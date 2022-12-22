@@ -37,6 +37,9 @@ paths:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
           application/json: "Action=SendMessage&MessageBody=$input.body"
+        responses:
+          default:
+            statusCode: "200"
         passthroughBehavior: "never"
         type: "aws"
 
@@ -53,5 +56,8 @@ paths:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
           application/json: "Action=SendMessage&MessageBody=$input.body"
+        responses:
+          default:
+            statusCode: "200"
         passthroughBehavior: "never"
         type: "aws"
