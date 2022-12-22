@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { replaceSpaceWithHyphenHelper, replaceSlashWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -81,13 +80,16 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 
 export const generateBranchName = (issueKey: string, issueSummary: string) => {
 	if (!issueSummary) {
-		return `${issueKey}-`;
+		return issueKey;
 	}
 
 	let branchSuffix = issueSummary;
-	branchSuffix = replaceSpaceWithHyphenHelper(branchSuffix);
-	branchSuffix = replaceSlashWithHyphenHelper(branchSuffix);
-
+	const validBranchCharactersRegex = /[^a-z0-9.\-_]/gi;
+	const validStartCharactersRegex = /^[^a-z0-9]/gi;
+	const validEndCharactersRegex = /[^a-z0-9]$/gi;
+	branchSuffix = branchSuffix.replace(validStartCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validEndCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validBranchCharactersRegex, "-");
 	return `${issueKey}-${branchSuffix}`;
 };
 

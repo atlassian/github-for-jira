@@ -2,7 +2,6 @@
 
 import {
 	replaceSpaceWithHyphenHelper,
-	replaceSlashWithHyphenHelper,
 	toLowercaseHelper,
 	concatStringHelper
 } from "./handlebar-helpers";
@@ -43,24 +42,6 @@ describe("Handlebar Helpers", () => {
 			expect(replaceSpaceWithHyphenHelper("baR")).toEqual("baR");
 			expect(replaceSpaceWithHyphenHelper(10943 as any)).toEqual("10943");
 			expect(replaceSpaceWithHyphenHelper(new Date(0) as any)).toMatch("Thu-Jan-01-1970");
-		});
-	});
-
-	describe("replaceSlashWithHyphenHelper", () => {
-		it("should return empty string with no parameter", () => {
-			expect(replaceSlashWithHyphenHelper()).toEqual("");
-		});
-
-		it("should return empty string with non stringifyable or falsy parameter", () => {
-			expect(replaceSlashWithHyphenHelper(undefined)).toEqual("");
-			expect(replaceSlashWithHyphenHelper(null as any)).toEqual("");
-			expect(replaceSlashWithHyphenHelper({} as any)).toEqual("");
-		});
-
-		it("should return the kebab case string for any stringifyable object", () => {
-			expect(replaceSlashWithHyphenHelper("FOO/bar")).toEqual("FOO-bar");
-			expect(replaceSlashWithHyphenHelper("baR")).toEqual("baR");
-			expect(replaceSlashWithHyphenHelper(10943 as any)).toEqual("10943");
 		});
 	});
 

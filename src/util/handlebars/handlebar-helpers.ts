@@ -4,7 +4,6 @@ import { isPlainObject } from "lodash";
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
-export const replaceSlashWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/\//g, "-") || "";
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);

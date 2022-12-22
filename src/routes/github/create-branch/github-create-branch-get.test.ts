@@ -74,11 +74,24 @@ describe("GitHub Create Branch Get", () => {
 	});
 
 	describe("GenerateBranchName", () => {
+		it("should return just the issue key when no issuesummary", () => {
+			expect(generateBranchName("ISSUEKEY", "")).toEqual("ISSUEKEY");
+		});
 		it("should replace spaces with hyphens", async () => {
 			expect(generateBranchName("ISSUEKEY", "issue summary with spaces")).toBe("ISSUEKEY-issue-summary-with-spaces");
 		});
 		it("should replace slashes with hyphens", async () => {
-			expect(generateBranchName("ISSUEKEY", "issue/summary/with/spaces")).toBe("ISSUEKEY-issue-summary-with-spaces");
+			expect(generateBranchName("ISSUEKEY", "issue/summary/with/slashes/yo")).toBe("ISSUEKEY-issue-summary-with-slashes-yo");
 		});
+		it("should replace special characters with hypen(exld exempt special chars)", () => {
+			expect(generateBranchName("ISSUEKEY", "A!B#CAT")).toEqual("ISSUEKEY-A-B-CAT");
+		});
+		it("should not replace exempt special characters with hypen", () => {
+			expect(generateBranchName("ISSUEKEY", "CAT-._88")).toEqual("ISSUEKEY-CAT-._88");
+		});
+		it("should replace leading special characters with nothing", () => {
+			expect(generateBranchName("ISSUEKEY", "/test/")).toEqual("ISSUEKEY-test");
+		});
+
 	});
 });
