@@ -74,7 +74,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 
 			return repos;
 		} catch (err) {
-			logger.error("Create branch - Failed to search repos for installation");
+			logger.error({ err }, "Create branch - Failed to search repos for installation");
 			throw err;
 		}
 	});
