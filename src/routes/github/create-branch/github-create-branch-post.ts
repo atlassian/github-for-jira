@@ -61,10 +61,9 @@ const getErrorMessages = (statusCode: number, url?: string): string => {
 };
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, gitHubAppConfig } = res.locals;
-	const { owner, repo, sourceBranchName, newBranchName, jiraHostEncoded } = req.body;
+	const { githubToken, gitHubAppConfig, jiraHost } = res.locals;
+	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
-	const jiraHost = decodeURIComponent(jiraHostEncoded);
 	if (!githubToken) {
 		res.sendStatus(401);
 		return;
