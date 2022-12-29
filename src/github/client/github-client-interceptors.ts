@@ -138,7 +138,6 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
-			logger.info({ response, request, error, isWarning }, "joshkay temp logging - githubclient interceptor handleFailedRequest");
 			return Promise.reject(new GithubClientError(errorMessage, status, error));
 		}
 
