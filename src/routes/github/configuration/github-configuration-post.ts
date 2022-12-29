@@ -94,7 +94,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost,
-			success: false,
+			success: true,
 			gitHubProduct
 		});
 
