@@ -139,5 +139,38 @@ describe("Jira util", () => {
 			const result = util.addJiraIssueLinks(source, issues);
 			expect(result).toBe(rendered);
 		});
+
+		it("should linkify for issue keys with alphanumeric values", () => {
+			const { source, rendered } = loadFixture("issue-keys-with-alphanumeric-values");
+			const issues = [
+				{
+					key: "KEY-2018",
+					fields: {
+						summary: "First Issue"
+					}
+				},
+				{
+					key: "A1-2019",
+					fields: {
+						summary: "Second Issue"
+					}
+				},
+				{
+					key: "A1B2-2020",
+					fields: {
+						summary: "Third Issue"
+					}
+				},
+				{
+					key: "A1B2C3-2021",
+					fields: {
+						summary: "Fourth Issue"
+					}
+				}
+			];
+
+			const result = util.addJiraIssueLinks(source, issues);
+			expect(result).toBe(rendered);
+		});
 	});
 });
