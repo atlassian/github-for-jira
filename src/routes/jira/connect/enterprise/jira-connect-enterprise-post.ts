@@ -6,6 +6,7 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -91,6 +92,14 @@ export const JiraConnectEnterprisePost = async (
 	} catch (err) {
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 		const codeOrStatus = "" + (err.code || err.response.status);
+
+		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
+			if (codeOrStatus) {
+				//as long as there's a code or status, means server returns something
+				//so the domain name is reachable, it is just it required some api tokens to be accessible
+				res.status(200).send({ success: true, appExists: false });
+			}
+		}
 
 		res.status(200).send({
 			success: false, errors: [{
