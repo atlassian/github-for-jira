@@ -108,7 +108,7 @@ export interface JiraSubmitDeploymentsResponse {
 export enum JiraGatingStatusTypeEnum {
 	ALLOWED = "allowed",
 	PREVENTED = "prevented",
-	AWAING = "awaiting",
+	AWATING = "awaiting",
 	INVALID = "invalid"
 }
 
@@ -169,6 +169,7 @@ export interface JiraDeployment {
 		type: string;
 	};
 	associations: JiraAssociation[];
+	commands: JiraDeploymentCommand[];
 }
 
 export interface JiraDeploymentBulkSubmitData {
@@ -221,4 +222,8 @@ export type JiraOperationType = "NORMAL" | "BACKFILL"
 export interface JiraSubmitOptions {
 	preventTransitions: boolean;
 	operationType: JiraOperationType;
+}
+
+export interface JiraDeploymentCommand {
+	command: string
 }

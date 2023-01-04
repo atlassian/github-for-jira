@@ -11,6 +11,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Config } from "interfaces/common";
 import { Subscription } from "models/subscription";
 import { getRepoConfig } from "services/user-config-service";
+import { DeploymentGatingPollerMessagePayload } from "~/src/sqs/sqs.types";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -65,9 +66,7 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	logger.error(config);
 	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId, config);
-	logger.error(jiraPayload);
 
 	if (!jiraPayload) {
 		logger.info(
@@ -91,15 +90,15 @@ export const processDeployment = async (
 			rejectedDeployments: result.rejectedDeployments
 		}, "Jira API rejected deployment!");
 	}
-
 	const checkGatingStatus = config?.deployments?.services?.checkGatingStatus;
-	if (jiraPayload.deployments[0].state === "in_progress" && checkGatingStatus?.environmentId === jiraPayload.deployments[0].environment.id)  {
-		await sqsQueues.deploymentGatingPoller.sendMessage({
+	if (jiraPayload.deployments[0].state === "pending" && checkGatingStatus?.environmentId === jiraPayload.deployments[0].environment.id)  {
+		const payload = {
 			jiraHost: jiraClient.baseURL,
 			installationId: gitHubInstallationId,
 			webhookPayload: {
 				githubDeployment: webhookPayload.deployment,
-				repository: webhookPayload.repository,
+				githubDeploymentStatus: webhookPayload.deployment_status,
+				githubRepository: webhookPayload.repository,
 				jiraEnvironmentId: jiraPayload.deployments[0].environment.id,
 				deploymentGatingConfig: {
 					totalRetryCount : checkGatingStatus.retry,
@@ -109,8 +108,9 @@ export const processDeployment = async (
 			},
 			webhookReceived: Date.now(),
 			webhookId: webhookId,
-			gitHubAppConfig: gitHubAppConfig
-		}, checkGatingStatus.sleep);
+			gitHubAppId: gitHubAppId
+		} as DeploymentGatingPollerMessagePayload;
+		await sqsQueues.deploymentGatingPoller.sendMessage(payload, checkGatingStatus.sleep);
 	}
 
 	emitWebhookProcessedMetrics(

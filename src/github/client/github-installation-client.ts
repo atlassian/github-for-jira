@@ -23,7 +23,7 @@ import {
 	SearchedRepositoriesResponse
 } from "./github-queries";
 import {
-	ActionsListRepoWorkflowRunsResponseEnhanced,
+	ActionsListRepoWorkflowRunsResponseEnhanced, GetEnvironmentResponse,
 	GetPullRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse,
@@ -328,10 +328,29 @@ export class GitHubInstallationClient extends GitHubClient {
 		}
 	}
 
-	public async reviewPendingDeploymentsForWorkflowRun(owner: string, repo: string, run_id: string, body: ReviewPendingWorkflowRunParams): Promise<AxiosResponse<ReviewPendingWorkflowRunResponse[]>> {
+	public async getEnvironmentId(owner: string, repo: string, environment_name: string): Promise<string | undefined> {
+		try {
+			// can't pass the path as a path param, because "/"s would be url encoded
+			const response = await this.get<GetEnvironmentResponse>(`/repos/{owner}/{repo}/environments/{environment_name}`, {}, {
+				owner,
+				repo,
+				environment_name
+			});
+
+
+			return response.data.id;
+		} catch (err) {
+			if (err.status == 404) {
+				this.logger.warn({ err, owner, repo, environment_name }, "could not find environment with ${environment_name}");
+				return undefined;
+			}
+			throw err;
+		}
+	}
+
+	public async reviewPendingDeploymentsForWorkflowRun(owner: string, repo: string, run_id: string, body: ReviewPendingWorkflowRunParams) {
 		return await this.post<ReviewPendingWorkflowRunResponse[]>(
-			`/repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments`,
-			{ body },
+			`/repos/{owner}/{repo}/actions/runs/{run_id}/pending_deployments`, body ,
 			{},
 			{
 				owner,

@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
+import { JiraAssociation, JiraDeploymentBulkSubmitData, JiraDeploymentCommand } from "interfaces/jira";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { Octokit } from "@octokit/rest";
 import {
@@ -16,7 +16,6 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -95,6 +94,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 const mapState = (state: string | undefined): string => {
 	switch (state?.toLowerCase()) {
 		case "queued":
+		case "waiting":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
 		// For users, it's a better UI experience if they see In progress instead of Pending, because the deployment might be running already.
@@ -175,8 +175,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	issueIds: string[],
 	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[],
-	config?: Config,
-	jiraHost?: string
+	config?: Config
 ): Promise<JiraAssociation[] | undefined> => {
 
 	const associations: JiraAssociation[] = [];
@@ -194,20 +193,19 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 		totalAssociationCount += issues.length;
 	}
 
-	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
-		if (config?.deployments?.services?.ids) {
-			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
-			const services = config.deployments.services.ids
-				.slice(0, maximumServicesToSubmit);
-			associations.push(
-				{
-					associationType: "serviceIdOrKeys",
-					values: services
-				}
-			);
-			totalAssociationCount += config.deployments.services.ids.length;
-		}
+	if (config?.deployments?.services?.ids) {
+		const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const services = config.deployments.services.ids
+			.slice(0, maximumServicesToSubmit);
+		associations.push(
+			{
+				associationType: "serviceIdOrKeys",
+				values: services
+			}
+		);
+		totalAssociationCount += config.deployments.services.ids.length;
 	}
+
 
 	if (commitSummaries?.length) {
 		const maximumCommitsToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
@@ -272,9 +270,9 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
 		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries,
-		config,
-		jiraHost
+		config
 	);
+	logger.error(associations);
 
 	if (!associations?.length) {
 		return undefined;
@@ -288,6 +286,13 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			description: deployment.description
 		}, "Unmapped environment detected.");
 	}
+	const state = mapState(deployment_status.state);
+	const commands : JiraDeploymentCommand[] = [];
+	if (state === "pending") {
+		commands.push({
+			command: "initiate_deployment_gating"
+		});
+	}
 
 	return {
 		deployments: [{
@@ -298,7 +303,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: new Date(deployment_status.updated_at),
-			state: mapState(deployment_status.state),
+			state: state,
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
@@ -309,7 +314,8 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 				displayName: deployment_status.environment,
 				type: environment
 			},
-			associations
+			associations,
+			commands : commands
 		}]
 	};
 };

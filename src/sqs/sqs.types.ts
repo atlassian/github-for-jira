@@ -1,4 +1,4 @@
-import { WebhookPayloadDeploymentStatus, WebhookPayloadDeploymentGatingChecker } from "@octokit/webhooks";
+import { PayloadRepositoryOwner, WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import type { WebhookPayloadCreate } from "@octokit/webhooks";
 import type { TaskType } from "~/src/sync/sync.types";
 import { Message } from "aws-sdk/clients/sqs";
@@ -156,13 +156,46 @@ export type DeploymentMessagePayload = {
 export type DeploymentGatingPollerMessagePayload = {
 	jiraHost: string,
 	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+	gitHubAppId?: number,
 	webhookReceived: number,
 	webhookId: string,
 
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
 	// that payload size for deployment_status webhooks maxes out at 13KB.
-	webhookPayload: WebhookPayloadDeploymentGatingChecker,
+	webhookPayload: DeploymentGatingPollerPayload,
+}
+
+export type DeploymentGatingPollerPayload = {
+	githubDeployment: {
+		id: number;
+		original_environment: string;
+		environment: string;
+		task: string,
+		description: null;
+		creator: { id: number };
+		created_at: string;
+		updated_at: string;
+	},
+	githubDeploymentStatus: {
+		url: string;
+		id: number;
+		state: string;
+		creator: { id: number };
+		environment: string;
+		target_url:  string;
+		created_at: string;
+		updated_at: string;
+	},
+	githubRepository: {
+		name: string,
+		owner: PayloadRepositoryOwner;
+	}
+	jiraEnvironmentId: string,
+	deploymentGatingConfig: {
+		totalRetryCount: number,
+		sleep: number
+	},
+	currentRetry: number
 }
 
 export type PushQueueMessagePayload = {

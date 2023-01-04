@@ -50,6 +50,16 @@ export interface ReposGetContentsResponse {
 	url: string;
 }
 
+export interface GetEnvironmentResponse {
+	id: string;
+	node_id: string;
+	name: string;
+	url: string;
+	html_url: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface ReviewPendingWorkflowRunParams  {
 	environment_ids: string[],
 	state: "approved" | "rejected",

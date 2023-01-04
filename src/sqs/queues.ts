@@ -56,7 +56,7 @@ export const sqsQueues = {
 		maxAttempts: 5
 	},
 	deploymentGatingPollerQueueMessageHandler,
-	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_status")
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_gating_poller")
 	),
 
 	branch: new SqsQueue<BranchMessagePayload>({
@@ -77,6 +77,7 @@ export const sqsQueues = {
 		sqsQueues.push.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
+		sqsQueues.deploymentGatingPoller.start();
 		logger.info("All queues started");
 	},
 
@@ -86,7 +87,8 @@ export const sqsQueues = {
 			sqsQueues.backfill.stop(),
 			sqsQueues.push.stop(),
 			sqsQueues.deployment.stop(),
-			sqsQueues.branch.stop()
+			sqsQueues.branch.stop(),
+			sqsQueues.deploymentGatingPoller.stop()
 		]);
 		logger.info("All queues stopped");
 	}
