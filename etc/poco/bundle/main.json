@@ -59,13 +59,11 @@
       }
     },
 		{
-			"description": "Allow microscope to use microscope dlq management endpoints",
-			"methods": [
-				"*"
-			],
+			"description": "Allow Microscope to call admin endpoints",
 			"paths": [
-				"/microscope/dlq/**"
+				"/api/internal/admin/**"
 			],
+			"methods": [ "*" ],
 			"principals": {
 				"asap": {
 					"issuers": [

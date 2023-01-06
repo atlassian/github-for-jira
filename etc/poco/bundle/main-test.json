@@ -73,12 +73,64 @@
 			"allowed": false
 		},
 		{
-			"name": "Allow service team members to access Admin API endpoints",
-			"path": "/api/jira/13453453/verify",
-			"method": "POST",
-			"mechanism": "group",
-			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"name": "allow Microscope to call admin dlq endpoint",
+			"path": "/api/internal/admin/dlq",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"micros/manager-service"
+			],
 			"allowed": true
+		},
+		{
+			"name": "allow Microscope to call admin dlq endpoint",
+			"path": "/api/internal/admin/dlq",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": [
+				"some-random-group"
+			],
+			"allowed": false
+		},
+		{
+			"name": "allow Microscope to call admin dlq replay endpoint",
+			"path": "/api/internal/admin/dlq/replay",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"micros/manager-service"
+			],
+			"allowed": true
+		},
+		{
+			"name": "allow Microscope to call admin dlq replay endpoint",
+			"path": "/api/internal/admin/dlq/replay",
+			"method": "POST",
+			"mechanism": "asap",
+			"principals": [
+				"some-random-group"
+			],
+			"allowed": false
+		},
+		{
+			"name": "allow Microscope to call admin clear messages endpoint",
+			"path": "/api/internal/admin/clear",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"micros/manager-service"
+			],
+			"allowed": true
+		},
+		{
+			"name": "allow Microscope to call admin clear messages endpoint",
+			"path": "/api/internal/admin/clear",
+			"method": "DELETE",
+			"mechanism": "asap",
+			"principals": [
+				"some-random-group"
+			],
+			"allowed": false
 		}
 	]
 }
