@@ -73,6 +73,14 @@
 			"allowed": false
 		},
 		{
+			"name": "Allow service team members to access Admin API endpoints",
+			"path": "/api/jira/13453453/verify",
+			"method": "POST",
+			"mechanism": "group",
+			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"allowed": true
+		},
+		{
 			"name": "allow Microscope to call admin dlq endpoint",
 			"path": "/api/internal/admin/dlq",
 			"method": "GET",
