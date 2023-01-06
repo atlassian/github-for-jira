@@ -91,6 +91,20 @@ export const jiraIssueRegex = (): RegExp => {
 	return /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
 };
 
+/**
+ * Same as the `jiraIssueRegex`,
+ * but this Regex captures only those issue keys that are surrounded by square brackets
+ * This regex is used when adding links to Jira issues in GitHub PR issue/descriptions.
+ */
+export const jiraIssueInSquareBracketsRegex = (): RegExp => {
+	if (issueKeyRegexCharLimitFeature) {
+		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
+	} else if (regexFixFeature) {
+		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
+	}
+
+	return /(^|[^\p{L}\p{Nd}])\[([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})\]/giu;
+};
 
 /**
  * Parses strings for Jira issue keys for commit messages,
