@@ -166,6 +166,12 @@ describe("Jira util", () => {
 					fields: {
 						summary: "Fourth Issue"
 					}
+				},
+				{
+					key: "TEST1-2021",
+					fields: {
+						summary: "Fifth Issue"
+					}
 				}
 			];
 

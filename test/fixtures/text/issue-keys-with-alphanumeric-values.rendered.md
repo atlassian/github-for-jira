@@ -10,6 +10,10 @@ Meanwhile these issues shouldn't have links:
 - [A11B22-2020]
 - [A11B2C33-2021]
 
+And anything not enclosed inside square brackets won't have any links added.
+- KEY-2018
+- TEST1-2021
+
 [KEY-2018]: http://example.com/browse/KEY-2018
 [A1-2019]: http://example.com/browse/A1-2019
 [A1B2-2020]: http://example.com/browse/A1B2-2020

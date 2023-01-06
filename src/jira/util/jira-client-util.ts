@@ -1,7 +1,7 @@
 import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
-import { jiraIssueRegex } from "utils/jira-utils";
+import { jiraIssueInSquareBracketsRegex } from "utils/jira-utils";
 
 const logger = getLogger("jira.util");
 
@@ -33,7 +33,7 @@ export const getJiraUtil = (jiraClient) => {
 	};
 
 	const addJiraIssueLinks = (text: string, issues: JiraIssue[]): string => {
-		const referenceRegex = jiraIssueRegex();
+		const referenceRegex = jiraIssueInSquareBracketsRegex();
 		const issueMap = issues.reduce((acc, issue) => ({
 			...acc,
 			[issue.key]: issue
