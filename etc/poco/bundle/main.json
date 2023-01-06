@@ -57,6 +57,22 @@
           ]
         }
       }
-    }
-  ]
+    },
+		{
+			"description": "Allow microscope to use microscope dlq management endpoints",
+			"methods": [
+				"*"
+			],
+			"paths": [
+				"/microscope/dlq/**"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"micros/manager-service"
+					]
+				}
+			}
+		}
+	]
 }
