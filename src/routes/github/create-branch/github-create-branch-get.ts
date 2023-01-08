@@ -104,7 +104,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {
-			logger.error("Create branch - Failed to fetch repos for installation");
+			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;
 		}
 	});
