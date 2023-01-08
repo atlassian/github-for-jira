@@ -73,6 +73,39 @@ let issueKeyRegexCharLimitFeature = false;
 onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
 	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT);
 });
+
+/**
+ *  Based on the JIRA Ticket parser extended regex: ^\p{L}[\p{L}\p{Digit}_]{1,255}-\p{Digit}{1,255}$ (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string
+ *  or be a non unicode-digit character (separator like space, new line, or special character like [) [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter,
+ *  then must be at least one more unicode-digit character up to 256 length to prefix the ID -\p{Nd}{1,255} means that it must be separated by a dash,
+ *  then at least 1 number character up to 256 length
+ */
+export const jiraIssueRegex = (): RegExp => {
+	if (issueKeyRegexCharLimitFeature) {
+		return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
+	} else if (regexFixFeature) {
+		// Old regex which was working before trying to update it to the "correct" one
+		return /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
+	}
+
+	return /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+};
+
+/**
+ * Same as the `jiraIssueRegex`,
+ * but this Regex captures only those issue keys that are surrounded by square brackets
+ * This regex is used when adding links to Jira issues in GitHub PR issue/descriptions.
+ */
+export const jiraIssueInSquareBracketsRegex = (): RegExp => {
+	if (issueKeyRegexCharLimitFeature) {
+		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
+	} else if (regexFixFeature) {
+		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
+	}
+
+	return /(^|[^\p{L}\p{Nd}])\[([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})\]/giu;
+};
+
 /**
  * Parses strings for Jira issue keys for commit messages,
  * branches, and pull requests.
@@ -96,23 +129,8 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 		return [];
 	}
 
-	// Based on the JIRA Ticket parser extended regex: ^\p{L}[\p{L}\p{Digit}_]{1,255}-\p{Digit}{1,255}$
-	// (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string or be a non unicode-digit character (separator like space, new line, or special character like [)
-	// [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter, then must be at least one more unicode-digit character up to 256 length to prefix the ID
-	// -\p{Nd}{1,255} means that it must be separated by a dash, then at least 1 number character up to 256 length
-
-	// Regex given to us by sayans
-	let regex = /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
-
-	if (issueKeyRegexCharLimitFeature) {
-		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
-	} else if (regexFixFeature) {
-		// Old regex which was working before trying to update it to the "correct" one
-		regex = /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
-	}
-
 	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
-	return uniq(Array.from(str.matchAll(regex), m => m[2].toUpperCase()));
+	return uniq(Array.from(str.matchAll(jiraIssueRegex()), m => m[2].toUpperCase()));
 };
 
 export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
