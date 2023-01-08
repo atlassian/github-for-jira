@@ -92,6 +92,9 @@ describe("GitHub Create Branch Get", () => {
 		it("should replace leading special characters with nothing", () => {
 			expect(generateBranchName("ISSUEKEY", "/test/")).toEqual("ISSUEKEY-test");
 		});
+		it("should replace repeating hypens to a single hyphen", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue//////summary------with$$$$$$////slashes//yo")).toBe("ISSUEKEY-issue-summary-with-slashes-yo");
+		});
 
 	});
 });

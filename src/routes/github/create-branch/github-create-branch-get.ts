@@ -84,13 +84,24 @@ export const generateBranchName = (issueKey: string, issueSummary: string) => {
 	}
 
 	let branchSuffix = issueSummary;
-	const validBranchCharactersRegex = /[^a-z0-9.\-_]/gi;
-	const validStartCharactersRegex = /^[^a-z0-9]/gi;
-	const validEndCharactersRegex = /[^a-z0-9]$/gi;
+	const validBranchCharactersRegex = /[^a-z\d.\-_]/gi;
+	const validStartCharactersRegex = /^[^a-z\d]/gi;
+	const validEndCharactersRegex = /[^a-z\d]$/gi;
 	branchSuffix = branchSuffix.replace(validStartCharactersRegex, "");
 	branchSuffix = branchSuffix.replace(validEndCharactersRegex, "");
 	branchSuffix = branchSuffix.replace(validBranchCharactersRegex, "-");
+	branchSuffix = reduceRepeatingDashes(branchSuffix);
 	return `${issueKey}-${branchSuffix}`;
+};
+
+const reduceRepeatingDashes = (text: string) => {
+	const repeatingDashesRegex = /(-)\1{1,}/gi;
+	const match = text.match(repeatingDashesRegex);
+	if (match) {
+		text = text.replace(repeatingDashesRegex, "-");
+		return reduceRepeatingDashes(text);
+	}
+	return text;
 };
 
 const sortByDateString = (a, b) => {
