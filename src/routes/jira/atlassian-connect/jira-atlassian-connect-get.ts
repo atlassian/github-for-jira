@@ -26,6 +26,11 @@ const modules = {
 			"commit",
 			"pull_request"
 		],
+		actions: {
+			createBranch: {
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}`
+			}
+		},
 		key: "github-development-tool",
 		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 		name: {
@@ -193,12 +198,6 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: {
-			actions: {
-				createBranch: {
-					templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}`
-				}
-			}
-		}
+		modules
 	});
 };
