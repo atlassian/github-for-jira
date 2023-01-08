@@ -3,6 +3,7 @@ import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "./sqs.types";
 import { RateLimitingError } from "../github/client/github-client-errors";
+import { getLogger } from "config/logger";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -22,8 +23,11 @@ type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Erro
 export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
 	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
+	const unsafeLogger = getLogger("error-handler-unsafe", { level: "warn", unsafe: true });
+	unsafeLogger.warn({ error, context }, "Handling Jira or GitHub error");
+
 	const maybeResult = maybeHandleNonFailureCase(error, context)
-		|| maybeHandleRateLimitingError(error)
+		|| maybeHandleRateLimitingError(error, context)
 		|| maybeHandleNonRetryableResponseCode(error, context);
 
 	if (maybeResult) {
@@ -32,6 +36,7 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: E
 
 	//In case if error is unknown we should use exponential backoff
 	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
+	context.log.warn({ error }, `no error result found, retrying`);
 	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 };
 
@@ -76,8 +81,9 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 	return undefined;
 };
 
-const maybeHandleRateLimitingError = (error: Error): ErrorHandlingResult | undefined => {
+const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	if (error instanceof RateLimitingError) {
+		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 	}
