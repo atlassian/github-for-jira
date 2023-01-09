@@ -94,12 +94,14 @@ export const JiraConnectEnterprisePost = async (
 		const codeOrStatus = "" + (err.code || err.response.status);
 
 		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
-			if (!err.code && err.status) {
+			req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${!err.code && err.response?.status}`);
+			if (!err.code && err.response?.status) {
 				//err.code means there's error on the tcp/https connection,
 				//err.status means traffic reach signals, but server reject it.
 				//as long as there's no code and a status, means server returns something
 				//so the domain name is reachable, it is just it required some api tokens to be accessible
 				res.status(200).send({ success: true, appExists: false });
+				return;
 			}
 		}
 
