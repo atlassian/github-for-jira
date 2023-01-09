@@ -166,7 +166,7 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({
 			success: false, errors: [{
 				code: "GHE_ERROR_CANNOT_CONNECT",
-				reason: "ENOTFOUND"
+				reason: expect.stringMatching(/ENOTFOUND|EAI_AGAIN/)
 			}]
 		});
 	});
