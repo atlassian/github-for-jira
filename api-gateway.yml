@@ -34,17 +34,19 @@ paths:
         httpMethod: "POST"
         uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}"
         requestParameters:
+          integration.request.header.Content-Type: "'text/plain'"
           integration.request.querystring.Action: "'SendMessage'"
-          integration.request.querystring.MessageBody: |
+        requestTemplates:
+          application/json: |
             #set($allParams = $input.params())
             {
               #foreach($type in $allParams.keySet())
               #set($params = $allParams.get($type))
               "$type" : {
-                #foreach($paramName in $params.keySet())
-                "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
-                #if($foreach.hasNext),#end
-                #end
+              #foreach($paramName in $params.keySet())
+              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+              #if($foreach.hasNext),#end
+              #end
               }
               #if($foreach.hasNext),#end
               #end
@@ -66,17 +68,19 @@ paths:
         credentials: "{{RoleARN}}"
         uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}"
         requestParameters:
+          integration.request.header.Content-Type: "'text/plain'"
           integration.request.querystring.Action: "'SendMessage'"
-          integration.request.querystring.MessageBody: |
+        requestTemplates:
+          application/json: |
             #set($allParams = $input.params())
             {
               #foreach($type in $allParams.keySet())
               #set($params = $allParams.get($type))
               "$type" : {
-                #foreach($paramName in $params.keySet())
-                "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
-                #if($foreach.hasNext),#end
-                #end
+              #foreach($paramName in $params.keySet())
+              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+              #if($foreach.hasNext),#end
+              #end
               }
               #if($foreach.hasNext),#end
               #end
