@@ -55,3 +55,4 @@ test/**/*.js.map
 test/e2e/test-results/
 
 *.drawio.bkp
+*.drawio.dtmp
