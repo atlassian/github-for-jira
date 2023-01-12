@@ -6,7 +6,9 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { deploymentQueueMessageHandler } from "./deployment";
 import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
-import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload } from "./sqs.types";
+import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload, WebhookMessagePayload } from "./sqs.types";
+import { jiraWebhooksQueueMessageHandler } from "~/src/sqs/jira-webhooks-handler";
+import { githubWebhooksQueueMessageHandler } from "~/src/sqs/github-webhooks-handler";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
@@ -58,9 +60,35 @@ export const sqsQueues = {
 	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "create")
 	),
 
+	jira: new SqsQueue<WebhookMessagePayload>({
+		queueName: "jira-webhooks",
+		queueUrl: envVars.SQS_JIRA_WEBHOOKS_QUEUE_URL,
+		queueRegion: envVars.SQS_JIRA_WEBHOOKS_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 60,
+		maxAttempts: 5
+	},
+	jiraWebhooksQueueMessageHandler,
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "jira")
+	),
+
+	github: new SqsQueue<WebhookMessagePayload>({
+		queueName: "github-webhooks",
+		queueUrl: envVars.SQS_GITHUB_WEBHOOKS_QUEUE_URL,
+		queueRegion: envVars.SQS_GITHUB_WEBHOOKS_QUEUE_REGION,
+		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
+		timeoutSec: 60,
+		maxAttempts: 5
+	},
+	githubWebhooksQueueMessageHandler,
+	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "github")
+	),
+
 	start: () => {
 		logger.info("Starting queues");
 		sqsQueues.backfill.start();
+		sqsQueues.jira.start();
+		sqsQueues.github.start();
 		sqsQueues.push.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
@@ -71,6 +99,8 @@ export const sqsQueues = {
 		logger.info("Stopping queues");
 		await Promise.all([
 			sqsQueues.backfill.stop(),
+			sqsQueues.jira.stop(),
+			sqsQueues.github.stop(),
 			sqsQueues.push.stop(),
 			sqsQueues.deployment.stop(),
 			sqsQueues.branch.stop()

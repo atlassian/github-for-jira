@@ -120,10 +120,20 @@ export interface SQSContext {
 	log: Logger;
 }
 
-export type BranchMessagePayload = {
+interface BaseMessagePayload {
 	jiraHost: string,
 	installationId: number,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+}
+
+export interface WebhookMessagePayload<Body = any, Headers = Record<string, string>, Query = Record<string, string>, Path = Record<string, string>> {
+	headers: Headers;
+	query: Query;
+	path: Path;
+	body: Body;
+}
+
+export interface BranchMessagePayload extends BaseMessagePayload {
 	webhookReceived: number,
 	webhookId: string,
 
@@ -132,19 +142,13 @@ export type BranchMessagePayload = {
 	webhookPayload: WebhookPayloadCreate,
 }
 
-export type BackfillMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export interface BackfillMessagePayload extends BaseMessagePayload {
 	startTime?: string,
 	commitsFromDate?: string,
 	targetTasks?: TaskType[]
 }
 
-export type DeploymentMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export interface DeploymentMessagePayload extends BaseMessagePayload {
 	webhookReceived: number,
 	webhookId: string,
 
@@ -153,10 +157,7 @@ export type DeploymentMessagePayload = {
 	webhookPayload: WebhookPayloadDeploymentStatus,
 }
 
-export type PushQueueMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export interface PushQueueMessagePayload extends BaseMessagePayload {
 	repository: PayloadRepository,
 	shas: { id: string, issueKeys: string[] }[],
 	webhookId: string,
