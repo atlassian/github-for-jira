@@ -131,7 +131,7 @@ Parameters:
   ResourceOwner:
     Description: 'User name of the individual person responsible for this resource.'
     Type: String
-    Default: crolf
+    Default: dmccormick
   BusinessUnit:
     Description: 'Business unit this resource belongs to.'
     Type: String
@@ -461,8 +461,13 @@ EOF\n"
         - !Ref 'EC2InstanceRole'
     Type: AWS::IAM::InstanceProfile
   EC2InstanceRole:
+    Type: AWS::IAM::Role
     Properties:
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
       AssumeRolePolicyDocument:
+        Version: '2012-10-17'
         Statement:
           - Action:
               - sts:AssumeRole
@@ -470,27 +475,27 @@ EOF\n"
             Principal:
               Service:
                 - ec2.amazonaws.com
-          - Action:
-              - sts:AssumeRole
-            Effect: Allow
-            Resource:
-              - "arn:aws:iam::915926889391:role/pipeline-prod-log-producers-all"
-              - "arn:aws:iam::672543177425:role/pipeline-prod-log-producers-all"
-          - Action:
-              - ec2:DescribeTags
-            Effect: Allow
-            Resource:
-              - "*"
-          - Action:
-            - secretsmanager:GetSecretValue
-            Effect: Allow
-            Resource:
-              - "arn:aws:secretsmanager:ap-southeast-2:988304025201:secret:FleetEnrollmentSecret-jwZqaI"
-        Version: '2012-10-17'
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-      Path: /
-    Type: AWS::IAM::Role
+      Policies:
+        - PolicyName: Other
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - ec2:DescribeTags
+                Effect: Allow
+                Resource:
+                  - "*"
+              - Action:
+                  - sts:AssumeRole
+                Effect: Allow
+                Resource:
+                  - "arn:aws:iam::915926889391:role/pipeline-prod-log-producers-all"
+                  - "arn:aws:iam::672543177425:role/pipeline-prod-log-producers-all"
+              - Action:
+                  - secretsmanager:GetSecretValue
+                Effect: Allow
+                Resource:
+                  - "arn:aws:secretsmanager:ap-southeast-2:988304025201:secret:FleetEnrollmentSecret-jwZqaI"
   ElasticIP:
     Properties:
       Domain: vpc
