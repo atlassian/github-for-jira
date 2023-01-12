@@ -78,10 +78,11 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+		req.log.info(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
 		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
-		await client.getMainPage(TIMEOUT_PERIOD_MS);
+		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+		req.log.info({ response }, `Successfully received response from ${gheServerURL}`);
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
