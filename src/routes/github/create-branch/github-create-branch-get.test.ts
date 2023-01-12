@@ -5,6 +5,7 @@ import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
+import { generateBranchName } from "routes/github/create-branch/github-create-branch-get";
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
@@ -70,5 +71,30 @@ describe("GitHub Create Branch Get", () => {
 					expect(res.text).toContain("<div class=\"gitHubCreateBranch__header\">Create GitHub Branch</div>");
 				});
 		});
+	});
+
+	describe("GenerateBranchName", () => {
+		it("should return just the issue key when no issuesummary", () => {
+			expect(generateBranchName("ISSUEKEY", "")).toEqual("ISSUEKEY");
+		});
+		it("should replace spaces with hyphens", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue summary with spaces")).toBe("ISSUEKEY-issue-summary-with-spaces");
+		});
+		it("should replace slashes with hyphens", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue/summary/with/slashes/yo")).toBe("ISSUEKEY-issue-summary-with-slashes-yo");
+		});
+		it("should replace special characters with hypen(exld exempt special chars)", () => {
+			expect(generateBranchName("ISSUEKEY", "A!B#CAT")).toEqual("ISSUEKEY-A-B-CAT");
+		});
+		it("should not replace exempt special characters with hypen", () => {
+			expect(generateBranchName("ISSUEKEY", "CAT-._88")).toEqual("ISSUEKEY-CAT-._88");
+		});
+		it("should replace leading special characters with nothing", () => {
+			expect(generateBranchName("ISSUEKEY", "/test/")).toEqual("ISSUEKEY-test");
+		});
+		it("should replace repeating hypens to a single hyphen", async () => {
+			expect(generateBranchName("ISSUEKEY", "issue//////summary------with$$$$$$////slashes//yo")).toBe("ISSUEKEY-issue-summary-with-slashes-yo");
+		});
+
 	});
 });
