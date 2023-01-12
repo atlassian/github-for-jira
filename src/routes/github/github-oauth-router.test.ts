@@ -30,7 +30,7 @@ describe("github-oauth-router", () => {
 			locals = {};
 			session = {
 				jiraHost,
-				fooState: "http://myredirect.com"
+				fooState: `http://myredirect.com?jiraHost=${jiraHost}`
 			};
 		});
 
@@ -63,7 +63,7 @@ describe("github-oauth-router", () => {
 			// @ts-ignore
 			expect(session.githubToken).toEqual("behold!");
 			expect(response.status).toEqual(302);
-			expect(response.headers.location).toEqual("http://myredirect.com");
+			expect(response.headers.location).toEqual(`http://myredirect.com?jiraHost=${jiraHost}`);
 		});
 	});
 

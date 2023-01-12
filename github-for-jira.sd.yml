@@ -513,8 +513,8 @@ environmentOverrides:
       - name: Worker
         scaling:
           instance: c5.2xlarge
-          min: 3
-          max: 35 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE # Temp update from 15 to 35 while backfilling
+          min: 5
+          max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
           metrics: *CpuMemAndQueuesScalingRules
     alarms:
       overrides:
@@ -598,7 +598,7 @@ environmentOverrides:
           DLQAlarmOnTooManyMessages:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
-            Description: "Message count for backfill dead letter queue too high!"
+            Description: "Message count for backfill dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
             Threshold: 50
             Priority: Low
             Dimensions:
@@ -628,7 +628,7 @@ environmentOverrides:
           DLQAlarmOnTooManyMessages:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
-            Description: "Message count for push dead letter queue too high!"
+            Description: "Message count for push dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
             Threshold: 100
             Priority: Low
             Dimensions:
@@ -658,7 +658,7 @@ environmentOverrides:
           DLQAlarmOnTooManyMessages:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
-            Description: "Message count for deployment dead letter queue too high!"
+            Description: "Message count for deployment dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
             Threshold: 5000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:
@@ -688,7 +688,7 @@ environmentOverrides:
           DLQAlarmOnTooManyMessages:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
-            Description: "Message count for branch dead letter queue too high!"
+            Description: "Message count for branch dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
             Threshold: 1000 # number is initially high until we start bringing numbers down
             Priority: Low
             Dimensions:

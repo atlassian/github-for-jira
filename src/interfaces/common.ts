@@ -38,6 +38,7 @@ export enum AnalyticsTrackEventsEnum {
 	GitHubServerUrlTrackEventName = "gitHubServerUrlSubmitted",
 	CreateBranchErrorTrackEventName = "createBranchSubmittedError",
 	CreateBranchSuccessTrackEventName = "createBranchSubmittedSuccess",
+	AutoCreateGitHubServerAppTrackEventName  = "autoCreateGitHubServerApp",
 	CreateGitHubServerAppTrackEventName = "createGitHubServerApp",
 	DeleteGitHubServerAppTrackEventName = "deleteGitHubServerApp",
 	UpdateGitHubServerAppTrackEventName = "updateGitHubServerApp",

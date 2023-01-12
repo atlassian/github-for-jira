@@ -9,6 +9,7 @@ import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/
 import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -38,8 +39,8 @@ const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> =
 
 	// Save the redirect that may have been specified earlier into session to be retrieved later
 	req.session[state] =
-		res.locals.redirect ||
-		`/github/configuration${url.parse(req.originalUrl).search || ""}`;
+		appendJiraHostIfNeeded(res.locals.redirect ||
+		`/github/configuration${url.parse(req.originalUrl).search || ""}`, res.locals.jiraHost);
 	// Find callback URL based on current url of this route
 	const redirectUrl = await getRedirectUrl(res, state);
 	req.log.info("redirectUrl:", redirectUrl);
@@ -205,8 +206,52 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
 };
 
+const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, next: NextFunction) => {
+
+	const stateKey = req.query.state as string;
+	if (!stateKey) {
+		req.log.warn("State key is empty");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+	if (!req.session[stateKey]) {
+		req.log.warn("State is empty in req.session for callback redirect");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+
+	let url;
+	try {
+		let redirectUrl = req.session[stateKey];
+		if (!redirectUrl.startsWith("http")) {
+			redirectUrl = "https://dummy.domain" + redirectUrl;
+		}
+		url = new URL(redirectUrl);
+	} catch (e) {
+		req.log.warn("Error passing redirect url in callback", e);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+	const jiraHost = url.searchParams.get("jiraHost");
+	if (!jiraHost) {
+		req.log.warn("jiraHost is missing in state redirect uri");
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
+		return;
+	}
+
+	res.locals.jiraHost = jiraHost;
+	next();
+};
+
+const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
+	if (!jiraHost) return url;
+	if (url.indexOf("?") === -1) url = url + "?";
+	if (url.indexOf("&jiraHost") === -1) url = url + "&jiraHost=" + jiraHost;
+	return url;
+};
+
 // IMPORTANT: We need to keep the login/callback/middleware functions
 // in the same file as they reference each other
-export const GithubOAuthRouter = Router();
-GithubOAuthRouter.get("/login", GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);
+export const GithubOAuthRouter = Router({ mergeParams: true });
+GithubOAuthRouter.get("/login", GithubServerAppMiddleware, GithubOAuthLoginGet);
+GithubOAuthRouter.get(callbackSubPath, TempGetJiraHostFromStateMiddleware, GithubServerAppMiddleware, GithubOAuthCallbackGet);

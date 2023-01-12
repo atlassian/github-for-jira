@@ -3,11 +3,19 @@ import { Request, Response } from "express";
 import { createAppClient, createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
+import { sendError } from "~/src/jira/util/jwt";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
+	const { githubToken, jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
+	const { jiraHost: jiraHostParam } = req.query;
 	const repoName = req.query?.repoName as string;
+	const jiraHost = jiraHostLocals || jiraHostParam;
+
+	if (!jiraHost) {
+		sendError(res, 401, "Unauthorised");
+		return;
+	}
 
 	if (!githubToken) {
 		res.sendStatus(401);
@@ -25,8 +33,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 			repositories
 		});
 	} catch (err) {
-		req.log.error({ err }, "Error searching repository");
-
+		req.log.error({ err }, "Error fetching repositories");
 		res.status(500).send({
 			repositories: []
 		});
@@ -39,7 +46,7 @@ export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubA
 		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, logger);
 		return repos || [];
 	} catch (err) {
-		logger.log.error({ err }, "Error searching repository");
+		logger.log.error({ err }, "Failed to get repos for subscription");
 		return [];
 	}
 };
@@ -67,7 +74,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 
 			return repos;
 		} catch (err) {
-			logger.error("Create branch - Failed to search repos for installation");
+			logger.error({ err }, "Create branch - Failed to search repos for installation");
 			throw err;
 		}
 	});
