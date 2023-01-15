@@ -131,7 +131,7 @@ That being said, here are the steps needed to create a Pull Request for us to re
 1. [Sign the CLA first!](#contributor-license-agreement)
 1. Fork the repository.
 1. Do your changes either on the main branch or create a new one.
-1. Make sure the tests pass on your machine with `yarn test` and the build works with `yarn run build`.  If you're adding new functionality, please add tests to reflect this.
+1. Make sure the tests pass on your machine with `yarn test` and the build works with `yarn run precommit`.  If you're adding new functionality, please add tests to reflect this.
 1. Commit and Push your changes - verify it passes all checks.
 1. Submit your pull request with a detailed message about what's changed.
 1. Wait for us to review and answer questions/make changes where requested.

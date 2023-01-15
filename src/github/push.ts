@@ -6,6 +6,9 @@ import { GitHubPushData } from "interfaces/github";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Subscription } from "models/subscription";
 import { getInstallationId } from "./client/installation-id";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { getCloudOrServerFromGitHubAppId } from "../util/get-cloud-or-server";
 
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
@@ -27,8 +30,20 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		installation: context.payload?.installation
 	};
 
+	const jiraHost = jiraClient.baseURL;
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
+	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		name: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+		gitHubProduct,
+		jiraHost,
+		totalCommitCount: context.payload?.commits?.length || 0,
+		commitWithJiraIssueKeyCount: payload.commits?.length || 0
+	});
+
 	context.log = context.log.child({
-		jiraHost: jiraClient.baseURL,
+		jiraHost,
 		gitHubInstallationId
 	});
 

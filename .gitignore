@@ -53,3 +53,6 @@ test/**/*.js.map
 
 # e2e tests
 test/e2e/test-results/
+
+*.drawio.bkp
+*.drawio.dtmp

@@ -21,14 +21,14 @@ export enum BooleanFlags {
 	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
-	CREATE_BRANCH = "create-branch",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
 	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
 	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
-	NEW_JWT_VALIDATION = "new-jwt-validation"
+	NEW_JWT_VALIDATION = "new-jwt-validation",
+	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check"
 }
 
 export enum StringFlags {

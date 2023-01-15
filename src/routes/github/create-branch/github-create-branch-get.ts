@@ -1,6 +1,5 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -26,7 +25,10 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { issueKey, issueSummary, multiGHInstance } = req.query;
+	const multiGHInstance = req.query.multiGHInstance;
+	const issueKey = req.query.issueKey as string;
+	const issueSummary = req.query.issueSummary as string;
+
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
@@ -48,7 +50,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return;
 	}
 
-	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
@@ -58,7 +59,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		issue: {
-			branchName: `${issueKey}-${branchSuffix}`,
+			branchName: generateBranchName(issueKey, issueSummary),
 			key: issueKey
 		},
 		issueUrl: `${jiraHost}/browse/${issueKey}`,
@@ -77,6 +78,32 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	});
 };
 
+export const generateBranchName = (issueKey: string, issueSummary: string) => {
+	if (!issueSummary) {
+		return issueKey;
+	}
+
+	let branchSuffix = issueSummary;
+	const validBranchCharactersRegex = /[^a-z\d.\-_]/gi;
+	const validStartCharactersRegex = /^[^a-z\d]/gi;
+	const validEndCharactersRegex = /[^a-z\d]$/gi;
+	branchSuffix = branchSuffix.replace(validStartCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validEndCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validBranchCharactersRegex, "-");
+	branchSuffix = reduceRepeatingDashes(branchSuffix);
+	return `${issueKey}-${branchSuffix}`;
+};
+
+const reduceRepeatingDashes = (text: string) => {
+	const repeatingDashesRegex = /(-)\1{1,}/gi;
+	const match = text.match(repeatingDashesRegex);
+	if (match) {
+		text = text.replace(repeatingDashesRegex, "-");
+		return reduceRepeatingDashes(text);
+	}
+	return text;
+};
+
 const sortByDateString = (a, b) => {
 	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
 };
@@ -88,7 +115,7 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {
-			logger.error("Create branch - Failed to fetch repos for installation");
+			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;
 		}
 	});

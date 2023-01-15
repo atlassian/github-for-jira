@@ -7,7 +7,11 @@ be configured properly for the GitHub for Jira app to be able to communicate wit
 
 ## IP address range
 
-The servers of the GitHub for Jira app operate from IP addresses in the CIDR range `13.52.5.96/28` (i.e. from the IP addresses starting with `13.52.5.96` and ending with `13.52.5.111`).
+The servers of the GitHub for Jira app operate from IP addresses in:
+
+- CIDR range `13.52.5.96/28` (i.e. from the IP addresses starting with `13.52.5.96` and ending with `13.52.5.111`).
+
+- CIDR range `104.192.138.240/28` (i.e. from the IP addresses starting with `104.192.138.240` and ending with `104.192.138.255`).
 
 A machine-readable version of the IP addresses that stays up-to-date is available at [https://ip-ranges.atlassian.com/](https://ip-ranges.atlassian.com/) (filter for the product `github-for-jira`).
 
