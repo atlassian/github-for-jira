@@ -37,7 +37,7 @@ export const getAllCommitsBetweenReferences = async (
 		commitSummaries = commitsDiff.data?.commits
 			?.map((c) => { return { sha: c.sha, message: c.commit.message }; });
 	} catch (err) {
-		logger?.error(
+		logger?.debug(
 			{ err, repo: payload.repo },
 			"Failed to compare commits on repo."
 		);

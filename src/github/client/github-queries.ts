@@ -151,7 +151,7 @@ export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: S
                 message
                 oid
                 url
-                changedFiles
+                changedFilesIfAvailable: changedFiles
               }
             }
           }
@@ -255,7 +255,7 @@ export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: 
                   name
                 }
                 authoredDate
-                changedFiles
+                changedFilesIfAvailable: changedFiles
                 history(since: $commitSince, first: 50) {
                   nodes {
                     message

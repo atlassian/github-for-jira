@@ -1,4 +1,4 @@
-import { InvalidPermissionsError, BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
+import { BlockedIpError, GithubClientError, GithubClientTimeoutError, InvalidPermissionsError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -132,8 +132,8 @@ export const handleFailedRequest = (logger: Logger) =>
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			if (isWarning){
-				logger.warn(errorMessage);
+			if (isWarning) {
+				logger.debug(errorMessage);
 			} else {
 				logger.error(errorMessage);
 			}
