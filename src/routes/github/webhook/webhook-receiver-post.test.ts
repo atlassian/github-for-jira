@@ -6,7 +6,7 @@ import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
+import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
@@ -222,11 +222,25 @@ describe("webhook-receiver-post", () => {
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(injectRawBodyToReq(req), res);
-		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepositoryWebhookHandler);
+		expect(GithubWebhookMiddleware).toBeCalledWith(repositoryWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "repository",
 			action: "deleted",
+			gitHubAppConfig: gitHubAppConfigForGHES()
+		}));
+	});
+
+	it("should call created repository handler", async () => {
+		req = createGHESReqForEvent("repository", "created", EXIST_GHES_UUID);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(repositoryWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "repository",
+			action: "created",
 			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
