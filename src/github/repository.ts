@@ -4,12 +4,13 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { findOrStartSync } from "~/src/sync/sync-utils";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const repositoryWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	if (context.action === "deleted") {
 		return deleteRepositoryWebhookHandler(context, jiraClient, gitHubInstallationId);
 	}
-	if (context.action === "created") {
+	if (context.action === "created" && await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraClient.baseURL)) {
 		return createRepositoryWebhookHandler(context, gitHubInstallationId, subscription);
 	}
 };
@@ -38,12 +39,8 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 export const createRepositoryWebhookHandler = async (context: WebhookContext, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 
 	let status: number;
-	context.log = context.log.child({
-		gitHubInstallationId
-	});
-	if (subscription.totalNumberOfRepos === undefined) {
-		return;
-	}
+	const { webhookReceived, name, log } = context;
+	context.log = context.log.child({ gitHubInstallationId });
 
 	try {
 		const { payload: { repository } } = context;
@@ -56,7 +53,7 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 			repoUrl: repository.html_url,
 			repoUpdatedAt: new Date(repository.updated_at)
 		});
-		await subscription.update({ totalNumberOfRepos: subscription.totalNumberOfRepos + 1 });
+		await subscription.update({ totalNumberOfRepos: (subscription.totalNumberOfRepos || 0) + 1 });
 		await findOrStartSync(subscription, context.log, "partial");
 		status = 200;
 	} catch (err) {
@@ -64,12 +61,11 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 		status = 500;
 	}
 
-	const { webhookReceived, name, log } = context;
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		status, // No jira reponse at this stage so db result here
+		status, // No jira response at this stage so db result here
 		context.gitHubAppConfig?.gitHubAppId
 	);
 };

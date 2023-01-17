@@ -61,7 +61,7 @@ describe("deleteRepositoryWebhookHandler", () => {
 
 describe("createdRepositoryWebhookHandler", () => {
 
-	let subscription: Subscription;
+	let subscription;
 	beforeEach(async () => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
@@ -70,6 +70,10 @@ describe("createdRepositoryWebhookHandler", () => {
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_REPO_ID_TRANSFORMER
+		).mockResolvedValue(true);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.REPO_CREATED_EVENT
 		).mockResolvedValue(true);
 
 		subscription = await Subscription.create({
