@@ -319,7 +319,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			return response.data.content;
 		} catch (err) {
 			if (err.status == 404) {
-				this.logger.warn({ err, owner, repo, path }, "could not find file in repo");
+				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}
 			throw err;

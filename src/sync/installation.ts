@@ -324,7 +324,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 /**
  * Handles an error and takes action based on the error type and parameters
  */
-export const handleBackfillError = async (err,
+export const handleBackfillError = async (
+	err,
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	subscription: Subscription,
@@ -375,7 +376,7 @@ export const handleBackfillError = async (err,
 		return;
 	}
 
-	logger.error({ err }, "Task failed, continuing with next task");
+	logger.warn({ errorMessage: err.message, task: nextTask }, "Task failed, continuing with next task");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
