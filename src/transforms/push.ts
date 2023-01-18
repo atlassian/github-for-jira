@@ -108,7 +108,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	});
 
-	log.info("Processing push");
+	log.info({ shas, shasCount: shas?.length }, "Processing push");
 
 	const gitHubAppId = payload.gitHubAppConfig?.gitHubAppId;
 
