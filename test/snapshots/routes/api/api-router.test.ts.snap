@@ -8,6 +8,8 @@ exports[`API Router Endpoints Delete Installation Should work with new delete in
 
 exports[`API Router Endpoints Delete Installation Should work with old delete installation route 1`] = `Object {}`;
 
+exports[`API Router Endpoints Delete Installation Should work with old delete installation route with gitHubAppId 1`] = `Object {}`;
+
 exports[`API Router Endpoints Repo Sync State should return 404 if no installation is found 1`] = `Object {}`;
 
 exports[`API Router Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;

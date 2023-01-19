@@ -16,7 +16,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 
 		app = express();
@@ -31,12 +31,12 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
-			iss: jiraHost
+			iss: "jira-client-key"
 		}, await installation.decrypt("encryptedSharedSecret"));
 	});
 
 	it("should return 202 when correct uuid and installation id are passed", async () => {
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -46,7 +46,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 		const payload ={
 			gitHubAppName: "my-app",
@@ -72,7 +72,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should use existing privateKey if new privateKey is not passed in as body", async () => {
 
-		let existingApp = await GitHubServerApp.create({
+		let existingApp = await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -82,7 +82,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 		const payload ={
 			gitHubAppName: "my-app",
@@ -106,11 +106,11 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		existingApp = await GitHubServerApp.findByPk(existingApp.id);
 
-		expect(await existingApp.getDecryptedPrivateKey()).toBe("privatekey");
+		expect(await existingApp.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
 	});
 
 	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -120,7 +120,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 		const payload ={
 			gitHubAppName: "newName",
@@ -142,13 +142,13 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
 
 		expect(restoredApp.gitHubAppName).toEqual("newName");
-		expect(await restoredApp.getDecryptedWebhookSecret()).toEqual("newSecret");
-		expect(await restoredApp.getDecryptedPrivateKey()).toEqual("privatekey");
-		expect(await restoredApp.getDecryptedGitHubClientSecret()).toEqual("secret");
+		expect(await restoredApp.getDecryptedWebhookSecret(jiraHost)).toEqual("newSecret");
+		expect(await restoredApp.getDecryptedPrivateKey(jiraHost)).toEqual("privatekey");
+		expect(await restoredApp.getDecryptedGitHubClientSecret(jiraHost)).toEqual("secret");
 	});
 
 	it("should return 404 when wrong uuid param is passed", async () => {
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -158,7 +158,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId: installation.id
-		});
+		}, jiraHost);
 
 		const payload ={
 			gitHubAppName: "my-app",
@@ -186,7 +186,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 	});
 
 	it("should return 404 when wrong installationId is passed", async () => {
-		await GitHubServerApp.create({
+		await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -196,7 +196,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "anothersecret",
 			privateKey: "privatekey",
 			installationId: 42
-		});
+		}, jiraHost);
 
 		const payload ={
 			gitHubAppName: "my-app",

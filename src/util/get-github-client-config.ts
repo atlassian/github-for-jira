@@ -1,7 +1,7 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId } from "../github/client/installation-id";
-import { booleanFlag, BooleanFlags, GHE_SERVER_GLOBAL, stringFlag, StringFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
@@ -25,7 +25,7 @@ interface GitHubClientConfig extends GitHubConfig {
 
 export const getGitHubApiUrl = async (jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost) && gitHubClientConfig
+	return await booleanFlag(BooleanFlags.GHE_SERVER, jiraHost) && gitHubClientConfig
 		? `${gitHubClientConfig.apiUrl}`
 		: GITHUB_CLOUD_API_BASEURL;
 };
@@ -56,11 +56,10 @@ const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | u
 			skipOutboundProxy = false;
 		}
 		if (skipOutboundProxy) {
-			logger.warn("Skip outbound proxy");
+			logger.debug({ gitHubBaseUrl, jiraHost }, "Skipping outbound proxy");
 			return undefined;
 		}
 	}
-	logger.info("Use outbound proxy");
 	return envVars.PROXY;
 };
 
@@ -90,13 +89,13 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 		serverId: gitHubServerApp.id,
 		appId: gitHubServerApp.appId,
 		gitHubClientId: gitHubServerApp.gitHubClientId,
-		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(),
-		privateKey: await gitHubServerApp.getDecryptedPrivateKey()
+		gitHubClientSecret: await gitHubServerApp.getDecryptedGitHubClientSecret(jiraHost),
+		privateKey: await gitHubServerApp.getDecryptedPrivateKey(jiraHost)
 	}
 );
 
 const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
-	const privateKey = await keyLocator(undefined);
+	const privateKey = await keyLocator(undefined, jiraHost);
 
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
@@ -133,10 +132,10 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
  */
 export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	if (await booleanFlag(BooleanFlags.GHE_SERVER, GHE_SERVER_GLOBAL, jiraHost)) {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, logger, gitHubClientConfig.serverId);
+	if (await booleanFlag(BooleanFlags.GHE_SERVER, jiraHost)) {
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, jiraHost, logger, gitHubClientConfig.serverId);
 	} else {
-		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, logger);
+		return new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubClientConfig, jiraHost, logger);
 	}
 };
 

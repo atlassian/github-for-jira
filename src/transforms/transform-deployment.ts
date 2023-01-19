@@ -41,7 +41,7 @@ const getLastSuccessfulDeployCommitSha = async (
 			}
 		}
 	} catch (e) {
-		logger?.error(`Failed to get deployment statuses.`);
+		logger?.debug(`Failed to get deployment statuses.`);
 	}
 
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
@@ -175,7 +175,8 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 	issueIds: string[],
 	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[],
-	config?: Config
+	config?: Config,
+	jiraHost?: string
 ): Promise<JiraAssociation[] | undefined> => {
 
 	const associations: JiraAssociation[] = [];
@@ -193,7 +194,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 		totalAssociationCount += issues.length;
 	}
 
-	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false)) {
+	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
 		if (config?.deployments?.services?.ids) {
 			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 			const services = config.deployments.services.ids
@@ -269,7 +270,8 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
 		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries,
-		config
+		config,
+		jiraHost
 	);
 
 	if (!associations?.length) {
@@ -290,7 +292,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: deployment.id,
 			updateSequenceNumber: deployment_status.id,
-			displayName: deployment.task,
+			displayName: message.substring(0, 255),
 			url: deployment_status.target_url || deployment.url,
 			description: deployment.description || deployment_status.description || deployment.task,
 			lastUpdated: new Date(deployment_status.updated_at),

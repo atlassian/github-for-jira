@@ -81,7 +81,7 @@ const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boole
 	);
 };
 
-const verifyQsh = (qsh: string, req: Request): boolean => {
+export const verifyQsh = (qsh: string, req: Request): boolean => {
 	// to get full path from express request, we need to add baseUrl with path
 	/**
 	 * TODO: Remove `decodeURIComponent` later

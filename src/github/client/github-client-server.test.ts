@@ -78,7 +78,6 @@ describe("GitHub Client", () => {
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.GHE_SERVER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 
@@ -90,6 +89,7 @@ describe("GitHub Client", () => {
 				apiUrl: gheApiUrl,
 				graphqlUrl: gheApiUrl  + "/graphql"
 			},
+			jiraHost,
 			getLogger("test")
 		);
 

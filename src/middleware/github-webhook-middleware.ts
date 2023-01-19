@@ -181,7 +181,7 @@ export const GithubWebhookMiddleware = (
 			context.log = context.log.child({ jiraHost });
 			context.log.info("Processing event for Jira Host");
 
-			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, false, jiraHost)) {
+			if (await booleanFlag(BooleanFlags.MAINTENANCE_MODE, jiraHost)) {
 				context.log.info(
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`

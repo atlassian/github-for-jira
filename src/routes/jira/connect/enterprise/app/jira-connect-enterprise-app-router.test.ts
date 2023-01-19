@@ -18,7 +18,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 	beforeEach(async ()=>{
 		app = getFrontendApp();
 		installation = await Installation.install({
-			clientKey: "client-key-1",
+			clientKey: "jira",
 			host: jiraHost,
 			sharedSecret: SHARED_SECRET
 		});
@@ -32,7 +32,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			installationId: installation.id,
 			privateKey: "private-key",
 			webhookSecret: "webhook-secret"
-		});
+		}, jiraHost);
 	});
 	describe("Routes with uuid", () => {
 		it("should take valid uuid from path and convert to ghe app config", async () => {
@@ -83,7 +83,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 				installationId: installationOfAnotherSite.id,
 				privateKey: "private-key",
 				webhookSecret: "webhook-secret"
-			});
+			}, jiraHost);
 
 			//try to delete app with uuid for another site
 			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;

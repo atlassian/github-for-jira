@@ -1,14 +1,16 @@
 name: Push
 
 on:
+  # Only build on main branch when pushed (when PR is merged)
   push:
+    branches:
+      - main
+  # Only build in PR on creation/update
   pull_request:
-    types: [ opened ]
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v4
@@ -22,7 +24,6 @@ jobs:
 
   unit-test:
     runs-on: ubuntu-22.04
-
     steps:
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v4
@@ -59,10 +60,19 @@ jobs:
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
         run: yarn test
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-coverage
+          retention-days: 14
+          path: |
+            coverage/
 
   e2e-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    # This will prevent multiple e2e tests from running concurrently, only one at a time to prevent collisions
+    concurrency: e2e
     steps:
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v4

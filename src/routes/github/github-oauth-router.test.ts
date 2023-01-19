@@ -17,7 +17,6 @@ describe("github-oauth-router", () => {
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
-			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(true);
 	});
@@ -31,7 +30,7 @@ describe("github-oauth-router", () => {
 			locals = {};
 			session = {
 				jiraHost,
-				fooState: "http://myredirect.com"
+				fooState: `http://myredirect.com?jiraHost=${jiraHost}`
 			};
 		});
 
@@ -64,7 +63,7 @@ describe("github-oauth-router", () => {
 			// @ts-ignore
 			expect(session.githubToken).toEqual("behold!");
 			expect(response.status).toEqual(302);
-			expect(response.headers.location).toEqual("http://myredirect.com");
+			expect(response.headers.location).toEqual(`http://myredirect.com?jiraHost=${jiraHost}`);
 		});
 	});
 
@@ -105,7 +104,6 @@ describe("github-oauth-router", () => {
 
 				when(booleanFlag).calledWith(
 					BooleanFlags.GHE_SERVER,
-					expect.anything(),
 					expect.anything()
 				).mockResolvedValue(true);
 			});

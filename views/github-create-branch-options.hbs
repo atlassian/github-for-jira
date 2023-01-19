@@ -20,8 +20,8 @@
   />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
-
 <body class="aui-page-hybrid p-6">
+    <input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
     <div class="gitHubCreateBranchOptions jiraSelectGitHubProduct"
          data-has-cloud-server="{{servers.hasCloudServer}}"
          data-ghe-servers-count="{{servers.gheServerInfos.length}}">
@@ -77,12 +77,6 @@
             </div>
           </section>
       </div>
-
-  <div class="gitHubCreateBranchOptions__loading">
-    {{> loading-screen
-        title="Connecting to GitHub"
-    }}
-  </div>
 
   <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
   <script src="/public/js/jira-select-card-option.js" nonce="{{nonce}}"></script>

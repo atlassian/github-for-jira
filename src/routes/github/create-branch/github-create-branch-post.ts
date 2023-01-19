@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { createUserClient } from "~/src/util/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { statsd } from "~/src/config/statsd";
 import { metricCreateBranch } from "~/src/config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "~/src/util/get-cloud-or-server";
@@ -61,7 +61,7 @@ const getErrorMessages = (statusCode: number, url?: string): string => {
 };
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
+	const { githubToken, gitHubAppConfig, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 
 	if (!githubToken) {
@@ -111,6 +111,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name,
+		source: AnalyticsTrackSource.CreateBranch,
 		jiraHost
 	});
 };

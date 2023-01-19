@@ -4,8 +4,9 @@ import { validateUrl } from "utils/validate-url";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -28,6 +29,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		source: AnalyticsTrackSource.CreateBranch,
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
@@ -84,11 +86,24 @@ export const JiraConnectEnterprisePost = async (
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost: jiraHost
 		});
 	} catch (err) {
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 		const codeOrStatus = "" + (err.code || err.response.status);
+
+		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
+			req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${!err.code && err.response?.status}`);
+			if (!err.code && err.response?.status) {
+				//err.code means there's error on the tcp/https connection,
+				//err.status means traffic reach signals, but server reject it.
+				//as long as there's no code and a status, means server returns something
+				//so the domain name is reachable, it is just it required some api tokens to be accessible
+				res.status(200).send({ success: true, appExists: false });
+				return;
+			}
+		}
 
 		res.status(200).send({
 			success: false, errors: [{

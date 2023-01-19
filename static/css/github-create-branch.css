@@ -103,12 +103,23 @@
 .aui-icon.aui-iconfont-error {
   margin-top: 10px;
 }
+.gitHubCreateBranch__contextContainer {
+  display: flex;
+}
+
+.gitHubCreateBranch__changeInstance {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: start;
+  margin: 16px 0px 0px 23px
+}
 
 .gitHubCreateBranch__userDetails {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
   margin: 16px 23px 0px 0px;
+  flex: 1;
 }
 
 .has-errors {

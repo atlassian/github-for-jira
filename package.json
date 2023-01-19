@@ -4,7 +4,7 @@
 	"description": "GitHub integration for Atlassian Jira",
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
-		"node": ">= 14.16 <15",
+		"node": ">= 14.21 <15",
 		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
@@ -27,7 +27,7 @@
 		"lint:yaml": "yamllint github-for-jira.sd.yml",
 		"pretest": "NODE_ENV=test run-p clean setup db:test",
 		"test": "jest --runInBand --forceExit --coverage",
-		"test:watch": "jest --runInBand --watchAll",
+		"test:watch": "jest --runInBand --watchAll --coverage=false",
 		"db": "run-s db:create db:migrate",
 		"db:create": "run-p db:create:dev db:create:test",
 		"db:create:dev": "dotenv -c development -- sequelize db:create || exit 0",
@@ -161,7 +161,7 @@
 		"@atlassiansox/analytics-node-client": "^3.1.1"
 	},
 	"volta": {
-		"node": "14.17.0",
+		"node": "14.21.1",
 		"yarn": "1.22.18"
 	}
 }

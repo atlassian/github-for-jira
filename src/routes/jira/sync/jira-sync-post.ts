@@ -2,6 +2,8 @@ import { Subscription } from "models/subscription";
 import * as Sentry from "@sentry/node";
 import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType, appId: gitHubAppId } = req.body;
@@ -29,8 +31,31 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		}
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
 
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			success: true,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			withStartingTime: commitsFromDate !== undefined,
+			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
+		});
+
 		res.sendStatus(202);
 	} catch (error) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			success: false,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			withStartingTime: commitsFromDate !== undefined,
+			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
+		});
+
 		next(new Error("Unauthorized"));
 	}
+};
+
+const MILLISECONDS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
+const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
+	if (commitsFromDate === undefined) return undefined;
+	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
