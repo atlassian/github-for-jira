@@ -12,6 +12,7 @@ import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
+const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
 const mapFile = (
 	githubFile: GithubCommitFile,
@@ -131,7 +132,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			log
 		);
 
-		const recentShas = shas.slice(0, 10);
+		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commits: JiraCommit[] = await Promise.all(
 			recentShas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
