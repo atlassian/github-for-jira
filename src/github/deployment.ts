@@ -8,6 +8,7 @@ import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { getLogger } from "config/logger";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -38,6 +39,8 @@ export const processDeployment = async (
 		webhookReceived: webhookReceivedDate
 	});
 
+	const unsafeLogger = getLogger("process-deployment-unsafe", { level: "warn", unsafe: true });
+
 	if (await isBlocked(gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
 		return;
@@ -66,9 +69,8 @@ export const processDeployment = async (
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
-		logger.warn({
-			rejectedDeployments: result.rejectedDeployments
-		}, "Jira API rejected deployment!");
+		unsafeLogger.warn({ rejectedDeployments: result.rejectedDeployments, jiraPayload, jiraHost }, "Jira API rejected deployment!");
+		logger.warn({ rejectedDeployments: result.rejectedDeployments }, "Jira API rejected deployment!");
 	}
 
 	emitWebhookProcessedMetrics(
