@@ -131,8 +131,9 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			log
 		);
 
+		const recentShas = shas.slice(0, 10);
 		const commits: JiraCommit[] = await Promise.all(
-			shas.map(async (sha): Promise<JiraCommit> => {
+			recentShas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
 				try {
 					const {
