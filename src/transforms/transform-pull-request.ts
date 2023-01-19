@@ -10,9 +10,10 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
-const mapStatus = (status: string, merged_at?: string) => {
+export const mapStatus = (status: string, draft?: boolean, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
-	if (status === "open") return "OPEN";
+	if (status === "open" && !draft) return "OPEN";
+	if (status === "open" && draft) return "DRAFT";
 	if (status === "closed" && merged_at) return "MERGED";
 	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
@@ -75,10 +76,9 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
 				reviewers: mapReviews(reviews),
-				draft: pullRequest.draft,
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
-				status: mapStatus(pullRequest.state, pullRequest.merged_at),
+				status: mapStatus(pullRequest.state, pullRequest.draft, pullRequest.merged_at),
 				timestamp: pullRequest.updated_at,
 				title: pullRequest.title,
 				url: pullRequest.html_url,
@@ -91,7 +91,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
-	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
+	if (mapStatus(pullRequest.state, pullRequest.draft, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
 	return [

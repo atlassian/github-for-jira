@@ -3,15 +3,7 @@ import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "models/subscription";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-
-// TODO: better typings in file
-const mapStatus = ({ state, merged_at }): string => {
-	if (state === "merged") return "MERGED";
-	if (state === "open") return "OPEN";
-	if (state === "closed" && merged_at) return "MERGED";
-	if (state === "closed" && !merged_at) return "DECLINED";
-	return "UNKNOWN";
-};
+import { mapStatus } from "~/src/transforms/transform-pull-request";
 
 interface Payload {
 	pullRequest: Octokit.PullsListResponseItem;
@@ -49,7 +41,7 @@ export const transformPullRequest =  async (payload: Payload, prDetails: Octokit
 				lastUpdate: prDetails.updated_at,
 				sourceBranch: `${prDetails.head?.ref || ""}`,
 				sourceBranchUrl: `${repository.html_url}/tree/${prDetails.head?.ref || ""}`,
-				status: mapStatus(prDetails),
+				status: mapStatus(prDetails.state, prDetails.draft, prDetails.merged_at),
 				timestamp: prDetails.updated_at,
 				title: prDetails.title,
 				url: prDetails.html_url,
