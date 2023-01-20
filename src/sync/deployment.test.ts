@@ -26,7 +26,9 @@ describe("sync/deployments", () => {
 		deployments,
 		properties: {
 			"gitHubInstallationId": installationId
-		}
+		},
+		preventTransitions: true,
+		operationType: "BACKFILL"
 	});
 
 	describe("cloud", () => {

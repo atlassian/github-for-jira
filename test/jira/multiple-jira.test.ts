@@ -60,6 +60,7 @@ const githubRequestUserLoginResponse = {
 
 const jiraMatchingIssuesKeysBulkResponse = {
 	preventTransitions: false,
+	operationType: "NORMAL",
 	repositories: [
 		{
 			id:"321806393",
@@ -133,6 +134,7 @@ const jiraMatchingIssuesKeysBulkResponse = {
 
 const jiraMultipleJiraBulkResponse = {
 	preventTransitions: false,
+	operationType: "NORMAL",
 	repositories: [
 		{
 			id:"321806393",

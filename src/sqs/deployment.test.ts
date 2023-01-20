@@ -162,7 +162,9 @@ describe("Deployment Webhook", () => {
 				properties:
 					{
 						gitHubInstallationId: 1234
-					}
+					},
+				preventTransitions: false,
+				operationType: "NORMAL"
 			}).reply(200);
 
 			await expect(app.receive(deploymentStatusBasic as any)).toResolve();
