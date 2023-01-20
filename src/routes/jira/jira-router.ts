@@ -11,6 +11,7 @@ import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { JiraContextJwtTokenMiddleware, JiraJwtTokenMiddleware } from "~/src/middleware/jira-jwt-middleware";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { JiraGetConnectedRepos } from "~/src/routes/jira/jira-get-connected-repos";
 
 export const JiraRouter = Router();
 
@@ -31,6 +32,8 @@ JiraRouter.post("/sync",
 JiraRouter.use("/events", JiraEventsRouter);
 
 JiraRouter.get("/", csrfMiddleware, JiraJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraGet);
+
+JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, JiraContextJwtTokenMiddleware, jiraSymmetricJwtMiddleware, JiraGetConnectedRepos);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`

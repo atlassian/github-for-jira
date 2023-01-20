@@ -1,0 +1,90 @@
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+  <meta name="public-url" content="{{APP_URL}}" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/public/aui/aui-prototyping.css"
+    integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <link rel="stylesheet" href="/public/css/jira-connected-repos.css" media="all" />
+  <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+</head>
+
+<body class="aui-page-hybrid">
+  <div class="jiraConnectedRepos">
+    <div class="jiraConnectedRepos__header">
+      <div>
+        <button class="navigation__backButton__container navigation__link go-back">
+          <img src="/public/assets/arrow-left.svg" alt="Go back" />
+        </button>
+      </div>
+      <div class="jiraConnectedRepos__header__title">
+        <h1>
+          GitHub connected repositories
+        </h1>
+      </div>
+    </div>
+
+    <section class="jiraConnectedRepos_content">
+
+      <div class="jiraConnectedRepos__tableContainer">
+        <table class="jiraConnectedRepos__table aui">
+          <thead class="jiraConnectedRepos__table__head">
+            <tr class="jiraConnectedRepos__table__head_row">
+              <th class="jiraConnectedRepos__table__head__title">Repository name</th>
+              <th class="jiraConnectedRepos__table__head__title">Backfill status
+              </th>
+            </tr>
+          </thead>
+
+          <tbody class="jiraConnectedRepos__table__body">
+            {{#each repos}}
+            <tr class="jiraConnectedRepos__table__row">
+
+              {{! Repo name }}
+              <td class="jiraConnectedRepos__table__cell">
+                {{name}}
+              </td>
+
+              {{! Backfill status }}
+              <td class="jiraConnectedRepos__table__cell">
+                <div class="jiraConnectedRepos__table__cell__syncStatus">
+                  <span class="jiraConnectedRepos__table__{{toLowerCase
+                                            (replaceSpaceWithHyphen syncStatus)
+                                          }}
+                                          jiraConnectedRepos__table__syncStatus">
+                    {{syncStatus}}
+                  </span>
+                  {{#if (inProgressOrPendingSync syncStatus)}}
+                  <div class="jiraConnectedRepos__loaderContainer">
+                    <aui-spinner size="small"></aui-spinner>
+                  </div>
+                  {{/if}}
+                </div>
+              </td>
+
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
+  <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+  <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+  <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+  <script src="/public/aui/aui-prototyping.js" crossorigin="anonymous" referrerpolicy="no-referrer"
+    nonce="{{nonce}}"></script>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+</body>
+
+</html>

@@ -71,6 +71,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
+			subscriptionId: subscription.id,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
@@ -130,6 +131,7 @@ const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
 		failedConnections,
 		hasConnections,
 		APP_URL: process.env.APP_URL,
+		enableRepoConnectedPage: await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraHost),
 		csrfToken: req.csrfToken(),
 		nonce
 	});
@@ -192,6 +194,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
 		APP_URL: process.env.APP_URL,
+		enableRepoConnectedPage: await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraHost),
 		csrfToken: req.csrfToken(),
 		nonce
 	});

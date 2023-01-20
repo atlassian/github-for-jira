@@ -25,6 +25,13 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+$(".jiraConfiguration__table__repo_access").click(function (event) {
+	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
+	AP.context.getToken(function (token) {
+		window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}`;
+	});
+});
+
 $(".add-enterprise-link").click(function(event) {
 	event.preventDefault();
 	AP.navigator.go(
@@ -255,6 +262,15 @@ if (genericModalClose != null) {
 		$(genericModal).hide();
 		$(".modal__footer__actionBtn").removeAttr("data-disconnect-type");
 		$(".modal__additionalContent").empty();
+	});
+}
+
+function openConnectedReposPage(subscriptionId){
+	AP.context.getToken(function(token) {
+		const child = openChildWindow(`/session/jira/subscription/${subscriptionId}/repos`);
+		// Remove below line on cleaning up NEW_JWT_VALIDATION flag
+		child.window.jiraHost = jiraHost;
+		child.window.jwt = token;
 	});
 }
 
