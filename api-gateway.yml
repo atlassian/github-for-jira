@@ -37,8 +37,6 @@ paths:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
           application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),body":$input.json('$')}
-        responseTemplates:
-          application/json:
         responses:
           default:
             statusCode: "204"
