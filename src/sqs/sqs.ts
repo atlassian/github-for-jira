@@ -137,6 +137,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: SQSContext) {
+		listenerContext.log.info(data, "sqs message");
 		if (!data.Messages) {
 			listenerContext.log.trace("Nothing to process");
 			return;
@@ -254,7 +255,9 @@ export class SqsQueue<MessagePayload> {
 			log: listenerContext.log.child({
 				messageId: message.MessageId,
 				executionId: uuidv4(),
-				queue: this.queueName
+				queue: this.queueName,
+				payload,
+				message
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
