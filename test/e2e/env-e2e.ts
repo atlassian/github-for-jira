@@ -19,6 +19,7 @@ export interface E2EEnvVars extends EnvVars {
 	GITHUB_USERNAME: string;
 	GITHUB_PASSWORD: string;
 	GITHUB_URL: string;
+	GITHUB_ORG?: string;
 	GITHUB_2FA_SECRET?: string;
 }
 
