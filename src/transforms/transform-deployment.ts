@@ -37,6 +37,7 @@ const getLastSuccessfulDeployCommitSha = async (
 			// Find the first successful one
 			const lastSuccessful = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
 			if (lastSuccessful) {
+
 				return deployment.sha;
 			}
 		}
