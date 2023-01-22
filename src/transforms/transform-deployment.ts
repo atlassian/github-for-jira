@@ -30,7 +30,6 @@ const getLastSuccessfulDeployCommitSha = async (
 ): Promise<string> => {
 
 	try {
-		// TODO JK - list count of deployments
 		for (const deployment of deployments) {
 			// Get each deployment status for this environment so we can have their statuses' ids
 			const listDeploymentStatusResponse: AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> =
@@ -39,10 +38,8 @@ const getLastSuccessfulDeployCommitSha = async (
 			const lastSuccessful = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
 			if (lastSuccessful) {
 
-				// TODO JK - lfound sha
 				return deployment.sha;
 			}
-			// TODO JK - try next sha
 		}
 	} catch (e) {
 		logger?.debug(`Failed to get deployment statuses.`);
