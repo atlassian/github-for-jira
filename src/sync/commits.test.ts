@@ -30,6 +30,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,
@@ -329,6 +330,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = async (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,
