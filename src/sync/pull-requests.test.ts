@@ -66,6 +66,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayload = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
@@ -122,6 +123,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayloadOldCloud = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
@@ -171,6 +173,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayloadOld = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{

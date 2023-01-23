@@ -114,6 +114,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		jiraNock.post("/rest/devinfo/0.10/bulk", {
 			preventTransitions: false,
+			operationType: "NORMAL",
 			repositories: [
 				{
 					id:"321806393",
@@ -341,6 +342,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories:
 					[
 						{
@@ -457,6 +459,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						id:"321806393",
@@ -539,6 +542,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories:
 					[
 						{
