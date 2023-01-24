@@ -9,10 +9,8 @@ import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
-	getBranchesQueryWithChangedFiles,
 	getBranchesQueryWithoutChangedFiles,
 	getBranchesResponse,
-	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
 	getCommitsResponse,
 	GetRepositoriesQuery,
@@ -28,7 +26,6 @@ import {
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
 } from "./github-client.types";
-import { isChangedFilesError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { GitHubClient, GitHubConfig } from "./github-client";
 
@@ -245,15 +242,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			cursor
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
-			.catch((err) => {
-				if (!isChangedFilesError(err)) {
-					return Promise.reject(err);
-				}
-
-				this.logger.warn("retrying branch graphql query without changedFiles");
-				return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
-			});
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
 		return response?.data?.data;
 	}
 
@@ -281,14 +270,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			commitSince: commitSince?.toISOString()
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
-			.catch((err) => {
-				if (!isChangedFilesError(err)) {
-					return Promise.reject(err);
-				}
-				this.logger.warn("retrying commit graphql query without changedFiles");
-				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
-			});
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
 		return response?.data?.data;
 	}
 
