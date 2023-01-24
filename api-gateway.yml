@@ -38,7 +38,7 @@ paths:
         requestTemplates:
           application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),body":$input.json('$')}
         responseTemplates:
-          application/json: ""
+          application/json: "''"
         responses:
           default:
             statusCode: "200"
@@ -59,7 +59,7 @@ paths:
         requestTemplates:
           application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),"query":$input.params().get('querystring'),"path":$input.params().get('path'),"body":$input.json('$')}
         responseTemplates:
-          application/json: ""
+          application/json: "''"
         responses:
           default:
             statusCode: "200"
