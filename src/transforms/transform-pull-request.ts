@@ -19,29 +19,47 @@ const mapStatus = (status: string, merged_at?: string) => {
 };
 
 // TODO: define arguments and return
-const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient) => {
+	// WHY IS gitHubInstallationClient SHIT UNDEFINED!!!!!!!
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReview> = {};
-	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
-	return sortedReviews.reduce((acc: JiraReview[], review) => {
+	// The reduce function goes through all the reviews and creates an array of unique users
+	// (so users' avatars won't be duplicated on the dev panel in Jira)
+	// and it considers 'APPROVED' as the main approval status for that user.
+	const reviewsReduced: JiraReview[] = sortedReviews.reduce((acc: JiraReview[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const author = review?.user;
+
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
-				...getJiraAuthor(author),
+				login: author.login,
 				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
+
 			acc.push(usernames[author?.login]);
-			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
+			// If user is already added (not unique) but the previous approval status is different
+			// than APPROVED and current approval status is APPROVED, updates approval status.
 		} else if (
 			usernames[author?.login].approvalStatus !== "APPROVED" &&
 			review.state === "APPROVED"
 		) {
 			usernames[author?.login].approvalStatus = "APPROVED";
 		}
+
 		// Returns the reviews' array with unique users
 		return acc;
 	}, []);
+
+	for (const reviewer of reviewsReduced) {
+		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+		if (gitHubUser && gitHubUser.email) {
+			reviewer.email = gitHubUser.email;
+		} else {
+			reviewer.email = `${reviewer.login}@noreply.user.github.com`;
+		}
+	}
+
+	return reviewsReduced;
 };
 
 // TODO: define arguments and return
@@ -74,7 +92,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: mapReviews(reviews),
+				reviewers: await mapReviews(reviews, gitHubInstallationClient),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),

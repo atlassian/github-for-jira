@@ -120,7 +120,13 @@ export interface JiraAuthor {
 	name: string;
 	url?: string;
 }
-export interface JiraReview extends JiraAuthor {
+
+export interface JiraReviewer {
+	login: string;
+	email?: string;
+}
+
+export interface JiraReview extends JiraReviewer {
 	approvalStatus: string;
 }
 
