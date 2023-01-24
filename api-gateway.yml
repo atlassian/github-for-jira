@@ -29,6 +29,8 @@ paths:
       responses:
         200:
           description: "Default response for POST /github/webhooks"
+          responseTemplates:
+            application/json: "''"
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
@@ -50,6 +52,8 @@ paths:
       responses:
         200:
           description: "Default response for POST /jira/webhooks"
+          responseTemplates:
+            application/json: "''"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
