@@ -27,10 +27,10 @@ paths:
   /github/webhooks:
     post:
       responses:
-        200:
+        204:
           description: "Default response for POST /github/webhooks"
           responseTemplates:
-            application/json: ""
+            application/json: "OK"
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
@@ -41,19 +41,19 @@ paths:
           application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),body":$input.json('$')}
         responses:
           default:
-            statusCode: "200"
+            statusCode: "204"
             responseTemplates:
-              application/json: ""
+              application/json: "OK"
         passthroughBehavior: "never"
         type: "aws"
 
   /jira/events:
     post:
       responses:
-        200:
+        204:
           description: "Default response for POST /jira/webhooks"
           responseTemplates:
-            application/json: ""
+            plain/text: "OK"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
@@ -64,8 +64,8 @@ paths:
           application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),"query":$input.params().get('querystring'),"path":$input.params().get('path'),"body":$input.json('$')}
         responses:
           default:
-            statusCode: "200"
+            statusCode: "204"
             responseTemplates:
-              application/json: ""
+              plain/text: "OK"
         passthroughBehavior: "never"
         type: "aws"
