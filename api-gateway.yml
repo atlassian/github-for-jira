@@ -42,6 +42,8 @@ paths:
         responses:
           default:
             statusCode: "200"
+            responseTemplates:
+              application/json: ""
         passthroughBehavior: "never"
         type: "aws"
 
@@ -63,5 +65,7 @@ paths:
         responses:
           default:
             statusCode: "200"
+            responseTemplates:
+              application/json: ""
         passthroughBehavior: "never"
         type: "aws"
