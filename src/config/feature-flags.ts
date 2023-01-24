@@ -18,7 +18,6 @@ export enum BooleanFlags {
 	REGEX_FIX = "regex-fix",
 	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
 	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER = "ghe_server",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
