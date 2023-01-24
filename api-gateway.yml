@@ -29,8 +29,6 @@ paths:
       responses:
         204:
           description: "Default response for POST /github/webhooks"
-          responseTemplates:
-            application/json: "OK"
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
@@ -42,8 +40,6 @@ paths:
         responses:
           default:
             statusCode: "204"
-            responseTemplates:
-              application/json: "OK"
         passthroughBehavior: "never"
         type: "aws"
 
@@ -52,8 +48,6 @@ paths:
       responses:
         204:
           description: "Default response for POST /jira/webhooks"
-          responseTemplates:
-            plain/text: "OK"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
@@ -65,7 +59,5 @@ paths:
         responses:
           default:
             statusCode: "204"
-            responseTemplates:
-              plain/text: "OK"
         passthroughBehavior: "never"
         type: "aws"
