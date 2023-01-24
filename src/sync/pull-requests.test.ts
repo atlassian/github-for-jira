@@ -317,9 +317,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
@@ -471,9 +468,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)

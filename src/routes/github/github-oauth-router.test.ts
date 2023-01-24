@@ -101,11 +101,6 @@ describe("github-oauth-router", () => {
 			beforeEach(async () => {
 				const creatorResult = await new DatabaseStateCreator().forServer().create();
 				gitHubServerApp = creatorResult.gitHubServerApp!;
-
-				when(booleanFlag).calledWith(
-					BooleanFlags.GHE_SERVER,
-					expect.anything()
-				).mockResolvedValue(true);
 			});
 
 			it("with token", async () => {

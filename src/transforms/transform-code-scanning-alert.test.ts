@@ -19,12 +19,6 @@ const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContex
 	});
 };
 
-const turnOnGHESFF = () => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-		.mockResolvedValue(true);
-};
-
 describe("code_scanning_alert transform", () => {
 	beforeEach(() => {
 		Date.now = jest.fn(() => 12345678);
@@ -61,7 +55,6 @@ describe("code_scanning_alert transform", () => {
 	});
 
 	it("code_scanning_alert is transformed into a remote link for server", async () => {
-		turnOnGHESFF();
 
 		const builderOutput = await new DatabaseStateCreator()
 			.forServer()

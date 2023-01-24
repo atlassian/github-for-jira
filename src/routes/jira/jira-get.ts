@@ -7,7 +7,6 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -119,36 +118,6 @@ const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number =>
 	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
 };
 
-const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
-	const { jiraHost, nonce } = res.locals;
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
-	const hasConnections = !!installations.total;
-
-	res.render("jira-configuration.hbs", {
-		host: jiraHost,
-		successfulConnections,
-		failedConnections,
-		hasConnections,
-		APP_URL: process.env.APP_URL,
-		enableRepoConnectedPage: await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraHost),
-		csrfToken: req.csrfToken(),
-		nonce
-	});
-
-	const completeConnections = successfulConnections.filter(connection => connection.syncStatus === "FINISHED");
-
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
-		jiraHost,
-		connectedOrgCount: installations.total,
-		failedCloudBackfillCount: countStatus(successfulConnections, "FAILED"),
-		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
-		hasConnections
-	});
-};
-
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 	const { jiraHost, nonce } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
@@ -235,11 +204,7 @@ export const JiraGet = async (
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, jiraHost)) {
-			await renderJiraCloudAndEnterpriseServer(res, req);
-		} else {
-			await renderJiraCloud(res, req);
-		}
+		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));

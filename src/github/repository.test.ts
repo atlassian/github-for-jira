@@ -12,11 +12,6 @@ describe("deleteRepositoryWebhookHandler", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
-
-		when(booleanFlag).calledWith(
 			BooleanFlags.USE_REPO_ID_TRANSFORMER
 		).mockResolvedValue(true);
 	});
