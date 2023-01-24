@@ -46,12 +46,6 @@ const mockGetRepoConfig = () => {
 	).mockResolvedValue(mockConfig);
 };
 
-const turnOnGHESFF = () => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-		.mockResolvedValue(true);
-};
-
 const buildJiraPayload = (displayName="testing", associations) => {
 	return {
 		deployments: [{
@@ -709,8 +703,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		});
 
 		it(`supports branch and merge workflows, sending related commits in deployment for Server`, async () => {
-
-			turnOnGHESFF();
 
 			when(booleanFlag).calledWith(
 				BooleanFlags.USE_REPO_ID_TRANSFORMER

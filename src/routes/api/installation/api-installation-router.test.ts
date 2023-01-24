@@ -2,7 +2,6 @@ import { Application } from "express";
 import supertest from "supertest";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { ApiInstallationGet } from "./api-installation-get";
 import { ApiInstallationSyncstateGet } from "./api-installation-syncstate-get";
 
@@ -12,12 +11,6 @@ jest.mock("./api-installation-syncstate-get");
 
 const setupAppAndRouter = () => {
 	return getFrontendApp();
-};
-
-const turnOnGHESFF = () => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-		.mockResolvedValue(true);
 };
 
 const mockApiGetReturn200OK = () => {
@@ -35,7 +28,6 @@ describe("Api Installation Routes", () => {
 	describe("Supporting GHES", () => {
 		let app: Application;
 		beforeEach(() => {
-			turnOnGHESFF();
 			app = setupAppAndRouter();
 		});
 		describe("Backward compatible with cloud", () => {

@@ -5,8 +5,6 @@ import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { v4 as newUUID } from "uuid";
 
 jest.mock("config/feature-flags");
@@ -78,10 +76,6 @@ describe("GitHub Create Branch Options Get", () => {
 			clientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",

@@ -239,10 +239,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	});
 
 	it("should delete the reference to a pull request when issue keys are removed from the title for server", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_REPO_ID_TRANSFORMER
