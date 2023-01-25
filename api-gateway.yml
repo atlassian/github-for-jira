@@ -36,7 +36,7 @@ paths:
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
-          application/json: Action=SendMessage&MessageBody={"headers":$util.escapeJavaScript($input.params().get('header')),"query":$util.escapeJavaScript($input.params().get('querystring')),"path":$util.escapeJavaScript($input.params().get('path')),body":$input.json('$')}
+          application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),"query":$input.params().get('querystring').json('$'),"path":$input.params().get('path').json('$'),body":$input.json('$')}
         responses:
           default:
             statusCode: "204"
@@ -55,7 +55,7 @@ paths:
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
-          application/json: Action=SendMessage&MessageBody={"headers":$util.escapeJavaScript($input.params().get('header')),"query":$util.escapeJavaScript($input.params().get('querystring')),"path":$util.escapeJavaScript($input.params().get('path')),"body":$input.json('$')}
+          application/json: Action=SendMessage&MessageBody={"headers":$input.params().get('header'),"query":$input.params().get('querystring').json('$'),"path":$input.params().get('path').json('$'),"body":$input.json('$')}
         responses:
           default:
             statusCode: "204"
