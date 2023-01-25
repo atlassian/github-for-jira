@@ -1,7 +1,6 @@
 import { Writable } from "stream";
 import safeJsonStringify from "safe-json-stringify";
 import bformat from "bunyan-format";
-import { DEBUG } from "bunyan";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { isNodeDev } from "utils/is-node-env";
 
@@ -72,17 +71,8 @@ export class SafeRawLogStream extends RawLogStream {
 }
 
 export class UnsafeRawLogStream extends RawLogStream {
-
-	private isAboveDebug = (record: ChunkData) => {
-		return !record.level || isNaN(record.level) || record.level > DEBUG;
-	};
-
 	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
-		// Skip any log above DEBUG level that isn't tagged unsafe
-		if (this.isAboveDebug(record) && !record.unsafe) {
-			return next();
-		}
-		// Tag the record do it gets indexed to the _unsafe logging environment
+		// Tag the record do it gets indexed to the [env]_unsafe logging environment
 		record.env_suffix = "unsafe";
 		await super._write(record, encoding, next);
 	}
