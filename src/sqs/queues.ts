@@ -87,8 +87,8 @@ export const sqsQueues = {
 	start: () => {
 		logger.info("Starting queues");
 		sqsQueues.backfill.start();
-		sqsQueues.jira.start();
-		sqsQueues.github.start();
+		// sqsQueues.jira.start();
+		// sqsQueues.github.start();
 		sqsQueues.push.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
@@ -99,8 +99,8 @@ export const sqsQueues = {
 		logger.info("Stopping queues");
 		await Promise.all([
 			sqsQueues.backfill.stop(),
-			sqsQueues.jira.stop(),
-			sqsQueues.github.stop(),
+			// sqsQueues.jira.stop(),
+			// sqsQueues.github.stop(),
 			sqsQueues.push.stop(),
 			sqsQueues.deployment.stop(),
 			sqsQueues.branch.stop()

@@ -137,7 +137,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: SQSContext) {
-		listenerContext.log.info(data, "sqs message");
+		listenerContext.log.info({ data }, "sqs message");
 		if (!data.Messages) {
 			listenerContext.log.debug("Nothing to process");
 			return;
@@ -313,7 +313,7 @@ export class SqsQueue<MessagePayload> {
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
+			unsafeLogger.error({ err: errorHandlingException, originalError: err, context }, "Error while performing error handling on SQS message");
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
