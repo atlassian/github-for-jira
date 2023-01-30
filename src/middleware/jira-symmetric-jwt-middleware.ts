@@ -34,7 +34,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			return res.status(401).send("Unauthorised");
 		}
 
-		const secret = await installation.decrypt("encryptedSharedSecret");
+		const secret = await installation.decrypt("encryptedSharedSecret", req.log);
 
 		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
 		try {

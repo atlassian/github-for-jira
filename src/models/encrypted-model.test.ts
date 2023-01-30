@@ -1,6 +1,7 @@
 import { DataTypes, Sequelize } from "sequelize";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { EncryptedModel } from "./encrypted-model";
+import { getLogger } from "config/logger";
 
 class Dummy extends EncryptedModel {
 	id: number;
@@ -43,12 +44,12 @@ Dummy.init({
 }, {
 	hooks: {
 		beforeSave: async (app, opts) => {
-			await app.encryptChangedSecretFields(opts.fields);
+			await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
 		},
 
 		beforeBulkCreate: async (apps, opts) => {
 			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields);
+				await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
 			}
 		}
 	},

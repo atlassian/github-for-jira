@@ -47,7 +47,7 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		await installation.decrypt("encryptedSharedSecret"),
+		await installation.decrypt("encryptedSharedSecret", logger),
 		logger
 	);
 
