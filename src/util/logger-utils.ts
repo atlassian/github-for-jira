@@ -72,7 +72,7 @@ export class SafeRawLogStream extends RawLogStream {
 
 export class UnsafeRawLogStream extends RawLogStream {
 	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
-		// Tag the record do it gets indexed to the [env]_unsafe logging environment
+		// Tag the record it gets indexed to the [env]_unsafe logging environment
 		record.env_suffix = "unsafe";
 		await super._write(record, encoding, next);
 	}
