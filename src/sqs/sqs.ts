@@ -137,7 +137,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: SQSContext) {
-		listenerContext.log.info({ data }, "sqs message");
+		listenerContext.log.debug({ data }, "sqs message");
 		if (!data.Messages) {
 			listenerContext.log.debug("Nothing to process");
 			return;

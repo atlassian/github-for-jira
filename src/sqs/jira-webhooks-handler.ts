@@ -7,11 +7,10 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 
 export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>) => {
-	const { payload } = context;
-	context.log.debug({ payload }, "Handling jira webhook from the SQS queue");
+	context.log.debug("Handling jira webhook from the SQS queue");
 
 	try {
-		const event = payload?.path?.event;
+		const event = context.payload?.path?.event;
 		switch (event) {
 			case "installed":
 				await jiraInstallWebhook(context);
@@ -26,7 +25,7 @@ export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePaylo
 				await jiraUninstalledWebhook(context);
 				break;
 			default:
-				context.log.warn({ payload }, `Unknown event of type '${event}'`);
+				context.log.warn(`Unknown event of type '${event}'`);
 				break;
 		}
 	} catch (err) {
@@ -36,6 +35,8 @@ export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePaylo
 
 const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePayload>) => {
 	context.log.info("Received installation payload");
+
+	// await verifyAsymmetricJwtTokenMiddleware();
 
 	const { body: { baseUrl, clientKey, sharedSecret } } = context.payload;
 	await Installation.install({
@@ -64,6 +65,8 @@ const jiraEnabledWebhook = async (context: SQSMessageContext<WebhookMessagePaylo
 
 const jiraUninstalledWebhook = async (context: SQSMessageContext<WebhookMessagePayload>) => {
 	const { body: { clientKey } } = context.payload;
+
+	// await verifyAsymmetricJwtTokenMiddleware();
 
 	if (!clientKey) {
 		context.log.debug("Missing clientKey for webhook");
