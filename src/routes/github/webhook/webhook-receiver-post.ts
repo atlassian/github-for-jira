@@ -73,7 +73,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	}
 };
 
-const webhookRouter = async (context: WebhookContext) => {
+export const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited"];
 	switch (context.name) {
 		case "push":
@@ -129,7 +129,7 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
+export const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {

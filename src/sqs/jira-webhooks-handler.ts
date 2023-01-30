@@ -11,18 +11,19 @@ export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePaylo
 
 	try {
 		const event = context.payload?.path?.event;
+		const data = JSON.parse(context.payload.body);
 		switch (event) {
 			case "installed":
-				await jiraInstallWebhook(context);
+				await jiraInstallWebhook(context, data);
 				break;
 			case "enabled":
-				await jiraEnabledWebhook(context);
+				await jiraEnabledWebhook(context, data);
 				break;
 			case "disabled":
 				// do nothing
 				break;
 			case "uninstalled":
-				await jiraUninstalledWebhook(context);
+				await jiraUninstalledWebhook(context, data);
 				break;
 			default:
 				context.log.warn(`Unknown event of type '${event}'`);
@@ -33,12 +34,12 @@ export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePaylo
 	}
 };
 
-const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePayload>) => {
+const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePayload>, data: any) => {
 	context.log.info("Received installation payload");
 
 	// await verifyAsymmetricJwtTokenMiddleware();
 
-	const { body: { baseUrl, clientKey, sharedSecret } } = context.payload;
+	const { baseUrl, clientKey, sharedSecret } = data;
 	await Installation.install({
 		host: baseUrl,
 		clientKey,
@@ -50,8 +51,8 @@ const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePaylo
 	statsd.increment(metricHttpRequest.install);
 };
 
-const jiraEnabledWebhook = async (context: SQSMessageContext<WebhookMessagePayload>) => {
-	const { body: { baseUrl } } = context.payload;
+const jiraEnabledWebhook = async (context: SQSMessageContext<WebhookMessagePayload>, data: any) => {
+	const { baseUrl } = data;
 	try {
 		const appProperties = await getConfiguredAppProperties(baseUrl, undefined, undefined, context.log);
 		if (!appProperties || appProperties.status !== 200) {
@@ -63,8 +64,8 @@ const jiraEnabledWebhook = async (context: SQSMessageContext<WebhookMessagePaylo
 	}
 };
 
-const jiraUninstalledWebhook = async (context: SQSMessageContext<WebhookMessagePayload>) => {
-	const { body: { clientKey } } = context.payload;
+const jiraUninstalledWebhook = async (context: SQSMessageContext<WebhookMessagePayload>, data:any) => {
+	const { clientKey } = data;
 
 	// await verifyAsymmetricJwtTokenMiddleware();
 

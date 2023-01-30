@@ -126,11 +126,11 @@ interface BaseMessagePayload {
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 }
 
-export interface WebhookMessagePayload<Body = any, Headers = Record<string, string>, Query = Record<string, string>, Path = Record<string, string>> {
-	headers: Headers;
+export interface WebhookMessagePayload<Header = Record<string, string>, Query = Record<string, string>, Path = Record<string, string>> {
+	header: Header;
 	query: Query;
 	path: Path;
-	body: Body;
+	body: string;
 }
 
 export interface BranchMessagePayload extends BaseMessagePayload {
