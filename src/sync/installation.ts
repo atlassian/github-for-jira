@@ -188,14 +188,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		return;
 	}
 
-	const jiraClient = await getJiraClient(
-		subscription.jiraHost,
-		gitHubInstallationId,
-		data.gitHubAppConfig?.gitHubAppId,
-		logger
-	);
-
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -217,6 +209,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const processor = tasks[task];
 
 	const execute = async (): Promise<TaskPayload> => {
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
@@ -257,6 +250,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		const taskPayload = await execute();
 		if (taskPayload.jiraPayload) {
 			try {
+				// In "try" because it could fail if cryptor throws a error, and we don't want to kill the whole backfilling in this case
+				const jiraClient = await getJiraClient(
+					subscription.jiraHost,
+					gitHubInstallationId,
+					data.gitHubAppConfig?.gitHubAppId,
+					logger
+				);
 				switch (task) {
 					case "build":
 						await jiraClient.workflow.submit(taskPayload.jiraPayload, {
@@ -351,10 +351,14 @@ export const handleBackfillError = async (
 	}
 
 	if (String(err).includes("connect ETIMEDOUT")) {
-		// There was a network connection issue.
-		// Add the job back to the queue with a 5 second delay
 		logger.warn("ETIMEDOUT error, retrying in 5 seconds");
 		scheduleNextTask(5_000);
+		return;
+	}
+
+	if (String(err).includes("connect ECONNREFUSED")) {
+		logger.warn("ECONNREFUSED error, retrying in 30 seconds");
+		scheduleNextTask(30_000);
 		return;
 	}
 
@@ -473,7 +477,9 @@ export const processInstallation = () => {
 				}
 			}
 		} catch (err) {
-			logger.warn({ err }, "Process installation failed");
+			// Error because looks like the installation sync has been stuck for the poor customer with
+			// some error we were not anticipated and shouldn't have occurred in the first place
+			logger.error({ err }, "Process installation failed");
 		}
 	};
 };
