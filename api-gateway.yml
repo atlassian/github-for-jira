@@ -24,11 +24,11 @@ paths:
         uri: "https://{{ServerHost}}/{proxy}"
         connectionType: "INTERNET"
 
-  /github/webhooks:
+  /webhooks/github:
     post:
       responses:
         204:
-          description: "Default response for POST /github/webhooks"
+          description: "Default response for POST /webhooks/github"
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
@@ -53,11 +53,11 @@ paths:
         passthroughBehavior: "never"
         type: "aws"
 
-  /jira/events:
+  /webhooks/jira/{event+}:
     post:
       responses:
         204:
-          description: "Default response for POST /jira/webhooks"
+          description: "Default response for POST /webhooks/jira"
       x-amazon-apigateway-integration:
         httpMethod: "POST"
         credentials: "{{RoleARN}}"
