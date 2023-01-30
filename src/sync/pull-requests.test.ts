@@ -351,6 +351,7 @@ describe("sync/pull-request", () => {
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -359,6 +360,13 @@ describe("sync/pull-request", () => {
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 				.reply(200, reviewsPayload)
+				.get("/users/test-pull-request-reviewer-login")
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@gmail.com"
+				})
 				.get("/users/test-pull-request-author-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
