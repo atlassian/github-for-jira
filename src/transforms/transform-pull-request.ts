@@ -19,8 +19,7 @@ const mapStatus = (status: string, merged_at?: string) => {
 };
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient) => {
-	// WHY IS gitHubInstallationClient SHIT UNDEFINED!!!!!!!
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReview> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users
@@ -32,13 +31,14 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
+				...getJiraAuthor(author),
 				login: author.login,
 				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
 
 			acc.push(usernames[author?.login]);
 			// If user is already added (not unique) but the previous approval status is different
-			// than APPROVED and current approval status is APPROVED, updates approval status.
+			// from APPROVED and current approval status is APPROVED, updates approval status.
 		} else if (
 			usernames[author?.login].approvalStatus !== "APPROVED" &&
 			review.state === "APPROVED"
@@ -50,16 +50,13 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 		return acc;
 	}, []);
 
-	for (const reviewer of reviewsReduced) {
+	return Promise.all(reviewsReduced.map(async reviewer => {
 		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
-		if (gitHubUser && gitHubUser.email) {
-			reviewer.email = gitHubUser.email;
-		} else {
-			reviewer.email = `${reviewer.login}@noreply.user.github.com`;
-		}
-	}
-
-	return reviewsReduced;
+		return {
+			...reviewer,
+			email: gitHubUser && gitHubUser.email ?  gitHubUser.email : `${reviewer.login}@noreply.user.github.com`
+		};
+	}));
 };
 
 // TODO: define arguments and return

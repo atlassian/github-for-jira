@@ -115,18 +115,14 @@ export enum JiraCommitFileChangeTypeEnum {
 }
 
 export interface JiraAuthor {
-	avatar?: string;
 	email: string;
-	name: string;
+	name?: string;
+	avatar?: string;
 	url?: string;
 }
 
-export interface JiraReviewer {
+export interface JiraReview extends JiraAuthor {
 	login: string;
-	email?: string;
-}
-
-export interface JiraReview extends JiraReviewer {
 	approvalStatus: string;
 }
 
