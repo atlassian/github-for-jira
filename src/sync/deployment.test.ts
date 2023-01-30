@@ -26,7 +26,9 @@ describe("sync/deployments", () => {
 		deployments,
 		properties: {
 			"gitHubInstallationId": installationId
-		}
+		},
+		preventTransitions: true,
+		operationType: "BACKFILL"
 	});
 
 	describe("cloud", () => {
@@ -428,10 +430,6 @@ describe("sync/deployments", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)

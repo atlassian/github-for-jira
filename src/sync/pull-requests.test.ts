@@ -66,6 +66,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayload = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
@@ -122,6 +123,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayloadOldCloud = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
@@ -171,6 +173,7 @@ describe("sync/pull-request", () => {
 	const buildJiraPayloadOld = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
@@ -314,9 +317,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
@@ -468,9 +468,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
