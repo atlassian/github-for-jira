@@ -3,6 +3,9 @@ import { e2eEnvVars } from "test/e2e/env-e2e";
 export const STATE_PATH = "./test/e2e/test-results/states";
 export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 
+export const TEST_PROJECT_NAME = "E2E - Test - " + Date.now();
+export const TEST_PROJECT_KEY = "E" + Math.floor(Math.random()*9000) + 1000;
+
 export const testData: TestData = {
 	stateDirectoryPath: STATE_PATH,
 	state: `${STATE_PATH}/default.json`,
@@ -16,7 +19,11 @@ export const testData: TestData = {
 			dashboard: `${e2eEnvVars.ATLASSIAN_URL}/jira/dashboards`,
 			yourWork: `${e2eEnvVars.ATLASSIAN_URL}/jira/your-work`,
 			manageApps: `${e2eEnvVars.ATLASSIAN_URL}/plugins/servlet/upm`,
-			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`
+			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`,
+			projects: `${e2eEnvVars.ATLASSIAN_URL}/jira/projects`,
+			testProjectBrowse: `${e2eEnvVars.ATLASSIAN_URL}/browse/${TEST_PROJECT_KEY}`,
+			testProjectSettings: `${e2eEnvVars.ATLASSIAN_URL}/jira/software/projects/${TEST_PROJECT_KEY}/settings/details`,
+			testProjectIssue: `${e2eEnvVars.ATLASSIAN_URL}/browse/${TEST_PROJECT_KEY}-1`
 		},
 		roles: {
 			admin: {
@@ -69,6 +76,10 @@ export interface JiraTestDataURLs extends TestDataURLs {
 	auth: string;
 	manageApps: string;
 	connectJson: string;
+	projects: string;
+	testProjectBrowse: string;
+	testProjectSettings: string;
+	testProjectIssue: string;
 }
 
 export interface GithubTestDataURLs extends TestDataURLs {
