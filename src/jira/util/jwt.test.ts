@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
+import { TokenType, validateAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
 import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
@@ -302,7 +302,7 @@ describe("jwt", () => {
 
 		it("should pass when token is valid", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false);
@@ -311,7 +311,7 @@ describe("jwt", () => {
 		it("should pass when token is valid for Staging Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
 			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work" };
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, true);
@@ -320,7 +320,7 @@ describe("jwt", () => {
 		it("should pass when token is valid for Prod Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
 			req.body = { baseUrl: "https://kabakumov.atlassian.net" };
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false);
@@ -328,7 +328,7 @@ describe("jwt", () => {
 
 		it("should return 401 when was encrypted with wrong key", async () => {
 			const req = buildRequestWithJwt(testQsh, undefined, wrongPrivateKey);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -339,21 +339,21 @@ describe("jwt", () => {
 				testKid,
 				false
 			).mockRejectedValueOnce(new Error("404"));
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
 
 		it("should return 401 when expiration date is wrong", async () => {
 			const req = buildRequestWithJwt(testQsh, Date.now() / 1000 - 100);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
 
 		it("should return 401 when qsh is wrong", async () => {
 			const req = buildRequestWithJwt("13113wrong13123");
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -363,7 +363,7 @@ describe("jwt", () => {
 				qsh: testQsh,
 				iss: "jira"
 			});
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -374,7 +374,7 @@ describe("jwt", () => {
 				iss: "jira",
 				aud: "https://wrong-addon.example.com"
 			});
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -382,7 +382,7 @@ describe("jwt", () => {
 		it("should return 200 with encoded URI in the path", async () => {
 			const req = buildRequestWithJwt("629dd55929f23ea619f465d40e02b394f57acfc6deeecd2024428f9c31f8b55c");
 			req.path = encodeURIComponent("https://whatever.fake");
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 		});

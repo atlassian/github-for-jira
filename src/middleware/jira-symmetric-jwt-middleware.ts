@@ -2,7 +2,7 @@ import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-import { TokenType, verifyQsh } from "~/src/jira/util/jwt";
+import { TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
@@ -118,7 +118,7 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
 			qshVerified = verifiedClaims.qsh === "context-qsh";
 		} else {
 			//validate query string hash
-			qshVerified = verifyQsh(verifiedClaims.qsh, req);
+			qshVerified = validateQsh(verifiedClaims.qsh, req);
 		}
 
 		if (!qshVerified) {
