@@ -37,7 +37,7 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 	});
 
 	verifySymmetricJwtTokenMiddleware(
-		await installation.decrypt("encryptedSharedSecret"),
+		await installation.decrypt("encryptedSharedSecret", req.log),
 		tokenType,
 		req,
 		res,
