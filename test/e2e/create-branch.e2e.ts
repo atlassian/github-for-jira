@@ -19,10 +19,10 @@ test.describe("Create branch", () => {
 		test.beforeEach(async() => {
 			await jiraAppInstall(page);
 			await jiraAddProject(page);
-			await jiraCreateIssue(page);
 		});
 
 		test("When there are no GitHub connections", async () => {
+			await jiraCreateIssue(page);
 			await page.goto(data.urls.testProjectIssue);
 			await (page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']")).click();
 			const poppedUpPage = await page.waitForEvent("popup");
