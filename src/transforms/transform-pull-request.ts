@@ -7,7 +7,7 @@ import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraReview } from "../interfaces/jira";
+import { JiraReviewer } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 const mapStatus = (status: string, merged_at?: string) => {
@@ -19,13 +19,13 @@ const mapStatus = (status: string, merged_at?: string) => {
 };
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReviewer[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
-	const usernames: Record<string, JiraReview> = {};
+	const usernames: Record<string, JiraReviewer> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)
 	// and it considers 'APPROVED' as the main approval status for that user.
-	const reviewsReduced: JiraReview[] = sortedReviews.reduce((acc: JiraReview[], review) => {
+	const reviewsReduced: JiraReviewer[] = sortedReviews.reduce((acc: JiraReviewer[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const author = review?.user;
 
@@ -54,7 +54,7 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
 		return {
 			...reviewer,
-			email: gitHubUser && gitHubUser.email ?  gitHubUser.email : `${reviewer.login}@noreply.user.github.com`
+			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
 		};
 	}));
 };
