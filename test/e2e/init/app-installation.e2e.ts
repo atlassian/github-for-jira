@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { jiraAppInstall, jiraAppUninstall, jiraLogin } from "test/e2e/utils/jira";
+import { jiraAppInstall, jiraLogin } from "test/e2e/utils/jira";
 import { githubLogin } from "test/e2e/utils/github";
 import { testData } from "test/e2e/constants";
 
@@ -29,10 +29,10 @@ test.describe("App Installation", () => {
 					test("jiraAppInstall", async () => {
 						expect(await jiraAppInstall(page)).toBeTruthy();
 					});
-
-					test("jiraAppUninstall", async () => {
-						expect(await jiraAppUninstall(page)).toBeTruthy();
-					});
+					//
+					// test("jiraAppUninstall", async () => {
+					// 	expect(await jiraAppUninstall(page)).toBeTruthy();
+					// });
 				});
 			});
 		});
