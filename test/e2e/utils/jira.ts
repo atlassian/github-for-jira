@@ -69,7 +69,7 @@ export const jiraAddProject = async (page: Page): Promise<Page> => {
 	await page.fill("input[id='project-create.create-form.name-field.input']", TEST_PROJECT_NAME);
 	await page.fill("input[id='project-create.create-form.advanced-dropdown.key-field.input']", TEST_PROJECT_KEY);
 	await (page.locator("div[data-test-id='project-create.create-form.create-screen.submit-button']")).click();
-	await page.waitForNavigation();
+	// await page.waitForNavigation();
 	return page;
 };
 
