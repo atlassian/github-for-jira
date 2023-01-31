@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JiraEventsInstallPost } from "./jira-events-install-post";
 import { Installation } from "models/installation";
+import { getLogger } from "config/logger";
 
 describe("Webhook: /events/installed", () => {
 	let body;
@@ -44,7 +45,8 @@ describe("Webhook: /events/installed", () => {
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 
 		//expect the plainClientKey is set
-		const inst = await Installation.findByPk(id);
-		expect(inst?.plainClientKey).toBe("abc123");
+		const inst: Installation = await Installation.findByPk(id);
+		expect(inst.plainClientKey).toBe("abc123");
+		expect(await inst.decrypt("encryptedSharedSecret", getLogger("test"))).toBe(body.sharedSecret);
 	});
 });
