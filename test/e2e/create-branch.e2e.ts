@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 // import { expect, Page, test } from "@playwright/test";
-import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
+import { jiraAddProject, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
+// import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
@@ -31,7 +32,7 @@ test.describe("Create branch", () => {
 			await poppedUpPage.waitForLoadState();
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
 
-			await jiraRemoveProject(page);
+			// await jiraRemoveProject(page);
 		});
 	});
 
