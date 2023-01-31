@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { jiraAddProject, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
+import { jiraAddProject, jiraAppInstall, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
@@ -16,6 +16,9 @@ test.describe("Create branch", () => {
 	});
 
 	test.describe("cloud", () => {
+		test.beforeEach(async() => {
+			await jiraAppInstall(page);
+		});
 		test("When there are no GitHub connections", async () => {
 			await jiraAddProject(page);
 			await jiraCreateIssue(page);
