@@ -105,7 +105,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 				login: "test-pull-request-reviewer-login",
 				avatar_url: "test-pull-request-reviewer-avatar",
 				html_url: "test-pull-request-reviewer-url",
-				email: "test-pull-request-reviewer-login@gmail.com"
+				email: "test-pull-request-reviewer-login@email.test"
 			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
@@ -175,7 +175,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 								{
 									avatar: "test-pull-request-reviewer-avatar",
 									name: "test-pull-request-reviewer-login",
-									email: "test-pull-request-reviewer-login@gmail.com",
+									email: "test-pull-request-reviewer-login@email.test",
 									login: "test-pull-request-reviewer-login",
 									url: "https://github.com/reviewer",
 									approvalStatus: "APPROVED"
@@ -221,7 +221,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 				login: "test-pull-request-reviewer-login",
 				avatar_url: "test-pull-request-reviewer-avatar",
 				html_url: "test-pull-request-reviewer-url",
-				email: "test-pull-request-reviewer-login@gmail.com"
+				email: "test-pull-request-reviewer-login@email.test"
 			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
@@ -346,7 +346,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 					login: "test-pull-request-reviewer-login",
 					avatar_url: "test-pull-request-reviewer-avatar",
 					html_url: "test-pull-request-reviewer-url",
-					email: "test-pull-request-reviewer-login@gmail.com"
+					email: "test-pull-request-reviewer-login@email.test"
 				});
 
 			githubNock
@@ -425,7 +425,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 												{
 													avatar: "test-pull-request-reviewer-avatar",
 													name: "test-pull-request-reviewer-login",
-													email: "test-pull-request-reviewer-login@gmail.com",
+													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
 													login: "test-pull-request-reviewer-login",
 													approvalStatus: "APPROVED"
@@ -476,7 +476,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 					login: "test-pull-request-reviewer-login",
 					avatar_url: "test-pull-request-reviewer-avatar",
 					html_url: "test-pull-request-reviewer-url",
-					email: "test-pull-request-reviewer-login@gmail.com"
+					email: "test-pull-request-reviewer-login@email.test"
 				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
@@ -519,7 +519,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 									{
 										avatar: "test-pull-request-reviewer-avatar",
 										name: "test-pull-request-reviewer-login",
-										email: "test-pull-request-reviewer-login@gmail.com",
+										email: "test-pull-request-reviewer-login@email.test",
 										login: "test-pull-request-reviewer-login",
 										url: "https://github.com/reviewer",
 										approvalStatus: "APPROVED"
@@ -573,7 +573,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 					login: "test-pull-request-reviewer-login",
 					avatar_url: "test-pull-request-reviewer-avatar",
 					html_url: "test-pull-request-reviewer-url",
-					email: "test-pull-request-reviewer-login@gmail.com"
+					email: "test-pull-request-reviewer-login@email.test"
 				});
 
 			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
@@ -645,7 +645,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 												{
 													avatar: "test-pull-request-reviewer-avatar",
 													name: "test-pull-request-reviewer-login",
-													email: "test-pull-request-reviewer-login@gmail.com",
+													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
 													login: "test-pull-request-reviewer-login",
 													approvalStatus: "APPROVED"

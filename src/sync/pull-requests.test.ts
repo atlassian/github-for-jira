@@ -95,7 +95,7 @@ describe("sync/pull-request", () => {
 											"avatar": "test-pull-request-reviewer-avatar",
 											"name": "test-pull-request-reviewer-login",
 											"login": "test-pull-request-reviewer-login",
-											"email": "test-pull-request-reviewer-login@gmail.com",
+											"email": "test-pull-request-reviewer-login@email.test",
 											"url": "https://github.com/reviewer",
 											"approvalStatus": "APPROVED"
 										}
@@ -260,7 +260,7 @@ describe("sync/pull-request", () => {
 						login: "test-pull-request-reviewer-login",
 						avatar_url: "test-pull-request-reviewer-avatar",
 						html_url: "test-pull-request-reviewer-url",
-						email: "test-pull-request-reviewer-login@gmail.com"
+						email: "test-pull-request-reviewer-login@email.test"
 					})
 					.get("/users/test-pull-request-author-login")
 					.reply(200, {
@@ -365,7 +365,7 @@ describe("sync/pull-request", () => {
 					login: "test-pull-request-reviewer-login",
 					avatar_url: "test-pull-request-reviewer-avatar",
 					html_url: "test-pull-request-reviewer-url",
-					email: "test-pull-request-reviewer-login@gmail.com"
+					email: "test-pull-request-reviewer-login@email.test"
 				})
 				.get("/users/test-pull-request-author-login")
 				.reply(200, {

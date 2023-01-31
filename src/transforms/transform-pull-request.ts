@@ -7,7 +7,7 @@ import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraReviewer } from "../interfaces/jira";
+import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
 const mapStatus = (status: string, merged_at?: string) => {
@@ -17,6 +17,10 @@ const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
 };
+
+interface JiraReviewer extends JiraReview {
+	login: string;
+}
 
 // TODO: define arguments and return
 const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReviewer[]> => {

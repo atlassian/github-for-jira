@@ -121,10 +121,6 @@ export interface JiraAuthor {
 	url?: string;
 }
 
-export interface JiraReviewer extends JiraReview {
-	login: string;
-}
-
 export interface JiraReview extends JiraAuthor {
 	approvalStatus: string;
 }
