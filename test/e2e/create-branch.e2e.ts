@@ -22,6 +22,8 @@ test.describe("Create branch", () => {
 		test("When there are no GitHub connections", async ({ page }) => {
 
 			await jiraLogin(page, "admin");
+
+			await jiraRemoveProject(page);
 			await jiraAddProject(page);
 			await jiraCreateIssue(page);
 			await page.goto(data.urls.testProjectIssue);
