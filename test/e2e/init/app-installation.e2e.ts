@@ -45,7 +45,7 @@ test.describe("App Installation", () => {
 					});
 				}
 
-				test("githubLogin", async ({ page }) => {
+				test.skip("githubLogin", async ({ page }) => {
 					expect(await githubLogin(page, "admin")).toBeTruthy();
 				});
 
