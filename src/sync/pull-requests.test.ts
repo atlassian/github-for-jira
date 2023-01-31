@@ -94,7 +94,6 @@ describe("sync/pull-request", () => {
 										{
 											"avatar": "test-pull-request-reviewer-avatar",
 											"name": "test-pull-request-reviewer-login",
-											"login": "test-pull-request-reviewer-login",
 											"email": "test-pull-request-reviewer-login@email.test",
 											"url": "https://github.com/reviewer",
 											"approvalStatus": "APPROVED"

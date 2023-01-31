@@ -19,11 +19,11 @@ const mapStatus = (status: string, merged_at?: string) => {
 };
 
 interface JiraReviewer extends JiraReview {
-	login: string;
+	login?: string;
 }
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReviewer[]> => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
 	// The reduce function goes through all the reviews and creates an array of unique users
@@ -54,11 +54,17 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 		return acc;
 	}, []);
 
+	// Get GitHub user email, so it can be matched to an AAID
 	return Promise.all(reviewsReduced.map(async reviewer => {
-		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+		let login;
+		if (reviewer.login) {
+			login = reviewer.login;
+			delete reviewer.login;
+		}
+		const gitHubUser = await getGithubUser(gitHubInstallationClient, login);
 		return {
 			...reviewer,
-			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
+			email: gitHubUser?.email || `${login}@noreply.user.github.com`
 		};
 	}));
 };

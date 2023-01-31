@@ -176,7 +176,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 									avatar: "test-pull-request-reviewer-avatar",
 									name: "test-pull-request-reviewer-login",
 									email: "test-pull-request-reviewer-login@email.test",
-									login: "test-pull-request-reviewer-login",
 									url: "https://github.com/reviewer",
 									approvalStatus: "APPROVED"
 								}
@@ -427,7 +426,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 													name: "test-pull-request-reviewer-login",
 													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
-													login: "test-pull-request-reviewer-login",
 													approvalStatus: "APPROVED"
 												}
 											],
@@ -520,7 +518,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 										avatar: "test-pull-request-reviewer-avatar",
 										name: "test-pull-request-reviewer-login",
 										email: "test-pull-request-reviewer-login@email.test",
-										login: "test-pull-request-reviewer-login",
 										url: "https://github.com/reviewer",
 										approvalStatus: "APPROVED"
 									}
@@ -647,7 +644,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 													name: "test-pull-request-reviewer-login",
 													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
-													login: "test-pull-request-reviewer-login",
 													approvalStatus: "APPROVED"
 												}
 											],
