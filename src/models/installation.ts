@@ -83,7 +83,8 @@ export class Installation extends EncryptedModel {
 			await installation
 				.update({
 					encryptedSharedSecret: payload.sharedSecret,
-					jiraHost: payload.host
+					jiraHost: payload.host,
+					plainClientKey: payload.clientKey
 				})
 				.then(async (record) => {
 					const subscriptions = await Subscription.getAllForClientKey(
