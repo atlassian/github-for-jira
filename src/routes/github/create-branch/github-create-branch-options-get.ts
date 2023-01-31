@@ -71,8 +71,7 @@ const getJiraHostFromTenantUrl = (jiraHostParam): string | undefined =>  {
 	if (!jiraHostParam) {
 		return undefined;
 	}
-	const siteName = jiraHostParam?.substring(0, jiraHostParam?.indexOf("."));
-	return `https://${siteName}.atlassian.net`;
+	return `https://${jiraHostParam}`;
 };
 
 const getGitHubServers = async (jiraHost: string) => {

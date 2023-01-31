@@ -28,7 +28,7 @@ const modules = {
 		],
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}`
 			}
 		},
 		key: "github-development-tool",
