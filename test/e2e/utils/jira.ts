@@ -37,6 +37,7 @@ export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles, s
 
 export const jiraAppInstall = async (page: Page): Promise<Page> => {
 	await page.goto(data.urls.manageApps);
+	await page.waitForLoadState();
 
 	// If app is already installed, uninstall it first
 	if (await removeApp(page)) {
