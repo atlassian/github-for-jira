@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { JiraEventsInstallPost } from "./jira-events-install-post";
-import { mocked } from "ts-jest/utils";
 import { Installation } from "models/installation";
 
-jest.mock("models/installation");
-
 describe("Webhook: /events/installed", () => {
-	let installation;
 	let body;
 
 	beforeEach(async () => {
@@ -16,16 +12,6 @@ describe("Webhook: /events/installed", () => {
 			sharedSecret: "ghi345"
 		};
 
-		installation = {
-			id: 19,
-			jiraHost: body.baseUrl,
-			clientKey: body.clientKey,
-			enabled: true,
-			subscriptions: jest.fn().mockResolvedValue([])
-		};
-
-		// Allows us to modify installation before it's finally called
-		mocked(Installation.install).mockImplementation(() => installation);
 	});
 
 	it("Install", async () => {
@@ -34,5 +20,31 @@ describe("Webhook: /events/installed", () => {
 
 		await JiraEventsInstallPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
+
+		const inst = await Installation.getForClientKey("abc123");
+		expect(inst?.plainClientKey).toBe("abc123");
+	});
+
+	it("Install event will update existing installation plainClientKey", async () => {
+		const req = { log: { info: jest.fn() }, body };
+		const res = { sendStatus: jest.fn(), on: jest.fn() };
+
+		//prepare existing installation and set plainClientKey to null to mimic old data
+		const { id } = await Installation.install({
+			host: body.baseUrl,
+			clientKey: body.clientKey,
+			sharedSecret: "whatever"
+		});
+		await Installation.sequelize?.query(`update "Installations" set "plainClientKey" = null where "id" = ${id}`);
+		const existInst = await Installation.findByPk(id);
+		expect(existInst.plainClientKey).toBeNull();
+
+		//do normal install events
+		await JiraEventsInstallPost(req as any, res as any);
+		expect(res.sendStatus).toHaveBeenCalledWith(204);
+
+		//expect the plainClientKey is set
+		const inst = await Installation.findByPk(id);
+		expect(inst?.plainClientKey).toBe("abc123");
 	});
 });

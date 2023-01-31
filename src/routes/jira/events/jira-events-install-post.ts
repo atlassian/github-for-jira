@@ -10,11 +10,18 @@ export const JiraEventsInstallPost = async (req: Request, res: Response): Promis
 	req.log.info("Received installation payload");
 
 	const { baseUrl: host, clientKey, sharedSecret } = req.body;
-	await Installation.install({
+	const newOrExistingInstallation = await Installation.install({
 		host,
 		clientKey,
 		sharedSecret
 	});
+
+	if (!newOrExistingInstallation.plainClientKey) {
+		req.log.info(`Found plainClientKey with installation ${newOrExistingInstallation.id}, updating it...`);
+		newOrExistingInstallation.plainClientKey = clientKey;
+		await newOrExistingInstallation.save();
+		req.log.info(`Installation ${newOrExistingInstallation.id} plainClientKey updated`);
+	}
 
 	req.log.info("Installed installation");
 
