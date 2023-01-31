@@ -23,7 +23,6 @@ test.describe("Create branch", () => {
 
 			await jiraLogin(page, "admin");
 
-			await jiraRemoveProject(page);
 			await jiraAddProject(page);
 			await jiraCreateIssue(page);
 			await page.goto(data.urls.testProjectIssue);

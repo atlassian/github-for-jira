@@ -4,7 +4,7 @@ export const STATE_PATH = "./test/e2e/test-results/states";
 export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 
 export const TEST_PROJECT_NAME = "E2E - Test";
-export const TEST_PROJECT_KEY = "E2ETEST";
+export const TEST_PROJECT_KEY = "E2ETESTX";
 
 export const testData: TestData = {
 	stateDirectoryPath: STATE_PATH,
