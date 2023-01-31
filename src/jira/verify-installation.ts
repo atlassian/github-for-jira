@@ -7,7 +7,7 @@ export const verifyJiraInstallation = (installation: Installation, log: Logger) 
 	return async (): Promise<boolean> => {
 		const instance = getAxiosInstance(
 			installation.jiraHost,
-			await installation.decrypt("encryptedSharedSecret"),
+			await installation.decrypt("encryptedSharedSecret", log),
 			log
 		);
 		try {

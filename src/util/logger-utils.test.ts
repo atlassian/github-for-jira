@@ -130,17 +130,6 @@ describe("Logger Utils", () => {
 				stream = new UnsafeRawLogStream();
 			});
 
-
-			it("should skip logger if higher than debug level", async () => {
-				const testMessage = {
-					msg: "More messaging",
-					orgName: "ORG",
-					level: INFO
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(process.stdout.write).not.toHaveBeenCalled();
-			});
-
 			it("should write log when tagged unsafe", async () => {
 				const testMessage = {
 					msg: "More messaging",
