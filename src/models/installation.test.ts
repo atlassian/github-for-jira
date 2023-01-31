@@ -10,7 +10,7 @@ describe("Installation", () => {
 			const found = await Installation.findByPk(inst.id);
 			expect(found.plainClientKey).toBe("1234");
 		});
-		it("should update origin unhashed plainClientKey for existing recorde", async () => {
+		it("should update origin unhashed plainClientKey for existing record", async () => {
 			//prepare
 			const origin = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
 			await Installation.sequelize?.query(`update "Installations" set "plainClientKey" = null where "id" = ${origin.id}`);
