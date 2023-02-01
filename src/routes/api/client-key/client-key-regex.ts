@@ -1,4 +1,9 @@
+import { toJson } from "xml2json";
 export const extractClientKey = (text: string): string | undefined  => {
-	const [, plainClientKey] = /<key>([0-9a-z-:.]+)<\/key>/gmi.exec(text) || [undefined, undefined];
-	return plainClientKey;
+	try {
+		const json = toJson(text, { object: true });
+		return (json.consumer as { [key: string]: string }).key;
+	} catch (e) {
+		return undefined;
+	}
 };
