@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { jiraAddProject, jiraAppInstall, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
+import { jiraAddProject, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
@@ -9,6 +9,7 @@ test.describe("Create branch", () => {
 	test.beforeEach(async ({ page: newPage }) => {
 		page = newPage;
 		await jiraLogin(page, "admin");
+		await jiraAddProject(page);
 	});
 
 	test.use({
@@ -16,12 +17,12 @@ test.describe("Create branch", () => {
 	});
 
 	test.describe("cloud", () => {
+		// Create a fresh issue per test
 		test.beforeEach(async() => {
-			await jiraAppInstall(page);
-		});
-		test("When there are no GitHub connections", async () => {
-			await jiraAddProject(page);
 			await jiraCreateIssue(page);
+		});
+
+		test("When there are no GitHub connections", async () => {
 			await page.goto(data.urls.testProjectIssue);
 			await (page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']")).click();
 			const poppedUpPage = await page.waitForEvent("popup");
@@ -29,5 +30,10 @@ test.describe("Create branch", () => {
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
 		});
 	});
+	// Clean up projects to avoid conflicts in future
+	// test.afterEach(async() => {
+	// 	await jiraRemoveProject(page);
+	// });
+
 });
 

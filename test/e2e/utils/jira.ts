@@ -84,9 +84,13 @@ export const jiraCreateIssue = async (page: Page): Promise<Page> => {
 };
 
 export const jiraRemoveProject = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.testProjectSettings);
-	await (page.locator("button[data-testid='project-details.header.menu.dropdown-menu--trigger']")).click();
-	await (page.locator("div[data-testid='project-details.header.menu.dropdown-menu--content'] button[role='menuitem']:first-of-type")).click();
+	await page.goto(data.urls.projects);
+
+	const filterInput = await page.locator("input[data-test-id='searchfield']");
+	await filterInput.fill(TEST_PROJECT_NAME);
+
+	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button")).click();
+	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
 	await (page.locator("button[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']")).click();
 
 	// Permanently deleting too
