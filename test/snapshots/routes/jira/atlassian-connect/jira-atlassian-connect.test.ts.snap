@@ -10,7 +10,7 @@ Object {
   "authentication": Object {
     "type": "jwt",
   },
-  "description": "Connect your code and your projects with ease.",
+  "description": "Connect your code and your project with ease.",
   "lifecycle": Object {
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
