@@ -39,7 +39,8 @@ export const GithubSubscriptionGet = async (req: Request, res: Response, next: N
 			gitHubUserClient,
 			installation.account.login,
 			login,
-			installation.target_type
+			installation.target_type,
+			logger
 		)) {
 			return res.render("github-subscriptions.hbs", {
 				csrfToken: req.csrfToken(),
