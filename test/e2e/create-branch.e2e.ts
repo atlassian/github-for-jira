@@ -9,6 +9,7 @@ test.describe("Create branch", () => {
 	test.beforeEach(async ({ page: newPage }) => {
 		page = newPage;
 		await jiraLogin(page, "admin");
+		await jiraAddProject(page);
 	});
 
 	test.use({
@@ -16,16 +17,23 @@ test.describe("Create branch", () => {
 	});
 
 	test.describe("cloud", () => {
+		// Create a fresh project and issue
+		test.beforeEach(async() => {
+			await jiraCreateIssue(page);
+		});
 
 		test("When there are no GitHub connections", async () => {
-			await jiraAddProject(page);
-			await jiraCreateIssue(page);
 			await page.goto(data.urls.testProjectIssue);
 			await (page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']")).click();
 			const poppedUpPage = await page.waitForEvent("popup");
 			await poppedUpPage.waitForLoadState();
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
 		});
+	});
+
+	// Clean up projects to avoid conflicts in future
+	test.afterEach(async() => {
+		// await jiraRemoveProject(page);
 	});
 });
 
