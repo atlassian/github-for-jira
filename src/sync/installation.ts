@@ -23,6 +23,7 @@ import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
+import { ConnectionTimedOutError } from "sequelize";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -358,6 +359,12 @@ export const handleBackfillError = async (
 
 	if (String(err).includes("connect ECONNREFUSED")) {
 		logger.warn("ECONNREFUSED error, retrying in 30 seconds");
+		scheduleNextTask(30_000);
+		return;
+	}
+
+	if (err instanceof ConnectionTimedOutError) {
+		logger.warn("ConnectionTimedOutError error, retrying in 30 seconds");
 		scheduleNextTask(30_000);
 		return;
 	}
