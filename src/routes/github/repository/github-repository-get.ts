@@ -12,17 +12,22 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	const repoName = req.query?.repoName as string;
 	const jiraHost = jiraHostLocals || jiraHostParam;
 
+	const log = req.log.child({ jiraHost });
+
 	if (!jiraHost) {
+		log.error("Unauthorised - No JiraHost found");
 		sendError(res, 401, "Unauthorised");
 		return;
 	}
 
 	if (!githubToken) {
+		log.error("Unauthorised - No githubToken found");
 		res.sendStatus(401);
 		return;
 	}
 
 	if (!repoName) {
+		log.error("No repoName found");
 		res.send(400);
 		return;
 	}
@@ -33,7 +38,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 			repositories
 		});
 	} catch (err) {
-		req.log.error({ err }, "Error fetching repositories");
+		log.error({ err }, "Error fetching repositories");
 		res.status(500).send({
 			repositories: []
 		});
