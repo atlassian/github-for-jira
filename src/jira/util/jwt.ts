@@ -235,7 +235,7 @@ interface JWTRequest extends URL {
 	body?: any;
 }
 
-const getJWTRequest = (req: Request): JWTRequest => ({
+export const getJWTRequest = (req: Request): JWTRequest => ({
 	...new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`),
 	method: req.method,
 	body: req.body
