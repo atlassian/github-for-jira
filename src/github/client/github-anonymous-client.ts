@@ -34,7 +34,7 @@ export class GitHubAnonymousClient extends GitHubClient {
 		code: string,
 		state: string
 	}) {
-		const response = await this.axios.get(`/login/oauth/access_token`,
+		const { data: { access_token: accessToken, refresh_token: refreshToken } } = await this.axios.get(`/login/oauth/access_token`,
 			{
 				baseURL: this.baseUrl,
 				params: {
@@ -50,7 +50,10 @@ export class GitHubAnonymousClient extends GitHubClient {
 				responseType: "json"
 			}
 		);
-		return response.data.access_token;
+		return {
+			accessToken,
+			refreshToken
+		};
 	}
 
 	public async checkGitHubToken(gitHubToken: string) {
@@ -59,6 +62,32 @@ export class GitHubAnonymousClient extends GitHubClient {
 				Authorization: `Bearer ${gitHubToken}`
 			}
 		});
+	}
+
+	public async renewGitHubToken(opts: {
+		refreshToken: string,
+		clientId: string,
+		clientSecret: string
+	}) {
+		const { data: { access_token: accessToken, refresh_token: refreshToken } } = await this.axios.post(`/login/oauth/access_token`,
+			{
+				refresh_token: opts.refreshToken,
+				grant_type: "refresh_token",
+				client_id: opts.clientId,
+				client_secret: opts.clientSecret
+			},{
+				baseURL: this.baseUrl,
+				headers: {
+					accept: "application/json",
+					"content-type": "application/json"
+				},
+				responseType: "json"
+			}
+		);
+		return {
+			accessToken,
+			refreshToken
+		};
 	}
 
 }

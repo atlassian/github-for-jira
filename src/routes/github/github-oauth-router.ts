@@ -10,6 +10,8 @@ import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import Logger from "bunyan";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -102,10 +104,11 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-			const accessToken = await gitHubAnonymousClient.exchangeGitHubToken({
+			const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
 				clientId, clientSecret: gitHubClientSecret, code, state
 			});
 			req.session.githubToken = accessToken;
+			req.session.githubRefreshToken = refreshToken;
 		} else {
 			const response = await axios.get(
 				`${hostname}/login/oauth/access_token`,
@@ -125,6 +128,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 			);
 			// Saving it to session be used later
 			req.session.githubToken = response.data.access_token;
+			req.session.githubRefreshToken = response.data.refresh_token;
 		}
 
 		// Saving UUID for each GitHubServerApp
@@ -182,8 +186,18 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
-		// If it's a GET request, we can redirect to login and try again
+		if (req.session?.githubRefreshToken) {
+			req.log.debug(`Trying to renew Github token...`);
+			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, logger);
+			if (token) {
+				req.session.githubToken = token.accessToken;
+				req.session.githubRefreshToken = token.refreshToken;
+				res.locals.githubToken = token.accessToken;
+				return next();
+			}
+		}
 		if (req.method == "GET") {
+			// If it's a GET request, we can redirect to login and try again
 			req.log.debug(`Trying to get new Github token...`);
 			res.locals.redirect = req.originalUrl;
 			return GithubOAuthLoginGet(req, res);
@@ -248,6 +262,25 @@ const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
 	if (url.indexOf("?") === -1) url = url + "?";
 	if (url.indexOf("&jiraHost") === -1) url = url + "&jiraHost=" + jiraHost;
 	return url;
+};
+
+const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: GitHubAppConfig, jiraHost: string, logger: Logger) => {
+	try {
+		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
+		if (clientSecret) {
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig?.gitHubAppId, jiraHost, logger);
+			const { accessToken, refreshToken } = await gitHubAnonymousClient.renewGitHubToken({
+				refreshToken: githubRefreshToken,
+				clientId: gitHubAppConfig.clientId,
+				clientSecret
+			});
+			return { accessToken, refreshToken };
+		}
+	} catch (err) {
+		logger.warn({ err }, "Failed to renew Github token...");
+	}
+	logger.debug("Failed to renew Github token...");
+	return undefined;
 };
 
 // IMPORTANT: We need to keep the login/callback/middleware functions
