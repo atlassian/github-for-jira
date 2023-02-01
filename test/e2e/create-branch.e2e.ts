@@ -17,7 +17,7 @@ test.describe("Create branch", () => {
 	});
 
 	test.describe("cloud", () => {
-		// Create a fresh project and issue
+		// Create a fresh issue per test
 		test.beforeEach(async() => {
 			await jiraCreateIssue(page);
 		});
