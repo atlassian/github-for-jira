@@ -1,11 +1,12 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
-import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
+import { decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
-import { includes, isEmpty } from "lodash";
+import _, { includes, isEmpty } from "lodash";
+import { createHash } from "crypto";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -81,13 +82,12 @@ const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boole
 	);
 };
 
-export const validateQsh = (tokenType: TokenType, qsh: string, fullUrl: string): boolean => {
+export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTRequest): boolean => {
 	// If token type if of type context, verify automatically if QSH is the correct string
 	if (tokenType === TokenType.context && qsh === "context-qsh") {
 		return true;
 	}
 
-	// to get full path from express request, we need to add baseUrl with path
 	/**
 	 * TODO: Remove `decodeURIComponent` later
 	 * This has been added here as a temporarily until the `qsh` bug is fixed
@@ -97,19 +97,19 @@ export const validateQsh = (tokenType: TokenType, qsh: string, fullUrl: string):
 	 * but uses the original string, which returns a different `qsh` value.
 	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
 	 */
-	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + decodeURIComponent(req.path) };
-	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
+	const fixedRequest = { ...request, pathname: decodeURIComponent(request.pathname) };
+	let expectedHash = createQueryStringHash(fixedRequest, false);
 	const signatureHashVerified = qsh === expectedHash;
 
 	if (!signatureHashVerified) {
 		// If that didn't verify, it might be a post/put - check the request body too
-		expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, true, BASE_URL);
+		expectedHash = createQueryStringHash(fixedRequest, true);
 		return qsh === expectedHash;
 	}
 	return true;
 };
 
-export const validateJwtClaims = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, fullUrl: string): void => {
+export const validateJwtClaims = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, request: JWTRequest): void => {
 	if (!verifiedClaims.qsh) {
 		throw "JWT validation Failed, no qsh";
 	}
@@ -119,12 +119,12 @@ export const validateJwtClaims = (verifiedClaims: { exp: number, qsh: string | u
 		throw "JWT validation failed, token is expired";
 	}
 
-	if (!validateQsh(tokenType, verifiedClaims.qsh, fullUrl)) {
+	if (!validateQsh(tokenType, verifiedClaims.qsh, request)) {
 		throw "JWT Verification Failed, wrong qsh";
 	}
 };
 
-const validateSymmetricJwt = (secret: string, fullUrl:string, tokenType: TokenType, token?: string): void => {
+const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: TokenType, token?: string): void => {
 	if (!token) {
 		throw "Could not find authentication data on request";
 	}
@@ -151,7 +151,7 @@ const validateSymmetricJwt = (secret: string, fullUrl:string, tokenType: TokenTy
 		throw `Unable to decode JWT token: ${error}`;
 	}
 
-	validateJwtClaims(verifiedClaims, tokenType, fullUrl);
+	validateJwtClaims(verifiedClaims, tokenType, request);
 };
 
 /**
@@ -166,7 +166,7 @@ const validateSymmetricJwt = (secret: string, fullUrl:string, tokenType: TokenTy
 export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction): void => {
 	try {
 		const token = extractJwtFromRequest(req);
-		validateSymmetricJwt(secret, getFullUrl(req), tokenType, token);
+		validateSymmetricJwt(secret, getJWTRequest(req), tokenType, token);
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (error) {
@@ -194,7 +194,7 @@ const isStagingTenant = (req: Request): boolean => {
 export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
-		await validateAsymmetricJwtToken(getFullUrl(req), token, isStagingTenant(req));
+		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenant(req));
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (err) {
@@ -205,7 +205,7 @@ export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Re
 	}
 };
 
-export const validateAsymmetricJwtToken = async (fullUrl: string, token?: string, isStaginTenant = false) => {
+export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: string, isStaginTenant = false) => {
 
 	if (!token) {
 		throw "JWT Verification Failed, no token present";
@@ -227,7 +227,104 @@ export const validateAsymmetricJwtToken = async (fullUrl: string, token?: string
 
 	const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
 
-	validateJwtClaims(verifiedClaims, TokenType.normal, fullUrl);
+	validateJwtClaims(verifiedClaims, TokenType.normal, request);
 };
 
-const getFullUrl = (req: Request) => `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+interface JWTRequest extends URL {
+	method: string;
+	body?: any;
+}
+
+const getJWTRequest = (req: Request): JWTRequest => ({
+	...new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`),
+	method: req.method,
+	body: req.body
+});
+
+const CANONICAL_QUERY_SEPARATOR = "&";
+
+enum HASH_ALGORITHM {
+	HS256 = "sha256",
+	HS384 = "sha384",
+	HS512 = "sha512",
+	RS256 = "RSA-SHA256"
+}
+
+const createQueryStringHash = (req: JWTRequest, checkBodyForParams?: boolean): string =>
+	createHash(HASH_ALGORITHM.HS256)
+		.update(createCanonicalRequest(req, checkBodyForParams))
+		.digest("hex");
+
+const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boolean): string =>
+	canonicalizeMethod(req) +
+	CANONICAL_QUERY_SEPARATOR +
+	canonicalizeUri(req) +
+	CANONICAL_QUERY_SEPARATOR +
+	canonicalizeQueryString(req, checkBodyForParams);
+
+const canonicalizeMethod = (req) => req.method.toUpperCase();
+
+const canonicalizeUri = (req: JWTRequest) => {
+	let path = req.pathname;
+
+	if (!path || path.length === 0) {
+		return "/";
+	}
+
+	// If the separator is not URL encoded then the following URLs have the same query-string-hash:
+	//   https://djtest9.jira-dev.com/rest/api/2/project&a=b?x=y
+	//   https://djtest9.jira-dev.com/rest/api/2/project?a=b&x=y
+	path = path.replace(new RegExp(CANONICAL_QUERY_SEPARATOR, "g"), encodeRfc3986(CANONICAL_QUERY_SEPARATOR));
+
+	// Prefix with /
+	if (path[0] !== "/") {
+		path = "/" + path;
+	}
+
+	// Remove trailing /
+	if (path.length > 1 && path[path.length - 1] === "/") {
+		path = path.substring(0, path.length - 1);
+	}
+
+	return path;
+};
+
+const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean): string => {
+	let queryParams:URLSearchParams = req.searchParams;
+	const method = req.method.toUpperCase();
+
+	// Apache HTTP client (or something) sometimes likes to take the query string and put it into the request body
+	// if the method is PUT or POST
+	if (checkBodyForParams && _.isEmpty(queryParams) && (method === "POST" || method === "PUT")) {
+		queryParams = new URLSearchParams(req.body);
+	}
+
+	const sortedQueryString:string[] = [],
+		query = Object.fromEntries(queryParams);
+	if (!_.isEmpty(query)) {
+		// Remove the 'jwt' query string param
+		delete query.jwt;
+
+		_.each(_.keys(query).sort(), key => {
+			// The __proto__ field can sometimes sneak in depending on what node version is being used.
+			// Get rid of it or the qsh calculation will be wrong.
+			if (key === "__proto__") {
+				return;
+			}
+			const param = query[key];
+			let paramValue = "";
+			if (Array.isArray(param)) {
+				paramValue = _.map(param.sort(), encodeRfc3986).join(",");
+			} else {
+				paramValue = encodeRfc3986(param);
+			}
+			sortedQueryString.push(encodeRfc3986(key) + "=" + paramValue);
+		});
+	}
+	return sortedQueryString.join(CANONICAL_QUERY_SEPARATOR);
+};
+
+const encodeRfc3986 = (value: string): string =>
+	encodeURIComponent(value)
+		.replace(/[!'()]/g, escape)
+		.replace(/\*/g, "%2A");
