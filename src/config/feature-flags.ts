@@ -26,7 +26,8 @@ export enum BooleanFlags {
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	NEW_JWT_VALIDATION = "new-jwt-validation",
-	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check"
+	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check",
+	RENEW_GITHUB_TOKEN = "renew-github-token"
 }
 
 export enum StringFlags {
@@ -65,9 +66,13 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> =>
+export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> => {
+	if (flag === BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER || flag === BooleanFlags.NEW_JWT_VALIDATION) {
+		return true;
+	}
 	// Always use the default value as false to prevent issues
-	await getLaunchDarklyValue(flag, false, key);
+	return	await getLaunchDarklyValue(flag, false, key);
+};
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);
