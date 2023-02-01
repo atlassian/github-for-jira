@@ -1,4 +1,4 @@
-import { isEmpty, orderBy } from "lodash";
+import { isEmpty, omit, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
@@ -18,30 +18,50 @@ const mapStatus = (status: string, merged_at?: string) => {
 	return "UNKNOWN";
 };
 
+interface JiraReviewer extends JiraReview {
+	login: string;
+}
+
 // TODO: define arguments and return
-const mapReviews = (reviews: Octokit.PullsListReviewsResponse = []) => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
-	const usernames: Record<string, JiraReview> = {};
-	// The reduce function goes through all the reviews and creates an array of unique users (so users' avatars won't be duplicated on the dev panel in Jira) and it considers 'APPROVED' as the main approval status for that user.
-	return sortedReviews.reduce((acc: JiraReview[], review) => {
+	const usernames: Record<string, JiraReviewer> = {};
+	// The reduce function goes through all the reviews and creates an array of unique users
+	// (so users' avatars won't be duplicated on the dev panel in Jira)
+	// and it considers 'APPROVED' as the main approval status for that user.
+	const reviewsReduced: JiraReviewer[] = sortedReviews.reduce((acc: JiraReviewer[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const author = review?.user;
+
 		if (!usernames[author?.login]) {
 			usernames[author?.login] = {
 				...getJiraAuthor(author),
+				login: author.login,
 				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
 			};
+
 			acc.push(usernames[author?.login]);
-			// If user is already added (not unique) but the previous approval status is different than APPROVED and current approval status is APPROVED, updates approval status.
+			// If user is already added (not unique) but the previous approval status is different
+			// from APPROVED and current approval status is APPROVED, updates approval status.
 		} else if (
 			usernames[author?.login].approvalStatus !== "APPROVED" &&
 			review.state === "APPROVED"
 		) {
 			usernames[author?.login].approvalStatus = "APPROVED";
 		}
+
 		// Returns the reviews' array with unique users
 		return acc;
 	}, []);
+
+	// Get GitHub user email, so it can be matched to an AAID
+	return Promise.all(reviewsReduced.map(async reviewer => {
+		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+		return {
+			...omit(reviewer, "login"),
+			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
+		};
+	}));
 };
 
 // TODO: define arguments and return
@@ -74,7 +94,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: mapReviews(reviews),
+				reviewers: await mapReviews(reviews, gitHubInstallationClient),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),
