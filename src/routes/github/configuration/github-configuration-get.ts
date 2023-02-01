@@ -89,7 +89,8 @@ const getInstallationsWithAdmin = async (
 			gitHubUserClient,
 			installation.account.login,
 			login,
-			installation.target_type
+			installation.target_type,
+			log
 		).catch(err => {
 			errors.push(err);
 			return false;
