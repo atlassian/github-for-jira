@@ -86,18 +86,10 @@ export const jiraCreateIssue = async (page: Page): Promise<Page> => {
 export const jiraRemoveProject = async (page: Page): Promise<Page> => {
 	await page.goto(data.urls.projects);
 
-	const filterInput = await page.locator("input[data-test-id='searchfield']");
-	await filterInput.fill(TEST_PROJECT_NAME);
-
+	await (await page.locator("input[data-test-id='searchfield']")).fill(TEST_PROJECT_NAME);
 	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button")).click();
 	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
 	await (page.locator("button[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']")).click();
-
-	// Permanently deleting too
-	await (page.locator("div[data-testid='project-soft-delete-modal.ui.flags.moved-to-trash-success-actions'] a:first-of-type")).click();
-	await (page.locator("button[data-testid='inactive-projects-directory-base.ui.projects-table.body.cells.trash.dropdown--trigger']")).click();
-	await (page.locator("div[data-testid='inactive-projects-directory-base.ui.projects-table.body.cells.trash.dropdown--content'] button[role='menuitem']:first-of-type")).click();
-	await (page.locator("button[data-test-id='project-permanent-delete-modal.ui.actions.delete-button-wrapper']")).click();
 
 	return page;
 };
