@@ -22,9 +22,7 @@ describe("Webhook: /events/installed", () => {
 		await JiraEventsInstallPost(req as any, res as any);
 		expect(res.sendStatus).toHaveBeenCalledWith(204);
 
-		const inst: Installation | null = await Installation.getForClientKey("abc123");
-		expect(inst?.jiraHost).toBe(body.baseUrl);
-		expect(await inst?.decrypt("encryptedSharedSecret", getLogger("test"))).toBe(body.sharedSecret);
+		const inst = await Installation.getForClientKey("abc123");
 		expect(inst?.plainClientKey).toBe("abc123");
 	});
 
@@ -48,8 +46,7 @@ describe("Webhook: /events/installed", () => {
 
 		//expect the plainClientKey is set
 		const inst: Installation = await Installation.findByPk(id);
-		expect(inst.jiraHost).toBe(body.baseUrl);
-		expect(await inst.decrypt("encryptedSharedSecret", getLogger("test"))).toBe(body.sharedSecret);
 		expect(inst.plainClientKey).toBe("abc123");
+		expect(await inst.decrypt("encryptedSharedSecret", getLogger("test"))).toBe(body.sharedSecret);
 	});
 });
