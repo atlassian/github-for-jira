@@ -1,4 +1,4 @@
-import { isEmpty, orderBy } from "lodash";
+import { isEmpty, omit, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
 import { Octokit  } from "@octokit/rest";
 import Logger from "bunyan";
@@ -19,7 +19,7 @@ const mapStatus = (status: string, merged_at?: string) => {
 };
 
 interface JiraReviewer extends JiraReview {
-	login?: string;
+	login: string;
 }
 
 // TODO: define arguments and return
@@ -56,15 +56,10 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 
 	// Get GitHub user email, so it can be matched to an AAID
 	return Promise.all(reviewsReduced.map(async reviewer => {
-		let login;
-		if (reviewer.login) {
-			login = reviewer.login;
-			delete reviewer.login;
-		}
-		const gitHubUser = await getGithubUser(gitHubInstallationClient, login);
+		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
 		return {
-			...reviewer,
-			email: gitHubUser?.email || `${login}@noreply.user.github.com`
+			...omit(reviewer, "login"),
+			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
 		};
 	}));
 };
