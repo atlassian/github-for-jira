@@ -10,6 +10,23 @@ describe("Installation", () => {
 			const found = await Installation.findByPk(inst.id);
 			expect(found.plainClientKey).toBe("1234");
 		});
+		it("should update origin unhashed plainClientKey for existing record", async () => {
+			//prepare
+			const origin = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
+			await Installation.sequelize?.query(`update "Installations" set "plainClientKey" = null where "id" = ${origin.id}`);
+			const nullPlainClientKeyInst = await Installation.findByPk(origin.id);
+			//make sure plainClientKey is null
+			expect(nullPlainClientKeyInst.id).toBe(origin.id);
+			expect(nullPlainClientKeyInst.plainClientKey).toBeNull();
+
+			//update it
+			const updatedInst = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
+			const finalResultInst = await Installation.findByPk(updatedInst.id);
+
+			expect(updatedInst.id).toBe(origin.id);
+			expect(finalResultInst.id).toBe(origin.id);
+			expect(finalResultInst.plainClientKey).toBe("1234");
+		});
 	});
 	describe("Decryption with cryptor", () => {
 		it("can decrypted the new safeSharedSecret column successfully", async () => {
