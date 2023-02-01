@@ -176,7 +176,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"signed-install": true
 		},
 		name: APP_NAME,
-		description: "Connect your code and your projects with ease.",
+		description: "Connect your code and your project with ease.",
 		key: APP_KEY,
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
