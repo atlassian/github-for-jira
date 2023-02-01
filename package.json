@@ -41,7 +41,7 @@
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
 		"precommit": "run-p lint build",
-		"test:e2e": "yarn test:e2e:install && yarn test:e2e:init && yarn test:e2e:start",
+		"test:e2e": "yarn test:e2e:install && yarn test:e2e:start",
 		"test:e2e:headed": "yarn test:e2e --headed",
 		"test:e2e:install": "playwright install",
 		"test:e2e:init": "NODE_ENV=e2e playwright test init/",
