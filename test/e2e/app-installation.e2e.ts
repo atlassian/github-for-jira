@@ -26,12 +26,12 @@ test.describe("App Installation", () => {
 						}
 					});
 
-					test("jiraAppInstall", async () => {
-						expect(await jiraAppInstall(page)).toBeTruthy();
-					});
-
 					test("jiraAppUninstall", async () => {
 						expect(await jiraAppUninstall(page)).toBeTruthy();
+					});
+
+					test("jiraAppInstall", async () => {
+						expect(await jiraAppInstall(page)).toBeTruthy();
 					});
 				});
 			});
