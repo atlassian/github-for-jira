@@ -1,4 +1,9 @@
+import { xml2json } from "xml2json-light";
 export const extractClientKey = (text: string): string | undefined  => {
-	const [, plainClientKey] = /<key>([0-9a-z-:]+)<\/key>/gmi.exec(text) || [undefined, undefined];
-	return plainClientKey;
+	try {
+		const json = xml2json(text, { object: true });
+		return json?.consumer?.key;
+	} catch (e) {
+		return undefined;
+	}
 };
