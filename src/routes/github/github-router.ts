@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router , NextFunction, Request, Response } from "express";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
@@ -15,7 +15,6 @@ import { GithubRepositoryRouter } from "routes/github/repository/github-reposito
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Errors } from "config/errors";
-import { NextFunction, Request, Response } from "express";
 
 // TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
 const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
@@ -42,6 +41,8 @@ subRouter.post("/webhooks",
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
+subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubRepositoryRouter);
+
 // OAuth Routes
 subRouter.use(GithubOAuthRouter);
 
@@ -63,7 +64,5 @@ subRouter.use("/configuration", GithubConfigurationRouter);
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", GithubSubscriptionRouter);
 
-
-subRouter.use("/repository", GithubRepositoryRouter);
 
 subRouter.use("/branch", GithubBranchRouter);
