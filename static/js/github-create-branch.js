@@ -111,7 +111,8 @@ $("#changeInstance").click(function (event) {
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
 	const repo = getRepoDetails();
-	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${encodeURIComponent(branchName)}`;
+  const jiraHost = encodeURIComponent($("#jiraHost").val());
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${encodeURIComponent(branchName)}?jiraHost=${jiraHost}`;
 
 	$.get(url)
 		.fail((err) => {
