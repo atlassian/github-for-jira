@@ -85,8 +85,8 @@ const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boole
 
 export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTRequest): boolean => {
 	// If token type if of type context, verify automatically if QSH is the correct string
-	if (tokenType === TokenType.context && qsh === "context-qsh") {
-		return true;
+	if (tokenType === TokenType.context) {
+		return qsh === "context-qsh";
 	}
 
 	/**
@@ -98,7 +98,10 @@ export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTReque
 	 * but uses the original string, which returns a different `qsh` value.
 	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
 	 */
-	const fixedRequest = { ...request, pathname: request.pathname && decodeURIComponent(request.pathname) };
+	const fixedRequest = {
+		...request,
+		pathname: request.pathname && decodeURIComponent(request.pathname)
+	};
 	let expectedHash = createQueryStringHash(fixedRequest, false);
 	const signatureHashVerified = qsh === expectedHash;
 
@@ -231,7 +234,7 @@ export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: st
 	validateJwtClaims(verifiedClaims, TokenType.normal, request);
 };
 
-interface JWTRequest extends UrlWithParsedQuery {
+export interface JWTRequest extends UrlWithParsedQuery {
 	method: string;
 	body?: any;
 }
@@ -251,12 +254,15 @@ enum HASH_ALGORITHM {
 	RS256 = "RSA-SHA256"
 }
 
-const createQueryStringHash = (req: JWTRequest, checkBodyForParams?: boolean): string =>
-	createHash(HASH_ALGORITHM.HS256)
-		.update(createCanonicalRequest(req, checkBodyForParams))
+export const createQueryStringHash = (req: JWTRequest, checkBodyForParams?: boolean): string => {
+	const request = createCanonicalRequest(req, checkBodyForParams);
+	const hash = createHash(HASH_ALGORITHM.HS256)
+		.update(request)
 		.digest("hex");
+	return hash;
+};
 
-const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boolean): string =>
+export const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boolean): string =>
 	canonicalizeMethod(req) +
 	CANONICAL_QUERY_SEPARATOR +
 	canonicalizeUri(req) +
@@ -268,7 +274,7 @@ const canonicalizeMethod = (req) => req.method.toUpperCase();
 const canonicalizeUri = (req: JWTRequest) => {
 	let path = req.pathname;
 
-	if (!path || path.length === 0) {
+	if (!path?.length) {
 		return "/";
 	}
 
@@ -291,7 +297,8 @@ const canonicalizeUri = (req: JWTRequest) => {
 };
 
 const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean): string => {
-	let query:Record<string, any> = Object.keys(req.query).map(key => req.query[key]);
+	// Change Dict to Object
+	let query: Record<string, any> = JSON.parse(JSON.stringify(req.query));
 	const method = req.method.toUpperCase();
 
 	// Apache HTTP client (or something) sometimes likes to take the query string and put it into the request body
@@ -300,28 +307,21 @@ const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean):
 		query = Object.fromEntries(req.body);
 	}
 
-	const sortedQueryString: string[] = [];
-	if (!isEmpty(query)) {
-		// Remove the 'jwt' query string param
-		delete query.jwt;
+	if (isEmpty(query)) {
+		return "";
+	}
+	// Remove the 'jwt' query string param
+	delete query.jwt;
 
-		Object.keys(query).sort().forEach(key => {
+	return Object.keys(query)
+		.sort()
+		.reduce((acc: string[], key) => {
 			// The __proto__ field can sometimes sneak in depending on what node version is being used.
 			// Get rid of it or the qsh calculation will be wrong.
-			if (key === "__proto__") {
-				return;
-			}
-			const param = query[key];
-			let paramValue = "";
-			if (Array.isArray(param)) {
-				paramValue = param.sort().map(encodeRfc3986).join(",");
-			} else {
-				paramValue = encodeRfc3986(param);
-			}
-			sortedQueryString.push(encodeRfc3986(key) + "=" + paramValue);
-		});
-	}
-	return sortedQueryString.join(CANONICAL_QUERY_SEPARATOR);
+			acc.push(encodeRfc3986(key) + "=" + [].concat(query[key]).sort().map(encodeRfc3986).join(","));
+			return acc;
+		}, [])
+		.join(CANONICAL_QUERY_SEPARATOR);
 };
 
 const encodeRfc3986 = (value: string): string =>
