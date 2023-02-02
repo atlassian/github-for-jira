@@ -13,7 +13,6 @@ describe("Cleanup RepoSyncState", () => {
 	});
 
 	it("should delete orphan RepoSyncState, while leave rest untouch", async () => {
-
 		//preparing data
 		const sub = await Subscription.install({
 			clientKey: "some-key",
@@ -21,37 +20,61 @@ describe("Cleanup RepoSyncState", () => {
 			gitHubAppId: undefined,
 			installationId: 123
 		});
-		await RepoSyncState.create({
-			subscriptionId: sub.id, //a up to date repo that link to sub
-			repoId: 1,
-			repoName: "a repo name",
-			repoOwner: "owner name",
-			repoFullName: "repo full name",
-			repoUrl: jiraHost,
-			repoPushedAt: new Date(),
-			repoUpdatedAt: new Date(),
-			repoCreatedAt: new Date()
-		});
-		await RepoSyncState.create({
-			subscriptionId: 99999, //something non-exists, so this is an orphan
-			repoId: 1,
-			repoName: "another repo name",
-			repoOwner: "owner name",
-			repoFullName: "another repo full name",
-			repoUrl: jiraHost,
-			repoPushedAt: new Date(),
-			repoUpdatedAt: new Date(),
-			repoCreatedAt: new Date()
-		});
+		await createdRepoSyncState("first", sub.id);
+		await createdRepoSyncState("second", 9999);
+		expect([...await RepoSyncState.findAll()].length).toBe(2);
 
 		//call clean up api
 		await supertest(app)
-			.delete("/api/data-cleanup/repo-sync-states")
+			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999`)
+			.set("X-Slauth-Mechanism", "test")
 			.expect(200);
 
 		//check result is correct
-		expect(await RepoSyncState.findAll().length).toBe(1);
+		expect([...await RepoSyncState.findAll()].length).toBe(1);
 		const upToDateRepoSyncState = await RepoSyncState.findOne({ where: { "subscriptionId": sub.id } });
-		expect(upToDateRepoSyncState.repoFullName).toBe("repo full name");
+		expect(upToDateRepoSyncState.repoFullName).toBe("first repo full name");
 	});
+
+	it("should delete orphan RepoSyncState by repoSyncStateId in query string, while leave rest untouch", async () => {
+		//preparing data
+		const sub = await Subscription.install({
+			clientKey: "some-key",
+			host: jiraHost,
+			gitHubAppId: undefined,
+			installationId: 123
+		});
+		await createdRepoSyncState("first", sub.id);
+		const secondRepoState = await createdRepoSyncState("second", 9998);
+		const thirdRepoState = await createdRepoSyncState("third", 9999);
+		expect([...await RepoSyncState.findAll()].length).toBe(3);
+		expect(thirdRepoState.id).toBeGreaterThan(secondRepoState.id);
+
+		//call clean up api
+		await supertest(app)
+			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=${secondRepoState.id}`)
+			.set("X-Slauth-Mechanism", "test")
+			.expect(200);
+
+		//check result is correct
+		expect([...await RepoSyncState.findAll()].length).toBe(2); //only the seoncd state is deleted
+		const upToDateRepoSyncState = await RepoSyncState.findOne({ where: { "subscriptionId": sub.id } });
+		expect(upToDateRepoSyncState.repoFullName).toBe("first repo full name");
+		const foundThirdRepoState = await RepoSyncState.findByPk(thirdRepoState.id);
+		expect(foundThirdRepoState.repoFullName).toBe("third repo full name");
+	});
+
+	const createdRepoSyncState = async (prefix: string, subscriptionId: number) => {
+		return await RepoSyncState.create({
+			subscriptionId: subscriptionId,
+			repoId: 1,
+			repoName: `${prefix} repo name`,
+			repoOwner: "owner name",
+			repoFullName: `${prefix} repo full name`,
+			repoUrl: jiraHost,
+			repoPushedAt: new Date(),
+			repoUpdatedAt: new Date(),
+			repoCreatedAt: new Date()
+		});
+	};
 });
