@@ -14,5 +14,5 @@ export const RepoSyncStateCleanUpOrphanDataPost = async (req: Request, res: Resp
 	const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
 	const result = await RepoSyncState.sequelize?.query(getCleanupSql(batchSize));
 	log.info({ count: result }, "Orphan RepoSyncStates data deleted");
-	res.status(204).end("Done. Count: " + result);
+	res.status(200).end("Done. Count: " + result);
 };
