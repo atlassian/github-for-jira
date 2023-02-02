@@ -5,8 +5,9 @@ import { decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlas
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
-import _, { includes, isEmpty } from "lodash";
+import { includes, isEmpty } from "lodash";
 import { createHash } from "crypto";
+import url, { UrlWithParsedQuery } from "url";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -97,7 +98,7 @@ export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTReque
 	 * but uses the original string, which returns a different `qsh` value.
 	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
 	 */
-	const fixedRequest = { ...request, pathname: decodeURIComponent(request.pathname) };
+	const fixedRequest = { ...request, pathname: request.pathname && decodeURIComponent(request.pathname) };
 	let expectedHash = createQueryStringHash(fixedRequest, false);
 	const signatureHashVerified = qsh === expectedHash;
 
@@ -230,13 +231,13 @@ export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: st
 	validateJwtClaims(verifiedClaims, TokenType.normal, request);
 };
 
-interface JWTRequest extends URL {
+interface JWTRequest extends UrlWithParsedQuery {
 	method: string;
 	body?: any;
 }
 
 export const getJWTRequest = (req: Request): JWTRequest => ({
-	...new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`),
+	...url.parse(req.url, true),
 	method: req.method,
 	body: req.body
 });
@@ -290,22 +291,21 @@ const canonicalizeUri = (req: JWTRequest) => {
 };
 
 const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean): string => {
-	let queryParams:URLSearchParams = req.searchParams;
+	let query:Record<string, any> = Object.keys(req.query).map(key => req.query[key]);
 	const method = req.method.toUpperCase();
 
 	// Apache HTTP client (or something) sometimes likes to take the query string and put it into the request body
 	// if the method is PUT or POST
-	if (checkBodyForParams && _.isEmpty(queryParams) && (method === "POST" || method === "PUT")) {
-		queryParams = new URLSearchParams(req.body);
+	if (checkBodyForParams && isEmpty(query) && (method === "POST" || method === "PUT")) {
+		query = Object.fromEntries(req.body);
 	}
 
-	const sortedQueryString:string[] = [],
-		query = Object.fromEntries(queryParams);
-	if (!_.isEmpty(query)) {
+	const sortedQueryString: string[] = [];
+	if (!isEmpty(query)) {
 		// Remove the 'jwt' query string param
 		delete query.jwt;
 
-		_.each(_.keys(query).sort(), key => {
+		Object.keys(query).sort().forEach(key => {
 			// The __proto__ field can sometimes sneak in depending on what node version is being used.
 			// Get rid of it or the qsh calculation will be wrong.
 			if (key === "__proto__") {
@@ -314,7 +314,7 @@ const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean):
 			const param = query[key];
 			let paramValue = "";
 			if (Array.isArray(param)) {
-				paramValue = _.map(param.sort(), encodeRfc3986).join(",");
+				paramValue = param.sort().map(encodeRfc3986).join(",");
 			} else {
 				paramValue = encodeRfc3986(param);
 			}

@@ -4,8 +4,8 @@ import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassia
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
 import { Request, Response } from "express";
-import Mock = jest.Mock;
 import { getLogger } from "config/logger";
+import Mock = jest.Mock;
 
 jest.mock("./query-atlassian-connect-public-key");
 
@@ -39,16 +39,20 @@ describe("jwt", () => {
 
 	const buildRequestWithNoToken = () => baseRequest;
 
-	const buildRequest = (jwtValue: string) => ({
-		...baseRequest,
-		query: {
+	const buildRequest = (jwtValue: string) => {
+		const query = {
 			...testQueryParams,
 			jwt: jwtValue
-		},
-		method: "GET",
-		path: "/configuration",
-		baseUrl: "/jira"
-	});
+		};
+		return {
+			...baseRequest,
+			query,
+			method: "GET",
+			path: "/configuration",
+			baseUrl: "/jira",
+			url: `/jira/configuration?${new URLSearchParams(query)}`
+		};
+	};
 
 	const buildRequestWithJwt = (secret = "secret", qsh: string): any =>
 		buildRequest(
@@ -89,6 +93,7 @@ describe("jwt", () => {
 			session: {
 				jiraHost: "https://test.atlassian.net"
 			},
+			url: `/jira/configuration?${new URLSearchParams(testQueryParams)}`,
 			log: getLogger("jwt.test")
 		} as any;
 
@@ -160,12 +165,14 @@ describe("jwt", () => {
 					exp: expiryDate
 				}, testSecret);
 
+				const query = {
+					...testQueryParams,
+					jwt: jwtValue
+				};
 				return {
 					...baseRequest,
-					query: {
-						...testQueryParams,
-						jwt: jwtValue
-					}
+					query,
+					url: `/jira/configuration?${new URLSearchParams(query)}`
 				};
 			};
 
