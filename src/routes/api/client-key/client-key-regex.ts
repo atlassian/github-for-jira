@@ -1,7 +1,7 @@
-import { toJson } from "xml2json";
+import { xml2json } from "xml2json-light";
 export const extractClientKey = (text: string): string | undefined  => {
 	try {
-		const json = toJson(text, { object: true });
+		const json = xml2json(text, { object: true });
 		return json?.consumer?.key;
 	} catch (e) {
 		return undefined;
