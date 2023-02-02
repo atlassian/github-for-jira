@@ -2,19 +2,17 @@ import { extractClientKey } from "./client-key-regex";
 
 const sampleUuid = "yyyyyyyy-0569-4f33-8413-cccccccc";
 const sampleJiraSite = "sample-site.atlassian.net";
-const xmlTemplate = `
-<consumer>
-<key>$$KEY$$</key>
-<name>JIRA</name>
-<publicKey>
-...SIb3DQEBAQUAA4GNADCBiQK...
-</publicKey>
-<description>Atlassian JIRA at url</description>
-</consumer>
-`;
-
 const getXml = (key: string) => {
-	return xmlTemplate.replace("$$KEY$$", key);
+	return `
+	<consumer>
+	<key>${key}</key>
+	<name>JIRA</name>
+	<publicKey>
+	...SIb3DQEBAQUAA4GNADCBiQK...
+	</publicKey>
+	<description>Atlassian JIRA at url</description>
+	</consumer>
+	`;
 };
 
 const possibleJiraXmlInfo = [
