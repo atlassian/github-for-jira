@@ -57,7 +57,6 @@
 		"@octokit/auth-app": "^2.6.0",
 		"@octokit/graphql-schema": "^10.73.0",
 		"@sentry/node": "^6.8.0",
-		"@types/xml2json": "^0.11.4",
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.999.0",
 		"axios": "^0.26.0",
