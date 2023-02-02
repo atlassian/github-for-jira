@@ -30,6 +30,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,
@@ -309,9 +310,6 @@ describe("sync/commits", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
@@ -329,6 +327,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = async (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,

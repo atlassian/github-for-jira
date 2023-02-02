@@ -68,6 +68,7 @@ describe("Branch Webhook", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						name: "example/test-repo-name",

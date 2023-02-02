@@ -89,6 +89,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -98,6 +99,14 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/users/test-pull-request-reviewer-login")
+			.reply(200, {
+				login: "test-pull-request-reviewer-login",
+				avatar_url: "test-pull-request-reviewer-avatar",
+				html_url: "test-pull-request-reviewer-url",
+				email: "test-pull-request-reviewer-login@email.test"
+			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
 			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
@@ -114,6 +123,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		jiraNock.post("/rest/devinfo/0.10/bulk", {
 			preventTransitions: false,
+			operationType: "NORMAL",
 			repositories: [
 				{
 					id:"321806393",
@@ -165,7 +175,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 								{
 									avatar: "test-pull-request-reviewer-avatar",
 									name: "test-pull-request-reviewer-login",
-									email: "test-pull-request-reviewer-login@noreply.user.github.com",
+									email: "test-pull-request-reviewer-login@email.test",
 									url: "https://github.com/reviewer",
 									approvalStatus: "APPROVED"
 								}
@@ -194,6 +204,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -203,6 +214,14 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/users/test-pull-request-reviewer-login")
+			.reply(200, {
+				login: "test-pull-request-reviewer-login",
+				avatar_url: "test-pull-request-reviewer-avatar",
+				html_url: "test-pull-request-reviewer-url",
+				email: "test-pull-request-reviewer-login@email.test"
+			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
 			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
@@ -238,10 +257,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	});
 
 	it("should delete the reference to a pull request when issue keys are removed from the title for server", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
 
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_REPO_ID_TRANSFORMER
@@ -313,6 +328,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -323,6 +339,14 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/users/test-pull-request-reviewer-login")
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				});
 
 			githubNock
 				.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
@@ -341,6 +365,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories:
 					[
 						{
@@ -399,7 +424,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 												{
 													avatar: "test-pull-request-reviewer-avatar",
 													name: "test-pull-request-reviewer-login",
-													email: "test-pull-request-reviewer-login@noreply.user.github.com",
+													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
 													approvalStatus: "APPROVED"
 												}
@@ -432,6 +457,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -442,6 +468,14 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/users/test-pull-request-reviewer-login")
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				});
 
 			githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
 				body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`
@@ -457,6 +491,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories: [
 					{
 						id:"321806393",
@@ -482,7 +517,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 									{
 										avatar: "test-pull-request-reviewer-avatar",
 										name: "test-pull-request-reviewer-login",
-										email: "test-pull-request-reviewer-login@noreply.user.github.com",
+										email: "test-pull-request-reviewer-login@email.test",
 										url: "https://github.com/reviewer",
 										approvalStatus: "APPROVED"
 									}
@@ -513,6 +548,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
 			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId);
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
@@ -529,6 +565,14 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
 
+			githubNock.get("/users/test-pull-request-reviewer-login")
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				});
+
 			jiraNock.get("/rest/api/latest/issue/TEST-124?fields=summary")
 				.reply(200, {
 					key: "TEST-124",
@@ -539,6 +583,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", {
 				preventTransitions: false,
+				operationType: "NORMAL",
 				repositories:
 					[
 						{
@@ -597,7 +642,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 												{
 													avatar: "test-pull-request-reviewer-avatar",
 													name: "test-pull-request-reviewer-login",
-													email: "test-pull-request-reviewer-login@noreply.user.github.com",
+													email: "test-pull-request-reviewer-login@email.test",
 													url: "https://github.com/reviewer",
 													approvalStatus: "APPROVED"
 												}

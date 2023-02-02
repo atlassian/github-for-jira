@@ -11,7 +11,7 @@ export class JiraClient {
 		const jiraClient = new JiraClient();
 		jiraClient.axios = getAxiosInstance(
 			installation.jiraHost,
-			await installation.decrypt("encryptedSharedSecret"),
+			await installation.decrypt("encryptedSharedSecret", log),
 			log
 		);
 		return jiraClient;

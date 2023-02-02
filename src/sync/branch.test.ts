@@ -35,6 +35,7 @@ describe("sync/branches", () => {
 
 	const makeExpectedResponseCloudServer = (branchName: string, repoId: string) => ({
 		preventTransitions: true,
+		operationType: "BACKFILL",
 		repositories: [
 			{
 				branches: [
@@ -186,6 +187,7 @@ describe("sync/branches", () => {
 			jiraNock
 				.post("/rest/devinfo/0.10/bulk", {
 					preventTransitions: true,
+					operationType: "BACKFILL",
 					repositories: [
 						{
 							branches: [
@@ -314,9 +316,6 @@ describe("sync/branches", () => {
 				.reply(200, response);
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)

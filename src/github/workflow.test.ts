@@ -79,7 +79,9 @@ describe("Workflow Webhook", () => {
 			providerMetadata:
 				{
 					product: "GitHub Actions"
-				}
+				},
+			preventTransitions: false,
+			operationType: "NORMAL"
 		}).reply(200);
 
 		mockSystemTime(12345678);
