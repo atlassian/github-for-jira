@@ -75,6 +75,9 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 			const userInstallationSearch = responseInstallationSearch.data?.items || [];
 			const userClientSearch = responseUserSearch.data?.items || [];
 
+			logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
+			logger.info(`Found ${userClientSearch.length} repos from user client search`);
+
 			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
 
 			return repos;
