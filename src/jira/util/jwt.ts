@@ -240,7 +240,7 @@ export interface JWTRequest extends UrlWithParsedQuery {
 }
 
 export const getJWTRequest = (req: Request): JWTRequest => ({
-	...url.parse(req.url, true),
+	...url.parse(req.originalUrl || req.url, true),
 	method: req.method,
 	body: req.body
 });
