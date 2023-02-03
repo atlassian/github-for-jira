@@ -97,11 +97,15 @@ export const handleFailedRequest = (logger: Logger) =>
 		const { response, config, request } = error;
 		const requestId = response?.headers?.["x-github-request-id"];
 		logger = logger.child({
-			requestId, resStatus: response?.status,
+			err: error,
+			requestId,
+			resStatus: response?.status,
 			requestMethod: request?.method,
 			requestPath: request?.path,
 			errorMessage: error?.message
 		});
+
+		logger.warn("Error executing Axios Request");
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
