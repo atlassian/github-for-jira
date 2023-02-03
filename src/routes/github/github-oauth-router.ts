@@ -269,12 +269,8 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
 		if (clientSecret) {
 			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig?.gitHubAppId, jiraHost, logger);
-			const { accessToken, refreshToken } = await gitHubAnonymousClient.renewGitHubToken({
-				refreshToken: githubRefreshToken,
-				clientId: gitHubAppConfig.clientId,
-				clientSecret
-			});
-			return { accessToken, refreshToken };
+			const res = await gitHubAnonymousClient.renewGitHubToken(githubRefreshToken, gitHubAppConfig.clientId, clientSecret);
+			return { accessToken: res.accessToken, refreshToken: res.refreshToken };
 		}
 	} catch (err) {
 		logger.warn({ err }, "Failed to renew Github token...");

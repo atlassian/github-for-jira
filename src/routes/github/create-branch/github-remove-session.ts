@@ -10,6 +10,7 @@ export const GithubRemoveSession = (req: Request, res: Response) => {
 	}
 
 	req.session.githubToken = undefined;
+	req.session.githubRefreshToken = undefined;
 	res.send({ baseUrl: gitHubAppConfig.hostname });
 
 };
