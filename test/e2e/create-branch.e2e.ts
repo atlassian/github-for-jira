@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
+import { jiraAddProject, jiraCreateIssue, jiraLogin } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
@@ -32,9 +32,9 @@ test.describe("Create branch", () => {
 	});
 
 	// Clean up projects to avoid conflicts in future
-	test.afterEach(async() => {
-		await jiraRemoveProject(page);
-	});
+	// test.afterEach(async() => {
+	// 	await jiraRemoveProject(page);
+	// });
 
 });
 

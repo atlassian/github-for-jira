@@ -5,7 +5,6 @@ import { TokenType } from "~/src/jira/util/jwt";
 import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-// import { decodeAsymmetric } from "atlassian-jwt";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
