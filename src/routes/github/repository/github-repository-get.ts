@@ -33,7 +33,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
-		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
+		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, log);
 		res.send({
 			repositories
 		});
@@ -60,20 +60,34 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const [orgName, gitHubInstallationClient, gitHubUserClient] = await Promise.all([
-				getOrgName(subscription, jiraHost, logger),
+				getOrgName(subscription, jiraHost, logger).then(orgName => {
+					logger.info({ orgName }, "Found orgName");
+					return orgName;
+				}),
 				createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId),
 				createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId)
 			]);
+
 			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
 			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
-			const [responseInstallationSearch, responseUserSearch] = await Promise.all([
-				gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated"),
-				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
-			]);
 
-			const userInstallationSearch = responseInstallationSearch.data?.items || [];
-			const userClientSearch = responseUserSearch.data?.items || [];
+			const [userInstallationSearch, userClientSearch] = await Promise.all([
+
+				gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
+					.then(responseInstallationSearch => {
+						const userInstallationSearch = responseInstallationSearch.data?.items || [];
+						logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
+						return userInstallationSearch;
+					}),
+
+				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
+					.then(responseUserSearch => {
+						const userClientSearch = responseUserSearch.data?.items || [];
+						logger.info(`Found ${userClientSearch.length} repos from user client search`);
+						return responseUserSearch.data?.items || [];
+					})
+			]);
 
 			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
 
