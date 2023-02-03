@@ -21,7 +21,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = getJiraHostFromTenantUrl(res.locals.jiraHost) || getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
+	const jiraHost = prependProtocolToSiteName(res.locals.jiraHost) || prependProtocolToSiteName(tenantUrl) || jiraHostQuery;
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 
@@ -66,11 +66,11 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	});
 };
 
-const getJiraHostFromTenantUrl = (jiraHostParam): string | undefined =>  {
-	if (!jiraHostParam) {
+const prependProtocolToSiteName = (siteName): string | undefined =>  {
+	if (!siteName) {
 		return undefined;
 	}
-	return `https://${jiraHostParam}`;
+	return `https://${siteName}`;
 };
 
 const getGitHubServers = async (jiraHost: string) => {
