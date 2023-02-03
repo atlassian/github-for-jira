@@ -43,6 +43,8 @@ subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAp
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
+subRouter.use("/branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubBranchRouter);
+
 // OAuth Routes
 subRouter.use(GithubOAuthRouter);
 
@@ -63,6 +65,3 @@ subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", GithubSubscriptionRouter);
-
-
-subRouter.use("/branch", GithubBranchRouter);
