@@ -33,7 +33,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
-		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, req.log);
+		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, log);
 		res.send({
 			repositories
 		});
