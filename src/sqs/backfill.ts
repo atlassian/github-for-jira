@@ -20,6 +20,31 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	});
 
 	const backfillData = { ...context.payload };
+
+	// const rateLimitResponse = await getRateRateLimitBlahBlah(backfillData, context.log);
+	// //move out of function scope
+	// const getRateRateLimitBlahBlah =() => {
+	// 	createInstallationClient();
+	// 	return await client,getRateLimit();
+	// 	//https://docs.github.com/en/rest/rate-limit?apiVersion=2022-11-28
+	//
+	// }
+	//
+	// const isRateLimitExceedingSoftLimit = async (rateLimitResponse, jiraHost) => {
+	// 	const threshold = await NumberFlag(, jiraHost, 100);
+	// 	const usedPercentCore = (rateLimitResponse.resources.core.used / rateLimitResponse.resources.core.limit) * 100;
+	// 	const usedPercentGraphql = (rateLimitResponse.resources.graphql.used / rateLimitResponse.resources.graphql.limit) * 100;
+	// 	return usedPercentCore >= threshold || usedPercentGraphql >= threshold;
+	// }
+	//
+	// // TODO ADD TESTS TO THE BACKFILL TO MAKE SURE OTS SKIPPED DURING RATE LIMIT HIT MODE
+	// if (isRateLimitExceedingSoftLimit()) {
+	// 	// LOG OUT ALL THE RATELIMIT DATA
+	// 	log({ rateLimitResponse }, "backfill rate limit reached");
+	// 	await sqsQueues.backfill.sendMessage(backfillData, rateLimitResponse.resetTime, context.log);
+	// 	return;
+	// }
+
 	if (!backfillData.startTime) {
 		backfillData.startTime = new Date().toISOString();
 	}
