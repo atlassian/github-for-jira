@@ -11,7 +11,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const { issueKey, tenantUrl } = req.query;
 	const jiraHostQuery = req.query.jiraHost as string;
 
-	if (!tenantUrl && !jiraHostQuery) {
+	if (!tenantUrl && !jiraHostQuery && !res.locals.jiraHost) {
 		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
@@ -21,8 +21,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
-
+	const jiraHost = getJiraHostFromTenantUrl(res.locals.jiraHost) || getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 

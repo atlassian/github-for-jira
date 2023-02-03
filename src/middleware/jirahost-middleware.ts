@@ -5,6 +5,7 @@ import { TokenType } from "~/src/jira/util/jwt";
 import { moduleUrls } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "utils/match-route-with-pattern";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+// import { decodeAsymmetric } from "atlassian-jwt";
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`
@@ -19,8 +20,19 @@ const extractUnsafeJiraHost = (req: Request): string | undefined => {
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
+	} else if (req.query?.jwt) {
+		return getJiraHostFromJwtToken(req.query.jwt as string);
 	}
 	return undefined;
+};
+
+const getJiraHostFromJwtToken = (encodedToken: string) => {
+	try {
+		const decodedToken = JSON.parse(Buffer.from(encodedToken.split(".")[1], "base64").toString());
+		return decodedToken.tenant_url;
+	} catch (error) {
+		return null;
+	}
 };
 
 export const getUnvalidatedJiraHost = (req: Request): string | undefined =>
