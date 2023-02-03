@@ -16,6 +16,7 @@ import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Errors } from "config/errors";
 
+//  DO NOT USE THIS MIDDLEWARE EXCEPT FOR CREATE BRANCH FLOW
 // TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
 const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const jiraHost = req.query?.jiraHost as string;
