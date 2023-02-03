@@ -19,7 +19,7 @@ describe("findOrStartSync", () => {
 				subscription = await Subscription.install({
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
-					clientKey: JIRA_CLIENT_KEY,
+					hashedClientKey: JIRA_CLIENT_KEY,
 					gitHubAppId: undefined
 				});
 			});
@@ -68,7 +68,7 @@ describe("findOrStartSync", () => {
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
 					gitHubAppId: gitHubServerApp.id,
-					clientKey: JIRA_CLIENT_KEY
+					hashedClientKey: JIRA_CLIENT_KEY
 				});
 			});
 			it("should send ghes gitHubAppConfig to msg queue", async () => {
