@@ -1,11 +1,13 @@
 // Original source code:
 // https://bitbucket.org/atlassian/atlassian-connect-express/src/f434e5a9379a41213acf53b9c2689ce5eec55e21/lib/middleware/authentication.js?at=master&fileviewer=file-view-default#authentication.js-227
 // TODO: need some typing for jwt
-import { createQueryStringHash, decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
+import { decodeAsymmetric, decodeSymmetric, getAlgorithm, getKeyId } from "atlassian-jwt";
 import { NextFunction, Request, Response } from "express";
-import { envVars }  from "config/env";
+import { envVars } from "config/env";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { includes, isEmpty } from "lodash";
+import { createHash } from "crypto";
+import url, { UrlWithParsedQuery } from "url";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -81,8 +83,12 @@ const decodeAsymmetricToken = (token: string, publicKey: string, noVerify: boole
 	);
 };
 
-export const verifyQsh = (qsh: string, req: Request): boolean => {
-	// to get full path from express request, we need to add baseUrl with path
+export const validateQsh = (tokenType: TokenType, qsh: string, request: JWTRequest): boolean => {
+	// If token type if of type context, verify automatically if QSH is the correct string
+	if (tokenType === TokenType.context) {
+		return qsh === "context-qsh";
+	}
+
 	/**
 	 * TODO: Remove `decodeURIComponent` later
 	 * This has been added here as a temporarily until the `qsh` bug is fixed
@@ -92,56 +98,39 @@ export const verifyQsh = (qsh: string, req: Request): boolean => {
 	 * but uses the original string, which returns a different `qsh` value.
 	 * Because of this reason, if we have any decoded URI in the request path, then it always fails with an error `Wrong qsh`
 	 */
-	const requestInAtlassianJwtFormat = { ...req, pathname: req.baseUrl + decodeURIComponent(req.path) };
-	let expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, false, BASE_URL);
+	const fixedRequest = {
+		...request,
+		pathname: request.pathname && decodeURIComponent(request.pathname)
+	};
+	let expectedHash = createQueryStringHash(fixedRequest, false);
 	const signatureHashVerified = qsh === expectedHash;
 
 	if (!signatureHashVerified) {
 		// If that didn't verify, it might be a post/put - check the request body too
-		expectedHash = createQueryStringHash(requestInAtlassianJwtFormat, true, BASE_URL);
+		expectedHash = createQueryStringHash(fixedRequest, true);
 		return qsh === expectedHash;
 	}
 	return true;
 };
 
-export const verifyJwtClaimsAndSetResponseCodeOnError = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, req: Request, res: Response): boolean => {
-	const expiry = verifiedClaims.exp;
-
-	// TODO: build in leeway?
-	if (expiry && (Date.now() / 1000 >= expiry)) {
-		req.log.info("JWT Verification Failed, token is expired");
-		sendError(res, 401, "Authentication request has expired. Try reloading the page.");
-		return false;
+export const validateJwtClaims = (verifiedClaims: { exp: number, qsh: string | undefined }, tokenType: TokenType, request: JWTRequest): void => {
+	if (!verifiedClaims.qsh) {
+		throw "JWT validation Failed, no qsh";
 	}
 
-	if (verifiedClaims.qsh) {
-		let qshVerified:boolean;
-		if (tokenType === TokenType.context) {
-			//If we use context jsw tokens, their qsh will be constant
-			qshVerified = verifiedClaims.qsh === "context-qsh";
-		} else {
-			//validate query string hash
-			qshVerified = verifyQsh(verifiedClaims.qsh, req);
-		}
+	// 3 second leeway in case of time drift
+	if (verifiedClaims.exp && (Date.now() / 1000 - 3) >= verifiedClaims.exp) {
+		throw "JWT validation failed, token is expired";
+	}
 
-		if (!qshVerified) {
-			req.log.info("JWT Verification Failed, wrong qsh");
-			sendError(res, 401, "Unauthorized");
-		}
-		return qshVerified;
-
-	} else {
-		req.log.info("JWT Verification Failed, no qsh");
-		sendError(res, 401, "JWT tokens without qsh are not allowed");
-		return false;
+	if (!validateQsh(tokenType, verifiedClaims.qsh, request)) {
+		throw "JWT Verification Failed, wrong qsh";
 	}
 };
 
-const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Request, res: Response, tokenType: TokenType): boolean => {
-	const token = extractJwtFromRequest(req);
+const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: TokenType, token?: string): void => {
 	if (!token) {
-		sendError(res, 401, "Could not find authentication data on request");
-		return false;
+		throw "Could not find authentication data on request";
 	}
 
 	const algorithm = getAlgorithm(token);
@@ -151,14 +140,11 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
 	} catch (e) {
-		sendError(res, 401, `Invalid JWT: ${e.message}`);
-		return false;
+		throw `Invalid JWT: ${e.message}`;
 	}
 
-	const issuer = unverifiedClaims.iss;
-	if (!issuer) {
-		sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
-		return false;
+	if (!unverifiedClaims.iss) {
+		throw "JWT claim did not contain the issuer (iss) claim";
 	}
 
 	/* eslint-disable @typescript-eslint/no-explicit-any*/
@@ -166,11 +152,10 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (error) {
-		sendError(res, 400, `Unable to decode JWT token: ${error}`);
-		return false;
+		throw `Unable to decode JWT token: ${error}`;
 	}
 
-	return verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, tokenType, req, res);
+	validateJwtClaims(verifiedClaims, tokenType, request);
 };
 
 /**
@@ -184,9 +169,8 @@ const verifySymmetricJwtAndSetResponseCodeOnError = (secret: string, req: Reques
  */
 export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: TokenType, req: Request, res: Response, next: NextFunction): void => {
 	try {
-		if (!verifySymmetricJwtAndSetResponseCodeOnError(secret, req, res, tokenType)) {
-			return;
-		}
+		const token = extractJwtFromRequest(req);
+		validateSymmetricJwt(secret, getJWTRequest(req), tokenType, token);
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (error) {
@@ -211,41 +195,136 @@ const isStagingTenant = (req: Request): boolean => {
 	return false;
 };
 
-export const verifyAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
-		if (!token) {
-			req.log.info("JWT Verification Failed, no token present");
-			sendError(res, 401, "Unauthorized");
-			return;
-		}
-
-		const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStagingTenant(req));
-		const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true);
-
-		const issuer = unverifiedClaims.iss;
-		if (!issuer) {
-			req.log.info("JWT Verification Failed, no issuer present");
-			sendError(res, 401, "JWT claim did not contain the issuer (iss) claim");
-			return;
-		}
-
-		if (isEmpty(unverifiedClaims.aud) ||
-			!unverifiedClaims.aud[0] ||
-			!includes(ALLOWED_BASE_URLS, unverifiedClaims.aud[0].replace(/\/$/, ""))) {
-			req.log.info("JWT Verification Failed, no correct audience present");
-			sendError(res, 401, "WT claim did not contain the correct audience (aud) claim");
-			return;
-		}
-
-		const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
-
-		if (verifyJwtClaimsAndSetResponseCodeOnError(verifiedClaims, TokenType.normal, req, res)) {
-			req.log.info("JWT Token Verified Successfully!");
-			next();
-		}
-	} catch (e) {
-		req.log.warn({ ...e }, "Error while validating JWT token");
-		sendError(res, 401, "Unauthorized");
+		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenant(req));
+		req.log.info("JWT Token Verified Successfully!");
+		next();
+	} catch (err) {
+		req.log.info(err, "Could not validate JWT token");
+		res.status(401).json({
+			message: "Unauthorized"
+		});
 	}
 };
+
+export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: string, isStaginTenant = false) => {
+
+	if (!token) {
+		throw "JWT Verification Failed, no token present";
+	}
+
+	const publicKey = await queryAtlassianConnectPublicKey(getKeyId(token), isStaginTenant);
+	const unverifiedClaims = decodeAsymmetricToken(token, publicKey, true);
+
+	const issuer = unverifiedClaims.iss;
+	if (!issuer) {
+		throw "JWT claim did not contain the issuer (iss) claim";
+	}
+
+	if (isEmpty(unverifiedClaims.aud) ||
+		!unverifiedClaims.aud[0] ||
+		!includes(ALLOWED_BASE_URLS, unverifiedClaims.aud[0].replace(/\/$/, ""))) {
+		throw "JWT claim did not contain the correct audience (aud) claim";
+	}
+
+	const verifiedClaims = decodeAsymmetricToken(token, publicKey, false);
+
+	validateJwtClaims(verifiedClaims, TokenType.normal, request);
+};
+
+export interface JWTRequest extends UrlWithParsedQuery {
+	method: string;
+	body?: any;
+}
+
+export const getJWTRequest = (req: Request): JWTRequest => ({
+	...url.parse(req.originalUrl || req.url, true),
+	method: req.method,
+	body: req.body
+});
+
+const CANONICAL_QUERY_SEPARATOR = "&";
+
+enum HASH_ALGORITHM {
+	HS256 = "sha256",
+	HS384 = "sha384",
+	HS512 = "sha512",
+	RS256 = "RSA-SHA256"
+}
+
+export const createQueryStringHash = (req: JWTRequest, checkBodyForParams?: boolean): string => {
+	const request = createCanonicalRequest(req, checkBodyForParams);
+	const hash = createHash(HASH_ALGORITHM.HS256)
+		.update(request)
+		.digest("hex");
+	return hash;
+};
+
+export const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boolean): string =>
+	canonicalizeMethod(req) +
+	CANONICAL_QUERY_SEPARATOR +
+	canonicalizeUri(req) +
+	CANONICAL_QUERY_SEPARATOR +
+	canonicalizeQueryString(req, checkBodyForParams);
+
+const canonicalizeMethod = (req) => req.method.toUpperCase();
+
+const canonicalizeUri = (req: JWTRequest) => {
+	let path = req.pathname;
+
+	if (!path?.length) {
+		return "/";
+	}
+
+	// If the separator is not URL encoded then the following URLs have the same query-string-hash:
+	//   https://djtest9.jira-dev.com/rest/api/2/project&a=b?x=y
+	//   https://djtest9.jira-dev.com/rest/api/2/project?a=b&x=y
+	path = path.replace(new RegExp(CANONICAL_QUERY_SEPARATOR, "g"), encodeRfc3986(CANONICAL_QUERY_SEPARATOR));
+
+	// Prefix with /
+	if (path[0] !== "/") {
+		path = "/" + path;
+	}
+
+	// Remove trailing /
+	if (path.length > 1 && path[path.length - 1] === "/") {
+		path = path.substring(0, path.length - 1);
+	}
+
+	return path;
+};
+
+const canonicalizeQueryString = (req: JWTRequest, checkBodyForParams?: boolean): string => {
+	// Change Dict to Object
+	let query: Record<string, any> = JSON.parse(JSON.stringify(req.query));
+	const method = req.method.toUpperCase();
+
+	// Apache HTTP client (or something) sometimes likes to take the query string and put it into the request body
+	// if the method is PUT or POST
+	if (checkBodyForParams && isEmpty(query) && (method === "POST" || method === "PUT")) {
+		query = Object.fromEntries(req.body);
+	}
+
+	if (isEmpty(query)) {
+		return "";
+	}
+	// Remove the 'jwt' query string param
+	delete query.jwt;
+
+	return Object.keys(query)
+		.sort()
+		.reduce((acc: string[], key) => {
+			// The __proto__ field can sometimes sneak in depending on what node version is being used.
+			// Get rid of it or the qsh calculation will be wrong.
+			acc.push(encodeRfc3986(key) + "=" + [].concat(query[key]).sort().map(encodeRfc3986).join(","));
+			return acc;
+		}, [])
+		.join(CANONICAL_QUERY_SEPARATOR);
+};
+
+const encodeRfc3986 = (value: string): string =>
+	encodeURIComponent(value)
+		.replace(/[!'()]/g, escape)
+		.replace(/\*/g, "%2A");
