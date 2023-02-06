@@ -105,6 +105,20 @@ const censorUrl = (url) => {
 	return url;
 };
 
+const headersSerializer = (headers) => {
+	if (!headers) {
+		return headers;
+	}
+
+	const ret = { ...headers };
+	if (ret["Authorization"] || ret["authorization"]) {
+		delete ret["Authorization"];
+		delete ret["authorization"];
+		ret["Authorization"] = "CENSORED";
+	}
+	return ret;
+};
+
 const responseConfigSerializer = (config) => {
 	if (!config) {
 		return config;
@@ -114,7 +128,7 @@ const responseConfigSerializer = (config) => {
 		method: config.method,
 		status: config.status,
 		statusText: config.statusText,
-		headers: config.headers
+		headers: headersSerializer(config.headers)
 	};
 };
 
@@ -125,7 +139,7 @@ const responseSerializer = (res) => {
 	return {
 		status: res.status,
 		statusText: res.statusText,
-		headers: res.headers,
+		headers: headersSerializer(res.headers),
 		config: responseConfigSerializer(res.config),
 		request: requestSerializer(res.request)
 	};
@@ -135,7 +149,7 @@ const requestSerializer = (req) => req && ({
 	method: req.method,
 	url: censorUrl(req.originalUrl || req.url),
 	path: censorUrl(req.path),
-	headers: req.headers,
+	headers: headersSerializer(req.headers),
 	remoteAddress: req.socket?.remoteAddress,
 	remotePort: req.socket?.remotePort
 });
