@@ -86,7 +86,9 @@ export const jiraCreateIssue = async (page: Page): Promise<Page> => {
 export const jiraRemoveProject = async (page: Page): Promise<Page> => {
 	await page.goto(data.urls.projects);
 
-	await (page.locator("input[data-test-id='searchfield']")).fill(TEST_PROJECT_NAME);
+	await (page.locator("input[data-test-id='searchfield']")).fill(TEST_PROJECT_NAME);	
+	// We need to wait while the search happens
+	await page.waitForTimeout(500);
 	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button")).click();
 	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
 	await (page.locator("button[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']")).click();
