@@ -28,7 +28,7 @@ describe("sync", () => {
 		await Subscription.install({
 			installationId: installationIdForCloud,
 			host: jiraHost,
-			clientKey: installation.clientKey,
+			hashedClientKey: installation.clientKey,
 			gitHubAppId: undefined
 		});
 		gitHubServerApp = await GitHubServerApp.install({
@@ -45,7 +45,7 @@ describe("sync", () => {
 		await Subscription.install({
 			installationId: installationIdForServer,
 			host: jiraHost,
-			clientKey: installation.clientKey,
+			hashedClientKey: installation.clientKey,
 			gitHubAppId: gitHubServerApp.id
 		});
 		app = express();
