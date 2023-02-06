@@ -12,7 +12,7 @@ describe("GitHub Repository Search", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { repoName: randomString };
+			req.query = { repoName: randomString, jiraHost };
 			req.csrfToken = jest.fn();
 			next();
 		});
