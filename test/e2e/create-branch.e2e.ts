@@ -30,7 +30,6 @@ test.describe("Create branch", () => {
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
 		});
 	});
-
 	// Clean up projects to avoid conflicts in future
 	// test.afterEach(async() => {
 	// 	await jiraRemoveProject(page);

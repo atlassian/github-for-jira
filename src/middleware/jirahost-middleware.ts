@@ -20,16 +20,19 @@ const extractUnsafeJiraHost = (req: Request): string | undefined => {
 	} else if (req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
 	} else if (req.query?.jwt) {
-		return getJiraHostFromJwtToken(req.query.jwt as string);
+		return getJiraHostFromJwtToken(req.query.jwt as string, req.log);
 	}
 	return undefined;
 };
 
-const getJiraHostFromJwtToken = (encodedToken: string) => {
+const getJiraHostFromJwtToken = (encodedToken: string, logger) => {
 	try {
 		const decodedToken = JSON.parse(Buffer.from(encodedToken.split(".")[1], "base64").toString());
-		return decodedToken.tenant_url;
+		const tenantUrl = decodedToken.tenant_url;
+		// prepend the protocol if its not there.
+		return tenantUrl.includes("https://") ? tenantUrl : `https://${tenantUrl}`;
 	} catch (error) {
+		logger.error("Error extracting jiraHost from JWT");
 		return null;
 	}
 };

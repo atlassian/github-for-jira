@@ -1,6 +1,10 @@
 import { Installation } from "models/installation";
 import { NextFunction, Request, Response } from "express";
-import { sendError, TokenType, verifySymmetricJwtTokenMiddleware } from "../jira/util/jwt";
+import {
+	sendError,
+	TokenType,
+	verifySymmetricJwtTokenMiddleware
+} from "../jira/util/jwt";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
