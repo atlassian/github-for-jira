@@ -13,10 +13,12 @@ describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
 	beforeEach(() => {
 		const tenantUrl = jiraHost.replace("https://", "");
+		// Basic JWT with tenant_url claim in the payload containing jiraHost
+		const mockJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidGVuYW50X3VybCI6InRlc3QtYXRsYXNzaWFuLWluc3RhbmNlLmF0bGFzc2lhbi5uZXQiLCJpYXQiOjE1MTYyMzkwMjJ9.d9d21sDBlo6s5v-xhLPRh9aFqVIgG101F6N0NfPxqVY";
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
+			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl, jwt: mockJWT };
 			req.csrfToken = jest.fn();
 			next();
 		});

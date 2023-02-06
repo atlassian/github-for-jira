@@ -23,6 +23,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	const jiraHost = prependProtocolToSiteName(res.locals.jiraHost) || prependProtocolToSiteName(tenantUrl) || jiraHostQuery;
 	// TODO move to middleware or shared for create-branch-get
+
 	const servers = await getGitHubServers(jiraHost);
 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
