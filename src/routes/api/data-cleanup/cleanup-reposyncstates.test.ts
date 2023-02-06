@@ -12,10 +12,32 @@ describe("Cleanup RepoSyncState", () => {
 		app = getFrontendApp();
 	});
 
+	it("should NOT delete orphan RepoSyncState in dry run mode", async () => {
+		//preparing data
+		const sub = await Subscription.install({
+			hashedClientKey: "some-key",
+			host: jiraHost,
+			gitHubAppId: undefined,
+			installationId: 123
+		});
+		await createdRepoSyncState("first", sub.id);
+		await createdRepoSyncState("second", 9999);
+		expect([...await RepoSyncState.findAll()].length).toBe(2);
+
+		//call clean up api
+		await supertest(app).delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999`).set("X-Slauth-Mechanism", "test").expect(200);
+		await supertest(app).delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999&commitToDB=`).set("X-Slauth-Mechanism", "test").expect(200);
+		await supertest(app).delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999&commitToDB=false`).set("X-Slauth-Mechanism", "test").expect(200);
+		await supertest(app).delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999&commitToDB=whatever`).set("X-Slauth-Mechanism", "test").expect(200);
+
+		//check result is correct
+		expect([...await RepoSyncState.findAll()].length).toBe(2);
+	});
+
 	it("should delete orphan RepoSyncState, while leave rest untouch", async () => {
 		//preparing data
 		const sub = await Subscription.install({
-			clientKey: "some-key",
+			hashedClientKey: "some-key",
 			host: jiraHost,
 			gitHubAppId: undefined,
 			installationId: 123
@@ -26,7 +48,7 @@ describe("Cleanup RepoSyncState", () => {
 
 		//call clean up api
 		await supertest(app)
-			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999`)
+			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=9999&commitToDB=true`)
 			.set("X-Slauth-Mechanism", "test")
 			.expect(200);
 
@@ -39,7 +61,7 @@ describe("Cleanup RepoSyncState", () => {
 	it("should delete orphan RepoSyncState by repoSyncStateId in query string, while leave rest untouch", async () => {
 		//preparing data
 		const sub = await Subscription.install({
-			clientKey: "some-key",
+			hashedClientKey: "some-key",
 			host: jiraHost,
 			gitHubAppId: undefined,
 			installationId: 123
@@ -52,7 +74,7 @@ describe("Cleanup RepoSyncState", () => {
 
 		//call clean up api
 		await supertest(app)
-			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=${secondRepoState.id}`)
+			.delete(`/api/data-cleanup/repo-sync-states?repoSyncStateId=${secondRepoState.id}&commitToDB=true`)
 			.set("X-Slauth-Mechanism", "test")
 			.expect(200);
 
