@@ -4,6 +4,22 @@ import { createHashWithSharedSecret as hash } from "utils/encryption";
 
 describe("logger behaviour", () => {
 
+	describe("error logger", () => {
+		let ringBuffer: RingBuffer;
+
+		beforeEach(() => {
+			ringBuffer = new RingBuffer({ limit: 5 });
+		});
+
+		it("should log error messages", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({ err: new Error("boom!") });
+
+			expect(JSON.parse(ringBuffer.records[0]).err.message).toEqual("boom!");
+		});
+	});
+
 	describe("safe logger", () => {
 		let ringBuffer: RingBuffer;
 
