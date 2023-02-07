@@ -50,7 +50,7 @@ const tryAndRestoreSubscriptionClientKey = async (subscription: Subscription) =>
 
 	const installationsWithSameJiraHost: Installation[] = await Installation.findAll({
 		where: { "jiraHost": subscription.jiraHost },
-		order: [ "createdAt", "DESC" ]
+		order: [["createdAt", "DESC"]]
 	});
 	if (!installationsWithSameJiraHost.length) {
 		log.warn(`Couldn't find any installation matching subscription ${subscription.id}'s jiraHost`);
@@ -62,8 +62,7 @@ const tryAndRestoreSubscriptionClientKey = async (subscription: Subscription) =>
 		const hashedAgainClientKey = getHashedKey(installation.clientKey);
 		if (hashedAgainClientKey === subscription.jiraClientKey) {
 			log.info({ origin: subscription.jiraClientKey, replaced: installation.clientKey }, `Found a matching double hash client key for subscription ${subscription.id}, replacing it with single hashed key`);
-			subscription.jiraClientKey = installation.clientKey;
-			await subscription.save();
+			await Subscription.update({ jiraClientKey: installation.clientKey }, { where: { id: subscription.id } });
 			log.info({ origin: subscription.jiraClientKey, replaced: installation.clientKey }, `subscription ${subscription.id} replaced with single hashed key`);
 			return true;
 		}
