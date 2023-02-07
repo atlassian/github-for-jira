@@ -16,6 +16,6 @@ module.exports = {
 	},
 
 	down: async (queryInterface) => {
-		await queryInterface.removeConstraint("RepoSyncStates", "fk_reposyncst_subs_subid");
+		await queryInterface.removeConstraint("RepoSyncStates", "reposyncstates_subscriptions_id_fk");
 	}
 };
