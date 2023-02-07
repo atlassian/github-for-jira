@@ -63,6 +63,7 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
+				githubRefreshToken?: string;
 				gitHubUuid?: string;
 				temp?:  {
 					[key: string]: string;
