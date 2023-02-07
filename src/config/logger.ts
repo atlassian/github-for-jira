@@ -1,5 +1,5 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
-import { isArray, isString, merge, omit } from "lodash";
+import { isArray, isString, merge, omit, mapKeys } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -110,11 +110,11 @@ const headersSerializer = (headers) => {
 		return headers;
 	}
 
-	const ret = { ...headers };
-	if (ret["Authorization"] || ret["authorization"]) {
-		delete ret["Authorization"];
+	const ret = mapKeys({ ...headers }, (_, key) => key.toLowerCase());
+
+	if (ret["authorization"]) {
 		delete ret["authorization"];
-		ret["Authorization"] = "CENSORED";
+		ret["authorization"] = "CENSORED";
 	}
 	return ret;
 };

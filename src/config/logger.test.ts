@@ -90,9 +90,9 @@ describe("logger behaviour", () => {
 				}
 			});
 
-			expect(JSON.parse(ringBuffer.records[0]).config.headers.Authorization).toEqual("CENSORED");
-			expect(JSON.parse(ringBuffer.records[0]).request.headers.Authorization).toEqual("CENSORED");
-			expect(JSON.parse(ringBuffer.records[0]).response.headers.Authorization).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).config.headers.authorization).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).request.headers.authorization).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).response.headers.authorization).toEqual("CENSORED");
 		});
 
 		it("Should remove branch from URL", () => {
