@@ -84,7 +84,6 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	if (error instanceof RateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
-		// ADD COMMENTS HERE FOR WEIRDNESS
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 	}

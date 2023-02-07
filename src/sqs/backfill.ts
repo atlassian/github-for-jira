@@ -27,7 +27,7 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	const backfillData = { ...context.payload };
 	const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
 
-	// Check if the rate limit is nearing maximum and delay until refresh
+	// Check if the rate limit is exceeding self-imposed limit
 	if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost)) {
 		context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
 		return await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
