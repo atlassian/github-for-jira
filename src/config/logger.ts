@@ -113,7 +113,6 @@ const headersSerializer = (headers) => {
 	const ret = mapKeys({ ...headers }, (_, key) => key.toLowerCase());
 
 	if (ret["authorization"]) {
-		delete ret["authorization"];
 		ret["authorization"] = "CENSORED";
 	}
 	return ret;
