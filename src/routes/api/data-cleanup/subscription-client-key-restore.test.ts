@@ -46,6 +46,38 @@ describe("Subscription jiraClientKey restore", () => {
 		expect(foundSub.jiraClientKey).toBe(SINGLE_HASHED_PLAIN_CLIENT_KEY);
 	});
 
+	it("should restore subscription jiraClientKey only up to the maxSubscriptionId", async () => {
+		//preparing double hashed data
+		const sub = await Subscription.install({
+			hashedClientKey: DOUBLE_HASHED_PLAIN_CLIENT_KEY,
+			host: jiraHost,
+			gitHubAppId: undefined,
+			installationId: 123
+		});
+		const sub2 = await Subscription.install({
+			hashedClientKey: DOUBLE_HASHED_PLAIN_CLIENT_KEY,
+			host: jiraHost,
+			gitHubAppId: undefined,
+			installationId: 567
+		});
+		expect(sub2.id).toBeGreaterThan(sub.id);
+
+		//call api
+		await supertest(app)
+			.post(`/api/data-cleanup/restore-subscription-client-key?maxSubscriptionId=${sub.id}`)
+			.set("X-Slauth-Mechanism", "test").expect(200);
+
+		//check result is correct
+		const foundSub: Subscription = await Subscription.findByPk(sub.id);
+		expect(foundSub.jiraHost).toBe(jiraHost);
+		expect(foundSub.jiraClientKey).toBe(inst.clientKey);
+		expect(foundSub.jiraClientKey).toBe(SINGLE_HASHED_PLAIN_CLIENT_KEY);
+
+		const foundSub2: Subscription = await Subscription.findByPk(sub2.id);
+		expect(foundSub2.jiraHost).toBe(jiraHost);
+		expect(foundSub2.jiraClientKey).toBe(DOUBLE_HASHED_PLAIN_CLIENT_KEY);
+	});
+
 	it("should NOT restore subscription jiraClientKey if not installation found by jiraHost", async () => {
 		//preparing double hashed data
 		const sub = await Subscription.install({

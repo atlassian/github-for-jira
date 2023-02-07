@@ -44,7 +44,7 @@ export const SubscriptionJiraClientKeyRestorePost = async (req: Request, res: Re
 const tryAndRestoreSubscriptionClientKey = async (subscription: Subscription) => {
 
 	if (!subscription.jiraHost) {
-		log.warn(`Subscription ${subscription.id} jiraHost is empty, skip`);
+		log.warn({ subscriptionId: subscription.id }, `Subscription jiraHost is empty, skip`);
 		return false;
 	}
 
@@ -53,22 +53,21 @@ const tryAndRestoreSubscriptionClientKey = async (subscription: Subscription) =>
 		order: [["createdAt", "DESC"]]
 	});
 	if (!installationsWithSameJiraHost.length) {
-		log.warn(`Couldn't find any installation matching subscription ${subscription.id}'s jiraHost`);
+		log.warn({ subscriptionId: subscription.id }, `Couldn't find any installation matching subscription's jiraHost`);
 		return false;
 	}
 
-	log.info(`${installationsWithSameJiraHost.length} installations matching subscription ${subscription.id}`);
+	log.info({ subscriptionId: subscription.id }, `${installationsWithSameJiraHost.length} installations matching subscription ${subscription.id}`);
 	for (const installation of installationsWithSameJiraHost) {
 		const hashedAgainClientKey = getHashedKey(installation.clientKey);
 		if (hashedAgainClientKey === subscription.jiraClientKey) {
-			log.info({ origin: subscription.jiraClientKey, replaced: installation.clientKey }, `Found a matching double hash client key for subscription ${subscription.id}, replacing it with single hashed key`);
 			await Subscription.update({ jiraClientKey: installation.clientKey }, { where: { id: subscription.id } });
-			log.info({ origin: subscription.jiraClientKey, replaced: installation.clientKey }, `subscription ${subscription.id} replaced with single hashed key`);
+			log.info({ origin: subscription.jiraClientKey, replaced: installation.clientKey, subscriptionId: subscription.id }, `SUCCESS Found a matching double hash client key, replaced it with single hashed key`);
 			return true;
 		}
 	}
 
-	log.warn(`Couldn't find any matching installation to replace jiraClientKey for subscription ${subscription.id}, skip`);
+	log.warn({ subscriptionId: subscription.id }, `Couldn't find any matching installation to replace jiraClientKey, skip`);
 	return false;
 
 };
