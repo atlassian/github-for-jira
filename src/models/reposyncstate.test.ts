@@ -294,4 +294,44 @@ describe("RepoSyncState", () => {
 			expect(result[0].pullCursor).toEqual(null);
 		});
 	});
+
+	describe("Foreign key relation with subscriptions", () => {
+		it("should delete related RepoSyncStates when Subscription is deleted", async () => {
+
+			const subToBeDeleted: Subscription  = await Subscription.create({
+				gitHubInstallationId: 789,
+				jiraHost,
+				jiraClientKey: "myClientKey"
+			});
+			const repoStateThatShouldBeDeleted: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: subToBeDeleted.id
+			});
+			const repoStateThatShouldStay: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: otherSub.id
+			});
+
+			await subToBeDeleted.destroy();
+
+			expect(await RepoSyncState.findByPk(repoStateThatShouldBeDeleted.id)).toBeNull();
+			const remainingState: RepoSyncState = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
+			expect(remainingState.subscriptionId).toBe(otherSub.id);
+
+		});
+		it("should NOT delete parent Subscription when RepoSyncState is deleted", async () => {
+
+			const stateToDelete: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: sub.id
+			});
+
+			await stateToDelete.destroy();
+
+			const foundSub: Subscription = await Subscription.findByPk(sub.id);
+			expect(foundSub.id).toBe(sub.id);
+			expect(foundSub.jiraHost).toBe(sub.jiraHost);
+
+		});
+	});
 });
