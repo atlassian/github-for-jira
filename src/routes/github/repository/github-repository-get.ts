@@ -80,6 +80,9 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 						logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
 						return userInstallationSearch;
 					})
+					// When no enough perms, API might throw errors. We don't want that to stop the routine because there might
+					// be other orgs connected where the customer has enough perms
+					// https://docs.github.com/en/rest/search?apiVersion=2022-11-28#access-errors-or-missing-search-results
 					.catch(err => {
 						logger.warn({ err },"Cannot search for repos using installation client, falling back to empty array");
 						return [];
