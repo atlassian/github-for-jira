@@ -70,7 +70,7 @@ const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unkn
 
 const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
-	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a calss, so we'll just rely on status
+	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a class, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
 	//TODO When we get rid of Octokit completely add check if (error instanceof GithubClientError) before the following code
 	const maybeErrorWithStatus: any = error;
@@ -84,6 +84,7 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	if (error instanceof RateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
+		// ADD COMMENTS HERE FOR WEIRDNESS
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 	}
