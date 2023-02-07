@@ -79,6 +79,10 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 						const userInstallationSearch = responseInstallationSearch.data?.items || [];
 						logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
 						return userInstallationSearch;
+					})
+					.catch(err => {
+						logger.warn({ err },"Cannot search for repos using installation client, falling back to empty array");
+						return [];
 					}),
 
 				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
@@ -86,6 +90,10 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 						const userClientSearch = responseUserSearch.data?.items || [];
 						logger.info(`Found ${userClientSearch.length} repos from user client search`);
 						return responseUserSearch.data?.items || [];
+					})
+					.catch(err => {
+						logger.warn({ err }, "Cannot search for repos using user client, falling back to empty array");
+						return [];
 					})
 			]);
 
