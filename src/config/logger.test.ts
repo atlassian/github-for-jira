@@ -95,6 +95,44 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[0]).response.headers.authorization).toEqual("CENSORED");
 		});
 
+		it("should remove UGC from tasks", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				task: {
+					cursor: 18,
+					repository: {
+						full_name: "raise-of-machines/top-secret",
+						html_url: "https://github.com/top-secret",
+						id: 123456,
+						name: "top-secret",
+						owner: {
+							login: "raise-of-machines"
+						},
+						updated_at: new Date("2022-01-01T19:59:53.000Z")
+					},
+					repositoryId: 54321,
+					task: "pull"
+				}
+			});
+			expect(JSON.parse(ringBuffer.records[0]).task).toEqual(
+				{
+					"cursor": 18,
+					"repository": {
+						"fullName": hash("raise-of-machines/top-secret"),
+						"id": 123456,
+						"name": hash("top-secret"),
+						"owner": {
+							"login": hash("raise-of-machines")
+						},
+						"updatedAt": "2022-01-01T19:59:53.000Z"
+					},
+					"repositoryId": 54321,
+					"task": "pull"
+				}
+			);
+		});
+
 		it("Should remove branch from URL", () => {
 			const logger = getLogger("test case");
 			logger.addStream({ stream: ringBuffer as Stream });
