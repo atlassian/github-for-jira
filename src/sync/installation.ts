@@ -387,7 +387,7 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	logger.warn({ errorMessage: err.message, task: nextTask }, "Task failed, continuing with next task");
+	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
