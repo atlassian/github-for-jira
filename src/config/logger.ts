@@ -82,6 +82,11 @@ const censorUrl = (url) => {
 		return url;
 	}
 	if (typeof url === "string") {
+		if (!url.startsWith("/")) {
+			const censoredUrl = censorUrl("/" + url);
+			return censoredUrl.substr(1);
+		}
+
 		const censoredUrl = maybeRemoveOrgAndRepo(url);
 
 		if (isCompareUrl(censoredUrl)) {

@@ -6,7 +6,6 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
-import { toUpper } from "lodash";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -93,46 +92,44 @@ export const instrumentFailedRequest = (metricName: string, host: string) =>
 	};
 
 export const handleFailedRequest = (logger: Logger) =>
-	(error: AxiosError) => {
-		const { response, config, request } = error;
+	(err: AxiosError) => {
+		const { response, config, request } = err;
 		const requestId = response?.headers?.["x-github-request-id"];
 		logger = logger.child({
-			err: error,
-			requestId,
-			resStatus: response?.status,
-			requestMethod: request?.method,
-			requestPath: request?.path,
-			errorMessage: error?.message
+			err,
+			config,
+			request,
+			response,
+			requestId
 		});
 
-		logger.warn("Error executing Axios Request");
+		const errorMessage = `Error executing Axios Request: ` + err.message;
+		logger.warn(errorMessage);
 
-		if (response?.status === 408 || error.code === "ETIMEDOUT") {
+		if (response?.status === 408 || err.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
-			return Promise.reject(new GithubClientTimeoutError(error));
+			return Promise.reject(new GithubClientTimeoutError(config, err));
 		}
 
 		if (response) {
 			const status = response?.status;
-			const errorMessage = `Error executing Axios Request (${toUpper(config.method)} ${config.baseURL}${config.url}): ` + error.message;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(response, error));
+				return Promise.reject(new RateLimitingError(config, response, err));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				logger.warn({ remote: response.data?.message }, "Blocked by GitHub allowlist");
-				return Promise.reject(new BlockedIpError(error, status));
+				logger.warn({ remote: response.data.message }, "Blocked by GitHub allowlist");
+				return Promise.reject(new BlockedIpError(config, err, status));
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
 				logger.warn({
-					err: error,
-					remote: response.data?.message
+					remote: response.data.message
 				}, "unauthorized");
-				return Promise.reject(new InvalidPermissionsError(error, status));
+				return Promise.reject(new InvalidPermissionsError(config, err, status));
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
@@ -142,8 +139,8 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
-			return Promise.reject(new GithubClientError(errorMessage, status, error));
+			return Promise.reject(new GithubClientError(config, errorMessage, status, err));
 		}
 
-		return Promise.reject(error);
+		return Promise.reject(err);
 	};
