@@ -1,5 +1,5 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
-import { isArray, isString, merge, omit } from "lodash";
+import { isArray, isString, merge, omit, mapKeys } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 import { createHashWithSharedSecret } from "utils/encryption";
 
@@ -82,6 +82,11 @@ const censorUrl = (url) => {
 		return url;
 	}
 	if (typeof url === "string") {
+		if (!url.startsWith("/")) {
+			const censoredUrl = censorUrl("/" + url);
+			return censoredUrl.substr(1);
+		}
+
 		const censoredUrl = maybeRemoveOrgAndRepo(url);
 
 		if (isCompareUrl(censoredUrl)) {
@@ -105,6 +110,19 @@ const censorUrl = (url) => {
 	return url;
 };
 
+const headersSerializer = (headers) => {
+	if (!headers) {
+		return headers;
+	}
+
+	const ret = mapKeys(headers, (_, key) => key.toLowerCase());
+
+	if (ret["authorization"]) {
+		ret["authorization"] = "CENSORED";
+	}
+	return ret;
+};
+
 const responseConfigSerializer = (config) => {
 	if (!config) {
 		return config;
@@ -114,7 +132,7 @@ const responseConfigSerializer = (config) => {
 		method: config.method,
 		status: config.status,
 		statusText: config.statusText,
-		headers: config.headers
+		headers: headersSerializer(config.headers)
 	};
 };
 
@@ -125,7 +143,7 @@ const responseSerializer = (res) => {
 	return {
 		status: res.status,
 		statusText: res.statusText,
-		headers: res.headers,
+		headers: headersSerializer(res.headers),
 		config: responseConfigSerializer(res.config),
 		request: requestSerializer(res.request)
 	};
@@ -135,7 +153,7 @@ const requestSerializer = (req) => req && ({
 	method: req.method,
 	url: censorUrl(req.originalUrl || req.url),
 	path: censorUrl(req.path),
-	headers: req.headers,
+	headers: headersSerializer(req.headers),
 	remoteAddress: req.socket?.remoteAddress,
 	remotePort: req.socket?.remotePort
 });

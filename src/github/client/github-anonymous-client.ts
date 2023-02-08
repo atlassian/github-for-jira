@@ -34,7 +34,7 @@ export class GitHubAnonymousClient extends GitHubClient {
 		code: string,
 		state: string
 	}) {
-		const response = await this.axios.get(`/login/oauth/access_token`,
+		const { data: { access_token: accessToken, refresh_token: refreshToken } } = await this.axios.get(`/login/oauth/access_token`,
 			{
 				baseURL: this.baseUrl,
 				params: {
@@ -50,7 +50,10 @@ export class GitHubAnonymousClient extends GitHubClient {
 				responseType: "json"
 			}
 		);
-		return response.data.access_token;
+		return {
+			accessToken,
+			refreshToken
+		};
 	}
 
 	public async checkGitHubToken(gitHubToken: string) {
@@ -59,6 +62,33 @@ export class GitHubAnonymousClient extends GitHubClient {
 				Authorization: `Bearer ${gitHubToken}`
 			}
 		});
+	}
+
+	public async renewGitHubToken(refreshToken: string,clientId: string,	clientSecret: string): Promise<{ accessToken: string, refreshToken: string }> {
+		const res = await this.axios.post(`/login/oauth/access_token`,
+			{
+				refresh_token: refreshToken,
+				grant_type: "refresh_token",
+				client_id: clientId,
+				client_secret: clientSecret
+			},{
+				baseURL: this.baseUrl,
+				headers: {
+					accept: "application/json",
+					"content-type": "application/json"
+				}
+			}
+		);
+
+		// In case of invalid or expired refresh token, GitHub API returns status code 200 with res.data object contains error fields,
+		// so adding check for presence of access token to make sure that new access token has been generated.
+		if (!res.data?.access_token) {
+			throw new Error(`Failed to renew access token ${res.data?.error}`);
+		}
+		return {
+			accessToken: res.data.access_token,
+			refreshToken: res.data.refresh_token
+		};
 	}
 
 }

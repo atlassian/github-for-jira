@@ -79,6 +79,13 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 						const userInstallationSearch = responseInstallationSearch.data?.items || [];
 						logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
 						return userInstallationSearch;
+					})
+					// When no enough perms, API might throw errors. We don't want that to stop the routine because there might
+					// be other orgs connected where the customer has enough perms
+					// https://docs.github.com/en/rest/search?apiVersion=2022-11-28#access-errors-or-missing-search-results
+					.catch(err => {
+						logger.warn({ err },"Cannot search for repos using installation client, falling back to empty array");
+						return [];
 					}),
 
 				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
@@ -86,6 +93,10 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 						const userClientSearch = responseUserSearch.data?.items || [];
 						logger.info(`Found ${userClientSearch.length} repos from user client search`);
 						return responseUserSearch.data?.items || [];
+					})
+					.catch(err => {
+						logger.warn({ err }, "Cannot search for repos using user client, falling back to empty array");
+						return [];
 					})
 			]);
 

@@ -63,6 +63,38 @@ describe("logger behaviour", () => {
 		const TEST_ORG_NAME = "testOrg";
 		const TEST_REPO_NAME = "testRepo";
 
+		it("Should remove authorization header", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				config: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						Authorization: "token super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				},
+				request: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						Authorization: "token super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				},
+				response: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						Authorization: "token super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).config.headers.authorization).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).request.headers.authorization).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).response.headers.authorization).toEqual("CENSORED");
+		});
+
 		it("Should remove branch from URL", () => {
 			const logger = getLogger("test case");
 			logger.addStream({ stream: ringBuffer as Stream });
@@ -85,6 +117,17 @@ describe("logger behaviour", () => {
 			});
 
 			expect(JSON.parse(ringBuffer.records[0]).requestPath).toEqual("/search/repositories?q=CENSORED&order=updated");
+		});
+
+		it("Should sanitise relative URLs", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				requestPath: `users/${encodeURIComponent(TEST_USER)}`
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).requestPath).toEqual(
+				`users/${hash(TEST_USER)}`);
 		});
 
 		it("Should remove user from URL", () => {
