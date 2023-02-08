@@ -13,10 +13,14 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } f
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
+		logger.info("Fetching info about user");
 		const { data: { login } } = await gitHubUserClient.getUser();
+
+		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
-		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
+		logger.info("Checking if the user is an admin");
+		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
@@ -66,7 +70,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		}
 
 		const subscription = await Subscription.install({
-			clientKey: req.body.clientKey,
+			hashedClientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
 			gitHubAppId

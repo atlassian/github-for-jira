@@ -38,7 +38,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			gitHubUserClient,
 			installation.account.login,
 			login,
-			installation.target_type
+			installation.target_type,
+			logger
 		)) {
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;

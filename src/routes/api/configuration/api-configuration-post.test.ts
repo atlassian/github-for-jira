@@ -42,14 +42,14 @@ describe("GitHub Configured Get", () => {
 			installationId: 1,
 			host: JIRAHOST_A,
 			gitHubAppId: undefined,
-			clientKey: "key"
+			hashedClientKey: "key"
 		});
 
 		await Subscription.install({
 			installationId: 2,
 			host: JIRAHOST_B,
 			gitHubAppId: undefined,
-			clientKey: "key"
+			hashedClientKey: "key"
 		});
 	});
 

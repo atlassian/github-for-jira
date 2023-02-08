@@ -56,6 +56,7 @@ describe("#verifyJiraMiddleware", () => {
 				// jiraHost,
 				jwt: jwtValue
 			},
+			originalUrl: `/jira/configuration?xdm_e=${encodeURIComponent(jiraHost)}&jwt=${jwtValue}`,
 			addLogFields: jest.fn(),
 			log: logger
 		};
@@ -151,6 +152,7 @@ describe("#verifyJiraMiddleware", () => {
 					xdm_e: jiraHost,
 					jwt: encodedJwt
 				},
+				originalUrl: `/jira/configuration?xdm_e=${encodeURIComponent(jiraHost)}&jwt=${encodedJwt}`,
 				addLogFields: jest.fn(),
 				log: logger
 			};
