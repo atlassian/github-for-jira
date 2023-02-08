@@ -1,13 +1,15 @@
-import { AxiosError, AxiosResponse } from "axios";
+import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 import { getLogger } from "config/logger";
 
 export class GithubClientError extends Error {
 	status?: number;
 	cause?: AxiosError;
+	config?: AxiosRequestConfig;
 	isRetryable = true;
 
-	constructor(message: string, status?: number, cause?: AxiosError) {
+	constructor(config: AxiosRequestConfig<any>, message: string, status?: number, cause?: AxiosError) {
 		super(message);
+		this.config = config;
 		this.status = status;
 		if (cause) {
 			this.cause = { ...cause, config: {} };
@@ -17,8 +19,8 @@ export class GithubClientError extends Error {
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
-	constructor(cause?: AxiosError) {
-		super("Timeout", undefined, cause);
+	constructor(config: AxiosRequestConfig<any>, cause?: AxiosError) {
+		super(config, "Timeout", undefined, cause);
 	}
 }
 
@@ -28,8 +30,8 @@ export class RateLimitingError extends GithubClientError {
 	 */
 	rateLimitReset: number;
 
-	constructor(response: AxiosResponse, cause?: AxiosError) {
-		super("Rate limiting error", response.status, cause);
+	constructor(config: AxiosRequestConfig<any>, response: AxiosResponse, cause?: AxiosError) {
+		super(config, "Rate limiting error", response.status, cause);
 		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
 		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
 		this.isRetryable = false;
@@ -37,15 +39,15 @@ export class RateLimitingError extends GithubClientError {
 }
 
 export class BlockedIpError extends GithubClientError {
-	constructor(error: AxiosError, status?: number) {
-		super("Blocked by GitHub allowlist", status, error);
+	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
+		super(config, "Blocked by GitHub allowlist", status, error);
 		this.isRetryable = false;
 	}
 }
 
 export class InvalidPermissionsError extends GithubClientError {
-	constructor(error: AxiosError, status?: number) {
-		super("Resource not accessible by integration", status, error);
+	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
+		super(config, "Resource not accessible by integration", status, error);
 	}
 }
 
@@ -77,8 +79,8 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 */
 	errors: GraphQLError[];
 
-	constructor(message: string, errors: GraphQLError[]) {
-		super(message);
+	constructor(config: AxiosRequestConfig<any>, message: string, errors: GraphQLError[]) {
+		super(config, message);
 		this.errors = errors;
 		this.isRetryable = !!errors?.find(
 			(error) =>
