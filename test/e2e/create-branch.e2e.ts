@@ -28,6 +28,7 @@ test.describe("Create branch", () => {
 			const poppedUpPage = await page.waitForEvent("popup");
 			await poppedUpPage.waitForLoadState();
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
+			await poppedUpPage.close();
 		});
 	});
 
