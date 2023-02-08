@@ -29,13 +29,13 @@ test.describe("Create branch", () => {
 			await poppedUpPage.waitForLoadState();
 			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
 			await poppedUpPage.close();
-			await jiraRemoveProject(page);
 		});
 	});
 
 	// Clean up projects to avoid conflicts in future
-	// test.afterEach(async() => {
-	// });
+	test.afterEach(async() => {
+		await jiraRemoveProject(page);
+	});
 
 });
 
