@@ -1,6 +1,6 @@
 import { isEmpty, omit, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
-import { Octokit  } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
@@ -9,6 +9,7 @@ import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { getLogger } from "config/logger";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
@@ -22,32 +23,50 @@ interface JiraReviewer extends JiraReview {
 	login: string;
 }
 
+const STATE_APPROVED = "APPROVED";
+const STATE_UNAPPROVED = "UNAPPROVED";
+
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient, log?: Logger): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
+	const logger = log || getLogger("debug-reviews");
+
+	const debugReviewsWithoutReviewers = await booleanFlag(BooleanFlags.DEBUG_REVIEWERS_PAYLOAD);
+	if (debugReviewsWithoutReviewers) {
+		logger.info("debugging reviews is ON");
+	}
+
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)
 	// and it considers 'APPROVED' as the main approval status for that user.
 	const reviewsReduced: JiraReviewer[] = sortedReviews.reduce((acc: JiraReviewer[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const author = review?.user;
+		const reviewer = review?.user;
+		const reviewerUsername = reviewer?.login;
 
-		if (!usernames[author?.login]) {
-			usernames[author?.login] = {
-				...getJiraAuthor(author),
-				login: author.login,
-				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
-			};
+		if (reviewerUsername) {
 
-			acc.push(usernames[author?.login]);
-			// If user is already added (not unique) but the previous approval status is different
-			// from APPROVED and current approval status is APPROVED, updates approval status.
-		} else if (
-			usernames[author?.login].approvalStatus !== "APPROVED" &&
-			review.state === "APPROVED"
-		) {
-			usernames[author?.login].approvalStatus = "APPROVED";
+			const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
+
+			if (!haveWeSeenThisReviewerAlready) {
+				usernames[reviewerUsername] = {
+					...getJiraAuthor(reviewer),
+					login: reviewerUsername,
+					approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+				};
+
+				acc.push(usernames[reviewerUsername]);
+
+			} else if (usernames[reviewerUsername].approvalStatus !== STATE_APPROVED && review.state === STATE_APPROVED) {
+				usernames[reviewerUsername].approvalStatus = STATE_APPROVED;
+			}
+
+		} else {
+			logger.warn("Review without user login detected");
+			if (debugReviewsWithoutReviewers) {
+				logger.warn({ unsafe: true }, "Review without username, wtf? " + JSON.stringify(review));
+			}
 		}
 
 		// Returns the reviews' array with unique users
@@ -94,7 +113,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: await mapReviews(reviews, gitHubInstallationClient),
+				reviewers: await mapReviews(reviews, gitHubInstallationClient, log),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),
