@@ -119,6 +119,17 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[0]).requestPath).toEqual("/search/repositories?q=CENSORED&order=updated");
 		});
 
+		it("Should sanitise relative URLs", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				requestPath: `users/${encodeURIComponent(TEST_USER)}`
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).requestPath).toEqual(
+				`users/${hash(TEST_USER)}`);
+		});
+
 		it("Should remove user from URL", () => {
 			const logger = getLogger("test case");
 			logger.addStream({ stream: ringBuffer as Stream });

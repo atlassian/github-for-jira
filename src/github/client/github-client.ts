@@ -58,11 +58,11 @@ export class GitHubClient {
 		if (graphqlErrors?.length) {
 			this.logger.warn({ res: response }, "GraphQL errors");
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(response));
+				return Promise.reject(new RateLimitingError(config, response));
 			}
 
 			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
+			return Promise.reject(new GithubClientGraphQLError(config, graphQlErrorMessage, graphqlErrors));
 		}
 
 		return response;
