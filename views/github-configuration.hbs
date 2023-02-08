@@ -17,6 +17,7 @@
     href="/public/css/github-configuration.css"
     media="all"
   />
+  <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
@@ -188,6 +189,10 @@
     </div>
   </div>
 
+  <div class="gitHubConfiguration__serverError">
+    {{> server-error-message-box }}
+  </div>
+    
   <div class="text-center">
     <div class="no-organization-in-github">
       Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.

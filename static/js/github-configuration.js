@@ -1,17 +1,28 @@
 /* globals $ */
 $('.install-link').click(function (event) {
   event.preventDefault();
+	event.currentTarget.setAttribute('disabled', true);
+	hideErrorMessage();
 
-  $.post(window.location.href, {
-    installationId: $(event.target).data('installation-id'),
-    _csrf: document.getElementById('_csrf').value,
-    clientKey: document.getElementById('clientKey').value
-  }, function (data) {
-    if (data.err) {
-      console.log(data.err);
-    }
-    window.close();
-  })
+	$.post(window.location.href, {
+		installationId: $(event.target).data('installation-id'),
+		_csrf: document.getElementById('_csrf').value,
+		clientKey: document.getElementById('clientKey').value
+	}, function (data) {
+		event.currentTarget.removeAttribute("disabled");
+		if (data.err) {
+			showErrorMessage(data.err);
+		}
+		window.close();
+	}).fail((err) => {
+		event.currentTarget.removeAttribute("disabled")
+		const errorResponse = err.responseJSON;
+		let message = err.responseJSON.err;
+		if (errorResponse.errorCode) {
+			message = mapErrorCodeToText(errorResponse.errorCode);
+		}
+		showErrorMessage(message);
+	});
 })
 
 $('.delete-link').click(function (event) {
@@ -61,3 +72,20 @@ $(".sync-connection-link").click(function (event) {
 		},
 	});
 });
+
+const showErrorMessage = (messages) => {
+  $(".gitHubConfiguration__serverError").show();
+  $(".errorMessageBox__message").empty().append(`${messages}`);
+};
+
+const hideErrorMessage = () => {
+  $(".has-errors").removeClass("has-errors");
+  $(".error-message").remove();
+  $(".gitHubConfiguration__serverError").hide();
+};
+
+const mapErrorCodeToText = (errorCode) => {
+	if(errorCode == "MISSING_GITHUB_TOKEN") {
+		return "The GitHub token is expired or missing. Please either refresh the browser or close the browser and open it again."
+	}
+}
