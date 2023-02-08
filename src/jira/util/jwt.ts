@@ -8,6 +8,8 @@ import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public
 import { includes, isEmpty } from "lodash";
 import { createHash } from "crypto";
 import url, { UrlWithParsedQuery } from "url";
+import Logger from "bunyan";
+import { getLogger } from "config/logger";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -182,15 +184,17 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 
 const ALLOWED_BASE_URLS = [BASE_URL];
 
-const isStagingTenant = (req: Request): boolean => {
+const isStagingTenantReq = (req: Request): boolean => {
+	return isStagingTenant(req.body?.baseUrl, req.log);
+};
+
+export const isStagingTenant = (baseUrl?: string, logger:Logger = getLogger("staging-tenant")): boolean => {
 	try {
-		const hostBaseUrl = req.body?.baseUrl;
-		if (hostBaseUrl) {
-			const host = new URL(hostBaseUrl).hostname;
-			return /\.jira-dev\.com$/.test(host);
+		if (baseUrl) {
+			return /\.jira-dev\.com$/.test(new URL(baseUrl).hostname);
 		}
 	} catch (err) {
-		req.log.error(err, "Error determining Jira instance environment");
+		logger.error(err, "Error determining Jira instance environment");
 	}
 	return false;
 };
@@ -198,7 +202,7 @@ const isStagingTenant = (req: Request): boolean => {
 export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {
 		const token = extractJwtFromRequest(req);
-		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenant(req));
+		await validateAsymmetricJwtToken(getJWTRequest(req), token, isStagingTenantReq(req));
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (err) {
@@ -234,7 +238,7 @@ export const validateAsymmetricJwtToken = async (request: JWTRequest, token?: st
 	validateJwtClaims(verifiedClaims, TokenType.normal, request);
 };
 
-export interface JWTRequest extends UrlWithParsedQuery {
+export interface JWTRequest extends Partial<UrlWithParsedQuery> {
 	method: string;
 	body?: any;
 }

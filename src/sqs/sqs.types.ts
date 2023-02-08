@@ -130,6 +130,8 @@ export interface WebhookMessagePayload<Header = Record<string, string>, Query = 
 	header: Header;
 	query: Query;
 	path: Path;
+	url: string;
+	method: string;
 	body: string;
 }
 

@@ -5,6 +5,8 @@ import { statsd } from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import { isStagingTenant, validateAsymmetricJwtToken } from "~/src/jira/util/jwt";
+import url from "url";
 
 export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>) => {
 	context.log.debug("Handling jira webhook from the SQS queue");
@@ -34,12 +36,18 @@ export const jiraWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePaylo
 	}
 };
 
-const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePayload>, data: any) => {
+const jiraInstallWebhook = async (context: SQSMessageContext<WebhookMessagePayload>, body: any) => {
 	context.log.info("Received installation payload");
+	const { baseUrl, clientKey, sharedSecret } = body;
 
-	// await verifyAsymmetricJwtTokenMiddleware();
+	await validateAsymmetricJwtToken({
+		...url.parse(context.payload.url),
+		method: context.payload.method,
+		body: context.payload.body,
+		query: context.payload.query
+	}, context.payload.query.jwt || body.jwt, isStagingTenant(baseUrl));
 
-	const { baseUrl, clientKey, sharedSecret } = data;
+
 	await Installation.install({
 		host: baseUrl,
 		clientKey,
