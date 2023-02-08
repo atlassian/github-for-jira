@@ -6,7 +6,6 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
-import { toUpper } from "lodash";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -109,22 +108,22 @@ export const handleFailedRequest = (logger: Logger) =>
 
 		if (response?.status === 408 || error.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
-			return Promise.reject(new GithubClientTimeoutError(error));
+			return Promise.reject(new GithubClientTimeoutError(config, error));
 		}
 
 		if (response) {
 			const status = response?.status;
-			const errorMessage = `Error executing Axios Request (${toUpper(config.method)} ${config.baseURL}${config.url}): ` + error.message;
+			const errorMessage = `Error executing Axios Request: ` + error.message;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(response, error));
+				return Promise.reject(new RateLimitingError(config, response, error));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
 				logger.warn({ remote: response.data?.message }, "Blocked by GitHub allowlist");
-				return Promise.reject(new BlockedIpError(error, status));
+				return Promise.reject(new BlockedIpError(config, error, status));
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
@@ -132,7 +131,7 @@ export const handleFailedRequest = (logger: Logger) =>
 					err: error,
 					remote: response.data?.message
 				}, "unauthorized");
-				return Promise.reject(new InvalidPermissionsError(error, status));
+				return Promise.reject(new InvalidPermissionsError(config, error, status));
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
@@ -142,7 +141,7 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
-			return Promise.reject(new GithubClientError(errorMessage, status, error));
+			return Promise.reject(new GithubClientError(config, errorMessage, status, error));
 		}
 
 		return Promise.reject(error);
