@@ -8,7 +8,7 @@ integration is an open-source project, built and maintained by [Atlassian](https
 
 ## Support
 
-For general support inquiries, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For technical issues, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
+For general support inquiries and bug reports, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For feature requests, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
 
 ## Table of Contents
   - [Install app](#install-app)

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Support and Bug Requests
+    url: https://support.atlassian.com/jira-software-cloud/
+    about: Need some help? Please submit a support request or bug report via Jira Software Support portal
