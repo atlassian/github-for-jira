@@ -8,10 +8,6 @@ import { getHashedKey } from "models/sequelize";
 
 const log = getLogger("SubscriptionJiraClientKeyRestorePost");
 
-const getSqlForDoubleHashedClientKeySubs = (maxSubscriptionId: number) => {
-	return `select * from "Subscriptions" where not exists (select null from "Installations" where "Installations"."clientKey" = "Subscriptions"."jiraClientKey") and "Subscriptions"."id" <= ${maxSubscriptionId}`;
-};
-
 export const SubscriptionJiraClientKeyRestorePost = async (req: Request, res: Response): Promise<void> => {
 
 	const maxSubscriptionId = Number(req.query.maxSubscriptionId) || -1;
@@ -20,8 +16,8 @@ export const SubscriptionJiraClientKeyRestorePost = async (req: Request, res: Re
 	let currentSubscriptionId: number | undefined;
 	try {
 
-		const getDoubleHashedSubsSql = getSqlForDoubleHashedClientKeySubs(maxSubscriptionId);
-		const doubleHashedSubscriptions = await Subscription.sequelize?.query(getDoubleHashedSubsSql, { type: QueryTypes.SELECT, mapToModel: true });
+		const doubleHashedSubscriptions  = await getDoubleHashedSubscriptions(maxSubscriptionId);
+		log.info(`Found ${doubleHashedSubscriptions.length} suscriptions within ${maxSubscriptionId} that doesn't have matching jiraClientKey from Installations table`);
 
 		let successCount = 0;
 		for (const subscription of doubleHashedSubscriptions) {
@@ -70,4 +66,10 @@ const tryAndRestoreSubscriptionClientKey = async (subscription: Subscription) =>
 	log.warn({ subscriptionId: subscription.id }, `Couldn't find any matching installation to replace jiraClientKey, skip`);
 	return false;
 
+};
+
+const getDoubleHashedSubscriptions = async (maxSubscriptionId: number) => {
+	const sql = `select * from "Subscriptions" where not exists (select null from "Installations" where "Installations"."clientKey" = "Subscriptions"."jiraClientKey") and "Subscriptions"."id" <= ${maxSubscriptionId}`;
+	const doubleHashedSubscriptions = await Subscription.sequelize?.query(sql, { type: QueryTypes.SELECT, mapToModel: true });
+	return doubleHashedSubscriptions;
 };
