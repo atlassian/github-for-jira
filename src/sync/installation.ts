@@ -176,7 +176,7 @@ export const isNotFoundError = (
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, logger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		gitHubInstallationId,
@@ -185,7 +185,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) {
-		logger.warn("No subscription found. Exiting backfill");
+		rootLogger.warn("No subscription found. Exiting backfill");
 		return;
 	}
 
@@ -195,7 +195,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	if (!nextTask) {
 		await subscription.update({ syncStatus: "COMPLETE" });
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
-		logger.info({ gitHubProduct }, "Sync complete");
+		rootLogger.info({ gitHubProduct }, "Sync complete");
 
 		return;
 	}
@@ -204,8 +204,9 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const { task, cursor, repository } = nextTask;
 
-	//TODO ARC-582 log task only if detailed logging enabled
-	logger.info({ task: nextTask }, "Starting task");
+	const logger = rootLogger.child({ task: nextTask, gitHubProduct });
+
+	logger.info("Starting task");
 
 	const processor = tasks[task];
 
@@ -216,26 +217,19 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			try {
 				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
 			} catch (err) {
-				const log = logger.child({
-					errorStatus: err.status,
-					isRetryable: err.isRetryable,
-					rateLimitReset: err.rateLimitReset,
-					repositoryId: repository.id,
-					cursor,
-					task
-				});
+				const errorLog = logger.child({ err });
 				// TODO - need a better way to manage GitHub errors globally
 				// In the event that the customer has not accepted the required permissions.
 				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
 				// The GraphQL errors do not return a status so we check 403 or undefined
 				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
 					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
-					log.error(`Invalid permissions for ${task} task`);
+					errorLog.error(`Invalid permissions for ${task} task`);
 					// Return undefined objects so the sync can complete while skipping this task
 					return { edges: undefined, jiraPayload: undefined };
 				}
 
-				log.error(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
+				errorLog.warn(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
 				if (!(await isRetryableWithSmallerRequest(err))) {
 					// error is not retryable, re-throwing it
 					throw err;
@@ -243,8 +237,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				// error is retryable, retrying with next smaller page size
 			}
 		}
-		logger.error({ jiraHost, gitHubInstallationId, repositoryId: nextTask.repositoryId, task }, "Error processing task");
-		throw new Error(`Error processing task: installationId=${gitHubInstallationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
+		logger.error("Error processing task after trying all page sizes");
+		throw new Error(`Error processing task after trying all page sizes: installationId=${gitHubInstallationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
 	};
 
 	try {
@@ -387,7 +381,7 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	logger.warn({ errorMessage: err.message, task: nextTask }, "Task failed, continuing with next task");
+	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
 	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
