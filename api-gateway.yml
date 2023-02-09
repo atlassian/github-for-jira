@@ -5,6 +5,54 @@ info:
   version: "0.0.1"
 
 paths:
+  # GITHUB WEBHOOKS
+  /webhooks/{source}/{proxy+}:
+    parameters:
+      - name: "source"
+        in: "path"
+        description: "Generated path parameter for source"
+        required: true
+        schema:
+          type: "string"
+      - name: "proxy+"
+        in: "path"
+        description: "Generated path parameter for proxy+"
+        required: true
+        schema:
+          type: "string"
+    post:
+      responses:
+        204:
+          description: "Default response for POST webhooks"
+      x-amazon-apigateway-integration:
+        credentials: "{{RoleARN}}"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}"
+        requestParameters:
+          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
+        requestTemplates:
+          application/json: |
+            Action=SendMessage&MessageBody={
+            #set($allParams = $input.params())
+            #foreach($type in $allParams.keySet())
+            #set($params = $allParams.get($type))
+            "$type" : {
+              #foreach($paramName in $params.keySet())
+              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"#if($foreach.hasNext),#end
+              #end
+            },#end
+            "method":"$context.httpMethod",
+            "source":"$util.escapeJavaScript($input.params('source'))",
+            "url":"$context.domainName$context.path",
+            "body":$input.body
+            }
+        responses:
+          default:
+            statusCode: "204"
+        passthroughBehavior: "never"
+        type: "aws"
+
+  # EVERYTHING ELSE
   /{proxy+}:
     parameters:
       - name: "proxy+"
@@ -23,61 +71,3 @@ paths:
           integration.request.path.proxy: "method.request.path.proxy"
         uri: "https://{{ServerHost}}/{proxy}"
         connectionType: "INTERNET"
-
-  /webhooks/github:
-    post:
-      responses:
-        204:
-          description: "Default response for POST /webhooks/github"
-      x-amazon-apigateway-integration:
-        credentials: "{{RoleARN}}"
-        httpMethod: "POST"
-        uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}"
-        requestParameters:
-          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-        requestTemplates:
-          application/json: |
-            Action=SendMessage&MessageBody={
-            #set($allParams = $input.params())
-            #foreach($type in $allParams.keySet())
-            #set($params = $allParams.get($type))
-            "$type" : {
-              #foreach($paramName in $params.keySet())
-              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"#if($foreach.hasNext),#end
-              #end
-            },#end
-            "method":"$context.httpMethod","url":"$context.domainName$context.path","body":$input.body}
-        responses:
-          default:
-            statusCode: "204"
-        passthroughBehavior: "never"
-        type: "aws"
-
-  /webhooks/jira/{event+}:
-    post:
-      responses:
-        204:
-          description: "Default response for POST /webhooks/jira"
-      x-amazon-apigateway-integration:
-        httpMethod: "POST"
-        credentials: "{{RoleARN}}"
-        uri: "arn:aws:apigateway:{{JiraQueueRegion}}:sqs:path/{{AccountNumber}}/{{JiraQueueName}}"
-        requestParameters:
-          integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
-        requestTemplates:
-          application/json: |
-            Action=SendMessage&MessageBody={
-            #set($allParams = $input.params())
-            #foreach($type in $allParams.keySet())
-            #set($params = $allParams.get($type))
-            "$type" : {
-              #foreach($paramName in $params.keySet())
-              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"#if($foreach.hasNext),#end
-              #end
-            },#end
-            "method":"$context.httpMethod","url":"$context.domainName$context.path","body":$input.body}
-        responses:
-          default:
-            statusCode: "204"
-        passthroughBehavior: "never"
-        type: "aws"

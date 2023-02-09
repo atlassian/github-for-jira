@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { statsd }  from "config/statsd";
-import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
+import { webhooksErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
@@ -47,7 +47,7 @@ describe("error-handlers", () => {
 
 		it("Returns normal retry when error is unknown", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(1, false));
+			const result = await webhooksErrorsHandler(new Error(), createContext(1, false));
 
 			expect(result.retryable).toBe(true);
 			expect(result.retryDelaySec).toBe(3 * 60);
@@ -56,7 +56,7 @@ describe("error-handlers", () => {
 
 		it("Exponential backoff works", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(new Error(), createContext(3, false));
+			const result = await webhooksErrorsHandler(new Error(), createContext(3, false));
 
 			expect(result.retryable).toBe(true);
 			expect(result.retryDelaySec).toBe(27 * 60);
@@ -73,28 +73,28 @@ describe("error-handlers", () => {
 
 		it("Unretryable and not an error on Jira 401", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(401), createContext(1, true));
+			const result = await webhooksErrorsHandler(getJiraClientError(401), createContext(1, true));
 			expect(result.retryable).toBe(false);
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 403", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(403), createContext(1, true));
+			const result = await webhooksErrorsHandler(getJiraClientError(403), createContext(1, true));
 			expect(result.retryable).toBe(false);
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Unretryable and not an error on Jira 404", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(404), createContext(1, true));
+			const result = await webhooksErrorsHandler(getJiraClientError(404), createContext(1, true));
 			expect(result.retryable).toBe(false);
 			expect(result.isFailure).toBe(false);
 		});
 
 		it("Retryable and error on Jira 500", async () => {
 
-			const result = await jiraAndGitHubErrorsHandler(getJiraClientError(500), createContext(1, true));
+			const result = await webhooksErrorsHandler(getJiraClientError(500), createContext(1, true));
 			expect(result.retryable).toBe(true);
 			expect(result.isFailure).toBe(true);
 		});
@@ -102,7 +102,7 @@ describe("error-handlers", () => {
 		it("Retryable with proper delay on Rate Limiting", async () => {
 			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
 			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
-			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(mockedResponse), createContext(1, false));
+			const result = await webhooksErrorsHandler(new RateLimitingError(mockedResponse), createContext(1, false));
 			expect(result.retryable).toBe(true);
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110);
@@ -113,7 +113,7 @@ describe("error-handlers", () => {
 
 			const error: Octokit.HookError = { ...new Error("Err"), status: 401, headers: {} };
 
-			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
+			const result = await webhooksErrorsHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(false);
 			expect(result.isFailure).toBe(false);
 		});
@@ -122,7 +122,7 @@ describe("error-handlers", () => {
 
 			const error: Octokit.HookError = { ...new Error("Err"), status: 500, headers: {} };
 
-			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
+			const result = await webhooksErrorsHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(true);
 			expect(result.isFailure).toBe(true);
 		});

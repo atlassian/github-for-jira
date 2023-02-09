@@ -206,7 +206,7 @@ export const validateAsymmetricJwtTokenMiddleware = async (req: Request, res: Re
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (err) {
-		req.log.info(err, "Could not validate JWT token");
+		req.log.warn(err, "Could not validate JWT token");
 		res.status(401).json({
 			message: "Unauthorized"
 		});

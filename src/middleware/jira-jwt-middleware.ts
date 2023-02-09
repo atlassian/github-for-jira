@@ -10,10 +10,10 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 ): Promise<void> => {
 
 	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
-		req.log.info("Skipping verifyJiraJwtMiddleware...");
+		req.log.debug("Skipping verifyJiraJwtMiddleware...");
 		return next();
 	}
-	req.log.info("Executing verifyJiraJwtMiddleware...");
+	req.log.debug("Executing verifyJiraJwtMiddleware...");
 
 	const { jiraHost } = res.locals;
 

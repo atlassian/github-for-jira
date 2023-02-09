@@ -2,13 +2,12 @@ import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
 import { backfillQueueMessageHandler } from "./backfill";
 import { pushQueueMessageHandler } from "./push";
-import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handlers";
+import { webhooksErrorsHandler, webhookMetricWrapper } from "./error-handlers";
 import { deploymentQueueMessageHandler } from "./deployment";
 import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
 import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload, WebhookMessagePayload } from "./sqs.types";
-import { jiraWebhooksQueueMessageHandler } from "~/src/sqs/jira-webhooks-handler";
-import { githubWebhooksQueueMessageHandler } from "~/src/sqs/github-webhooks-handler";
+import { webhooksQueueMessageHandler } from "~/src/sqs/webhooks-handler";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
@@ -24,7 +23,7 @@ export const sqsQueues = {
 		maxAttempts: 3
 	},
 	backfillQueueMessageHandler,
-	jiraAndGitHubErrorsHandler
+	webhooksErrorsHandler
 	),
 
 	push: new SqsQueue<PushQueueMessagePayload>({
@@ -34,7 +33,7 @@ export const sqsQueues = {
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
-	}, pushQueueMessageHandler, webhookMetricWrapper(jiraAndGitHubErrorsHandler, "push")),
+	}, pushQueueMessageHandler, webhookMetricWrapper(webhooksErrorsHandler, "push")),
 
 	deployment: new SqsQueue<DeploymentMessagePayload>({
 		queueName: "deployment",
@@ -45,7 +44,7 @@ export const sqsQueues = {
 		maxAttempts: 5
 	},
 	deploymentQueueMessageHandler,
-	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "deployment_status")
+	webhookMetricWrapper(webhooksErrorsHandler, "deployment_status")
 	),
 
 	branch: new SqsQueue<BranchMessagePayload>({
@@ -57,38 +56,25 @@ export const sqsQueues = {
 		maxAttempts: 5
 	},
 	branchQueueMessageHandler,
-	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "create")
+	webhookMetricWrapper(webhooksErrorsHandler, "create")
 	),
 
-	jira: new SqsQueue<WebhookMessagePayload>({
-		queueName: "jira-webhooks",
-		queueUrl: envVars.SQS_JIRA_WEBHOOKS_QUEUE_URL,
-		queueRegion: envVars.SQS_JIRA_WEBHOOKS_QUEUE_REGION,
+	webhooks: new SqsQueue<WebhookMessagePayload>({
+		queueName: "webhooks",
+		queueUrl: envVars.SQS_WEBHOOKS_QUEUE_URL,
+		queueRegion: envVars.SQS_WEBHOOKS_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 60,
 		maxAttempts: 5
 	},
-	jiraWebhooksQueueMessageHandler,
-	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "jira")
-	),
-
-	github: new SqsQueue<WebhookMessagePayload>({
-		queueName: "github-webhooks",
-		queueUrl: envVars.SQS_GITHUB_WEBHOOKS_QUEUE_URL,
-		queueRegion: envVars.SQS_GITHUB_WEBHOOKS_QUEUE_REGION,
-		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
-		timeoutSec: 60,
-		maxAttempts: 5
-	},
-	githubWebhooksQueueMessageHandler,
-	webhookMetricWrapper(jiraAndGitHubErrorsHandler, "github")
+	webhooksQueueMessageHandler,
+	webhookMetricWrapper(webhooksErrorsHandler, "webhooks")
 	),
 
 	start: () => {
 		logger.info("Starting queues");
 		sqsQueues.backfill.start();
-		sqsQueues.jira.start();
-		sqsQueues.github.start();
+		sqsQueues.webhooks.start();
 		sqsQueues.push.start();
 		sqsQueues.deployment.start();
 		sqsQueues.branch.start();
@@ -99,8 +85,7 @@ export const sqsQueues = {
 		logger.info("Stopping queues");
 		await Promise.all([
 			sqsQueues.backfill.stop(),
-			sqsQueues.jira.stop(),
-			sqsQueues.github.stop(),
+			sqsQueues.webhooks.stop(),
 			sqsQueues.push.stop(),
 			sqsQueues.deployment.stop(),
 			sqsQueues.branch.stop()

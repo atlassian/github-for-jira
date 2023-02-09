@@ -131,6 +131,7 @@ export interface WebhookMessagePayload<Header = Record<string, string>, Query = 
 	query: Query;
 	path: Path;
 	url: string;
+	source: "github" | "jira";
 	method: string;
 	body: string;
 }

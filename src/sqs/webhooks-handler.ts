@@ -4,9 +4,27 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 
-export const githubWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>) => {
-	context.log.debug("Handling github webhook from the SQS queue");
+export const webhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>): Promise<void> => {
+	context.log.debug("Handling webhook from the SQS queue");
+	let body: any;
+	if (context.payload.body) {
+		try {
+			body = JSON.parse(context.payload.body);
+		} catch (e) {
+			context.log.debug(context, "Could not parse body of webhook payload");
+		}
+	}
+	switch (context.payload.source) {
+		case "github":
+			return await githubWebhookHandler(context, body);
+		case "jira":
+			return await jiraWebhookHandler(context, body);
+	}
 
+};
+
+const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: any): Promise<void> => {
+	context.log.debug(context, "Github webhook handler");
 	try {
 		const {
 			body,
@@ -14,9 +32,6 @@ export const githubWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePay
 				"x-github-event": eventName,
 				"x-hub-signature-256": signature,
 				"x-github-delivery": id
-			},
-			query: {
-				uuid
 			}
 		} = context.payload;
 
@@ -24,6 +39,8 @@ export const githubWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePay
 			context.log.warn("Missing headers for Github webhooks");
 			return;
 		}
+
+		const uuid = context.payload.path?.proxy;
 
 		context.log = context.log.child({
 			githubAppUUID: uuid,
@@ -33,7 +50,6 @@ export const githubWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePay
 		context.log.debug("Github Webhook received");
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
 		const verification = createHash(body, webhookSecret);
-		const data = JSON.parse(body);
 
 		if (verification !== signature) {
 			context.log.warn("Github webhook signature validation failed");
@@ -60,4 +76,8 @@ export const githubWebhooksQueueMessageHandler: MessageHandler<WebhookMessagePay
 	} catch (err) {
 		context.log.error(err, "Uncaught error in Github webhooks");
 	}
+};
+
+const jiraWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: any): Promise<void> => {
+	context.log.debug(data, "Jira webhook handler");
 };

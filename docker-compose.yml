@@ -4,13 +4,11 @@ services:
 
   redis:
     image: redis
-    container_name: redis
     ports:
       - "6379:6379"
 
   postgres:
     image: postgres:14.2-alpine
-    container_name: postgres
     ports:
       - "5432:5432"
     environment:
@@ -18,14 +16,12 @@ services:
 
   ngrok:
     image: wernight/ngrok
-    container_name: ngrok
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN app:8080
+    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN github-for-jira:8080
 
   localstack:
     image: localstack/localstack:1.0.4
-    container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
@@ -39,14 +35,13 @@ services:
 
   cryptor:
     build: etc/cryptor-mock
-    container_name: cryptor
     environment:
       CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "random-string" #has to match the one in env.test
     ports:
       - "26272:26272"
 
   app:
-    container_name: app
+    container_name: github-for-jira
     depends_on:
       - redis
       - postgres
@@ -69,5 +64,6 @@ services:
       SQS_DEPLOYMENT_QUEUE_URL: http://localstack:4566/000000000000/deployment
       SQS_BRANCH_QUEUE_URL: http://localstack:4566/000000000000/branch
       SQS_TEST_QUEUE_URL: http://localstack:4566/000000000000/test-sqs-client
+      SQS_WEBHOOKS_QUEUE_URL: http://localstack:4566/000000000000/webhooks
       REDISX_CACHE_HOST: redis
       NODE_ENV: $NODE_ENV

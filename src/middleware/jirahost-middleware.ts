@@ -44,10 +44,10 @@ const detectJwtTokenType = (req: Request): TokenType => {
 export const jirahostMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
 	if (await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
-		req.log.info("Skipping jirahostMiddleware...");
+		req.log.debug("Skipping jirahostMiddleware...");
 		return next();
 	}
-	req.log.info("Executing jirahostMiddleware...");
+	req.log.debug("Executing jirahostMiddleware...");
 
 	const unsafeJiraHost = extractUnsafeJiraHost(req);
 	req.addLogFields({ jiraHost: unsafeJiraHost });

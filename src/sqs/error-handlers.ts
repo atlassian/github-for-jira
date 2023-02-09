@@ -20,7 +20,7 @@ const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
 type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Error;
-export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
+export const webhooksErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
 	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
 	const unsafeLogger = getLogger("error-handler-unsafe", { level: "warn", unsafe: true });
