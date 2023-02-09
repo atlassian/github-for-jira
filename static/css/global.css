@@ -116,9 +116,11 @@ a:focus {
 .jiraConfiguration__retryMsg,
 .jiraConfiguration__syncWarningMessage,
 .gitHubConfiguration__notAdminMsg,
-.gitHubConfiguration__manageSubscriptions,
-.gitHubConfiguration__manageSubscriptions--notAdmin,
-.gitHubConfiguration__failedSyncWarningLabel {
+.gitHubConfiguration__deleteSubscription,
+.gitHubConfiguration__deleteSubscription--notAdmin,
+.gitHubConfiguration__failedSyncWarningLabel,
+.gitHubSubscriptions__deleteSubscription,
+.gitHubConfiguration__deleteSubscription--notConnected {
   background-color: #172b4d;
   border-radius: 3px;
   display: none;
