@@ -21,14 +21,15 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	const { installationId, jiraHost } = context.payload;
 	context.log = context.log.child({
 		jiraHost,
-		gitHubInstallationId: installationId
+		gitHubInstallationId: installationId,
+		traceId: Date.now()
 	});
 
 	const backfillData = { ...context.payload };
 	const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
 
 	// Check if the rate limit is exceeding self-imposed limit
-	if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost)) {
+	if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost, context.log)) {
 		context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
 		return await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
 	}
@@ -59,16 +60,18 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 const getRateRateLimitStatus = async (backfillData: BackfillMessagePayload, logger: Logger) => {
 	const { installationId, jiraHost } = backfillData;
 	const gitHubAppId = backfillData.gitHubAppConfig?.gitHubAppId;
+	logger.info({ gitHubAppId }, "preemptive getRateRateLimitStatus");
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, gitHubAppId);
 
 	return await gitHubInstallationClient.getRateLimit();
 };
 
-const isRateLimitExceedingSoftLimit = async (rateLimitResponse: Octokit.RateLimitGetResponse, jiraHost) : Promise<boolean> => {
+const isRateLimitExceedingSoftLimit = async (rateLimitResponse: Octokit.RateLimitGetResponse, jiraHost, logger) : Promise<boolean> => {
 	const threshold = await numberFlag(NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD, 100, jiraHost);
 	const { core, graphql } = rateLimitResponse.resources;
 	const usedPercentCore = ((core.limit - core.remaining) / core.limit) * 100;
 	const usedPercentGraphql = ((graphql.limit - graphql.remaining) / graphql.limit) * 100;
+	logger.info({ core, graphql }, "preemptive getRateRateLimitStatus");
 
 	return usedPercentCore >= threshold || usedPercentGraphql >= threshold;
 };
