@@ -27,6 +27,7 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 
 	const backfillData = { ...context.payload };
 	const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
+	context.log.info({ rateLimitResponse, backfillData }, "preemptive ratelimitresponse");
 
 	// Check if the rate limit is exceeding self-imposed limit
 	if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost, context.log)) {
@@ -62,6 +63,7 @@ const getRateRateLimitStatus = async (backfillData: BackfillMessagePayload, logg
 	const gitHubAppId = backfillData.gitHubAppConfig?.gitHubAppId;
 	logger.info({ gitHubAppId }, "preemptive getRateRateLimitStatus");
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, gitHubAppId);
+	logger.info({ gitHubAppId }, "preemptive gitHubInstallationClient acquired");
 
 	return await gitHubInstallationClient.getRateLimit();
 };
