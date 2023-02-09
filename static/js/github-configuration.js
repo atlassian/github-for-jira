@@ -12,16 +12,21 @@ $('.install-link').click(function (event) {
 		event.currentTarget.removeAttribute("disabled");
 		if (data.err) {
 			showErrorMessage(data.err);
+			console.log(data.err);
+			return;
 		}
 		window.close();
 	}).fail((err) => {
-		event.currentTarget.removeAttribute("disabled")
-		const errorResponse = err.responseJSON;
-		let message = err.responseJSON.err;
-		if (errorResponse.errorCode) {
-			message = mapErrorCodeToText(errorResponse.errorCode);
+		event.currentTarget.removeAttribute("disabled");
+		if (err.responseJSON) {
+			const errorResponse = err.responseJSON;
+			let message = err.responseJSON.err;
+			if (errorResponse.errorCode) {
+				message = mapErrorCodeToText(errorResponse.errorCode);
+			}
+			showErrorMessage(message);
 		}
-		showErrorMessage(message);
+		console.log(err);
 	});
 })
 
