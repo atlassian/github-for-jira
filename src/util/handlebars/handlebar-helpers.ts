@@ -52,4 +52,11 @@ export const registerHandlebarsHelpers = () => {
 
 
 	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
+
+	hbs.registerHelper(
+		"disableDeleteSubscription",
+		(subscriptionHost, jiraHost) =>
+			subscriptionHost !== jiraHost
+	);
+
 };
