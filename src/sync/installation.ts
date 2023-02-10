@@ -175,6 +175,32 @@ export const isNotFoundError = (
 	return isNotFoundError;
 };
 
+const sendJiraFailureToSentry = (err, sentry: Hub) => {
+	if (err?.response?.status === 400) {
+		sentry.setExtra(
+			"Response body",
+			err.response.data.errorMessages
+		);
+		sentry.setExtra("Jira payload", err.response.data.jiraPayload);
+	}
+
+	if (err.request) {
+		sentry.setExtra("Request", {
+			host: err.request.domain,
+			path: err.request.path,
+			method: err.request.method
+		});
+	}
+
+	if (err.response) {
+		sentry.setExtra("Response", {
+			status: err.response.status,
+			statusText: err.response.statusText,
+			body: err.response.body
+		});
+	}
+};
+
 // TODO: type queues
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const subscription = await Subscription.getSingleInstallation(
@@ -232,9 +258,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				errorLog.warn(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
 				if (!(await isRetryableWithSmallerRequest(err))) {
 					// error is not retryable, re-throwing it
+					errorLog.warn(`Not retryable error, rethrowing`);
 					throw err;
 				}
 				// error is retryable, retrying with next smaller page size
+				errorLog.info(`Retryable error, try again with a smaller page size`);
 			}
 		}
 		logger.error("Error processing task after trying all page sizes");
@@ -272,30 +300,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 						});
 				}
 			} catch (err) {
-				if (err?.response?.status === 400) {
-					sentry.setExtra(
-						"Response body",
-						err.response.data.errorMessages
-					);
-					sentry.setExtra("Jira payload", err.response.data.jiraPayload);
-				}
+				logger.warn({ err }, "Failed to send data to Jira");
+				sendJiraFailureToSentry(err, sentry);
 
-				if (err.request) {
-					sentry.setExtra("Request", {
-						host: err.request.domain,
-						path: err.request.path,
-						method: err.request.method
-					});
-				}
-
-				if (err.response) {
-					sentry.setExtra("Response", {
-						status: err.response.status,
-						statusText: err.response.statusText,
-						body: err.response.body
-					});
-				}
-
+				// TODO: this won't reach SQS handler but will be stuck in handleBackfillError and will mark the task as failed.
+				//       Something we should fix sooner rather than later...
 				throw err;
 			}
 		}
