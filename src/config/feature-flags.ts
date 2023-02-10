@@ -27,7 +27,6 @@ export enum BooleanFlags {
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	NEW_JWT_VALIDATION = "new-jwt-validation",
 	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check",
-	REPO_CREATED_EVENT="repo-created-event",
 	RENEW_GITHUB_TOKEN = "renew-github-token"
 }
 

@@ -1,0 +1,22 @@
+[
+	{
+		"id":448221072,
+		"node_id":"MDE3OlB1bGxSZXF1ZXN0UmV2aWV3NDQ4MjIxMDcy",
+		"user":null,
+		"body":"",
+		"state":"APPROVED",
+		"html_url":"https://github.com/bgvozdev/testing/pull/8605#pullrequestreview-448221072",
+		"pull_request_url":"https://api.github.com/repos/bgvozdev/testing/pulls/8605",
+		"author_association":"NONE",
+		"_links": {
+			"html": {
+				"href":"https://github.com/bgvozdev/testing/pull/8605#pullrequestreview-448221072"
+			},
+			"pull_request":{
+				"href":"https://api.github.com/repos/bgvozdev/testing/pulls/8605"
+			}
+		},
+		"submitted_at":"2020-07-14T15:31:49Z",
+		"commit_id":"c5d81ac7d2a3b18a82a83f8bc04212345f082cf811"
+	}
+]
