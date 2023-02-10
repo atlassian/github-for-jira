@@ -137,22 +137,28 @@
                         Connected
                       </p>
                     {{/if}}
-                    <a
-                        class="gitHubConfiguration__orgContent__settingsContainer"
+                    <button
+                            class="gitHubConfiguration__orgContent__settingsContainer{{#if (isNotConnected syncStatus)}}--notConnected{{else}} delete-subscription{{/if}}"
                         href="{{setSubscriptionUrl ../gitHubServerApp.uuid id}}"
+                        aria-disabled={{isNotConnected syncStatus}}
+                        disabled={{isNotConnected syncStatus}}
                     >
-                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
-                        Manage Jira Subscriptions
-                      </span>
-                    </a>
+                        <span
+                                class="aui-icon aui-icon-small aui-iconfont-trash delete-subscription"
+                                data-jira-host="{{jiraHost}}"
+                                data-github-installation-id="{{id}}"
+                                data-github-app-uuid="{{../gitHubAppUuid}}"
+                                data-org-name="{{account.login}}"
+                        >
+                            Delete subscription
+                        </span>
+                    </button>
                   {{else}}
                     <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
                       Connect
                     </button>
                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
-                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
-                        Manage Jira Subscriptions
-                      </span>
+                      <span class="aui-icon aui-icon-small aui-iconfont-trash">Delete subscription</span>
                     </div>
                   {{/if}}
 
@@ -161,14 +167,19 @@
                     You need repository admin permissions to install this app. Please contact your admin.
                   </p>
 
-                  {{!-- Hidden unless user hovers over settings icon --}}
-                  <p class="gitHubConfiguration__manageSubscriptions">
-                    Manage Jira subscriptions
+                  {{!-- Hidden unless user hovers over trash can icon and org is connected --}}
+                  <p class="gitHubConfiguration__deleteSubscription">
+                    Delete subscription
                   </p>
 
-                  {{!-- Hidden unless user hovers over settings icon when user is not an admin --}}
-                  <p class="gitHubConfiguration__manageSubscriptions--notAdmin">
-                    You must have admin permissions to manage Jira subscriptions. Please contact your admin.
+                    {{!-- Hidden unless user hovers over trash can icon and org is not connected --}}
+                  <p class="gitHubConfiguration__deleteSubscription--notConnected">
+                    This organisation hasn't been connected yet. Cannot delete this subscription.
+                  </p>
+
+                  {{!-- Hidden unless user hovers over trash can icon when user is not an admin --}}
+                  <p class="gitHubConfiguration__deleteSubscription--notAdmin">
+                    You must have admin permissions to delete Jira subscriptions. Please contact your admin.
                   </p>
 
                   {{!-- Hidden unless user hovers over warning icon when a sync fails --}}
@@ -186,6 +197,8 @@
           <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
         {{/unless}}
       </div>
+
+        {{> modal }}
     </div>
   </div>
 
