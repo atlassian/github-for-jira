@@ -4,6 +4,7 @@ import { createAppClient, createInstallationClient, createUserClient } from "uti
 import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 import { sendError } from "~/src/jira/util/jwt";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
@@ -68,6 +69,8 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId)
 			]);
 
+			const verboseLoggingEnabled = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+
 			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
 			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
@@ -96,6 +99,14 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 					})
 					.catch(err => {
 						logger.warn({ err }, "Cannot search for repos using user client, falling back to empty array");
+						// Troubleshooting https://github.com/atlassian/github-for-jira/issues/1845
+						if (verboseLoggingEnabled) {
+							logger.warn({
+								unsafe: true,
+								err,
+								searchQueryUserString
+							}, "Cannot search for repos using user client, falling back to empty array");
+						}
 						return [];
 					})
 			]);
