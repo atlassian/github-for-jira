@@ -84,18 +84,7 @@ resources:
         - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
 
   - type: sqs
-    name: github-webhooks
-    attributes:
-      MaxReceiveCount: 5
-      MessageRetentionPeriod: 1209600
-      VisibilityTimeout: 62 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails
-      dataType:
-        - UGC/Label                # name of GitHub org, URL/name of Jira site
-        - PII/IndirectConfidential # name of GitHub org
-        - UGC/PrimaryIdentifier
-
-  - type: sqs
-    name: jira-webhooks
+    name: webhooks
     attributes:
       MaxReceiveCount: 5
       MessageRetentionPeriod: 1209600
@@ -408,12 +397,9 @@ environmentOverrides:
             configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
               AccountNumber: 936664463856
-              GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
-              GithubQueueName: '_Ref sqs.github-webhooks.queuename'
-              GithubQueueRegion: '_Ref sqs.github-webhooks.queueregion'
-              JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
-              JiraQueueName: '_Ref sqs.jira-webhooks.queuename'
-              JiraQueueRegion: '_Ref sqs.jira-webhooks.queueregion'
+              WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
+              WebhooksQueueName: '_Ref sqs.webhooks.queuename'
+              WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
           stageName: live
           dataType:
@@ -553,8 +539,7 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
-              GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
-              JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
+              WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
               ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
           stageName: live
           dataType:
@@ -639,8 +624,7 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
-              GithubQueueUrl: '_Ref sqs.github-webhooks.queueurl'
-              JiraQueueUrl: '_Ref sqs.jira-webhooks.queueurl'
+              WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
               ServerUri: 'https://github-for-jira.prod-west.services.atlassian.com'
           stageName: live
           dataType:

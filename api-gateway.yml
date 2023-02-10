@@ -27,7 +27,7 @@ paths:
       x-amazon-apigateway-integration:
         credentials: "{{RoleARN}}"
         httpMethod: "POST"
-        uri: "arn:aws:apigateway:{{GithubQueueRegion}}:sqs:path/{{AccountNumber}}/{{GithubQueueName}}"
+        uri: "arn:aws:apigateway:{{WebhooksQueueRegion}}:sqs:path/{{AccountNumber}}/{{WebhooksQueueName}}"
         requestParameters:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
