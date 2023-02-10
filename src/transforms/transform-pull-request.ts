@@ -9,7 +9,6 @@ import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { getLogger } from "config/logger";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
@@ -27,15 +26,9 @@ const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient, log?: Logger): Promise<JiraReview[]> => {
+const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
-	const logger = log || getLogger("debug-reviews");
-
-	const debugReviewsWithoutReviewers = await booleanFlag(BooleanFlags.DEBUG_REVIEWERS_PAYLOAD);
-	if (debugReviewsWithoutReviewers) {
-		logger.info("debugging reviews is ON");
-	}
 
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)
@@ -45,28 +38,19 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 		const reviewer = review?.user;
 		const reviewerUsername = reviewer?.login;
 
-		if (reviewerUsername) {
+		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
 
-			const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
+		if (!haveWeSeenThisReviewerAlready) {
+			usernames[reviewerUsername] = {
+				...getJiraAuthor(reviewer),
+				login: reviewerUsername,
+				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+			};
 
-			if (!haveWeSeenThisReviewerAlready) {
-				usernames[reviewerUsername] = {
-					...getJiraAuthor(reviewer),
-					login: reviewerUsername,
-					approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
-				};
+			acc.push(usernames[reviewerUsername]);
 
-				acc.push(usernames[reviewerUsername]);
-
-			} else if (usernames[reviewerUsername].approvalStatus !== STATE_APPROVED && review.state === STATE_APPROVED) {
-				usernames[reviewerUsername].approvalStatus = STATE_APPROVED;
-			}
-
-		} else {
-			logger.warn("Review without user login detected");
-			if (debugReviewsWithoutReviewers) {
-				logger.warn({ unsafe: true }, "Review without username, wtf? " + JSON.stringify(review));
-			}
+		} else if (usernames[reviewerUsername].approvalStatus !== STATE_APPROVED && review.state === STATE_APPROVED) {
+			usernames[reviewerUsername].approvalStatus = STATE_APPROVED;
 		}
 
 		// Returns the reviews' array with unique users
@@ -75,11 +59,15 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 
 	// Get GitHub user email, so it can be matched to an AAID
 	return Promise.all(reviewsReduced.map(async reviewer => {
-		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
-		return {
-			...omit(reviewer, "login"),
-			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
+		const mappedReviewer = {
+			...omit(reviewer, "login")
 		};
+		const isDeletedUser = !reviewer.login;
+		if (!isDeletedUser) {
+			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
+		}
+		return mappedReviewer;
 	}));
 };
 
@@ -113,7 +101,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: await mapReviews(reviews, gitHubInstallationClient, log),
+				reviewers: await mapReviews(reviews, gitHubInstallationClient),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),
