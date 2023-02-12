@@ -26,13 +26,18 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	});
 
 	const backfillData = { ...context.payload };
-	const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
-	context.log.info({ rateLimitResponse, backfillData }, "preemptive ratelimitresponse");
 
-	// Check if the rate limit is exceeding self-imposed limit
-	if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost, context.log)) {
-		context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
-		return await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
+	try {
+		const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
+		context.log.info({ rateLimitResponse, backfillData }, "preemptive ratelimitresponse");
+
+		// Check if the rate limit is exceeding self-imposed limit
+		if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost, context.log)) {
+			context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
+			return await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
+		}
+	} catch (err) {
+		context.log.error({ err }, "Unable to retrieve current rate limit");
 	}
 
 	if (!backfillData.startTime) {
