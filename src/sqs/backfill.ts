@@ -5,7 +5,6 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { BackfillMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { sqsQueues } from "~/src/sqs/queues";
-import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
@@ -27,17 +26,10 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 
 	const backfillData = { ...context.payload };
 
-	try {
-		const rateLimitResponse = (await getRateRateLimitStatus(backfillData, context.log))?.data;
-		context.log.info({ rateLimitResponse, backfillData }, "preemptive ratelimitresponse");
-
-		// Check if the rate limit is exceeding self-imposed limit
-		if (await isRateLimitExceedingSoftLimit(rateLimitResponse, jiraHost, context.log)) {
-			context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
-			return await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
-		}
-	} catch (err) {
-		context.log.error({ err }, "Unable to retrieve current rate limit");
+	// Check if the rate limit is exceeding self-imposed limit
+	if (await isRateLimitExceedingSoftLimit(context)) {
+		context.log.info("Rate limit internal threshold exceeded, delaying backfilling message.");
+		return;
 	}
 
 	if (!backfillData.startTime) {
@@ -63,24 +55,34 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	}
 };
 
-const getRateRateLimitStatus = async (backfillData: BackfillMessagePayload, logger: Logger) => {
-	const { installationId, jiraHost } = backfillData;
-	const gitHubAppId = backfillData.gitHubAppConfig?.gitHubAppId;
-	logger.info({ gitHubAppId }, "preemptive getRateRateLimitStatus");
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, logger, gitHubAppId);
-	logger.info({ gitHubAppId }, "preemptive gitHubInstallationClient acquired");
+const getRateRateLimitStatus = async (context: SQSMessageContext<BackfillMessagePayload>) => {
+	const { installationId, jiraHost } = context.payload;
+	const gitHubAppId = context.payload.gitHubAppConfig?.gitHubAppId;
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId);
 
 	return await gitHubInstallationClient.getRateLimit();
 };
 
-const isRateLimitExceedingSoftLimit = async (rateLimitResponse: Octokit.RateLimitGetResponse, jiraHost, logger) : Promise<boolean> => {
+// Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
+const isRateLimitExceedingSoftLimit = async (context: SQSMessageContext<BackfillMessagePayload>) : Promise<boolean> => {
+	const { jiraHost } = context.payload;
 	const threshold = await numberFlag(NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD, 100, jiraHost);
-	const { core, graphql } = rateLimitResponse.resources;
-	const usedPercentCore = ((core.limit - core.remaining) / core.limit) * 100;
-	const usedPercentGraphql = ((graphql.limit - graphql.remaining) / graphql.limit) * 100;
-	logger.info({ core, graphql }, "preemptive getRateRateLimitStatus");
 
-	return usedPercentCore >= threshold || usedPercentGraphql >= threshold;
+	try {
+		const rateLimitResponse = (await getRateRateLimitStatus(context))?.data;
+		const { core, graphql } = rateLimitResponse.resources;
+		const usedPercentCore = ((core.limit - core.remaining) / core.limit) * 100;
+		const usedPercentGraphql = ((graphql.limit - graphql.remaining) / graphql.limit) * 100;
+		if (usedPercentCore >= threshold || usedPercentGraphql >= threshold) {
+			// Delay the message until rate limit has reset
+			await sqsQueues.backfill.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse), context.log);
+			return true;
+		}
+	} catch {
+		context.log.info("Failed to fetch Rate Limit");
+	}
+
+	return false;
 };
 
 const getRateResetTime = (rateLimitResponse: Octokit.RateLimitGetResponse): number => {
