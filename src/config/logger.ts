@@ -178,6 +178,26 @@ const errorSerializer = (err) => {
 	};
 };
 
+const taskSerializer = (task) => {
+	if (!task) {
+		return task;
+	}
+	const repository = task.repository ? {
+		fullName: createHashWithSharedSecret(task.repository.full_name),
+		id: task.repository.id,
+		name: createHashWithSharedSecret(task.repository.name),
+		owner: {
+			login: createHashWithSharedSecret(task.repository.owner?.login)
+		},
+		updatedAt: task.repository.updated_at
+	} : {};
+
+	return {
+		...task,
+		repository
+	};
+};
+
 export const defaultLogLevel: LogLevel = process.env.LOG_LEVEL as LogLevel || "info";
 
 const loggerStreamSafe = (): Logger.Stream => ({
@@ -219,7 +239,9 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 			response: responseSerializer,
 			req: requestSerializer,
 			request: requestSerializer,
-			requestPath: censorUrl
+			requestPath: censorUrl,
+			task: taskSerializer,
+			nextTask: taskSerializer
 		},
 		...options.fields
 	}, omit(options, "fields")));

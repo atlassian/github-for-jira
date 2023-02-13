@@ -64,11 +64,6 @@ interface Author {
 	};
 }
 
-let regexFixFeature = false;
-onFlagChange(BooleanFlags.REGEX_FIX, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX);
-});
-
 let issueKeyRegexCharLimitFeature = false;
 onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
 	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT);
@@ -83,12 +78,8 @@ onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
 export const jiraIssueRegex = (): RegExp => {
 	if (issueKeyRegexCharLimitFeature) {
 		return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
-	} else if (regexFixFeature) {
-		// Old regex which was working before trying to update it to the "correct" one
-		return /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
 	}
-
-	return /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+	return /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
 };
 
 /**
@@ -99,11 +90,9 @@ export const jiraIssueRegex = (): RegExp => {
 export const jiraIssueInSquareBracketsRegex = (): RegExp => {
 	if (issueKeyRegexCharLimitFeature) {
 		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
-	} else if (regexFixFeature) {
-		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
 	}
 
-	return /(^|[^\p{L}\p{Nd}])\[([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})\]/giu;
+	return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
 };
 
 /**

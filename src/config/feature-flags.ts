@@ -13,16 +13,9 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	REGEX_FIX = "regex-fix",
-	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
-	RETRY_ALL_ERRORS = "retry-all-errors",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
-	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
-	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	NEW_JWT_VALIDATION = "new-jwt-validation",

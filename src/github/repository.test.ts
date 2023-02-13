@@ -1,20 +1,10 @@
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
 import { getLogger } from "config/logger";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-jest.mock("config/feature-flags");
-
 describe("deleteRepositoryWebhookHandler", () => {
-
-	beforeEach(() => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER
-		).mockResolvedValue(true);
-	});
 
 	it("should call delete repository endpoint for server", async () => {
 

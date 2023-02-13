@@ -83,7 +83,7 @@ const mapCommit = (commit) => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformBranches = async (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
+export const transformBranches = (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
 	// TODO: use reduce instead of map/filter
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository))
@@ -101,7 +101,7 @@ export const transformBranches = async (payload: { branches: any, repository: an
 	}
 
 	return {
-		... await transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
+		... transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		branches,
 		commits
 	};

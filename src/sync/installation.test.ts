@@ -58,31 +58,7 @@ describe("sync/installation", () => {
 
 	describe("isRetryableWithSmallerRequest()", () => {
 
-		it("should return true for max node limit exceeded", async () => {
-			const err = {
-				errors: [
-					{
-						type: "MAX_NODE_LIMIT_EXCEEDED"
-					}
-				]
-			};
-
-			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
-		});
-
-		it("should return true for 'something went wrong' error", async () => {
-			const err = {
-				errors: [
-					{
-						message: "Something went wrong while executing your query. some random text"
-					}
-				]
-			};
-
-			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
-		});
-
-		it("should return false for unknown error", async () => {
+		it("should return false for error without isRetryable flag", () => {
 			const err = {
 				errors: [
 					{
@@ -91,7 +67,20 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(await isRetryableWithSmallerRequest(err)).toBeFalsy();
+			expect(isRetryableWithSmallerRequest(err)).toBeFalsy();
+		});
+
+		it("should return true for error with isRetryable flag", () => {
+			const err = {
+				isRetryable: true,
+				errors: [
+					{
+						type: "FOO"
+					}
+				]
+			};
+
+			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 	});
 

@@ -2,12 +2,8 @@ import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-
-jest.mock("config/feature-flags");
 
 const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContext => {
 	return new WebhookContext({
@@ -22,10 +18,6 @@ const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContex
 describe("code_scanning_alert transform", () => {
 	beforeEach(() => {
 		Date.now = jest.fn(() => 12345678);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER
-		).mockResolvedValue(true);
 	});
 	const gitHubInstallationId = 1234;
 	const jiraHost = "testHost";

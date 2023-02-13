@@ -65,7 +65,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, req.log)) {
-			res.status(401).json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
+			req.log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
+			res.status(401).json({ err: `User is not an admin of the installation` });
 			return;
 		}
 

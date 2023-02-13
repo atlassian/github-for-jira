@@ -21,7 +21,7 @@ jest.mock("config/feature-flags");
 describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
-	const issueKeys = ["TEST-123", "TEST-321"];
+	const issueKeys = ["TEST-123", "TEST-321", "TEST-124"];
 
 	const reviewsPayload = [
 		{
@@ -257,10 +257,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	});
 
 	it("should delete the reference to a pull request when issue keys are removed from the title for server", async () => {
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER
-		).mockResolvedValue(true);
 
 		mockSystemTime(12345678);
 

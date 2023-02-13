@@ -29,7 +29,7 @@ export const mapCommit = (commit): JiraCommit | undefined => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformCommit = async (payload, gitHubBaseUrl?: string): Promise<JiraCommitBulkSubmitData | undefined> => {
+export const transformCommit = (payload, gitHubBaseUrl?: string): JiraCommitBulkSubmitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit))
@@ -40,7 +40,7 @@ export const transformCommit = async (payload, gitHubBaseUrl?: string): Promise<
 	}
 
 	return {
-		... await transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
+		... transformRepositoryDevInfoBulk(payload.repository, gitHubBaseUrl),
 		commits: commits
 	};
 };
