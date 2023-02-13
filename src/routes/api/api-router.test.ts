@@ -2,7 +2,7 @@
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
-import { Subscription } from "models/subscription";
+import { Subscription, SyncStatus } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
@@ -31,13 +31,6 @@ describe("API Router", () => {
 	};
 
 	beforeEach(async () => {
-		locals = {
-			client: {
-				apps: {
-					getInstallation: jest.fn().mockResolvedValue({ data: {} })
-				}
-			}
-		};
 		app = createApp();
 
 		installation = await Installation.create({
@@ -50,7 +43,8 @@ describe("API Router", () => {
 		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
-			jiraClientKey: "client-key"
+			jiraClientKey: "client-key",
+			syncStatus: SyncStatus.PENDING
 		});
 
 		gitHubServerApp = await GitHubServerApp.install({
@@ -163,7 +157,20 @@ describe("API Router", () => {
 					});
 			});
 
-			it("should return information for an existing installation", async () => {
+			it("should return a failed connection when subscription is fucked", async () => {
+				return supertest(app)
+					.get(`/api/${gitHubInstallationId}`)
+					.set("host", "127.0.0.1")
+					.send({ jiraHost })
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
+			it("should return a connection when subscription is OK", async () => {
+				githubNock.get(`/app/installations/${gitHubInstallationId}`).reply(200, { foo: "bar" });
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}`)
 					.set("host", "127.0.0.1")

@@ -14,16 +14,33 @@ exports[`API Router Endpoints Repo Sync State should return 404 if no installati
 
 exports[`API Router Endpoints installation should return 404 if no installation is found 1`] = `Object {}`;
 
-exports[`API Router Endpoints installation should return information for an existing installation 1`] = `
+exports[`API Router Endpoints installation should return a connection when subscription is OK 1`] = `
 Object {
   "connections": Array [
     Object {
+      "foo": "bar",
       "isGlobalInstall": false,
-      "syncStatus": null,
-      "updated_at": "Invalid Date",
+      "syncState": "PENDING",
     },
   ],
   "failedConnections": Array [],
+  "hasConnections": true,
+  "host": "https://test-atlassian-instance.atlassian.net",
+  "installationId": "1234",
+  "syncStateUrl": "http://127.0.0.1/api/1234/https%3A%2F%2Ftest-atlassian-instance.atlassian.net/syncstate",
+}
+`;
+
+exports[`API Router Endpoints installation should return a failed connection when subscription is fucked 1`] = `
+Object {
+  "connections": Array [],
+  "failedConnections": Array [
+    Object {
+      "deleted": false,
+      "error": "getaddrinfo ENOTFOUND proxy. More details in logs",
+      "id": 1234,
+    },
+  ],
   "hasConnections": true,
   "host": "https://test-atlassian-instance.atlassian.net",
   "installationId": "1234",

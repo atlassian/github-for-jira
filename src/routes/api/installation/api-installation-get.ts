@@ -33,17 +33,23 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 						syncState: subscription.syncStatus
 					};
 				} catch (err) {
-					return { error: err, id, deleted: err.status === 404 };
+					return { err, id, deleted: err.status === 404 };
 				}
 			})
 		);
 		const connections = installations
-			.filter((response) => !response.error);
+			.filter((response) => !response.err);
 
-		const failedConnections = installations.filter((response) => {
-			req.log.error({ ...response }, "Failed installation");
-			return response.error;
-		});
+		const failedConnections = installations
+			.filter((response) => response.err)
+			.map((response) => {
+				req.log.error({ ...response }, "Failed installation");
+				return {
+					id: response.id,
+					error: response.err.message + ". More details in logs",
+					deleted: response.deleted
+				};
+			});
 		res.json({
 			host: jiraHost,
 			installationId,

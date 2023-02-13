@@ -478,7 +478,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			it(`crops issue keys (505) to 500 (5 issue keys must be left aside)`, async () => {
 
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(505).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(505).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -496,7 +496,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
-				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
+				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1));
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
@@ -508,7 +508,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			it(`crops issue keys (499) and services (2) to 500 (one service must be left aside)`, async () => {
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(499).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(499).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -532,7 +532,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(499).keys()].map(number => "ABC-" + number)
+						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1))
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -543,7 +543,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			it(`crops issue keys (497), service ids (2) and commits (2) to 500 (one commit must be left aside)`, async () => {
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(497).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(497).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -577,7 +577,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(497).keys()].map(number => "ABC-" + number)
+						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1))
 					},
 					{
 						associationType: "serviceIdOrKeys",
