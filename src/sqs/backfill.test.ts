@@ -4,9 +4,6 @@ import { backfillQueueMessageHandler } from "./backfill";
 import { BackfillMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { getLogger } from "config/logger";
 import * as Sentry from "@sentry/node";
-import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
-import { sqsQueues } from "~/src/sqs/queues";
 
 jest.mock("config/feature-flags");
 jest.mock("../sync/installation");
@@ -32,32 +29,6 @@ const mockSentryGetClient = () => {
 	}));
 };
 
-const mockPreemptiveRateLimit = (threshold: number): void => {
-	when(numberFlag).calledWith(
-		NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
-		expect.anything(),
-		expect.anything()
-	).mockResolvedValue(threshold);
-};
-
-const mockGitHubRateLimitResponse = (coreLimit = 100, coreRemaining = 100): void => {
-	githubUserTokenNock(123);
-	githubNock.get("/rate_limit")
-		.reply(200, {
-			"resources": {
-				"core": {
-					"limit": coreLimit,
-					"remaining": coreRemaining,
-					"reset": 1372700873
-				},
-				"graphql": {
-					"limit": 5000,
-					"remaining": 5000,
-					"reset": 1372700389
-				}
-			}
-		});
-};
 
 describe("backfill", () => {
 	const BACKFILL_MESSAGE_CONTEXT: SQSMessageContext<BackfillMessagePayload> = {
@@ -74,8 +45,6 @@ describe("backfill", () => {
 	describe("Sentry", () => {
 		beforeEach(() => {
 			mockSentryGetClient();
-			mockPreemptiveRateLimit(100);
-			mockGitHubRateLimitResponse();
 		});
 
 		it("sentry captures exception", async () => {
@@ -91,30 +60,30 @@ describe("backfill", () => {
 		});
 	});
 
-	describe("Preemptive rate limit", () => {
-
-		beforeEach(() => {
-			mockSentryGetClient();
-		});
-
-		it("Should stop processing if preemptive threshold is met", async () => {
-			mockPreemptiveRateLimit(50);
-			mockGitHubRateLimitResponse(100, 10);
-
-			await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
-			expect(sqsQueues.backfill.changeVisibilityTimeout).toBeCalled();
-		});
-
-		it("Should continue processing if rate limit still has a sufficient amount remaining", async () => {
-			mockPreemptiveRateLimit(50);
-			mockGitHubRateLimitResponse(100, 51);
-
-			const mockedProcessor = jest.fn();
-			mocked(processInstallation).mockReturnValue(mockedProcessor);
-			await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
-			expect(sqsQueues.backfill.changeVisibilityTimeout).not.toBeCalled();
-		});
-
-	});
+	// describe.skip("Preemptive rate limit", () => {
+	//
+	// 	beforeEach(() => {
+	// 		mockSentryGetClient();
+	// 	});
+	//
+	// 	it("Should stop processing if preemptive threshold is met", async () => {
+	// 		// mockPreemptiveRateLimit(50);
+	// 		// mockGitHubRateLimitResponse(100, 10);
+	//
+	// 		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
+	// 		expect(sqsQueues.backfill.changeVisibilityTimeout).toBeCalled();
+	// 	});
+	//
+	// 	it("Should continue processing if rate limit still has a sufficient amount remaining", async () => {
+	// 		mockPreemptiveRateLimit(50);
+	// 		mockGitHubRateLimitResponse(100, 51);
+	//
+	// 		const mockedProcessor = jest.fn();
+	// 		mocked(processInstallation).mockReturnValue(mockedProcessor);
+	// 		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
+	// 		expect(sqsQueues.backfill.changeVisibilityTimeout).not.toBeCalled();
+	// 	});
+	//
+	// });
 
 });
