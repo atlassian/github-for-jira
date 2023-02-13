@@ -342,8 +342,8 @@ environmentOverrides:
 #      remoteDebug: true
     config:
       environmentVariables:
-        APP_URL: https://github-for-jira.dev.atlassian.com
-        WEBHOOK_PROXY_URL: https://github-for-jira.dev.atlassian.com
+        APP_URL: https://github.dev.atlassian.com
+        WEBHOOK_PROXY_URL: https://github.dev.atlassian.com
         INSTANCE_NAME: development
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
