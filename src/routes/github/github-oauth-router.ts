@@ -171,7 +171,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 
 		// For any other requests, it should just error
-		return res.status(401).send(Errors.MISSING_GITHUB_TOKEN);
+		return res.status(401).json({ err: Errors.MISSING_GITHUB_TOKEN, errorCode: "MISSING_GITHUB_TOKEN" });
 	}
 };
 

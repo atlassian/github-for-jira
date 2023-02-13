@@ -273,6 +273,14 @@
     margin: 0 auto 18px;
 }
 
+.gitHubConfiguration__serverError {
+    display: none;
+    margin-top: 2.5em;
+  }
+  .gitHubConfiguration__serverError  .errorMessageBox__container {
+    align-items: center;
+  }
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
