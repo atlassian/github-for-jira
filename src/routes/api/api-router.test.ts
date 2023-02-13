@@ -158,6 +158,7 @@ describe("API Router", () => {
 			});
 
 			it("should return a failed connection when subscription is fucked", async () => {
+				githubNock.get(`/app/installations/${gitHubInstallationId}`).reply(500, { boom: "kaboom" });
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}`)
 					.set("host", "127.0.0.1")
