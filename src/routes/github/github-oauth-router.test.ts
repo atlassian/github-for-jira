@@ -16,10 +16,6 @@ describe("github-oauth-router", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
-			expect.anything()
-		).mockResolvedValue(true);
-		when(booleanFlag).calledWith(
 			BooleanFlags.RENEW_GITHUB_TOKEN,
 			expect.anything()
 		).mockResolvedValue(true);

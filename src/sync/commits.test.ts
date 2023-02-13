@@ -9,7 +9,7 @@ import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
@@ -310,10 +310,6 @@ describe("sync/commits", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()

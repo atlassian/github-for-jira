@@ -31,7 +31,7 @@ export const getCommitTask = async (
 
 	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
-	const jiraPayload = await transformCommit(
+	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl
 	);
