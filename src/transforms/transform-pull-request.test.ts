@@ -6,10 +6,6 @@ import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.j
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 100403908;
@@ -18,9 +14,6 @@ describe("pull_request transform", () => {
 	beforeEach(() => {
 		mockSystemTime(12345678);
 		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
-		when(booleanFlag).calledWith(
-			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
-		).mockResolvedValue(true);
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
@@ -179,7 +172,7 @@ describe("pull_request transform", () => {
 
 		const { updated_at, title } = fixture;
 
-		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
+		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i+1}`);
 
 		expect(data).toMatchObject({
 			id: "100403908",
@@ -243,7 +236,7 @@ describe("pull_request transform", () => {
 		);
 
 		const fixture = pullRequestList[0];
-		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		fixture.user = null;
@@ -266,7 +259,7 @@ describe("pull_request transform", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-0"],
+					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -299,7 +292,7 @@ describe("pull_request transform", () => {
 		);
 
 		const fixture = pullRequestList[0];
-		fixture.title = "[TEST-0] Branch payload with loads of issue keys Test";
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		fixture.user = null;
@@ -329,7 +322,7 @@ describe("pull_request transform", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-0"],
+					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{

@@ -98,7 +98,7 @@ export const getPullRequestTask = async (
 				}
 
 				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
-				const data = await transformPullRequestSync(
+				const data = transformPullRequestSync(
 					{ pullRequest: pull, repository },
 					prDetails,
 					gitHubInstallationClient.baseUrl,
@@ -117,7 +117,7 @@ export const getPullRequestTask = async (
 		jiraPayload:
 			pullRequests?.length
 				? {
-					... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+					... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 					pullRequests
 				}
 				: undefined
