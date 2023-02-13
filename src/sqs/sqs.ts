@@ -267,7 +267,7 @@ export class SqsQueue<MessagePayload> {
 			const messageProcessingStartTime = Date.now();
 
 			if (await preemptiveRateLimitCheck(context, this.queueName, this.changeVisibilityTimeout)) {
-				//return;
+				return;
 			}
 
 			// Change message visibility timeout to the max processing time
