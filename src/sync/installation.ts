@@ -12,7 +12,7 @@ import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -142,20 +142,8 @@ export const updateJobStatus = async (
  * with a smaller request (i.e. with fewer pages).
  * @param err the error thrown by Octokit.
  */
-export const isRetryableWithSmallerRequest = async (err): Promise<boolean> => {
-	if (await booleanFlag(BooleanFlags.RETRY_ALL_ERRORS)) {
-		return err?.isRetryable || false;
-	}
-	if (err?.errors) {
-		const retryableErrors = err?.errors?.find(
-			(error) => "MAX_NODE_LIMIT_EXCEEDED" == error.type ||
-				error.message?.startsWith("Something went wrong while executing your query")
-		);
-
-		return !!retryableErrors;
-	}
-	return err?.isRetryable || false;
-};
+export const isRetryableWithSmallerRequest = (err) =>
+	err?.isRetryable || false;
 
 // Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
 // - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
@@ -256,7 +244,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				}
 
 				errorLog.warn(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
-				if (!(await isRetryableWithSmallerRequest(err))) {
+				if (!isRetryableWithSmallerRequest(err)) {
 					// error is not retryable, re-throwing it
 					errorLog.warn(`Not retryable error, rethrowing`);
 					throw err;

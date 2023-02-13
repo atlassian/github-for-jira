@@ -6,10 +6,6 @@ import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.j
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 100403908;
@@ -18,9 +14,6 @@ describe("pull_request transform", () => {
 	beforeEach(() => {
 		mockSystemTime(12345678);
 		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
-		when(booleanFlag).calledWith(
-			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
-		).mockResolvedValue(true);
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {

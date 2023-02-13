@@ -16,7 +16,7 @@ import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-k
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
@@ -316,10 +316,6 @@ describe("sync/branches", () => {
 				.reply(200, response);
 
 		beforeEach(async () => {
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()

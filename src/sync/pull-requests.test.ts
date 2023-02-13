@@ -191,17 +191,16 @@ describe("sync/pull-request", () => {
 										},
 									"commentCount": 10,
 									"destinationBranch": "devel",
-									"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
+									"destinationBranchUrl": "test-repo-url/tree/devel",
 									"displayId": "#51",
 									"id": 51,
 									"issueKeys":
 										[
-											"KEY-15"
+											"TES-15"
 										],
 									"lastUpdate": "2018-05-04T14:06:56Z",
-									"reviewers":[],
 									"sourceBranch": "use-the-force",
-									"sourceBranchUrl":"https://github.com/integrations/test/tree/use-the-force",
+									"sourceBranchUrl":"test-repo-url/tree/use-the-force",
 									"status": "DECLINED",
 									"timestamp": "2018-05-04T14:06:56Z",
 									"title": "[KEY-15] Testing force pushes",
@@ -325,10 +324,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
 
 			when(jest.mocked(booleanFlag))
 				.calledWith(BooleanFlags.USE_SHARED_PR_TRANSFORM, expect.anything())
@@ -485,11 +480,6 @@ describe("sync/pull-request", () => {
 
 		beforeEach(async () => {
 
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
-
-
 			const buildResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -503,20 +493,12 @@ describe("sync/pull-request", () => {
 			pullRequestList[0].head.ref = "Evernote Test";
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
 				.reply(200, pullRequestList)
 				.get("/repos/integrations/test-repo-name/pulls/51")
-				.reply(200, pullRequest)
-				.get("/users/integrations")
-				.reply(200, {
-					login: "integrations",
-					avatar_url: "integrations-avatar",
-					html_url: "integrations-url"
-				});
+				.reply(200, pullRequest);
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOld("6769746875626d79646f6d61696e636f6d-1")).reply(200);
 

@@ -1,11 +1,10 @@
 import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response, Router } from "express";
-import axios from "axios";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { Errors } from "config/errors";
-import { getGitHubApiUrl, createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
+import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
@@ -90,7 +89,7 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	if (!code) return next("Missing OAuth Code");
 
 	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { hostname, clientId, uuid } = gitHubAppConfig;
+	const { clientId, uuid } = gitHubAppConfig;
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
@@ -102,34 +101,12 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	try {
 
-		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
-			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-			const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
-				clientId, clientSecret: gitHubClientSecret, code, state
-			});
-			req.session.githubToken = accessToken;
-			req.session.githubRefreshToken = refreshToken;
-		} else {
-			const response = await axios.get(
-				`${hostname}/login/oauth/access_token`,
-				{
-					params: {
-						client_id: clientId,
-						client_secret: gitHubClientSecret,
-						code,
-						state
-					},
-					headers: {
-						accept: "application/json",
-						"content-type": "application/json"
-					},
-					responseType: "json"
-				}
-			);
-			// Saving it to session be used later
-			req.session.githubToken = response.data.access_token;
-			req.session.githubRefreshToken = response.data.refresh_token;
-		}
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
+			clientId, clientSecret: gitHubClientSecret, code, state
+		});
+		req.session.githubToken = accessToken;
+		req.session.githubRefreshToken = refreshToken;
 
 		// Saving UUID for each GitHubServerApp
 		req.session.gitHubUuid = uuid;
@@ -153,7 +130,6 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	try {
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
-		const gitHubAppId = res.locals.gitHubAppId || gitHubAppConfig.gitHubAppId;
 
 		/**
 		 * Comparing the `UUID` saved in the session with the `UUID` inside `gitHubAppConfig`,
@@ -167,17 +143,8 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		if (await booleanFlag(BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER, jiraHost)) {
-			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
-			await gitHubAnonymousClient.checkGitHubToken(githubToken);
-		} else {
-			const url = await getGitHubApiUrl(jiraHost, gitHubAppId, req.log);
-			await axios.get(url, {
-				headers: {
-					Authorization: `Bearer ${githubToken}`
-				}
-			});
-		}
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+		await gitHubAnonymousClient.checkGitHubToken(githubToken);
 
 		req.log.debug(`Github token is valid, continuing...`);
 
