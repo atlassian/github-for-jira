@@ -266,7 +266,8 @@ export class SqsQueue<MessagePayload> {
 		try {
 			const messageProcessingStartTime = Date.now();
 
-			if (await preemptiveRateLimitCheck(context, this.queueName, this.changeVisibilityTimeout)) {
+			if (await preemptiveRateLimitCheck(context, this)) {
+				context.log.info("Preemptive rate limit threshold exceeded");
 				return;
 			}
 
@@ -332,7 +333,7 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;
@@ -354,7 +355,6 @@ export class SqsQueue<MessagePayload> {
 			VisibilityTimeout: Math.round(timeoutSec)
 		};
 		try {
-
 			await this.sqs.changeMessageVisibility(params).promise();
 		} catch (err) {
 			logger.error("Message visibility timeout change failed");
