@@ -401,7 +401,6 @@ environmentOverrides:
               WebhooksQueueName: '_Ref sqs.webhooks.queuename'
               WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
-              Domain: 'github.dev.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
@@ -545,7 +544,6 @@ environmentOverrides:
               WebhooksQueueName: '_Ref sqs.webhooks.queuename'
               WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
               ServerHost: 'github-for-jira.stg-west.services.atlassian.com'
-              Domain: 'github.stg.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
@@ -634,7 +632,6 @@ environmentOverrides:
               WebhooksQueueName: '_Ref sqs.webhooks.queuename'
               WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
               ServerHost: 'github-for-jira.prod-west.services.atlassian.com'
-              Domain: 'github.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site

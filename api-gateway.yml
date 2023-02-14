@@ -32,12 +32,12 @@ paths:
             #set($params = $allParams.get($type))
             "$type" : {
               #foreach($paramName in $params.keySet())
-              "$paramName" : "$util.escapeJavaScript($params.get($paramName))"#if($foreach.hasNext),#end
+              "$paramName.toLowerCase()" : "$util.escapeJavaScript($params.get($paramName))"#if($foreach.hasNext),#end
               #end
             },#end
             "method":"$context.httpMethod",
             "event":"$util.escapeJavaScript($input.params('event'))",
-            "url":"{{Domain}}$context.path",
+            "url":"$input.params('X-Forwarded-Proto')://$input.params('X-Forwarded-Host')$input.params('X-Envoy-Original-Path')",
             "body":$input.body
             }
         responses:
