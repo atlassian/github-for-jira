@@ -6,17 +6,11 @@ info:
 
 paths:
   # GITHUB WEBHOOKS
-  /webhooks/{source}/{proxy+}:
+  /webhooks/{event+}:
     parameters:
-      - name: "source"
+      - name: "event+"
         in: "path"
-        description: "Generated path parameter for source"
-        required: true
-        schema:
-          type: "string"
-      - name: "proxy+"
-        in: "path"
-        description: "Generated path parameter for proxy+"
+        description: "Generated path parameter for event+"
         required: true
         schema:
           type: "string"
@@ -42,7 +36,7 @@ paths:
               #end
             },#end
             "method":"$context.httpMethod",
-            "source":"$util.escapeJavaScript($input.params('source'))",
+            "event":"$util.escapeJavaScript($input.params('event'))",
             "url":"$context.domainName$context.path",
             "body":$input.body
             }

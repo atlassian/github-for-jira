@@ -13,4 +13,4 @@ awslocal sqs create-queue --queue-name test-backfill
 awslocal sqs create-queue --queue-name test-push
 awslocal sqs create-queue --queue-name test-deployment
 awslocal sqs create-queue --queue-name test-branch
-awslocal sqs create-queue --queue-name webhooks
+awslocal sqs create-queue --queue-name test-webhooks

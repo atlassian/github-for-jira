@@ -14,13 +14,12 @@ export const webhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> 
 			context.log.debug(context, "Could not parse body of webhook payload");
 		}
 	}
-	switch (context.payload.source) {
+	switch (context.payload.event) {
 		case "github":
 			return await githubWebhookHandler(context, body);
-		case "jira":
-			return await jiraWebhookHandler(context, body);
+		default:
+			context.log.warn(context.payload, "Unknown Webhook event");
 	}
-
 };
 
 const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: any): Promise<void> => {
@@ -76,8 +75,4 @@ const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePay
 	} catch (err) {
 		context.log.error(err, "Uncaught error in Github webhooks");
 	}
-};
-
-const jiraWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: any): Promise<void> => {
-	context.log.debug(data, "Jira webhook handler");
 };
