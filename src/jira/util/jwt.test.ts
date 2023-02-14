@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenType, verifyAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
-import { AsymmetricAlgorithm, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
+import { createCanonicalRequest as jwtCreateCanonicalRequest, createQueryStringHash as jwtCreateQueryStringHash, getJWTRequest, JWTRequest, TokenType, validateAsymmetricJwtTokenMiddleware, verifySymmetricJwtTokenMiddleware } from "./jwt";
+import { AsymmetricAlgorithm, createCanonicalRequest, createQueryStringHash, encodeAsymmetric, encodeSymmetric } from "atlassian-jwt";
 import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public-key";
 import { when } from "jest-when";
 import { Request, Response } from "express";
-import Mock = jest.Mock;
 import { getLogger } from "config/logger";
+import Mock = jest.Mock;
 
 jest.mock("./query-atlassian-connect-public-key");
 
@@ -18,7 +18,7 @@ describe("jwt", () => {
 	const testSecret = "testSecret";
 
 	// Query string hash corresponding to the request parameters above
-	const testQsh = "345c5da1c34c5126155b18ff4522446c89cc017debe4878bfa6056cacd5245ae";
+	const testQsh = "bcb1e97709b6bcbce5b08cabffe01050e13edabb7a64efbd45ee15ee4b6494d9";
 
 	// RAS keypair used to sign test tokens. Base64 encoded to prevent security scanning from being triggered
 	const testPrivateKey = Buffer.from(
@@ -39,16 +39,19 @@ describe("jwt", () => {
 
 	const buildRequestWithNoToken = () => baseRequest;
 
-	const buildRequest = (jwtValue: string) => ({
-		...baseRequest,
-		query: {
+	const buildRequest = (jwtValue: string) => {
+		const query = {
 			...testQueryParams,
 			jwt: jwtValue
-		},
-		method: "GET",
-		path: "/configuration",
-		baseUrl: "/jira"
-	});
+		};
+		return {
+			...baseRequest,
+			query,
+			method: "GET",
+			pathname: "/jira/configuration",
+			url: `/jira/configuration?${new URLSearchParams(query)}`
+		};
+	};
 
 	const buildRequestWithJwt = (secret = "secret", qsh: string): any =>
 		buildRequest(
@@ -72,12 +75,11 @@ describe("jwt", () => {
 		(res.status as Mock).mockReturnValue(res);
 		(res.json as Mock).mockReturnValue(res);
 
-		// TODO: need to remove all references to 'kabakumov' in this file, just use jiraHost instead
 		testQueryParams = {
-			xdm_e: "https://kabakumov.atlassian.net",
-			xdm_c: "channel-com.github.integration.konstantin__github-post-install-page",
+			xdm_e: "https://test.atlassian.net",
+			xdm_c: "channel-com.github.integration.test__github-post-install-page",
 			cp: "",
-			xdm_deprecated_addon_key_do_not_use: "com.github.integration.konstantin",
+			xdm_deprecated_addon_key_do_not_use: "com.github.integration.test",
 			lic: "none",
 			cv: "1001.0.0-SNAPSHOT"
 		};
@@ -85,10 +87,11 @@ describe("jwt", () => {
 		baseRequest = {
 			query: testQueryParams,
 			method: "GET",
-			path: "/jira/configuration",
+			pathname: "/jira/configuration",
 			session: {
 				jiraHost: "https://test.atlassian.net"
 			},
+			url: `/jira/configuration?${new URLSearchParams(testQueryParams)}`,
 			log: getLogger("jwt.test")
 		} as any;
 
@@ -114,7 +117,7 @@ describe("jwt", () => {
 			it("should fail if secret is wrong", async () => {
 				const req = buildRequestWithJwt("wrongSecret", testQsh);
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.normal, req, res, next);
-				expect(res.status).toHaveBeenCalledWith(400);
+				expect(res.status).toHaveBeenCalledWith(401);
 				expect(next).toBeCalledTimes(0);
 			});
 		});
@@ -147,7 +150,7 @@ describe("jwt", () => {
 			it("should fail if secret is wrong", async () => {
 				const req = buildRequestWithJwt("wrongSecret", testQsh);
 				verifySymmetricJwtTokenMiddleware(testSecret, TokenType.context, req, res, next);
-				expect(res.status).toHaveBeenCalledWith(400);
+				expect(res.status).toHaveBeenCalledWith(401);
 				expect(next).toBeCalledTimes(0);
 			});
 		});
@@ -160,12 +163,14 @@ describe("jwt", () => {
 					exp: expiryDate
 				}, testSecret);
 
+				const query = {
+					...testQueryParams,
+					jwt: jwtValue
+				};
 				return {
 					...baseRequest,
-					query: {
-						...testQueryParams,
-						jwt: jwtValue
-					}
+					query,
+					url: `/jira/configuration?${new URLSearchParams(query)}`
 				};
 			};
 
@@ -302,7 +307,7 @@ describe("jwt", () => {
 
 		it("should pass when token is valid", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false);
@@ -310,8 +315,8 @@ describe("jwt", () => {
 
 		it("should pass when token is valid for Staging Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			req.body = { baseUrl: "https://kabakumov2.jira-dev.com/jira/your-work" };
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			req.body = { baseUrl: "https://test.jira-dev.com/jira/your-work" };
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, true);
@@ -319,8 +324,8 @@ describe("jwt", () => {
 
 		it("should pass when token is valid for Prod Jira Instance", async () => {
 			const req = buildRequestWithJwt(testQsh);
-			req.body = { baseUrl: "https://kabakumov.atlassian.net" };
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			req.body = { baseUrl: "https://test.atlassian.net" };
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
 			expect(queryAtlassianConnectPublicKey).toHaveBeenCalledWith(testKid, false);
@@ -328,7 +333,7 @@ describe("jwt", () => {
 
 		it("should return 401 when was encrypted with wrong key", async () => {
 			const req = buildRequestWithJwt(testQsh, undefined, wrongPrivateKey);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -339,21 +344,21 @@ describe("jwt", () => {
 				testKid,
 				false
 			).mockRejectedValueOnce(new Error("404"));
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
 
 		it("should return 401 when expiration date is wrong", async () => {
 			const req = buildRequestWithJwt(testQsh, Date.now() / 1000 - 100);
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
 
 		it("should return 401 when qsh is wrong", async () => {
 			const req = buildRequestWithJwt("13113wrong13123");
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -363,7 +368,7 @@ describe("jwt", () => {
 				qsh: testQsh,
 				iss: "jira"
 			});
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
@@ -374,17 +379,35 @@ describe("jwt", () => {
 				iss: "jira",
 				aud: "https://wrong-addon.example.com"
 			});
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledWith(401);
 			expect(next).toBeCalledTimes(0);
 		});
 
 		it("should return 200 with encoded URI in the path", async () => {
-			const req = buildRequestWithJwt("629dd55929f23ea619f465d40e02b394f57acfc6deeecd2024428f9c31f8b55c");
+			const req = buildRequestWithJwt("bcb1e97709b6bcbce5b08cabffe01050e13edabb7a64efbd45ee15ee4b6494d9");
 			req.path = encodeURIComponent("https://whatever.fake");
-			await verifyAsymmetricJwtTokenMiddleware(req, res, next);
+			await validateAsymmetricJwtTokenMiddleware(req, res, next);
 			expect(res.status).toHaveBeenCalledTimes(0);
 			expect(next).toBeCalledTimes(1);
+		});
+	});
+
+	describe("Make sure our jwt API returns the same data as atlassian-jwt", () => {
+		let request: Request;
+		let jwtRequest: JWTRequest;
+		beforeEach(() => {
+			request = buildRequestWithJwt(testSecret, testQsh);
+			jwtRequest = getJWTRequest(request);
+		});
+
+		it("should return the same qsh", () => {
+			expect(jwtCreateQueryStringHash(jwtRequest)).toEqual(createQueryStringHash(request));
+			expect(jwtCreateQueryStringHash(jwtRequest, true)).toEqual(createQueryStringHash(request, true));
+		});
+
+		it("should return the same request string", () => {
+			expect(jwtCreateCanonicalRequest(jwtRequest)).toEqual(createCanonicalRequest(request));
 		});
 	});
 });

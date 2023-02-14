@@ -38,7 +38,7 @@ describe("GitHub Configured Get", () => {
 			installationId: INSTALLATION_ID,
 			host: jiraHost,
 			gitHubAppId: undefined,
-			clientKey: "key"
+			hashedClientKey: "key"
 		});
 	});
 

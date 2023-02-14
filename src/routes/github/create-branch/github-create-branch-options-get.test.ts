@@ -43,7 +43,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 		await supertest(app)
@@ -75,7 +75,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await supertest(app)
@@ -119,13 +119,13 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 123,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp2.id
 		});
 
@@ -157,13 +157,13 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 

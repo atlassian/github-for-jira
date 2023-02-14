@@ -66,7 +66,7 @@ declare global {
 }
 
 const clearState = async () => Promise.all([
-	sequelize.truncate({ truncate: true })
+	sequelize.truncate({ truncate: true, cascade: true })
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>

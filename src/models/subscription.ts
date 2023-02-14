@@ -1,6 +1,6 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize, getHashedKey } from "models/sequelize";
+import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -176,11 +176,11 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: getHashedKey(payload.clientKey),
+				jiraClientKey: payload.hashedClientKey,
 				gitHubAppId: payload.gitHubAppId || null
 			},
 			defaults: {
-				plainClientKey: payload.clientKey
+				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
 			}
 		});
 
@@ -252,5 +252,5 @@ export interface SubscriptionPayload {
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
-	clientKey: string;
+	hashedClientKey: string;
 }

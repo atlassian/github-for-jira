@@ -17,7 +17,7 @@ describe("ApiInstallationDelete", ()=>{
 				installationId: GHES_GITHUB_INSTALLATION_ID,
 				host: jiraHost,
 				gitHubAppId: GHES_GITHUB_APP_ID,
-				clientKey: "key"
+				hashedClientKey: "key"
 			});
 			mockJiraClient = {
 				devinfo: {
