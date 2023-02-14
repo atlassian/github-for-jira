@@ -401,6 +401,7 @@ environmentOverrides:
               WebhooksQueueName: '_Ref sqs.webhooks.queuename'
               WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
               ServerHost: 'github-for-jira.dev.services.atlassian.com'
+              Domain: 'github.dev.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
@@ -539,8 +540,12 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
+              AccountNumber: 752631980301
               WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
-              ServerUri: 'https://github-for-jira.stg-west.services.atlassian.com'
+              WebhooksQueueName: '_Ref sqs.webhooks.queuename'
+              WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
+              ServerHost: 'github-for-jira.stg-west.services.atlassian.com'
+              Domain: 'github.stg.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
@@ -624,8 +629,12 @@ environmentOverrides:
           swaggerConfig:
             configFile: api-gateway.yml
             configParams:
+              AccountNumber: 234617365107
               WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
-              ServerUri: 'https://github-for-jira.prod-west.services.atlassian.com'
+              WebhooksQueueName: '_Ref sqs.webhooks.queuename'
+              WebhooksQueueRegion: '_Ref sqs.webhooks.queueregion'
+              ServerHost: 'github-for-jira.prod-west.services.atlassian.com'
+              Domain: 'github.atlassian.com'
           stageName: live
           dataType:
             - UGC/Label                # name of GitHub org / Jira site
