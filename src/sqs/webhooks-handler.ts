@@ -14,15 +14,13 @@ export const webhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> 
 			context.log.debug(context, "Could not parse body of webhook payload");
 		}
 	}
-	switch (context.payload.event) {
-		case "github":
-			return await githubWebhookHandler(context, data);
-		default:
-			context.log.warn(context.payload, "Unknown Webhook event");
+	const event = context.payload.event;
+	if (event.startsWith("github")) {
+		return await githubWebhookHandler(event, context, data);
 	}
 };
 
-const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: Record<string, any>): Promise<void> => {
+const githubWebhookHandler = async (event: string, context: SQSMessageContext<WebhookMessagePayload>, data: Record<string, any>): Promise<void> => {
 	context.log.debug(context, "Github webhook handler");
 	try {
 		const {
@@ -38,7 +36,7 @@ const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePay
 			return;
 		}
 
-		const uuid = context.payload.path?.proxy;
+		const uuid = event.match(/github\/(.*)/)?.[1];
 
 		context.log = context.log.child({
 			githubAppUUID: uuid,
