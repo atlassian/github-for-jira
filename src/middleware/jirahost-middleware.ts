@@ -14,7 +14,12 @@ const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRou
 const extractUnsafeJiraHost = (req: Request): string | undefined => {
 	if (checkPathValidity(req.path) && req.method == "GET") {
 		// Only save xdm_e query when on the GET post install url (iframe url)
-		return req.query.xdm_e as string;
+		if (req.query.xdm_e) {
+			return req.query.xdm_e as string;
+		} else {
+			return getJiraHostFromJwtToken(req.query.jwt as string, req.log);
+		}
+
 	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
