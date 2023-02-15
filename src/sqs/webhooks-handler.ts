@@ -6,23 +6,23 @@ import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github
 
 export const webhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>): Promise<void> => {
 	context.log.debug("Handling webhook from the SQS queue");
-	let body: any;
+	let parsedBody: any;
 	if (context.payload.body) {
 		try {
-			body = JSON.parse(context.payload.body);
+			parsedBody = JSON.parse(context.payload.body);
 		} catch (e) {
 			context.log.debug(context, "Could not parse body of webhook payload");
 		}
 	}
 	switch (context.payload.event) {
 		case "github":
-			return await githubWebhookHandler(context, body);
+			return await githubWebhookHandler(context, parsedBody);
 		default:
 			context.log.warn(context.payload, "Unknown Webhook event");
 	}
 };
 
-const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: any): Promise<void> => {
+const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePayload>, data: Record<string, any>): Promise<void> => {
 	context.log.debug(context, "Github webhook handler");
 	try {
 		const {

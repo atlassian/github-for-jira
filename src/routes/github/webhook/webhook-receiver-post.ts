@@ -1,4 +1,4 @@
-import { BinaryLike, createHmac } from "crypto";
+import { createHmac } from "crypto";
 import { Request, Response } from "express";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware, LOGGER_NAME } from "~/src/middleware/github-webhook-middleware";
@@ -121,7 +121,7 @@ export const webhookRouter = async (context: WebhookContext) => {
 	}
 };
 
-export const createHash = (data: BinaryLike | undefined, secret: string): string => {
+export const createHash = (data: string | undefined, secret: string): string => {
 	if (!data) {
 		throw new Error("No data to hash");
 	}
