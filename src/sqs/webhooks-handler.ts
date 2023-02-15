@@ -49,7 +49,7 @@ const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePay
 		context.log.debug("Github Webhook received");
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
 		const verification = createHash(body, webhookSecret);
-
+		context.log.debug("Verifying github webhook signature");
 		if (verification !== signature) {
 			context.log.warn("Github webhook signature validation failed");
 			return;
@@ -70,6 +70,7 @@ const githubWebhookHandler = async (context: SQSMessageContext<WebhookMessagePay
 				uuid
 			}
 		});
+		context.log.debug(webhookContext, "created webhook context");
 		await webhookRouter(webhookContext);
 		context.log.info("Webhook was successfully processed");
 	} catch (err) {

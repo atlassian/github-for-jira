@@ -75,6 +75,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 export const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited"];
+	context.log.debug({ event: context.name, action: context.action }, "Github routing event");
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);

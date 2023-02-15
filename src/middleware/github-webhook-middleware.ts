@@ -58,11 +58,8 @@ const isStateChangeOrDeploymentAction = (action) =>
 	);
 
 const extractWebhookEventNameFromContext = (context: WebhookContext): string => {
-	let webhookEvent = context.name;
-	if (context.payload?.action) {
-		webhookEvent = `${webhookEvent}.${context.payload.action}`;
-	}
-	return webhookEvent;
+	const action = context.action || context.payload?.action;
+	return action ? `${context.name}.${action}` : context.name;
 };
 
 // TODO: fix typings

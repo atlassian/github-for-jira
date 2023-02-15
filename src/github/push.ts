@@ -30,6 +30,8 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		installation: context.payload?.installation
 	};
 
+	context.log.debug({ payload }, "Starting push webhook handler");
+
 	const jiraHost = jiraClient.baseURL;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
