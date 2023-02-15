@@ -12,19 +12,26 @@ import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 const checkPathValidity = (url: string) => moduleUrls.some(moduleUrl => matchRouteWithPattern(moduleUrl, url));
 
 const extractUnsafeJiraHost = (req: Request): string | undefined => {
+	req.log.info({ req }, "TESTJOSHH - extractUnsafeJiraHost");
 	if (checkPathValidity(req.path) && req.method == "GET") {
+		req.log.info("TESTJOSHH - HERA A");
 		// Only save xdm_e query when on the GET post install url (iframe url)
 		if (req.query.xdm_e) {
+			req.log.info("TESTJOSHH - HERA A1");
 			return req.query.xdm_e as string;
 		} else {
+			req.log.info("TESTJOSHH - HERA A2");
 			return getJiraHostFromJwtToken(req.query.jwt as string, req.log);
 		}
 
 	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
+		req.log.info("TESTJOSHH - HERA B");
 		return req.body?.jiraHost;
 	} else if (req.cookies.jiraHost) {
+		req.log.info("TESTJOSHH - HERA C");
 		return req.cookies.jiraHost;
 	} else if (req.query?.jwt) {
+		req.log.info("TESTJOSHH - HERA D");
 		return getJiraHostFromJwtToken(req.query.jwt as string, req.log);
 	}
 	return undefined;
