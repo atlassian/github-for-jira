@@ -64,7 +64,7 @@ RootRouter.use(jirahostMiddleware);
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
 
-RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

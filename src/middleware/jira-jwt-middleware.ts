@@ -40,7 +40,6 @@ export const verifyJiraJwtMiddleware = (tokenType: TokenType) => async (
 			installation.clientKey && `${installation.clientKey.substr(0, 5)}***`
 	});
 
-	req.log.info("TESTJK - attempt verifySymmetricJwtTokenMiddleware");
 	verifySymmetricJwtTokenMiddleware(
 		await installation.decrypt("encryptedSharedSecret", req.log),
 		tokenType,
