@@ -60,30 +60,4 @@ describe("backfill", () => {
 		});
 	});
 
-	// describe.skip("Preemptive rate limit", () => {
-	//
-	// 	beforeEach(() => {
-	// 		mockSentryGetClient();
-	// 	});
-	//
-	// 	it("Should stop processing if preemptive threshold is met", async () => {
-	// 		// mockPreemptiveRateLimit(50);
-	// 		// mockGitHubRateLimitResponse(100, 10);
-	//
-	// 		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
-	// 		expect(sqsQueues.backfill.changeVisibilityTimeout).toBeCalled();
-	// 	});
-	//
-	// 	it("Should continue processing if rate limit still has a sufficient amount remaining", async () => {
-	// 		mockPreemptiveRateLimit(50);
-	// 		mockGitHubRateLimitResponse(100, 51);
-	//
-	// 		const mockedProcessor = jest.fn();
-	// 		mocked(processInstallation).mockReturnValue(mockedProcessor);
-	// 		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT);
-	// 		expect(sqsQueues.backfill.changeVisibilityTimeout).not.toBeCalled();
-	// 	});
-	//
-	// });
-
 });
