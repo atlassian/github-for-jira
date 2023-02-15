@@ -171,9 +171,11 @@ export const verifySymmetricJwtTokenMiddleware = (secret: string, tokenType: Tok
 	try {
 		const token = extractJwtFromRequest(req);
 		validateSymmetricJwt(secret, getJWTRequest(req), tokenType, token);
+		req.log.info("TESTJK - passed verifySymmetricJwtTokenMiddleware");
 		req.log.info("JWT Token Verified Successfully!");
 		next();
 	} catch (error) {
+		req.log.info("TESTJK - failed verifySymmetricJwtTokenMiddleware");
 		req.log.error(error, "Error happened when validating JWT token");
 		sendError(res, 401, "Unauthorized");
 		return;

@@ -27,9 +27,12 @@ const extractUnsafeJiraHost = (req: Request): string | undefined => {
 
 const getJiraHostFromJwtToken = (encodedToken: string, logger) => {
 	try {
+		logger.info({ encodedToken }, "TESTJK - encodedToken");
 		const decodedToken = JSON.parse(Buffer.from(encodedToken.split(".")[1], "base64").toString());
-		const tenantUrl = decodedToken.tenant_url;
+		const tenantUrl = decodedToken.context.tenant.url;
 		// prepend the protocol if its not there.
+
+		logger.info({ tenantUrl }, "TESTJK - tenantUrl");
 		return tenantUrl.includes("https://") ? tenantUrl : `https://${tenantUrl}`;
 	} catch (error) {
 		logger.error("Error extracting jiraHost from JWT");
