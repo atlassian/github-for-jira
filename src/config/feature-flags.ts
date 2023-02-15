@@ -18,7 +18,6 @@ export enum BooleanFlags {
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
-	NEW_JWT_VALIDATION = "new-jwt-validation",
 	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check",
 	RENEW_GITHUB_TOKEN = "renew-github-token"
 }

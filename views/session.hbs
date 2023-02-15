@@ -35,10 +35,6 @@
             (E.g. they can be stored in browser's session or hijacked.)
             More secure is to pass it using the cookies.
       */--}}
-      {{!--/*
-        Don't set jiraHost cookie on cleaning up NEW_JWT_VALIDATION flag - remove below line
-      */--}}
-      document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
       document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
     }
   });
