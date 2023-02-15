@@ -5,11 +5,12 @@ import { SQSMessageContext } from "~/src/sqs/sqs.types";
 import { SqsQueue } from "~/src/sqs/sqs";
 import Logger from "bunyan";
 
-const ALLOWED_QUEUES = ["backfill"];
+// List of queues we want to apply the preemptive rate limiting on
+const TARGETTED_QUEUES = ["backfill"];
 
 // Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
 export const preemptiveRateLimitCheck = async (context: SQSMessageContext<any>, sqsQueue: SqsQueue<any>) : Promise<boolean> => {
-	if (!ALLOWED_QUEUES.includes(sqsQueue.queueName))
+	if (!TARGETTED_QUEUES.includes(sqsQueue.queueName))
 	{
 		return false;
 	}
