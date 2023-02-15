@@ -1,4 +1,4 @@
-import { createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
+import { createGithubSignature, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { issueWebhookHandler } from "~/src/github/issue";
@@ -274,7 +274,7 @@ describe("webhook-receiver-post", () => {
 
 describe("createHash", () => {
 	it("throws a Error if no data was provided", () => {
-		expect(() => createHash(undefined, "blah")).toThrow();
+		expect(() => createGithubSignature(undefined, "blah")).toThrow();
 	});
 });
 
@@ -302,7 +302,7 @@ const createReqForEvent = (
 
 	const req = {
 		headers: {
-			"x-hub-signature-256": signature || createHash(JSON.stringify(body), webhookSecret || ""),
+			"x-hub-signature-256": signature || createGithubSignature(JSON.stringify(body), webhookSecret || ""),
 			"x-github-event": event,
 			"x-github-delivery": "100"
 		},
