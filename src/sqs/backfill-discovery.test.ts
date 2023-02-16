@@ -13,6 +13,10 @@ import { v4 as UUID } from "uuid";
 import fs from "fs";
 import path from "path";
 import { createWebhookApp } from "test/utils/create-webhook-app";
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Discovery Queue Test - GitHub Client", () => {
 	const TEST_INSTALLATION_ID = 1234;
@@ -64,6 +68,13 @@ describe("Discovery Queue Test - GitHub Client", () => {
 		});
 
 		await sqsQueues.backfill.start();
+
+		when(numberFlag).calledWith(
+			NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(100);
+
 	});
 
 	afterEach(async () => {
@@ -85,8 +96,36 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			.reply(200, { data: getRepositories });
 	};
 
+	const rateLimitResponse = {
+		"resources": {
+			"core": {
+				"limit": 100,
+				"remaining": 100,
+				"reset": 1372700873
+			},
+			"graphql": {
+				"limit": 5000,
+				"remaining": 5000,
+				"reset": 1372700389
+			}
+		}
+	};
+
+	const mockGitHubRateLimit = () => {
+		githubUserTokenNock(TEST_INSTALLATION_ID);
+		githubNock.get(`/rate_limit`)
+			.reply(200, rateLimitResponse);
+	};
+	const mockGitHubEnterpriseRateLimit = () => {
+		gheUserTokenNock(TEST_INSTALLATION_ID);
+		gheNock.get(`/api/v3/rate_limit`)
+			.reply(200, rateLimitResponse);
+	};
+
 	it("Discovery sqs queue processes the message for cloud", async () => {
 		mockGitHubReposResponses();
+		mockGitHubRateLimit();
+
 		await sqsQueues.backfill.sendMessage({ installationId: TEST_INSTALLATION_ID, jiraHost });
 		await waitUntil(async () => {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, TEST_INSTALLATION_ID, undefined);
@@ -98,6 +137,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 
 	it("Discovery sqs queue processes the message for GHES", async () => {
 		mockGitHubEnterpriseReposResponses();
+		mockGitHubEnterpriseRateLimit();
 		await sqsQueues.backfill.sendMessage({
 			installationId: TEST_INSTALLATION_ID,
 			jiraHost,
