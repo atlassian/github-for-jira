@@ -179,6 +179,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	};
 
+
+	/**
+	 * Returns the current status of the rate limit for all resources types
+	 */
+	public getRateLimit = async (): Promise<AxiosResponse<Octokit.RateLimitGetResponse>> => {
+		return await this.get<Octokit.RateLimitGetResponse>(`/rate_limit`);
+	};
+
 	// TODO: remove this function after discovery backfill is deployed
 	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
 		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
