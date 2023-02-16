@@ -15,6 +15,7 @@ import { GithubRepositoryRouter } from "routes/github/repository/github-reposito
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Errors } from "config/errors";
+import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
 
 //  DO NOT USE THIS MIDDLEWARE ELSE WHERE EXCEPT FOR CREATE BRANCH FLOW AS THIS HAS SECURITY HOLE
 // TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
@@ -51,6 +52,9 @@ subRouter.use(GithubOAuthRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
+
+subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
+
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
