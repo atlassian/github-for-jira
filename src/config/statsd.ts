@@ -17,8 +17,8 @@ const logger = getLogger("config.statsd");
 
 export const statsd = new StatsD({
 	prefix: "github-for-jira.",
-	host: "platform-statsd",
-	port: 8125,
+	host: envVars.MICROS_PLATFORM_STATSD_HOST,
+	port: Number(envVars.MICROS_PLATFORM_STATSD_PORT),
 	globalTags,
 	errorHandler: (err) => {
 		if (isNodeProd()) {
