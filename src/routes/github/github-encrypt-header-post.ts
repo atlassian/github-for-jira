@@ -46,7 +46,7 @@ export const GithubEncryptHeaderPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	const encryptedValue = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_PREAUTH_HEADER_VALUE, plainValue, {
+	const encryptedValue = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, plainValue, {
 		jiraHost: res.locals.jiraHost
 	});
 
