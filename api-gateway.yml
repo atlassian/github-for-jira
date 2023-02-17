@@ -4,9 +4,6 @@ info:
   description: It routes things
   version: "0.0.1"
 
-x-amazon-apigateway-binary-media-types:
-  - 'application/json'
-
 paths:
   # GITHUB WEBHOOKS
   /webhooks/{event+}:
@@ -29,7 +26,7 @@ paths:
           integration.request.header.Content-Type: "'application/x-www-form-urlencoded'"
         requestTemplates:
           application/json: |
-            Action=SendMessage&MessageBody={
+            Action=SendMessage&MessageBody=$util.urlEncode({
             #set($allParams = $input.params())
             #foreach($type in $allParams.keySet())
             #set($params = $allParams.get($type))
@@ -41,8 +38,8 @@ paths:
             "method":"$context.httpMethod",
             "event":"$util.escapeJavaScript($input.params('event'))",
             "url":"$input.params('X-Forwarded-Proto')://$input.params('X-Forwarded-Host')$input.params('X-Envoy-Original-Path')",
-            "body":"$util.base64Decode($input.body)"
-            }
+            "body":"$input.body"
+            })
         responses:
           default:
             statusCode: "204"
