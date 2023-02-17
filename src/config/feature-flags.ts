@@ -25,7 +25,8 @@ export enum BooleanFlags {
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt"
 }
 
 export enum NumberFlags {
