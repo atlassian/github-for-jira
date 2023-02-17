@@ -5,7 +5,7 @@ info:
   version: "0.0.1"
 
 x-amazon-apigateway-binary-media-types:
-  - 'application/json'
+  - '*/*'
 
 paths:
   # GITHUB WEBHOOKS
@@ -41,7 +41,7 @@ paths:
             "method":"$context.httpMethod",
             "event":"$util.escapeJavaScript($input.params('event'))",
             "url":"$input.params('X-Forwarded-Proto')://$input.params('X-Forwarded-Host')$input.params('X-Envoy-Original-Path')",
-            "body":"$input.body"
+            "body":"$util.base64Decode($input.body)"
             }
         responses:
           default:
