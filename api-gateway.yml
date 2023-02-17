@@ -4,6 +4,9 @@ info:
   description: It routes things
   version: "0.0.1"
 
+x-amazon-apigateway-binary-media-types:
+  - 'application/json'
+
 paths:
   # GITHUB WEBHOOKS
   /webhooks/{event+}:
