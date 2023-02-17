@@ -21,7 +21,6 @@ describe("Github Encrypt Header post endpoint", () => {
 			.calledWith(StringFlags.HEADERS_TO_ENCRYPT, expect.anything(), jiraHost)
 			.mockResolvedValue(undefined);
 
-		// githubNock.get("/").reply(200);
 		await supertest(frontendApp)
 			.post("/github/encrypt/header")
 			.set(
@@ -44,7 +43,6 @@ describe("Github Encrypt Header post endpoint", () => {
 			.calledWith(StringFlags.HEADERS_TO_ENCRYPT, expect.anything(), jiraHost)
 			.mockResolvedValue(" test-HEADER  ");
 
-		// githubNock.get("/").reply(200);
 		await supertest(frontendApp)
 			.post("/github/encrypt/header")
 			.set(
