@@ -29,7 +29,7 @@
 ></script>
 <script nonce="{{nonce}}">
   $(function() {
-    if (window.jiraHost) {
+    if (window.jwt) {
       {{!--/*
             We cannot pass jwt as a query string parameter because of security considerations!
             (E.g. they can be stored in browser's session or hijacked.)
