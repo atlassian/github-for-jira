@@ -145,7 +145,7 @@ export class SqsQueue<MessagePayload> {
 
 		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
 
-		listenerContext.log.debug("Processing messages batch");
+		listenerContext.log.debug({ messages: data.Messages }, "Processing messages batch");
 		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));
 		listenerContext.log.debug("Messages batch processed");
 	}
@@ -242,6 +242,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
+		listenerContext.log.debug({ message }, "Trying to parse message body");
 		const payload = message.Body ? JSON.parse(message.Body) : {};
 
 		// Sets the log level depending on FF for the specific jira host
