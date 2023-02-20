@@ -81,7 +81,7 @@ describe("get-github-client-config", () => {
 	it("includes API key config when provided", async () => {
 		when(stringFlag)
 			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
-			.mockResolvedValue("ApiKeyHeader:encrypted:super-key");
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
 
 		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
 		expect(config.apiKeyConfig!.headerName).toEqual("ApiKeyHeader");

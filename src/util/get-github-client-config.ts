@@ -69,9 +69,7 @@ const calculateApiKeyConfig = async (jiraHost: string, logger: Logger): Promise<
 		const maybeApiKey = await stringFlag(StringFlags.GHE_API_KEY, "", jiraHost);
 		if (maybeApiKey) {
 			logger.info("Encrypted API key found");
-			const maybeApiKeyParts = maybeApiKey.split(":");
-			const headerName = maybeApiKeyParts.shift()!;
-			const headerEncryptedValue = maybeApiKeyParts.join(":");
+			const [headerName, headerEncryptedValue] = JSON.parse(maybeApiKey) as Array<string>;
 			return Promise.resolve({
 				apiKeyConfig: {
 					headerName,
@@ -85,7 +83,7 @@ const calculateApiKeyConfig = async (jiraHost: string, logger: Logger): Promise<
 	} catch (err) {
 		logger.error({ err }, "Cannot calculate API key");
 	}
-	return Promise.resolve(undefined);
+	return undefined;
 };
 
 const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubConfig> => {
