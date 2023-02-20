@@ -36,8 +36,8 @@ paths:
               #end
             },#end
             "method":"$context.httpMethod",
-            "event":"$util.urlEncode(($input.params('event'))",
-            "url":"$util.urlEncode($input.params('X-Forwarded-Proto')://$input.params('X-Forwarded-Host')$input.params('X-Envoy-Original-Path'))",
+            "event":"$util.urlEncode($input.params('event'))",
+            "url":"$util.urlEncode("$input.params('X-Forwarded-Proto')://$input.params('X-Forwarded-Host')$input.params('X-Envoy-Original-Path')")",
             "body":"$util.urlEncode($input.body)"
             }
         responses:
