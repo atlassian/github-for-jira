@@ -77,4 +77,19 @@ describe("get-github-client-config", () => {
 		const config = await getGitHubClientConfigFromAppId(undefined, getLogger("test"), jiraHost);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
+
+	it("includes API key config when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("ApiKeyHeader:encrypted:super-key");
+
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		expect(config.apiKeyConfig!.headerName).toEqual("ApiKeyHeader");
+		expect(await config.apiKeyConfig!.apiKeyGenerator()).toEqual("super-key");
+	});
+
+	it("does not include API key config when not provided", async () => {
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		expect(config.apiKeyConfig).toBeUndefined();
+	});
 });

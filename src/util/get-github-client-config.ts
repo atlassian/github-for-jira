@@ -7,8 +7,9 @@ import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { envVars } from "~/src/config/env";
 import { keyLocator } from "~/src/github/client/key-locator";
-import { GitHubConfig } from "~/src/github/client/github-client";
+import { GitHubClientApiKeyConfig, GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
+import { EncryptionClient } from "utils/encryption-client";
 
 export const GITHUB_CLOUD_HOSTNAME = "github.com";
 export const GITHUB_CLOUD_BASEURL = "https://github.com";
@@ -63,13 +64,38 @@ const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | u
 	return envVars.PROXY;
 };
 
+const calculateApiKeyConfig = async (jiraHost: string, logger: Logger): Promise<{ apiKeyConfig: GitHubClientApiKeyConfig } | undefined> => {
+	try {
+		const maybeApiKey = await stringFlag(StringFlags.GHE_API_KEY, "", jiraHost);
+		if (maybeApiKey) {
+			logger.info("Encrypted API key found");
+			const maybeApiKeyParts = maybeApiKey.split(":");
+			const headerName = maybeApiKeyParts.shift()!;
+			const headerEncryptedValue = maybeApiKeyParts.join(":");
+			return Promise.resolve({
+				apiKeyConfig: {
+					headerName,
+					apiKeyGenerator: () =>
+						EncryptionClient.decrypt(headerEncryptedValue, {
+							jiraHost
+						})
+				}
+			});
+		}
+	} catch (err) {
+		logger.error({ err }, "Cannot calculate API key");
+	}
+	return Promise.resolve(undefined);
+};
+
 const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubConfig> => {
 	return {
 		hostname: githubServerBaseUrl,
 		baseUrl: githubServerBaseUrl,
 		apiUrl: `${githubServerBaseUrl}/api/v3`,
 		graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger)
+		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger),
+		... await calculateApiKeyConfig(jiraHost, logger)
 	};
 };
 
