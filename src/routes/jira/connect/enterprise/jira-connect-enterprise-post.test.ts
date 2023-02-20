@@ -3,8 +3,6 @@ import { GitHubServerApp } from "models/github-server-app";
 import { JiraConnectEnterprisePost } from "routes/jira/connect/enterprise/jira-connect-enterprise-post";
 import { Installation } from "models/installation";
 import { v4 as newUUID } from "uuid";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
@@ -128,24 +126,7 @@ describe("POST /jira/connect/enterprise", () => {
 		});
 	});
 
-	it("POST Jira Connect Enterprise - invalid status code", async () => {
-		const response = mockResponse();
-		gheNock.get("/").reply(500);
-		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
-		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({
-			success: false, errors: [{
-				code: "GHE_ERROR_CANNOT_CONNECT",
-				reason: "received 500 response"
-			}]
-		});
-	});
-
-	it("POST Jira Connect Enterprise - invalid status code still return success when relax ff on", async () => {
-
-		when(booleanFlag)
-			.calledWith(BooleanFlags.RELAX_GHE_URLS_CHECK, expect.anything())
-			.mockResolvedValue(true);
+	it("POST Jira Connect Enterprise - invalid status code still return success", async () => {
 
 		const response = mockResponse();
 		gheNock.get("/").reply(500);
@@ -154,11 +135,7 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
 	});
 
-	it("POST Jira Connect Enterprise - network error code will fail when relax ff on", async () => {
-
-		when(booleanFlag)
-			.calledWith(BooleanFlags.RELAX_GHE_URLS_CHECK, expect.anything())
-			.mockResolvedValue(true);
+	it("POST Jira Connect Enterprise - network error code will fail", async () => {
 
 		const response = mockResponse();
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
