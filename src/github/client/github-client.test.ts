@@ -15,7 +15,7 @@ class TestGitHubClient extends GitHubClient {
 	}
 }
 
-describe("GitHub Client", () => {
+describe("GitHub Client (mocks)", () => {
 	const mockedAxiosPost = jest.fn();
 
 	beforeEach(async () => {
