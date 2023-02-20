@@ -17,7 +17,6 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
-	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check",
 	RENEW_GITHUB_TOKEN = "renew-github-token"
 }
 
