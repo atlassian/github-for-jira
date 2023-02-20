@@ -59,7 +59,8 @@ describe("Github Encrypt Header post endpoint", () => {
 				expect(res.status).toBe(200);
 				expect(res.body).toMatchObject({
 					encryptedValue: "encrypted:blah",
-					plainValueSha256: "8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52"
+					plainValueSha256: "8b7df143d91c716ecfa5fc1730022f6b421b05cedee8fd52b1fc65a96030ad52",
+					jiraHost
 				});
 			});
 	});
