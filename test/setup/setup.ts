@@ -16,8 +16,8 @@ jest.mock("lru-cache");
 
 const redis = new IORedis(getRedisInfo("test"));
 
-type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
-type GithubAppTokenNockFunc = () => void
+type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => nock.Scope
+type GithubAppTokenNockFunc = () => nock.Scope
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
 export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
@@ -71,7 +71,7 @@ const clearState = async () => Promise.all([
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 	(githubInstallationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
-		scope
+		return scope
 			.post(`/app/installations/${githubInstallationId}/access_tokens`)
 			.matchHeader(
 				"Authorization",
@@ -85,7 +85,7 @@ const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 
 const githubAppToken = (scope: nock.Scope): GithubAppTokenNockFunc =>
 	() => {
-		scope
+		return scope
 			.get("/app")
 			// .matchHeader("Authorization", /^Bearer .+$/i)
 			.reply(200, {
