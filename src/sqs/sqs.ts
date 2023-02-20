@@ -137,17 +137,17 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	async handleSqsResponse(data: ReceiveMessageResult, listenerContext: SQSContext) {
-		listenerContext.log.trace({ data }, "sqs message");
+		listenerContext.log.debug({ data }, "sqs message");
 		if (!data.Messages) {
-			listenerContext.log.trace("Nothing to process");
+			listenerContext.log.debug("Nothing to process");
 			return;
 		}
 
 		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
 
-		listenerContext.log.trace("Processing messages batch");
+		listenerContext.log.debug("Processing messages batch");
 		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));
-		listenerContext.log.trace("Messages batch processed");
+		listenerContext.log.debug("Messages batch processed");
 	}
 
 	/**
