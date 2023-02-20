@@ -126,19 +126,6 @@ describe("POST /jira/connect/enterprise", () => {
 		});
 	});
 
-	it("POST Jira Connect Enterprise - invalid status code", async () => {
-		const response = mockResponse();
-		gheNock.get("/").reply(500);
-		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
-		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({
-			success: false, errors: [{
-				code: "GHE_ERROR_CANNOT_CONNECT",
-				reason: "received 500 response"
-			}]
-		});
-	});
-
 	it("POST Jira Connect Enterprise - invalid status code still return success", async () => {
 
 		const response = mockResponse();
