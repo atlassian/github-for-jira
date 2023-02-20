@@ -271,10 +271,6 @@ describe("Github Configuration", () => {
 		});
 
 		it("should return a 401 if no Jira host present in session", async () => {
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
@@ -376,7 +372,6 @@ describe("Github Configuration", () => {
 		});
 
 		it("should return a 200 and install a Subscription", async () => {
-			const jiraHost = "test-jira-host";
 
 			// This is for github token validation check
 			githubNock

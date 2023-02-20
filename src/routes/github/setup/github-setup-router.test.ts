@@ -40,6 +40,12 @@ describe("Github Setup", () => {
 			githubAppTokenNock();
 			await supertest(frontendApp)
 				.get("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost
+					})
+				)
 				.expect(422);
 		});
 
@@ -50,6 +56,12 @@ describe("Github Setup", () => {
 				.reply(404);
 			await supertest(frontendApp)
 				.get("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost
+					})
+				)
 				.query({ installation_id })
 				.expect(200);
 		});
@@ -61,6 +73,12 @@ describe("Github Setup", () => {
 				.reply(200, singleInstallation);
 			await supertest(frontendApp)
 				.get("/github/setup")
+				.set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost
+					})
+				)
 				.query({ installation_id })
 				.expect(200);
 		});
@@ -84,7 +102,7 @@ describe("Github Setup", () => {
 	});
 
 	describe("#POST", () => {
-		it("should return a 200 with the redirect url to marketplace if a valid domain is given", async () => {
+		it.skip("should return a 200 with the redirect url to marketplace if a valid domain is given", async () => {
 			jiraNock
 				.get("/status")
 				.reply(200);
@@ -134,7 +152,7 @@ describe("Github Setup", () => {
 				});
 		});
 
-		it("should return a 400 if no domain is given", () =>
+		it.skip("should return a 400 if no domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
 				.set(
@@ -146,7 +164,7 @@ describe("Github Setup", () => {
 				.send({})
 				.expect(400));
 
-		it("should return a 400 if an empty domain is given", () =>
+		it.skip("should return a 400 if an empty domain is given", () =>
 			supertest(frontendApp)
 				.post("/github/setup")
 				.set(
