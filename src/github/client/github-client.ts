@@ -6,12 +6,18 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 
+export interface GitHubClientApiKeyConfig {
+	headerName: string;
+	apiKeyGenerator: () => Promise<string>;
+}
+
 export interface GitHubConfig {
 	hostname: string;
 	baseUrl: string;
 	apiUrl: string;
 	graphqlUrl: string;
 	proxyBaseUrl?: string;
+	apiKeyConfig?: GitHubClientApiKeyConfig;
 }
 
 /**
@@ -44,6 +50,18 @@ export class GitHubClient {
 			},
 			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
 		});
+
+		if (gitHubConfig.apiKeyConfig) {
+			logger.info("Use API key");
+			const apiKeyConfig = gitHubConfig.apiKeyConfig;
+			this.axios.interceptors.request.use(async (config) => {
+				if (!config.headers) {
+					config.headers = {};
+				}
+				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator();
+				return config;
+			});
+		}
 	}
 
 	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
