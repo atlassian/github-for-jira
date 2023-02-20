@@ -63,9 +63,14 @@ describe("GitHub router", () => {
 	describe("Common route utilities", () => {
 		describe("Cloud scenario", () => {
 			let app: Application;
-			beforeEach(() => {
+			beforeEach(async() => {
 				app = setupAppAndRouter();
 				mockConfigurationGetProceed();
+				await Installation.create({
+					jiraHost,
+					clientKey: "abc123",
+					encryptedSharedSecret: "ghi345"
+				});
 			});
 			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
 				await supertest(app)
