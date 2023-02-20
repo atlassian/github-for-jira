@@ -5,6 +5,7 @@ import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { stringFlag, StringFlags } from "config/feature-flags";
+import { Installation } from "~/src/models/installation";
 
 jest.mock("config/feature-flags");
 
@@ -15,6 +16,14 @@ describe("Github Encrypt Header post endpoint", () => {
 		next();
 	});
 	frontendApp.use(getFrontendApp());
+
+	beforeEach(async() => {
+		await Installation.create({
+			jiraHost,
+			clientKey: "abc123",
+			encryptedSharedSecret: "ghi345"
+		});
+	});
 
 	it("should return 400 when header is not provided", async () => {
 		when(stringFlag)
