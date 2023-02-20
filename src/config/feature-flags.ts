@@ -16,7 +16,6 @@ export enum BooleanFlags {
 	VERBOSE_LOGGING = "verbose-logging",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	RENEW_GITHUB_TOKEN = "renew-github-token"
 }
