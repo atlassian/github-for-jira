@@ -2,10 +2,10 @@
 
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		await queryInterface.addColumn("Subscriptions", "backfillSinceDate", { type: Sequelize.DATE, allowNull: true });
+		await queryInterface.addColumn("Subscriptions", "backfillSince", { type: Sequelize.DATE, allowNull: true });
 	},
 
 	down: async (queryInterface) => {
-		await queryInterface.removeColumn("Subscriptions", "backfillSinceDate");
+		await queryInterface.removeColumn("Subscriptions", "backfillSince");
 	}
 };
