@@ -102,6 +102,8 @@ $(".sync-connection-link").click(function (event) {
 
 	$("#restart-backfill").prop("disabled", true);
 	$("#restart-backfill").attr("aria-disabled", "true");
+	$("#restart-backfill-action-button").prop("disabled", true);
+	$("#restart-backfill-action-button").attr("aria-disabled", "true");
 
 	$.ajax({
 		type: "POST",
@@ -119,6 +121,8 @@ $(".sync-connection-link").click(function (event) {
 			console.log(error);
 			$("#restart-backfill").prop("disabled", false);
 			$("#restart-backfill").attr("aria-disabled", "false");
+			$("#restart-backfill-action-button").prop("disabled", false);
+			$("#restart-backfill-action-button").attr("aria-disabled", "false");
 		},
 	});
 });

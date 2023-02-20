@@ -119,7 +119,7 @@
 }
 
 .jiraConfiguration__table__head__title:not(:last-child) {
-    width: 30%;
+    width: 23%;
 }
 
 .jiraConfiguration__table__head_row
@@ -238,6 +238,12 @@
 
 .jiraConfiguration__syncWarning__connectFailed__warningIcon {
     color: #ff9b20;
+}
+
+.jiraConfiguration__table__body
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__action__inline {
+    text-align: right;
 }
 
 .jiraConfiguration__table__body

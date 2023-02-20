@@ -12,6 +12,7 @@
 
           </span>
         </th>
+        <th class="jiraConfiguration__table__head__title"></th>
         <th class="jiraConfiguration__table__head__title">Settings</th>
       </tr>
       </thead>
@@ -113,6 +114,19 @@
               {{/if}}
             </div>
           </td>
+          {{! Restart Button }}
+          <td class="jiraConfiguration__table__cell jiraConfiguration__table__cell__action__inline">
+            <button
+                class="sync-connection-link restart-backfill-button-inline aui-button aui-button-secondary"
+                data-jira-host="{{ ../host }}"
+                data-installation-id="{{ id }}"
+                data-app-id="{{ ../gitHubAppId }}"
+                id="restart-backfill-action-button"
+            >
+              Restart backfill
+            </button>
+            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+          </td>
           {{! Settings }}
           <td class="jiraConfiguration__table__cell__settings">
             <button
@@ -136,18 +150,6 @@
                 >
                   Configure
                 </a>
-                <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                  <button
-                      class="sync-connection-link restart-backfill-button"
-                      data-jira-host="{{ ../host }}"
-                      data-installation-id="{{ id }}"
-                      data-app-id="{{ ../gitHubAppId }}"
-                      id="restart-backfill"
-                  >
-                    Restart backfill
-                  </button>
-                  <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                </div>
                 <button
                     class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
                     data-installation-id="{{id}}"
