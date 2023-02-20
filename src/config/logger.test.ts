@@ -95,6 +95,38 @@ describe("logger behaviour", () => {
 			expect(JSON.parse(ringBuffer.records[0]).response.headers.authorization).toEqual("CENSORED");
 		});
 
+		it("Should remove cookies header", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error({
+				config: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						Cookie: "super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				},
+				req: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						Cookie: "super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				},
+				res: {
+					headers: {
+						Accept: "application/vnd.github.v3+json",
+						"Set-cookie": "token super-secret",
+						"User-Agent": "axios/0.26.0"
+					}
+				}
+			});
+
+			expect(JSON.parse(ringBuffer.records[0]).config.headers.cookie).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).req.headers.cookie).toEqual("CENSORED");
+			expect(JSON.parse(ringBuffer.records[0]).res.headers["set-cookie"]).toEqual("CENSORED");
+		});
+
 		it("should remove UGC from tasks", () => {
 			const logger = getLogger("test case");
 			logger.addStream({ stream: ringBuffer as Stream });
