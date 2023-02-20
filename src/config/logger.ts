@@ -110,6 +110,8 @@ const censorUrl = (url) => {
 	return url;
 };
 
+const SENSITIVE_HEADERS_TO_CENSOR = ["authorization", "set-cookie", "cookie"];
+
 const headersSerializer = (headers) => {
 	if (!headers) {
 		return headers;
@@ -117,9 +119,11 @@ const headersSerializer = (headers) => {
 
 	const ret = mapKeys(headers, (_, key) => key.toLowerCase());
 
-	if (ret["authorization"]) {
-		ret["authorization"] = "CENSORED";
-	}
+	SENSITIVE_HEADERS_TO_CENSOR.forEach(headerName => {
+		if (ret[headerName]) {
+			ret[headerName] = "CENSORED";
+		}
+	});
 	return ret;
 };
 
