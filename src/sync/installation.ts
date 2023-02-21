@@ -209,7 +209,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		await subscription.update({ syncStatus: "COMPLETE" });
+		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, rootLogger);
+		await subscription.update({ syncStatus: "COMPLETE", backfillSince: newBackFillSinceDate });
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
 
