@@ -12,7 +12,11 @@
 
           </span>
         </th>
+        {{! Restart Button }}
+        {{#if shouldPromoteBackfillButtonToTableRow}}
         <th class="jiraConfiguration__table__head__title"></th>
+        {{/if}}
+        {{! Restart Button -- end}}
         <th class="jiraConfiguration__table__head__title">Settings</th>
       </tr>
       </thead>
@@ -114,7 +118,9 @@
               {{/if}}
             </div>
           </td>
+
           {{! Restart Button }}
+          {{#if ../shouldPromoteBackfillButtonToTableRow}}
           <td class="jiraConfiguration__table__cell jiraConfiguration__table__cell__action__inline">
             <button
                 class="sync-connection-link restart-backfill-button-inline aui-button aui-button-secondary"
@@ -127,6 +133,9 @@
             </button>
             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
           </td>
+          {{/if}}
+          {{! Restart Button -- end}}
+
           {{! Settings }}
           <td class="jiraConfiguration__table__cell__settings">
             <button
@@ -150,6 +159,20 @@
                 >
                   Configure
                 </a>
+                {{#unless ../shouldPromoteBackfillButtonToTableRow}}
+                <div class="jiraConfiguration__table__cell__settings__dropdownItem">
+                  <button
+                      class="sync-connection-link restart-backfill-button"
+                      data-jira-host="{{ ../host }}"
+                      data-installation-id="{{ id }}"
+                      data-app-id="{{ ../gitHubAppId }}"
+                      id="restart-backfill"
+                  >
+                    Restart backfill
+                  </button>
+                  <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                </div>
+                {{/unless}}
                 <button
                     class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
                     data-installation-id="{{id}}"
