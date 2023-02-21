@@ -4,10 +4,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
-import { NumberFlags } from "config/feature-flags";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { getCommitSinceDate } from "~/src/sync/sync-utils";
 import { TaskPayload } from "~/src/sync/sync.types";
+import { convertCommitsFromDateStringToDate } from "~/src/sync/sync-utils";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -23,13 +22,13 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 export const getCommitTask = async (
 	logger: Logger,
 	gitHubClient: GitHubInstallationClient,
-	jiraHost: string,
+	_jiraHost: string,
 	repository: Repository,
 	cursor?: string | number,
 	perPage?: number,
 	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
 
-	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
+	const commitSince = convertCommitsFromDateStringToDate(messagePayload?.commitsFromDate, logger);
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 	const jiraPayload = transformCommit(
 		{ commits, repository },

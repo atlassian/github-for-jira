@@ -1,7 +1,7 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
 import { Request, Response } from "express";
-import { findOrStartSync } from "~/src/sync/sync-utils";
+import { findOrStartSync, getCommitSinceDate } from "~/src/sync/sync-utils";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
@@ -10,6 +10,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { NumberFlags } from "config/feature-flags";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -77,10 +78,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			gitHubAppId
 		});
 
+		const commitSinceDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT);
 		await Promise.all(
 			[
 				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
-				findOrStartSync(subscription, req.log)
+				findOrStartSync(subscription, req.log, "partial", commitSinceDate)
 			]
 		);
 

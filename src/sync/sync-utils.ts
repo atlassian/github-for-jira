@@ -14,10 +14,11 @@ type SyncType = "full" | "partial";
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: SyncType,
-	commitsFromDate?: Date,
+	syncType: SyncType,
+	commitsFromDate: Date | undefined,
 	targetTasks?: TaskType[]
 ): Promise<void> => {
+
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	await subscription.update({
@@ -54,13 +55,22 @@ export const findOrStartSync = async (
 	}, 0, logger);
 };
 
+export const convertCommitsFromDateStringToDate = (commitsFromDate: string | undefined, logger: Logger) => {
+	try {
+		return commitsFromDate ? new Date(commitsFromDate) : undefined;
+	} catch (e) {
+		logger.error({ commitsFromDate }, "Fail to convert commitsFromDate to date object during backfill commit task");
+		return undefined;
+	}
+};
+
 type SubscriptionUpdateTasks = {
 	totalNumberOfRepos?: number | null;
 	repositoryCursor?: string | null;
 	repositoryStatus?: string | null;
 }
 
-const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
+const resetTargetedTasks = async (subscription: Subscription, syncType: SyncType, targetTasks?: TaskType[]): Promise<void> => {
 	if (!targetTasks?.length) {
 		return;
 	}
