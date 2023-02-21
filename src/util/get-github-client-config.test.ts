@@ -2,8 +2,15 @@ import { stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { v4 as newUUID } from "uuid";
 import { GitHubServerApp } from "models/github-server-app";
-import { getGitHubClientConfigFromAppId } from "utils/get-github-client-config";
+import {
+	createAnonymousClient, createAppClient,
+	createInstallationClient,
+	createUserClient,
+	getGitHubClientConfigFromAppId
+} from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { Subscription } from "models/subscription";
 
 jest.mock("../config/feature-flags");
 
@@ -76,5 +83,108 @@ describe("get-github-client-config", () => {
 
 		const config = await getGitHubClientConfigFromAppId(undefined, getLogger("test"), jiraHost);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
+	});
+
+	it("includes API key config when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		expect(config.apiKeyConfig!.headerName).toEqual("ApiKeyHeader");
+		expect(await config.apiKeyConfig!.apiKeyGenerator()).toEqual("super-key");
+	});
+
+	it("does not include API key config when not provided", async () => {
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		expect(config.apiKeyConfig).toBeUndefined();
+	});
+});
+
+describe("anonymous client", () => {
+	beforeEach(async () => {
+		await new DatabaseStateCreator().forServer().create();
+	});
+
+	it("should inject API key when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+
+		gheNock.get("/")
+			.matchHeader("ApiKeyHeader", "super-key")
+			.reply(200);
+		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const response = await client.getMainPage(1000);
+		expect(response).toBeDefined();
+	});
+})
+;
+
+describe("user client", () => {
+	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	beforeEach(async () => {
+		const res = await new DatabaseStateCreator().forServer().create();
+		gitHubServerApp = res.gitHubServerApp;
+	});
+
+	it("should inject API key when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+
+		gheApiNock.get("/user")
+			.matchHeader("ApiKeyHeader", "super-key")
+			.reply(200);
+		const client = await createUserClient("MY_TOKEN", jiraHost, getLogger("test"), gitHubServerApp?.id);
+		const response = await client.getUser();
+		expect(response).toBeDefined();
+	});
+});
+
+describe("installation client", () => {
+	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	let subscription: Subscription | undefined = undefined;
+	beforeEach(async () => {
+		const res = await new DatabaseStateCreator().forServer().create();
+		gitHubServerApp = res.gitHubServerApp;
+		subscription = res.subscription;
+	});
+
+	it("should inject API key when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+
+		gheUserTokenNock(subscription!.gitHubInstallationId)
+			.matchHeader("ApiKeyHeader", "super-key");
+
+		gheApiNock.get("/rate_limit")
+			.matchHeader("ApiKeyHeader", "super-key")
+			.reply(200);
+		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, getLogger("test"), gitHubServerApp?.id);
+		const response = await client.getRateLimit();
+		expect(response).toBeDefined();
+	});
+});
+
+describe("app client", () => {
+	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	beforeEach(async () => {
+		const res = await new DatabaseStateCreator().forServer().create();
+		gitHubServerApp = res.gitHubServerApp;
+	});
+
+	it("should inject API key when provided", async () => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+
+		gheAppTokenNock()
+			.matchHeader("ApiKeyHeader", "super-key");
+
+		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp?.id);
+		const response = await client.getApp();
+		expect(response).toBeDefined();
 	});
 });
