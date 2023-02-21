@@ -1,5 +1,6 @@
 import hbs from "hbs";
 import { isPlainObject } from "lodash";
+import { format } from "date-fns";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
@@ -58,5 +59,10 @@ export const registerHandlebarsHelpers = () => {
 		(subscriptionHost, jiraHost) =>
 			subscriptionHost !== jiraHost
 	);
+
+	hbs.registerHelper("toDay", (date: Date | null | undefined) => {
+		if (!date) return "";
+		return format(date, "YYYY-MM-DD");
+	});
 
 };

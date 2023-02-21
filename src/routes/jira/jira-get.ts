@@ -75,6 +75,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			backfillSince: subscription.backfillSince,
 			jiraHost
 		};
 

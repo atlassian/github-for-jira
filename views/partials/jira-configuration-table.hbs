@@ -78,6 +78,15 @@
                 >
                   {{connection.syncStatus}}
                 </span>
+              {{#if ../shouldPromoteBackfillButtonToTableRow}}
+              <span class="jiraConfiguration__info__backfillDate">
+                  {{#if connection.backfillSince}}
+                    Backfilled till: {{ toDay connection.backfillSince }}
+                  {{else}}
+                    All commits backfilled
+                  {{/if}}
+              </span>
+              {{/if}}
               {{!-- Display any sync warnings --}}
               {{#if (isMissingPermissions connection.syncWarning)}}
                 <div class="jiraConfiguration__syncWarning">
