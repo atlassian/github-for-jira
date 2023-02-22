@@ -18,20 +18,22 @@ services:
     image: wernight/ngrok
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN github-for-jira:8080
+    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN g4j-localstack:4566
 
   localstack:
-    image: localstack/localstack:1.0.4
+    container_name: g4j-localstack
+    image: localstack/localstack:1.4
     environment:
       - DEFAULT_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
-      - LS_LOG=error # log level
+#      - LS_LOG=debug # log level
     ports:
       - "4566:4566"
     volumes:
-      - ./.localstack:/docker-entrypoint-initaws.d
+      - ./.localstack:/etc/localstack/init/ready.d
+      - ./api-gateway.yml:/api-gateway.yml
 
   cryptor:
     build: etc/cryptor-mock

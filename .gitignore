@@ -56,3 +56,6 @@ test/e2e/test-results/
 
 *.drawio.bkp
 *.drawio.dtmp
+
+# api-gateway json conversion
+api-gateway.json
