@@ -11,8 +11,8 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
  *
  * Locations can include:
  *  - Branch Name (ref)
- *  - Title of the associated Pull Request
- *  - Messages from up to the last 100 commits in that branch
+ *  - Title of the last associated Pull Request
+ *  - Message from the last commit in that branch
  */
 const mapBranch = (branch, repository) => {
 	const branchKeys = jiraIssueKeyParser(branch.name);

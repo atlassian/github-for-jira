@@ -32,6 +32,7 @@ For general support inquiries and bug reports, [please contact the Atlassian Sup
     - [See Jira issues in GitHub](#see-jira-issues-in-github)
     - [See GitHub builds and deployments in Jira](#see-github-builds-and-deployments-in-jira)
     - [How the integration works](#how-the-integration-works)
+    - [How the backfill works](#how-the-backfill-works)
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
   - [Enterprise Features](#enterprise-features)
     - [IP Allow List](#ip-allow-list)
@@ -189,13 +190,16 @@ The app is designed to backfill historical data into Jira. Once you have install
 
 1. The backfilling process attempts to connect all branches that fulfill at least one of the following criteria:
     - The branch name contains the issue key.
-    - The last pull request associated with the branch contains the issue key.
-    - The last commit message contains the issue key.
-2. All commits from the default branch will be filled in. The commit message must contain the Jira issue key.
-3. Only the last 50 commits from non-default branches will be filled in.
-4. Commits from deleted branches will NOT be filled in.
-5. All pull requests, regardless of their status, will be filled in. The Jira issue key should be included either in the title of the pull request or in the name of the branch that is linked to the pull request.
-6. All the builds and deployments data will be filled in.
+    - The title of the latest pull request associated with the branch contains the issue key.
+    - The last commit message of the branch contains the issue key.
+2. All commits from the default branch will be backfilled. The commit message must contain the Jira issue key.
+3. Only the latest 50 commits from non-default branches will be backfilled.
+4. Unreachable commits (e.g. from deleted branches) will NOT be backfilled.
+5. All pull requests, regardless of their statuses, will be backfilled. The Jira issue key should be included either in 
+   the title of the pull request, in the description of the pull request or in the name of the source branch 
+   of the pull request.
+6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include 
+   issue keys to the builds and deployments [here](#see-github-builds-and-deployments-in-jira).
 
 
 
