@@ -51,6 +51,10 @@ export class GitHubClient {
 			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
 		});
 
+		// Temp logging to calculate the number of requests we are making during backfilling per hour so the support
+		// could ask GH for an extension for big customers
+		this._addLogging();
+
 		if (gitHubConfig.apiKeyConfig) {
 			logger.info("Use API key");
 			const apiKeyConfig = gitHubConfig.apiKeyConfig;
@@ -97,5 +101,24 @@ export class GitHubClient {
 			httpsAgent: proxyHttpsAgent,
 			proxy: false
 		};
+	}
+
+	private _addLogging() {
+		this.axios.interceptors.request.use(config => {
+			this.logger.info("making a request to GH");
+			return config;
+		});
+		this.axios.interceptors.response.use(response => {
+			if (response?.headers["x-ratelimit-remaining"]) {
+				this.logger.info(`x-rate-limit-remaining: ${response?.headers["x-ratelimit-remaining"]}`);
+			}
+			if (response?.headers["x-ratelimit-reset"]) {
+				this.logger.info(`x-rate-limit-reset: ${response?.headers["x-ratelimit-remaining"]}`);
+			}
+			return response;
+		}, err => {
+			this.logger.info({ err }, "Request to GitHub was failed!");
+			return Promise.reject(err);
+		});
 	}
 }
