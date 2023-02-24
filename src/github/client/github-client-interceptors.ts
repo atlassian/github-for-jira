@@ -108,7 +108,7 @@ export const handleFailedRequest = (logger: Logger) =>
 
 		if (response?.status === 408 || err.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
-			return Promise.reject(new GithubClientTimeoutError(config, err));
+			return Promise.reject(new GithubClientTimeoutError(err));
 		}
 
 		if (response) {
@@ -117,19 +117,19 @@ export const handleFailedRequest = (logger: Logger) =>
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(config, response, err));
+				return Promise.reject(new RateLimitingError(response, err));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
 				logger.warn({ remote: response.data.message }, "Blocked by GitHub allowlist");
-				return Promise.reject(new BlockedIpError(config, err, status));
+				return Promise.reject(new BlockedIpError(err));
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
 				logger.warn({
 					remote: response.data.message
 				}, "unauthorized");
-				return Promise.reject(new InvalidPermissionsError(config, err, status));
+				return Promise.reject(new InvalidPermissionsError(err));
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
@@ -139,7 +139,7 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
-			return Promise.reject(new GithubClientError(config, errorMessage, status, err));
+			return Promise.reject(new GithubClientError(errorMessage, err));
 		}
 
 		return Promise.reject(err);

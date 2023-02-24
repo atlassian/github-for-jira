@@ -4,7 +4,11 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import {
+	buildAxiosStubErrorForGraphQlErrors,
+	GithubClientGraphQLError,
+	RateLimitingError
+} from "~/src/github/client/github-client-errors";
 import {
 	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
 	setRequestStartTime,
@@ -94,12 +98,12 @@ export class GitHubClient {
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
 			this.logger.warn({ res: response }, "GraphQL errors");
+			const graphQlError = new GithubClientGraphQLError(config, response, graphqlErrors);
 			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(config, response));
+				this.logger.info({ err: graphqlErrors }, "Mapping a GraphQl error to a rate-limiting error");
+				return Promise.reject(new RateLimitingError(response, buildAxiosStubErrorForGraphQlErrors(config, response)));
 			}
-
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(config, graphQlErrorMessage, graphqlErrors));
+			return Promise.reject(graphQlError);
 		}
 
 		return response;

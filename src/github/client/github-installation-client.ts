@@ -241,7 +241,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 
@@ -277,7 +277,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 				this.logger.warn("retrying commit graphql query without changedFiles");

@@ -1,26 +1,30 @@
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { getLogger } from "config/logger";
+import Logger from "bunyan";
 
 export class GithubClientError extends Error {
-	status?: number;
-	cause?: AxiosError;
-	config?: AxiosRequestConfig;
+	cause: AxiosError;
 	isRetryable = true;
 
-	constructor(config: AxiosRequestConfig<any>, message: string, status?: number, cause?: AxiosError) {
+	constructor(message: string, cause: AxiosError) {
 		super(message);
-		this.config = config;
-		this.status = status;
 		if (cause) {
-			this.cause = { ...cause, config: {} };
+			this.cause = { ...cause };
 			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 		}
+	}
+
+	getStatus() {
+		return this.cause.response?.status;
+	}
+
+	getCode() {
+		return this.cause.code;
 	}
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, cause?: AxiosError) {
-		super(config, "Timeout", undefined, cause);
+	constructor(cause: AxiosError) {
+		super("Timeout", cause);
 	}
 }
 
@@ -30,8 +34,8 @@ export class RateLimitingError extends GithubClientError {
 	 */
 	rateLimitReset: number;
 
-	constructor(config: AxiosRequestConfig<any>, response: AxiosResponse, cause?: AxiosError) {
-		super(config, "Rate limiting error", response.status, cause);
+	constructor(response: AxiosResponse, cause: AxiosError) {
+		super("Rate limiting error", cause);
 		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
 		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
 		this.isRetryable = false;
@@ -39,15 +43,15 @@ export class RateLimitingError extends GithubClientError {
 }
 
 export class BlockedIpError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
-		super(config, "Blocked by GitHub allowlist", status, error);
+	constructor(error: AxiosError) {
+		super("Blocked by GitHub allowlist", error);
 		this.isRetryable = false;
 	}
 }
 
 export class InvalidPermissionsError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
-		super(config, "Resource not accessible by integration", status, error);
+	constructor(error: AxiosError) {
+		super("Resource not accessible by integration", error);
 	}
 }
 
@@ -72,6 +76,16 @@ export type GraphQLError = {
 	];
 };
 
+export const buildAxiosStubErrorForGraphQlErrors = (config: AxiosRequestConfig<any>, response: AxiosResponse) => {
+	return {
+		name: "GraphQLError",
+		message: "GraphQLError(s)",
+		config,
+		response,
+		isAxiosError: true
+	} as AxiosError;
+};
+
 export class GithubClientGraphQLError extends GithubClientError {
 
 	/**
@@ -79,8 +93,11 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 */
 	errors: GraphQLError[];
 
-	constructor(config: AxiosRequestConfig<any>, message: string, errors: GraphQLError[]) {
-		super(config, message);
+	constructor(config: AxiosRequestConfig<any>, response: AxiosResponse, errors: GraphQLError[]) {
+		super(
+			errors[0].message + (errors.length > 1 ? ` and ${errors.length - 1} more errors` : ""),
+			buildAxiosStubErrorForGraphQlErrors(config, response)
+		);
 		this.errors = errors;
 		this.isRetryable = !!errors?.find(
 			(error) =>
@@ -90,8 +107,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 	}
 }
 
-const logger = getLogger("github.errors");
-export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
+export const isChangedFilesError = (logger: Logger, err: GithubClientGraphQLError | GithubClientError): boolean => {
 	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
 	logger.warn({ isChangedFilesError: bool , error: err }, "isChangedFilesError");
 	return bool;

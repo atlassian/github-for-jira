@@ -1,6 +1,8 @@
 import { getLogger } from "config/logger";
 import { RingBuffer, Stream } from "bunyan";
 import { createHashWithSharedSecret as hash } from "utils/encryption";
+import { GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
+import { createAnonymousClient } from "utils/get-github-client-config";
 
 describe("logger behaviour", () => {
 
@@ -352,6 +354,75 @@ describe("logger behaviour", () => {
 			};
 			data.a = data as any;
 			expect(() => logger.warn(data, "log")).not.toThrow();
+		});
+	});
+
+	describe("logging errors", () => {
+
+		let ringBuffer: RingBuffer;
+
+		beforeEach(() => {
+			ringBuffer = new RingBuffer({ limit: 5 });
+		});
+
+		it("should log GraphQL errors", async () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+
+			gheNock.get("/")
+				.reply(200, {}, { "foo": "bar" });
+
+			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+
+			const response = await client.getMainPage(1000);
+
+			logger.error({
+				err: new GithubClientGraphQLError(
+					response.config,
+					response,
+					[
+						{
+							message: "blah1",
+							type: "type1"
+						},
+						{
+							message: "blah2",
+							type: "type2"
+						}
+					])
+			});
+
+			const record = JSON.parse(ringBuffer.records[0]).err;
+
+			expect(record).toMatchObject({
+				cause: {
+					config: {
+						headers: {
+							accept: "application/json, text/plain, */*"
+						},
+						method: "get",
+						url: "https://github.mydomain.com"
+					},
+					message: "GraphQLError(s)",
+					response: {
+						headers: {
+							foo: "bar"
+						},
+						status: 200
+					}
+				},
+				message: "blah1 and 1 more errors",
+				errors: [
+					{
+						message: "blah1",
+						type: "type1"
+					},
+					{
+						message: "blah2",
+						type: "type2"
+					}
+				]
+			});
 		});
 	});
 

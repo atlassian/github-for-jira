@@ -121,8 +121,42 @@ describe("POST /jira/connect/enterprise", () => {
 		expect(response.send).toHaveBeenCalledWith({
 			success: false, errors: [{
 				code: "GHE_ERROR_CANNOT_CONNECT",
-				reason: "ETIMEDOUT"
+				reason: "Timeout. ETIMEDOUT"
 			}]
+		});
+	});
+
+	it("POST Jira Connect Enterprise - DNS resolution failure", async () => {
+		const response = mockResponse();
+		gheNock.get("/").replyWithError({ code: "ENOTFOUND" });
+		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: false, errors: [{
+				code: "GHE_ERROR_CANNOT_CONNECT",
+				reason: "ENOTFOUND"
+			}]
+		});
+	});
+
+	it("POST Jira Connect Enterprise - Rate limiting error", async () => {
+		const response = mockResponse();
+		gheNock.get("/").reply(
+			403,
+			() => (
+				{ message: "Rate limit exceeded" }
+			),
+			{
+				"x-ratelimit-limit": "1000",
+				"x-ratelimit-remaining": "0",
+				"x-ratelimit-reset": "1630166400"
+			}
+		);
+		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
+		expect(response.status).toHaveBeenCalledWith(200);
+		expect(response.send).toHaveBeenCalledWith({
+			success: true,
+			appExists: false
 		});
 	});
 
