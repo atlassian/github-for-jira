@@ -50,6 +50,14 @@ export class GitHubClient {
 		this.restApiUrl = gitHubConfig.apiUrl;
 		this.graphqlUrl = gitHubConfig.graphqlUrl;
 
+		this.axios = axios.create({
+			baseURL: this.restApiUrl,
+			transitional: {
+				clarifyTimeoutError: true
+			},
+			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
+		});
+
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);
 		this.axios.interceptors.request.use(urlParamsMiddleware);
@@ -61,14 +69,6 @@ export class GitHubClient {
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
 		);
-
-		this.axios = axios.create({
-			baseURL: this.restApiUrl,
-			transitional: {
-				clarifyTimeoutError: true
-			},
-			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
-		});
 
 		if (gitHubConfig.apiKeyConfig) {
 			logger.info("Use API key");

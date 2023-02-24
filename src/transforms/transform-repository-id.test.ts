@@ -1,5 +1,5 @@
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 describe("transform-repository-id", () => {
 

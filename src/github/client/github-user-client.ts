@@ -1,7 +1,6 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
@@ -10,6 +9,7 @@ import {
 	UserOrganizationsQuery,
 	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.

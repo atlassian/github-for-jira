@@ -10,11 +10,7 @@ import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubClientApiKeyConfig, GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
 import { EncryptionClient } from "utils/encryption-client";
-
-export const GITHUB_CLOUD_HOSTNAME = "github.com";
-export const GITHUB_CLOUD_BASEURL = "https://github.com";
-export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_HOSTNAME } from "~/src/github/client/github-client-constants";
 
 interface GitHubClientConfig extends GitHubConfig {
 	serverId?: number;

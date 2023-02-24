@@ -26,7 +26,7 @@ import {
 	ReposGetContentsResponse
 } from "./github-client.types";
 import { isChangedFilesError } from "./github-client-errors";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**

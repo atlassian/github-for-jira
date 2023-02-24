@@ -3,7 +3,7 @@ import { Octokit } from "@octokit/rest";
 import { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
