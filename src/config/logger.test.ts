@@ -378,7 +378,6 @@ describe("logger behaviour", () => {
 
 			logger.error({
 				err: new GithubClientGraphQLError(
-					response.config,
 					response,
 					[
 						{

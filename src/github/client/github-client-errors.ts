@@ -1,4 +1,4 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import Logger from "bunyan";
 
 export class GithubClientError extends Error {
@@ -30,24 +30,24 @@ export class RateLimitingError extends GithubClientError {
 	 */
 	rateLimitReset: number;
 
-	constructor(response: AxiosResponse, cause: AxiosError) {
+	constructor(cause: AxiosError) {
 		super("Rate limiting error", cause);
-		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
-		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
+		const rateLimitResetHeaderValue: string = cause.response?.headers?.["x-ratelimit-reset"] || "";
+		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || ((Date.now() / 1000) + ONE_HOUR_IN_SECONDS);
 		this.isRetryable = false;
 	}
 }
 
 export class BlockedIpError extends GithubClientError {
-	constructor(error: AxiosError) {
-		super("Blocked by GitHub allowlist", error);
+	constructor(cause: AxiosError) {
+		super("Blocked by GitHub allowlist", cause);
 		this.isRetryable = false;
 	}
 }
 
 export class InvalidPermissionsError extends GithubClientError {
-	constructor(error: AxiosError) {
-		super("Resource not accessible by integration", error);
+	constructor(cause: AxiosError) {
+		super("Resource not accessible by integration", cause);
 	}
 }
 
@@ -72,11 +72,11 @@ export type GraphQLError = {
 	];
 };
 
-export const buildAxiosStubErrorForGraphQlErrors = (config: AxiosRequestConfig<any>, response: AxiosResponse) => {
+export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
 	return {
 		name: "GraphQLError",
 		message: "GraphQLError(s)",
-		config,
+		config: response.config,
 		response,
 		isAxiosError: true
 	} as AxiosError;
@@ -89,10 +89,10 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 */
 	errors: GraphQLError[];
 
-	constructor(config: AxiosRequestConfig<any>, response: AxiosResponse, errors: GraphQLError[]) {
+	constructor(response: AxiosResponse, errors: GraphQLError[]) {
 		super(
 			errors[0].message + (errors.length > 1 ? ` and ${errors.length - 1} more errors` : ""),
-			buildAxiosStubErrorForGraphQlErrors(config, response)
+			buildAxiosStubErrorForGraphQlErrors(response)
 		);
 		this.errors = errors;
 		this.isRetryable = !!errors?.find(
@@ -103,9 +103,10 @@ export class GithubClientGraphQLError extends GithubClientError {
 	}
 }
 
-export const isChangedFilesError = (logger: Logger, err: GithubClientGraphQLError | GithubClientError): boolean => {
+// TODO: the name doesn't make sense: it returns true for any GraphQL error...
+export const isChangedFilesError = (logger: Logger, err: GithubClientError): boolean => {
 	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
-	logger.warn({ isChangedFilesError: bool , error: err }, "isChangedFilesError");
+	logger.warn({ isChangedFilesError: bool , err }, "isChangedFilesError");
 	return bool;
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
 };

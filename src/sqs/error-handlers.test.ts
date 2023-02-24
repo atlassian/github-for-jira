@@ -102,7 +102,15 @@ describe("error-handlers", () => {
 		it("Retryable with proper delay on Rate Limiting", async () => {
 			const headers: AxiosResponseHeaders = { "x-ratelimit-reset": `${Math.floor(new Date("2020-01-01").getTime() / 1000) + 100}` };
 			const mockedResponse = { status: 403, headers: headers } as AxiosResponse;
-			const result = await jiraAndGitHubErrorsHandler(new RateLimitingError(mockedResponse, { } as AxiosError), createContext(1, false));
+
+			const result = await jiraAndGitHubErrorsHandler(
+				new RateLimitingError({
+					response: mockedResponse
+				} as AxiosError),
+
+				createContext(1, false)
+			);
+
 			expect(result.retryable).toBe(true);
 			//Make sure delay is equal to recommended delay + 10 seconds
 			expect(result.retryDelaySec).toBe(110);

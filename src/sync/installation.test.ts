@@ -160,7 +160,13 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse, { } as AxiosError), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(
+				new RateLimitingError(
+					{ response: axiosResponse } as unknown as AxiosError
+				),
+				JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask
+			);
+
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -179,7 +185,9 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse, {} as AxiosError), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError({
+				response: axiosResponse
+			} as unknown as AxiosError), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);

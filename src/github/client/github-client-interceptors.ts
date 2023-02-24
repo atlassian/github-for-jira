@@ -117,7 +117,7 @@ export const handleFailedRequest = (logger: Logger) =>
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(response, err));
+				return Promise.reject(new RateLimitingError(err));
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {

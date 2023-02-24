@@ -97,13 +97,13 @@ export class GitHubClient {
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
-			this.logger.warn({ res: response }, "GraphQL errors");
-			const graphQlError = new GithubClientGraphQLError(config, response, graphqlErrors);
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				this.logger.info({ err: graphqlErrors }, "Mapping a GraphQl error to a rate-limiting error");
-				return Promise.reject(new RateLimitingError(response, buildAxiosStubErrorForGraphQlErrors(config, response)));
+			const err = new GithubClientGraphQLError(response, graphqlErrors);
+			this.logger.warn({ err }, "GraphQL errors");
+			if (graphqlErrors.find(graphQLError => graphQLError.type == "RATE_LIMITED")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a rate-limiting error");
+				return Promise.reject(new RateLimitingError(buildAxiosStubErrorForGraphQlErrors(response)));
 			}
-			return Promise.reject(graphQlError);
+			return Promise.reject(err);
 		}
 
 		return response;
