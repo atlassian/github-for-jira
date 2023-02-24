@@ -5,20 +5,16 @@ export class GithubClientError extends Error {
 	cause: AxiosError;
 	isRetryable = true;
 
+	status?: number;
+	code?: string;
+
 	constructor(message: string, cause: AxiosError) {
 		super(message);
-		if (cause) {
-			this.cause = { ...cause };
-			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
-		}
-	}
 
-	getStatus() {
-		return this.cause.response?.status;
-	}
-
-	getCode() {
-		return this.cause.code;
+		this.cause = { ...cause };
+		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
+		this.status = this.cause.response?.status;
+		this.code = this.cause.code;
 	}
 }
 
