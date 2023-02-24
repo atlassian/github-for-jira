@@ -4,9 +4,6 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
-import { metricHttpRequest } from "config/metric-names";
-import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
@@ -54,17 +51,6 @@ export class GitHubInstallationClient extends GitHubClient {
 		super(gitHubConfig, logger);
 		this.jiraHost = jiraHost;
 
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
-		this.axios.interceptors.response.use(
-			undefined,
-			handleFailedRequest(this.logger)
-		);
-		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
-		);
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;

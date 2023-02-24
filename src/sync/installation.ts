@@ -218,7 +218,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const { task, cursor, repository } = nextTask;
 
-	const logger = rootLogger.child({ task: nextTask, gitHubProduct });
+	const logger = rootLogger.child({
+		task: nextTask,
+		gitHubProduct,
+		startTime: data.startTime,
+		commitsFromDate: data.commitsFromDate
+	});
 
 	logger.info("Starting task");
 
