@@ -10,7 +10,7 @@ import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
-import { ConnectionTimedOutError } from "sequelize";
+import { ConnectionTimedOutError, Sequelize } from "sequelize";
 import { AxiosError } from "axios";
 
 jest.mock("../sqs/queues");
@@ -307,6 +307,28 @@ describe("sync/installation", () => {
 			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
 
 			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
+		});
+
+		it("30s delay when sequelize connection error", async () => {
+			let sequelizeConnectionError: Error | undefined = undefined;
+			try {
+				const sequelize = new Sequelize({
+					dialect: "postgres",
+					host: "1.2.3.400",
+					port: 3306,
+					username: "your_username",
+					password: "your_password",
+					database: "your_database"
+				});
+				await sequelize.authenticate();
+			} catch (err) {
+				sequelizeConnectionError = err;
+			}
+
+			await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
