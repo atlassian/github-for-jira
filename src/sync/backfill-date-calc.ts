@@ -18,11 +18,7 @@ export const calcNewBackfillSinceDate = (
 		//this is previously backfilled customers,
 		//we assume all data area backfilled,
 		//so keep the date empty for ALL_BACKFILLED
-		return undefined;
-	}
-
-	if (!backfillSinceInMsgPayload) {
-		return undefined;
+		return existingBackfillSince;
 	}
 
 	const newBackfillSinceDate = convertCommitsFromDateStringToDate(backfillSinceInMsgPayload, logger);
@@ -31,14 +27,14 @@ export const calcNewBackfillSinceDate = (
 		return existingBackfillSince;
 	}
 
-	if (existingBackfillSince.getTime() > newBackfillSinceDate.getTime()) {
-		//The new backfill date is earlier then the origin one
-		//Use the new backfill date
-		return newBackfillSinceDate;
-	} else {
+	if (existingBackfillSince.getTime() <= newBackfillSinceDate.getTime()) {
 		//Origin backfill date is either empty or earlier,
 		//So use the origin one.
 		return existingBackfillSince;
 	}
+
+	//The new backfill date is earlier then the origin one
+	//Use the new backfill date
+	return newBackfillSinceDate;
 };
 

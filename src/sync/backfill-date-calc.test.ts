@@ -60,8 +60,8 @@ describe("Calculating backfill since date", () => {
 				beforeEach(() => {
 					newBackfillSinceDate = undefined;
 				});
-				it("Should resolve to new undefined backfill date", () => {
-					expect(getResult()).toEqual(undefined);
+				it("Should resolve to existing undefined backfill date", () => {
+					expect(getResult()).toEqual(existingBackfillSince);
 				});
 			});
 			describe("Backfill with a more recent date", () => {

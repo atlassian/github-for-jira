@@ -12,7 +12,7 @@ import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -119,7 +119,9 @@ export const updateJobStatus = async (
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, targetTasks))) {
-		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, logger);
+		const newBackFillSinceDate = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
+			? calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, logger)
+			: subscription.backfillSince;
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE, backfillSince: newBackFillSinceDate  });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -209,7 +211,9 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, rootLogger);
+		const newBackFillSinceDate = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
+			? calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, rootLogger)
+			: subscription.backfillSince;
 		await subscription.update({ syncStatus: "COMPLETE", backfillSince: newBackFillSinceDate });
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
