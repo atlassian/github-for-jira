@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { JiraConnectEnterprisePost } from "routes/jira/connect/enterprise/jira-connect-enterprise-post";
 import { Installation } from "models/installation";
 import { v4 as newUUID } from "uuid";
+import { getLogger } from "config/logger";
 
 jest.mock("config/feature-flags");
 
@@ -11,12 +12,7 @@ const testSharedSecret = "test-secret";
 describe("POST /jira/connect/enterprise", () => {
 	let installation;
 	const mockRequest = (gheServerURL: string): any => ({
-		log: {
-			info: jest.fn(),
-			warn: jest.fn(),
-			error: jest.fn(),
-			debug: jest.fn()
-		},
+		log: getLogger("test"),
 		body: { gheServerURL },
 		query: {},
 		csrfToken: jest.fn().mockReturnValue({})
