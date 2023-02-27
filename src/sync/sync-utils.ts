@@ -3,13 +3,11 @@ import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
-import { TaskType } from "~/src/sync/sync.types";
+import { TaskType, SyncType } from "~/src/sync/sync.types";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
 import { GitHubServerApp } from "models/github-server-app";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
-
-type SyncType = "full" | "partial";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
@@ -49,6 +47,7 @@ export const findOrStartSync = async (
 		installationId,
 		jiraHost,
 		startTime: fullSyncStartTime,
+		syncType,
 		commitsFromDate: commitsFromDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig

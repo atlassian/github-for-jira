@@ -119,7 +119,7 @@ export const updateJobStatus = async (
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, targetTasks))) {
-		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, logger);
+		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, logger);
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE, backfillSince: newBackFillSinceDate  });
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -209,7 +209,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, rootLogger);
+		const newBackFillSinceDate = calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, rootLogger);
 		await subscription.update({ syncStatus: "COMPLETE", backfillSince: newBackFillSinceDate });
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");

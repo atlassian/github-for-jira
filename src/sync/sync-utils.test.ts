@@ -32,6 +32,7 @@ describe("findOrStartSync", () => {
 					undefined
 				);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					syncType: "partial",
 					gitHubAppConfig: {
 						appId: parseInt(envVars.APP_ID),
 						clientId: envVars.GITHUB_CLIENT_ID,
@@ -80,6 +81,7 @@ describe("findOrStartSync", () => {
 					undefined
 				);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					syncType: "partial",
 					gitHubAppConfig: {
 						gitHubAppId: gitHubServerApp.id,
 						appId: GHES_GITHUB_APP_ID,

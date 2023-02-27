@@ -1,16 +1,27 @@
 import Logger from "bunyan";
 import { convertCommitsFromDateStringToDate } from "~/src/sync/sync-utils";
+import { SyncType } from "~/src/sync/sync.types";
 
 export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
 	backfillSinceInMsgPayload: string | undefined,
+	syncType: SyncType | undefined,
 	logger: Logger
 ): Date | undefined  => {
+
+	if (syncType === "partial" || syncType === undefined) {
+		//do not change anything on partial sync or missing sync type on mgs body ( which means old msg before the prod deployment )
+		return existingBackfillSince;
+	}
 
 	if (!existingBackfillSince) {
 		//this is previously backfilled customers,
 		//we assume all data area backfilled,
 		//so keep the date empty for ALL_BACKFILLED
+		return undefined;
+	}
+
+	if (!backfillSinceInMsgPayload) {
 		return undefined;
 	}
 
