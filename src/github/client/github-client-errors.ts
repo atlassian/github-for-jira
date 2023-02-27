@@ -79,6 +79,7 @@ export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => 
 		message: "GraphQLError(s)",
 		config: response.config,
 		response,
+		request: response.request,
 		isAxiosError: true
 	} as AxiosError;
 };
