@@ -1,10 +1,6 @@
 import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
-import { metricHttpRequest } from "config/metric-names";
-import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
 import { GitHubClient, GitHubConfig } from "./github-client";
 import {
@@ -13,6 +9,7 @@ import {
 	UserOrganizationsQuery,
 	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
@@ -20,7 +17,7 @@ import {
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger) {
+	constructor(userToken: string, githubConfig: GitHubConfig, logger: Logger) {
 		super(githubConfig, logger);
 		this.userToken = userToken;
 
@@ -34,19 +31,6 @@ export class GitHubUserClient extends GitHubClient {
 				}
 			};
 		});
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
-
-		this.axios.interceptors.response.use(
-			undefined,
-			handleFailedRequest(this.logger)
-		);
-
-		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
-		);
 	}
 
 	private async get<T>(url, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {

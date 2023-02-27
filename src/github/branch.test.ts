@@ -1,9 +1,9 @@
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "./branch";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("../sqs/queues");
 

@@ -1,10 +1,20 @@
 import Logger from "bunyan";
-import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import {
+	buildAxiosStubErrorForGraphQlErrors,
+	GithubClientGraphQLError,
+	RateLimitingError
+} from "~/src/github/client/github-client-errors";
+import {
+	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
+	setRequestStartTime,
+	setRequestTimeout
+} from "~/src/github/client/github-client-interceptors";
+import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
+import { metricHttpRequest } from "config/metric-names";
 
 export interface GitHubClientApiKeyConfig {
 	headerName: string;
@@ -36,7 +46,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		logger: Logger = getLogger("gitHub-client")
+		logger: Logger
 	) {
 		this.logger = logger;
 		this.baseUrl = gitHubConfig.baseUrl;
@@ -50,6 +60,18 @@ export class GitHubClient {
 			},
 			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
 		});
+
+		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(setRequestTimeout);
+		this.axios.interceptors.request.use(urlParamsMiddleware);
+		this.axios.interceptors.response.use(
+			undefined,
+			handleFailedRequest(this.logger)
+		);
+		this.axios.interceptors.response.use(
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
+		);
 
 		if (gitHubConfig.apiKeyConfig) {
 			logger.info("Use API key");
@@ -74,13 +96,13 @@ export class GitHubClient {
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
-			this.logger.warn({ res: response }, "GraphQL errors");
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(config, response));
+			const err = new GithubClientGraphQLError(response, graphqlErrors);
+			this.logger.warn({ err }, "GraphQL errors");
+			if (graphqlErrors.find(graphQLError => graphQLError.type == "RATE_LIMITED")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a rate-limiting error");
+				return Promise.reject(new RateLimitingError(buildAxiosStubErrorForGraphQlErrors(response)));
 			}
-
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(config, graphQlErrorMessage, graphqlErrors));
+			return Promise.reject(err);
 		}
 
 		return response;

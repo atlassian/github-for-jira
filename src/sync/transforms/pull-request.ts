@@ -28,7 +28,7 @@ interface Payload {
 export const transformPullRequest =  (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
 	const { pullRequest, repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
-	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
+	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}\n${pullRequest.body}`);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;

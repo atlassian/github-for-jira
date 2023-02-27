@@ -4,9 +4,6 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
-import { metricHttpRequest } from "config/metric-names";
-import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
@@ -29,7 +26,7 @@ import {
 	ReposGetContentsResponse
 } from "./github-client.types";
 import { isChangedFilesError } from "./github-client-errors";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
@@ -48,23 +45,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
 		jiraHost: string,
-		logger?: Logger,
+		logger: Logger,
 		gshaId?: number
 	) {
 		super(gitHubConfig, logger);
 		this.jiraHost = jiraHost;
 
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
-		this.axios.interceptors.response.use(
-			undefined,
-			handleFailedRequest(this.logger)
-		);
-		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
-		);
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;
@@ -255,7 +241,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 
@@ -291,7 +277,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 				this.logger.warn("retrying commit graphql query without changedFiles");

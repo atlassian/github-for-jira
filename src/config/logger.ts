@@ -162,6 +162,12 @@ const requestSerializer = (req) => req && ({
 	remotePort: req.socket?.remotePort
 });
 
+const graphQlErrorsSerializer = (errors: Array<any>) => (
+	{
+		errors: errors.map(error => errorSerializer(error))
+	}
+);
+
 const errorSerializer = (err) => {
 	if (!err) {
 		return err;
@@ -173,13 +179,17 @@ const errorSerializer = (err) => {
 		err = { message: err };
 	}
 
-	return {
+	const res = {
 		...err,
-		message: err?.message,
+		... (err.cause && err.cause !== err ? { cause: errorSerializer(err.cause) } : { }),
+		message: err.message,
 		config: responseConfigSerializer(err.config),
 		response: responseSerializer(err.response),
-		request: requestSerializer(err.request)
+		request: requestSerializer(err.request),
+		... (err.errors && Array.isArray(err.errors) ? graphQlErrorsSerializer(err.errors) : {})
 	};
+
+	return res;
 };
 
 const taskSerializer = (task) => {

@@ -1,5 +1,5 @@
 import { envVars }  from "config/env";
-import { GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL } from "./github-client-constants";
 /**
  * An installation ID uniquely identifies an installation of a GitHub app across the (single) cloud instance
  * and (potentially many) GHE instances.

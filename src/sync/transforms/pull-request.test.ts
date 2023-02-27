@@ -67,6 +67,28 @@ describe("pull_request transform", () => {
 		});
 	});
 
+	it("should extract issue key from the body", () => {
+		pullRequest.body = "[TES-123] Evernote Test";
+
+		const fixture = {
+			pullRequest,
+			repository: {
+				id: 1234568,
+				name: "test-repo",
+				full_name: "test-owner/test-repo",
+				owner: { login: "test-login" },
+				html_url: "https://github.com/test-owner/test-repo"
+			}
+		};
+
+		mockSystemTime(12345678);
+
+		const data = transformPullRequest(fixture as any, pullRequest);
+
+		expect(data!.pullRequests[0].issueKeys).toMatchObject(["KEY-15", "TES-123"]);
+	});
+
+
 	it("should return no data if there are no issue keys", () => {
 		const fixture = {
 			pullRequest: {
