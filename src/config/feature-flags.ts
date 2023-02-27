@@ -19,6 +19,7 @@ export enum BooleanFlags {
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	RENEW_GITHUB_TOKEN = "renew-github-token",
+	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event"
 }
 
