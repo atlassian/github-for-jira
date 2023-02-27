@@ -6,6 +6,10 @@ import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
 import { getLogger } from "config/logger";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { Subscription } from "models/subscription";
+<<<<<<< HEAD
+=======
+import { findOrStartSync } from "~/src/sync/sync-utils";
+>>>>>>> be6fc3e6 (resolve conflicts)
 
 jest.mock("config/feature-flags");
 jest.mock("~/src/sync/sync-utils");
@@ -102,6 +106,10 @@ describe("createdRepositoryWebhookHandler", () => {
 		}), DatabaseStateCreator.GITHUB_INSTALLATION_ID, subscription);
 
 		expect(subscription.update).toBeCalledWith({ totalNumberOfRepos: 100 });
+<<<<<<< HEAD
 		// expect(findOrStartSync).toBeCalledWith(subscription, expect.anything(), "partial");
+=======
+		expect(findOrStartSync).toBeCalledWith(subscription, expect.anything(), "partial");
+>>>>>>> be6fc3e6 (resolve conflicts)
 	});
 });
