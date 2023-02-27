@@ -127,7 +127,7 @@ const headersSerializer = (headers) => {
 	return ret;
 };
 
-const responseConfigSerializer = (config) => {
+const axiosConfigSerializer = (config) => {
 	if (!config) {
 		return config;
 	}
@@ -140,7 +140,7 @@ const responseConfigSerializer = (config) => {
 	};
 };
 
-const responseSerializer = (res) => {
+const responseSerializer = (res, includeConfig = true, includeRequest = true) => {
 	if (!res) {
 		return res;
 	}
@@ -148,8 +148,8 @@ const responseSerializer = (res) => {
 		status: res.status,
 		statusText: res.statusText,
 		headers: headersSerializer(res.headers),
-		config: responseConfigSerializer(res.config),
-		request: requestSerializer(res.request)
+		...((includeConfig && res.config) ? { config: axiosConfigSerializer(res.config) } : { }),
+		...((includeRequest && res.request) ? { request: requestSerializer(res.request) } : { })
 	};
 };
 
@@ -183,11 +183,16 @@ const errorSerializer = (err) => {
 		...err,
 		... (err.cause && err.cause !== err ? { cause: errorSerializer(err.cause) } : { }),
 		message: err.message,
-		config: responseConfigSerializer(err.config),
-		response: responseSerializer(err.response),
+		config: axiosConfigSerializer(err.config),
+		response: responseSerializer(err.response, false, !err.request),
 		request: requestSerializer(err.request),
 		... (err.errors && Array.isArray(err.errors) ? graphQlErrorsSerializer(err.errors) : {})
 	};
+
+	delete res.toJSON;
+	if (err.response && err.request) {
+		delete res.config;
+	}
 
 	return res;
 };
@@ -248,7 +253,7 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 		serializers: {
 			err: errorSerializer,
 			error: errorSerializer,
-			config: responseConfigSerializer,
+			config: axiosConfigSerializer,
 			res: responseSerializer,
 			response: responseSerializer,
 			req: requestSerializer,
