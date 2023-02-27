@@ -3,7 +3,6 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import { findOrStartSync } from "~/src/sync/sync-utils";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 
@@ -32,7 +31,6 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 		});
 
 		await subscription.update({ totalNumberOfRepos: (subscription.totalNumberOfRepos || 0) + 1 });
-		await findOrStartSync(subscription, context.log, "partial");
 		webhookProcessComplete(context, 200);
 	} catch (err) {
 		context.log.error({ err }, "Error processing create repository webhook");
