@@ -5,10 +5,22 @@ import { format } from "date-fns";
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
+export const toDayHelper = (date: Date | null | undefined) => {
+	if (!date) return "";
+	try {
+		const ret = format(date, "YYYY-MM-DD");
+		if (ret === "Invalid Date") {
+			return "";
+		}
+		return ret;
+	} catch (_) {
+		return "";
+	}
+};
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);
-
+	hbs.registerHelper("toDay", toDayHelper);
 	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
 	hbs.registerHelper("concat", concatStringHelper);
 
@@ -59,10 +71,5 @@ export const registerHandlebarsHelpers = () => {
 		(subscriptionHost, jiraHost) =>
 			subscriptionHost !== jiraHost
 	);
-
-	hbs.registerHelper("toDay", (date: Date | null | undefined) => {
-		if (!date) return "";
-		return format(date, "YYYY-MM-DD");
-	});
 
 };

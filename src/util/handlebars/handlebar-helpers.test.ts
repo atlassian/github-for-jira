@@ -3,7 +3,8 @@
 import {
 	replaceSpaceWithHyphenHelper,
 	toLowercaseHelper,
-	concatStringHelper
+	concatStringHelper,
+	toDayHelper
 } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
@@ -54,6 +55,20 @@ describe("Handlebar Helpers", () => {
 			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
 			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
 			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
+		});
+	});
+
+	describe("toDay helper", () => {
+		it("should render Date as day string", () => {
+			const testDate = new Date("2345-06-27");
+			expect(toDayHelper(testDate)).toEqual("2345-06-27");
+		});
+		it("should render emptpy string on empty value", () => {
+			expect(toDayHelper(null)).toEqual("");
+			expect(toDayHelper(undefined)).toEqual("");
+		});
+		it("should render emptpy string on invalid value", () => {
+			expect(toDayHelper({} as Date)).toEqual("");
 		});
 	});
 });
