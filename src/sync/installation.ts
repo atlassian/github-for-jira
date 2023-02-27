@@ -24,7 +24,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
-import { convertCommitsFromDateStringToDate } from "src/sync/sync-utils";
+import { calcNewBackfillSinceDate } from "./backfill-date-calc";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -508,31 +508,5 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 		Object.keys(repoStates).length && subscription.update(repoStates),
 		Object.keys(rest).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
 	]);
-};
-
-const calcNewBackfillSinceDate = (existingBackfillSince: Date | undefined, backfillSinceInMsgPayload: string | undefined, logger: Logger)  => {
-
-	if (!existingBackfillSince) {
-		//this is previously backfilled customers,
-		//we assume all data area backfilled,
-		//so keep the date empty for ALL_BACKFILLED
-		return undefined;
-	}
-
-	const newBackfillSinceDate = convertCommitsFromDateStringToDate(backfillSinceInMsgPayload, logger);
-	if (!newBackfillSinceDate) {
-		//something wrong, just ignore it, use the origin date
-		return existingBackfillSince;
-	}
-
-	if (existingBackfillSince.getTime() > newBackfillSinceDate.getTime()) {
-		//The new backfill date is earlier then the origin one
-		//Use the new backfill date
-		return newBackfillSinceDate;
-	} else {
-		//Origin backfill date is either empty or earlier,
-		//So use the origin one.
-		return existingBackfillSince;
-	}
 };
 
