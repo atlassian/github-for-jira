@@ -3,6 +3,7 @@ import { RingBuffer, Stream } from "bunyan";
 import { createHashWithSharedSecret as hash } from "utils/encryption";
 import { GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
+import { noop } from "lodash";
 
 describe("logger behaviour", () => {
 
@@ -440,8 +441,7 @@ describe("logger behaviour", () => {
 
 			const client = await createAnonymousClient(gheUrl, jiraHost, logger);
 
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			await client.getMainPage(1000).catch(() => { });
+			await client.getMainPage(1000).catch(noop);
 
 			const record = JSON.parse(ringBuffer.records[ringBuffer.records.length - 1]);
 
