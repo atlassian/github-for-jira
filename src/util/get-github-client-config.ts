@@ -10,11 +10,7 @@ import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubClientApiKeyConfig, GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
 import { EncryptionClient } from "utils/encryption-client";
-
-export const GITHUB_CLOUD_HOSTNAME = "github.com";
-export const GITHUB_CLOUD_BASEURL = "https://github.com";
-export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_HOSTNAME } from "~/src/github/client/github-client-constants";
 
 interface GitHubClientConfig extends GitHubConfig {
 	serverId?: number;
@@ -168,10 +164,10 @@ export const createUserClient = async (githubToken: string, jiraHost: string, lo
 };
 
 export const createAnonymousClient = async (gitHubBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
-	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
+	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger), logger);
 };
 
 export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
 	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAnonymousClient(config);
+	return new GitHubAnonymousClient(config, logger);
 };

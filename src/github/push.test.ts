@@ -3,9 +3,9 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { GitHubCommit, GitHubPushData, GitHubRepository } from "../interfaces/github";
 import { enqueuePush } from "../transforms/push";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { envVars } from "config/env";
 import { Subscription } from "models/subscription";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("../transforms/push");
 
