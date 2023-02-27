@@ -181,6 +181,7 @@
                 {{> jira-configuration-table
                     id=id
                     host=host
+                    shouldPromoteBackfillButtonToTableRow=shouldPromoteBackfillButtonToTableRow
                     elementIdPrefix="ghCloud-"
                     enableRepoConnectedPage=enableRepoConnectedPage
                     html_url=html_url
@@ -255,6 +256,7 @@
                             {{> jira-configuration-table
                                 id=id
                                 host=../../host
+                                shouldPromoteBackfillButtonToTableRow=../../shouldPromoteBackfillButtonToTableRow
                                 hideAvatar=true
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
@@ -305,5 +307,12 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
+    {{#if shouldPromoteBackfillButtonToTableRow }}
+    <style>
+    .jiraConfiguration__table__head__title:not(:last-child) {
+        width: 23%;
+    }
+    </style>
+    {{/if}}
   </body>
 </html>
