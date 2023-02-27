@@ -1,5 +1,4 @@
 import Logger from "bunyan";
-import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -47,7 +46,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		logger: Logger = getLogger("gitHub-client")
+		logger: Logger
 	) {
 		this.logger = logger;
 		this.baseUrl = gitHubConfig.baseUrl;

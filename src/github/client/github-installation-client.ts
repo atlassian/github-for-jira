@@ -45,7 +45,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
 		jiraHost: string,
-		logger?: Logger,
+		logger: Logger,
 		gshaId?: number
 	) {
 		super(gitHubConfig, logger);

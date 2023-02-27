@@ -91,11 +91,11 @@ export const instrumentFailedRequest = (metricName: string, host: string) =>
 		return Promise.reject(error);
 	};
 
-export const handleFailedRequest = (logger: Logger) =>
+export const handleFailedRequest = (rootLogger: Logger) =>
 	(err: AxiosError) => {
 		const { response, config, request } = err;
 		const requestId = response?.headers?.["x-github-request-id"];
-		logger = logger.child({
+		const logger = rootLogger.child({
 			err,
 			config,
 			request,
@@ -116,20 +116,24 @@ export const handleFailedRequest = (logger: Logger) =>
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
-				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(err));
+				const mappedError = new RateLimitingError(err);
+				logger.warn({ err: mappedError }, "Rate limiting error");
+				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				logger.warn({ remote: response.data.message }, "Blocked by GitHub allowlist");
-				return Promise.reject(new BlockedIpError(err));
+				const mappedError = new BlockedIpError(err);
+				logger.warn({ err: mappedError, remote: response.data.message }, "Blocked by GitHub allowlist");
+				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
+				const mappedError = new InvalidPermissionsError(err);
 				logger.warn({
+					err: mappedError,
 					remote: response.data.message
 				}, "unauthorized");
-				return Promise.reject(new InvalidPermissionsError(err));
+				return Promise.reject(mappedError);
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
@@ -139,7 +143,9 @@ export const handleFailedRequest = (logger: Logger) =>
 				logger.error(errorMessage);
 			}
 
-			return Promise.reject(new GithubClientError(errorMessage, err));
+			const mappedError = new GithubClientError(errorMessage, err);
+			logger.warn({ err: mappedError }, "GitHubClientError");
+			return Promise.reject(mappedError);
 		}
 
 		return Promise.reject(err);

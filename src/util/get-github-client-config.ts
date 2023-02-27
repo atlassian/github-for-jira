@@ -164,10 +164,10 @@ export const createUserClient = async (githubToken: string, jiraHost: string, lo
 };
 
 export const createAnonymousClient = async (gitHubBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
-	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
+	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger), logger);
 };
 
 export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
 	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAnonymousClient(config);
+	return new GitHubAnonymousClient(config, logger);
 };

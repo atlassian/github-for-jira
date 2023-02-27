@@ -11,10 +11,11 @@ export class GithubClientError extends Error {
 	constructor(message: string, cause: AxiosError) {
 		super(message);
 
+		this.status = cause.response?.status;
+		this.code = cause.code;
+
 		this.cause = { ...cause };
 		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
-		this.status = this.cause.response?.status;
-		this.code = this.cause.code;
 	}
 }
 

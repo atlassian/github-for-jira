@@ -362,7 +362,7 @@ describe("logger behaviour", () => {
 		let ringBuffer: RingBuffer;
 
 		beforeEach(() => {
-			ringBuffer = new RingBuffer({ limit: 5 });
+			ringBuffer = new RingBuffer({ limit: 50 });
 		});
 
 		it("should log GraphQL errors", async () => {
@@ -421,6 +421,69 @@ describe("logger behaviour", () => {
 						type: "type2"
 					}
 				]
+			});
+		});
+
+		it("should log RateLimiting errors with all headers", async () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+
+			gheNock.get("/")
+				.reply(403, {
+					message: "API rate limit exceeded",
+					documentation_url: "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+				}, {
+					"X-RateLimit-Limit": "60",
+					"X-RateLimit-Remaining": "0",
+					"X-RateLimit-Reset": "1613088454"
+				});
+
+			const client = await createAnonymousClient(gheUrl, jiraHost, logger);
+
+			// eslint-disable-next-line @typescript-eslint/no-empty-function
+			await client.getMainPage(1000).catch(() => { });
+
+			const record = JSON.parse(ringBuffer.records[ringBuffer.records.length - 1]);
+
+			expect(record).toMatchObject({
+				err: {
+					isRetryable: false,
+					status: 403,
+					cause: {
+						config: {
+							url: "https://github.mydomain.com",
+							method: "get",
+							headers: {
+								accept: "application/json, text/plain, */*"
+							}
+						},
+						status: 403
+					},
+					message: "Rate limiting error"
+				},
+				config: {
+					url: "https://github.mydomain.com",
+					method: "get",
+					headers: {
+						accept: "application/json, text/plain, */*"
+					}
+				},
+				request: {
+					method: "GET",
+					path: "/",
+					headers: {
+						accept: "application/json, text/plain, */*"
+					}
+				},
+				response: {
+					status: 403,
+					headers: {
+						"x-ratelimit-limit": "60",
+						"x-ratelimit-remaining": "0",
+						"x-ratelimit-reset": "1613088454"
+					}
+				},
+				msg: "Rate limiting error"
 			});
 		});
 	});

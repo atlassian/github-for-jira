@@ -17,7 +17,7 @@ import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, githubConfig: GitHubConfig, logger?: Logger) {
+	constructor(userToken: string, githubConfig: GitHubConfig, logger: Logger) {
 		super(githubConfig, logger);
 		this.userToken = userToken;
 
