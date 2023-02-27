@@ -186,7 +186,8 @@ Also see our guides for [builds](./docs/builds.md) and [deployments](./docs/depl
 When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, the app receives a webhook from GitHub. The app then extract the issue key from the respective branch/commit/PR and send this information to Jira.
 
 ## How the backfill works
-The app is designed to backfill historical data into Jira. Once you have installed and configured the app successfully, it will automatically trigger the backfilling process to update Jira with historical information such as pull requests, deployments, branches, builds, and commits.
+The app is designed to backfill historical data into Jira. Once you have installed and configured the app successfully,
+it will automatically trigger the backfilling process for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits.
 
 1. The backfilling process attempts to connect all branches that fulfill at least one of the following criteria:
     - The branch name contains the issue key.
