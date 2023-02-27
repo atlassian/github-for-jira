@@ -10,8 +10,8 @@ import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
 import { envVars } from "config/env";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 

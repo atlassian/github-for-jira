@@ -2,10 +2,11 @@
 import "config/env";
 
 import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
+import { getLogger } from "config/logger";
 
 class TestGitHubClient extends GitHubClient {
 	constructor(config: GitHubConfig) {
-		super(config);
+		super(config, getLogger("test"));
 	}
 	public doTestHttpCall() {
 		return this.axios.get("/", {});

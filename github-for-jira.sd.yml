@@ -127,7 +127,7 @@ resources:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
       parameters:
-        DBType: postgres125
+        DBType: postgres1211
         CustomParameters:
           log_min_duration_statement: 5000
 
