@@ -392,26 +392,33 @@ describe("logger behaviour", () => {
 					])
 			});
 
-			const record = JSON.parse(ringBuffer.records[0]).err;
+			const record = JSON.parse(ringBuffer.records[0]);
 
-			expect(record).toMatchObject({
+			expect(record.err).toMatchObject({
+				isRetryable: false,
+				status: 200,
 				cause: {
-					config: {
-						headers: {
-							accept: "application/json, text/plain, */*"
-						},
-						method: "get",
-						url: "https://github.mydomain.com"
-					},
+					name: "GraphQLError",
 					message: "GraphQLError(s)",
 					response: {
+						status: 200,
+						statusText: null,
 						headers: {
-							foo: "bar"
-						},
-						status: 200
-					}
+							foo: "bar",
+							"content-type": "application/json"
+						}
+					},
+					request: {
+						method: "GET",
+						path: "/",
+						headers: {
+							accept: "application/json, text/plain, */*",
+							"user-agent": "axios/0.26.0",
+							host: "github.mydomain.com"
+						}
+					},
+					isAxiosError: true
 				},
-				message: "blah1 and 1 more errors",
 				errors: [
 					{
 						message: "blah1",
@@ -421,8 +428,11 @@ describe("logger behaviour", () => {
 						message: "blah2",
 						type: "type2"
 					}
-				]
+				],
+				message: "blah1 and 1 more errors"
 			});
+			expect(record.err.cause.request.remoteAddress).toBeDefined();
+			expect(record.err.cause.request.remotePort).toBeDefined();
 		});
 
 		it("should log RateLimiting errors with all headers", async () => {
@@ -445,46 +455,36 @@ describe("logger behaviour", () => {
 
 			const record = JSON.parse(ringBuffer.records[ringBuffer.records.length - 1]);
 
-			expect(record).toMatchObject({
-				err: {
-					isRetryable: false,
-					status: 403,
-					cause: {
-						config: {
-							url: "https://github.mydomain.com",
-							method: "get",
-							headers: {
-								accept: "application/json, text/plain, */*"
-							}
-						},
-						status: 403
+			expect(record.err).toMatchObject({
+				isRetryable: false,
+				status: 403,
+				cause: {
+					request: {
+						method: "GET",
+						path: "/",
+						headers: {
+							accept: "application/json, text/plain, */*",
+							"user-agent": "axios/0.26.0",
+							host: "github.mydomain.com"
+						}
 					},
-					message: "Rate limiting error"
+					response: {
+						status: 403,
+						statusText: null,
+						headers: {
+							"x-ratelimit-limit": "60",
+							"x-ratelimit-remaining": "0",
+							"x-ratelimit-reset": "1613088454",
+							"content-type": "application/json"
+						}
+					},
+					isAxiosError: true
 				},
-				config: {
-					url: "https://github.mydomain.com",
-					method: "get",
-					headers: {
-						accept: "application/json, text/plain, */*"
-					}
-				},
-				request: {
-					method: "GET",
-					path: "/",
-					headers: {
-						accept: "application/json, text/plain, */*"
-					}
-				},
-				response: {
-					status: 403,
-					headers: {
-						"x-ratelimit-limit": "60",
-						"x-ratelimit-remaining": "0",
-						"x-ratelimit-reset": "1613088454"
-					}
-				},
-				msg: "Rate limiting error"
+				rateLimitReset: 1613088454,
+				message: "Rate limiting error"
 			});
+			expect(record.err.cause.request.remoteAddress).toBeDefined();
+			expect(record.err.cause.request.remotePort).toBeDefined();
 		});
 	});
 
