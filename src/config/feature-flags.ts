@@ -17,9 +17,14 @@ export enum BooleanFlags {
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
+<<<<<<< HEAD
 	RENEW_GITHUB_TOKEN = "renew-github-token",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event"
+=======
+	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
+	RENEW_GITHUB_TOKEN = "renew-github-token"
+>>>>>>> a5e036e6 (ARC-1975 promot restart backfill button (#1916))
 }
 
 export enum StringFlags {

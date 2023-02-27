@@ -100,8 +100,8 @@ $(".sync-connection-link").click(function (event) {
 	const jiraHost = $(event.target).data("jira-host");
 	const csrfToken = document.getElementById("_csrf").value;
 
-	$("#restart-backfill").prop("disabled", true);
-	$("#restart-backfill").attr("aria-disabled", "true");
+	$(".sync-connection-link").prop("disabled", true);
+	$(".sync-connection-link").attr("aria-disabled", "true");
 
 	$.ajax({
 		type: "POST",
@@ -117,8 +117,8 @@ $(".sync-connection-link").click(function (event) {
 		},
 		error: function (error) {
 			console.log(error);
-			$("#restart-backfill").prop("disabled", false);
-			$("#restart-backfill").attr("aria-disabled", "false");
+			$(".sync-connection-link").prop("disabled", false);
+			$(".sync-connection-link").attr("aria-disabled", "false");
 		},
 	});
 });
