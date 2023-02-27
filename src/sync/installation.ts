@@ -326,8 +326,10 @@ export const handleBackfillError = async (
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	subscription: Subscription,
-	logger: Logger,
+	rootLogger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+
+	const logger = rootLogger.child({ err });
 
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
@@ -361,6 +363,15 @@ export const handleBackfillError = async (
 
 	if (err instanceof ConnectionTimedOutError) {
 		logger.warn("ConnectionTimedOutError error, retrying in 30 seconds");
+		scheduleNextTask(30_000);
+		return;
+	}
+
+	// TODO: replace with "instanceof" when sequelize version is upgraded to some modern one
+	// Capturing errors like SequelizeConnectionError, SequelizeConnectionAcquireTimeoutError etc
+	// that are not exported from sequelize
+	if (String(err.name).toLowerCase().includes("sequelize")) {
+		logger.warn("sequelize error, retrying in 30 seconds");
 		scheduleNextTask(30_000);
 		return;
 	}
