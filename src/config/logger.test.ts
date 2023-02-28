@@ -404,7 +404,7 @@ describe("logger behaviour", () => {
 						status: 200,
 						statusText: null,
 						headers: {
-							foo: "bar",
+							foo: "CENSORED",
 							"content-type": "application/json"
 						}
 					},
