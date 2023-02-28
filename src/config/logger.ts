@@ -2,6 +2,7 @@ import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit, mapKeys } from "lodash";
 import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { canLogHeader } from "utils/http-headers";
 
 const REPO_URL_REGEX = /^(\/api\/v3)?\/repos\/([^/]+)\/([^/]+)\/(.*)$/;
 
@@ -110,8 +111,6 @@ const censorUrl = (url) => {
 	return url;
 };
 
-const SENSITIVE_HEADERS_TO_CENSOR = ["authorization", "set-cookie", "cookie"];
-
 const headersSerializer = (headers) => {
 	if (!headers) {
 		return headers;
@@ -119,11 +118,12 @@ const headersSerializer = (headers) => {
 
 	const ret = mapKeys(headers, (_, key) => key.toLowerCase());
 
-	SENSITIVE_HEADERS_TO_CENSOR.forEach(headerName => {
-		if (ret[headerName]) {
-			ret[headerName] = "CENSORED";
+	for (const key in ret) {
+		if (!canLogHeader(key)) {
+			ret[key] = "CENSORED";
 		}
-	});
+	}
+
 	return ret;
 };
 
