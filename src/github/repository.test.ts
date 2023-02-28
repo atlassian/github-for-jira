@@ -11,6 +11,18 @@ jest.mock("config/feature-flags");
 jest.mock("~/src/sync/sync-utils");
 
 describe("deleteRepositoryWebhookHandler", () => {
+	let subscription;
+	beforeEach(async () => {
+
+		subscription = await Subscription.create({
+			id: 123,
+			gitHubInstallationId: 123,
+			jiraHost: jiraHost,
+			jiraClientKey: "client-key",
+			totalNumberOfRepos: 99
+		});
+		subscription.update = jest.fn();
+	});
 
 	it("should call delete repository endpoint for server", async () => {
 
@@ -42,7 +54,8 @@ describe("deleteRepositoryWebhookHandler", () => {
 					delete: jiraClientDevinfoRepositoryDeleteMock
 				}
 			}
-		}, DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		}, DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		subscription);
 		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-test-repo-id");
 	});
 });
