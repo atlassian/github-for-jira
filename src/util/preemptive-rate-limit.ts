@@ -29,7 +29,7 @@ export const preemptiveRateLimitCheck = async (context: SQSMessageContext<any>, 
 			return true;
 		}
 	} catch (err) {
-		context.log.error({ err }, "Failed to fetch Rate Limit");
+		context.log.error({ err, gitHubServerAppId: context.payload.gitHubAppConfig?.gitHubAppId }, "Failed to fetch Rate Limit");
 	}
 
 	return false;
