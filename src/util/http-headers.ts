@@ -272,7 +272,8 @@ const knownGitHubSafe = new Set([
 	"x-accepted-oauth-scopes",
 	"x-github-delivery",
 	"x-github-event",
-	"x-github-hook-id"
+	"x-github-hook-id",
+	"x-ratelimit-used"
 ]);
 
 export const canLogHeader = (httpHeader: string) => {
