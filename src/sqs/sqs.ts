@@ -255,7 +255,8 @@ export class SqsQueue<MessagePayload> {
 			log: listenerContext.log.child({
 				messageId: message.MessageId,
 				executionId: uuidv4(),
-				queue: this.queueName
+				queue: this.queueName,
+				...(payload?.jiraHost ? { jiraHost: payload.jiraHost } : { })
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
