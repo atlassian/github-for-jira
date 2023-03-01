@@ -23,6 +23,13 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+$(".jiraConfiguration__table__repo_access").click(function (event) {
+	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
+	AP.context.getToken(function (token) {
+		window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}`;
+	});
+});
+
 $(".add-enterprise-link").click(function(event) {
 	event.preventDefault();
 	AP.navigator.go(
@@ -255,6 +262,13 @@ if (genericModalClose != null) {
 		$(".modal__additionalContent").empty();
 	});
 }
+
+$(".jiraConfiguration__table__repo_access").click(function (event) {
+	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
+	AP.context.getToken(function (token) {
+		window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}`;
+	});
+});
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function(event) {

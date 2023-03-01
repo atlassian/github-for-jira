@@ -1,0 +1,107 @@
+.jiraConnectedRepos {
+    box-sizing: border-box;
+    height: 100vh;
+    overflow-y: hidden;
+    padding: 3.5em 4.5em;
+}
+
+.jiraConnectedRepos__header {
+    display: flex;
+    align-items: center;
+}
+
+.jiraConnectedRepos__header__title {
+    font-weight: 500;
+    margin-left: 20px;
+}
+
+.jiraConnectedRepos_content {
+    margin-top: 2em;
+}
+
+.jiraConnectedRepos_content > .jiraConnectedRepos__tableContainer {
+    overflow: auto;
+    margin-top: 2.5em;
+    box-shadow: 0 1px 1px rgb(9 30 66 / 25%), 0 0 1px rgb(9 30 66 / 31%);
+    border-radius: 12px;
+    padding: 1.5em 1.5em;
+}
+
+.jiraConnectedRepos_content > .jiraConnectedRepos__tableContainer > .jiraConnectedRepos__table {
+    color: #172b4d;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.jiraConnectedRepos__table__head {
+    color: #6b778c;
+    font-size: 0.8rem;
+}
+
+.jiraConnectedRepos__table__head_row > .jiraConnectedRepos__table__head__title {
+    font-weight: normal;
+    padding: 0.3em 0;
+}
+
+/*.jiraConnectedRepos__table__head__title:not(:last-child) {*/
+/*    width: 30%;*/
+/*}*/
+
+.jiraConnectedRepos__table__body
+> .jiraConnectedRepos__table__row
+> .jiraConnectedRepos__table__cell,
+.jiraConnectedRepos__table__body
+> .jiraConnectedRepos__table__row
+> .jiraConnectedRepos__table__cell__settings {
+    border-bottom: none;
+    border-top: none;
+    padding: 0.8em 0;
+}
+
+.jiraConnectedRepos__table__syncStatus,
+.syncStatusPending,
+.syncStatusInProgress,
+.syncStatusFinished,
+.syncStatusFailed {
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.2em 0.3em;
+}
+
+.jiraConnectedRepos__table__pending,
+.syncStatusPending {
+    background-color: #dfe1e6;
+    color: #42526e;
+}
+
+.jiraConnectedRepos__table__in-progress,
+.syncStatusInProgress {
+    background-color: #deebff;
+    color: #0747a6;
+}
+
+.jiraConnectedRepos__table__finished,
+.syncStatusFinished {
+    background-color: #e3fcef;
+    color: #006644;
+}
+
+.jiraConnectedRepos__table__failed,
+.syncStatusFailed {
+    background-color: #ffebe6;
+    color: #bf2600;
+}
+
+.jiraConnectedRepos__table__cell__syncStatus {
+    display: flex;
+}
+
+.jiraConnectedRepos__loaderContainer {
+    margin-left: 8px;
+}
+
+.jiraConnectedRepos_pagination {
+    margin: 1rem;
+}
+
