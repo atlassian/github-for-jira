@@ -1,6 +1,6 @@
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import type { WebhookPayloadCreate } from "@octokit/webhooks";
-import type { TaskType } from "~/src/sync/sync.types";
+import type { TaskType, SyncType } from "~/src/sync/sync.types";
 import { Message } from "aws-sdk/clients/sqs";
 import Logger from "bunyan";
 
@@ -135,6 +135,7 @@ export type BranchMessagePayload = {
 export type BackfillMessagePayload = {
 	jiraHost: string,
 	installationId: number,
+	syncType?: SyncType,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 	startTime?: string,
 	commitsFromDate?: string,

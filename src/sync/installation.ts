@@ -12,7 +12,7 @@ import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, NumberFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -24,6 +24,8 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
+import { getCommitSinceDate } from "~/src/sync/sync-utils";
+import { calcNewBackfillSinceDate } from "~/src/sync/backfill-since-date-calc";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -118,7 +120,10 @@ export const updateJobStatus = async (
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, targetTasks))) {
-		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
+		await subscription.update({
+			syncStatus: SyncStatus.COMPLETE,
+			backfillSince: await getBackfillSince(subscription, data)
+		});
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
@@ -207,7 +212,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		await subscription.update({ syncStatus: "COMPLETE" });
+		await subscription.update({
+			syncStatus: "COMPLETE",
+			backfillSince: await getBackfillSince(subscription, data)
+		});
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
 
@@ -505,4 +513,9 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 		Object.keys(repoStates).length && subscription.update(repoStates),
 		Object.keys(rest).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
 	]);
+};
+
+const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | undefined> => {
+	const commitSince = await getCommitSinceDate(data.jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, data.commitsFromDate);
+	return calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType);
 };

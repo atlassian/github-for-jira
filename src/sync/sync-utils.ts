@@ -45,6 +45,7 @@ export const findOrStartSync = async (
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
+		syncType,
 		startTime: fullSyncStartTime,
 		commitsFromDate: commitsFromDate?.toISOString(),
 		targetTasks,
