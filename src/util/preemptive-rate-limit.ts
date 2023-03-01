@@ -47,6 +47,6 @@ const getRateResetTime = (rateLimitResponse: Octokit.RateLimitGetResponse, log: 
 	const resetEpochDateTime = Math.max(rateLimitResponse?.resources?.core?.reset, rateLimitResponse?.resources?.graphql?.reset);
 	// Get the difference in seconds between now and reset time
 	const timeToResetInSeconds = resetEpochDateTime - (Date.now()/1000);
-	log.info({ timeToResetInSeconds }, "Preemptive rate limit reset time");
+	log.info({ rateLimitResponse, timeToResetInSeconds }, "Preemptive rate limit reset time");
 	return timeToResetInSeconds;
 };
