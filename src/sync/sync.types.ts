@@ -6,6 +6,8 @@ import Logger from "bunyan";
 /* valid task types */
 export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment";
 
+export type SyncType = "full" | "partial";
+
 export interface TaskProcessors {
 	[task: string]: (
 		logger: Logger,
