@@ -77,10 +77,6 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			gitHubAppId
 		});
 
-		//mark is as current date so that subsequent backfill will override it
-		subscription.backfillSince = new Date();
-		await subscription.save();
-
 		await Promise.all(
 			[
 				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
