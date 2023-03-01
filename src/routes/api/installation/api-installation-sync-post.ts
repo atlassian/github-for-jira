@@ -8,6 +8,11 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 
 	req.log.debug({ body: req.body }, "Sync body");
 	const { jiraHost, resetType } = req.body;
+	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
+	if (commitsFromDate && commitsFromDate.valueOf() > Date.now()) {
+		res.status(400).send("Invalid date value, cannot select a future date!");
+		return;
+	}
 
 	try {
 		req.log.info(jiraHost, githubInstallationId);
@@ -22,7 +27,7 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 			return;
 		}
 
-		await findOrStartSync(subscription, req.log, resetType, undefined, false);
+		await findOrStartSync(subscription, req.log, resetType, commitsFromDate, false);
 
 		res.status(202).json({
 			message: `Successfully (re)started sync for ${githubInstallationId}`
