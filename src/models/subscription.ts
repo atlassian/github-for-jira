@@ -32,6 +32,7 @@ export class Subscription extends Model {
 	selectedRepositories?: number[];
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
+	backfillSince?: Date;
 	jiraClientKey: string;
 	plainClientKey: string;
 	updatedAt: Date;
@@ -228,6 +229,7 @@ Subscription.init({
 	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
+	backfillSince: DataTypes.DATE,
 	jiraClientKey: DataTypes.STRING,
 	plainClientKey: {
 		type: DataTypes.STRING,

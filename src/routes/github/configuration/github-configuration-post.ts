@@ -70,17 +70,21 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			return;
 		}
 
-		const subscription = await Subscription.install({
+		const subscription: Subscription = await Subscription.install({
 			hashedClientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
 			gitHubAppId
 		});
 
+		//mark is as current date so that subsequent backfill will override it
+		subscription.backfillSince = new Date();
+		await subscription.save();
+
 		await Promise.all(
 			[
 				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
-				findOrStartSync(subscription, req.log)
+				findOrStartSync(subscription, req.log, "full")
 			]
 		);
 

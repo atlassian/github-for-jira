@@ -3,8 +3,7 @@ import { SyncType } from "~/src/sync/sync.types";
 export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
 	commitsFromDate: Date | undefined,
-	syncType: SyncType | undefined,
-	isFirstSyncOnSubscription: boolean
+	syncType: SyncType | undefined
 ): Date | undefined  => {
 
 	if (syncType === "partial" || syncType === undefined) {
@@ -12,11 +11,6 @@ export const calcNewBackfillSinceDate = (
 		//or missing sync type on mgs body
 		//( which means old msg before the prod deployment )
 		return existingBackfillSince;
-	}
-
-	if (isFirstSyncOnSubscription === true) {
-		//this is fresh new sync, just take whatever is requested
-		return commitsFromDate;
 	}
 
 	if (!existingBackfillSince) {
