@@ -60,15 +60,14 @@ export const getRepositoryTask = async (
 	}
 
 	await subscription.update({ totalNumberOfRepos: totalCount });
-	const createdRepoSyncStates = await RepoSyncState.bulkCreate(repositories.map(repo => ({
-		subscriptionId: subscription.id,
+	const createdRepoSyncStates = await RepoSyncState.bulkCreateOrUpdateByRepos(subscription.id, repositories.map(repo => ({
 		repoId: repo.id,
 		repoName: repo.name,
 		repoFullName: repo.full_name,
 		repoOwner: repo.owner.login,
 		repoUrl: repo.html_url,
 		repoUpdatedAt: new Date(repo.updated_at)
-	})), { updateOnDuplicate: ["subscriptionId", "repoId"] });
+	})));
 
 	logger.debug({
 		repositories,

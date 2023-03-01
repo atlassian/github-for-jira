@@ -156,6 +156,30 @@ export class RepoSyncState extends Model {
 			}
 		});
 	}
+
+	static async bulkCreateOrUpdateByRepos(
+		subscriptionId: number,
+		repositories: {
+			repoId: number,
+			repoName: string,
+			repoFullName: string,
+			repoOwner: string,
+			repoUrl: string,
+			repoUpdatedAt: Date
+		}[]
+	): Promise<RepoSyncState[]> {
+		return Promise.all(repositories.map(repo => {
+			return RepoSyncState.findOrCreate({
+				where: {
+					subscriptionId,
+					repoId: repo.repoId
+				},
+				defaults: {
+					...repo
+				}
+			}).then((r: [RepoSyncState, boolean]) => r[0]);
+		}));
+	}
 }
 
 RepoSyncState.init({

@@ -334,4 +334,70 @@ describe("RepoSyncState", () => {
 
 		});
 	});
+
+	describe("Bulk upsert RepoSyncStates", () => {
+		it("should do create new ones and update existing ones", async () => {
+
+			//prepare
+			await RepoSyncState.create({
+				...repo,
+				subscriptionId: sub.id,
+				repoId: 1,
+				repoFullName: "Repo One"
+			});
+			await RepoSyncState.create({
+				...repo,
+				subscriptionId: otherSub.id,
+				repoId: 2,
+				repoFullName: "Repo Two"
+			});
+
+			//upsert
+			const result = await RepoSyncState.bulkCreateOrUpdateByRepos(sub.id, [{
+				...repo,
+				repoId: 2,
+				repoFullName: "Repo Two New"
+			}, {
+				...repo,
+				repoId: 3,
+				repoFullName: "Repo Three"
+			}]);
+
+			//assert
+			const foundInDB = await RepoSyncState.findAll({
+				where: { subscriptionId: sub.id }
+			});
+
+			expect(result).toEqual(expect.arrayContaining([
+				expect.objectContaining({
+					subscriptionId: sub.id,
+					repoId: 2,
+					repoFullName: "Repo Two New"
+				}),
+				expect.objectContaining({
+					subscriptionId: sub.id,
+					repoId: 3,
+					repoFullName: "Repo Three"
+				})
+			]));
+
+			expect(foundInDB).toEqual(expect.arrayContaining([
+				expect.objectContaining({
+					subscriptionId: sub.id,
+					repoId: 1,
+					repoFullName: "Repo One"
+				}),
+				expect.objectContaining({
+					subscriptionId: sub.id,
+					repoId: 2,
+					repoFullName: "Repo Two New"
+				}),
+				expect.objectContaining({
+					subscriptionId: sub.id,
+					repoId: 3,
+					repoFullName: "Repo Three"
+				})
+			]));
+		});
+	});
 });
