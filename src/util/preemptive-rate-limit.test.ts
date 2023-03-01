@@ -6,6 +6,12 @@ jest.mock("config/feature-flags");
 
 const TEST_INSTALLATION_ID = 1234;
 
+const mockGitHubRateLimitFail = () => {
+	githubUserTokenNock(TEST_INSTALLATION_ID);
+	githubNock.get(`/rate_limit`)
+		.reply(404);
+};
+
 const mockGitHubRateLimit = (limit , remaining) => {
 	githubUserTokenNock(TEST_INSTALLATION_ID);
 	githubNock.get(`/rate_limit`)
@@ -99,6 +105,38 @@ describe("Preemptive rate limit check - Cloud", () => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		expect(await preemptiveRateLimitCheck({}, sqsQueue)).toBe(false);
+	});
+
+	it(`Shold return true if something goes wrong during rate limit checking`, async () => {
+		when(numberFlag).calledWith(
+			NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(50);
+
+		mockGitHubRateLimitFail();
+		const sqsQueue = {
+			queueName: "backfill",
+			changeVisibilityTimeout: jest.fn()
+		};
+		const message = {
+			payload: {
+				jiraHost: "JIRAHOST_MOCK",
+				installationId: TEST_INSTALLATION_ID,
+				gitHubAppConfig: {
+					gitHubAppId: 1
+				}
+			},
+			message: {},
+			log: {
+				info: jest.fn(),
+				warn: jest.fn(),
+				error: jest.fn()
+			}
+		};
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		expect(await preemptiveRateLimitCheck(message, sqsQueue)).toBe(true);
 	});
 
 });

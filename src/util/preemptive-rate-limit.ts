@@ -27,12 +27,15 @@ export const preemptiveRateLimitCheck = async (context: SQSMessageContext<any>, 
 			// Delay the message until rate limit has reset
 			await sqsQueue.changeVisibilityTimeout(context.message, getRateResetTime(rateLimitResponse, context.log), context.log);
 			return true;
+		} else {
+			return false;
 		}
 	} catch (err) {
 		context.log.error({ err, gitHubServerAppId: context.payload.gitHubAppConfig?.gitHubAppId }, "Failed to fetch Rate Limit");
+		//something wrong checking the rate-limit, so to be safe, just let it continue
+		return true;
 	}
 
-	return false;
 };
 
 const getRateRateLimitStatus = async (context: SQSMessageContext<any>) => {
