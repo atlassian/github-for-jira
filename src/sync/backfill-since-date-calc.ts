@@ -4,7 +4,7 @@ export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
 	commitsFromDate: Date | undefined,
 	syncType: SyncType | undefined,
-	isInitialNewSync: boolean | undefined
+	isInitialSync: boolean | undefined
 ): Date | undefined  => {
 
 	//------------ partial sync ---------------
@@ -16,7 +16,7 @@ export const calcNewBackfillSinceDate = (
 	}
 
 	//------------ initial new sync ---------------
-	if (isInitialNewSync === true) {
+	if (isInitialSync) {
 		//for initial new sync, take whatever provided as the commitsFromDate
 		//even it is undefined (which means everything will be synced)
 		return commitsFromDate;
@@ -37,7 +37,7 @@ export const calcNewBackfillSinceDate = (
 
 	if (existingBackfillSince.getTime() <= commitsFromDate.getTime()) {
 		//Origin backfill date is either empty or earlier,
-		//So use the origin one.
+		//So use the existing backfillSince date.
 		return existingBackfillSince;
 	}
 
