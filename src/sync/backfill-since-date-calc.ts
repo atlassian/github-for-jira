@@ -3,9 +3,11 @@ import { SyncType } from "~/src/sync/sync.types";
 export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
 	commitsFromDate: Date | undefined,
-	syncType: SyncType | undefined
+	syncType: SyncType | undefined,
+	isInitialNewSync: boolean | undefined
 ): Date | undefined  => {
 
+	//------------ partial sync ---------------
 	if (syncType === "partial" || syncType === undefined) {
 		//do not change anything on partial sync
 		//or missing sync type on mgs body
@@ -13,6 +15,14 @@ export const calcNewBackfillSinceDate = (
 		return existingBackfillSince;
 	}
 
+	//------------ initial new sync ---------------
+	if (isInitialNewSync === true) {
+		//for initial new sync, take whatever provided as the commitsFromDate
+		//even it is undefined (which means everything will be synced)
+		return commitsFromDate;
+	}
+
+	//------------ restart/continue existing backfill ---------------
 	if (!existingBackfillSince) {
 		//this is previously backfilled customers,
 		//we assume all data area backfilled,
@@ -21,8 +31,8 @@ export const calcNewBackfillSinceDate = (
 	}
 
 	if (!commitsFromDate) {
-		//something wrong, just ignore it, use the origin date
-		return existingBackfillSince;
+		//backfill is instructed to backfill everything, so use it
+		return commitsFromDate;
 	}
 
 	if (existingBackfillSince.getTime() <= commitsFromDate.getTime()) {

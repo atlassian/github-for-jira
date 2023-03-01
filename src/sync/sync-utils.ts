@@ -12,6 +12,7 @@ import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/cli
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
+	isInitialNewSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
@@ -45,6 +46,7 @@ export const findOrStartSync = async (
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
+		isInitialNewSync,
 		syncType,
 		startTime: fullSyncStartTime,
 		commitsFromDate: commitsFromDate?.toISOString(),

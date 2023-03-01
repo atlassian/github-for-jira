@@ -515,7 +515,9 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	]);
 };
 
-const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | undefined> => {
+const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | null> => {
 	const commitSince = await getCommitSinceDate(data.jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, data.commitsFromDate);
-	return calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType);
+	const backfillSinceDateToSave = calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType, data.isInitialNewSync);
+	//set it to null on falsy value so that we can override db with sequlize
+	return backfillSinceDateToSave || null;
 };

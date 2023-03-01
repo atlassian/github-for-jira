@@ -135,6 +135,7 @@ export type BranchMessagePayload = {
 export type BackfillMessagePayload = {
 	jiraHost: string,
 	installationId: number,
+	isInitialNewSync?: boolean,
 	syncType?: SyncType,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 	startTime?: string,
