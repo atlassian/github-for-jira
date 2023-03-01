@@ -24,7 +24,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
-import { calcNewBackfillSinceDate } from "./backfill-date-calc";
+import { convertFromISODateStringToDate } from "~/src/sync/sync-utils";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -119,10 +119,12 @@ export const updateJobStatus = async (
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, targetTasks))) {
-		const newBackFillSinceDate = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
-			? calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, logger)
+
+		const newBackFillSinceDate: Date | undefined = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
+			? convertFromISODateStringToDate(data.backFillSinceDateOnSuccess, logger)
 			: subscription.backfillSince;
 		await subscription.update({ syncStatus: SyncStatus.COMPLETE, backfillSince: newBackFillSinceDate  });
+
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
@@ -211,10 +213,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		const newBackFillSinceDate = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
-			? calcNewBackfillSinceDate(subscription.backfillSince, data.commitsFromDate, data.syncType, rootLogger)
+
+		const newBackFillSinceDate: Date | undefined = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)
+			? convertFromISODateStringToDate(data.backFillSinceDateOnSuccess, rootLogger)
 			: subscription.backfillSince;
 		await subscription.update({ syncStatus: "COMPLETE", backfillSince: newBackFillSinceDate });
+
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
 

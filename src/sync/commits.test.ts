@@ -223,7 +223,7 @@ describe("sync/commits", () => {
 			});
 
 			it("should only get commits since date specified", async () => {
-				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate: dateCutoff.toISOString() };
 
 				createGitHubNock(commitNodesFixture, { commitSince: dateCutoff.toISOString() });
 				const commits = [

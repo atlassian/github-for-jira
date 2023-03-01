@@ -1,17 +1,22 @@
-import Logger from "bunyan";
-import { convertCommitsFromDateStringToDate } from "~/src/sync/sync-utils";
 import { SyncType } from "~/src/sync/sync.types";
 
 export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
-	backfillSinceInMsgPayload: string | undefined,
+	commitsFromDate: Date | undefined,
 	syncType: SyncType | undefined,
-	logger: Logger
+	isFirstSyncOnSubscription: boolean
 ): Date | undefined  => {
 
 	if (syncType === "partial" || syncType === undefined) {
-		//do not change anything on partial sync or missing sync type on mgs body ( which means old msg before the prod deployment )
+		//do not change anything on partial sync
+		//or missing sync type on mgs body
+		//( which means old msg before the prod deployment )
 		return existingBackfillSince;
+	}
+
+	if (isFirstSyncOnSubscription === true) {
+		//this is fresh new sync, just take whatever is requested
+		return commitsFromDate;
 	}
 
 	if (!existingBackfillSince) {
@@ -21,13 +26,12 @@ export const calcNewBackfillSinceDate = (
 		return existingBackfillSince;
 	}
 
-	const newBackfillSinceDate = convertCommitsFromDateStringToDate(backfillSinceInMsgPayload, logger);
-	if (!newBackfillSinceDate) {
+	if (!commitsFromDate) {
 		//something wrong, just ignore it, use the origin date
 		return existingBackfillSince;
 	}
 
-	if (existingBackfillSince.getTime() <= newBackfillSinceDate.getTime()) {
+	if (existingBackfillSince.getTime() <= commitsFromDate.getTime()) {
 		//Origin backfill date is either empty or earlier,
 		//So use the origin one.
 		return existingBackfillSince;
@@ -35,6 +39,6 @@ export const calcNewBackfillSinceDate = (
 
 	//The new backfill date is earlier then the origin one
 	//Use the new backfill date
-	return newBackfillSinceDate;
+	return commitsFromDate;
 };
 

@@ -8,12 +8,14 @@ import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
 import { GitHubServerApp } from "models/github-server-app";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { calcNewBackfillSinceDate } from "./backfill-date-calc";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
 	syncType: SyncType,
 	commitsFromDate: Date | undefined,
+	isFirstSyncOnSubscription: boolean,
 	targetTasks?: TaskType[]
 ): Promise<void> => {
 
@@ -42,6 +44,8 @@ export const findOrStartSync = async (
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
+	const backFillSinceDateOnSuccess = calcNewBackfillSinceDate(subscription.backfillSince, commitsFromDate, syncType, isFirstSyncOnSubscription);
+
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
 		installationId,
@@ -49,16 +53,17 @@ export const findOrStartSync = async (
 		startTime: fullSyncStartTime,
 		syncType,
 		commitsFromDate: commitsFromDate?.toISOString(),
+		backFillSinceDateOnSuccess: backFillSinceDateOnSuccess?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
 };
 
-export const convertCommitsFromDateStringToDate = (commitsFromDate: string | undefined, logger: Logger) => {
+export const convertFromISODateStringToDate = (maybeIsoDateString: string | undefined, logger: Logger): Date | undefined => {
 	try {
-		return commitsFromDate ? new Date(commitsFromDate) : undefined;
+		return maybeIsoDateString? new Date(maybeIsoDateString) : undefined;
 	} catch (e) {
-		logger.error({ commitsFromDate }, "Fail to convert commitsFromDate to date object during backfill commit task");
+		logger.error({ maybeIsoDateString }, "Fail to convert maybeIsoDateString to date object during backfill commit task");
 		return undefined;
 	}
 };

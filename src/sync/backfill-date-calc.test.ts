@@ -1,15 +1,15 @@
-import { getLogger } from "config/logger";
 import { calcNewBackfillSinceDate } from "./backfill-date-calc";
 import { SyncType } from "~/src/sync/sync.types";
 
 describe("Calculating backfill since date", () => {
 	let existingBackfillSince: Date | undefined;
-	let newBackfillSinceDate: string | undefined;
+	let newBackfillSinceDate: Date | undefined;
 	let syncType: SyncType | undefined;
+	let isFirstSyncOnSubscription: boolean;
 	const getResult = () => {
-		return calcNewBackfillSinceDate(existingBackfillSince, newBackfillSinceDate, syncType, getLogger("test"));
+		return calcNewBackfillSinceDate(existingBackfillSince, newBackfillSinceDate, syncType, isFirstSyncOnSubscription);
 	};
-	describe("For partial sync", () => {
+	describe("For partial sync, should keep the existing regardless", () => {
 		beforeEach(() => {
 			syncType = "partial";
 			existingBackfillSince = new Date();
@@ -19,11 +19,11 @@ describe("Calculating backfill since date", () => {
 			expect(getResult()).toEqual(existingBackfillSince);
 		});
 		it("should resolve to existingBackfillSince with earlier new backfillSince date", () => {
-			newBackfillSinceDate = new Date(existingBackfillSince!.getTime() - 1000).toISOString();
+			newBackfillSinceDate = new Date(existingBackfillSince!.getTime() - 1000);
 			expect(getResult()).toEqual(existingBackfillSince);
 		});
 		it("should resolve to existingBackfillSince with more recent new backfillSince date", () => {
-			newBackfillSinceDate = new Date(existingBackfillSince!.getTime() + 1000).toISOString();
+			newBackfillSinceDate = new Date(existingBackfillSince!.getTime() + 1000);
 			expect(getResult()).toEqual(existingBackfillSince);
 		});
 	});
@@ -31,53 +31,48 @@ describe("Calculating backfill since date", () => {
 		beforeEach(()=> {
 			syncType = "full";
 		});
-		describe("For existing syncs with empty backfill date", () => {
-			beforeEach(() => {
+		describe("For new fresh sync on new subscription", () => {
+			beforeEach(()=> {
+				isFirstSyncOnSubscription = true;
 				existingBackfillSince = undefined;
 			});
-			describe("Backfill with undefined date", () => {
-				beforeEach(() => {
-					newBackfillSinceDate = new Date().toISOString();
-				});
-				it("Should resolve to existing empty backfillSince date", () => {
-					expect(getResult()).toBeUndefined();
-				});
+			it("Should resolve to new backfillSince date if provided", () => {
+				newBackfillSinceDate = new Date();
+				expect(getResult()).toEqual(newBackfillSinceDate);
 			});
-			describe("Backfill new a recent date", () => {
-				beforeEach(() => {
-					newBackfillSinceDate = new Date().toISOString();
-				});
-				it("Should resolve to existing empty backfillSince date", () => {
-					expect(getResult()).toBeUndefined();
-				});
+			it("Should resolve to empty backfillSince date if new date is empty", () => {
+				newBackfillSinceDate = undefined;
+				expect(getResult()).toBeUndefined();
 			});
 		});
-		describe("For new syncs with existing backfill date", () => {
-			beforeEach(() => {
-				existingBackfillSince = new Date();
+		describe("For sync on existing subscription", () => {
+			beforeEach(()=> {
+				isFirstSyncOnSubscription = false;
 			});
-			describe("Backfill with undefined date", () => {
+			describe("with an empty backfillSince date", () => {
 				beforeEach(() => {
+					existingBackfillSince = undefined;
+				});
+				it("Should resolve to existing empty backfillSince date", () => {
+					newBackfillSinceDate = new Date();
+					expect(getResult()).toBeUndefined();
+				});
+			});
+			describe("with non-empty backfillSince date", () => {
+				beforeEach(() => {
+					existingBackfillSince = new Date();
+				});
+				it("should resolve to existing backfillSince with undefined new backfillSince date", () => {
 					newBackfillSinceDate = undefined;
-				});
-				it("Should resolve to existing undefined backfill date", () => {
 					expect(getResult()).toEqual(existingBackfillSince);
 				});
-			});
-			describe("Backfill with a more recent date", () => {
-				beforeEach(() => {
-					newBackfillSinceDate = new Date(existingBackfillSince!.getTime() + 1000).toISOString();
+				it("should resolve to earlier new backfillSince date", () => {
+					newBackfillSinceDate = new Date(existingBackfillSince!.getTime() - 1000);
+					expect(getResult()).toEqual(newBackfillSinceDate);
 				});
-				it("Should resolve to existingBackfillSince date", () => {
+				it("should resolve to existing backfillSince with more recent new backfillSince date", () => {
+					newBackfillSinceDate = new Date(existingBackfillSince!.getTime() + 1000);
 					expect(getResult()).toEqual(existingBackfillSince);
-				});
-			});
-			describe("Backfill with a more older date", () => {
-				beforeEach(() => {
-					newBackfillSinceDate = new Date(existingBackfillSince!.getTime() - 1000).toISOString();
-				});
-				it("Should resolve to the more older (new backfill since) date", () => {
-					expect(getResult()).toEqual(new Date(newBackfillSinceDate!));
 				});
 			});
 		});

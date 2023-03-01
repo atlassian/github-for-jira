@@ -34,7 +34,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			return;
 		}
 
-		await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
+		await findOrStartSync(subscription, req.log, syncType, commitsFromDate, false);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,

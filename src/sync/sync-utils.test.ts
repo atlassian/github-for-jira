@@ -29,6 +29,7 @@ describe("findOrStartSync", () => {
 					getLogger("test"),
 					"partial",
 					undefined,
+					true,
 					undefined
 				);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
@@ -78,6 +79,7 @@ describe("findOrStartSync", () => {
 					getLogger("test"),
 					"partial",
 					undefined,
+					true,
 					undefined
 				);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({

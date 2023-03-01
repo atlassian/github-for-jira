@@ -137,7 +137,8 @@ export type BackfillMessagePayload = {
 	installationId: number,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 	startTime?: string,
-	commitsFromDate?: string,
+	commitsFromDate?: string, //a date to request commits from
+	backFillSinceDateOnSuccess?: string, //a backfill since date to be saved in db on backfill success
 	syncType?: SyncType,
 	targetTasks?: TaskType[]
 }
