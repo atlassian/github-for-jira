@@ -2,7 +2,7 @@ import { MessageHandler, SQSMessageContext, WebhookMessagePayload } from "./sqs.
 import { createGithubSignature, getWebhookSecret, webhookRouter } from "routes/github/webhook/webhook-receiver-post";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { envVars } from "config/env";
-import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 export const webhooksQueueMessageHandler: MessageHandler<WebhookMessagePayload> = async (context: SQSMessageContext<WebhookMessagePayload>): Promise<void> => {
 	context.log.debug("Handling webhook from the SQS queue");
