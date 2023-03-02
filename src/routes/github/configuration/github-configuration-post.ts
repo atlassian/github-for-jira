@@ -70,7 +70,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			return;
 		}
 
-		const subscription = await Subscription.install({
+		const subscription: Subscription = await Subscription.install({
 			hashedClientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
@@ -80,7 +80,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		await Promise.all(
 			[
 				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
-				findOrStartSync(subscription, req.log)
+				findOrStartSync(subscription, req.log, true, "full")
 			]
 		);
 
