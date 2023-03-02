@@ -1,20 +1,12 @@
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-
-	if (!await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
-		req.log.debug("Skipping jiraSymmetricJwtMiddleware...");
-		return next();
-	}
-
-	req.log.info("Executing jiraSymmetricJwtMiddleware...");
 
 	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
 

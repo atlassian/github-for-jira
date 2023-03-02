@@ -12,6 +12,7 @@ import { GithubRepositoryRouter } from "routes/github/repository/github-reposito
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Errors } from "config/errors";
+import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { WebhookReceiverPost } from "routes/github/webhook/webhook-receiver-post";
 import { header } from "express-validator";
@@ -51,6 +52,9 @@ subRouter.use(GithubOAuthRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
+
+subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
+
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);

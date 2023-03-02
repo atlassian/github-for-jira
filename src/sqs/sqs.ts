@@ -6,8 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
-import { stringFlag, StringFlags } from "config/feature-flags";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, SqsTimeoutError } from "~/src/sqs/sqs.types";
+import { stringFlag, StringFlags } from "config/feature-flags";
+import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
 const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
@@ -257,8 +258,7 @@ export class SqsQueue<MessagePayload> {
 				messageId: message.MessageId,
 				executionId: uuidv4(),
 				queue: this.queueName,
-				payload,
-				message
+				...(payload?.jiraHost ? { jiraHost: payload.jiraHost } : { })
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
@@ -268,6 +268,11 @@ export class SqsQueue<MessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
+
+			if (await preemptiveRateLimitCheck(context, this)) {
+				context.log.info("Preemptive rate limit threshold exceeded");
+				return;
+			}
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
@@ -331,7 +336,7 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;

@@ -5,7 +5,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("../sqs/queues");
 
@@ -27,6 +27,7 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
+					true,
 					undefined,
 					undefined,
 					undefined
@@ -75,6 +76,7 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
+					true,
 					undefined,
 					undefined,
 					undefined

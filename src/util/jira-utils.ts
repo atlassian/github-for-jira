@@ -3,7 +3,6 @@ import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
-import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
@@ -64,16 +63,6 @@ interface Author {
 	};
 }
 
-let regexFixFeature = false;
-onFlagChange(BooleanFlags.REGEX_FIX, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX);
-});
-
-let issueKeyRegexCharLimitFeature = false;
-onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
-	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT);
-});
-
 /**
  *  Based on the JIRA Ticket parser extended regex: ^\p{L}[\p{L}\p{Digit}_]{1,255}-\p{Digit}{1,255}$ (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string
  *  or be a non unicode-digit character (separator like space, new line, or special character like [) [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter,
@@ -81,14 +70,7 @@ onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
  *  then at least 1 number character up to 256 length
  */
 export const jiraIssueRegex = (): RegExp => {
-	if (issueKeyRegexCharLimitFeature) {
-		return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
-	} else if (regexFixFeature) {
-		// Old regex which was working before trying to update it to the "correct" one
-		return /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
-	}
-
-	return /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
 };
 
 /**
@@ -97,13 +79,7 @@ export const jiraIssueRegex = (): RegExp => {
  * This regex is used when adding links to Jira issues in GitHub PR issue/descriptions.
  */
 export const jiraIssueInSquareBracketsRegex = (): RegExp => {
-	if (issueKeyRegexCharLimitFeature) {
-		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
-	} else if (regexFixFeature) {
-		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
-	}
-
-	return /(^|[^\p{L}\p{Nd}])\[([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})\]/giu;
+	return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
 };
 
 /**
