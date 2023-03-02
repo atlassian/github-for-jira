@@ -27,6 +27,7 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
+					true,
 					undefined,
 					undefined,
 					undefined
@@ -75,6 +76,7 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
+					true,
 					undefined,
 					undefined,
 					undefined

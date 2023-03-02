@@ -7,6 +7,7 @@ import Logger from "bunyan";
 
 // List of queues we want to apply the preemptive rate limiting on
 const TARGETTED_QUEUES = ["backfill"];
+const DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS = 30 * 60; //30 minutes
 
 // Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
 export const preemptiveRateLimitCheck = async (context: SQSMessageContext<any>, sqsQueue: SqsQueue<any>) : Promise<boolean> => {
@@ -29,7 +30,7 @@ export const preemptiveRateLimitCheck = async (context: SQSMessageContext<any>, 
 			return true;
 		}
 	} catch (err) {
-		context.log.error({ err }, "Failed to fetch Rate Limit");
+		context.log.error({ err, gitHubServerAppId: context.payload.gitHubAppConfig?.gitHubAppId }, "Failed to fetch Rate Limit");
 	}
 
 	return false;
@@ -47,6 +48,14 @@ const getRateResetTime = (rateLimitResponse: Octokit.RateLimitGetResponse, log: 
 	const resetEpochDateTime = Math.max(rateLimitResponse?.resources?.core?.reset, rateLimitResponse?.resources?.graphql?.reset);
 	// Get the difference in seconds between now and reset time
 	const timeToResetInSeconds = resetEpochDateTime - (Date.now()/1000);
-	log.info({ timeToResetInSeconds }, "Preemptive rate limit reset time");
-	return timeToResetInSeconds;
+	const finalTimeToRestInSeconds = timeToResetInSeconds <= 0 ? DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS : timeToResetInSeconds;
+
+	log.info({
+		timeToResetInSeconds,
+		finalTimeToRestInSeconds,
+		coreReset: rateLimitResponse?.resources?.core?.reset,
+		graphqlRest: rateLimitResponse?.resources?.graphql?.reset
+	}, "Preemptive rate limit reset time");
+
+	return finalTimeToRestInSeconds;
 };
