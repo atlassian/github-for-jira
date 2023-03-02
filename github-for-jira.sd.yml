@@ -537,7 +537,7 @@ environmentOverrides:
         name: gateway
         attributes:
           swaggerConfig:
-            configFile: api-gateway.yml
+            configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
               AccountNumber: 752631980301
               WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
@@ -625,7 +625,7 @@ environmentOverrides:
         name: gateway
         attributes:
           swaggerConfig:
-            configFile: api-gateway.yml
+            configFile: "github-for-jira/api-gateway-${BITBUCKET_BUILD_NUMBER}.yml"
             configParams:
               AccountNumber: 234617365107
               WebhooksQueueUrl: '_Ref sqs.webhooks.queueurl'
