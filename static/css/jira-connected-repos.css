@@ -43,9 +43,9 @@
     padding: 0.3em 0;
 }
 
-/*.jiraConnectedRepos__table__head__title:not(:last-child) {*/
-/*    width: 30%;*/
-/*}*/
+.jiraConnectedRepos__table__head__title:not(:last-child) {
+    width: 30%;
+}
 
 .jiraConnectedRepos__table__body
 > .jiraConnectedRepos__table__row

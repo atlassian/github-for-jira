@@ -59,17 +59,4 @@ export const registerHandlebarsHelpers = () => {
 			subscriptionHost !== jiraHost
 	);
 
-	const syncStatusIcon = (status) => {
-		switch (status) {
-			case "complete":
-				return "<span class='aui-icon aui-icon-small aui-iconfont-check-circle-filled'>Complete</span>";
-			case "failed":
-				return "<span class='aui-icon aui-icon-small aui-iconfont-cross-circle'>Failed</span>";
-			default:
-				return "<span class='aui-icon aui-icon-small aui-iconfont-warning'>Incomplete</span>";
-		}
-
-	};
-
-	hbs.registerHelper("syncStatusIcon", syncStatusIcon);
 };
