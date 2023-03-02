@@ -18,7 +18,16 @@ services:
     image: wernight/ngrok
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN g4j-localstack:4566
+    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN g4j-proxy:3128
+
+  # creates a proxy to redirect to proper path for localstack
+  proxy:
+    container_name: g4j-proxy
+    image: nginx:alpine
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
   localstack:
     container_name: g4j-localstack
@@ -28,7 +37,7 @@ services:
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
-#      - LS_LOG=debug # log level
+      - LS_LOG=warn # log level
     ports:
       - "4566:4566"
     volumes:
@@ -48,6 +57,7 @@ services:
       - redis
       - postgres
       - localstack
+      - proxy
       - cryptor
     volumes:
       - .:/app

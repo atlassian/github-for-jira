@@ -27,6 +27,7 @@ app.post("/cryptor/encrypt/*", (req, res) => {
 	console.log('-- cyrptor mock encrypt', {ret});
 	res.status(200).json(ret);
 });
+
 app.post("/cryptor/decrypt", (req, res) => {
 	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) {
 		res.status(403).send("Wrong challenge");
@@ -49,6 +50,33 @@ app.post("/cryptor/decrypt", (req, res) => {
 	res.status(200).json(ret);
 });
 
-app.listen(26272, () => {
+const server = app.listen(26272, () => {
 	console.log(`Cryptor mock app running on 26272`);
 });
+
+let connections = [];
+server.on("connection", connection => {
+	connections.push(connection);
+	connection.on("close", () => connections = connections.filter(curr => curr !== connection));
+});
+
+function stop() {
+	console.log("Received kill signal, shutting down gracefully");
+	server.close(() => {
+		console.log("Closed out remaining connections");
+		process.exit(0);
+	});
+
+	setTimeout(() => {
+		console.error("Could not close connections in time, forcefully shutting down");
+		process.exit(1);
+	}, 1000);
+
+	connections.forEach(curr => curr.end());
+	setTimeout(() => connections.forEach(curr => curr.destroy()), 5000);
+}
+
+// Graceful shutdown of cryptor in docker
+process.on("SIGTERM", stop);
+process.on("SIGINT", stop);
+process.on("exit", stop);
