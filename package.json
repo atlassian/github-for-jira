@@ -4,7 +4,7 @@
 	"description": "GitHub integration for Atlassian Jira",
 	"repository": "https://github.com/atlassian/github-for-jira.git",
 	"engines": {
-		"node": ">= 14.21 <15",
+		"node": ">= 14.17 <15",
 		"yarn": "^1.22.0"
 	},
 	"main": "src/main",
