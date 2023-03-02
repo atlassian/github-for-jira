@@ -65,7 +65,7 @@ lifecycleEvents:
 
 resources:
   - type: globaledge
-    name: vanity
+    name: ingress
     attributes:
       default_vanity_dns: true
       ip_whitelist:
