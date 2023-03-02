@@ -39,11 +39,6 @@
                 <tr class="jiraConnectedRepos__table__head_row">
                     <th class="jiraConnectedRepos__table__head__title">Repository</th>
                     <th class="jiraConnectedRepos__table__head__title">Backfill</th>
-                    <th class="jiraConnectedRepos__table__head__title">Branch</th>
-                    <th class="jiraConnectedRepos__table__head__title">Commit</th>
-                    <th class="jiraConnectedRepos__table__head__title">Pull</th>
-                    <th class="jiraConnectedRepos__table__head__title">Build</th>
-                    <th class="jiraConnectedRepos__table__head__title">Deployment</th>
                 </tr>
                 </thead>
 
@@ -66,31 +61,6 @@
                             {{syncStatus}}
                             </span>
                         </div>
-                    </td>
-
-                    {{! Branch Status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{{syncStatusIcon branchStatus}}}
-                    </td>
-
-                    {{! Commit Status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{{syncStatusIcon commitStatus}}}
-                    </td>
-
-                    {{! Pull Status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{{syncStatusIcon pullStatus}}}
-                    </td>
-
-                    {{! Build Status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{{syncStatusIcon buildStatus}}}
-                    </td>
-
-                    {{! Deployment Status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{{syncStatusIcon deploymentStatus}}}
                     </td>
 
                 </tr>
