@@ -42,6 +42,8 @@ export const findOrStartSync = async (
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
+	const finalCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
 		installationId,
@@ -49,7 +51,7 @@ export const findOrStartSync = async (
 		isInitialSync,
 		syncType,
 		startTime: fullSyncStartTime,
-		commitsFromDate: commitsFromDate?.toISOString(),
+		commitsFromDate: finalCommitsFromDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
