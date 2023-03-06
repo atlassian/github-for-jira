@@ -243,7 +243,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	}
 
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
-		const payload = message.Body ? JSON.parse(message.Body) : {};
+		const payload: MessagePayload = message.Body ? JSON.parse(message.Body) : {};
 
 		// Sets the log level depending on FF for the specific jira host
 		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
@@ -257,7 +257,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				messageId: message.MessageId,
 				executionId: uuidv4(),
 				queue: this.queueName,
-				...(payload?.jiraHost ? { jiraHost: payload.jiraHost } : { })
+				jiraHost: payload?.jiraHost,
+				installationId: payload?.installationId,
+				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
+				webhookId: payload?.webhookId
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
@@ -270,9 +273,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
+				//threshold exceeded, retry via sending a new message.
 				const { MessageId } = await this.sendMessage(payload, rateLimitCheckResult.resetTimeInSeconds, context.log);
 				await this.deleteMessage(context);
-				context.log.info({ NewMessageId: MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
+				context.log.info({ NewMessageId: MessageId, DeletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
 				return;
 			}
 
