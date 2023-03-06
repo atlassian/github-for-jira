@@ -22,6 +22,8 @@ export class DatabaseStateCreator {
 	private pendingForBuilds: boolean;
 	private pendingForDeployments: boolean;
 
+	private buildsCustomCursor: string | undefined;
+
 	public static GITHUB_INSTALLATION_ID = 111222;
 
 	public forServer() {
@@ -51,6 +53,11 @@ export class DatabaseStateCreator {
 
 	public repoSyncStatePendingForBuilds() {
 		this.pendingForBuilds = true;
+		return this;
+	}
+
+	public withBuildsCustomCursor(cursor: string) {
+		this.buildsCustomCursor = cursor;
 		return this;
 	}
 
@@ -106,6 +113,7 @@ export class DatabaseStateCreator {
 			pullStatus: this.pendingForPrs ? "pending" : "complete",
 			buildStatus: this.pendingForBuilds ? "pending" : "complete",
 			deploymentStatus: this.pendingForDeployments ? "pending" : "complete",
+			... (this.buildsCustomCursor ? { buildCursor: this.buildsCustomCursor } : { }),
 			updatedAt: new Date(),
 			createdAt: new Date()
 		}) : undefined;
