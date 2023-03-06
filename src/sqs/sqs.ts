@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
-import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, SqsTimeoutError } from "~/src/sqs/sqs.types";
+import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
 import { stringFlag, StringFlags } from "config/feature-flags";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
@@ -32,7 +32,7 @@ const isNotRetryable = (errorHandlingResult: ErrorHandlingResult) => {
  *
  * Allows sending SQS messages, as well as listening to the queue messages.
  */
-export class SqsQueue<MessagePayload> {
+export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	readonly queueUrl: string;
 	readonly queueName: string;
 	readonly queueRegion: string;
@@ -84,6 +84,7 @@ export class SqsQueue<MessagePayload> {
 			.promise();
 		logger.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
+		return sendMessageResult;
 	}
 
 	/**
@@ -267,8 +268,11 @@ export class SqsQueue<MessagePayload> {
 		try {
 			const messageProcessingStartTime = Date.now();
 
-			if (await preemptiveRateLimitCheck(context, this)) {
-				context.log.info("Preemptive rate limit threshold exceeded");
+			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
+			if (rateLimitCheckResult.isExceedThreshold) {
+				const { MessageId } = await this.sendMessage(payload, rateLimitCheckResult.resetTimeInSeconds, context.log);
+				await this.deleteMessage(context);
+				context.log.info({ NewMessageId: MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
 				return;
 			}
 

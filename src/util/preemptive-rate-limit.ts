@@ -15,7 +15,7 @@ type PreemptyRateLimitCheckResult = {
 };
 
 // Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
-export const preemptiveRateLimitCheck = async (context: SQSMessageContext<BaseMessagePayload>, sqsQueue: SqsQueue<BaseMessagePayload>) : Promise<PreemptyRateLimitCheckResult> => {
+export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(context: SQSMessageContext<T>, sqsQueue: SqsQueue<T>) : Promise<PreemptyRateLimitCheckResult> => {
 
 	if (!TARGETTED_QUEUES.includes(sqsQueue.queueName))
 	{

@@ -42,7 +42,6 @@ describe("sync/builds", () => {
 			.repoSyncStatePendingForBuilds()
 			.create();
 
-		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 	});
 
 	it("should sync builds to Jira when build message contains issue key", async () => {
