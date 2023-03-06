@@ -25,7 +25,7 @@ export const findOrStartSync = async (
 		syncWarning: null
 	});
 
-	logger.info({ subscription, syncType }, "Starting sync");
+	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");
 
 	await resetTargetedTasks(subscription, syncType, targetTasks);
 
