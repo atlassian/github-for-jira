@@ -14,9 +14,9 @@ export interface TaskProcessors {
 		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
 		repository: Repository,
-		cursor?: string | number,
-		perPage?: number,
-		messagePayload?: BackfillMessagePayload
+		cursor: string | number | undefined,
+		perPage: number,
+		messagePayload: BackfillMessagePayload
 	) => Promise<TaskPayload>;
 }
 
