@@ -120,10 +120,13 @@ export interface SQSContext {
 	log: Logger;
 }
 
-export type BranchMessagePayload = {
+export type BaseMessagePayload = {
 	jiraHost: string,
 	installationId: number,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+}
+
+export type BranchMessagePayload = BaseMessagePayload & {
 	webhookReceived: number,
 	webhookId: string,
 
@@ -132,21 +135,15 @@ export type BranchMessagePayload = {
 	webhookPayload: WebhookPayloadCreate,
 }
 
-export type BackfillMessagePayload = {
-	jiraHost: string,
-	installationId: number,
+export type BackfillMessagePayload = BaseMessagePayload & {
 	isInitialSync?: boolean,
 	syncType?: SyncType,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 	startTime?: string,
 	commitsFromDate?: string,
 	targetTasks?: TaskType[]
 }
 
-export type DeploymentMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export type DeploymentMessagePayload = BaseMessagePayload & {
 	webhookReceived: number,
 	webhookId: string,
 
@@ -155,10 +152,7 @@ export type DeploymentMessagePayload = {
 	webhookPayload: WebhookPayloadDeploymentStatus,
 }
 
-export type PushQueueMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export type PushQueueMessagePayload = BaseMessagePayload & {
 	repository: PayloadRepository,
 	shas: { id: string, issueKeys: string[] }[],
 	webhookId: string,
