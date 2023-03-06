@@ -9,7 +9,7 @@ const TEST_INSTALLATION_ID = 1234;
 const ONE_MINUTES_IN_SECONDS = 1 * 60;
 const THIRTY_MINUTES_IN_SECONDS = 30 * 60;
 
-const mockGitHubRateLimit = (limit , remaining, resetTime) => {
+const mockGitHubRateLimit = (limit: number, remaining: number, resetTime: number) => {
 	githubUserTokenNock(TEST_INSTALLATION_ID);
 	githubNock.get(`/rate_limit`)
 		.reply(200, {
@@ -55,10 +55,10 @@ const getMessage = (): SQSMessageContext<BaseMessagePayload> => {
 
 describe("Preemptive rate limit check - Cloud", () => {
 
-	let sqsQueue;
-	let message;
-	let fakeDate;
-	let nowInSeconds;
+	let sqsQueue: any;
+	let message: SQSMessageContext<BaseMessagePayload>;
+	let fakeDate: number;
+	let nowInSeconds: number;
 
 	beforeEach(() => {
 		sqsQueue = {
