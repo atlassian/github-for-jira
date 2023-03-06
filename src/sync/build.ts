@@ -5,6 +5,8 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { numberFlag, NumberFlags } from "config/feature-flags";
+
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
@@ -25,17 +27,27 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 export const getBuildTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage?: number
+	cursorOrigStr: string | number = 1,
+	perPageOrig: number
 ) => {
 	logger.info("Syncing Builds: started");
-	cursor = Number(cursor);
+	const cursorOrig = Number(cursorOrigStr);
+	let cursor = cursorOrig;
+	let perPage = perPageOrig;
+	let nextPage = cursorOrig + 1;
+
+	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_PAGE_SIZE_COEF, 0, jiraHost);
+	if (pageSizeCoef > 0) {
+		// An experiment to speed up a particular customer by increasing the page size
+		perPage = perPageOrig * pageSizeCoef;
+		cursor = Math.floor(cursorOrig / pageSizeCoef);
+		nextPage = cursorOrig + pageSizeCoef;
+	}
 
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
 	const { workflow_runs } = data;
-	const nextPage = cursor + 1;
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
 
 	if (!workflow_runs?.length) {
