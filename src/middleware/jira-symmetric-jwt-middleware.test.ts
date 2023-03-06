@@ -1,5 +1,6 @@
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import express, { Application, NextFunction, Request, Response } from "express";
+import { noop } from "lodash";
 import supertest from "supertest";
 import { getLogger } from "~/src/config/logger";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
@@ -204,6 +205,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			req.session = session || {};
 			req.cookies = {};
 			req.log = getLogger("test");
+			req.addLogFields = () => noop;
 			next();
 		});
 		app.use(jiraSymmetricJwtMiddleware);
