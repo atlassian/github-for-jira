@@ -75,6 +75,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			backfillSince: subscription.backfillSince,
 			jiraHost
 		};
 
@@ -161,7 +162,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
-		shouldPromoteBackfillButtonToTableRow,
+		shouldPromoteBackfillButtonToTableRow: true,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),

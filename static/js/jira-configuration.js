@@ -278,4 +278,9 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 	);
 });
 
-
+$(".jiraConfiguration__info__backfillDate-label").each(backfillSinceLabelEle => {
+	const backfillSinceISOStr = backfillSinceLabelEle.dataset.backfillSince;
+	if(backfillSinceISOStr) {
+		backfillSinceLabelEle.text(AJS.I18n
+	}
+});
