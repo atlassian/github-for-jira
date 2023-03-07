@@ -14,6 +14,8 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { jiraIssueKeyParser } from "utils/jira-utils";
+import { isEmpty } from "lodash";
 
 /**
  * Find the next page number from the response headers.
@@ -88,6 +90,12 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
+				const issueKeys = jiraIssueKeyParser(`${pull.title}\n${pull.head.ref}\n${pull.body}`);
+
+				if (isEmpty(issueKeys)) {
+					return undefined;
+				}
+
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
