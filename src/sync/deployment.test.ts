@@ -60,7 +60,6 @@ describe("sync/deployments", () => {
 				.repoSyncStatePendingForDeployments()
 				.create();
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			githubUserTokenNock(installationId);
 		});
 
@@ -439,7 +438,6 @@ describe("sync/deployments", () => {
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			gheUserTokenNock(installationId);
 		});
 

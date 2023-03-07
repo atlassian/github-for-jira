@@ -13,7 +13,7 @@ import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
 
 /**
@@ -46,15 +46,27 @@ type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 export const getPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage?: number
+	cursorOrigStr: string | number = 1,
+	perPageOrig: number
 ) => {
 	logger.debug("Syncing PRs: started");
 
-	cursor = Number(cursor);
 	const startTime = Date.now();
+
+	const cursorOrig = Number(cursorOrigStr);
+	let cursor = cursorOrig;
+	let perPage = perPageOrig;
+	let nextPage = cursorOrig + 1;
+
+	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
+	if (pageSizeCoef > 0) {
+		// An experiment to speed up a particular customer by increasing the page size
+		perPage = perPageOrig * pageSizeCoef;
+		cursor = Math.max(1, Math.floor(cursorOrig / pageSizeCoef));
+		nextPage = cursorOrig + pageSizeCoef;
+	}
 
 	const {
 		data: edges,
@@ -79,7 +91,9 @@ export const getPullRequestTask = async (
 		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = getNextPage(logger, headers) || cursor + 1;
+	if (pageSizeCoef == 0) {
+		nextPage = getNextPage(logger, headers) || cursor + 1;
+	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
