@@ -6,7 +6,8 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GithubClientError } from "~/src/github/client/github-client-errors";
+import { AxiosError } from "axios";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -69,17 +70,17 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
+	const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
+
+	if (gitHubServerApps?.length) {
+		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
+		res.status(200).send({ success: true, appExists: true });
+		return;
+	}
+
+	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+
 	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
-
-		if (gitHubServerApps?.length) {
-			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-			res.status(200).send({ success: true, appExists: true });
-			return;
-		}
-
-		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
-
 		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
 		await client.getMainPage(TIMEOUT_PERIOD_MS);
 		res.status(200).send({ success: true, appExists: false });
@@ -90,28 +91,42 @@ export const JiraConnectEnterprisePost = async (
 			jiraHost: jiraHost
 		});
 	} catch (err) {
-		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
-		const codeOrStatus = "" + (err.code || err.response.status);
+		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
-		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
-			req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${!err.code && err.response?.status}`);
-			if (!err.code && err.response?.status) {
-				//err.code means there's error on the tcp/https connection,
-				//err.status means traffic reach signals, but server reject it.
-				//as long as there's no code and a status, means server returns something
-				//so the domain name is reachable, it is just it required some api tokens to be accessible
-				res.status(200).send({ success: true, appExists: false });
-				return;
-			}
+		//err.code means there's error on the tcp/https connection,
+		//err.status means traffic reach network, but server reject it.
+		//as long as there's no code and a status, means server returns something
+		//so the domain name is reachable, it is just it required some api tokens to be accessible,
+		//and we can bypass this check to allow the manual app creation.
+		const hasServerResponded = !axiosError.code && axiosError.response?.status;
+
+		req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${hasServerResponded}`);
+		if (hasServerResponded) {
+			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
+			res.status(200).send({ success: true, appExists: false });
+			return;
 		}
+
+		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status);
+		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
+
+		const reasons = [err.message];
+		reasons.push(axiosError.message || "");
+
+		reasons.push(
+			isInteger(codeOrStatus)
+				? `Received ${codeOrStatus} response.`
+				: codeOrStatus
+		);
 
 		res.status(200).send({
 			success: false, errors: [{
 				code: ErrorResponseCode.CANNOT_CONNECT,
-				reason:
-					isInteger(codeOrStatus)
-						? `received ${codeOrStatus} response`
-						: codeOrStatus
+				reason: reasons
+					.filter(item => !!item)
+					.map(reason =>
+						reason.trim().replace(/\.*$/, ""))
+					.join(". ")
 			}]
 		});
 		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, codeOrStatus);

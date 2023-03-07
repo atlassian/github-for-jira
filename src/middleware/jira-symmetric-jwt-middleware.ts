@@ -1,20 +1,12 @@
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-import { TokenType, verifyQsh } from "~/src/jira/util/jwt";
+import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-
-	if (!await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
-		req.log.info("Skipping jiraSymmetricJwtMiddleware...");
-		return next();
-	}
-
-	req.log.info("Executing jiraSymmetricJwtMiddleware...");
 
 	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
 
@@ -51,6 +43,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
 		}
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 
 	} else if (req.session?.jiraHost) {
@@ -64,6 +57,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 	}
 
@@ -112,14 +106,7 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
 	}
 
 	if (verifiedClaims.qsh) {
-		let qshVerified: boolean;
-		if (tokenType === TokenType.context) {
-			//If we use context jwt tokens, their qsh will be constant
-			qshVerified = verifiedClaims.qsh === "context-qsh";
-		} else {
-			//validate query string hash
-			qshVerified = verifyQsh(verifiedClaims.qsh, req);
-		}
+		const qshVerified = validateQsh(tokenType, verifiedClaims.qsh, getJWTRequest(req));
 
 		if (!qshVerified) {
 			throw new Error("JWT Verification Failed, wrong qsh");

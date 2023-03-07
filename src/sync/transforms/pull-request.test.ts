@@ -13,7 +13,7 @@ describe("pull_request transform", () => {
 		user = Object.assign({}, userFixture);
 	});
 
-	it("should send the ghost user to Jira when GitHub user has been deleted", async () => {
+	it("should send the ghost user to Jira when GitHub user has been deleted", () => {
 		pullRequest.title = "[TES-123] Evernote Test";
 
 		const fixture = {
@@ -31,7 +31,7 @@ describe("pull_request transform", () => {
 
 		mockSystemTime(12345678);
 
-		const data = await transformPullRequest(fixture as any, pullRequest);
+		const data = transformPullRequest(fixture as any, pullRequest);
 
 		expect(data).toMatchObject({
 			id: "1234568",
@@ -67,7 +67,29 @@ describe("pull_request transform", () => {
 		});
 	});
 
-	it("should return no data if there are no issue keys", async () => {
+	it("should extract issue key from the body", () => {
+		pullRequest.body = "[TES-123] Evernote Test";
+
+		const fixture = {
+			pullRequest,
+			repository: {
+				id: 1234568,
+				name: "test-repo",
+				full_name: "test-owner/test-repo",
+				owner: { login: "test-login" },
+				html_url: "https://github.com/test-owner/test-repo"
+			}
+		};
+
+		mockSystemTime(12345678);
+
+		const data = transformPullRequest(fixture as any, pullRequest);
+
+		expect(data!.pullRequests[0].issueKeys).toMatchObject(["KEY-15", "TES-123"]);
+	});
+
+
+	it("should return no data if there are no issue keys", () => {
 		const fixture = {
 			pullRequest: {
 				author: null,
@@ -102,10 +124,10 @@ describe("pull_request transform", () => {
 
 		mockSystemTime(12345678);
 
-		await expect(transformPullRequest(
+		expect(transformPullRequest(
 			fixture as any,
 			pullRequest,
 			user
-		)).resolves.toBeUndefined();
+		)).toBeUndefined();
 	});
 });

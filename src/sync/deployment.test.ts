@@ -12,8 +12,6 @@ import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -62,7 +60,6 @@ describe("sync/deployments", () => {
 				.repoSyncStatePendingForDeployments()
 				.create();
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			githubUserTokenNock(installationId);
 		});
 
@@ -431,10 +428,6 @@ describe("sync/deployments", () => {
 
 		beforeEach(async () => {
 
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
-
 			mockSystemTime(12345678);
 
 			const builderOutput = await new DatabaseStateCreator()
@@ -445,7 +438,6 @@ describe("sync/deployments", () => {
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			gheUserTokenNock(installationId);
 		});
 
