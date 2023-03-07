@@ -35,7 +35,7 @@ export enum NumberFlags {
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
-	INCREASE_BUILDS_PAGE_SIZE_COEF = "increase-builds-page-size-coef"
+	INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF = "increase-builds-page-size-coef"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
