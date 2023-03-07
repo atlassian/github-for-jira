@@ -82,7 +82,7 @@
                 {{#if (isAllSyncSuccess connection)}}
                   <span class="jiraConfiguration__info__backfillDate">
                       {{#if connection.backfillSince}}
-                        Backfilled till: <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
+                        Backfilled from: <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
                       {{else}}
                         All commits backfilled
                       {{/if}}
