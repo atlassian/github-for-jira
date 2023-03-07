@@ -18,6 +18,7 @@ import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jirahostMiddleware } from "~/src/middleware/jirahost-middleware";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
 
 export const RootRouter = Router();
 
@@ -49,6 +50,8 @@ RootRouter.get("/version", VersionGet);
 // Api needs to be before cookieSessionMiddleware, jirahostMiddleware, etc
 // as those are for apps logic, api SHOULD NOT rely on any cookie/session/jiraHost header etc.
 RootRouter.use("/api", ApiRouter);
+
+RootRouter.use("/microscope/dlq", MicroscopeDlqRouter);
 
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
