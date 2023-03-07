@@ -129,7 +129,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		gitHubAppId
+		gitHubAppConfig
 	} = res.locals;
 
 	const log = req.log.child({ jiraHost });
@@ -137,6 +137,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
+
+	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
 
 	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
@@ -229,7 +231,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
-			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null
+			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null,
+			gitHubAppUuid
 		});
 
 		req.log.debug(`rendered page`);

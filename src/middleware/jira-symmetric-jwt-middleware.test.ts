@@ -1,8 +1,7 @@
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import express, { Application, NextFunction, Request, Response } from "express";
-import { when } from "jest-when";
+import { noop } from "lodash";
 import supertest from "supertest";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { getLogger } from "~/src/config/logger";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
@@ -25,10 +24,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			host: jiraHost,
 			sharedSecret: testSharedSecret
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.NEW_JWT_VALIDATION
-		).mockResolvedValue(true);
 	});
 
 	it("should throw error when token is missing and no jiraHost in session", async () => {
@@ -210,6 +205,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			req.session = session || {};
 			req.cookies = {};
 			req.log = getLogger("test");
+			req.addLogFields = () => noop;
 			next();
 		});
 		app.use(jiraSymmetricJwtMiddleware);

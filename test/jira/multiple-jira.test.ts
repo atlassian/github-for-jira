@@ -5,8 +5,6 @@ import nock from "nock";
 import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-invalid-issue-key.json";
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
 import { createWebhookApp } from "test/utils/create-webhook-app";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
@@ -236,9 +234,6 @@ describe("multiple Jira instances", () => {
 			jiraClientKey: clientKey
 		});
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
-		).mockResolvedValue(true);
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {

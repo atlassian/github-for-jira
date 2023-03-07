@@ -189,7 +189,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		for (const chunk of chunks) {
 			const jiraPayload = {
-				... await transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
+				... transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
 				commits: chunk
 			};
 

@@ -1,10 +1,9 @@
 import { isEmpty, omit, orderBy } from "lodash";
 import { getJiraId } from "../jira/util/id";
-import { Octokit  } from "@octokit/rest";
+import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
 import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
@@ -22,32 +21,35 @@ interface JiraReviewer extends JiraReview {
 	login: string;
 }
 
+const STATE_APPROVED = "APPROVED";
+const STATE_UNAPPROVED = "UNAPPROVED";
+
 // TODO: define arguments and return
 const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
+
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)
 	// and it considers 'APPROVED' as the main approval status for that user.
 	const reviewsReduced: JiraReviewer[] = sortedReviews.reduce((acc: JiraReviewer[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const author = review?.user;
+		const reviewer = review?.user;
+		const reviewerUsername = reviewer?.login;
 
-		if (!usernames[author?.login]) {
-			usernames[author?.login] = {
-				...getJiraAuthor(author),
-				login: author.login,
-				approvalStatus: review?.state === "APPROVED" ? "APPROVED" : "UNAPPROVED"
+		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
+
+		if (!haveWeSeenThisReviewerAlready) {
+			usernames[reviewerUsername] = {
+				...getJiraAuthor(reviewer),
+				login: reviewerUsername,
+				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
 			};
 
-			acc.push(usernames[author?.login]);
-			// If user is already added (not unique) but the previous approval status is different
-			// from APPROVED and current approval status is APPROVED, updates approval status.
-		} else if (
-			usernames[author?.login].approvalStatus !== "APPROVED" &&
-			review.state === "APPROVED"
-		) {
-			usernames[author?.login].approvalStatus = "APPROVED";
+			acc.push(usernames[reviewerUsername]);
+
+		} else if (usernames[reviewerUsername].approvalStatus !== STATE_APPROVED && review.state === STATE_APPROVED) {
+			usernames[reviewerUsername].approvalStatus = STATE_APPROVED;
 		}
 
 		// Returns the reviews' array with unique users
@@ -56,11 +58,15 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 
 	// Get GitHub user email, so it can be matched to an AAID
 	return Promise.all(reviewsReduced.map(async reviewer => {
-		const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
-		return {
-			...omit(reviewer, "login"),
-			email: gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`
+		const mappedReviewer = {
+			...omit(reviewer, "login")
 		};
+		const isDeletedUser = !reviewer.login;
+		if (!isDeletedUser) {
+			const gitHubUser = await getGithubUser(gitHubInstallationClient, reviewer.login);
+			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
+		}
+		return mappedReviewer;
 	}));
 };
 
@@ -69,8 +75,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 	const { title: prTitle, head, body } = pullRequest;
 
 	// This is the same thing we do in sync, concatenating these values
-	const prBody = await booleanFlag(BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY) ? body : "";
-	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${prBody}}`);
+	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${body}}`);
 
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info({
@@ -81,7 +86,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 	}
 
 	return {
-		...await transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
+		...transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
 		branches: await getBranches(gitHubInstallationClient, pullRequest, issueKeys),
 		pullRequests: [
 			{

@@ -7,13 +7,10 @@ import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
 import { envVars } from "~/src/config/env";
 import { keyLocator } from "~/src/github/client/key-locator";
-import { GitHubConfig } from "~/src/github/client/github-client";
+import { GitHubClientApiKeyConfig, GitHubConfig } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
-
-export const GITHUB_CLOUD_HOSTNAME = "github.com";
-export const GITHUB_CLOUD_BASEURL = "https://github.com";
-export const GITHUB_CLOUD_API_BASEURL = "https://api.github.com";
-export const GITHUB_ACCEPT_HEADER = "application/vnd.github.v3+json";
+import { EncryptionClient } from "utils/encryption-client";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_HOSTNAME } from "~/src/github/client/github-client-constants";
 
 interface GitHubClientConfig extends GitHubConfig {
 	serverId?: number;
@@ -63,13 +60,36 @@ const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | u
 	return envVars.PROXY;
 };
 
+const calculateApiKeyConfig = async (jiraHost: string, logger: Logger): Promise<{ apiKeyConfig: GitHubClientApiKeyConfig } | undefined> => {
+	try {
+		const maybeApiKey = await stringFlag(StringFlags.GHE_API_KEY, "", jiraHost);
+		if (maybeApiKey) {
+			logger.info("Encrypted API key found");
+			const [headerName, headerEncryptedValue] = JSON.parse(maybeApiKey) as Array<string>;
+			return Promise.resolve({
+				apiKeyConfig: {
+					headerName,
+					apiKeyGenerator: () =>
+						EncryptionClient.decrypt(headerEncryptedValue, {
+							jiraHost
+						})
+				}
+			});
+		}
+	} catch (err) {
+		logger.error({ err }, "Cannot calculate API key");
+	}
+	return undefined;
+};
+
 const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubConfig> => {
 	return {
 		hostname: githubServerBaseUrl,
 		baseUrl: githubServerBaseUrl,
 		apiUrl: `${githubServerBaseUrl}/api/v3`,
 		graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger)
+		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger),
+		... await calculateApiKeyConfig(jiraHost, logger)
 	};
 };
 
@@ -144,10 +164,10 @@ export const createUserClient = async (githubToken: string, jiraHost: string, lo
 };
 
 export const createAnonymousClient = async (gitHubBaseUrl: string, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
-	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger));
+	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger), logger);
 };
 
-export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
+export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, logger: Logger): Promise<GitHubAnonymousClient> => {
 	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAnonymousClient(config);
+	return new GitHubAnonymousClient(config, logger);
 };
