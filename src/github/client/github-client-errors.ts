@@ -1,26 +1,27 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { getLogger } from "config/logger";
+import { AxiosError, AxiosResponse } from "axios";
+import Logger from "bunyan";
 
 export class GithubClientError extends Error {
-	status?: number;
-	cause?: AxiosError;
-	config?: AxiosRequestConfig;
+	cause: AxiosError;
 	isRetryable = true;
 
-	constructor(config: AxiosRequestConfig<any>, message: string, status?: number, cause?: AxiosError) {
+	status?: number;
+	code?: string;
+
+	constructor(message: string, cause: AxiosError) {
 		super(message);
-		this.config = config;
-		this.status = status;
-		if (cause) {
-			this.cause = { ...cause, config: {} };
-			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
-		}
+
+		this.status = cause.response?.status;
+		this.code = cause.code;
+
+		this.cause = { ...cause };
+		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 	}
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, cause?: AxiosError) {
-		super(config, "Timeout", undefined, cause);
+	constructor(cause: AxiosError) {
+		super("Timeout", cause);
 	}
 }
 
@@ -30,24 +31,24 @@ export class RateLimitingError extends GithubClientError {
 	 */
 	rateLimitReset: number;
 
-	constructor(config: AxiosRequestConfig<any>, response: AxiosResponse, cause?: AxiosError) {
-		super(config, "Rate limiting error", response.status, cause);
-		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
-		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
+	constructor(cause: AxiosError) {
+		super("Rate limiting error", cause);
+		const rateLimitResetHeaderValue: string = cause.response?.headers?.["x-ratelimit-reset"] || "";
+		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || ((Date.now() / 1000) + ONE_HOUR_IN_SECONDS);
 		this.isRetryable = false;
 	}
 }
 
 export class BlockedIpError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
-		super(config, "Blocked by GitHub allowlist", status, error);
+	constructor(cause: AxiosError) {
+		super("Blocked by GitHub allowlist", cause);
 		this.isRetryable = false;
 	}
 }
 
 export class InvalidPermissionsError extends GithubClientError {
-	constructor(config: AxiosRequestConfig<any>, error: AxiosError, status?: number) {
-		super(config, "Resource not accessible by integration", status, error);
+	constructor(cause: AxiosError) {
+		super("Resource not accessible by integration", cause);
 	}
 }
 
@@ -72,6 +73,17 @@ export type GraphQLError = {
 	];
 };
 
+export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
+	return {
+		name: "GraphQLError",
+		message: "GraphQLError(s)",
+		config: response.config,
+		response,
+		request: response.request,
+		isAxiosError: true
+	} as AxiosError;
+};
+
 export class GithubClientGraphQLError extends GithubClientError {
 
 	/**
@@ -79,8 +91,11 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 */
 	errors: GraphQLError[];
 
-	constructor(config: AxiosRequestConfig<any>, message: string, errors: GraphQLError[]) {
-		super(config, message);
+	constructor(response: AxiosResponse, errors: GraphQLError[]) {
+		super(
+			errors[0].message + (errors.length > 1 ? ` and ${errors.length - 1} more errors` : ""),
+			buildAxiosStubErrorForGraphQlErrors(response)
+		);
 		this.errors = errors;
 		this.isRetryable = !!errors?.find(
 			(error) =>
@@ -90,10 +105,10 @@ export class GithubClientGraphQLError extends GithubClientError {
 	}
 }
 
-const logger = getLogger("github.errors");
-export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
+// TODO: the name doesn't make sense: it returns true for any GraphQL error...
+export const isChangedFilesError = (logger: Logger, err: GithubClientError): boolean => {
 	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
-	logger.warn({ isChangedFilesError: bool , error: err }, "isChangedFilesError");
+	logger.warn({ isChangedFilesError: bool , err }, "isChangedFilesError");
 	return bool;
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
 };

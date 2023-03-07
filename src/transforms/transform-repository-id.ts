@@ -1,4 +1,4 @@
-import { GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
+import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 declare const transformedRepositoryId: unique symbol;
 

@@ -242,6 +242,12 @@
 
 .jiraConfiguration__table__body
 > .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__action__inline {
+    text-align: right;
+}
+
+.jiraConfiguration__table__body
+> .jiraConfiguration__table__row
 > .jiraConfiguration__table__cell__settings {
     padding: 0;
     text-align: right;

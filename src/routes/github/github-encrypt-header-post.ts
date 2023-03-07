@@ -52,7 +52,8 @@ export const GithubEncryptHeaderPost = async (req: Request, res: Response): Prom
 
 	res.json({
 		encryptedValue: encryptedValue,
-		plainValueSha256: getHashedKey(plainValue)
+		plainValueSha256: getHashedKey(plainValue),
+		jiraHost: res.locals.jiraHost
 	});
 
 	req.log.info("Encrypted header was returned sent back!");

@@ -24,6 +24,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
+import { calcNewBackfillSinceDate } from "~/src/sync/backfill-since-date-calc";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -118,7 +119,10 @@ export const updateJobStatus = async (
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
 	} else if (!(await getNextTask(subscription, targetTasks))) {
-		await subscription.update({ syncStatus: SyncStatus.COMPLETE });
+		await subscription.update({
+			syncStatus: SyncStatus.COMPLETE,
+			backfillSince: await getBackfillSince(subscription, data)
+		});
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
 		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
@@ -207,7 +211,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {
-		await subscription.update({ syncStatus: "COMPLETE" });
+		await subscription.update({
+			syncStatus: "COMPLETE",
+			backfillSince: await getBackfillSince(subscription, data)
+		});
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
 
@@ -218,7 +225,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const { task, cursor, repository } = nextTask;
 
-	const logger = rootLogger.child({ task: nextTask, gitHubProduct });
+	const logger = rootLogger.child({
+		task: nextTask,
+		gitHubProduct,
+		startTime: data.startTime,
+		commitsFromDate: data.commitsFromDate
+	});
 
 	logger.info("Starting task");
 
@@ -321,8 +333,10 @@ export const handleBackfillError = async (
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	subscription: Subscription,
-	logger: Logger,
+	rootLogger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+
+	const logger = rootLogger.child({ err });
 
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
@@ -356,6 +370,15 @@ export const handleBackfillError = async (
 
 	if (err instanceof ConnectionTimedOutError) {
 		logger.warn("ConnectionTimedOutError error, retrying in 30 seconds");
+		scheduleNextTask(30_000);
+		return;
+	}
+
+	// TODO: replace with "instanceof" when sequelize version is upgraded to some modern one
+	// Capturing errors like SequelizeConnectionError, SequelizeConnectionAcquireTimeoutError etc
+	// that are not exported from sequelize
+	if (String(err.name).toLowerCase().includes("sequelize")) {
+		logger.warn("sequelize error, retrying in 30 seconds");
 		scheduleNextTask(30_000);
 		return;
 	}
@@ -489,4 +512,11 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 		Object.keys(repoStates).length && subscription.update(repoStates),
 		Object.keys(rest).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
 	]);
+};
+
+const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | null> => {
+	const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
+	const backfillSinceDateToSave = calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType, data.isInitialSync);
+	//set it to null on falsy value so that we can override db with sequlize
+	return backfillSinceDateToSave || null;
 };

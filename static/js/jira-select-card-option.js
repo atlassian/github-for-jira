@@ -40,8 +40,6 @@ $(document).ready(function() {
 		if (selectedVersion === "cloud") {
 			AP.context.getToken(function(token) {
 				const child = openChildWindow("/session/github/configuration");
-				// Remove below line on cleaning up NEW_JWT_VALIDATION flag
-				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
 		} else if(selectedVersion === "server"){
