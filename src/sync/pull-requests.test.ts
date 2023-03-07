@@ -14,8 +14,6 @@ import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("config/feature-flags");
 
-jest.setTimeout(600000);
-
 describe("sync/pull-request", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any as Hub;
 
