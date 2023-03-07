@@ -34,7 +34,8 @@ export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
-	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold"
+	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
+	INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF = "increase-builds-page-size-coef"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
