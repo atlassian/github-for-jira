@@ -82,7 +82,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		logger.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		logger.info({ DelaySeconds: delaySec, MessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
 		return sendMessageResult;
 	}
