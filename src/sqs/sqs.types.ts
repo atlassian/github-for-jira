@@ -139,7 +139,8 @@ export type BackfillMessagePayload = BaseMessagePayload & {
 	isInitialSync?: boolean,
 	syncType?: SyncType,
 	startTime?: string,
-	commitsFromDate?: string,
+	commitsFromDate?: string, //main commits from date, ISO string
+	branchCommitsFromDate?: string, //branch commits from date, ISO string
 	targetTasks?: TaskType[]
 }
 
