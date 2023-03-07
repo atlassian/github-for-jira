@@ -20,6 +20,7 @@ import { RecoverClientKeyPost } from "./client-key/recover-client-key";
 import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
 import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
+import { ApiRecryptPost } from "./api-recrypt-post";
 
 export const ApiRouter = Router();
 
@@ -84,6 +85,9 @@ ApiRouter.post(
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
+
+// Endpoint to recrypt encrypted value in a different encryption context
+ApiRouter.post("/recrypt", ApiRecryptPost);
 
 ApiRouter.post("/ping", ApiPingPost);
 
