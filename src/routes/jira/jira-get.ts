@@ -162,7 +162,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
-		shouldPromoteBackfillButtonToTableRow: true,
+		shouldPromoteBackfillButtonToTableRow,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),

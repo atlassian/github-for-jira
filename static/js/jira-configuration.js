@@ -278,9 +278,12 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 	);
 });
 
-$(".jiraConfiguration__info__backfillDate-label").each(backfillSinceLabelEle => {
-	const backfillSinceISOStr = backfillSinceLabelEle.dataset.backfillSince;
-	if(backfillSinceISOStr) {
-		backfillSinceLabelEle.text(AJS.I18n
+$(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle) => {
+	try {
+		const isoStr = backfillSinceLabelEle.dataset.backfillSince;
+		const backfillDate = new Date(isoStr);
+		$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
+	} catch (e) {
+		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
 	}
 });
