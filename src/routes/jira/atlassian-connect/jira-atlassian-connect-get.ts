@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const instance = envVars.INSTANCE_NAME;
 
@@ -27,6 +26,11 @@ const modules = {
 			"commit",
 			"pull_request"
 		],
+		actions: {
+			createBranch: {
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}`
+			}
+		},
 		key: "github-development-tool",
 		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
 		name: {
@@ -67,14 +71,6 @@ const modules = {
 		conditions: adminCondition
 	},
 	generalPages: [
-		{
-			key: "create-branch-options",
-			name: {
-				value: "GitHub Create Branch"
-			},
-			url: `/create-branch-options?issueKey={ac.issueKey}&issueSummary={ac.issueSummary}`,
-			location: "none"
-		},
 		{
 			key: "github-select-product-page",
 			name: {
@@ -171,18 +167,6 @@ const modules = {
 
 export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
-// Remove this function when CREATE_BRANCH flag is complete
-const addCreateBranchAction = async (modules) => {
-	if (await booleanFlag(BooleanFlags.CREATE_BRANCH, false)) {
-		modules.jiraDevelopmentTool.actions = {
-			createBranch: {
-				templateUrl: `/plugins/servlet/ac/${APP_KEY}/create-branch-options?ac.issueKey={issue.key}&ac.issueSummary={issue.summary}`
-			}
-		};
-	}
-	return modules;
-};
-
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
@@ -197,6 +181,8 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",
+			enabled: "/jira/events/enabled",
+			disabled: "/jira/events/disabled",
 			uninstalled: "/jira/events/uninstalled"
 		},
 		vendor: {
@@ -212,6 +198,6 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: await addCreateBranchAction(modules)
+		modules
 	});
 };

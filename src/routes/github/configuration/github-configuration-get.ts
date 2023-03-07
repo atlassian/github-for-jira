@@ -89,7 +89,8 @@ const getInstallationsWithAdmin = async (
 			gitHubUserClient,
 			installation.account.login,
 			login,
-			installation.target_type
+			installation.target_type,
+			log
 		).catch(err => {
 			errors.push(err);
 			return false;
@@ -128,7 +129,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	const {
 		jiraHost,
 		githubToken,
-		gitHubAppId
+		gitHubAppConfig
 	} = res.locals;
 
 	const log = req.log.child({ jiraHost });
@@ -136,6 +137,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	if (!githubToken) {
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
+
+	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
 
 	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
@@ -182,7 +185,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ installations, headers }, `verbose logging: listInstallationsForAuthenticatedUser`);
 		}
 
@@ -190,7 +193,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
 		}
 
@@ -198,7 +201,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		const { data: info } = await gitHubAppClient.getApp();
 		req.log.debug(`got user's authenticated apps from GitHub`);
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ info }, `verbose logging: getAuthenticated`);
 		}
 
@@ -213,7 +216,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		const rankInstallation = (i: MergedInstallation) => Number(i.isAdmin) - Number(i.isIPBlocked) + 3 * Number(i.syncStatus !== "FINISHED" && i.syncStatus !== "IN PROGRESS" && i.syncStatus !== "PENDING");
 		const sortedInstallation = connectedInstallations.sort((a, b) => rankInstallation(b) - rankInstallation(a));
 
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, false, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info({ connectedInstallations }, `verbose logging: connectedInstallations`);
 		}
 
@@ -228,7 +231,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
-			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null
+			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null,
+			gitHubAppUuid
 		});
 
 		req.log.debug(`rendered page`);

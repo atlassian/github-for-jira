@@ -16,10 +16,12 @@ export const backfillQueueMessageHandler: MessageHandler<BackfillMessagePayload>
 	const { installationId, jiraHost } = context.payload;
 	context.log = context.log.child({
 		jiraHost,
-		gitHubInstallationId: installationId
+		gitHubInstallationId: installationId,
+		traceId: Date.now()
 	});
 
 	const backfillData = { ...context.payload };
+
 	if (!backfillData.startTime) {
 		backfillData.startTime = new Date().toISOString();
 	}

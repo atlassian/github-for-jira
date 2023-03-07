@@ -1,6 +1,5 @@
 import Logger from "bunyan";
 import { Subscription } from "models/subscription";
-import { getHashedKey } from "models/sequelize";
 import { Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
@@ -8,13 +7,20 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
+		logger.info("Fetching info about user");
 		const { data: { login } } = await gitHubUserClient.getUser();
+
+		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
-		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type);
+		logger.info("Checking if the user is an admin");
+		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
@@ -59,21 +65,44 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, req.log)) {
-			res.status(401).json({ err: `Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation` });
+			req.log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
+			res.status(401).json({ err: `User is not an admin of the installation` });
 			return;
 		}
 
-		const subscription = await Subscription.install({
-			clientKey: getHashedKey(req.body.clientKey),
+		const subscription: Subscription = await Subscription.install({
+			hashedClientKey: req.body.clientKey,
 			installationId: gitHubInstallationId,
 			host: jiraHost,
 			gitHubAppId
 		});
 
-		await findOrStartSync(subscription, req.log);
+		await Promise.all(
+			[
+				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
+				findOrStartSync(subscription, req.log, true, "full")
+			]
+		);
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			jiraHost,
+			success: true,
+			gitHubProduct
+		});
 
 		res.sendStatus(200);
 	} catch (err) {
+
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			jiraHost,
+			success: false,
+			gitHubProduct
+		});
+
 		req.log.error({ err, gitHubProduct }, "Error processing subscription add request");
 		res.sendStatus(500);
 	}

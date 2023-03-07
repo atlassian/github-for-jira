@@ -16,7 +16,10 @@ import { ApiPingPost } from "routes/api/api-ping-post";
 import { ApiResyncPost } from "routes/api/api-resync-post";
 import { UUID_REGEX } from "~/src/util/regex";
 import { DBMigrationsRouter } from "./db-migrations/db-migration-router";
-
+import { RecoverClientKeyPost } from "./client-key/recover-client-key";
+import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
+import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
+import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
 
 export const ApiRouter = Router();
 
@@ -27,7 +30,6 @@ ApiRouter.use(LogMiddleware);
 
 // Verify SLAuth headers to make sure that no open access was allowed for these endpoints
 // And also log how the request was authenticated
-
 ApiRouter.use(
 	async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 		const mechanism = req.get("X-Slauth-Mechanism");
@@ -69,6 +71,9 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 	res.send({});
 });
 
+ApiRouter.use("/configuration", ApiConfigurationRouter);
+
+
 ApiRouter.post(
 	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
@@ -83,6 +88,13 @@ ApiRouter.post("/hash", ApiHashPost);
 ApiRouter.post("/ping", ApiPingPost);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
+ApiRouter.delete(
+	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
+	param("installationId").isInt(),
+	param("jiraHost").isString(),
+	returnOnValidationError,
+	ApiInstallationDelete
+);
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
 	param("installationId").isInt(),
@@ -119,6 +131,9 @@ ApiRouter.use("/cryptor", async (_req: Request, resp: Response) => {
 	}
 });
 ApiRouter.use("/db-migration", DBMigrationsRouter);
+ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
+ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
+ApiRouter.use("/data-cleanup", DataCleanupRouter);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

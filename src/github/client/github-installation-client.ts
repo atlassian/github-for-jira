@@ -4,9 +4,6 @@ import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { InstallationTokenCache } from "./installation-token-cache";
 import { AuthToken } from "./auth-token";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
-import { metricHttpRequest } from "config/metric-names";
-import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
@@ -29,7 +26,7 @@ import {
 	ReposGetContentsResponse
 } from "./github-client.types";
 import { isChangedFilesError } from "./github-client-errors";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig } from "./github-client";
 
 /**
@@ -42,26 +39,18 @@ export class GitHubInstallationClient extends GitHubClient {
 	private readonly installationTokenCache: InstallationTokenCache;
 	public readonly githubInstallationId: InstallationId;
 	public readonly gitHubServerAppId?: number;
+	private readonly jiraHost: string;
 
 	constructor(
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
-		logger?: Logger,
+		jiraHost: string,
+		logger: Logger,
 		gshaId?: number
 	) {
 		super(gitHubConfig, logger);
+		this.jiraHost = jiraHost;
 
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
-		this.axios.interceptors.response.use(
-			undefined,
-			handleFailedRequest(this.logger)
-		);
-		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
-		);
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;
@@ -176,6 +165,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	};
 
+
+	/**
+	 * Returns the current status of the rate limit for all resources types
+	 */
+	public getRateLimit = async (): Promise<AxiosResponse<Octokit.RateLimitGetResponse>> => {
+		return await this.get<Octokit.RateLimitGetResponse>(`/rate_limit`);
+	};
+
 	// TODO: remove this function after discovery backfill is deployed
 	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
 		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
@@ -189,9 +186,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		};
 	};
 
-	public searchRepositories = async (queryString: string): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={q}`,{ },
-			{ q: queryString }
+	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
+		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
+			{
+				queryString,
+				order
+			}
 		);
 	};
 
@@ -241,7 +241,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 
@@ -277,7 +277,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(err)) {
+				if (!isChangedFilesError(this.logger, err)) {
 					return Promise.reject(err);
 				}
 				this.logger.warn("retrying commit graphql query without changedFiles");
@@ -313,7 +313,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			return response.data.content;
 		} catch (err) {
 			if (err.status == 404) {
-				this.logger.warn({ err, owner, repo, path }, "could not find file in repo");
+				this.logger.debug({ err, owner, repo, path }, "could not find file in repo");
 				return undefined;
 			}
 			throw err;
@@ -324,7 +324,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Use this config in a request to authenticate with the app token.
 	 */
 	private async appAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
-		const appToken = await AppTokenHolder.getInstance().getAppToken(this.githubInstallationId, this.gitHubServerAppId);
+		const appToken = await AppTokenHolder.getInstance().getAppToken(this.githubInstallationId, this.jiraHost, this.gitHubServerAppId);
 		return {
 			headers: {
 				Accept: GITHUB_ACCEPT_HEADER,

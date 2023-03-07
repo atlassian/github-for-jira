@@ -32,7 +32,7 @@ export const issueCommentWebhookHandler = async (
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 
-	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, false, jiraHost)){
+	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
 		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 	}
 
@@ -58,14 +58,20 @@ export const issueCommentWebhookHandler = async (
 		comment_id: comment.id
 	};
 
-	const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
+	let status;
+	try {
+		const githubResponse: GitHubIssue = await gitHubInstallationClient.updateIssueComment(updatedIssueComment);
+		status = githubResponse.status;
+	} catch (err) {
+		context.log.warn({ err }, "Cannot modify issue comment");
+	}
 	const { webhookReceived, name, log } = context;
 
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
 		log,
-		githubResponse?.status,
+		status,
 		gitHubAppId
 	);
 };

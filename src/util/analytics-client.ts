@@ -12,12 +12,14 @@ let analyticsNodeClient;
 
 export const sendAnalytics: {
 	(eventType: "screen", attributes: { name: string } & Record<string, unknown>);
-	(eventType: "ui" | "track" | "operational", attributes: Record<string, unknown>);
+	(eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
+	(eventType: "ui" | "operational", attributes: Record<string, unknown>);
 } = (eventType: string, attributes: Record<string, unknown> = {}): void => {
 
-	logger.info(analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
+		logger.warn("No analyticsClient or skipping sending analytics");
 		return;
 	}
 
@@ -40,9 +42,10 @@ export const sendAnalytics: {
 
 	logger.debug({ eventType }, "Sending analytics");
 
+	const name = attributes.name || "";
 	switch (eventType) {
 		case "screen":
-			sendEvent(analyticsNodeClient.sendScreenEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendScreenEvent({
 				...baseAttributes,
 				name: attributes.name,
 				screenEvent: {
@@ -52,7 +55,7 @@ export const sendAnalytics: {
 			}));
 			break;
 		case "ui":
-			sendEvent(analyticsNodeClient.sendUIEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendUIEvent({
 				...baseAttributes,
 				uiEvent: {
 					attributes
@@ -60,15 +63,18 @@ export const sendAnalytics: {
 			}));
 			break;
 		case "track":
-			sendEvent(analyticsNodeClient.sendTrackEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendTrackEvent({
 				...baseAttributes,
 				trackEvent: {
+					source: attributes.source,
+					action: attributes.action || attributes.name,
+					actionSubject: attributes.actionSubject || attributes.name,
 					attributes
 				}
 			}));
 			break;
 		case "operational":
-			sendEvent(analyticsNodeClient.sendOperationalEvent({
+			sendEvent(eventType, name, analyticsNodeClient.sendOperationalEvent({
 				...baseAttributes,
 				operationalEvent: {
 					attributes
@@ -81,8 +87,8 @@ export const sendAnalytics: {
 	}
 };
 
-const sendEvent = (promise: Promise<unknown>) => {
+const sendEvent = (eventType: string, name: unknown, promise: Promise<unknown>) => {
 	promise.catch((error) => {
-		logger.warn(`Cannot sendAnalytics event: ${error}`);
+		logger.warn(`Cannot sendAnalytics event ${eventType} - ${name}, error: ${error}`);
 	});
 };

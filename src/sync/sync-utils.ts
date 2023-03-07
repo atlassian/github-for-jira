@@ -3,17 +3,16 @@ import { sqsQueues } from "../sqs/queues";
 import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
 import { numberFlag, NumberFlags } from "config/feature-flags";
-import { TaskType } from "~/src/sync/sync.types";
+import { TaskType, SyncType } from "~/src/sync/sync.types";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "utils/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
-
-type SyncType = "full" | "partial";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
+	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
@@ -26,7 +25,7 @@ export const findOrStartSync = async (
 		syncWarning: null
 	});
 
-	logger.info({ subscription, syncType }, "Starting sync");
+	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");
 
 	await resetTargetedTasks(subscription, syncType, targetTasks);
 
@@ -43,12 +42,18 @@ export const findOrStartSync = async (
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
+	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const branchCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
+		isInitialSync,
+		syncType,
 		startTime: fullSyncStartTime,
-		commitsFromDate: commitsFromDate?.toISOString(),
+		commitsFromDate: mainCommitsFromDate?.toISOString(),
+		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);

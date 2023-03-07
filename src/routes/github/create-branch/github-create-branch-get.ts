@@ -1,19 +1,17 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { replaceSpaceWithHyphenHelper } from "utils/handlebars/handlebar-helpers";
 import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
-import { Subscription } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
-import { RepositoryNode } from "~/src/github/client/github-queries";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
-		jiraHost,
 		githubToken,
-		gitHubAppConfig
+		gitHubAppConfig,
+		jiraHost
 	} = res.locals;
 
 	if (!githubToken) {
@@ -27,27 +25,31 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return next();
 	}
 
-	const { issueKey, issueSummary } = req.query;
+	const multiGHInstance = req.query.multiGHInstance;
+	const issueKey = req.query.issueKey as string;
+	const issueSummary = req.query.issueSummary as string;
+
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
 
+	// TODO move to middleware or shared for create-branch-options-get
 	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
+		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
-			nonce: res.locals.nonce
+			nonce: res.locals.nonce,
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
 			jiraHost
 		});
-
 		return;
 	}
 
-	const branchSuffix = issueSummary ? replaceSpaceWithHyphenHelper(issueSummary as string) : "";
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
@@ -57,14 +59,15 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost,
 		nonce: res.locals.nonce,
 		issue: {
-			branchName: `${issueKey}-${branchSuffix}`,
+			branchName: generateBranchName(issueKey, issueSummary),
 			key: issueKey
 		},
 		issueUrl: `${jiraHost}/browse/${issueKey}`,
 		repos,
 		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
-		gitHubUser
+		gitHubUser,
+		multiGHInstance
 	});
 
 	req.log.debug(`Github Create Branch Page rendered page`);
@@ -75,25 +78,52 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	});
 };
 
+export const generateBranchName = (issueKey: string, issueSummary: string) => {
+	if (!issueSummary) {
+		return issueKey;
+	}
+
+	let branchSuffix = issueSummary;
+	const validBranchCharactersRegex = /[^a-z\d.\-_]/gi;
+	const validStartCharactersRegex = /^[^a-z\d]/gi;
+	const validEndCharactersRegex = /[^a-z\d]$/gi;
+	branchSuffix = branchSuffix.replace(validStartCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validEndCharactersRegex, "");
+	branchSuffix = branchSuffix.replace(validBranchCharactersRegex, "-");
+	branchSuffix = reduceRepeatingDashes(branchSuffix);
+	return `${issueKey}-${branchSuffix}`;
+};
+
+const reduceRepeatingDashes = (text: string) => {
+	const repeatingDashesRegex = /(-)\1{1,}/gi;
+	const match = text.match(repeatingDashesRegex);
+	if (match) {
+		text = text.replace(repeatingDashesRegex, "-");
+		return reduceRepeatingDashes(text);
+	}
+	return text;
+};
+
 const sortByDateString = (a, b) => {
 	return new Date(b.node.updated_at).valueOf() - new Date(a.node.updated_at).valueOf();
 };
 
-const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
 			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {
-			logger.error("Create branch - Failed to fetch repos for installation");
+			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;
 		}
 	});
 
 	const repos = (await Promise.all(repoTasks))
 		.flat()
-		.sort(sortByDateString);
+		.sort(sortByDateString)
+		.map(repo => repo.node);
 
 	return repos.slice(0, MAX_REPOS_RETURNED);
 };

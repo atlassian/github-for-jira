@@ -1,16 +1,17 @@
 import { createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 import { GitHubServerApp } from "models/github-server-app";
+import { Installation } from "models/installation";
 import { issueWebhookHandler } from "~/src/github/issue";
 import { pushWebhookHandler } from "~/src/github/push";
 import { GithubWebhookMiddleware } from "~/src/middleware/github-webhook-middleware";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
+import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_API_BASEURL } from "~/src/util/get-github-client-config";
 import { envVars } from "config/env";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 
@@ -60,6 +61,12 @@ describe("webhook-receiver-post", () => {
 			sendStatus: jest.fn()
 		};
 
+		const installation = await Installation.install({
+			clientKey: "clientKey123",
+			host:  jiraHost,
+			sharedSecret: "secrete123"
+		});
+
 		const payload = {
 			uuid: EXIST_GHES_UUID,
 			appId: 123,
@@ -69,9 +76,11 @@ describe("webhook-receiver-post", () => {
 			gitHubClientSecret: "myghsecret",
 			webhookSecret: GHES_WEBHOOK_SECRET,
 			privateKey: "myprivatekey",
-			installationId: 10
+			installationId: installation.id
 		};
-		gitHubApp = await GitHubServerApp.install(payload);
+		gitHubApp = await GitHubServerApp.install(payload, jiraHost);
+
+
 	});
 
 	it("should throw an error if github app not found", async () => {
@@ -213,11 +222,25 @@ describe("webhook-receiver-post", () => {
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
 		await WebhookReceiverPost(injectRawBodyToReq(req), res);
-		expect(GithubWebhookMiddleware).toBeCalledWith(deleteRepositoryWebhookHandler);
+		expect(GithubWebhookMiddleware).toBeCalledWith(repositoryWebhookHandler);
 		expect(spy).toBeCalledWith(expect.objectContaining({
 			id: "100",
 			name: "repository",
 			action: "deleted",
+			gitHubAppConfig: gitHubAppConfigForGHES()
+		}));
+	});
+
+	it("should call created repository handler", async () => {
+		req = createGHESReqForEvent("repository", "created", EXIST_GHES_UUID);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(repositoryWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "repository",
+			action: "created",
 			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});

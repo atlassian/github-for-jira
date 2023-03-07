@@ -45,24 +45,24 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 1234,
-			clientKey: "client-key",
+			hashedClientKey: "client-key",
 			gitHubAppId: undefined
 		});
 
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 4711,
-			clientKey: "client-key",
+			hashedClientKey: "client-key",
 			gitHubAppId: undefined
 		});
 
 		const appTokenHolder = new AppTokenHolder();
 		jest.setSystemTime(new Date(2021, 10, 25, 10, 0));
-		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234));
+		const token1 = await appTokenHolder.getAppToken(getInstallationId(1234), jiraHost);
 		expect(token1).toBeTruthy();
-		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711));
+		const token2 = await appTokenHolder.getAppToken(getInstallationId(4711), jiraHost);
 		expect(token2).toBeTruthy();
-		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), 1);
+		const token3 = await appTokenHolder.getAppToken(getInstallationId(4711), jiraHost, 1);
 		expect(token3).toBeTruthy();
 		expect(keyLocator).toHaveBeenCalledTimes(3);
 	});

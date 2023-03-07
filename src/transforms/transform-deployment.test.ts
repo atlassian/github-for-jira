@@ -8,17 +8,9 @@ import deployment_status from "fixtures/deployment_status-basic.json";
 import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-jest.mock("config/feature-flags");
 jest.mock("services/user-config-service");
-
-const turnFF_OnOff_service = (newStatus: boolean) => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
-		.mockResolvedValue(newStatus);
-};
 
 const mockConfig = {
 	deployments: {
@@ -46,19 +38,13 @@ const mockGetRepoConfig = () => {
 	).mockResolvedValue(mockConfig);
 };
 
-const turnOnGHESFF = () => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
-		.mockResolvedValue(true);
-};
-
-const buildJiraPayload = (associations) => {
+const buildJiraPayload = (displayName="testing", associations) => {
 	return {
 		deployments: [{
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: 1234,
 			updateSequenceNumber: 123456,
-			displayName: "deploy",
+			displayName: displayName,
 			url: "test-repo-url/commit/885bee1-commit-id-1c458/checks",
 			description: "deploy",
 			lastUpdated: new Date("2021-06-28T12:15:18.000Z"),
@@ -176,13 +162,12 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	describe("cloud", () => {
 
 		beforeEach(async () => {
-			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, getLogger("test"));
+			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, getLogger("test"));
 
 			await new DatabaseStateCreator().create();
 		});
 
 		it(`uses user config to associate services`, async () => {
-			turnFF_OnOff_service(true);
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -275,6 +260,91 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			);
 		});
 
+		it(`check if display name commit message cropped to 255 to fit api limit`, async () => {
+
+			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "Q4ua5dPnvDaW8CQgbnC7IiOQ8emND4bTv6ibK2Vh5LsGukmAF7VFE7MWZBwiPWON2fbqWL9q1jyjilgOMmt79WgMgDbT2opGlh6at5WfTYlYQVV77FXiLtPIOs8szN02ldD4slvScLRRynPQpzShisQpVfYU4PL5vCl2OzIYBIJ3zJJIY9g3EMSxtwe0rGaDBuINFBBgWYS2WOh8UAZxSR0w2wetYgq1Adv11Qy85rffGG3GkRHpFNvQ22n6JqpZx"
+					}
+				});
+
+			// List deployments
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=Production&per_page=10`)
+				.reply(200,
+					[
+						{
+							id: 1,
+							environment: "Production",
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc"
+						}
+					]
+				);
+
+			// List deployments statuses
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [
+					{
+						id: 1,
+						state: "pending"
+					},
+					{
+						id: 2,
+						state: "success"
+					}
+				]);
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload).toMatchObject(buildJiraPayload("Q4ua5dPnvDaW8CQgbnC7IiOQ8emND4bTv6ibK2Vh5LsGukmAF7VFE7MWZBwiPWON2fbqWL9q1jyjilgOMmt79WgMgDbT2opGlh6at5WfTYlYQVV77FXiLtPIOs8szN02ldD4slvScLRRynPQpzShisQpVfYU4PL5vCl2OzIYBIJ3zJJIY9g3EMSxtwe0rGaDBuINFBBgWYS2WOh8UAZxSR0w2wetYgq1Adv11Qy85rffGG3GkRHpFNvQ22n6Jqp",  [
+				{
+					associationType: "issueIdOrKeys",
+					values: ["ABC-1", "ABC-2"]
+				},
+				{
+					associationType: "commit",
+					values: [
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+							repositoryId: "65"
+						},
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+							repositoryId: "65"
+						}
+					]
+				}
+			]));
+		});
+
 		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud`, async () => {
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
@@ -339,7 +409,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
-			expect(jiraPayload).toMatchObject(buildJiraPayload([
+			expect(jiraPayload).toMatchObject(buildJiraPayload("testing",  [
 				{
 					associationType: "issueIdOrKeys",
 					values: ["ABC-1", "ABC-2"]
@@ -409,7 +479,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			it(`crops issue keys (505) to 500 (5 issue keys must be left aside)`, async () => {
 
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(505).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(505).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -427,9 +497,9 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
-				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + number);
+				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1));
 
-				expect(jiraPayload).toMatchObject(buildJiraPayload([
+				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
 						values: expectedIssueIds
@@ -438,10 +508,8 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			});
 
 			it(`crops issue keys (499) and services (2) to 500 (one service must be left aside)`, async () => {
-				await turnFF_OnOff_service(true);
-
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(499).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(499).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -462,10 +530,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 				// make expected issue id array
 
-				expect(jiraPayload).toMatchObject(buildJiraPayload([
+				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(499).keys()].map(number => "ABC-" + number)
+						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1))
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -475,10 +543,8 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			});
 
 			it(`crops issue keys (497), service ids (2) and commits (2) to 500 (one commit must be left aside)`, async () => {
-				await turnFF_OnOff_service(true);
-
 				// make message with 500 issue ids to prove there isn't room in the submission for any associated commits
-				const commitMessage = "ABC-" + [...Array(497).keys()].join(" ABC-");
+				const commitMessage = "ABC-" + [...Array(497).keys()].map(number => number + 1).join(" ABC-");
 
 				// Compare commits
 				githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
@@ -509,10 +575,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
-				expect(jiraPayload).toMatchObject(buildJiraPayload([
+				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(497).keys()].map(number => "ABC-" + number)
+						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1))
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -618,19 +684,13 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					apiUrl: gheApiUrl,
 					graphqlUrl: gheApiUrl + "/graphql"
 				},
+				jiraHost,
 				getLogger("test"),
 				builderOutput.gitHubServerApp!.id
 			);
 		});
 
 		it(`supports branch and merge workflows, sending related commits in deployment for Server`, async () => {
-
-			turnOnGHESFF();
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_REPO_ID_TRANSFORMER,
-				expect.anything()
-			).mockResolvedValue(true);
 
 			//If we use old GH Client we won't call the API because we pass already "authenticated" client to the test method
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -694,7 +754,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
 
-			expect(jiraPayload).toMatchObject(buildJiraPayload([
+			expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 				{
 					associationType: "issueIdOrKeys",
 					values: ["ABC-1", "ABC-2"]

@@ -6,8 +6,9 @@ import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
+import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
 import { stringFlag, StringFlags } from "config/feature-flags";
-import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, SqsTimeoutError } from "~/src/sqs/sqs.types";
+import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
 const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
@@ -31,7 +32,7 @@ const isNotRetryable = (errorHandlingResult: ErrorHandlingResult) => {
  *
  * Allows sending SQS messages, as well as listening to the queue messages.
  */
-export class SqsQueue<MessagePayload> {
+export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	readonly queueUrl: string;
 	readonly queueName: string;
 	readonly queueRegion: string;
@@ -81,8 +82,9 @@ export class SqsQueue<MessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		logger.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
+		return sendMessageResult;
 	}
 
 	/**
@@ -241,7 +243,7 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
-		const payload = message.Body ? JSON.parse(message.Body) : {};
+		const payload: MessagePayload = message.Body ? JSON.parse(message.Body) : {};
 
 		// Sets the log level depending on FF for the specific jira host
 		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
@@ -252,9 +254,13 @@ export class SqsQueue<MessagePayload> {
 			message,
 			payload,
 			log: listenerContext.log.child({
-				id: message.MessageId,
+				messageId: message.MessageId,
 				executionId: uuidv4(),
-				queue: this.queueName
+				queue: this.queueName,
+				jiraHost: payload?.jiraHost,
+				installationId: payload?.installationId,
+				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
+				webhookId: payload?.webhookId
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
@@ -264,6 +270,18 @@ export class SqsQueue<MessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
+
+			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
+			if (rateLimitCheckResult.isExceedThreshold) {
+				//We have found out that the rate limite quota has been used and exceed the configured threshold.
+				//Next step is to postpone the processing.
+				//For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
+				//Therefore sendign a new msg instead of keep polling github until rate limit is raised.
+				const { MessageId } = await this.sendMessage(payload, rateLimitCheckResult.resetTimeInSeconds, context.log);
+				await this.deleteMessage(context);
+				context.log.info({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
+				return;
+			}
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
@@ -284,7 +302,9 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
+		const unsafeLogger = getLogger("message-error-handler-unsafe", { level: "warn", unsafe: true });
 		try {
+			unsafeLogger.warn({ err, context }, "Failed message");
 			const errorHandlingResult = await this.errorHandler(err, context);
 
 			if (errorHandlingResult.isFailure) {
@@ -304,10 +324,12 @@ export class SqsQueue<MessagePayload> {
 				context.log.warn("Deleting the message because it has reached the maximum amount of retries");
 				await this.deleteMessage(context);
 			} else {
+				unsafeLogger.error({ errorHandlingResult, err, context }, "SQS message visibility timeout changed");
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling");
+			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
+			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
 
@@ -323,7 +345,7 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;

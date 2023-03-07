@@ -12,8 +12,6 @@ import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -26,7 +24,9 @@ describe("sync/deployments", () => {
 		deployments,
 		properties: {
 			"gitHubInstallationId": installationId
-		}
+		},
+		preventTransitions: true,
+		operationType: "BACKFILL"
 	});
 
 	describe("cloud", () => {
@@ -60,7 +60,6 @@ describe("sync/deployments", () => {
 				.repoSyncStatePendingForDeployments()
 				.create();
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			githubUserTokenNock(installationId);
 		});
 
@@ -104,7 +103,7 @@ describe("sync/deployments", () => {
 						"id": 1,
 						"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
 						"ref": "topic-branch",
-						"task": "deploy",
+						"task": "[TEST-123] test-commit-message",
 						"payload": {},
 						"original_environment": "staging",
 						"environment": "production",
@@ -157,7 +156,7 @@ describe("sync/deployments", () => {
 				"schemaVersion": "1.0",
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
-				"displayName": "deploy",
+				"displayName": "[TEST-123] test-commit-message",
 				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
@@ -283,7 +282,7 @@ describe("sync/deployments", () => {
 					schemaVersion: "1.0",
 					deploymentSequenceNumber: 500226426,
 					updateSequenceNumber: 500226426,
-					displayName: "deploy",
+					displayName: "[TEST-123] test-commit-message 1",
 					url: "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 					description: "deploy",
 					lastUpdated: "2022-02-03T22:45:04.000Z",
@@ -322,7 +321,7 @@ describe("sync/deployments", () => {
 					schemaVersion: "1.0",
 					deploymentSequenceNumber: 1234,
 					updateSequenceNumber: 1234,
-					displayName: "deploy",
+					displayName: "[TEST-246] test-commit-message 2",
 					url: "https://github.com/test-repo-owner/test-repo-name/commit/7544f2fec0321a32d5effd421682463c2ebd5018/checks",
 					description: "deploy",
 					lastUpdated: "2022-02-03T22:45:04.000Z",
@@ -429,14 +428,6 @@ describe("sync/deployments", () => {
 
 		beforeEach(async () => {
 
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
-				.mockResolvedValue(true);
-
 			mockSystemTime(12345678);
 
 			const builderOutput = await new DatabaseStateCreator()
@@ -447,7 +438,6 @@ describe("sync/deployments", () => {
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 			gheUserTokenNock(installationId);
 		});
 
@@ -498,7 +488,7 @@ describe("sync/deployments", () => {
 						"id": 1,
 						"sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
 						"ref": "topic-branch",
-						"task": "deploy",
+						"task": "[TEST-123] test-commit-message",
 						"payload": {},
 						"original_environment": "staging",
 						"environment": "production",
@@ -551,7 +541,7 @@ describe("sync/deployments", () => {
 				"schemaVersion": "1.0",
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
-				"displayName": "deploy",
+				"displayName": "[TEST-123] test-commit-message",
 				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",

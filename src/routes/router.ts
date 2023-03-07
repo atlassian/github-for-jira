@@ -9,7 +9,6 @@ import { json, urlencoded } from "body-parser";
 import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { SessionGet } from "./session/session-get";
-import { jirahostMiddleware } from "middleware/jirahost-middleware";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
@@ -17,6 +16,7 @@ import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
+import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 
 export const RootRouter = Router();
 
@@ -57,9 +57,6 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
 
-// Saves the jiraHost cookie to the secure session if available
-RootRouter.use(jirahostMiddleware);
-
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
 
@@ -69,7 +66,7 @@ RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
 // On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", async (req: Request, res: Response) => {
+RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 	const { data: info } = await gitHubAppClient.getApp();

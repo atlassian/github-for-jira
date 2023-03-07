@@ -17,6 +17,13 @@
 
 When an organization contains a small amount of data, the backfilling process is relatively fast and may only take a few minutes. But when an organization contains a large amount of data, the backfilling process will take longer. The good news is you can start using issue keys in new branches, commits, and pull requests as soon as you’ve connected a Github organization to Jira - and this new data will be visible in Jira immediately.
 
+<h3>Q: Why can't I see the author, reviewer names, and/or icons in my Jira?</h3>
+
+**A:** In order for the author, reviewer names, and/or icons to appear in the development panel of your Jira issue, the email address associated with your GitHub account should match the address in your Jira account. If these two email addresses are different, then the account names and icons will not show up in Jira. This behavior is similar to smart commits, which also require matching emails.
+![Not seeing names/icons](./images/author-icons-in-jira-for-non-matching-atlassian-emails.png)
+![Not seeing names/icons](./images/code-in-jira-missing-user.png)
+![Not seeing names/icons](./images/issue-board-view-missing-user.png)
+
 ## Permissions
 
 <h3>Q: The permission scope for code and metadata suggests data is read to synchronize development information. Is code stored on Jira? Should I be concerned that, were the app to be compromised, an actor could exfiltrate all our code from GitHub?</h3>
@@ -48,7 +55,7 @@ When an organization contains a small amount of data, the backfilling process is
 
 **A:** There are a few reasons why you might have trouble connecting your GitHub Enterprise Server account to the GitHub for Jira app:
 
-- **Atlassian IP address ranges need whitelisting** - Please see the above FAQ  - <TODO - Link to above question>
+- **Atlassian IP address ranges need whitelisting** - [Please see our IP allowlist documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md)
 
 - **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
 
@@ -132,3 +139,4 @@ When an organization contains a small amount of data, the backfilling process is
 <h3>Q: Do I have to wait for all data to complete backfilling before I can start using the GitHub for Jira integration?</h3>
 
 **A:** No :) The job of backfilling is to pull in all your historical data so that, if any issue keys were referenced before you installed the app, you will eventually see that data in Jira. This means you can start using the app with your team immediately as the app will start listening and responding to webhook events (real-time data) straight away.
+

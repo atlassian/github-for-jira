@@ -22,6 +22,9 @@ export class DatabaseStateCreator {
 	private pendingForBuilds: boolean;
 	private pendingForDeployments: boolean;
 
+	private buildsCustomCursor: string | undefined;
+	private prsCustomCursor: string | undefined;
+
 	public static GITHUB_INSTALLATION_ID = 111222;
 
 	public forServer() {
@@ -54,6 +57,16 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
+	public withBuildsCustomCursor(cursor: string) {
+		this.buildsCustomCursor = cursor;
+		return this;
+	}
+
+	public withPrsCustomCursor(cursor: string) {
+		this.prsCustomCursor = cursor;
+		return this;
+	}
+
 	public repoSyncStatePendingForDeployments() {
 		this.pendingForDeployments = true;
 		return this;
@@ -71,7 +84,7 @@ export class DatabaseStateCreator {
 			clientKey: "client-key"
 		});
 
-		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.create({
+		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({
 			uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
@@ -81,7 +94,7 @@ export class DatabaseStateCreator {
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
 			gitHubAppName: "app-name",
 			installationId: installation.id
-		}) : undefined;
+		}, jiraHost) : undefined;
 
 		const subscription = await Subscription.create({
 			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
@@ -106,6 +119,8 @@ export class DatabaseStateCreator {
 			pullStatus: this.pendingForPrs ? "pending" : "complete",
 			buildStatus: this.pendingForBuilds ? "pending" : "complete",
 			deploymentStatus: this.pendingForDeployments ? "pending" : "complete",
+			... (this.buildsCustomCursor ? { buildCursor: this.buildsCustomCursor } : { }),
+			... (this.prsCustomCursor ? { pullCursor: this.prsCustomCursor } : { }),
 			updatedAt: new Date(),
 			createdAt: new Date()
 		}) : undefined;

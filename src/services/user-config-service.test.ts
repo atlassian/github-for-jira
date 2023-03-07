@@ -3,16 +3,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
 import { getInstallationId } from "~/src/github/client/installation-id";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
-
-const turnFF_OnOff_service = (newStatus: boolean) => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, expect.anything())
-		.mockResolvedValue(newStatus);
-};
 
 describe("User Config Service", () => {
 	const gitHubInstallationId = 1234;
@@ -46,7 +36,6 @@ describe("User Config Service", () => {
 
 
 	beforeEach(async () => {
-		turnFF_OnOff_service(false);
 		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
@@ -85,6 +74,14 @@ describe("User Config Service", () => {
 			});
 	};
 
+	const givenGitHubReturnsAccessNotAllowed = (repoOwner: string = repoSyncState.repoOwner, repoName = repoSyncState.repoName) => {
+		// see https://docs.github.com/en/rest/repos/contents#get-repository-content
+		githubNock.get(`/repos/${repoOwner}/${repoName}/contents/.jira/config.yml`)
+			.reply(401, {
+				content: "not allowed"
+			});
+	};
+
 	it("should not update config in database when config file hasn't been touched", async () => {
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
 		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
@@ -100,8 +97,15 @@ describe("User Config Service", () => {
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
 
-	it("should get service ids behind ff", async () => {
-		turnFF_OnOff_service(true);
+	it("no Write perms case should be tolerated", async () => {
+		githubUserTokenNock(gitHubInstallationId);
+		givenGitHubReturnsAccessNotAllowed();
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		expect(config).toBeFalsy();
+	});
+
+	it("should get service ids", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
 		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
@@ -122,6 +126,5 @@ describe("User Config Service", () => {
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
-
 
 });

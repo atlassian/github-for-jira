@@ -29,7 +29,6 @@ $('.select-server').click(function (event) {
   const uuid = $(this).data("identifier");
   window.AP.context.getToken(function(token) {
     const child = openChildWindow(`/session/github/${uuid}/configuration?ghRedirect=to`);
-    child.window.jiraHost = jiraHost;
     child.window.jwt = token;
   });
 });

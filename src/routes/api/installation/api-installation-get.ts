@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
-import format from "date-fns/format";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import { AxiosResponse } from "axios";
+import { Octokit } from "@octokit/rest";
 
 export const ApiInstallationGet = async (req: Request, res: Response): Promise<void> => {
 	const { installationId, gitHubAppId: gitHubAppIdStr } = req.params;
 
 	const gitHubAppId = parseInt(gitHubAppIdStr) || undefined;
 
-	const { client, jiraHost } = res.locals;
+	const { jiraHost } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
 
 	try {
@@ -25,30 +25,31 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			subscriptions.map(async (subscription) => {
 				const id = subscription.gitHubInstallationId;
 				try {
-					const response = await booleanFlag(BooleanFlags.USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API, false) ?
-						await gitHubAppClient.getInstallation(id) :
-						await client.apps.getInstallation({ installation_id: id });
+					const response: AxiosResponse<Octokit.AppsGetInstallationResponse> = await gitHubAppClient.getInstallation(id);
 
-					response.data.syncStatus = subscription.syncStatus;
-					return response.data;
+					return {
+						...response.data,
+						isGlobalInstall: response.data.repository_selection === "all",
+						syncState: subscription.syncStatus
+					};
 				} catch (err) {
-					return { error: err, id, deleted: err.status === 404 };
+					return { err, id, deleted: err.status === 404 };
 				}
 			})
 		);
 		const connections = installations
-			.filter((response) => !response.error)
-			.map((data) => ({
-				...data,
-				isGlobalInstall: data.repository_selection === "all",
-				updated_at: format(data.updated_at, "MMMM D, YYYY h:mm a"),
-				syncState: data.syncState
-			}));
+			.filter((response) => !response.err);
 
-		const failedConnections = installations.filter((response) => {
-			req.log.error({ ...response }, "Failed installation");
-			return response.error;
-		});
+		const failedConnections = installations
+			.filter((response) => response.err)
+			.map((response) => {
+				req.log.error({ ...response }, "Failed installation");
+				return {
+					id: response.id,
+					error: response.err.message + ". More details in logs",
+					deleted: response.deleted
+				};
+			});
 		res.json({
 			host: jiraHost,
 			installationId,

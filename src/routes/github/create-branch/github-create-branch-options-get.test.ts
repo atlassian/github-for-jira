@@ -5,25 +5,18 @@ import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { v4 as newUUID } from "uuid";
 
 jest.mock("config/feature-flags");
 
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
-	const setupGitHubCloudPingNock = () => {
-		githubNock.get("/").reply(200);
-	};
-	const setupGHEPingNock = () => {
-		gheApiNock.get("").reply(200);
-	};
 	beforeEach(() => {
+		const tenantUrl = jiraHost.replace("https://", "");
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string" };
+			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -45,11 +38,10 @@ describe("GitHub Create Branch Options Get", () => {
 	});
 
 	it("With one cloud connection - should open the create-branch page", async () => {
-		setupGitHubCloudPingNock();
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 		await supertest(app)
@@ -61,7 +53,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch");
+				expect(res.text).toBe("Found. Redirecting to /github/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net");
 			});
 	});
 
@@ -77,19 +69,13 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
-		setupGHEPingNock();
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
@@ -99,7 +85,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch`);
+				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net`);
 			});
 	});
 
@@ -116,7 +102,7 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		const serverApp2 = await GitHubServerApp.install({
 			uuid: uuid2,
 			appId: 234,
@@ -127,17 +113,17 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 123,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp2.id
 		});
 
@@ -165,17 +151,17 @@ describe("GitHub Create Branch Options Get", () => {
 			webhookSecret: "mywebhooksecret",
 			privateKey: "myprivatekey",
 			installationId: 1
-		});
+		}, jiraHost);
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 

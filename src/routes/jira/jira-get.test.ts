@@ -6,16 +6,16 @@ import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import express from "express";
+import express, { Application } from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
+jest.mock("utils/app-properties-utils");
 
 describe("Jira Configuration Suite", () => {
+	let frontendApp: Application;
 	let subscription: Subscription;
 	let installation: Installation;
 
@@ -49,6 +49,12 @@ describe("Jira Configuration Suite", () => {
 			encryptedSharedSecret: "ghi345"
 		});
 
+		frontendApp = express();
+		frontendApp.use((request, _, next) => {
+			request.log = getLogger("test");
+			next();
+		});
+		frontendApp.use(getFrontendApp());
 	});
 
 	const mockRequest = (): any => ({
@@ -74,20 +80,19 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 		githubNock
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);
 
 		await JiraGet(mockRequest(), response, jest.fn());
-		const data = response.render.mock.calls[0][1];
-		expect(data.hasConnections).toBe(true);
-		expect(data.ghCloud.failedCloudConnections.length).toBe(0);
-		expect(data.ghCloud.successfulCloudConnections.length).toBe(1);
+
+		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
+			hasConnections: true,
+			ghCloud: {
+				failedCloudConnections: [],
+				successfulCloudConnections: [expect.anything()]
+			}
+		}));
 	});
 
 	describe("getInstallations", () => {
@@ -271,11 +276,11 @@ describe.each([
 	{
 		url: "/jira/configuration",
 		testSharedSecret: "test-secret",
-		testQsh: "db37a424af6f7376d21db2662904db65628a7c2e4af73b67fa13df5e4bedbae3"
+		testQsh: "03bb62de90d9a341a303b5d4bb97ebf50fa8f9701aadc9de46b744d9abbd43bd"
 	}, {
 		url: "/jira",
 		testSharedSecret: "test-secret",
-		testQsh: "220ebb06872fa43907db98520b898b10f3509824e84602d342d202a1d6c392e6"
+		testQsh: "25af23d03ec867427e41d0f9d53ddbd8afc043869f24b0ab2aaaced7acaf34eb"
 	}
 ])("Jira Route", (testData) => {
 	const { url, testSharedSecret, testQsh } = testData;
@@ -285,7 +290,7 @@ describe.each([
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: testSharedSecret,
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 		frontendApp = express();
 		frontendApp.use((request, res, next) => {
@@ -295,7 +300,7 @@ describe.each([
 				xdm_e: jiraHost,
 				jwt: encodeSymmetric({
 					qsh: testQsh,
-					iss: "jira"
+					iss: "jira-client-key"
 				}, testSharedSecret)
 			};
 			request.addLogFields = jest.fn();
