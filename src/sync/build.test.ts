@@ -50,7 +50,6 @@ describe("sync/builds", () => {
 			.withBuildsCustomCursor("10")
 			.create()).repoSyncState!;
 
-		jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue();
 	});
 
 	it("should sync builds to Jira when build message contains issue key", async () => {
