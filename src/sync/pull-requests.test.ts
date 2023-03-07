@@ -291,7 +291,7 @@ describe("sync/pull-request", () => {
 			pullRequestList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.INCREASE_BUILDS_PAGE_SIZE_COEF,
+				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(5);

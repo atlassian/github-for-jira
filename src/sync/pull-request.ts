@@ -61,7 +61,7 @@ export const getPullRequestTask = async (
 	let perPage = perPageOrig;
 	let nextPage = cursorOrig + 1;
 
-	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_PAGE_SIZE_COEF, 0, jiraHost);
+	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
 	if (pageSizeCoef > 0) {
 		// An experiment to speed up a particular customer by increasing the page size
 		perPage = perPageOrig * pageSizeCoef;
