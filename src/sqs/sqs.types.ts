@@ -139,7 +139,8 @@ export type BackfillMessagePayload = {
 	syncType?: SyncType,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
 	startTime?: string,
-	commitsFromDate?: string,
+	commitsFromDate?: string, //main commits from date, ISO string
+	branchCommitsFromDate?: string, //branch commits from date, ISO string
 	targetTasks?: TaskType[]
 }
 

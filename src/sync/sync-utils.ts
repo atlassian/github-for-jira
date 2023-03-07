@@ -42,7 +42,8 @@ export const findOrStartSync = async (
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
-	const finalCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const branchCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
 
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
@@ -51,7 +52,8 @@ export const findOrStartSync = async (
 		isInitialSync,
 		syncType,
 		startTime: fullSyncStartTime,
-		commitsFromDate: finalCommitsFromDate?.toISOString(),
+		commitsFromDate: mainCommitsFromDate?.toISOString(),
+		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
