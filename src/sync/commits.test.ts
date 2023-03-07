@@ -70,7 +70,6 @@ describe("sync/commits", () => {
 				.repoSyncStatePendingForCommits()
 				.create();
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 

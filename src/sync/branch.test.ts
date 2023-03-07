@@ -132,7 +132,6 @@ describe("sync/branches", () => {
 				.repoSyncStatePendingForBranches()
 				.create();
 
-			mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		});
