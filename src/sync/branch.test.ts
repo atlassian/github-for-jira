@@ -15,14 +15,11 @@ import associatedPRhasKeys from "fixtures/api/graphql/branch-associated-pr-has-k
 
 import branchNoIssueKeys from "fixtures/api/graphql/branch-no-issue-keys.json";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("../sqs/queues");
-jest.mock("config/feature-flags");
 
 describe("sync/branches", () => {
 
@@ -35,6 +32,7 @@ describe("sync/branches", () => {
 
 	const makeExpectedResponseCloudServer = (branchName: string, repoId: string) => ({
 		preventTransitions: true,
+		operationType: "BACKFILL",
 		repositories: [
 			{
 				branches: [
@@ -134,7 +132,6 @@ describe("sync/branches", () => {
 				.repoSyncStatePendingForBranches()
 				.create();
 
-			mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		});
@@ -186,6 +183,7 @@ describe("sync/branches", () => {
 			jiraNock
 				.post("/rest/devinfo/0.10/bulk", {
 					preventTransitions: true,
+					operationType: "BACKFILL",
 					repositories: [
 						{
 							branches: [
@@ -250,46 +248,17 @@ describe("sync/branches", () => {
 			await verifyMessageSent(data, 15);
 		});
 
-		describe("SYNC_BRANCH_COMMIT_TIME_LIMIT FF is enabled", () => {
-			let dateCutoff: Date;
-			beforeEach(() => {
-				const time = Date.now();
-				const cutoff = 1000 * 60 * 60 * 24;
-				mockSystemTime(time);
-				dateCutoff = new Date(time - cutoff);
-
-				when(numberFlag).calledWith(
-					NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue(cutoff);
-			});
-
-			it("should sync to Jira when branch refs have jira references", async () => {
-				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-				nockBranchRequest(branchNodesFixture, { commitSince: dateCutoff.toISOString() });
-
-				jiraNock
-					.post(
-						"/rest/devinfo/0.10/bulk",
-						makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
-					)
-					.reply(200);
-
-				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-				await verifyMessageSent(data);
-			});
-
+		describe("Branch sync date", () => {
 			describe("Branch commit history value is passed", () => {
 
 				it("should use commit history depth parameter before feature flag time", async () => {
 					const time = Date.now();
 					const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
 					mockSystemTime(time);
-					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
+					const branchCommitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
+					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, branchCommitsFromDate };
 
-					nockBranchRequest(branchNodesFixture, { commitSince: commitsFromDate });
+					nockBranchRequest(branchNodesFixture, { commitSince: branchCommitsFromDate });
 					jiraNock
 						.post(
 							"/rest/devinfo/0.10/bulk",
@@ -314,13 +283,6 @@ describe("sync/branches", () => {
 				.reply(200, response);
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
-				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()

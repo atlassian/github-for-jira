@@ -11,11 +11,9 @@ $(document).ready(() => {
   })).toArray();
 
   uuid = $("#createBranchForm").attr("data-ghe-uuid");
-  let url = "/github/repository";
-  if(uuid) {
-    url = `/github/${uuid}/repository`;
-  }
-  $("#ghRepo").auiSelect2({
+	const jiraHost = encodeURIComponent($("#jiraHost").val());
+	const url = `/github/${uuid ? uuid + "/" : ""}repository?jiraHost=${jiraHost}`;
+	$("#ghRepo").auiSelect2({
     placeholder: "Select a repository",
     data: totalRepos,
     formatNoMatches: () => "No search results",
@@ -99,7 +97,9 @@ $(document).ready(() => {
 
   $("#openGitBranch").click(function () {
     const repo = getRepoDetails();
-    window.open(`${$("#gitHubHostname").val()}/${repo.owner}/${repo.name}/tree/${$("#branchNameText").val()}`);
+		const branchName = encodeURIComponent($("#branchNameText").val());
+		const host = $("#gitHubHostname").val();
+	  window.open(`${host}/${repo.owner}/${repo.name}/tree/${branchName}`);
   });
 });
 
@@ -111,7 +111,8 @@ $("#changeInstance").click(function (event) {
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
 	const repo = getRepoDetails();
-	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${branchName}`;
+  const jiraHost = encodeURIComponent($("#jiraHost").val());
+	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${encodeURIComponent(branchName)}?jiraHost=${jiraHost}`;
 
 	$.get(url)
 		.fail((err) => {
@@ -127,10 +128,8 @@ const loadBranches = () => {
   toggleSubmitDisabled(true);
   hideErrorMessage();
   const repo = getRepoDetails();
-  let url = `/github/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`;
-  if(uuid) {
-    url = `/github/${uuid}/create-branch/owners/${repo.owner}/repos/${repo.name}/branches`
-  }
+	const jiraHost = encodeURIComponent($("#jiraHost").val());
+  const url = `/github/${uuid ? uuid + "/" : ""}create-branch/owners/${repo.owner}/repos/${repo.name}/branches?jiraHost=${jiraHost}`;
   $.ajax({
     type: "GET",
     url,
@@ -198,19 +197,14 @@ const hideValidationErrorMessage = (id) => {
 };
 
 const createBranchPost = () => {
-  let url = "/github/create-branch";
-  if(uuid) {
-    url = `/github/${uuid}/create-branch`;
-  }
+	const jiraHost = encodeURIComponent($("#jiraHost").val());
+	let url = `/github/${uuid ? uuid + "/" : ""}create-branch?jiraHost=${jiraHost}`;
   const repo = getRepoDetails();
-  const newBranchName = $("#branchNameText").val();
-  const jiraHost = $("#jiraHost").val();
   const data = {
     owner: repo.owner,
     repo: repo.name,
-		jiraHostEncoded: encodeURIComponent(jiraHost),
     sourceBranchName: $("#ghParentBranch").select2("val"),
-    newBranchName,
+    newBranchName: $("#branchNameText").val(),
     _csrf: $("#_csrf").val(),
   };
   toggleSubmitDisabled(true);
@@ -252,11 +246,12 @@ const hideLoading = () => {
 
 const toggleSubmitDisabled = (bool) => {
   $("#createBranchBtn").prop("disabled", bool);
-  $("#createBranchBtn").attr("aria-disabled", String(bool));
+  $("#createBranchBtn").attr("aria-disabled", bool.toString());
 }
 
 const getRepoDetails = () => {
   const repoWithOwner = $("#ghRepo").select2("val").split("/");
+	// According to github, owners and repo names cannot have special characters in them
   return {
     owner: repoWithOwner[0],
     name: repoWithOwner[1],

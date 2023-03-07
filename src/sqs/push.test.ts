@@ -17,10 +17,8 @@ import longFilePaths from "fixtures/file-paths-too-long.json";
 import pushNoIssues from "fixtures/push-no-issues.json";
 import pushNoIssuekeyCommits from "fixtures/push-no-issuekey-commits.json";
 import pushMergeCommit from "fixtures/push-merge-commit.json";
-import { booleanFlag, BooleanFlags, shouldTagBackfillRequests } from "config/feature-flags";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 import { GitHubPushData } from "interfaces/github";
@@ -104,7 +102,6 @@ describe("Push Webhook", () => {
 
 		let app: WebhookApp;
 		beforeEach(async () => {
-			jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 			app = await createWebhookApp();
 			await new DatabaseStateCreator()
 				.create();
@@ -602,18 +599,7 @@ describe("Push Webhook", () => {
 		});
 
 		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.GHE_SERVER,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(true);
 
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_REPO_ID_TRANSFORMER,
-				expect.anything()
-			).mockResolvedValue(true);
-
-			jest.mocked(shouldTagBackfillRequests).mockResolvedValue(true);
 			const builderOutput = await new DatabaseStateCreator()
 				.forServer()
 				.create();

@@ -47,6 +47,8 @@ export const processDeployment = async (
 
 	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
 
+	logger.info("deployment message transformed");
+
 	if (!jiraPayload) {
 		logger.info(
 			{ noop: "no_jira_payload_deployment" },

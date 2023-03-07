@@ -23,12 +23,12 @@ describe("sync", () => {
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 		await Subscription.install({
 			installationId: installationIdForCloud,
 			host: jiraHost,
-			clientKey: installation.clientKey,
+			hashedClientKey: installation.clientKey,
 			gitHubAppId: undefined
 		});
 		gitHubServerApp = await GitHubServerApp.install({
@@ -45,7 +45,7 @@ describe("sync", () => {
 		await Subscription.install({
 			installationId: installationIdForServer,
 			host: jiraHost,
-			clientKey: installation.clientKey,
+			hashedClientKey: installation.clientKey,
 			gitHubAppId: gitHubServerApp.id
 		});
 		app = express();
@@ -59,8 +59,8 @@ describe("sync", () => {
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
-			iss: jiraHost
-		}, await installation.decrypt("encryptedSharedSecret"));
+			iss: "jira-client-key"
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("should return 200 on correct post for /jira/sync for Cloud app", async () => {

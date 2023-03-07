@@ -40,7 +40,6 @@ $(document).ready(function() {
 		if (selectedVersion === "cloud") {
 			AP.context.getToken(function(token) {
 				const child = openChildWindow("/session/github/configuration");
-				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
 		} else if(selectedVersion === "server"){

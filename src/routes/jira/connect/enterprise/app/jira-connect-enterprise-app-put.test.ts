@@ -16,7 +16,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
-			clientKey: "client-key"
+			clientKey: "jira-client-key"
 		});
 
 		app = express();
@@ -31,8 +31,8 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
-			iss: jiraHost
-		}, await installation.decrypt("encryptedSharedSecret"));
+			iss: "jira-client-key"
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("should return 202 when correct uuid and installation id are passed", async () => {

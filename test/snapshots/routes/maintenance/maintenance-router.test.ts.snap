@@ -12,6 +12,8 @@ Object {
   },
   "description": "Connect your code and your project with ease.",
   "lifecycle": Object {
+    "disabled": "/jira/events/disabled",
+    "enabled": "/jira/events/enabled",
     "installed": "/jira/events/installed",
     "uninstalled": "/jira/events/uninstalled",
   },
@@ -154,6 +156,11 @@ Object {
       },
     },
     "jiraDevelopmentTool": Object {
+      "actions": Object {
+        "createBranch": Object {
+          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}",
+        },
+      },
       "application": Object {
         "value": "GitHub",
       },

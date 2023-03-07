@@ -8,8 +8,6 @@ import { BackfillMessagePayload } from "../sqs/sqs.types";
 import commitNodesFixture from "fixtures/api/graphql/commit-nodes.json";
 import mixedCommitNodes from "fixtures/api/graphql/commit-nodes-mixed.json";
 import commitsNoKeys from "fixtures/api/graphql/commit-nodes-no-keys.json";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
@@ -30,6 +28,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,
@@ -71,7 +70,6 @@ describe("sync/commits", () => {
 				.repoSyncStatePendingForCommits()
 				.create();
 
-			jest.mocked(sqsQueues.backfill.sendMessage).mockResolvedValue(Promise.resolve());
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		});
 
@@ -206,87 +204,6 @@ describe("sync/commits", () => {
 			removeInterceptor(interceptor);
 		});
 
-		describe("SYNC_MAIN_COMMIT_TIME_LIMIT FF is enabled", () => {
-			let dateCutoff: Date;
-			beforeEach(() => {
-				const time = Date.now();
-				const cutoff = 1000 * 60 * 60 * 24;
-				mockSystemTime(time);
-				dateCutoff = new Date(time - cutoff);
-
-				when(numberFlag).calledWith(
-					NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue(cutoff);
-			});
-
-			it("should only get commits since date specified", async () => {
-				const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-
-				createGitHubNock(commitNodesFixture, { commitSince: dateCutoff.toISOString() });
-				const commits = [
-					{
-						"author": {
-							"name": "test-author-name",
-							"email": "test-author-email@example.com"
-						},
-						"authorTimestamp": "test-authored-date",
-						"displayId": "test-o",
-						"fileCount": 0,
-						"hash": "test-oid",
-						"id": "test-oid",
-						"issueKeys": [
-							"TES-17"
-						],
-						"message": "[TES-17] test-commit-message",
-						"url": "https://github.com/test-login/test-repo/commit/test-sha",
-						"updateSequenceId": 12345678
-					}
-				];
-				createJiraNock(commits);
-
-				await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-				await verifyMessageSent(data);
-			});
-
-
-			describe("Commit history value is passed", () => {
-				it("should use commit history depth parameter before feature flag time", async () => {
-
-					const time = Date.now();
-					const commitTimeLimitCutoff = 1000 * 60 * 60 * 72;
-					mockSystemTime(time);
-					const commitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate };
-
-					createGitHubNock(commitNodesFixture, { commitSince: commitsFromDate });
-					const commits = [
-						{
-							"author": {
-								"name": "test-author-name",
-								"email": "test-author-email@example.com"
-							},
-							"authorTimestamp": "test-authored-date",
-							"displayId": "test-o",
-							"fileCount": 0,
-							"hash": "test-oid",
-							"id": "test-oid",
-							"issueKeys": [
-								"TES-17"
-							],
-							"message": "[TES-17] test-commit-message",
-							"url": "https://github.com/test-login/test-repo/commit/test-sha",
-							"updateSequenceId": 12345678
-						}
-					];
-					createJiraNock(commits);
-
-					await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-					await verifyMessageSent(data);
-				});
-			});
-		});
 	});
 
 	describe("for server",  () => {
@@ -309,13 +226,6 @@ describe("sync/commits", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER, expect.anything())
-				.mockResolvedValue(true);
 
 			const builderResult = await new DatabaseStateCreator()
 				.forServer()
@@ -329,6 +239,7 @@ describe("sync/commits", () => {
 
 		const makeExpectedJiraResponse = async (commits) => ({
 			preventTransitions: true,
+			operationType: "BACKFILL",
 			repositories: [
 				{
 					commits,

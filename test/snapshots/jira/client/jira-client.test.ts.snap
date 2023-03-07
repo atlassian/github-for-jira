@@ -5,6 +5,7 @@ Object {
   "appProperties": Object {
     "create": [Function],
     "delete": [Function],
+    "get": [Function],
   },
   "baseURL": "https://test-atlassian-instance.atlassian.net",
   "deployment": Object {

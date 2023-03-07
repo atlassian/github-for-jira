@@ -6,6 +6,8 @@ import pullRequestMultipleInvalidIssues from "../fixtures/pull-request-multiple-
 import pullRequestBasic from "../fixtures/pull-request-basic.json";
 import { createWebhookApp } from "test/utils/create-webhook-app";
 
+jest.mock("config/feature-flags");
+
 const githubPullReviewsResponse = [
 	{
 		id: 80,
@@ -56,6 +58,7 @@ const githubRequestUserLoginResponse = {
 
 const jiraMatchingIssuesKeysBulkResponse = {
 	preventTransitions: false,
+	operationType: "NORMAL",
 	repositories: [
 		{
 			id:"321806393",
@@ -107,7 +110,7 @@ const jiraMatchingIssuesKeysBulkResponse = {
 						{
 							avatar: "test-pull-request-reviewer-avatar",
 							name: "test-pull-request-reviewer-login",
-							email: "test-pull-request-reviewer-login@noreply.user.github.com",
+							email: "test-pull-request-reviewer-login@email.test",
 							url: "https://github.com/reviewer",
 							approvalStatus: "APPROVED"
 						}
@@ -129,6 +132,7 @@ const jiraMatchingIssuesKeysBulkResponse = {
 
 const jiraMultipleJiraBulkResponse = {
 	preventTransitions: false,
+	operationType: "NORMAL",
 	repositories: [
 		{
 			id:"321806393",
@@ -180,7 +184,7 @@ const jiraMultipleJiraBulkResponse = {
 						{
 							avatar: "test-pull-request-reviewer-avatar",
 							name: "test-pull-request-reviewer-login",
-							email: "test-pull-request-reviewer-login@noreply.user.github.com",
+							email: "test-pull-request-reviewer-login@email.test",
 							url: "https://github.com/reviewer",
 							approvalStatus: "APPROVED"
 						}
@@ -229,10 +233,13 @@ describe("multiple Jira instances", () => {
 			jiraHost: jira2Host,
 			jiraClientKey: clientKey
 		});
+
 	});
 
 	it("should not linkify issue keys for jira instance that has matching issues", async () => {
 
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
@@ -246,6 +253,15 @@ describe("multiple Jira instances", () => {
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.times(2)
 			.reply(200, githubPullReviewsResponse);
+
+		githubNock.get("/users/test-pull-request-reviewer-login")
+			.times(2)
+			.reply(200, {
+				login: "test-pull-request-reviewer-login",
+				avatar_url: "test-pull-request-reviewer-avatar",
+				html_url: "test-pull-request-reviewer-url",
+				email: "test-pull-request-reviewer-login@email.test"
+			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
 			body: `[TEST-124] [TEST-223] body of the test pull request.\n\n[TEST-223]: ${jira2Host}/browse/TEST-223`
@@ -287,6 +303,8 @@ describe("multiple Jira instances", () => {
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
 		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId);
 
 		githubNock.get("/users/test-pull-request-user-login")
 			.twice()
@@ -295,6 +313,15 @@ describe("multiple Jira instances", () => {
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.twice()
 			.reply(200, githubPullReviewsResponse);
+
+		githubNock.get("/users/test-pull-request-reviewer-login")
+			.times(2)
+			.reply(200, {
+				login: "test-pull-request-reviewer-login",
+				avatar_url: "test-pull-request-reviewer-avatar",
+				html_url: "test-pull-request-reviewer-url",
+				email: "test-pull-request-reviewer-login@email.test"
+			});
 
 		githubNock.patch("/repos/test-repo-owner/test-repo-name/issues/1", {
 			body: `[TEST-124] body of the test pull request.\n\n[TEST-124]: ${jiraHost}/browse/TEST-124`

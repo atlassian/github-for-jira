@@ -16,8 +16,7 @@ describe("github-oauth-router", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
-			expect.anything(),
+			BooleanFlags.RENEW_GITHUB_TOKEN,
 			expect.anything()
 		).mockResolvedValue(true);
 	});
@@ -31,7 +30,7 @@ describe("github-oauth-router", () => {
 			locals = {};
 			session = {
 				jiraHost,
-				fooState: "http://myredirect.com"
+				fooState: `http://myredirect.com?jiraHost=${jiraHost}`
 			};
 		});
 
@@ -64,7 +63,7 @@ describe("github-oauth-router", () => {
 			// @ts-ignore
 			expect(session.githubToken).toEqual("behold!");
 			expect(response.status).toEqual(302);
-			expect(response.headers.location).toEqual("http://myredirect.com");
+			expect(response.headers.location).toEqual(`http://myredirect.com?jiraHost=${jiraHost}`);
 		});
 	});
 
@@ -95,6 +94,47 @@ describe("github-oauth-router", () => {
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 			});
+
+			it("with expired token", async () => {
+				githubNock.get("/")
+					.matchHeader("Authorization", "Bearer the-token")
+					.reply(401);
+
+				nock("https://github.com")
+					.post("/login/oauth/access_token")
+					.matchHeader("accept", "application/json")
+					.matchHeader("content-type", "application/json")
+					.reply(200, {
+						"access_token": "new_access_token",
+						"refresh_token": "new_refresh_token"
+					});
+
+				const next = jest.fn();
+
+				const req = {
+					log: getLogger("test"),
+					session: {
+						githubToken: "the-token",
+						githubRefreshToken: "refresh-token"
+					}
+				};
+
+				const res = {
+					locals: {
+						gitHubAppConfig: {},
+						jiraHost,
+						githubToken: ""
+					}
+				};
+
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				await GithubAuthMiddleware(req, res, next);
+				expect(next.mock.calls).toHaveLength(1);
+				expect(req.session.githubToken).toBe("new_access_token");
+				expect(req.session.githubRefreshToken).toBe("new_refresh_token");
+				expect(res.locals.githubToken).toBe("new_access_token");
+			});
 		});
 
 		describe("server", () => {
@@ -102,12 +142,6 @@ describe("github-oauth-router", () => {
 			beforeEach(async () => {
 				const creatorResult = await new DatabaseStateCreator().forServer().create();
 				gitHubServerApp = creatorResult.gitHubServerApp!;
-
-				when(booleanFlag).calledWith(
-					BooleanFlags.GHE_SERVER,
-					expect.anything(),
-					expect.anything()
-				).mockResolvedValue(true);
 			});
 
 			it("with token", async () => {

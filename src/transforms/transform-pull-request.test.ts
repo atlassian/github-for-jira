@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { transformPullRequest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
+import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
+import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
@@ -170,7 +172,7 @@ describe("pull_request transform", () => {
 
 		const { updated_at, title } = fixture;
 
-		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
+		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i+1}`);
 
 		expect(data).toMatchObject({
 			id: "100403908",
@@ -223,6 +225,125 @@ describe("pull_request transform", () => {
 					url: "https://github.com/integrations/test/tree/use-the-force"
 				}
 			],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should transform deleted author and reviewers without exploding", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		const data = await transformPullRequest(client, fixture as any, reviewersListNoUser as any);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/ghost.png",
+							name: "Deleted User",
+							email: "deleted@noreply.user.github.com",
+							url: "https://github.com/ghost",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should resolve reviewer's email", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
+			.reply(200, {
+				...reviewersListHasUser[0].user,
+				email: "octocat-mapped@github.com"
+			});
+
+		const data = await transformPullRequest(client, fixture as any, reviewersListHasUser as any);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							email: "octocat-mapped@github.com",
+							name: "octocat",
+							url: "https://github.com/octocat",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
 			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});

@@ -16,7 +16,6 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -37,11 +36,12 @@ const getLastSuccessfulDeployCommitSha = async (
 			// Find the first successful one
 			const lastSuccessful = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
 			if (lastSuccessful) {
+
 				return deployment.sha;
 			}
 		}
 	} catch (e) {
-		logger?.error(`Failed to get deployment statuses.`);
+		logger?.debug(`Failed to get deployment statuses.`);
 	}
 
 	// If there's no successful deployment on the list of deployments that GitHub returned us (max. 100) then we'll return the last one from the array, even if it's a failed one.
@@ -171,13 +171,12 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 
 // Maps issue ids and commit summaries to an array of associations (one for issue ids, and one for commits).
 // Returns undefined when there are no issue ids to map.
-const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
+const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 	issueIds: string[],
 	transformedRepositoryId: TransformedRepositoryId,
 	commitSummaries?: CommitSummary[],
-	config?: Config,
-	jiraHost?: string
-): Promise<JiraAssociation[] | undefined> => {
+	config?: Config
+): JiraAssociation[] | undefined => {
 
 	const associations: JiraAssociation[] = [];
 	let totalAssociationCount = 0;
@@ -194,19 +193,17 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = async (
 		totalAssociationCount += issues.length;
 	}
 
-	if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, false, jiraHost)) {
-		if (config?.deployments?.services?.ids) {
-			const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
-			const services = config.deployments.services.ids
-				.slice(0, maximumServicesToSubmit);
-			associations.push(
-				{
-					associationType: "serviceIdOrKeys",
-					values: services
-				}
-			);
-			totalAssociationCount += config.deployments.services.ids.length;
-		}
+	if (config?.deployments?.services?.ids) {
+		const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
+		const services = config.deployments.services.ids
+			.slice(0, maximumServicesToSubmit);
+		associations.push(
+			{
+				associationType: "serviceIdOrKeys",
+				values: services
+			}
+		);
+		totalAssociationCount += config.deployments.services.ids.length;
 	}
 
 	if (commitSummaries?.length) {
@@ -266,12 +263,11 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 	}
 
 	const allCommitsMessages = extractMessagesFromCommitSummaries(commitSummaries);
-	const associations = await mapJiraIssueIdsCommitsAndServicesToAssociationArray(
+	const associations = mapJiraIssueIdsCommitsAndServicesToAssociationArray(
 		jiraIssueKeyParser(`${deployment.ref}\n${message}\n${allCommitsMessages}`),
-		await transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
+		transformRepositoryId(payload.repository.id, githubInstallationClient.baseUrl),
 		commitSummaries,
-		config,
-		jiraHost
+		config
 	);
 
 	if (!associations?.length) {

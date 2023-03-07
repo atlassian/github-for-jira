@@ -1,14 +1,12 @@
 import { Application } from "express";
 import { getFrontendApp } from "../../app";
 import supertest from "supertest";
-import { when } from "jest-when";
 import { GithubConfigurationGet } from "./configuration/github-configuration-get";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { v4 as v4uuid } from "uuid";
 import { envVars } from "config/env";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 
 jest.mock("./configuration/github-configuration-get");
 jest.mock("config/feature-flags");
@@ -17,11 +15,6 @@ const VALID_TOKEN = "valid-token";
 const GITHUB_SERVER_APP_UUID: string = v4uuid();
 const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
 const GITHUB_SERVER_CLIENT_ID = "client-id";
-const turnGHE_FF_OnOff = (newStatus: boolean) => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything(), expect.anything())
-		.mockResolvedValue(newStatus);
-};
 
 const setupAppAndRouter = () => {
 	return getFrontendApp();
@@ -68,14 +61,16 @@ const mockConfigurationGetProceed = ()=>{
 
 describe("GitHub router", () => {
 	describe("Common route utilities", () => {
-		beforeEach(() => {
-			turnGHE_FF_OnOff(true);
-		});
 		describe("Cloud scenario", () => {
 			let app: Application;
-			beforeEach(() => {
+			beforeEach(async() => {
 				app = setupAppAndRouter();
 				mockConfigurationGetProceed();
+				await Installation.create({
+					jiraHost,
+					clientKey: "abc123",
+					encryptedSharedSecret: "ghi345"
+				});
 			});
 			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
 				await supertest(app)
@@ -193,20 +188,6 @@ describe("GitHub router", () => {
 					}),
 					expect.anything()
 				);
-			});
-			it("should not match route, return empty if uuid present but invalid", async ()=>{
-				setupGitHubCloudPingNock(); //since uuid invalid, this fallsback to cloud
-				await supertest(app)
-					.get(`/github/${GITHUB_SERVER_APP_UUID + "random-gibberish"}/configuration`)
-					.set(
-						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
-						})
-					)
-					.expect(404);
-				expect(GithubConfigurationGet).not.toHaveBeenCalled();
 			});
 		});
 	});

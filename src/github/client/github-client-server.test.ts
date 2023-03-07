@@ -4,9 +4,7 @@ import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
 import { InstallationId } from "./installation-id";
 import nock from "nock";
-import { GITHUB_ACCEPT_HEADER } from "utils/get-github-client-config";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { GITHUB_ACCEPT_HEADER } from "~/src/github/client/github-client-constants";
 
 jest.mock("config/feature-flags");
 
@@ -75,12 +73,6 @@ describe("GitHub Client", () => {
 			page,
 			"installation token"
 		);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(true);
 
 		const client = new GitHubInstallationClient(
 			new InstallationId(gheUrl, 4711, githubInstallationId),

@@ -1,6 +1,6 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize, getHashedKey } from "models/sequelize";
+import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -32,6 +32,7 @@ export class Subscription extends Model {
 	selectedRepositories?: number[];
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
+	backfillSince?: Date;
 	jiraClientKey: string;
 	plainClientKey: string;
 	updatedAt: Date;
@@ -142,8 +143,8 @@ export class Subscription extends Model {
 	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId: number | undefined,
-		gitHubAppId: number | undefined
+		gitHubInstallationId?: number,
+		gitHubAppId?: number
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -176,11 +177,11 @@ export class Subscription extends Model {
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: getHashedKey(payload.clientKey),
+				jiraClientKey: payload.hashedClientKey,
 				gitHubAppId: payload.gitHubAppId || null
 			},
 			defaults: {
-				plainClientKey: payload.clientKey
+				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
 			}
 		});
 
@@ -228,6 +229,7 @@ Subscription.init({
 	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
+	backfillSince: DataTypes.DATE,
 	jiraClientKey: DataTypes.STRING,
 	plainClientKey: {
 		type: DataTypes.STRING,
@@ -252,5 +254,5 @@ export interface SubscriptionPayload {
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
-	clientKey: string;
+	hashedClientKey: string;
 }

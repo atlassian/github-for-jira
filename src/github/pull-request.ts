@@ -37,7 +37,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
 	let reviews: Octokit.PullsListReviewsResponse = [];
 
-	if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM, false)) {
+	if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
 		reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 	} else {
 		try {
@@ -70,7 +70,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 			);
 
 			await jiraClient.devinfo.pullRequest.delete(
-				await transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
+				transformRepositoryId(repositoryId, context.gitHubAppConfig?.gitHubBaseUrl),
 				pullRequestNumber
 			);
 

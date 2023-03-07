@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
 export const JiraConnectEnterpriseServerAppGet = async (
 	req: Request,
@@ -22,6 +24,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
 			res.render("jira-select-github-cloud-app.hbs", {
 				list: serverApps,
 				// Passing these query parameters for the route when clicking `Create new application`
@@ -29,6 +32,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 				serverUrl: baseUrl
 			});
 		} else {
+			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
 			res.render("jira-select-app-creation.hbs", { baseUrl });
 		}
 
@@ -36,4 +40,12 @@ export const JiraConnectEnterpriseServerAppGet = async (
 	} catch (error) {
 		return next(new Error(`Failed to render Jira Connect Enterprise App page: ${error}`));
 	}
+};
+
+const sendScreenAnalytics = ({ isNew, gheServers, name }) => {
+	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		name,
+		createNew: isNew,
+		existingServerAppsCount: gheServers?.length || 0
+	});
 };

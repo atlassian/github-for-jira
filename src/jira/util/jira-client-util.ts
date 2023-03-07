@@ -1,6 +1,7 @@
 import { envVars }  from "config/env";
 import { getLogger } from "config/logger";
 import { JiraIssue } from "interfaces/jira";
+import { jiraIssueInSquareBracketsRegex } from "utils/jira-utils";
 
 const logger = getLogger("jira.util");
 
@@ -32,7 +33,7 @@ export const getJiraUtil = (jiraClient) => {
 	};
 
 	const addJiraIssueLinks = (text: string, issues: JiraIssue[]): string => {
-		const referenceRegex = /\[([A-Z]+-[0-9]+)\](?!\()/g;
+		const referenceRegex = jiraIssueInSquareBracketsRegex();
 		const issueMap = issues.reduce((acc, issue) => ({
 			...acc,
 			[issue.key]: issue
@@ -49,7 +50,7 @@ export const getJiraUtil = (jiraClient) => {
 				break;
 			}
 
-			const [, key] = match;
+			const [, , key] = match;
 			// If we already have a reference link, or the issue is not valid, skip it.
 			if (keys.includes(key) || !issueMap[key]) {
 				continue;

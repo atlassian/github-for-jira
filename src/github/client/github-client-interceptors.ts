@@ -1,4 +1,4 @@
-import { InvalidPermissionsError, BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
+import { BlockedIpError, GithubClientError, GithubClientTimeoutError, InvalidPermissionsError, RateLimitingError } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -6,7 +6,6 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import { extractPath } from "../../jira/client/axios";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
-import { toUpper } from "lodash";
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 
@@ -92,55 +91,62 @@ export const instrumentFailedRequest = (metricName: string, host: string) =>
 		return Promise.reject(error);
 	};
 
-export const handleFailedRequest = (logger: Logger) =>
-	(error: AxiosError) => {
-		const { response, config, request } = error;
+export const handleFailedRequest = (rootLogger: Logger) =>
+	(err: AxiosError) => {
+		const { response, config, request } = err;
 		const requestId = response?.headers?.["x-github-request-id"];
-		logger = logger.child({
-			requestId, resStatus: response?.status,
-			requestMethod: request?.method,
-			requestPath: request?.path,
-			errorMessage: error?.message
+		const logger = rootLogger.child({
+			err,
+			config,
+			request,
+			response,
+			requestId
 		});
 
-		if (response?.status === 408 || error.code === "ETIMEDOUT") {
+		const errorMessage = `Error executing Axios Request: ` + err.message;
+		logger.warn(errorMessage);
+
+		if (response?.status === 408 || err.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");
-			return Promise.reject(new GithubClientTimeoutError(error));
+			return Promise.reject(new GithubClientTimeoutError(err));
 		}
 
 		if (response) {
 			const status = response?.status;
-			const errorMessage = `Error executing Axios Request (${toUpper(config.method)} ${config.baseURL}${config.url}): ` + error.message;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
-				logger.warn("Rate limiting error");
-				return Promise.reject(new RateLimitingError(response, error));
+				const mappedError = new RateLimitingError(err);
+				logger.warn({ err: mappedError }, "Rate limiting error");
+				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				logger.warn({ remote: response.data?.message }, "Blocked by GitHub allowlist");
-				return Promise.reject(new BlockedIpError(error, status));
+				const mappedError = new BlockedIpError(err);
+				logger.warn({ err: mappedError, remote: response.data.message }, "Blocked by GitHub allowlist");
+				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
+				const mappedError = new InvalidPermissionsError(err);
 				logger.warn({
-					err: error,
-					remote: response.data?.message
+					err: mappedError,
+					remote: response.data.message
 				}, "unauthorized");
-				return Promise.reject(new InvalidPermissionsError(error, status));
+				return Promise.reject(mappedError);
 			}
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
-			if (isWarning){
-				logger.warn(errorMessage);
+			if (isWarning) {
+				logger.debug(errorMessage);
 			} else {
 				logger.error(errorMessage);
 			}
 
-			logger.info({ response, request, error, isWarning }, "joshkay temp logging - githubclient interceptor handleFailedRequest");
-			return Promise.reject(new GithubClientError(errorMessage, status, error));
+			const mappedError = new GithubClientError(errorMessage, err);
+			logger.warn({ err: mappedError }, "GitHubClientError");
+			return Promise.reject(mappedError);
 		}
 
-		return Promise.reject(error);
+		return Promise.reject(err);
 	};
