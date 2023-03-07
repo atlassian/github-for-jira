@@ -1,12 +1,5 @@
 import { Request, Response } from "express";
-import crypto from "crypto";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
-
-const calculateSha256 = (str: string): string => {
-	const keyHash = crypto.createHash("sha256");
-	keyHash.update(str);
-	return keyHash.digest("hex");
-};
 
 const strToKey = (keyStr: string): EncryptionSecretKeyEnum | null => {
 	const validValues = Object.values(EncryptionSecretKeyEnum); // get all the valid values of the enum
@@ -60,6 +53,8 @@ export const ApiRecryptPost = async (req: Request, res: Response): Promise<void>
 
 	res.json({
 		recryptedValue,
-		plainValueSha256: calculateSha256(plainValue)
+		oldContext,
+		newContext,
+		key
 	});
 };
