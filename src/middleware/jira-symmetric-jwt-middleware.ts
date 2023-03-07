@@ -43,6 +43,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
 		}
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 
 	} else if (req.session?.jiraHost) {
@@ -56,6 +57,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 	}
 

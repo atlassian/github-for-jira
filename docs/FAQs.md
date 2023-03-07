@@ -55,7 +55,7 @@ When an organization contains a small amount of data, the backfilling process is
 
 **A:** There are a few reasons why you might have trouble connecting your GitHub Enterprise Server account to the GitHub for Jira app:
 
-- **Atlassian IP address ranges need whitelisting** - Please see the above FAQ  - <TODO - Link to above question>
+- **Atlassian IP address ranges need whitelisting** - [Please see our IP allowlist documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md)
 
 - **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
 

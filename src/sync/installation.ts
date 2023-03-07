@@ -12,7 +12,7 @@ import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
-import { isBlocked, NumberFlags } from "config/feature-flags";
+import { isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -24,7 +24,6 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
-import { getCommitSinceDate } from "~/src/sync/sync-utils";
 import { calcNewBackfillSinceDate } from "~/src/sync/backfill-since-date-calc";
 
 const tasks: TaskProcessors = {
@@ -516,7 +515,7 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 };
 
 const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | null> => {
-	const commitSince = await getCommitSinceDate(data.jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, data.commitsFromDate);
+	const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
 	const backfillSinceDateToSave = calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType, data.isInitialSync);
 	//set it to null on falsy value so that we can override db with sequlize
 	return backfillSinceDateToSave || null;
