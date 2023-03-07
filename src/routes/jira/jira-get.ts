@@ -38,14 +38,15 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
+export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
 		case "COMPLETE":
 			return "FINISHED";
 		default:
-			return syncStatus;
+			return syncStatus as ConnectionSyncStatus;
 	}
 };
 
@@ -123,7 +124,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const { jiraHost, nonce } = res.locals;
 
-	const shouldPromoteBackfillButtonToTableRow = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
@@ -162,7 +163,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
-		shouldPromoteBackfillButtonToTableRow,
+		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
