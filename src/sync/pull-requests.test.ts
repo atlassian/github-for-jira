@@ -251,7 +251,7 @@ describe("sync/pull-request", () => {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
-					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc")
+					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
 					.reply(200, pullRequestList)
 					.get("/repos/integrations/test-repo-name/pulls/51")
 					.reply(200, pullRequest)
