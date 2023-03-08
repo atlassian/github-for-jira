@@ -238,6 +238,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const execute = async (): Promise<TaskPayload> => {
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+		//
+		// We are not using "big" numbers here (e.g. 100) to speed up the process; API returns smaller pages faster and
+		// they will more likely not to break.
+		//
+		// Also this logic is broken for any rest queries (where cursor is the page number), because when the page size
+		// changes the cursor is broken (as it is just an interger specifically for the original page size).
+		//
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {

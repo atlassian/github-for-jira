@@ -181,7 +181,7 @@
                 {{> jira-configuration-table
                     id=id
                     host=host
-                    shouldPromoteBackfillButtonToTableRow=shouldPromoteBackfillButtonToTableRow
+                    isIncrementalBackfillEnabled=isIncrementalBackfillEnabled
                     elementIdPrefix="ghCloud-"
                     html_url=html_url
                     csrfToken=csrfToken
@@ -255,7 +255,7 @@
                             {{> jira-configuration-table
                                 id=id
                                 host=../../host
-                                shouldPromoteBackfillButtonToTableRow=../../shouldPromoteBackfillButtonToTableRow
+                                isIncrementalBackfillEnabled=../../isIncrementalBackfillEnabled
                                 hideAvatar=true
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
@@ -305,7 +305,7 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    {{#if shouldPromoteBackfillButtonToTableRow }}
+    {{#if isIncrementalBackfillEnabled }}
     <style>
     .jiraConfiguration__table__head__title:not(:last-child) {
         width: 23%;
