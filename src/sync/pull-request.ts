@@ -133,7 +133,7 @@ export const getPullRequestTask = async (
 		)
 	).filter((value) => !!value);
 
-	logger.debug("Syncing PRs: finished");
+	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
 
 	return {
 		edges: edgesWithCursor,
