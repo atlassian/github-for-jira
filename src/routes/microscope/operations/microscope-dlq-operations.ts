@@ -3,9 +3,11 @@ import Logger from "bunyan";
 import { getLogger } from "config/logger";
 import { optionalRequire } from "optional-require";
 
-const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
+const { dlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
 
 const log: Logger = getLogger("microscope-dlq");
+
+let dlqServiceNodeClient;
 
 type RequeueMessageRequest = {
 	messageId: string;
@@ -18,11 +20,13 @@ type DeleteMessageRequest = {
 	receiptHandle: string;
 };
 
-const dlqService = new DlqService(log, {
-	sqs: {
-		region: process.env.SQS_PUSH_QUEUE_REGION
-	}
-});
+if (!dlqServiceNodeClient) {
+	dlqServiceNodeClient = dlqService(log, {
+		sqs: {
+			region: process.env.SQS_PUSH_QUEUE_REGION
+		}
+	});
+}
 
 
 export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promise<void> => {
