@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
-import { DlqService } from "@atlassian/sqs-queue-dlq-service";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
+import { optionalRequire } from "optional-require";
+
+const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
 
 const log: Logger = getLogger("microscope-dlq");
 
