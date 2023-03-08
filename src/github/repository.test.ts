@@ -25,7 +25,18 @@ describe("deleteRepositoryWebhookHandler", () => {
 	});
 
 	it("should call delete repository endpoint for server", async () => {
-
+		const context = {
+			repository: {
+				id: 123,
+				name: "name",
+				full_name: "owner/name",
+				html_url: "webaddress",
+				updated_at: 0,
+				owner: {
+					login: "owner"
+				}
+			}
+		};
 		const builderResult = await new DatabaseStateCreator()
 			.forServer()
 			.withActiveRepoSyncState()
@@ -33,11 +44,10 @@ describe("deleteRepositoryWebhookHandler", () => {
 		const gitHubServerApp = builderResult.gitHubServerApp!;
 
 		const jiraClientDevinfoRepositoryDeleteMock = jest.fn();
-
 		await deleteRepositoryWebhookHandler(new WebhookContext({
 			id: "my-id",
 			name: pullRequestRemoveKeys.name,
-			payload: pullRequestRemoveKeys.payload,
+			payload: context,
 			log: getLogger("test"),
 			gitHubAppConfig: {
 				gitHubAppId: gitHubServerApp.id,
@@ -56,7 +66,7 @@ describe("deleteRepositoryWebhookHandler", () => {
 			}
 		}, DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 		subscription);
-		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-test-repo-id");
+		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-123");
 	});
 });
 
