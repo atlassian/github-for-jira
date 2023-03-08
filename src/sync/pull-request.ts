@@ -107,7 +107,7 @@ export const getPullRequestTask = async (
 				if (isEmpty(extractIssueKeysFromPr(pull))) {
 					logger.info({
 						prId: pull.id
-					}, "Skip PR cause has no issue keys");
+					}, "Skip PR cause it has no issue keys");
 					return undefined;
 				}
 
