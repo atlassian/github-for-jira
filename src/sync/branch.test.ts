@@ -248,29 +248,6 @@ describe("sync/branches", () => {
 			await verifyMessageSent(data, 15);
 		});
 
-		describe("Branch sync date", () => {
-			describe("Branch commit history value is passed", () => {
-
-				it("should use commit history depth parameter before feature flag time", async () => {
-					const time = Date.now();
-					const commitTimeLimitCutoff = 1000 * 60 * 60 * 96;
-					mockSystemTime(time);
-					const branchCommitsFromDate = new Date(time - commitTimeLimitCutoff).toISOString();
-					const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, branchCommitsFromDate };
-
-					nockBranchRequest(branchNodesFixture, { commitSince: branchCommitsFromDate });
-					jiraNock
-						.post(
-							"/rest/devinfo/0.10/bulk",
-							makeExpectedResponse("branch-with-issue-key-in-the-last-commit")
-						)
-						.reply(200);
-
-					await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-					await verifyMessageSent(data);
-				});
-			});
-		});
 	});
 
 	describe("server", () => {

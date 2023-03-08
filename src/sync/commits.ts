@@ -7,8 +7,8 @@ import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { TaskPayload } from "~/src/sync/sync.types";
 
-const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
-	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
+const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, commitUntil?: Date, cursor?: string | number, perPage?: number) => {
+	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, commitUntil, cursor);
 	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
 	const commits = edges?.map(({ node: item }) => item) || [];
 
@@ -28,7 +28,8 @@ export const getCommitTask = async (
 	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
 
 	const commitSince = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
+	const commitUntil = 	messagePayload?.commitsToDate ? new Date(messagePayload.commitsToDate): undefined;
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, commitUntil, cursor, perPage);
 	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl

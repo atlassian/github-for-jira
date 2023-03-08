@@ -266,13 +266,14 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Attempt to get the commits page, if failing try again omiting the changedFiles field
 	 */
-	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: Date, cursor?: string | number): Promise<getCommitsResponse> {
+	public async getCommitsPage(owner: string, repoName: string, perPage?: number, commitSince?: Date, commitUntil?: Date, cursor?: string | number): Promise<getCommitsResponse> {
 		const variables = {
 			owner,
 			repo: repoName,
 			per_page: perPage,
 			cursor,
-			commitSince: commitSince?.toISOString()
+			commitSince: commitSince?.toISOString(),
+			commitUntil: commitUntil?.toISOString()
 		};
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)

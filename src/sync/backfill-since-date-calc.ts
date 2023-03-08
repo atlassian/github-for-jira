@@ -1,19 +1,8 @@
-import { SyncType } from "~/src/sync/sync.types";
-
 export const calcNewBackfillSinceDate = (
 	existingBackfillSince: Date | undefined,
 	commitsFromDate: Date | undefined,
-	syncType: SyncType | undefined,
 	isInitialSync: boolean | undefined
 ): Date | undefined  => {
-
-	//------------ partial sync ---------------
-	if (syncType === "partial" || syncType === undefined) {
-		//do not change anything on partial sync
-		//or missing sync type on mgs body
-		//( which means old msg before the prod deployment )
-		return existingBackfillSince;
-	}
 
 	//------------ initial new sync ---------------
 	if (isInitialSync) {

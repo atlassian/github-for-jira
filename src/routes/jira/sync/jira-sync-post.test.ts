@@ -8,8 +8,11 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { sqsQueues } from "~/src/sqs/queues";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 jest.mock("~/src/sqs/queues");
+jest.mock("config/feature-flags");
 
 describe("sync", () => {
 	let app: Express;
@@ -61,6 +64,11 @@ describe("sync", () => {
 			qsh: "context-qsh",
 			iss: "jira-client-key"
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 
 	it("should return 200 on correct post for /jira/sync for Cloud app", async () => {
@@ -107,4 +115,67 @@ describe("sync", () => {
 				}), expect.anything(), expect.anything());
 			});
 	});
+
+	it("should skip sync if data for the given date range already backfilled", async() => {
+		const subscription = await Subscription.getSingleInstallation(
+			jiraHost,
+			installationIdForServer,
+			gitHubServerApp.id
+		);
+		await subscription?.update({
+			syncStatus: "COMPLETE",
+			backfillSince: new Date(new Date().getTime() - 1000)
+		});
+		return supertest(app)
+			.post("/jira/sync")
+			.query({
+				jwt
+			})
+			.send({
+				installationId: installationIdForServer,
+				jiraHost,
+				appId: gitHubServerApp.id,
+				commitsFromDate: new Date(new Date().getTime() - 500)
+			})
+			.expect(202)
+			.then(() => {
+				expect(sqsQueues.backfill.sendMessage).not.toBeCalled();
+			});
+	});
+
+	it("should run incremental sync", async() => {
+		const commitsFromDate = new Date(new Date().getTime() - 2000);
+		const backfillSince = new Date(new Date().getTime() - 1000);
+		const subscription = await Subscription.getSingleInstallation(
+			jiraHost,
+			installationIdForServer,
+			gitHubServerApp.id
+		);
+		await subscription?.update({
+			syncStatus: "COMPLETE",
+			backfillSince
+		});
+		return supertest(app)
+			.post("/jira/sync")
+			.query({
+				jwt
+			})
+			.send({
+				installationId: installationIdForServer,
+				jiraHost,
+				appId: gitHubServerApp.id,
+				commitsFromDate
+			})
+			.expect(202)
+			.then(() => {
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					installationId: installationIdForServer,
+					jiraHost,
+					commitsFromDate: commitsFromDate.toISOString(),
+					commitsToDate: backfillSince.toISOString(),
+					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
+				}), expect.anything(), expect.anything());
+			});
+	});
+
 });

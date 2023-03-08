@@ -17,8 +17,7 @@ export const getBranchTask = async (
 	logger.debug("Syncing branches: started");
 	perPage = perPage || 20;
 
-	const commitSince = messagePayload?.branchCommitsFromDate ? new Date(messagePayload.branchCommitsFromDate) : undefined;
-	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
+	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, undefined, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 

@@ -15,6 +15,7 @@ export const findOrStartSync = async (
 	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
+	commitsToDate?: Date,
 	targetTasks?: TaskType[]
 ): Promise<void> => {
 	let fullSyncStartTime;
@@ -40,6 +41,14 @@ export const findOrStartSync = async (
 		await RepoSyncState.deleteFromSubscription(subscription);
 	}
 
+	if (syncType === "partial" && commitsFromDate && commitsToDate && targetTasks?.includes("commit")) {
+		await RepoSyncState.update({ commitCursor: null }, {
+			where: {
+				subscriptionId: subscription.id
+			}
+		});
+	}
+
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
 	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
@@ -54,6 +63,7 @@ export const findOrStartSync = async (
 		startTime: fullSyncStartTime,
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
+		commitsToDate: commitsToDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
