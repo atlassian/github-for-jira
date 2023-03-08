@@ -51,10 +51,14 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		transformRepositoryId(context.payload.repository?.id, context.gitHubAppConfig?.gitHubBaseUrl)
 	);
 
-	// Update the total number of repos, we can assume atleast 1 repo(just deleted repo) exists for the default value
-	const totalNumberOfRepos = ((subscription.totalNumberOfRepos || 1) - 1);
-	await subscription.update({ totalNumberOfRepos });
-	await RepoSyncState.deleteRepoForSubscription(subscription, context.payload.repository?.id);
+	// Only attempt to delete if we have the ID
+	if (context?.payload?.repository?.id) {
+		// Remove the repos
+		await RepoSyncState.deleteRepoForSubscription(subscription, context.payload.repository.id);
+		// Update the repos by taking the new post-delete count of repos for the given subscription
+		const totalNumberOfRepos = (await RepoSyncState.findAllFromSubscription(subscription)).length;
+		await subscription.update({ totalNumberOfRepos });
+	}
 	webhookProcessComplete(context, jiraResponse?.status);
 };
 
