@@ -112,7 +112,7 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 
 	const plainClientKey = extractClientKey(text);
 	if (!plainClientKey) {
-		throw { msg: `Client key regex failed`, jiraHost, id, text };
+		throw { msg: `Client key xml extraction failed`, jiraHost, id, text };
 	}
 
 	const hashedplainClientKey = getHashedKey(plainClientKey);

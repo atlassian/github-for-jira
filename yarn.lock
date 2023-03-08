@@ -7842,6 +7842,11 @@ xml2js@0.4.19:
     sax ">=0.6.0"
     xmlbuilder "~9.0.1"
 
+xml2json-light@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/xml2json-light/-/xml2json-light-1.0.6.tgz#111687710a2b01fbd2fe18f418adf511de547f34"
+  integrity sha512-6CSibpteBS4B8/fzJaj6TDtWatIlonSFfVVK3TLM23mlTOxkMgVA4b2FaGeTIrrhOMdDZ8X1/dvo4mfBtsU4yw==
+
 xmlbuilder@~9.0.1:
   version "9.0.7"
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-9.0.7.tgz#132ee63d2ec5565c557e20f4c22df9aca686b10d"

@@ -5,6 +5,11 @@ import { waitUntil } from "test/utils/wait-until";
 import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { Request as AwsRequest } from "aws-sdk";
+import { BaseMessagePayload } from "~/src/sqs/sqs.types";
+import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
+import { when } from "jest-when";
+
+jest.mock("utils/preemptive-rate-limit");
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
 
@@ -12,14 +17,14 @@ describe("SQS", () => {
 	let mockRequestHandler: jest.Mock;
 	let mockErrorHandler: jest.Mock;
 	let testMaxQueueAttempts = 3;
-	let queue: SqsQueue<unknown>;
+	let queue: SqsQueue<BaseMessagePayload>;
 	let payload;
 
 	let TEST_QUEUE_URL:string;
 	let TEST_QUEUE_REGION:string;
 	const TEST_QUEUE_NAME = "test";
 
-	let createSqsQueue: (timeout: number, maxAttempts?: number) => SqsQueue<unknown>;
+	let createSqsQueue: (timeout: number, maxAttempts?: number) => SqsQueue<BaseMessagePayload>;
 
 	beforeEach(() => {
 		TEST_QUEUE_URL = testEnvVars.SQS_TEST_QUEUE_URL;
@@ -39,6 +44,8 @@ describe("SQS", () => {
 			},
 			mockRequestHandler,
 			mockErrorHandler);
+		when(jest.mocked(preemptiveRateLimitCheck))
+			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
 	});
 
 	afterEach(async () => {
@@ -56,6 +63,7 @@ describe("SQS", () => {
 			statsdIncrementSpy = jest.spyOn(statsd, "increment");
 			queue = createSqsQueue(10);
 			queue.start();
+			await queue.purgeQueue();
 			mockErrorHandler.mockReturnValue({ retryable: false, isFailure: true });
 		});
 
@@ -154,6 +162,41 @@ describe("SQS", () => {
 			await queue.sendMessage(payload);
 			await waitUntil(async () => expect(queueDeletionSpy).toBeCalledTimes(1));
 			expect(statsdIncrementSpy).not.toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
+		});
+	});
+
+	describe("Rate limiting checks", () => {
+		beforeEach(async () => {
+			queue = createSqsQueue(10);
+			queue.start();
+			await queue.purgeQueue();
+			mockErrorHandler.mockReturnValue({ retryable: false, isFailure: true });
+		});
+		it("Message gets executed when limit not exceeded", async () => {
+			when(jest.mocked(preemptiveRateLimitCheck))
+				.calledWith(expect.anything(), expect.anything()).mockResolvedValue({ isExceedThreshold: false });
+			await queue.sendMessage(payload);
+			const time = Date.now();
+			await delay(2000);
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalled());
+			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
+			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
+		});
+		it("Message NOT executed when limit exceeded", async () => {
+			when(jest.mocked(preemptiveRateLimitCheck))
+				.calledWith(expect.anything(), expect.anything()).mockResolvedValue({ isExceedThreshold: true, resetTimeInSeconds: 123 });
+			const queueSendSpy = jest.spyOn(queue.sqs, "sendMessage");
+			const queueDeletionSpy = jest.spyOn(queue.sqs, "deleteMessage");
+			await queue.sendMessage(payload);
+			const time = Date.now();
+			await delay(2000);
+			await waitUntil(async () => expect(mockRequestHandler).toHaveBeenCalledTimes(0));
+			await waitUntil(async () => expect(queueDeletionSpy).toBeCalledTimes(1));
+			await waitUntil(async () => expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
+				DelaySeconds: 123,
+				MessageBody: JSON.stringify(payload)
+			})));
+			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});
 	});
 

@@ -19,8 +19,6 @@ $(".add-organization-link").click(function(event) {
 	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
 	AP.context.getToken(function(token) {
 		const child = openChildWindow("/session/github/configuration" + queryParameter);
-		// Remove below line on cleaning up NEW_JWT_VALIDATION flag
-		child.window.jiraHost = jiraHost;
 		child.window.jwt = token;
 	});
 });
@@ -280,4 +278,12 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 	);
 });
 
-
+$(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle) => {
+	try {
+		const isoStr = backfillSinceLabelEle.dataset.backfillSince;
+		const backfillDate = new Date(isoStr);
+		$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
+	} catch (e) {
+		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
+	}
+});

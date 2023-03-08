@@ -11,6 +11,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface FailedConnection {
 	id: number;
@@ -37,14 +38,15 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
+export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
 		case "COMPLETE":
 			return "FINISHED";
 		default:
-			return syncStatus;
+			return syncStatus as ConnectionSyncStatus;
 	}
 };
 
@@ -74,6 +76,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			backfillSince: subscription.backfillSince,
 			jiraHost
 		};
 
@@ -118,7 +121,11 @@ const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number =>
 };
 
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
+
 	const { jiraHost, nonce } = res.locals;
+
+	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
@@ -156,6 +163,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
+		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),

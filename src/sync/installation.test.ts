@@ -10,6 +10,8 @@ import { RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
+import { ConnectionTimedOutError, Sequelize } from "sequelize";
+import { AxiosError } from "axios";
 
 jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
@@ -57,31 +59,7 @@ describe("sync/installation", () => {
 
 	describe("isRetryableWithSmallerRequest()", () => {
 
-		it("should return true for max node limit exceeded", async () => {
-			const err = {
-				errors: [
-					{
-						type: "MAX_NODE_LIMIT_EXCEEDED"
-					}
-				]
-			};
-
-			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
-		});
-
-		it("should return true for 'something went wrong' error", async () => {
-			const err = {
-				errors: [
-					{
-						message: "Something went wrong while executing your query. some random text"
-					}
-				]
-			};
-
-			expect(await isRetryableWithSmallerRequest(err)).toBeTruthy();
-		});
-
-		it("should return false for unknown error", async () => {
+		it("should return false for error without isRetryable flag", () => {
 			const err = {
 				errors: [
 					{
@@ -90,7 +68,20 @@ describe("sync/installation", () => {
 				]
 			};
 
-			expect(await isRetryableWithSmallerRequest(err)).toBeFalsy();
+			expect(isRetryableWithSmallerRequest(err)).toBeFalsy();
+		});
+
+		it("should return true for error with isRetryable flag", () => {
+			const err = {
+				isRetryable: true,
+				errors: [
+					{
+						type: "FOO"
+					}
+				]
+			};
+
+			expect(isRetryableWithSmallerRequest(err)).toBeTruthy();
 		});
 	});
 
@@ -169,7 +160,13 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(
+				new RateLimitingError(
+					{ response: axiosResponse } as unknown as AxiosError
+				),
+				JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask
+			);
+
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -188,7 +185,9 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError(axiosResponse), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new RateLimitingError({
+				response: axiosResponse
+			} as unknown as AxiosError), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -299,6 +298,37 @@ describe("sync/installation", () => {
 			const connectionRefusedError = "connect ECONNREFUSED 10.255.0.9:26272";
 
 			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
+		});
+
+		it("30s delay if cannot connect to database", async () => {
+			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
+
+			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
+			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect(failRepoSpy).toHaveBeenCalledTimes(0);
+		});
+
+		it("30s delay when sequelize connection error", async () => {
+			let sequelizeConnectionError: Error | undefined = undefined;
+			try {
+				const sequelize = new Sequelize({
+					dialect: "postgres",
+					host: "1.2.3.400",
+					port: 3306,
+					username: "your_username",
+					password: "your_password",
+					database: "your_database"
+				});
+				await sequelize.authenticate();
+			} catch (err) {
+				sequelizeConnectionError = err;
+			}
+
+			await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);

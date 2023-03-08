@@ -16,7 +16,7 @@ describe("github-oauth-router", () => {
 
 	beforeEach(() => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
+			BooleanFlags.RENEW_GITHUB_TOKEN,
 			expect.anything()
 		).mockResolvedValue(true);
 	});
@@ -93,6 +93,47 @@ describe("github-oauth-router", () => {
 				// @ts-ignore
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
+			});
+
+			it("with expired token", async () => {
+				githubNock.get("/")
+					.matchHeader("Authorization", "Bearer the-token")
+					.reply(401);
+
+				nock("https://github.com")
+					.post("/login/oauth/access_token")
+					.matchHeader("accept", "application/json")
+					.matchHeader("content-type", "application/json")
+					.reply(200, {
+						"access_token": "new_access_token",
+						"refresh_token": "new_refresh_token"
+					});
+
+				const next = jest.fn();
+
+				const req = {
+					log: getLogger("test"),
+					session: {
+						githubToken: "the-token",
+						githubRefreshToken: "refresh-token"
+					}
+				};
+
+				const res = {
+					locals: {
+						gitHubAppConfig: {},
+						jiraHost,
+						githubToken: ""
+					}
+				};
+
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				await GithubAuthMiddleware(req, res, next);
+				expect(next.mock.calls).toHaveLength(1);
+				expect(req.session.githubToken).toBe("new_access_token");
+				expect(req.session.githubRefreshToken).toBe("new_refresh_token");
+				expect(res.locals.githubToken).toBe("new_access_token");
 			});
 		});
 
