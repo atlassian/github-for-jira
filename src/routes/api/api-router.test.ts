@@ -8,6 +8,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
 import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("API Router", () => {
 	let app: Application;
@@ -408,6 +409,58 @@ describe("API Router", () => {
 					});
 			});
 
+		});
+
+		describe("ApiResetSubscriptionFailedTasks", () => {
+			it("Should drop failed status for all failed tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toBeNull();
+			});
+
+			it("Should drop failed status for passed tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId,
+						targetTasks: ["branch"]
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toBeNull();
+			});
+
+			it("Should not update status for other tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId,
+						targetTasks: ["commit"]
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toEqual("failed");
+			});
 		});
 	});
 

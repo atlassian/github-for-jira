@@ -18,6 +18,7 @@ export class DatabaseStateCreator {
 	private withActiveRepoSyncStateFlag: boolean;
 	private pendingForPrs: boolean;
 	private pendingForBranches: boolean;
+	private failedForBranches: boolean;
 	private pendingForCommits: boolean;
 	private pendingForBuilds: boolean;
 	private pendingForDeployments: boolean;
@@ -77,6 +78,11 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
+	public repoSyncStateFailedForBranches() {
+		this.failedForBranches = true;
+		return this;
+	}
+
 	public async create(): Promise<CreatorResult> {
 		const installation  = await Installation.create({
 			jiraHost,
@@ -114,7 +120,9 @@ export class DatabaseStateCreator {
 			repoPushedAt: new Date(),
 			repoUpdatedAt: new Date(),
 			repoCreatedAt: new Date(),
-			branchStatus: this.pendingForBranches ? "pending" : "complete",
+			branchStatus: this.pendingForBranches ? "pending" : (
+				this.failedForBranches ? "failed" : "complete"
+			),
 			commitStatus: this.pendingForCommits ? "pending" : "complete",
 			pullStatus: this.pendingForPrs ? "pending" : "complete",
 			buildStatus: this.pendingForBuilds ? "pending" : "complete",

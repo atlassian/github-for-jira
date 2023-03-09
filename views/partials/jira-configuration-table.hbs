@@ -13,7 +13,7 @@
           </span>
         </th>
         {{! Restart Button }}
-        {{#if shouldPromoteBackfillButtonToTableRow}}
+        {{#if isIncrementalBackfillEnabled}}
         <th class="jiraConfiguration__table__head__title"></th>
         {{/if}}
         {{! Restart Button -- end}}
@@ -78,6 +78,17 @@
                 >
                   {{connection.syncStatus}}
                 </span>
+              {{#if ../isIncrementalBackfillEnabled}}
+                {{#if (isAllSyncSuccess connection)}}
+                  <span class="jiraConfiguration__info__backfillDate">
+                      {{#if connection.backfillSince}}
+                        Backfilled from: <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
+                      {{else}}
+                        All commits backfilled
+                      {{/if}}
+                  </span>
+                {{/if}}
+              {{/if}}
               {{!-- Display any sync warnings --}}
               {{#if (isMissingPermissions connection.syncWarning)}}
                 <div class="jiraConfiguration__syncWarning">
@@ -120,7 +131,7 @@
           </td>
 
           {{! Restart Button }}
-          {{#if ../shouldPromoteBackfillButtonToTableRow}}
+          {{#if ../isIncrementalBackfillEnabled}}
           <td class="jiraConfiguration__table__cell jiraConfiguration__table__cell__action__inline">
             <button
                 class="sync-connection-link restart-backfill-button-inline aui-button aui-button-secondary"
@@ -159,7 +170,7 @@
                 >
                   Configure
                 </a>
-                {{#unless ../shouldPromoteBackfillButtonToTableRow}}
+                {{#unless ../isIncrementalBackfillEnabled}}
                 <div class="jiraConfiguration__table__cell__settings__dropdownItem">
                   <button
                       class="sync-connection-link restart-backfill-button"
