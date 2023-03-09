@@ -520,13 +520,14 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	]);
 };
 
-const getBackfillSince = async (data: BackfillMessagePayload, log: Logger): Promise<Date | null> => {
+const getBackfillSince = async (data: BackfillMessagePayload, log: Logger): Promise<Date | null | undefined> => {
 	try {
 		const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
 		//set it to null on falsy value so that we can override db with sequlize
 		return commitSince || null;
 	} catch (e) {
 		log.error({ err: e, commitsFromDate: data.commitsFromDate }, `Error parsing commitsFromDate in backfill message body`);
-		return null;
+		//do not change anything
+		return undefined;
 	}
 };
