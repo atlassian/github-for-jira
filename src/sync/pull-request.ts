@@ -1,6 +1,6 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import { transformPullRequest } from "../transforms/transform-pull-request";
+import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
 import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
@@ -14,7 +14,6 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
-import { jiraIssueKeyParser } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 
 /**
@@ -104,9 +103,11 @@ export const getPullRequestTask = async (
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
-				const issueKeys = jiraIssueKeyParser(`${pull.title}\n${pull.head.ref}\n${pull.body}`);
 
-				if (isEmpty(issueKeys)) {
+				if (isEmpty(extractIssueKeysFromPr(pull))) {
+					logger.info({
+						prId: pull.id
+					}, "Skip PR cause it has no issue keys");
 					return undefined;
 				}
 

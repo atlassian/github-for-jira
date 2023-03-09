@@ -24,7 +24,6 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
-import { calcNewBackfillSinceDate } from "~/src/sync/backfill-since-date-calc";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -121,7 +120,7 @@ export const updateJobStatus = async (
 	} else if (!(await getNextTask(subscription, targetTasks))) {
 		await subscription.update({
 			syncStatus: SyncStatus.COMPLETE,
-			backfillSince: await getBackfillSince(subscription, data)
+			backfillSince: await getBackfillSince(data, logger)
 		});
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -213,7 +212,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	if (!nextTask) {
 		await subscription.update({
 			syncStatus: "COMPLETE",
-			backfillSince: await getBackfillSince(subscription, data)
+			backfillSince: await getBackfillSince(data, rootLogger)
 		});
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
@@ -238,6 +237,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const execute = async (): Promise<TaskPayload> => {
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+		//
+		// We are not using "big" numbers here (e.g. 100) to speed up the process; API returns smaller pages faster and
+		// they will more likely not to break.
+		//
+		// Also this logic is broken for any rest queries (where cursor is the page number), because when the page size
+		// changes the cursor is broken (as it is just an interger specifically for the original page size).
+		//
 		for (const perPage of [20, 10, 5, 1]) {
 			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
 			try {
@@ -514,9 +520,14 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	]);
 };
 
-const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | null> => {
-	const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
-	const backfillSinceDateToSave = calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.isInitialSync);
-	//set it to null on falsy value so that we can override db with sequlize
-	return backfillSinceDateToSave || null;
+const getBackfillSince = async (data: BackfillMessagePayload, log: Logger): Promise<Date | null | undefined> => {
+	try {
+		const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
+		//set it to null on falsy value so that we can override db with sequlize
+		return commitSince || null;
+	} catch (e) {
+		log.error({ err: e, commitsFromDate: data.commitsFromDate }, `Error parsing commitsFromDate in backfill message body`);
+		//do not change anything
+		return undefined;
+	}
 };
