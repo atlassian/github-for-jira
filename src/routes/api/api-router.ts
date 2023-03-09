@@ -20,6 +20,7 @@ import { RecoverClientKeyPost } from "./client-key/recover-client-key";
 import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
 import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
+import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed-tasks";
 
 export const ApiRouter = Router();
 
@@ -80,6 +81,11 @@ ApiRouter.post(
 	body("targetTasks").optional().isArray(),
 	returnOnValidationError,
 	ApiResyncPost
+);
+
+ApiRouter.post(
+	`/reset-subscription-failed-tasks`,
+	ApiResetSubscriptionFailedTasks
 );
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
