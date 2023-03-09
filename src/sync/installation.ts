@@ -24,7 +24,6 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
-import { calcNewBackfillSinceDate } from "~/src/sync/backfill-since-date-calc";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -121,7 +120,7 @@ export const updateJobStatus = async (
 	} else if (!(await getNextTask(subscription, targetTasks))) {
 		await subscription.update({
 			syncStatus: SyncStatus.COMPLETE,
-			backfillSince: await getBackfillSince(subscription, data)
+			backfillSince: await getBackfillSince(data, logger)
 		});
 		const endTime = Date.now();
 		const startTime = data?.startTime || 0;
@@ -213,7 +212,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	if (!nextTask) {
 		await subscription.update({
 			syncStatus: "COMPLETE",
-			backfillSince: await getBackfillSince(subscription, data)
+			backfillSince: await getBackfillSince(data, rootLogger)
 		});
 		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
 		rootLogger.info({ gitHubProduct }, "Sync complete");
@@ -521,9 +520,13 @@ const updateRepo = async (subscription: Subscription, repoId: number, values: Re
 	]);
 };
 
-const getBackfillSince = async (subscription: Subscription, data: BackfillMessagePayload): Promise<Date | null> => {
-	const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
-	const backfillSinceDateToSave = calcNewBackfillSinceDate(subscription.backfillSince, commitSince, data.syncType, data.isInitialSync);
-	//set it to null on falsy value so that we can override db with sequlize
-	return backfillSinceDateToSave || null;
+const getBackfillSince = async (data: BackfillMessagePayload, log: Logger): Promise<Date | null> => {
+	try {
+		const commitSince = data.commitsFromDate ? new Date(data.commitsFromDate) : undefined;
+		//set it to null on falsy value so that we can override db with sequlize
+		return commitSince || null;
+	} catch (e) {
+		log.error({ err: e, commitsFromDate: data.commitsFromDate }, `Error parsing commitsFromDate in backfill message body`);
+		return null;
+	}
 };
