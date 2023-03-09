@@ -156,6 +156,43 @@
             <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
 
+
+        <!-- Error Summary modal-->
+        <div class='jiraConfiguration__errorSummaryModal'  id="error-summary-modal">
+          <div class='jiraConfiguration__errorSummaryModalContent'>
+            <div class="jiraConfiguration__errorSummaryModal__header__container">
+              <h3>Oh noes - Errors occurred during the backfill</h3>
+              <span id="close-error-summary" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+            </div>
+            <div class="jiraConfiguration__errorSummaryModal__header__content">
+              <p>The backfill finished but following entities were not backfilled. This may be because of permission issues, Github API rate-limiting and network outages. Learn more
+                You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
+            </div>
+
+            <table>
+              <th>
+                Repo
+              </th>
+              <th>
+                Description
+              </th>
+              <tr>
+                <td>
+                  repo X
+                </td>
+                <td>
+                  Just not working i guess
+                </td>
+              </tr>
+            </table>
+            <div class="jiraConfiguration__errorSummaryModal__actions">
+              <a href="www.google.com" target="_blank">Raise a support ticket</a>
+              <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+            </div>
+          </div>
+          <div class="jiraConfiguration__errorSummaryModalOverlay"></div>
+        </div>
+
           {{#if hasCloudAndEnterpriseServers}}
             <div class="jiraConfiguration__optionContainer">
               <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"

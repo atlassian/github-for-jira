@@ -54,13 +54,13 @@
               </span>
             {{/if}}
             <a
-                class="jiraConfiguration__table__editContainer"
-                href="{{html_url}}"
-                data-installation-link="{{html_url}}"
-                target="_blank"
+                    class="jiraConfiguration__table__editContainer"
+                    href="{{html_url}}"
+                    data-installation-link="{{html_url}}"
+                    target="_blank"
             >
               <span
-                  class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
+                      class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
                 Edit
               </span>
             </a>
@@ -78,6 +78,13 @@
                 >
                   {{connection.syncStatus}}
                 </span>
+                <a
+                        class="jiraConfiguration__table__editContainer"
+                        href="#"
+                        id="error-summary"
+                >
+                  <span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
+                </a>
               {{#if ../isIncrementalBackfillEnabled}}
                 {{#if (isAllSyncSuccess connection)}}
                   <span class="jiraConfiguration__info__backfillDate">

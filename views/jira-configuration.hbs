@@ -137,6 +137,30 @@
             <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
 
+          <!-- Error Summary modal-->
+          <div class='jiraConfiguration__errorSummaryModal'  id="error-summary-modal">
+            <div class='jiraConfiguration__errorSummaryModalContent'>
+              <div class="jiraConfiguration__errorSummaryModal__header__container">
+                <h3>Oh noes</h3>
+              </div>
+              <div class="jiraConfiguration__errorSummaryModal__header__content">
+                <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+              </div>
+              <form id="jiraConfiguration__errorSummaryModal__form" class="aui top-label">
+                <div class="field-group">
+                  <label for="backfill-date-picker">
+                    Backfill commits from <span class="jiraConfiguration__errorSummaryModal__required">*</span>
+                  </label>
+                </div>
+                <div class="jiraConfiguration__errorSummaryModal__actions">
+                  <button class="aui-button aui-button-secondary" type="button" id="create-support-ticket">Raise a support ticket</button>
+                  <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+                </div>
+              </form>
+            </div>
+            <div class="jiraConfiguration__errorSummaryModalOverlay"></div>
+          </div>
+
           {{#if successfulConnections}}
           <div class="jiraConfiguration__tableContainer">
             <table class="jiraConfiguration__table aui">
