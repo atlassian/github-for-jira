@@ -48,25 +48,43 @@ export const getPullRequestTask = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursorOrigStr: string | number = 1,
-	perPageOrig: number
+	cursor: string | number = 1,
+	perPage: number
+) => {
+	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
+	if (!pageSizeCoef) {
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+	} else {
+		const scaledPageSize = perPage * pageSizeCoef;
+		const scaledCursor = Math.max(1, Math.floor(Number(cursor) / pageSizeCoef));
+		const nextPageCursor = Number(cursor) + pageSizeCoef;
+
+		const result = await doGetPullRequestTask(
+			logger, gitHubInstallationClient, jiraHost, repository,
+			scaledCursor,
+			scaledPageSize
+		);
+		if (result.edges) {
+			result.edges.forEach((edge) => {
+				edge.cursor = nextPageCursor;
+			});
+		}
+		return result;
+	}
+};
+
+export const doGetPullRequestTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	_jiraHost: string,
+	repository: Repository,
+	cursor: string | number = 1,
+	perPage: number
 ) => {
 	logger.debug("Syncing PRs: started");
 
+	cursor = Number(cursor);
 	const startTime = Date.now();
-
-	const cursorOrig = Number(cursorOrigStr);
-	let cursor = cursorOrig;
-	let perPage = perPageOrig;
-	let nextPage = cursorOrig + 1;
-
-	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
-	if (pageSizeCoef > 0) {
-		// An experiment to speed up a particular customer by increasing the page size
-		perPage = perPageOrig * pageSizeCoef;
-		cursor = Math.max(1, Math.floor(cursorOrig / pageSizeCoef));
-		nextPage = cursorOrig + pageSizeCoef;
-	}
 
 	const {
 		data: edges,
@@ -91,9 +109,7 @@ export const getPullRequestTask = async (
 		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	if (pageSizeCoef == 0) {
-		nextPage = getNextPage(logger, headers) || cursor + 1;
-	}
+	const nextPage = getNextPage(logger, headers) || cursor + 1;
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.

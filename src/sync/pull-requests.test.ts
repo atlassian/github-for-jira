@@ -332,12 +332,14 @@ describe("sync/pull-request", () => {
 				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
 				.reply(200, pullRequestList);
 
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
+
 			await expect(processInstallation()({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nock.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("21");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("26");
 		});
 
 		it("should not sync if nodes are empty", async () => {
