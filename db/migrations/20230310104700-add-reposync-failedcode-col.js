@@ -2,7 +2,7 @@
 
 module.exports = {
 	up: async (queryInterface, Sequelize) => {
-		await queryInterface.addColumn("RepoSyncStates", "failedCode", { type: Sequelize.INTEGER , allowNull: true });
+		await queryInterface.addColumn("RepoSyncStates", "failedCode", { type: Sequelize.STRING , allowNull: true });
 	},
 
 	down: async (queryInterface) => {
