@@ -92,7 +92,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		};
 		statsd.increment(metricCreateBranch.created, tags);
 	} catch (err) {
-		req.log.error({ err }, "Error creating branch");
+		req.log.error({ err, jiraHost }, "Error creating branch");
 
 		if (err.status === 403) {
 			const user = await gitHubUserClient.getUser();
