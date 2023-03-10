@@ -64,7 +64,41 @@ describe("sync/pull-request", () => {
 		}
 	];
 
-	const buildJiraPayload = (repoId: string) => {
+	const buildJiraPayload = (repoId: string, times = 1) => {
+		const pr = {
+			"author": {
+				"avatar": "test-pull-request-author-avatar",
+				"name": "test-pull-request-author-login",
+				"email": "test-pull-request-author-login@noreply.user.github.com",
+				"url": "test-pull-request-author-url"
+			},
+			"commentCount": 10,
+			"destinationBranch": "devel",
+			"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
+			"displayId": "#51",
+			"id": 51,
+			"issueKeys": [
+				"KEY-15"
+			],
+			"lastUpdate": "2018-05-04T14:06:56Z",
+			"reviewers": [
+				{
+					"avatar": "test-pull-request-reviewer-avatar",
+					"name": "test-pull-request-reviewer-login",
+					"email": "test-pull-request-reviewer-login@email.test",
+					"url": "https://github.com/reviewer",
+					"approvalStatus": "APPROVED"
+				}
+			],
+			"sourceBranch": "use-the-force",
+			"sourceBranchUrl": "https://github.com/integrations/test/tree/use-the-force",
+			"status": "DECLINED",
+			"timestamp": "2018-05-04T14:06:56Z",
+			"title": "[KEY-15] Testing force pushes",
+			"url": "https://github.com/integrations/test/pull/51",
+			"updateSequenceId": 12345678
+		};
+
 		return {
 			"preventTransitions": true,
 			operationType: "BACKFILL",
@@ -73,42 +107,7 @@ describe("sync/pull-request", () => {
 					{
 						"id": repoId,
 						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author": {
-										"avatar": "test-pull-request-author-avatar",
-										"name": "test-pull-request-author-login",
-										"email": "test-pull-request-author-login@noreply.user.github.com",
-										"url": "test-pull-request-author-url"
-									},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys": [
-										"KEY-15"
-									],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"reviewers": [
-										{
-											"avatar": "test-pull-request-reviewer-avatar",
-											"name": "test-pull-request-reviewer-login",
-											"email": "test-pull-request-reviewer-login@email.test",
-											"url": "https://github.com/reviewer",
-											"approvalStatus": "APPROVED"
-										}
-									],
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl": "https://github.com/integrations/test/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
+						"pullRequests": Array(times).fill(pr),
 						"url": "test-repo-url",
 						"updateSequenceId": 12345678
 					}
@@ -340,6 +339,95 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nock.isDone()).toBeTruthy();
 			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("26");
+		});
+
+		it("parallel fetching when FF is over 5", async () => {
+
+			pullRequestList[0].title = "TES-15";
+
+			when(numberFlag).calledWith(
+				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(6);
+
+			for (let i = 0; i < 12; i++) {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			}
+
+			githubNock
+				.get("/repos/integrations/test-repo-name/pulls/51").times(2)
+				.reply(200, pullRequest)
+				.get("/repos/integrations/test-repo-name/pulls/51/reviews").times(2)
+				.reply(200, reviewsPayload)
+				.get("/users/test-pull-request-reviewer-login").times(2)
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				})
+				.get("/users/test-pull-request-author-login").times(2)
+				.reply(200, {
+					login: "test-pull-request-author-login",
+					avatar_url: "test-pull-request-author-avatar",
+					html_url: "test-pull-request-author-url"
+				})
+				.get("/users/integrations").times(2)
+				.reply(200, {
+					login: "integrations",
+					avatar_url: "integrations-avatar",
+					html_url: "integrations-url"
+				});
+
+			const nockPage1 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
+				.reply(200, pullRequestList);
+
+			const nockPage2 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
+				.reply(200, pullRequestList);
+
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1", 2)).reply(200);
+
+			await expect(processInstallation()({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage1.isDone()).toBeTruthy();
+			expect(nockPage2.isDone()).toBeTruthy();
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("31");
+		});
+
+		it("parallel fetching when FF is over 5 should stop", async () => {
+
+			pullRequestList[0].title = "TES-15";
+
+			when(numberFlag).calledWith(
+				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(6);
+
+			for (let i = 0; i < 2; i++) {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			}
+
+			const nockPage1 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			const nockPage2 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			await expect(processInstallation()({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage1.isDone()).toBeTruthy();
+			expect(nockPage2.isDone()).toBeTruthy();
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
 		});
 
 		it("should not sync if nodes are empty", async () => {
