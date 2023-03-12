@@ -395,13 +395,52 @@ export const handleBackfillError = async (
 	}
 
 	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentTaskAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+	await markCurrentTaskAsFailedAndContinue(subscription, nextTask, scheduleNextTask, err, logger);
 };
 
-export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void, err, logger: Logger): Promise<void> => {
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask, err, logger);
+};
+
+const getFailedCode = (err): string => {
+	const { status, message, code } = err;
+
+	// Socket is closed or Client network socket disconnected before secure TLS connection was established
+	if (code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
+		return "CONNECTION_ERROR";
+	}
+	if (status === 401) {
+		return "AUTHENTICATION_ERROR";
+	}
+	// A generic catch for authorization issues, invalid permissions on the JWT
+	if (status === 403) {
+		return "AUTHORIZATION_ERROR";
+	}
+	// If the user hasn't accepted updated permissions for the app.
+	if (status === 200 && message === "Resource not accessible by integration") {
+		return "PERMISSIONS_ERROR";
+	}
+	// No data returned.
+	if (status === 404) {
+		return "NOT_FOUND_ERROR";
+	}
+	// Server error, Could be GitHub or Jira
+	if (status === 500) {
+		return "SERVER_ERROR";
+	}
+	// After we have tried all variations of pages sizes down to 1
+	if (message?.includes("Error processing task after trying all page sizes")) {
+		return "CURSOR_ERROR";
+	}
+	return "UNKNOWN_ERROR";
+};
+
+export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void, err, logger: Logger): Promise<void> => {
 	// marking the current task as failed
-	// TODO - JOSH MARKER - UPDATE REPO HERE WITH FAILED REASON?
-	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
+	const failedCode = getFailedCode(err);
+	logger.warn({ failedCode, err }, "Backfill task failed");
+
+	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 

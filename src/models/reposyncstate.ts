@@ -74,6 +74,24 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+
+	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+
+		const result = await RepoSyncState.findAll(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
+				}
+			}
+		}));
+		return result || [];
+	}
+
 	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}

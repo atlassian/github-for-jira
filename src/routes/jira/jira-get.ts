@@ -161,6 +161,26 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
+	//TODO move to a better location
+	const getSyncErrors = async (subscriptions: Subscription[]) => {
+		// subscriptions.map(sub => {
+		// 	sub.plainClientKey
+		// })
+		const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscriptions[0]);
+
+		// eslint-disable-next-line no-console
+		console.log(failedSyncs);
+
+		// const a = failedSyncs.reduce((accumulator, currentValue) => {
+		// 	if (!currentValue.failedCode) {
+		// 		return accumulator;
+		// 	}
+		// 	return
+		// }, {});
+		//
+		// return a;
+	};
+
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		isIncrementalBackfillEnabled,
@@ -169,6 +189,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
+		syncErrors: await getSyncErrors(subscriptions),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
