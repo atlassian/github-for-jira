@@ -6,7 +6,7 @@ import { SqsQueue } from "~/src/sqs/sqs";
 import type { BaseMessagePayload } from "~/src/sqs/sqs.types";
 
 // List of queues we want to apply the preemptive rate limiting on
-const TARGETTED_QUEUES = ["backfill"];
+const TARGETTED_QUEUES = ["backfill", "deployment"];
 export const DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS = 10 * 60; //10 minutes
 
 type PreemptyRateLimitCheckResult = {

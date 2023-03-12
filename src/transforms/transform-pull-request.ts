@@ -70,13 +70,18 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 	}));
 };
 
+export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseItem) => {
+	const { title: prTitle, head, body } = pullRequest;
+	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
+};
+
 // TODO: define arguments and return
 export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
-	const { title: prTitle, head, body } = pullRequest;
+	const { head } = pullRequest;
+
+	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	// This is the same thing we do in sync, concatenating these values
-	const issueKeys = jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${body}}`);
-
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info({
 			pullRequestNumber: pullRequest.number,
