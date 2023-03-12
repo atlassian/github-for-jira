@@ -57,6 +57,9 @@ export const getBuildTask = async (
 		};
 	}
 
+	logger.info(`Found ${workflow_runs.length} workflow_runs`);
+	logger.info(`First workflow_run.updated_at=${workflow_runs[0].updated_at}`);
+
 	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
 	logger.info("Syncing Builds: finished");
 

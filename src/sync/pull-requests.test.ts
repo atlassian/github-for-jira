@@ -223,11 +223,13 @@ describe("sync/pull-request", () => {
 
 		let repoSyncState: RepoSyncState;
 
+		const PRS_INITIAL_CURSOR = 21;
+
 		beforeEach(async () => {
 			repoSyncState = (await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForPrs()
-				.withPrsCustomCursor("21")
+				.withPrsCustomCursor(String(PRS_INITIAL_CURSOR))
 				.create()).repoSyncState!;
 
 			when(jest.mocked(booleanFlag))
@@ -338,10 +340,10 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nock.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("26");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 5));
 		});
 
-		it("parallel fetching when FF is over 5", async () => {
+		it("uses parallel fetching of 2 pages when FF is over 5", async () => {
 
 			pullRequestList[0].title = "TES-15";
 
@@ -396,10 +398,10 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual("31");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 10));
 		});
 
-		it("parallel fetching when FF is over 5 should stop", async () => {
+		it("processing of PRs with parallel fetching ON should stop when no more PRs from GitHub", async () => {
 
 			pullRequestList[0].title = "TES-15";
 
