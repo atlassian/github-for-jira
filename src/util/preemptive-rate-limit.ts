@@ -27,6 +27,9 @@ export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(con
 
 	try {
 		const rateLimitResponse = (await getRateRateLimitStatus(context)).data;
+		if (Math.random() < 0.01) {
+			context.log.info({ rateLimitResponse }, "Rate limit check result (sampled)");
+		}
 		const { core, graphql } = rateLimitResponse.resources;
 		const usedPercentCore = ((core.limit - core.remaining) / core.limit) * 100;
 		const usedPercentGraphql = ((graphql.limit - graphql.remaining) / graphql.limit) * 100;
