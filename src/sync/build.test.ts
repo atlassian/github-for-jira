@@ -39,6 +39,7 @@ describe("sync/builds", () => {
 	};
 
 	let repoSyncState: RepoSyncState;
+	const ORIGINAL_BUILDS_CURSOR = 21;
 
 	beforeEach(async () => {
 
@@ -47,7 +48,7 @@ describe("sync/builds", () => {
 		repoSyncState = (await new DatabaseStateCreator()
 			.withActiveRepoSyncState()
 			.repoSyncStatePendingForBuilds()
-			.withBuildsCustomCursor("10")
+			.withBuildsCustomCursor(String(ORIGINAL_BUILDS_CURSOR))
 			.create()).repoSyncState!;
 
 	});
@@ -59,7 +60,7 @@ describe("sync/builds", () => {
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=10`)
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
 			.reply(200, buildFixture);
 
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
@@ -97,8 +98,7 @@ describe("sync/builds", () => {
 		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
-	it("should use updated per_page and cursor when FF is ON", async () => {
-
+	it("should use scaled per_page and cursor when FF is ON", async () => {
 		when(numberFlag).calledWith(
 			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
 			expect.anything(),
@@ -110,8 +110,10 @@ describe("sync/builds", () => {
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
+		// Original pages: 12345 67890 12345 67890 1
+		// Scaled pages:   --1-- --2-- --3-- --4-- 5
 		const nock = githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=2`)
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=5`)
 			.reply(200, buildFixture);
 
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
@@ -124,7 +126,64 @@ describe("sync/builds", () => {
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
 		expect(nock.isDone()).toBeTruthy();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual("15");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
+	});
+
+	const NUMBER_OF_PARALLEL_FETCHES = 5;
+
+	it("should fetch pages in parallel when FF is ON and more than 6", async () => {
+		const SCALE_COEF = 5;
+
+		when(numberFlag).calledWith(
+			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(6);
+
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+
+		const pageNocks = new Array(NUMBER_OF_PARALLEL_FETCHES).fill(0).map((_, index) => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			return githubNock
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=${5 + index}`)
+				.reply(200, buildFixture);
+		});
+
+		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
+			.times(5)
+			.reply(200, compareReferencesFixture);
+
+		jiraNock
+			.post("/rest/builds/0.1/bulk")
+			.reply(200);
+
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+		pageNocks.forEach(nock => {
+			expect(nock.isDone()).toBeTruthy();
+		});
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + SCALE_COEF * NUMBER_OF_PARALLEL_FETCHES));
+	});
+
+	it("should finish task with parallel fetching when no more data", async () => {
+		when(numberFlag).calledWith(
+			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(6);
+
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+
+		new Array(NUMBER_OF_PARALLEL_FETCHES).fill(0).map((_, index) => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=${5 + index}`)
+				.reply(200, []);
+		});
+
+		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
@@ -134,7 +193,7 @@ describe("sync/builds", () => {
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=10`)
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
 			.reply(200, multiBuildFixture);
 
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
@@ -204,7 +263,7 @@ describe("sync/builds", () => {
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 		githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=10`)
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
 			.reply(200, noKeysBuildFixture);
 
 		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
@@ -225,7 +284,7 @@ describe("sync/builds", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=10`)
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
 			.reply(200, {});
 
 		const interceptor = jiraNock.post(/.*/);

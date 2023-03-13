@@ -94,7 +94,7 @@ export const getPullRequestTask = async (
 	}
 };
 
-export const doGetPullRequestTask = async (
+const doGetPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
