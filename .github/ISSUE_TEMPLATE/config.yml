@@ -7,5 +7,5 @@ contact_links:
     url: https://support.atlassian.com/contact/#/
     about: Need some help? Please submit a support request or bug report via Jira Software Support portal
   - name: Feature Requests and Product Suggestions
-    url: https://jira.atlassian.com/secure/Dashboard.jspa?selectPageId=10440
+    url: https://jira.atlassian.com/secure/Dashboard.jspa
     about: Suggest an idea or solution for the Github for Jira app. When creating tickets, please select the project-"Jira Software Cloud" and the component-"Integration - GitHub - Marketplace".
