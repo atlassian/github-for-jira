@@ -129,7 +129,7 @@ describe("sync/builds", () => {
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
 	});
 
-	const NUMBER_OF_PARALLEL_FETCHES = 5;
+	const NUMBER_OF_PARALLEL_FETCHES = 10;
 
 	it("should fetch pages in parallel when FF is ON and more than 6", async () => {
 		const SCALE_COEF = 5;

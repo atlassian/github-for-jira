@@ -52,7 +52,7 @@ export const getBuildTask = async (
 		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
 
 		const data = await fetchNextPagesInParallel(
-			shouldFetchNextPageInParallel ? 5 : 1,
+			shouldFetchNextPageInParallel ? 10 : 1,
 			scaledCursor,
 			(scaledPageNoToFetch) =>
 				doGetBuildTask(
