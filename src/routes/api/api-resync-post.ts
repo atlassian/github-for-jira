@@ -47,7 +47,7 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 	await Promise.all(subscriptions.map((subscription) =>
-		findOrStartSync(subscription, req.log, false, syncType, commitsFromDate, subscription.backfillSince, targetTasks)
+		findOrStartSync(subscription, req.log, false, syncType, commitsFromDate, targetTasks)
 	));
 
 	res.json(subscriptions.map(serializeSubscription));

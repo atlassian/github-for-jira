@@ -1,13 +1,13 @@
-import { RepoSyncState } from "models/reposyncstate";
-import { sqsQueues } from "../sqs/queues";
-import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
-import { numberFlag, NumberFlags } from "config/feature-flags";
-import { TaskType, SyncType } from "~/src/sync/sync.types";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription, SyncStatus } from "models/subscription";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { SyncType, TaskType } from "~/src/sync/sync.types";
+import { sqsQueues } from "../sqs/queues";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
@@ -15,7 +15,6 @@ export const findOrStartSync = async (
 	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
-	commitsToDate?: Date,
 	targetTasks?: TaskType[]
 ): Promise<void> => {
 	let fullSyncStartTime;
@@ -41,7 +40,9 @@ export const findOrStartSync = async (
 		await RepoSyncState.deleteFromSubscription(subscription);
 	}
 
-	if (syncType === "partial" && commitsFromDate && commitsToDate && targetTasks?.includes("commit")) {
+	const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+
+	if (shouldUseBackfillAlgoIncremental && syncType === "partial" && commitsFromDate && targetTasks?.includes("commit")) {
 		await RepoSyncState.update({ commitCursor: null }, {
 			where: {
 				subscriptionId: subscription.id
@@ -63,7 +64,6 @@ export const findOrStartSync = async (
 		startTime: fullSyncStartTime,
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
-		commitsToDate: commitsToDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig
 	}, 0, logger);
@@ -85,12 +85,34 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Partial sync only resets status (continues from existing cursor)
 	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
-	repoSyncTasks.forEach(task => {
+	const updateRepoSyncCursors = { };
+	const updateRepoSyncCursorsCondition = { };
+
+	const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, subscription.jiraHost);
+	if (shouldUseBackfillAlgoIncremental) {
 		if (syncType === "full") {
-			updateRepoSyncTasks[`${task}Cursor`] = null;
+			repoSyncTasks.forEach(task => {
+				updateRepoSyncTasks[`${task}Cursor`] = null;
+				updateRepoSyncTasks[`${task}Status`] = null;
+			});
+		} else {
+			repoSyncTasks.forEach(task => {
+				updateRepoSyncCursors[`${task}Cursor`] = null;
+				updateRepoSyncCursorsCondition[`${task}Status`] = "failed";
+				updateRepoSyncTasks[`${task}Status`] = null;
+			});
+			await RepoSyncState.update(updateRepoSyncCursors, {
+				where : updateRepoSyncCursorsCondition
+			});
 		}
-		updateRepoSyncTasks[`${task}Status`] = null;
-	});
+	} else {
+		repoSyncTasks.forEach(task => {
+			if (syncType === "full") {
+				updateRepoSyncTasks[`${task}Cursor`] = null;
+			}
+			updateRepoSyncTasks[`${task}Status`] = null;
+		});
+	}
 
 	await RepoSyncState.update(updateRepoSyncTasks, {
 		where: {

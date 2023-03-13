@@ -32,12 +32,8 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		}
 
 		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, res.locals.installation.jiraHost);
-		if (shouldUseBackfillAlgoIncremental && isDataAlreadyBackfilled(commitsFromDate, subscription.backfillSince)) {
-			req.log.info({ commitsFromDate, backfillSince: subscription.backfillSince }, "Data already backfilled, skipping... ");
-			res.sendStatus(202);
-			return;
-		}	else if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(commitsFromDate, subscription.backfillSince)) {
-			await findOrStartSync(subscription, req.log, false, "partial", commitsFromDate, subscription.backfillSince, ["pull", "branch", "commit", "build", "deployment"]);
+		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription, commitsFromDate)) {
+			await findOrStartSync(subscription, req.log, false, "partial", commitsFromDate, ["pull", "branch", "commit", "build", "deployment"]);
 		} else {
 			await findOrStartSync(subscription, req.log, false, "full", commitsFromDate);
 		}
@@ -71,20 +67,12 @@ const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
 
-const isDataAlreadyBackfilled = (startDate: Date | undefined, endDate: Date | undefined) => {
-	// case: all data already backfilled and user requested to backfill data for specific date range.
-	if (startDate && !endDate) {
-		return true;
-	}
-	if (startDate && endDate && startDate.getTime() > endDate.getTime()) {
-		return true;
-	}
-	return false;
-};
-
-const isIncrementalBackfilling = (startDate: Date | undefined, endDate: Date | undefined): boolean => {
-	if (!endDate || !startDate) {
+const isIncrementalBackfilling = (subscription: Subscription, fromDate: Date | undefined): boolean => {
+	if (subscription.syncStatus === "FAILED") {
 		return false;
 	}
-	return startDate.getTime() <= endDate.getTime();
+	if (!fromDate) {
+		return false;
+	}
+	return true;
 };

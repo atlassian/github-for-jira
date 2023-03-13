@@ -110,7 +110,14 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await updateRepo(subscription, repositoryId, { [getStatusKey(task)]: status });
+
+	const values: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
+
+	if (isComplete && task === "commit" && data.commitsFromDate) {
+		values["commitFrom"] = new Date(data.commitsFromDate);
+	}
+
+	await updateRepo(subscription, repositoryId, values);
 
 	if (!isComplete) {
 		// there's more data to get

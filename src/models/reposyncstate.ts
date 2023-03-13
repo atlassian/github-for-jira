@@ -34,6 +34,8 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	commitFrom: Date;
+
 
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
@@ -149,7 +151,8 @@ export class RepoSyncState extends Model {
 			buildStatus: null,
 			buildCursor: null,
 			deploymentStatus: null,
-			deploymentCursor: null
+			deploymentCursor: null,
+			commitFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -210,5 +213,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	commitFrom: DATE
 }, { sequelize });

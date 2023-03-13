@@ -116,33 +116,6 @@ describe("sync", () => {
 			});
 	});
 
-	it("should skip sync if data for the given date range already backfilled", async() => {
-		const subscription = await Subscription.getSingleInstallation(
-			jiraHost,
-			installationIdForServer,
-			gitHubServerApp.id
-		);
-		await subscription?.update({
-			syncStatus: "COMPLETE",
-			backfillSince: new Date(new Date().getTime() - 1000)
-		});
-		return supertest(app)
-			.post("/jira/sync")
-			.query({
-				jwt
-			})
-			.send({
-				installationId: installationIdForServer,
-				jiraHost,
-				appId: gitHubServerApp.id,
-				commitsFromDate: new Date(new Date().getTime() - 500)
-			})
-			.expect(202)
-			.then(() => {
-				expect(sqsQueues.backfill.sendMessage).not.toBeCalled();
-			});
-	});
-
 	it("should run incremental sync", async() => {
 		const commitsFromDate = new Date(new Date().getTime() - 2000);
 		const backfillSince = new Date(new Date().getTime() - 1000);
@@ -169,10 +142,10 @@ describe("sync", () => {
 			.expect(202)
 			.then(() => {
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					syncType: "partial",
 					installationId: installationIdForServer,
 					jiraHost,
 					commitsFromDate: commitsFromDate.toISOString(),
-					commitsToDate: backfillSince.toISOString(),
 					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
 				}), expect.anything(), expect.anything());
 			});
