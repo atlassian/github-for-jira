@@ -203,6 +203,15 @@
             </aui-dropdown-menu>
           </td>
         </tr>
+
+
+        {{> jira-configuration-error-summary
+        id=id
+        host=host
+        syncErrors=connection.failedSyncErrors
+        csrfToken=csrfToken
+        }}
+
       {{/each}}
       </tbody>
     </table>
@@ -238,3 +247,84 @@
     </div>
   </div>
 {{/each}}
+<!-- Error Summary modal-->
+<div class='jiraConfiguration__errorSummaryModal' id="error-summary-modal">
+  <div class='jiraConfiguration__errorSummaryModalContent'>
+    <div class="jiraConfiguration__errorSummaryModal__header__container">
+      <h3>Oh noes - Errors occurred during the backfill</h3>
+      <span id="close-error-summary" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+    </div>
+    <div class="jiraConfiguration__errorSummaryModal__header__content">
+      <p>The backfill finished but following entities were not backfilled. This may be because of permission issues, GitHub API rate-limiting and network outages. Learn more
+        You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
+    </div>
+    {{connection.failedSyncErrors}}
+    <table>
+      <th>
+        Description
+      </th>
+
+      {{#if connection.failedSyncErrors.CONNECTION_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.CONNECTION_ERROR}} Connection errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.AUTHENTICATION_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.AUTHENTICATION_ERROR}} Authentication errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.PERMISSIONS_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.PERMISSIONS_ERROR}} Permission errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.NOT_FOUND_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.NOT_FOUND_ERROR}} Not Found errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.SERVER_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.SERVER_ERROR}} Server errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.CURSOR_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.CURSOR_ERROR}} cursor errors
+        </td>
+      </tr>
+      {{/if}}
+
+      {{#if connection.failedSyncErrors.UNKNOWN_ERROR}}
+      <tr>
+        <td>
+          {{connection.failedSyncErrors.UNKNOWN_ERROR}} Server errors
+        </td>
+      </tr>
+      {{/if}}
+    </table>
+    <div class="jiraConfiguration__errorSummaryModal__actions">
+      <a href="www.google.com" target="_blank">Raise a support ticket</a>
+      <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+    </div>
+  </div>
+  <div class="jiraConfiguration__errorSummaryModalOverlay"></div>
+</div>
+

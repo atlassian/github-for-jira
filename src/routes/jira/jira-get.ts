@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { groupBy, chain, difference } from "lodash";
+import { groupBy, chain, difference, countBy } from "lodash";
 import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -77,6 +77,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
 			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
 			backfillSince: subscription.backfillSince,
+			failedSyncErrors: await getFailedSyncErrors(subscription),
 			jiraHost
 		};
 
@@ -161,26 +162,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	//TODO move to a better location
-	const getSyncErrors = async (subscriptions: Subscription[]) => {
-		// subscriptions.map(sub => {
-		// 	sub.plainClientKey
-		// })
-		const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscriptions[0]);
-
-		// eslint-disable-next-line no-console
-		console.log(failedSyncs);
-
-		// const a = failedSyncs.reduce((accumulator, currentValue) => {
-		// 	if (!currentValue.failedCode) {
-		// 		return accumulator;
-		// 	}
-		// 	return
-		// }, {});
-		//
-		// return a;
-	};
-
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
 		isIncrementalBackfillEnabled,
@@ -189,7 +170,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
-		syncErrors: await getSyncErrors(subscriptions),
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce
@@ -213,6 +193,21 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
 		hasConnections
 	});
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const getFailedSyncErrors = async (_subscription: Subscription) => {
+	// const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
+	// const errorCodes = failedSyncs.map(sync => sync.failedCode);
+
+	const errorCodes = [
+		"CONNECTION_ERROR", "CONNECTION_ERROR", "CONNECTION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR",
+		"AUTHENTICATION_ERROR", "AUTHORIZATION_ERROR", "AUTHORIZATION_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR",
+		"PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "NOT_FOUND_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR",
+		"SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "CURSOR_ERROR", "CURSOR_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR"
+	];
+	const errorObject = countBy(errorCodes);
+	return errorObject;
 };
 
 export const JiraGet = async (

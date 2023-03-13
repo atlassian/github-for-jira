@@ -1,0 +1,67 @@
+<!-- Error Summary modal-->
+<div class='jiraConfiguration__errorSummaryModal' id="error-summary-modal">
+  <div class='jiraConfiguration__errorSummaryModalContent'>
+    <div class="jiraConfiguration__errorSummaryModal__header__container">
+      <h3>Oh noes - Errors occurred during the backfill</h3>
+      <span id="close-error-summary" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+    </div>
+    <div class="jiraConfiguration__errorSummaryModal__header__content">
+      <p>The backfill finished but following entities were not backfilled. This may be because of permission issues, GitHub API rate-limiting and network outages. Learn more
+        You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
+    </div>
+
+    {{#if syncErrors.CONNECTION_ERROR}}
+    <div>
+       {{syncErrors.CONNECTION_ERROR}} Connection errors
+    </div>
+    {{/if}}
+    {{#if syncErrors.AUTHORIZATION_ERROR}}
+      <div>
+        {{syncErrors.AUTHORIZATION_ERROR}} Authorization errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.AUTHENTICATION_ERROR}}
+      <div>
+        {{syncErrors.AUTHENTICATION_ERROR}} Authentication errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.PERMISSIONS_ERROR}}
+      <div>
+        {{syncErrors.PERMISSIONS_ERROR}} Permission errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.NOT_FOUND_ERROR}}
+      <div>
+        {{syncErrors.NOT_FOUND_ERROR}} Not Found errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.SERVER_ERROR}}
+      <div>
+        {{syncErrors.SERVER_ERROR}} Server errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.CURSOR_ERROR}}
+      <div>
+        {{syncErrors.CURSOR_ERROR}} Cursor errors
+      </div>
+    {{/if}}
+
+    {{#if syncErrors.UNKNOWN_ERROR}}
+      <div>
+        {{syncErrors.UNKNOWN_ERROR}} Unknown errors
+      </div>
+    {{/if}}
+    <div class="jiraConfiguration__errorSummaryModal__actions">
+      <a href="www.google.com" target="_blank">Raise a support ticket</a>
+      <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+    </div>
+  </div>
+<!--  TODO !!!! FIX OVERLAY-->
+<!--  <div class="jiraConfiguration__errorSummaryModalOverlay"></div>-->
+</div>
+

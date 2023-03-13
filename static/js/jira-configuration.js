@@ -99,20 +99,19 @@ $("#close-error-summary").click(() => {
 });
 
 $("#error-summary").click(event => {
-	const installationId = $(event.target).data("installation-id");
 	const jiraHost = $(event.target).data("jira-host");
 	const appId = $(event.target).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById("error-summary-modal").style.display = "block";
 
-	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
-		event.preventDefault();
-		const commitsFromDate = document.getElementById('backfill-date-picker').value;
-		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
-		});
-	});
+	// AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
+	// 	event.preventDefault();
+	// 	const commitsFromDate = document.getElementById('backfill-date-picker').value;
+	// 	window.AP.context.getToken(function (jwt) {
+	// 		restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
+	// 	});
+	// });
 });
 
 initializeBackfillDateInput();
