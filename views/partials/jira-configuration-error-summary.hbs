@@ -1,14 +1,21 @@
 <!-- Error Summary modal-->
-<div class='jiraConfiguration__errorSummaryModal' id="error-summary-modal">
+<div class='jiraConfiguration__errorSummaryModal' id="error-summary-modal-{{id}}">
   <div class='jiraConfiguration__errorSummaryModalContent'>
     <div class="jiraConfiguration__errorSummaryModal__header__container">
       <h3>Oh noes - Errors occurred during the backfill</h3>
-      <span id="close-error-summary" class="jiraConfiguration__syncRetryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+      <span id="close-error-summary" data-installation-id="{{id}}" class="jiraConfiguration__syncErrorSummaryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
     </div>
     <div class="jiraConfiguration__errorSummaryModal__header__content">
       <p>The backfill finished but following entities were not backfilled. This may be because of permission issues, GitHub API rate-limiting and network outages. Learn more
         You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
     </div>
+
+    We were unable to completely backfill
+    <b>
+    {{add syncErrors.AUTHORIZATION_ERROR syncErrors.CONNECTION_ERROR}}
+    </b> repositories.
+
+
 
     {{#if syncErrors.CONNECTION_ERROR}}
     <div>
@@ -56,12 +63,13 @@
         {{syncErrors.UNKNOWN_ERROR}} Unknown errors
       </div>
     {{/if}}
-    <div class="jiraConfiguration__errorSummaryModal__actions">
-      <a href="www.google.com" target="_blank">Raise a support ticket</a>
-      <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
-    </div>
+    <form class="jiraConfiguration__errorSummaryModal__form">
+      <div class="jiraConfiguration__errorSummaryModal__actions">
+        <a href="https://support.atlassian.com/" target="_blank" class="aui-button aui-button-link">Raise a support ticket</a>
+        <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+      </div>
+    </form>
   </div>
-<!--  TODO !!!! FIX OVERLAY-->
-<!--  <div class="jiraConfiguration__errorSummaryModalOverlay"></div>-->
+  <div class="jiraConfiguration__errorSummaryModalOverlay"></div>
 </div>
 

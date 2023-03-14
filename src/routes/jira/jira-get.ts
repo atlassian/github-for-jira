@@ -196,7 +196,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getFailedSyncErrors = async (_subscription: Subscription) => {
+const getFailedSyncErrors = async (subscription: Subscription) => {
 	// const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
 	// const errorCodes = failedSyncs.map(sync => sync.failedCode);
 
@@ -206,8 +206,17 @@ const getFailedSyncErrors = async (_subscription: Subscription) => {
 		"PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "NOT_FOUND_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR",
 		"SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "CURSOR_ERROR", "CURSOR_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR"
 	];
-	const errorObject = countBy(errorCodes);
-	return errorObject;
+	const errorCodesT = [
+		"CONNECTION_ERROR", "CONNECTION_ERROR", "CONNECTION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR"
+	];
+	if (subscription.id === 5) {
+		return countBy(errorCodesT);
+	}
+
+	if (errorCodes.length === 0) {
+		return undefined;
+	}
+	return countBy(errorCodes);
 };
 
 export const JiraGet = async (

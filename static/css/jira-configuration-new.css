@@ -43,6 +43,7 @@
     font-size: 20px;
 }
 
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
     cursor: pointer;
     font-size: 20px;
@@ -479,6 +480,7 @@
 }
 
 .jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
     border-radius: 3px;
     cursor: pointer;
@@ -487,6 +489,7 @@
 }
 
 .jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
     background: #091E4208;
 }
