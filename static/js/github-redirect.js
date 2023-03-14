@@ -2,7 +2,7 @@ const gheHost = document.getElementById("gheHost").value;
 const appHost = document.getElementById("appHost").value;
 const uuid = document.getElementById("uuid").value;
 
-const defaultManifest = {
+const appManifest = {
   "name": "Jira",
   "url": "https://github.com/marketplace/jira-software-github",
   "redirect_url": `${ appHost }/github/manifest/${ uuid }/complete`,
@@ -46,7 +46,7 @@ $(document).ready(() => {
   }).append(jQuery("<input>", {
     "name": "manifest",
     "id": "manifest",
-    "value": JSON.stringify(defaultManifest),
+    "value": JSON.stringify(appManifest),
     "type": "hidden"
   }));
   $(document.body).append(newForm);
