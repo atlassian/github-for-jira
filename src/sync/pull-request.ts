@@ -98,7 +98,7 @@ export const getPullRequestTask = async (
 export const doGetPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
 	perPage: number,
@@ -134,15 +134,18 @@ export const doGetPullRequestTask = async (
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
 
-	//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
-	//Because GitHub rest api  doesn't support supply a from date in the query param,
-	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
-	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const edgesSinceFromDate = filterEdgesSinceFromDate(edges, fromDate, logger);
+	let filteredEdges = edges;
+	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
+		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+		//Because GitHub rest api  doesn't support supply a from date in the query param,
+		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+		filteredEdges = filterEdgesSinceFromDate(edges, fromDate, logger);
+	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: PullRequestWithCursor[] = edgesSinceFromDate.map((edge) => ({ ...edge, cursor: nextPage }));
+	const edgesWithCursor: PullRequestWithCursor[] = filteredEdges.map((edge) => ({ ...edge, cursor: nextPage }));
 
 	// TODO: change this to reduce
 	const pullRequests = (
