@@ -15,14 +15,8 @@ export const JiraGetConnectedRepos = async (
 
 	try {
 		const { jiraHost, nonce } = res.locals;
-		const subscriptionId = Number(req.params.subscriptionId) || Number(req.body.subscriptionId);
+		const subscriptionId = Number(req.params.subscriptionId);
 		const page = Number(req.query.page || 1);
-
-		if (!jiraHost) {
-			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
-			res.status(404).send(`Missing Jira Host`);
-			return;
-		}
 
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");

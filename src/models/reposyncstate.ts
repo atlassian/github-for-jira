@@ -98,7 +98,11 @@ export class RepoSyncState extends Model {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
 				subscriptionId: subscription.id
-			}
+			},
+			order: [
+				["syncStatus", "DESC"],
+				["id", "ASC"]
+			]
 		}));
 		return result || [];
 	}
