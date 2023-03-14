@@ -1,4 +1,5 @@
 import { GithubManifestGet } from "~/src/routes/github/manifest/github-manifest-get";
+import { envVars } from "config/env";
 
 describe("github-manifest-complete-get", () => {
 	let req, res;
@@ -13,52 +14,28 @@ describe("github-manifest-complete-get", () => {
 		};
 
 		res = {
-			json: jest.fn()
+			render: jest.fn().mockReturnValue({}),
+			locals: { nonce: "nonce" }
 		};
 	});
 
 
 	it("Should throw error if GHE host missing", async () => {
-		req.query.temp.gheHost = undefined;
+		req.session.temp.gheHost = undefined;
 		await expect(GithubManifestGet(req, res))
 			.rejects
-			.toThrow("GHE URL not found");
+			.toThrow("GitHub Enterprise Host not found");
 	});
 
-	it("Should return App manifest", async () => {
+	it("Should return Manifest View", async () => {
 		await GithubManifestGet(req, res);
-		expect(res.json).toBeCalledWith(expect.objectContaining({
-			url: expect.any(String),
-			redirect_url: expect.any(String),
-			hook_attributes: expect.objectContaining({
-				url: expect.any(String)
-			}),
-			setup_url: expect.any(String),
-			callback_url: expect.any(String),
-			default_permissions: expect.objectContaining({
-				"actions": "read",
-				"security_events": "read",
-				"contents": "write",
-				"deployments": "read",
-				"issues": "write",
-				"metadata": "read",
-				"pull_requests": "write",
-				"members": "read"
-			}),
-			default_events: expect.arrayContaining([
-				"code_scanning_alert",
-				"commit_comment",
-				"create",
-				"delete",
-				"deployment_status",
-				"issue_comment",
-				"issues",
-				"pull_request",
-				"pull_request_review",
-				"push",
-				"repository",
-				"workflow_run"
-			])
-		}));
+
+		expect(res.render.mock.calls[0][1]).toHaveProperty("uuid");
+
+		expect(res.render.mock.calls[0][0]).toBe("github-manifest.hbs");
+		expect(res.render.mock.calls[0][1].nonce).toBe("nonce");
+		expect(res.render.mock.calls[0][1].appHost).toBe(envVars.APP_URL);
+		expect(res.render.mock.calls[0][1].gheHost).toBe(req.session.temp.gheHost);
+		expect(res.render.mock.calls[0][1].title).toBe("Creating manifest and redirecting to your GitHub Enterprise Server instance");
 	});
 });
