@@ -5,10 +5,10 @@ describe("github-manifest-complete-get", () => {
 
 	beforeEach(async () => {
 		req = {
-			query: {
-				gheHost: "http://example.com"
-			},
 			session: {
+				temp: {
+					gheHost: "http://example.com"
+				}
 			}
 		};
 
@@ -19,7 +19,7 @@ describe("github-manifest-complete-get", () => {
 
 
 	it("Should throw error if GHE host missing", async () => {
-		req.query.gheHost = undefined;
+		req.query.temp.gheHost = undefined;
 		await expect(GithubManifestGet(req, res))
 			.rejects
 			.toThrow("GHE URL not found");
