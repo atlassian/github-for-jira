@@ -80,7 +80,7 @@ export const getPullRequestTask = async (
 					scaledPageSize
 				)
 		);
-		if ((data.edges?.length) || 0 > 0) {
+		if ((data.edges?.length || 0) > 0) {
 			data.edges!.forEach(edge => {
 				// Cursor is scaled... scaling back!
 				// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,

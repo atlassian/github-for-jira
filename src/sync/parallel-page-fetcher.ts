@@ -15,8 +15,8 @@ const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 
 	return {
 		...(jiraPayload1 || jiraPayload2),
-		... (pullRequests.length > 0 ? { pullRequests } : {}),
-		... (builds.length > 0 ? { builds } : {})
+		...(pullRequests.length > 0 ? { pullRequests } : {}),
+		...(builds.length > 0 ? { builds } : {})
 	};
 };
 
