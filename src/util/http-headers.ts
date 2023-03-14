@@ -273,7 +273,10 @@ const knownGitHubSafe = new Set([
 	"x-github-delivery",
 	"x-github-event",
 	"x-github-hook-id",
-	"x-ratelimit-used"
+	"x-ratelimit-used",
+	"x-github-api-version-selected",
+	"x-github-media-type",
+	"x-ratelimit-resource"
 ]);
 
 export const canLogHeader = (httpHeader: string) => {
