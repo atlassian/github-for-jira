@@ -329,8 +329,12 @@ describe("sync/pull-request", () => {
 					html_url: "integrations-url"
 				});
 
+			//
+			// Original pages: 123456789012345678901345
+			// Scaled pages  : 111112222233333444445555
+			// Cursor pointing to the original scale (21) should point to scaled page 5
 			const nock = githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
 				.reply(200, pullRequestList);
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
@@ -383,11 +387,11 @@ describe("sync/pull-request", () => {
 				});
 
 			const nockPage1 = githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
 				.reply(200, pullRequestList);
 
 			const nockPage2 = githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=6&state=all&sort=created&direction=desc")
 				.reply(200, pullRequestList);
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1", 2)).reply(200);
@@ -416,11 +420,11 @@ describe("sync/pull-request", () => {
 			}
 
 			const nockPage1 = githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=4&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
 				.reply(200, []);
 
 			const nockPage2 = githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=5&state=all&sort=created&direction=desc")
+				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=6&state=all&sort=created&direction=desc")
 				.reply(200, []);
 
 			await expect(processInstallation()({
