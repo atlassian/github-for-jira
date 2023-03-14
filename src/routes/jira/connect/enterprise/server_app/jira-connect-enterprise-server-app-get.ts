@@ -33,6 +33,7 @@ export const JiraConnectEnterpriseServerAppGet = async (
 			});
 		} else {
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
+			req.session.temp = { gheHost: baseUrl };
 			res.render("jira-select-app-creation.hbs", { baseUrl });
 		}
 

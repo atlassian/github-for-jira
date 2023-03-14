@@ -62,6 +62,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			success: false
 		});
 
-		res.redirect(`/error/${errorQueryParam}?retryUrl=/session&baseUrl=${gheHost}&ghRedirect=to&autoApp=1`);
+		res.redirect(`/error/${errorQueryParam}?retryUrl=/session&baseUrl=${gheHost}&ghRedirect=to`);
 	}
 };

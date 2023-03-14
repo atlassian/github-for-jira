@@ -19,6 +19,9 @@
 {{> loading-screen
     title=title
 }}
+<input type="hidden" id="gheHost" value={{gheHost}} />
+<input type="hidden" id="appHost" value={{appHost}} />
+<input type="hidden" id="uuid" value={{uuid}} />
 </body>
 <script
     src="/public/aui/aui-prototyping.js"
@@ -39,9 +42,5 @@
     }
   });
 </script>
-<script nonce="{{nonce}}">
-  $(function() {
-    window.location = "{{{redirectUrl}}}";
-  });
-</script>
+<script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
 </html>
