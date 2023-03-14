@@ -119,8 +119,8 @@ export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags
 		return new Date(commitsFromDate);
 	}
 	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
-	if (!timeCutoffMsecs) {
-		return;
+	if (!timeCutoffMsecs || timeCutoffMsecs === -1) {
+		return undefined;
 	}
 	return new Date(Date.now() - timeCutoffMsecs);
 };
