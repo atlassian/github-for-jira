@@ -25,6 +25,7 @@ export const RecoverCommitsFromDatePost = async (req: Request, res: Response): P
 		info(`Start recovering commits from date for Subscription starting from ${startSubscriptionId} with batch size ${batchSize}`);
 
 		const subscriptionToBeUpdated: Subscription[] = await Subscription.findAll({
+			limit: batchSize,
 			where: {
 				[Op.and]: {
 					"backfillSince": {
