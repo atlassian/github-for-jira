@@ -12,7 +12,6 @@ import { sqsQueues } from "../sqs/queues";
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
-	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
@@ -59,7 +58,6 @@ export const findOrStartSync = async (
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
-		isInitialSync,
 		syncType,
 		startTime: fullSyncStartTime,
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
