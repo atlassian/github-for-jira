@@ -83,34 +83,13 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Partial sync only resets status (continues from existing cursor)
 	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
-	const updateRepoSyncCursors = { };
-	const updateRepoSyncCursorsCondition = { };
 
-	const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, subscription.jiraHost);
-	if (shouldUseBackfillAlgoIncremental) {
+	repoSyncTasks.forEach(task => {
 		if (syncType === "full") {
-			repoSyncTasks.forEach(task => {
-				updateRepoSyncTasks[`${task}Cursor`] = null;
-				updateRepoSyncTasks[`${task}Status`] = null;
-			});
-		} else {
-			repoSyncTasks.forEach(task => {
-				updateRepoSyncCursors[`${task}Cursor`] = null;
-				updateRepoSyncCursorsCondition[`${task}Status`] = "failed";
-				updateRepoSyncTasks[`${task}Status`] = null;
-			});
-			await RepoSyncState.update(updateRepoSyncCursors, {
-				where : updateRepoSyncCursorsCondition
-			});
+			updateRepoSyncTasks[`${task}Cursor`] = null;
 		}
-	} else {
-		repoSyncTasks.forEach(task => {
-			if (syncType === "full") {
-				updateRepoSyncTasks[`${task}Cursor`] = null;
-			}
-			updateRepoSyncTasks[`${task}Status`] = null;
-		});
-	}
+		updateRepoSyncTasks[`${task}Status`] = null;
+	});
 
 	await RepoSyncState.update(updateRepoSyncTasks, {
 		where: {
