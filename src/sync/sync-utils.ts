@@ -15,7 +15,8 @@ export const findOrStartSync = async (
 	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
-	targetTasks?: TaskType[]
+	targetTasks?: TaskType[],
+	targetRepositoryId?: number
 ): Promise<void> => {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -55,6 +56,7 @@ export const findOrStartSync = async (
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
+		targetRepositoryId,
 		gitHubAppConfig
 	}, 0, logger);
 };

@@ -43,7 +43,16 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 
 	return allTaskTypes;
 };
-const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
+
+export const getTargetRepos = async (subscription: Subscription, targetRepositoryId?: number) => {
+	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	if (targetRepositoryId) {
+		return repoSyncStates.filter(repo => repo.repoId === targetRepositoryId);
+	}
+	return repoSyncStates;
+};
+
+const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[], targetRepositoryId?: number): Promise<Task | undefined> => {
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
@@ -54,8 +63,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	const repoSyncStates = await getTargetRepos(subscription, targetRepositoryId);
 
 	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
@@ -91,7 +99,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost, targetTasks } = data;
+	const { installationId, jiraHost, targetTasks, targetRepositoryId } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -117,7 +125,7 @@ export const updateJobStatus = async (
 		await updateRepo(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
 		scheduleNextTask(0);
 		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription, targetTasks))) {
+	} else if (!(await getNextTask(subscription, targetTasks, targetRepositoryId))) {
 		await subscription.update({
 			syncStatus: SyncStatus.COMPLETE,
 			backfillSince: await getBackfillSince(data, logger)
@@ -206,7 +214,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		return;
 	}
 
-	const nextTask = await getNextTask(subscription, data.targetTasks);
+	const nextTask = await getNextTask(subscription, data.targetTasks, data.targetRepositoryId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (!nextTask) {

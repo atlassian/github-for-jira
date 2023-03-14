@@ -22,6 +22,14 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	// restrict sync to a subset of tasks
 	const targetTasks = req.body.targetTasks as TaskType[];
+	// restrict sync to a subset of tasks
+	const targetRepositoryId = req.body.targetRepositoryId as number;
+
+	// Full syncs reset subscription data for repo discovery
+	if (syncType === "full" && targetRepositoryId) {
+		res.status(400).send("Full resync type for single repo is not supported");
+		return;
+	}
 
 	if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
 		res.status(400).send("please provide at least one of the filter parameters!");
@@ -47,7 +55,7 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 	await Promise.all(subscriptions.map((subscription) =>
-		findOrStartSync(subscription, req.log, false, syncType, commitsFromDate, targetTasks)
+		findOrStartSync(subscription, req.log, false, syncType, commitsFromDate, targetTasks, targetRepositoryId)
 	));
 
 	res.json(subscriptions.map(serializeSubscription));

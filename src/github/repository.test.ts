@@ -6,6 +6,7 @@ import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
 import { getLogger } from "config/logger";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("config/feature-flags");
 jest.mock("~/src/sync/sync-utils");
@@ -73,6 +74,8 @@ describe("deleteRepositoryWebhookHandler", () => {
 describe("createdRepositoryWebhookHandler", () => {
 
 	let subscription;
+	let repoOne;
+
 	beforeEach(async () => {
 
 		when(booleanFlag).calledWith(
@@ -84,9 +87,28 @@ describe("createdRepositoryWebhookHandler", () => {
 			gitHubInstallationId: 123,
 			jiraHost: jiraHost,
 			jiraClientKey: "client-key",
-			totalNumberOfRepos: 99
+			totalNumberOfRepos: 1
 		});
 		subscription.update = jest.fn();
+
+		repoOne = {
+			subscriptionId: subscription.id,
+			repoId: 1,
+			repoName: "github-for-jira",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira"
+		};
+
+		await RepoSyncState.create({
+			...repoOne,
+			branchStatus: "complete",
+			branchCursor: "foo",
+			commitStatus: "complete",
+			commitCursor: "bar",
+			pullStatus: "complete",
+			pullCursor: "12"
+		});
 	});
 
 	it("should call created repository endpoint for server", async () => {
@@ -124,6 +146,6 @@ describe("createdRepositoryWebhookHandler", () => {
 			}
 		}), DatabaseStateCreator.GITHUB_INSTALLATION_ID, subscription);
 
-		expect(subscription.update).toBeCalledWith({ totalNumberOfRepos: 100 });
+		expect(subscription.update).toBeCalledWith({ totalNumberOfRepos: 2 });
 	});
 });

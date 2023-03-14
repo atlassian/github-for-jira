@@ -142,6 +142,7 @@ export type BackfillMessagePayload = BaseMessagePayload & {
 	commitsFromDate?: string, //main commits from date, ISO string
 	branchCommitsFromDate?: string, //branch commits from date, ISO string
 	targetTasks?: TaskType[]
+	targetRepositoryId?: number
 }
 
 export type DeploymentMessagePayload = BaseMessagePayload & {
