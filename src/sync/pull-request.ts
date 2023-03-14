@@ -80,21 +80,19 @@ export const getPullRequestTask = async (
 					scaledPageSize
 				)
 		);
-		if ((data.edges?.length) || 0 > 0) {
-			data.edges!.forEach(edge => {
-				// Cursor is scaled... scaling back!
-				// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-				// scaled pages:   ----1--------, --------2-----
-				// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
-				edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
-			});
-		}
+		(data.edges || []).forEach(edge => {
+			// Cursor is scaled... scaling back!
+			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			// scaled pages:   ----1--------, --------2-----
+			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
+			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
+		});
 
 		return data;
 	}
 };
 
-const doGetPullRequestTask = async (
+export const doGetPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	_jiraHost: string,
