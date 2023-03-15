@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import { getTargetTasks, getTargetRepos, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
@@ -12,7 +12,6 @@ import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockO
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError, Sequelize } from "sequelize";
 import { AxiosError } from "axios";
-import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
@@ -427,66 +426,4 @@ describe("sync/installation", () => {
 		});
 	});
 
-	describe("getTargetRepos", () => {
-		let sub: Subscription;
-		let repoOne;
-		let repoTwo;
-
-		beforeEach(async () => {
-			sub = await Subscription.create({
-				gitHubInstallationId: 123,
-				jiraHost,
-				jiraClientKey: "myClientKey"
-			});
-
-			repoOne = {
-				subscriptionId: sub.id,
-				repoId: 1,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira"
-			};
-
-			repoTwo = {
-				subscriptionId: sub.id,
-				repoId: 2,
-				repoName: "github-for-jira",
-				repoOwner: "atlassian",
-				repoFullName: "atlassian/github-for-jira",
-				repoUrl: "github.com/atlassian/github-for-jira"
-			};
-
-			await RepoSyncState.create({
-				...repoOne,
-				branchStatus: "complete",
-				branchCursor: "foo",
-				commitStatus: "complete",
-				commitCursor: "bar",
-				pullStatus: "complete",
-				pullCursor: "12"
-			});
-
-			await RepoSyncState.create({
-				...repoTwo,
-				branchStatus: "complete",
-				branchCursor: "foo",
-				commitStatus: "complete",
-				commitCursor: "bar",
-				pullStatus: "complete",
-				pullCursor: "12"
-			});
-		});
-
-		it("should return all tasks if no target tasks present", async () => {
-			expect(await getTargetRepos(sub)).toHaveLength(2);
-		});
-
-		it("should return single target task", async () => {
-			const targetRepo = await getTargetRepos(sub, 1);
-			expect(targetRepo).toHaveLength(1);
-			expect(targetRepo[0].repoId).toEqual(1);
-		});
-
-	});
 });

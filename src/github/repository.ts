@@ -38,7 +38,7 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 		});
 
 		await updateRepoCount(subscription);
-		await findOrStartSync(subscription, context.log, false, "partial", subscription.backfillSince,undefined, repository.id);
+		await findOrStartSync(subscription, context.log, false, "partial", subscription.backfillSince,undefined);
 		webhookProcessComplete(context, 200);
 	} catch (err) {
 		context.log.error({ err }, "Error processing create repository webhook");
