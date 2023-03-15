@@ -1,4 +1,3 @@
-const gheHost = document.getElementById("gheHost").value;
 const appHost = document.getElementById("appHost").value;
 const uuid = document.getElementById("uuid").value;
 
@@ -39,16 +38,19 @@ const appManifest = {
 };
 
 $(document).ready(() => {
-  const newForm = jQuery("<form>", {
-    "action": `${ gheHost }/settings/apps/new`,
-    "method": "post",
-    "target": "_self"
-  }).append(jQuery("<input>", {
-    "name": "manifest",
-    "id": "manifest",
-    "value": JSON.stringify(appManifest),
-    "type": "hidden"
-  }));
-  $(document.body).append(newForm);
-  newForm.submit();
+  if (window.gheHost) {
+    const newForm = jQuery("<form>", {
+      "action": `${ window.gheHost }/settings/apps/new`,
+      "method": "post",
+      "target": "_self"
+    }).append(jQuery("<input>", {
+      "name": "manifest",
+      "id": "manifest",
+      "value": JSON.stringify(appManifest),
+      "type": "hidden"
+    }));
+    $(document.body).append(newForm);
+    newForm.submit();
+  }
 });
+
