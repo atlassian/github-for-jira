@@ -420,12 +420,8 @@ const getFailedCode = (err): string => {
 	if (status === 200 && message === "Resource not accessible by integration") {
 		return "PERMISSIONS_ERROR";
 	}
-	// No data returned.
-	if (status === 404) {
-		return "NOT_FOUND_ERROR";
-	}
 	// Server error, Could be GitHub or Jira
-	if (status === 500) {
+	if (status === 500 || status === 502 || status === 503) {
 		return "SERVER_ERROR";
 	}
 	// After we have tried all variations of pages sizes down to 1
