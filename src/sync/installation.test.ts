@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import { getTargetTasks, handleBackfillError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
-import { RateLimitingError } from "~/src/github/client/github-client-errors";
+import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
-import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
+import { mockNotFoundErrorOctokitGraphql, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError, Sequelize } from "sequelize";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
+import { createAnonymousClient } from "utils/get-github-client-config";
 
 jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
@@ -140,7 +141,7 @@ describe("sync/installation", () => {
 		beforeEach(() => {
 
 			updateStatusSpy = jest.spyOn(installation, "updateJobStatus");
-			failRepoSpy = jest.spyOn(installation, "markCurrentRepositoryAsFailedAndContinue");
+			failRepoSpy = jest.spyOn(installation, "markCurrentTaskAsFailedAndContinue");
 
 			updateStatusSpy.mockReturnValue(Promise.resolve());
 			failRepoSpy.mockReturnValue(Promise.resolve());
@@ -170,7 +171,6 @@ describe("sync/installation", () => {
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
 		});
 
 		it("No delay if rate limit already reset", async () => {
@@ -191,7 +191,6 @@ describe("sync/installation", () => {
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
 		});
 
 		it("Error with headers indicating rate limit will be retried with the appropriate delay", async () => {
@@ -220,25 +219,16 @@ describe("sync/installation", () => {
 		});
 
 		it("Repository ignored if not found error", async () => {
-			const notFoundError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "6479",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				},
-				name: "HttpError",
-				status: 404
-			};
+			gheNock.get("/")
+				.reply(404, {});
 
-			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			try {
+				await client.getMainPage(1000);
+			} catch (err) {
+				await handleBackfillError(err, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			}
+
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -246,7 +236,7 @@ describe("sync/installation", () => {
 
 		it("Repository ignored if GraphQL not found error", async () => {
 
-			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -344,65 +334,6 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
 		});
 
-	});
-
-	describe("handleNotFoundErrors", () => {
-		it("should continue sync if 404 status is sent in response from octokit/request", (): void => {
-			// returns true if status is 404 so sync will continue
-			expect(
-				isNotFoundError(
-					mockNotFoundErrorOctokitRequest,
-					getLogger("test")
-				)
-			).toBeTruthy();
-		});
-
-		it("should continue sync if NOT FOUND error is sent in response from octokit/graphql", (): void => {
-			// returns true if error object has type 'NOT_FOUND' so sync will continue
-			expect(
-				isNotFoundError(
-					mockNotFoundErrorOctokitGraphql,
-					getLogger("test")
-				)
-			).toBeTruthy();
-		});
-
-		it("handleNotFoundErrors should not continue sync for any other error response type", () => {
-			expect(
-				isNotFoundError(
-					mockOtherOctokitRequestErrors,
-					getLogger("test")
-				)
-			).toBeFalsy();
-
-			expect(
-				isNotFoundError(
-					mockOtherOctokitGraphqlErrors,
-					getLogger("test")
-				)
-			).toBeFalsy();
-
-			expect(
-				isNotFoundError(
-					mockOtherError,
-					getLogger("test")
-				)
-			).toBeFalsy();
-
-			expect(
-				isNotFoundError(
-					null,
-					getLogger("test")
-				)
-			).toBeFalsy();
-
-			expect(
-				isNotFoundError(
-					"",
-					getLogger("test")
-				)
-			).toBeFalsy();
-		});
 	});
 
 	describe("getTargetTasks", () => {

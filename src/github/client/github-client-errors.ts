@@ -58,19 +58,18 @@ export class InvalidPermissionsError extends GithubClientError {
 export type GraphQLError = {
 	message: string;
 	type: string;
-	path?: [string];
+	path?: string[];
 	extensions?: {
 		code?: string;
 		timestamp?: string;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		[key: string]: any;
 	};
-	locations?: [
+	locations?:
 		{
 			line: number;
 			column: number;
-		}
-	];
+		}[];
 };
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
@@ -97,11 +96,15 @@ export class GithubClientGraphQLError extends GithubClientError {
 			buildAxiosStubErrorForGraphQlErrors(response)
 		);
 		this.errors = errors;
-		this.isRetryable = !!errors?.find(
+		this.isRetryable = !!errors.find(
 			(error) =>
 				"MAX_NODE_LIMIT_EXCEEDED" == error.type ||
 				error.message?.startsWith("Something went wrong while executing your query")
 		);
+	}
+
+	isNotFound() {
+		return !!this.errors.find(error => error.type === "NOT_FOUND");
 	}
 }
 
