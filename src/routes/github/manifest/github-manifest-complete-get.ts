@@ -12,7 +12,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!jiraHost) {
 		throw new Error("Jira Host not found");
 	}
-	const gheHost = req.session.temp?.gheHost;
+	const gheHost = req.params.gheHost;
 	if (!gheHost) {
 		throw new Error("GitHub Enterprise Host not found");
 	}

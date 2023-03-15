@@ -18,10 +18,6 @@
 {{> loading-screen
     title=title
 }}
-<input type="hidden" id="gheHost" value={{gheHost}} />
-<input type="hidden" id="appHost" value={{appHost}} />
-<input type="hidden" id="uuid" value={{uuid}} />
-</body>
 <script
     src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
@@ -29,5 +25,58 @@
     referrerpolicy="no-referrer"
     nonce="{{nonce}}"
 ></script>
-<script src="/public/js/github-manifest.js" nonce="{{nonce}}"></script>
+<script nonce="{{nonce}}">
+  $(function() {
+    if (window.gheHost) {
+      const appManifest = {
+        "name": "Jira",
+        "url": "https://github.com/marketplace/jira-software-github",
+        "redirect_url": "{{appHost}}/github/manifest/{{uuid}}/" + encodeURIComponent(window.gheHost),
+        "hook_attributes": {
+          "url": "{{appHost}}/github/{{uuid}}/webhooks"
+        },
+        "setup_url": "{{appHost}}/github/{{uuid}}/setup" ,
+        "callback_url": "{{appHost}}/github/{{uuid}}/callback" ,
+        "public": true,
+        "default_permissions": {
+          "actions": "read",
+          "security_events": "read",
+          "contents": "write",
+          "deployments": "read",
+          "issues": "write",
+          "metadata": "read",
+          "pull_requests": "write",
+          "members": "read"
+        },
+        "default_events": [
+          "code_scanning_alert",
+          "commit_comment",
+          "create",
+          "delete",
+          "deployment_status",
+          "issue_comment",
+          "issues",
+          "pull_request",
+          "pull_request_review",
+          "push",
+          "repository",
+          "workflow_run"
+        ]
+      };
+       const newForm = jQuery("<form>", {
+          "action": window.gheHost + "/settings/apps/new",
+          "method": "post",
+          "target": "_self"
+        }).append(jQuery("<input>", {
+          "name": "manifest",
+          "id": "manifest",
+          "value": JSON.stringify(appManifest),
+          "type": "hidden"
+        }));
+        $(document.body).append(newForm);
+        newForm.submit();
+    }
+  });
+</script>
+</body>
 </html>

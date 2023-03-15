@@ -68,6 +68,7 @@ $(document).ready(function() {
 				const child = openChildWindow("/github-manifest");
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
+				child.window.gheHost = gitHubServerBaseUrl;
 			});
 		}
 	});
