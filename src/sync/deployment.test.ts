@@ -8,10 +8,15 @@ import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-import { getDeploymentsQuery } from "~/src/github/client/github-queries";
+import { getDeploymentsQuery, getDeploymentsQueryByCreatedAtDesc } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { getDeploymentTask } from "./deployment";
+import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -51,14 +56,17 @@ describe("sync/deployments", () => {
 				.reply(200);
 		};
 
+		let repoSyncState: RepoSyncState;
+
 		beforeEach(async () => {
 
 			mockSystemTime(12345678);
 
-			await new DatabaseStateCreator()
+			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()
 				.create();
+			repoSyncState = dbState.repoSyncState!;
 
 			githubUserTokenNock(installationId);
 		});
@@ -72,6 +80,49 @@ describe("sync/deployments", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 		};
+
+		it("should sync nothing to jira if all edges are earlier than fromDate -- when ff is on", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				jiraHost
+			).mockResolvedValue(true);
+
+			githubNock
+				.post("/graphql", {
+					query: getDeploymentsQueryByCreatedAtDesc,
+					variables: {
+						owner: "integrations",
+						repo: "test-repo-name",
+						per_page: 20
+					}
+				})
+				.query(true)
+				.reply(200, deploymentNodesFixture);
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			expect(await getDeploymentTask(getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				20,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: "2023-01-01T00:00:00Z"
+				}
+			)).toEqual({
+				edges: []
+			});
+		});
 
 		it("should sync to Jira when Deployment messages have jira references", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
