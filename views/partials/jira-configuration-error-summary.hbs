@@ -10,59 +10,31 @@
         You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
     </div>
 
-    We were unable to completely backfill
-    <b>
-    {{add syncErrors.AUTHORIZATION_ERROR syncErrors.CONNECTION_ERROR}}
-    </b> repositories.
-
-
-
     {{#if syncErrors.CONNECTION_ERROR}}
     <div>
-       {{syncErrors.CONNECTION_ERROR}} Connection errors
+       We were unable to complete backfill for {{syncErrors.CONNECTION_ERROR}} repositories due to connection issues, please retry....
     </div>
-    {{/if}}
-    {{#if syncErrors.AUTHORIZATION_ERROR}}
-      <div>
-        {{syncErrors.AUTHORIZATION_ERROR}} Authorization errors
-      </div>
-    {{/if}}
-
-    {{#if syncErrors.AUTHENTICATION_ERROR}}
-      <div>
-        {{syncErrors.AUTHENTICATION_ERROR}} Authentication errors
-      </div>
     {{/if}}
 
     {{#if syncErrors.PERMISSIONS_ERROR}}
       <div>
-        {{syncErrors.PERMISSIONS_ERROR}} Permission errors
-      </div>
-    {{/if}}
-
-    {{#if syncErrors.NOT_FOUND_ERROR}}
-      <div>
-        {{syncErrors.NOT_FOUND_ERROR}} Not Found errors
+        We were unable to complete backfill for {{syncErrors.PERMISSIONS_ERROR}} repositories, because of GitHub Permissions, please check your GitHub permissions before attempting backfill again.
       </div>
     {{/if}}
 
     {{#if syncErrors.SERVER_ERROR}}
-      <div>
-        {{syncErrors.SERVER_ERROR}} Server errors
-      </div>
+    <div>
+      We were unable to complete backfill for {{syncErrors.SERVER_ERROR}} repositories, due to server errors, sometimes these can be temporary issues from Jira or GitHub, please retry....
+    </div>
     {{/if}}
 
-    {{#if syncErrors.CURSOR_ERROR}}
-      <div>
-        {{syncErrors.CURSOR_ERROR}} Cursor errors
-      </div>
+
+    {{#if syncErrors.OTHER_ERRORS_COMBINED}}
+    <div>
+      We were unable to complete backfill for {{syncErrors.OTHER_ERRORS_COMBINED}} repositories, some of these may be resolved with a retry, if the errors persist, please raise a ticket and we can investigate???
+    </div>
     {{/if}}
 
-    {{#if syncErrors.UNKNOWN_ERROR}}
-      <div>
-        {{syncErrors.UNKNOWN_ERROR}} Unknown errors
-      </div>
-    {{/if}}
     <form class="jiraConfiguration__errorSummaryModal__form">
       <div class="jiraConfiguration__errorSummaryModal__actions">
         <a href="https://support.atlassian.com/" target="_blank" class="aui-button aui-button-link">Raise a support ticket</a>

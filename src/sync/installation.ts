@@ -91,6 +91,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
+
 	const { installationId, jiraHost, targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await Subscription.getSingleInstallation(
@@ -262,6 +263,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	};
 
 	try {
+
+		if (task === "commit") {
+			throw new Error();
+		}
 		const taskPayload = await execute();
 		if (taskPayload.jiraPayload) {
 			try {
@@ -329,7 +334,9 @@ export const handleBackfillError = async (
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
 	const logger = rootLogger.child({ err });
+	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask, err, logger);
 
+	return;
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
@@ -405,27 +412,28 @@ export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscript
 const getFailedCode = (err): string => {
 	const { status, message, code } = err;
 
+	const randomError = Math.random();
 	// Socket is closed or Client network socket disconnected before secure TLS connection was established
-	if (code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
+	if (randomError < 0.1 || code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
 		return "CONNECTION_ERROR";
 	}
-	if (status === 401) {
+	if (randomError < 0.2 || status === 401) {
 		return "AUTHENTICATION_ERROR";
 	}
 	// A generic catch for authorization issues, invalid permissions on the JWT
-	if (status === 403) {
+	if (randomError < 0.3 || status === 403) {
 		return "AUTHORIZATION_ERROR";
 	}
 	// If the user hasn't accepted updated permissions for the app.
-	if (status === 200 && message === "Resource not accessible by integration") {
+	if (randomError < 0.4 || status === 200 && message === "Resource not accessible by integration") {
 		return "PERMISSIONS_ERROR";
 	}
 	// Server error, Could be GitHub or Jira
-	if (status === 500 || status === 502 || status === 503) {
+	if (randomError < 0.5 || status === 500 || status === 502 || status === 503) {
 		return "SERVER_ERROR";
 	}
 	// After we have tried all variations of pages sizes down to 1
-	if (message?.includes("Error processing task after trying all page sizes")) {
+	if (randomError < 0.6 || message?.includes("Error processing task after trying all page sizes")) {
 		return "CURSOR_ERROR";
 	}
 	return "UNKNOWN_ERROR";
