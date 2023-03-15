@@ -195,22 +195,6 @@ export const doGetPullRequestTask = async (
 	};
 };
 
-<<<<<<< HEAD
-const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined, logger: Logger) => {
-
-	//if there's no from date, just return
-	if (!fromDate) return edges;
-
-	return edges.filter(edge => {
-		try {
-			const edgeCreatedAt = new Date(edge.created_at);
-			//only return edges/pull_requests that are created later than the fromDate in arg
-			return edgeCreatedAt.getTime() > fromDate.getTime();
-		} catch (e) {
-			logger.warn({ fromDate, edgeCreatedAt: edge.created_at }, `Failed to parse created_at from pull requests edges`);
-			return false;
-		}
-=======
 const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined) => {
 
 	if (!fromDate) return edges;
@@ -218,7 +202,6 @@ const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDa
 	return edges.filter(edge => {
 		const edgeCreatedAt = new Date(edge.created_at);
 		return edgeCreatedAt.getTime() > fromDate.getTime();
->>>>>>> main
 	});
 
 };
