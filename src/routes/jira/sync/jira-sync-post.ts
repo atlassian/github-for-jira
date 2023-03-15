@@ -9,8 +9,12 @@ import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, appId: gitHubAppId } = req.body;
 
+	if (!req.body?.commitsFromDate) {
+		res.status(404).send("Missing sync date");
+		return;
+	}
 	// A date to start fetching commit history(main and branch) from.
-	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
+	const commitsFromDate = new Date(req.body.commitsFromDate);
 	Sentry.setExtra("Body", req.body);
 
 	req.log.info("Received sync request");
@@ -32,7 +36,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		}
 
 		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, res.locals.installation.jiraHost);
-		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription, commitsFromDate)) {
+		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription)) {
 			await findOrStartSync(subscription, req.log, "partial", commitsFromDate, ["pull", "branch", "commit", "build", "deployment"]);
 		} else {
 			await findOrStartSync(subscription, req.log, "full", commitsFromDate);
@@ -67,11 +71,8 @@ const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
 
-const isIncrementalBackfilling = (subscription: Subscription, fromDate: Date | undefined): boolean => {
+const isIncrementalBackfilling = (subscription: Subscription): boolean => {
 	if (subscription.syncStatus === "FAILED") {
-		return false;
-	}
-	if (!fromDate) {
 		return false;
 	}
 	return true;
