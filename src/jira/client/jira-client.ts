@@ -11,7 +11,6 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
-import { getAppKey } from "utils/app-properties-utils";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -33,7 +32,7 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number | undefined,
+	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
 ): Promise<any> => {
@@ -220,12 +219,6 @@ export const getJiraClient = async (
 						}
 					}),
 				update: async (data, options?: JiraSubmitOptions) => {
-					// TODO: Looks like gitHubInstallationId is not provided only for
-					// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
-					if (!gitHubInstallationId) {
-						throw new Error("A repo must belong to a subscription, cannot update otherwise!");
-					}
-
 					dedupIssueKeys(data);
 
 					if (
@@ -258,11 +251,6 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data, options?: JiraSubmitOptions) => {
-				// TODO: Looks like gitHubInstallationId is not provided only for
-				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
-				if (!gitHubInstallationId) {
-					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
-				}
 
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
@@ -291,11 +279,6 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
-				// TODO: Looks like gitHubInstallationId is not provided only for
-				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
-				if (!gitHubInstallationId) {
-					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
-				}
 
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
@@ -325,11 +308,6 @@ export const getJiraClient = async (
 		},
 		remoteLink: {
 			submit: async (data, options?: JiraSubmitOptions) => {
-				// TODO: Looks like gitHubInstallationId is not provided only for
-				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
-				if (!gitHubInstallationId) {
-					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
-				}
 
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
@@ -349,14 +327,6 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
-		},
-		appProperties: {
-			create: (isConfiguredState: string) =>
-				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
-					"isConfigured": isConfiguredState
-				}),
-			get: () => instance.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`),
-			delete: () => instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
 		}
 	};
 

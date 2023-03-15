@@ -1,19 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getLogger } from "config/logger";
 import { JiraClient } from "./jira-client";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("JiraClient", () => {
+	let jiraClient: JiraClient;
+	beforeEach(async () => {
+		const { installation } = await new DatabaseStateCreator().create();
+		jiraClient = await JiraClient.getNewClient(installation, getLogger("test"));
+	});
+
 	describe("isAuthorized()", () => {
-		let jiraClient: any;
-
-		beforeEach(async () => {
-			const installation: any = {
-				jiraHost,
-				decrypt: jest.fn(()=> "secret")
-			};
-
-			jiraClient = await JiraClient.getNewClient(installation, getLogger("test"));
-		});
 
 		it("is true when response is 200", async () => {
 			jiraNock
@@ -48,6 +45,40 @@ describe("JiraClient", () => {
 			});
 
 			await expect(jiraClient.isAuthorized()).rejects.toThrow("boom");
+		});
+	});
+
+	describe("appPropertiesCreate()", () => {
+		test.each([true, false])("sets up %s",  async (value) => {
+			jiraNock
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", {
+					isConfigured: value
+				})
+				.reply(200);
+
+			expect(await jiraClient.appPropertiesCreate(value)).toBeDefined();
+		});
+	});
+
+	describe("appPropertiesGet()", () => {
+		it("returns data",  async () => {
+			jiraNock
+				.get("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured")
+				.reply(200,{
+					isConfigured: true
+				});
+
+			expect((await jiraClient.appPropertiesGet()).data.isConfigured).toBeTruthy();
+		});
+	});
+
+	describe("appPropertiesDelete()", () => {
+		it("deletes data",  async () => {
+			jiraNock
+				.delete("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured")
+				.reply(200);
+
+			expect(await jiraClient.appPropertiesDelete()).toBeDefined();
 		});
 	});
 });
