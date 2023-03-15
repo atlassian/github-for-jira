@@ -140,7 +140,7 @@ export const doGetPullRequestTask = async (
 		//Because GitHub rest api  doesn't support supply a from date in the query param,
 		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
 		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		filteredEdges = filterEdgesSinceFromDate(edges, fromDate, logger);
+		filteredEdges = filterEdgesSinceFromDate(edges, fromDate);
 	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
@@ -195,6 +195,7 @@ export const doGetPullRequestTask = async (
 	};
 };
 
+<<<<<<< HEAD
 const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined, logger: Logger) => {
 
 	//if there's no from date, just return
@@ -209,6 +210,15 @@ const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDa
 			logger.warn({ fromDate, edgeCreatedAt: edge.created_at }, `Failed to parse created_at from pull requests edges`);
 			return false;
 		}
+=======
+const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined) => {
+
+	if (!fromDate) return edges;
+
+	return edges.filter(edge => {
+		const edgeCreatedAt = new Date(edge.created_at);
+		return edgeCreatedAt.getTime() > fromDate.getTime();
+>>>>>>> main
 	});
 
 };
