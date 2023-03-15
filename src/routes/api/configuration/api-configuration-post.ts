@@ -28,7 +28,7 @@ export const ApiConfigurationPost = async (req: Request, res: Response): Promise
 		// need to confirm that passed in value is configured. Existing on subscription table satisfies this.
 		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
 		// We could still save isconfiguredstate as false, but null is equivalent so why not save some trees and leave Jira alone
-		return await saveConfiguredAppProperties(jiraHost, undefined, gitHubAppId, logger, subscriptions?.length > 0);
+		return await saveConfiguredAppProperties(jiraHost, logger, subscriptions?.length > 0);
 	});
 
 	try {

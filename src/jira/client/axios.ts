@@ -18,9 +18,7 @@ export class JiraClientError extends Error {
 	constructor(message: string, cause: AxiosError, status?: number) {
 		super(message);
 		this.status = status;
-
-		//Remove config from the cause to prevent large payloads from being logged
-		this.cause = { ...cause, config: {} };
+		this.cause = cause;
 	}
 }
 
