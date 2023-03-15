@@ -247,6 +247,7 @@ describe("sync/branches", () => {
 			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data, 15);
 		});
+
 		describe("Branch sync date", () => {
 			describe("Branch commit history value is passed", () => {
 
