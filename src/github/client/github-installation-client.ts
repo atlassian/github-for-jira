@@ -209,9 +209,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		);
 	};
 
-	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
+	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number, fromDate?: Date): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
 		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`,
-			{ per_page, page: cursor },
+			{ per_page, page: cursor, ...(fromDate ? { "created": `>=${fromDate.toISOString()}` } : {}) },
 			{ owner, repo }
 		);
 	};

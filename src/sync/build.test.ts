@@ -12,8 +12,10 @@ import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepoSyncState } from "models/reposyncstate";
+import { getBuildTask } from "./build";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 
 jest.mock("../sqs/queues");
@@ -96,6 +98,49 @@ describe("sync/builds", () => {
 
 		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
 		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+	});
+
+	it("should get proper jira payload that within from date when increment ff on", async () => {
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate: "2023-01-01" };
+
+		when(booleanFlag).calledWith(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost).mockResolvedValue(true);
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+		githubNock
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1&created=%3E%3D2023-01-01T00:00:00.000Z`)
+			.reply(200, buildFixture);
+
+		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
+			.reply(200, compareReferencesFixture);
+
+		const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+		expect(await getBuildTask(
+			getLogger("test"),
+			gitHubClient,
+			jiraHost,
+			{
+				id: repoSyncState.repoId,
+				name: repoSyncState.repoName,
+				full_name: repoSyncState.repoFullName,
+				owner: { login: repoSyncState.repoOwner },
+				html_url: repoSyncState.repoUrl,
+				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+			},
+			undefined,
+			20,
+			data
+		)).toEqual({
+			edges: expect.anything(),
+			jiraPayload: expect.objectContaining({
+				id: "1",
+				name: "test-repo-name",
+				builds: expect.arrayContaining([expect.objectContaining({
+					"buildNumber": 59
+				})])
+			})
+		});
 	});
 
 	it("should use scaled per_page and cursor when FF is ON", async () => {

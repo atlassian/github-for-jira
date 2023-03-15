@@ -138,6 +138,15 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async deleteRepoForSubscription(subscription: Subscription, repoId: number, options: DestroyOptions = {}): Promise<number> {
+		return RepoSyncState.destroy(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				repoId
+			}
+		}));
+	}
+
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
 		return RepoSyncState.update({
