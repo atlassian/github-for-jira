@@ -356,4 +356,5 @@ describe("sync/installation", () => {
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
 	});
+
 });
