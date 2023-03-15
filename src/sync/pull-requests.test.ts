@@ -11,6 +11,8 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
+import { doGetPullRequestTask  } from "./pull-request";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 jest.mock("config/feature-flags");
 
@@ -469,6 +471,59 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
+		});
+
+		it("should only use pull requests that are later than fromDate is supplied -- when ff is on", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				jiraHost
+			).mockResolvedValue(true);
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			const mockPullRequestList = () => {
+				githubNock
+					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc")
+					.reply(200, [
+						{ ...pullRequest, title: "PR3", created_at: "2023-01-03T00:00:00Z" },
+						{ ...pullRequest, title: "PR2", created_at: "2023-01-02T00:00:00Z" },
+						{ ...pullRequest, title: "PR1", created_at: "2023-01-01T00:00:00Z" }
+					]);
+			};
+
+			mockPullRequestList();
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			expect(await doGetPullRequestTask(getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				20,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: "2023-01-01T01:02:03Z"
+				}
+			)).toEqual({
+				edges: expect.arrayContaining([expect.objectContaining({
+					title: "PR3",
+					created_at: "2023-01-03T00:00:00Z"
+				}), expect.objectContaining({
+					title: "PR2",
+					created_at: "2023-01-02T00:00:00Z"
+				})]),
+				jiraPayload: undefined
+			});
+
 		});
 
 	});
