@@ -38,7 +38,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			privateKey:  gitHubAppConfig.pem,
 			installationId: installation.id
 		}, jiraHost);
-		req.session.temp = undefined;
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
