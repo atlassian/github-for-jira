@@ -52,7 +52,7 @@ describe("findOrStartSync", () => {
 				when(jest.mocked(numberFlag))
 					.calledWith(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
 					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: undefined }),
 					expect.anything(), expect.anything());
@@ -61,7 +61,7 @@ describe("findOrStartSync", () => {
 				when(jest.mocked(numberFlag))
 					.calledWith(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
 					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ branchCommitsFromDate: undefined }),
 					expect.anything(), expect.anything());
