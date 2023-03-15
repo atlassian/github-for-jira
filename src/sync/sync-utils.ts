@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { envVars } from "config/env";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription, SyncStatus } from "models/subscription";
@@ -37,16 +37,6 @@ export const findOrStartSync = async (
 		});
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
-	}
-
-	const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-
-	if (shouldUseBackfillAlgoIncremental && syncType === "partial" && commitsFromDate && targetTasks?.includes("commit")) {
-		await RepoSyncState.update({ commitCursor: null }, {
-			where: {
-				subscriptionId: subscription.id
-			}
-		});
 	}
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);

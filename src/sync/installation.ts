@@ -117,7 +117,7 @@ export const updateJobStatus = async (
 		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
 		const commitsFromDate =  new Date(data.commitsFromDate);
 		// Set commitsFromDate in RepoSyncState only if its the later date
-		if (repoSync && repoSync.commitFrom && repoSync.commitFrom.getTime() > commitsFromDate.getTime()) {
+		if (repoSync &&	(!repoSync.commitFrom || repoSync.commitFrom.getTime() > commitsFromDate.getTime())) {
 			values["commitFrom"] = commitsFromDate;
 		}
 	}

@@ -130,12 +130,12 @@ export type getCommitsResponse = {
 	}
 };
 
-export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $commitUntil: GitTimestamp, $cursor: String) {
+export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
     defaultBranchRef {
       target {
         ... on Commit {
-          history(first: $per_page, after: $cursor, since: $commitSince, until: $commitUntil ) {
+          history(first: $per_page, after: $cursor, since: $commitSince) {
             edges {
               cursor
               node {
