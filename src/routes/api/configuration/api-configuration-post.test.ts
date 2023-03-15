@@ -69,14 +69,14 @@ describe("GitHub Configured Get", () => {
 	it("Should save false for no subscriptions", async () => {
 		req.body.jiraHosts = [ JIRAHOST_C ];
 		await ApiConfigurationPost(req, res);
-		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, undefined, undefined, expect.anything(), false);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_C, expect.anything(), false);
 		expect(res.status).toBeCalledWith(200);
 	});
 
 	it("Should save true for subscription present", async () => {
 		req.body.jiraHosts = [ JIRAHOST_A ];
 		await ApiConfigurationPost(req, res);
-		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_A, undefined, undefined, expect.anything(), true);
+		expect(saveConfiguredAppProperties).toBeCalledWith(JIRAHOST_A, expect.anything(), true);
 		expect(res.status).toBeCalledWith(200);
 	});
 
