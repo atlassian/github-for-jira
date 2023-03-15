@@ -110,8 +110,8 @@ export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags
 		return new Date(commitsFromDate);
 	}
 	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
-	if (!timeCutoffMsecs) {
-		return;
+	if (!timeCutoffMsecs || timeCutoffMsecs === -1) {
+		return undefined;
 	}
 	return new Date(Date.now() - timeCutoffMsecs);
 };
@@ -127,7 +127,7 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
 	if (!gitHubServerApp) {
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
-		throw new Error("Error duing find and start sync. Reason: Cannot find ghes record from subscription.");
+		throw new Error("Error during find and start sync. Reason: Cannot find ghes record from subscription.");
 	}
 	return ghesGitHubAppConfig(gitHubServerApp);
 

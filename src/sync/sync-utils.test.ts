@@ -20,6 +20,7 @@ describe("findOrStartSync", () => {
 		const JIRA_INSTALLATION_ID = 1111;
 		const JIRA_CLIENT_KEY = "jira-client-key";
 		const CUTOFF_IN_MSECS = 1000;
+		const CUTOFF_IN_MSECS__DISABLED = -1;
 		describe("commit since date", () => {
 			let subscription: Subscription;
 			beforeEach(async () => {
@@ -45,6 +46,24 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: targetCommitsFromDate.toISOString() }),
+					expect.anything(), expect.anything());
+			});
+			it("should  send undefined commit since date in the msg payload if flag is set to -1 for main commits from date", async () => {
+				when(jest.mocked(numberFlag))
+					.calledWith(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
+					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
+				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
+					expect.objectContaining({ commitsFromDate: undefined }),
+					expect.anything(), expect.anything());
+			});
+			it("should  send undefined commit since date in the msg payload if flag is set to -1 for branch commits from date", async () => {
+				when(jest.mocked(numberFlag))
+					.calledWith(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
+					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
+				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
+					expect.objectContaining({ branchCommitsFromDate: undefined }),
 					expect.anything(), expect.anything());
 			});
 		});

@@ -15,6 +15,8 @@ import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-req
 import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
+import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 /**
  * Find the next page number from the response headers.
@@ -43,79 +45,64 @@ type Headers = AxiosResponseHeaders & {
 
 type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
 
-const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
-	if (!jiraPayload1 && !jiraPayload2) {
-		return undefined;
-	}
-
-	return {
-		...(jiraPayload1 || jiraPayload2),
-		pullRequests: [...(jiraPayload1?.pullRequests || []), ...(jiraPayload2?.pullRequests || [])]
-	};
-};
-
 export const getPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
-	perPage: number
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ) => {
 	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
 	if (!pageSizeCoef) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
 	} else {
 		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
 		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
 		// overcomplicate it too much and limit ourselves to 2 pages.
 		const limitedPageSizeCoef = Math.min(5, pageSizeCoef);
-		const shouldFetchNextPage = pageSizeCoef > 5;
-
-		const prFetchJobs: Promise<any>[] = [];
+		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
 
 		const scaledPageSize = perPage * limitedPageSizeCoef;
-		const scaledCursor = Math.max(1, Math.floor(Number(cursor) / limitedPageSizeCoef));
 
-		prFetchJobs.push(doGetPullRequestTask(
-			logger, gitHubInstallationClient, jiraHost, repository,
+		// Cursor 1, 2, 3, 4, 5 should be mapped to scaled cursor 1;
+		// Cursor 6, 7, 8, 9, 10 shoul be mapped to scaled cursor 2;
+		// etc
+		// Given that the page counter starts from 1, we need to deduct 1 first and then add 1 back to the outcome
+		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
+
+		const data = await fetchNextPagesInParallel(
+			shouldFetchNextPageInParallel ? 2 : 1,
 			scaledCursor,
-			scaledPageSize
-		));
-
-		if (shouldFetchNextPage) {
-			logger.info("Fetch second page in parallel");
-			prFetchJobs.push(doGetPullRequestTask(
-				logger, gitHubInstallationClient, jiraHost, repository,
-				scaledCursor + 1,
-				scaledPageSize
-			));
-		}
-
-		const [page1, page2] = await Promise.all(prFetchJobs);
-
-		const mergeResult = {
-			edges: [...(page1?.edges || []), ...(page2?.edges || [])],
-			jiraPayload:
-				mergeJiraPayload(page1?.jiraPayload, page2?.jiraPayload)
-		};
-
-		const nextPageCursor = Number(cursor) + (shouldFetchNextPage ? limitedPageSizeCoef * 2 : limitedPageSizeCoef);
-
-		mergeResult.edges.forEach((edge) => {
-			edge.cursor = nextPageCursor;
+			(scaledPageNoToFetch) =>
+				doGetPullRequestTask(
+					logger, gitHubInstallationClient, jiraHost, repository,
+					scaledPageNoToFetch,
+					scaledPageSize,
+					messagePayload
+				)
+		);
+		(data.edges || []).forEach(edge => {
+			// Cursor is scaled... scaling back!
+			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			// scaled pages:   ----1--------, --------2-----
+			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
+			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
 		});
-		return mergeResult;
+
+		return data;
 	}
 };
 
 export const doGetPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
-	perPage: number
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ) => {
 	logger.debug("Syncing PRs: started");
 
@@ -147,9 +134,18 @@ export const doGetPullRequestTask = async (
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPage = getNextPage(logger, headers) || cursor + 1;
 
+	let filteredEdges = edges;
+	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
+		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+		//Because GitHub rest api  doesn't support supply a from date in the query param,
+		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+		filteredEdges = filterEdgesSinceFromDate(edges, fromDate);
+	}
+
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPage }));
+	const edgesWithCursor: PullRequestWithCursor[] = filteredEdges.map((edge) => ({ ...edge, cursor: nextPage }));
 
 	// TODO: change this to reduce
 	const pullRequests = (
@@ -197,4 +193,15 @@ export const doGetPullRequestTask = async (
 				}
 				: undefined
 	};
+};
+
+const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined) => {
+
+	if (!fromDate) return edges;
+
+	return edges.filter(edge => {
+		const edgeCreatedAt = new Date(edge.created_at);
+		return edgeCreatedAt.getTime() > fromDate.getTime();
+	});
+
 };
