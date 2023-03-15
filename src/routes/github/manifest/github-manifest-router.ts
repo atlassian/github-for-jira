@@ -3,5 +3,9 @@ import { GithubManifestCompleteGet } from "~/src/routes/github/manifest/github-m
 
 export const GithubManifestRouter = Router();
 
-GithubManifestRouter.route("/:uuid/complete")
+/**
+ * TODO: Store the gheHost temporarily
+ * The URL parameters here are still vulnerable as this route does not require any authentication
+ */
+GithubManifestRouter.route("/:uuid/:gheHost")
 	.get(GithubManifestCompleteGet);
