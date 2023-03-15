@@ -220,6 +220,12 @@ export const getJiraClient = async (
 						}
 					}),
 				update: async (data, options?: JiraSubmitOptions) => {
+					// TODO: Looks like gitHubInstallationId is not provided only for
+					// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
+					if (!gitHubInstallationId) {
+						throw new Error("A repo must belong to a subscription, cannot update otherwise!");
+					}
+
 					dedupIssueKeys(data);
 
 					if (
@@ -252,6 +258,12 @@ export const getJiraClient = async (
 		},
 		workflow: {
 			submit: async (data, options?: JiraSubmitOptions) => {
+				// TODO: Looks like gitHubInstallationId is not provided only for
+				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
+				if (!gitHubInstallationId) {
+					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
+				}
+
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -279,6 +291,12 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+				// TODO: Looks like gitHubInstallationId is not provided only for
+				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
+				if (!gitHubInstallationId) {
+					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
+				}
+
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -307,6 +325,12 @@ export const getJiraClient = async (
 		},
 		remoteLink: {
 			submit: async (data, options?: JiraSubmitOptions) => {
+				// TODO: Looks like gitHubInstallationId is not provided only for
+				// TODO: appState calls. We should split the client in two then, otherwise we are not leveraging TypeScript whatsoever
+				if (!gitHubInstallationId) {
+					throw new Error("Data must belong to repo, and repo must belong to an subscription! This call should be never possible.");
+				}
+
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
