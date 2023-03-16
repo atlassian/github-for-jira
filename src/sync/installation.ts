@@ -110,7 +110,19 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await updateRepo(subscription, repositoryId, { [getStatusKey(task)]: status });
+
+	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
+
+	if (isComplete && task === "commit" && data.commitsFromDate) {
+		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
+		const commitsFromDate =  new Date(data.commitsFromDate);
+		// Set commitsFromDate in RepoSyncState only if its the later date
+		if (repoSync &&	(!repoSync.commitFrom || repoSync.commitFrom.getTime() > commitsFromDate.getTime())) {
+			updateRepoSyncFields["commitFrom"] = commitsFromDate;
+		}
+	}
+
+	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
 
 	if (!isComplete) {
 		// there's more data to get

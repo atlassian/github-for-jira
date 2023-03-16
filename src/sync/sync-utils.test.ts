@@ -33,7 +33,7 @@ describe("findOrStartSync", () => {
 			});
 			it("should send a specific commit since date in the msg payload if provided", async () => {
 				const providedCommitSinceDate = new Date();
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, providedCommitSinceDate, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, providedCommitSinceDate, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: providedCommitSinceDate.toISOString() }),
 					expect.anything(), expect.anything());
@@ -43,7 +43,7 @@ describe("findOrStartSync", () => {
 					.calledWith(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
 					.mockResolvedValue(CUTOFF_IN_MSECS);
 				const targetCommitsFromDate = new Date(DATE_NOW.getTime() - CUTOFF_IN_MSECS);
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: targetCommitsFromDate.toISOString() }),
 					expect.anything(), expect.anything());
@@ -52,7 +52,7 @@ describe("findOrStartSync", () => {
 				when(jest.mocked(numberFlag))
 					.calledWith(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
 					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: undefined }),
 					expect.anything(), expect.anything());
@@ -61,7 +61,7 @@ describe("findOrStartSync", () => {
 				when(jest.mocked(numberFlag))
 					.calledWith(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
 					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
-				await findOrStartSync(subscription, getLogger("test"), true, undefined, undefined, undefined);
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ branchCommitsFromDate: undefined }),
 					expect.anything(), expect.anything());
@@ -85,7 +85,6 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
-					true,
 					undefined,
 					undefined,
 					undefined
@@ -134,7 +133,6 @@ describe("findOrStartSync", () => {
 				await findOrStartSync(
 					subscription,
 					getLogger("test"),
-					true,
 					undefined,
 					undefined,
 					undefined
