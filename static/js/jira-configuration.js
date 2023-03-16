@@ -89,7 +89,13 @@ $(".sync-connection-link").click(event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, commitsFromDate, appId});
+			const isIncrementalBackfillEnabled = $("body")
+				.data("is-incremental-backfill-enabled");
+			if(isIncrementalBackfillEnabled) {
+				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, commitsFromDate, appId});
+			} else {
+				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
+			}
 		});
 	});
 });
