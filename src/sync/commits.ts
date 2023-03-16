@@ -6,6 +6,7 @@ import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { TaskPayload } from "~/src/sync/sync.types";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -23,12 +24,16 @@ export const getCommitTask = async (
 	gitHubClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
-	cursor?: string | number,
-	perPage?: number,
+	cursor: string | number | undefined,
+	perPage: number,
 	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
 
+	const accelerateBackfillSpeedCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
+
 	const commitSince = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage *
+		(accelerateBackfillSpeedCoef ? accelerateBackfillSpeedCoef : 1)
+	);
 	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl

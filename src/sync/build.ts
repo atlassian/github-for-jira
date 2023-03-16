@@ -33,7 +33,7 @@ export const getBuildTask = async (
 	cursor: string | number = 1,
 	perPage: number
 ) => {
-	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
+	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 	if (!pageSizeCoef) {
 		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
 	} else {

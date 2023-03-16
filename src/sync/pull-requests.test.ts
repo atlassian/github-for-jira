@@ -294,7 +294,7 @@ describe("sync/pull-request", () => {
 			pullRequestList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+				NumberFlags.ACCELERATE_BACKFILL_COEF,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(5);
@@ -354,7 +354,7 @@ describe("sync/pull-request", () => {
 			pullRequestList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+				NumberFlags.ACCELERATE_BACKFILL_COEF,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(6);
@@ -412,7 +412,7 @@ describe("sync/pull-request", () => {
 			pullRequestList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+				NumberFlags.ACCELERATE_BACKFILL_COEF,
 				expect.anything(),
 				expect.anything()
 			).mockResolvedValue(6);
