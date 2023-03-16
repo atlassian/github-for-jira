@@ -7,19 +7,10 @@ import nock from "nock";
 import { envVars } from "config/env";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
 describe("github-oauth-router", () => {
-
-	beforeEach(() => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.RENEW_GITHUB_TOKEN,
-			expect.anything()
-		).mockResolvedValue(true);
-	});
 
 	describe("GithubOAuthCallbackGet", () => {
 
