@@ -34,6 +34,11 @@ export const getCommitTask = async (
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, Math.min(
 		perPage * (accelerateBackfillSpeedCoef ? accelerateBackfillSpeedCoef : 1), 100
 	));
+
+	if (commits.length > 0) {
+		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate}`);
+	}
+
 	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl
