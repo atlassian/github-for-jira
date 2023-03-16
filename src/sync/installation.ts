@@ -55,7 +55,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	// Order on "id" is to have deterministic behaviour when there are records without "repoUpdatedAt"
+	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"], ["id", "DESC"]] });
 
 	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
@@ -110,7 +111,19 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await updateRepo(subscription, repositoryId, { [getStatusKey(task)]: status });
+
+	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
+
+	if (isComplete && task === "commit" && data.commitsFromDate) {
+		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
+		const commitsFromDate =  new Date(data.commitsFromDate);
+		// Set commitsFromDate in RepoSyncState only if its the later date
+		if (repoSync &&	(!repoSync.commitFrom || repoSync.commitFrom.getTime() > commitsFromDate.getTime())) {
+			updateRepoSyncFields["commitFrom"] = commitsFromDate;
+		}
+	}
+
+	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
 
 	if (!isComplete) {
 		// there's more data to get

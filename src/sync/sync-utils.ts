@@ -1,18 +1,17 @@
-import { RepoSyncState } from "models/reposyncstate";
-import { sqsQueues } from "../sqs/queues";
-import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
-import { numberFlag, NumberFlags } from "config/feature-flags";
-import { TaskType, SyncType } from "~/src/sync/sync.types";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription, SyncStatus } from "models/subscription";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { SyncType, TaskType } from "~/src/sync/sync.types";
+import { sqsQueues } from "../sqs/queues";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
-	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[]
@@ -49,7 +48,6 @@ export const findOrStartSync = async (
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
-		isInitialSync,
 		syncType,
 		startTime: fullSyncStartTime,
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
@@ -75,6 +73,7 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Partial sync only resets status (continues from existing cursor)
 	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
+
 	repoSyncTasks.forEach(task => {
 		if (syncType === "full") {
 			updateRepoSyncTasks[`${task}Cursor`] = null;
