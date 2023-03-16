@@ -17,6 +17,7 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
+	getDeploymentsQueryByCreatedAtDesc,
 	SearchedRepositoriesResponse
 } from "./github-queries";
 import {
@@ -209,9 +210,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		);
 	};
 
-	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
+	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number, fromDate?: Date): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
 		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`,
-			{ per_page, page: cursor },
+			{ per_page, page: cursor, ...(fromDate ? { "created": `>=${fromDate.toISOString()}` } : {}) },
 			{ owner, repo }
 		);
 	};
@@ -253,6 +254,18 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
 		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+			await this.installationAuthenticationHeaders(),
+			{
+				owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			});
+		return response?.data?.data;
+	}
+
+	public async getDeploymentsPageByCreatedAtDesc(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQueryByCreatedAtDesc,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,

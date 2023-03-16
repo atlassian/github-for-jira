@@ -22,6 +22,7 @@ import { ApiConfigurationRouter } from "routes/api/configuration/api-configurati
 import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
 import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed-tasks";
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
+import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 
 export const ApiRouter = Router();
 
@@ -142,6 +143,7 @@ ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
 ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
 ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
+ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

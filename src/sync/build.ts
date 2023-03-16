@@ -5,8 +5,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
@@ -31,11 +32,12 @@ export const getBuildTask = async (
 	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
-	perPage: number
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ) => {
 	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 	if (!pageSizeCoef) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage);
+		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
 	} else {
 		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
 		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
@@ -58,7 +60,8 @@ export const getBuildTask = async (
 				doGetBuildTask(
 					logger, gitHubInstallationClient, jiraHost, repository,
 					scaledPageNoToFetch,
-					scaledPageSize
+					scaledPageSize,
+					messagePayload
 				)
 		);
 
@@ -77,15 +80,18 @@ export const getBuildTask = async (
 const doGetBuildTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor: string | number = 1,
-	perPage: number
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ) => {
 	logger.info("Syncing Builds: started");
 	cursor = Number(cursor);
 
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
+	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor, fromDate);
 	const { workflow_runs } = data;
 	const nextPage = cursor + 1;
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
