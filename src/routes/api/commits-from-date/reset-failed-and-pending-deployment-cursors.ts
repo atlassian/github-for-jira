@@ -29,10 +29,7 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 			where: {
 				[Op.and]: {
 					"deploymentStatus": {
-						[Op.or]: {
-							[Op.is]: undefined,
-							[Op.in]: ["pending", "failed"]
-						}
+						[Op.in]: ["pending", "failed"]
 					},
 					"id": {
 						[Op.gte]: startRepoSyncStatesId
