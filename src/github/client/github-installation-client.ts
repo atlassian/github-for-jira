@@ -17,6 +17,7 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
+	getDeploymentsQueryByCreatedAtDesc,
 	SearchedRepositoriesResponse
 } from "./github-queries";
 import {
@@ -253,6 +254,18 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
 		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+			await this.installationAuthenticationHeaders(),
+			{
+				owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			});
+		return response?.data?.data;
+	}
+
+	public async getDeploymentsPageByCreatedAtDesc(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQueryByCreatedAtDesc,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,
