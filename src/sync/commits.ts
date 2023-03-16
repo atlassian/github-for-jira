@@ -31,9 +31,9 @@ export const getCommitTask = async (
 	const accelerateBackfillSpeedCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 
 	const commitSince = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage *
-		(accelerateBackfillSpeedCoef ? accelerateBackfillSpeedCoef : 1)
-	);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, Math.min(
+		perPage * (accelerateBackfillSpeedCoef ? accelerateBackfillSpeedCoef : 1), 100
+	));
 	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl
