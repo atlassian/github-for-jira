@@ -12,8 +12,9 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 
 	try {
 
-		const startRepoSyncStatesId = Number(req.query.startRepoSyncStatesId) || 0;
-		const batchSize = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
+		const startRepoSyncStatesId: number = Number(req.query.startRepoSyncStatesId) || 0;
+		const batchSize: number = Number(req.query.batchSize) || DEFAULT_BATCH_SIZE;
+		const extraRepoSyncIdsToReset: number[] = String(req.query.extraRepoSyncIdsToReset).split(",").map(id => Number(id)).filter(n => !!n);
 
 		const info = (msg: string) => {
 			log.info(msg);
@@ -27,32 +28,31 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 		const repoSyncStatesToBeUpdated: RepoSyncState[] = await RepoSyncState.findAll({
 			limit: batchSize,
 			where: {
-				[Op.and]: {
-					"deploymentStatus": {
-						[Op.in]: ["pending", "failed"]
+				[Op.or]: {
+					[Op.and]: {
+						"deploymentStatus": {
+							[Op.in]: ["pending", "failed"]
+						},
+						"id": {
+							[Op.gte]: startRepoSyncStatesId
+						}
 					},
 					"id": {
-						[Op.gte]: startRepoSyncStatesId
+						[Op.in]: extraRepoSyncIdsToReset
 					}
 				}
 			},
 			order: [ ["id", "ASC"] ]
 		});
-		info(`Found ${repoSyncStatesToBeUpdated.length} repo sync states potentially to look at`);
+		info(`Found ${repoSyncStatesToBeUpdated.length} repo sync states to update`);
 
 		let count = 0;
 		let lastId: number | undefined;
 		for (const repo of repoSyncStatesToBeUpdated) {
-			if (!repo.deploymentStatus || repo.deploymentStatus === "pending" || repo.deploymentStatus === "failed") {
-				//just double check it is the record we want to update
-				if (repo.deploymentCursor) {
-					//resetting the cursor since we are changing the pagination order from asc to desc
-					await repo.update({
-						deploymentCursor: null
-					});
-					count++;
-				}
-			}
+			await repo.update({
+				deploymentCursor: null
+			});
+			count++;
 			lastId = repo.id;
 		}
 		info(`${count} repo sync states updated, last RepoSyncState id is ${lastId})`);
