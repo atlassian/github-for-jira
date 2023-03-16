@@ -8,7 +8,7 @@ import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-import { getDeploymentsQuery, getDeploymentsQueryByCreatedAtDesc } from "~/src/github/client/github-queries";
+import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
@@ -90,7 +90,7 @@ describe("sync/deployments", () => {
 
 			githubNock
 				.post("/graphql", {
-					query: getDeploymentsQueryByCreatedAtDesc,
+					query: getDeploymentsQuery,
 					variables: {
 						owner: "integrations",
 						repo: "test-repo-name",
