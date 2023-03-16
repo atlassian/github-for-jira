@@ -135,6 +135,7 @@ describe("sync", () => {
 			})
 			.send({
 				installationId: installationIdForServer,
+				syncType: "partial",
 				jiraHost,
 				appId: gitHubServerApp.id,
 				commitsFromDate
@@ -146,6 +147,7 @@ describe("sync", () => {
 					installationId: installationIdForServer,
 					jiraHost,
 					commitsFromDate: commitsFromDate.toISOString(),
+					targetTasks: ["pull", "branch", "commit", "build", "deployment"],
 					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
 				}), expect.anything(), expect.anything());
 			});

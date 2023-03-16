@@ -89,7 +89,7 @@ $(".sync-connection-link").click(event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, commitsFromDate, appId});
 		});
 	});
 });

@@ -109,6 +109,7 @@ $(".sync-connection-link").click(function (event) {
 		data: {
 			installationId,
 			jiraHost,
+			syncType: "full",
 			_csrf: csrfToken,
 		},
 		success: function (data) {

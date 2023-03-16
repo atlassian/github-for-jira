@@ -5,19 +5,16 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { SyncType } from "~/src/sync/sync.types";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const { installationId: gitHubInstallationId, appId: gitHubAppId } = req.body;
+	const { installationId: gitHubInstallationId, syncType, appId: gitHubAppId } = req.body;
 
-	if (!req.body?.commitsFromDate) {
-		res.status(404).send("Missing sync date");
-		return;
-	}
 	// A date to start fetching commit history(main and branch) from.
-	const commitsFromDate = new Date(req.body.commitsFromDate);
+	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	Sentry.setExtra("Body", req.body);
 
-	req.log.info("Received sync request");
+	req.log.info({ syncType }, "Received sync request");
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId, gitHubAppId);
@@ -36,10 +33,10 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		}
 
 		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, res.locals.installation.jiraHost);
-		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription)) {
-			await findOrStartSync(subscription, req.log, "partial", commitsFromDate, ["pull", "branch", "commit", "build", "deployment"]);
+		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription, syncType, commitsFromDate)) {
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, ["pull", "branch", "commit", "build", "deployment"]);
 		} else {
-			await findOrStartSync(subscription, req.log, "full", commitsFromDate);
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
 		}
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
@@ -71,8 +68,8 @@ const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
 
-const isIncrementalBackfilling = (subscription: Subscription): boolean => {
-	if (subscription.syncStatus === "FAILED") {
+const isIncrementalBackfilling = (subscription: Subscription, syncType: SyncType, commitsFromDate?: Date): boolean => {
+	if (subscription.syncStatus === "FAILED" || syncType === "full" || !commitsFromDate) {
 		return false;
 	}
 	return true;
