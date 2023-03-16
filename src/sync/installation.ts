@@ -55,7 +55,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	// Order on "id" is to have deterministic behaviour when there are records without "repoUpdatedAt"
+	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"], ["id", "DESC"]] });
 
 	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
