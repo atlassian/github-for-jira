@@ -22,7 +22,7 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 export const getCommitTask = async (
 	logger: Logger,
 	gitHubClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
 	cursor: string | number | undefined,
 	perPage: number,
