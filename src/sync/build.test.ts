@@ -145,7 +145,7 @@ describe("sync/builds", () => {
 
 	it("should use scaled per_page and cursor when FF is ON", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(5);
@@ -180,7 +180,7 @@ describe("sync/builds", () => {
 		const SCALE_COEF = 5;
 
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(6);
@@ -213,7 +213,7 @@ describe("sync/builds", () => {
 
 	it("should finish task with parallel fetching when no more data", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(6);
