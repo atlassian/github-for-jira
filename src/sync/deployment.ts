@@ -8,11 +8,9 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 
-const fetchDeployments = async (shouldUseIncrementalBackfill: boolean, gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
+const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 
-	const deploymentData: getDeploymentsResponse = shouldUseIncrementalBackfill ?
-		await gitHubInstallationClient.getDeploymentsPageByCreatedAtDesc(repository.owner.login, repository.name, perPage, cursor)
-		: await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
+	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
 
 	const edges = deploymentData.repository.deployments.edges || [];
 	const deployments = edges?.map(({ node: item }) => item) || [];
@@ -59,7 +57,7 @@ export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient
 	logger.debug("Syncing Deployments: started");
 
 	const shouldUseIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-	const { edges, deployments } = await fetchDeployments(shouldUseIncrementalBackfill, gitHubInstallationClient, repository, cursor, perPage);
+	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
 	if (shouldUseIncrementalBackfill) {
 		const fromDate = data?.commitsFromDate ? new Date(data?.commitsFromDate) : undefined;
