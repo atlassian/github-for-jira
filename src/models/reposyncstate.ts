@@ -160,7 +160,8 @@ export class RepoSyncState extends Model {
 			buildStatus: null,
 			buildCursor: null,
 			deploymentStatus: null,
-			deploymentCursor: null
+			deploymentCursor: null,
+			commitFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
