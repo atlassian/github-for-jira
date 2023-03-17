@@ -121,6 +121,11 @@ export const JiraConnectEnterprisePost = async (
 		if (isReponseFromGitHub(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			res.status(200).send({ success: true, appExists: false });
+			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				source: AnalyticsTrackSource.GitHubEnterprise,
+				jiraHost: jiraHost
+			});
 			return;
 		}
 
