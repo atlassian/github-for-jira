@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { validateUrl } from "utils/validate-url";
@@ -7,7 +8,8 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { GithubClientError } from "~/src/github/client/github-client-errors";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
+import { isUniquelyGitHubServerHeader } from "utils/http-headers";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -34,6 +36,15 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
+};
+
+const isReponseFromGitHub = (logger: Logger, response?: AxiosResponse) => {
+	if (!response) {
+		logger.info("No response, cannot conclude if coming from GHE or not");
+		return false;
+	}
+	return !!Object.keys(response.headers).find(isUniquelyGitHubServerHeader) ||
+		response.headers["server"] === "GitHub.com";
 };
 
 export const JiraConnectEnterprisePost = async (
@@ -82,7 +93,20 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
-		await client.getMainPage(TIMEOUT_PERIOD_MS);
+		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+
+		if (!isReponseFromGitHub(req.log, response)) {
+			req.log.warn("Received OK response, but not GHE server");
+			res.status(200).send({
+				success: false, errors: [{
+					code: ErrorResponseCode.CANNOT_CONNECT,
+					reason: "Received OK, but the host is not GitHub Enterprise server"
+				}]
+			});
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
+			return;
+		}
+
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
@@ -93,15 +117,8 @@ export const JiraConnectEnterprisePost = async (
 	} catch (err) {
 		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
-		//err.code means there's error on the tcp/https connection,
-		//err.status means traffic reach network, but server reject it.
-		//as long as there's no code and a status, means server returns something
-		//so the domain name is reachable, it is just it required some api tokens to be accessible,
-		//and we can bypass this check to allow the manual app creation.
-		const hasServerResponded = !axiosError.code && axiosError.response?.status;
-
-		req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${hasServerResponded}`);
-		if (hasServerResponded) {
+		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
+		if (isReponseFromGitHub(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			res.status(200).send({ success: true, appExists: false });
 			return;
