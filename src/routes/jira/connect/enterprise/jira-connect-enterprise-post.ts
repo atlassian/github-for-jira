@@ -38,7 +38,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	});
 };
 
-const isReponseFromGitHub = (logger: Logger, response?: AxiosResponse) => {
+const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 	if (!response) {
 		logger.info("No response, cannot conclude if coming from GHE or not");
 		return false;
@@ -95,7 +95,7 @@ export const JiraConnectEnterprisePost = async (
 		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
 		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
 
-		if (!isReponseFromGitHub(req.log, response)) {
+		if (!isResponseFromGhe(req.log, response)) {
 			req.log.warn("Received OK response, but not GHE server");
 			res.status(200).send({
 				success: false, errors: [{
@@ -118,7 +118,7 @@ export const JiraConnectEnterprisePost = async (
 		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
-		if (isReponseFromGitHub(req.log, axiosError.response)) {
+		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			res.status(200).send({ success: true, appExists: false });
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
