@@ -48,7 +48,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
-			taskStartTimeInMS: new Date().getTime(),
+			taskStartTimeInSec: Math.floor(new Date().getTime() / 1000),
 			repositoryId: 0,
 			repository: {} as Repository,
 			cursor: subscription.repositoryCursor || undefined
@@ -66,7 +66,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 		if (!task) continue;
 		return {
 			task,
-			taskStartTimeInMS: new Date().getTime(),
+			taskStartTimeInSec: new Date().getTime(),
 			repositoryId: syncState.repoId,
 			repository: {
 				id: syncState.repoId,
@@ -334,7 +334,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 };
 
 const recordTaskProcessDuration = (nextTask: Task, gitHubProduct: string, subscription: Subscription, data: BackfillMessagePayload) => {
-	statsd.increment(metricTaskDuration.duration, new Date().getTime() - nextTask.taskStartTimeInMS, 1, {
+	statsd.increment(metricTaskDuration.duration, Math.floor(new Date().getTime() / 1000) - nextTask.taskStartTimeInSec, 1, {
 		task: nextTask.task,
 		gitHubProduct,
 		repoNums: getRepoNumberBuckets(subscription.totalNumberOfRepos),
