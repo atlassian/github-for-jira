@@ -360,7 +360,7 @@ const ONE_YEAR_IN_SEC = 12 * 30 * ONE_DAY_IN_SEC + TOLERANT_BUFFER_IN_SEC;
  */
 const getSyncDateBuckets = (fromDateStr: string | undefined, syncRequestedTimeStr: string | undefined): string => {
 	if (!fromDateStr) return "all_time";
-	if (!syncRequestedTimeStr) return "unknonw";
+	if (!syncRequestedTimeStr) return "unknown";
 	try {
 		const fromDate = new Date(fromDateStr);
 		const syncRequestedTime = new Date(syncRequestedTimeStr);
@@ -369,7 +369,7 @@ const getSyncDateBuckets = (fromDateStr: string | undefined, syncRequestedTimeSt
 		if (diffInSec < ONE_YEAR_IN_SEC) return "6mth-1yr";
 		return "1yr+";
 	} catch (_) {
-		return "unknown_time";
+		return "unknown";
 	}
 };
 
