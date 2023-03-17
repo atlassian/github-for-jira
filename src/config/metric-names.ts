@@ -42,6 +42,10 @@ export const metricTaskStatus = {
 	failed: `${server}.task-status.failed`
 };
 
+export const metricTaskDuration = {
+	duration: `${server}.task-duration`
+};
+
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`,
 	webhookProcessingTimes: `${server}.webhooks.processing-time.duration-ms`,

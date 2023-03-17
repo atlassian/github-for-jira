@@ -50,6 +50,7 @@ export const findOrStartSync = async (
 		jiraHost,
 		syncType,
 		startTime: fullSyncStartTime,
+		syncRequestedTime: new Date().toISOString(), //don't want to reuse the "startTime" above as it is used for full sync only
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,

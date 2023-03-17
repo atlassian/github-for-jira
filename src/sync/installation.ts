@@ -11,7 +11,7 @@ import { getBranchTask } from "./branches";
 import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
-import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
+import { metricSyncStatus, metricTaskStatus, metricTaskDuration } from "config/metric-names";
 import { isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
@@ -48,6 +48,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	if (subscription.repositoryStatus !== "complete") {
 		return {
 			task: "repository",
+			taskStartTimeInMS: new Date().getTime(),
 			repositoryId: 0,
 			repository: {} as Repository,
 			cursor: subscription.repositoryCursor || undefined
@@ -65,6 +66,7 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 		if (!task) continue;
 		return {
 			task,
+			taskStartTimeInMS: new Date().getTime(),
 			repositoryId: syncState.repoId,
 			repository: {
 				id: syncState.repoId,
@@ -324,9 +326,50 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		);
 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+		recordTaskProcessDuration(nextTask, gitHubProduct, subscription, data);
 
 	} catch (err) {
 		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
+	}
+};
+
+const recordTaskProcessDuration = (nextTask: Task, gitHubProduct: string, subscription: Subscription, data: BackfillMessagePayload) => {
+	statsd.increment(metricTaskDuration.duration, new Date().getTime() - nextTask.taskStartTimeInMS, 1, {
+		task: nextTask.task,
+		gitHubProduct,
+		repoNums: getRepoNumberBuckets(subscription.totalNumberOfRepos),
+		syncType: String(data.syncType),
+		commitsFromDate: getSyncDateBuckets(data.commitsFromDate, data.syncRequestedTime)
+	}, undefined);
+};
+
+const getRepoNumberBuckets = (repoNum: number | undefined): string => {
+	if (!repoNum) return "none";
+	if (repoNum < 10) return "0-9";
+	if (repoNum < 100) return "10-99";
+	if (repoNum < 1000) return "100-999";
+	return "1000+";
+};
+
+const ONE_DAY_IN_SEC = 24 * 60 * 60;
+const TOLERANT_BUFFER_IN_SEC = 10 * ONE_DAY_IN_SEC; // a bit random tolerant (4 days) buffer for calculating the time diff
+const SIX_MONTH_IN_SEC = 6 * 30 * ONE_DAY_IN_SEC + TOLERANT_BUFFER_IN_SEC;
+const ONE_YEAR_IN_SEC = 12 * 30 * ONE_DAY_IN_SEC + TOLERANT_BUFFER_IN_SEC;
+/**
+ * Generate a bucket for the time span requested for sync, this is approximate in the result.
+ */
+const getSyncDateBuckets = (fromDateStr: string | undefined, syncRequestedTimeStr: string | undefined): string => {
+	if (!fromDateStr) return "all_time";
+	if (!syncRequestedTimeStr) return "unknonw";
+	try {
+		const fromDate = new Date(fromDateStr);
+		const syncRequestedTime = new Date(syncRequestedTimeStr);
+		const diffInSec = Math.floor((syncRequestedTime.getTime() - fromDate.getTime()) / 1000);
+		if (diffInSec < SIX_MONTH_IN_SEC) return "0-6mth";
+		if (diffInSec < ONE_YEAR_IN_SEC) return "6mth-1yr";
+		return "1yr+";
+	} catch (_) {
+		return "unknown_time";
 	}
 };
 

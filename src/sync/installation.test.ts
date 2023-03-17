@@ -50,7 +50,7 @@ describe("sync/installation", () => {
 		updated_at: "1234"
 	};
 
-	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO, taskStartTimeInMS: new Date().getTime() };
 
 	const TEST_SUBSCRIPTION: Subscription = {} as any;
 
@@ -326,7 +326,7 @@ describe("sync/installation", () => {
 
 		it("don't reschedule a repository sync straight after a failed repository", async () => {
 			const connectionTimeoutErr = "an error that doesnt match";
-			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO };
+			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO, taskStartTimeInMS: new Date().getTime() };
 
 			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);

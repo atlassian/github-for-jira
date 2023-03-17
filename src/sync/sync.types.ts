@@ -28,6 +28,7 @@ export interface TaskPayload<E = any, P = any> {
 
 export interface Task {
 	task: TaskType;
+	taskStartTimeInMS: number;
 	repositoryId: number;
 	repository: Repository;
 	cursor?: string | number;

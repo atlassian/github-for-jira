@@ -190,6 +190,7 @@ export const mockJob = {
 
 export const mockNextTask:Task = {
 	task: "branch",
+	taskStartTimeInMS: 1672531200000,
 	repositoryId: 483702170,
 	repository: {
 		id: 483702170,
