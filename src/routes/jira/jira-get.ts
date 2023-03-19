@@ -196,41 +196,16 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getFailedSyncErrors = async (_subscription: Subscription) => {
-	// const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
-	// const errorCodes = failedSyncs.map(sync => sync.failedCode);
+const getFailedSyncErrors = async (subscription: Subscription) => {
+	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
+	const errorCodes = failedSyncs.map(sync => sync.failedCode);
+	const retryableErrorCodes = errorCodes.filter(errorCode => errorCode === "PERMISSIONS_ERROR" || errorCode === "CONNECTION_ERROR");
 
-	const errorCodes = [
-		"CONNECTION_ERROR", "CONNECTION_ERROR", "CONNECTION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR",
-		"AUTHENTICATION_ERROR", "AUTHORIZATION_ERROR", "AUTHORIZATION_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR",
-		"PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "NOT_FOUND_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR",
-		"SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "CURSOR_ERROR", "CURSOR_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR"
-	];
-	const errorCount = countBy(errorCodes);
-	const { AUTHORIZATION_ERROR, AUTHENTICATION_ERROR, CURSOR_ERROR, UNKNOWN_ERROR } = errorCount;
-	// Group the errors that don't have an individual message to display
-	errorCount.OTHER_ERRORS_COMBINED = AUTHORIZATION_ERROR + AUTHENTICATION_ERROR + CURSOR_ERROR + UNKNOWN_ERROR;
-
-	// console.log("errorCount");
-	// console.log("errorCount");
-	// console.log("errorCount");
-	// console.log("errorCount");
-	// console.log("errorCount");
-	// console.log(errorCount);
-	// console.log("WWWWWWWWWWWWW");
-	// console.log("errorCodes");
-	// console.log("errorCodes");
-	// console.log("errorCodes");
-	// console.log(errorCodes);
-	// console.log("failedSyncs");
-	// console.log(failedSyncs);
-	if (errorCodes.length === 0) {
+	if (retryableErrorCodes.length === 0) {
 		return undefined;
 	}
-	return countBy(errorCodes);
+	return countBy(retryableErrorCodes);
 };
-
-// atlas slauth curl -a github-for-jira -g micros-sv--github-for-jira-dl-admins -- -X POST 'https://github-for-jira.ap-southeast-2.dev.atl-paas.net/api/db-migration/up' -H "Content-Type: application/json" -d '{"targetScript": "20230202110100-add-repo-sync-state-fk.js" }'
 
 export const JiraGet = async (
 	req: Request,
