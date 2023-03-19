@@ -196,16 +196,16 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getFailedSyncErrors = async (subscription: Subscription) => {
-	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
-	const errorCodes = failedSyncs.map(sync => sync.failedCode);
+const getFailedSyncErrors = async (_subscription: Subscription) => {
+	// const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
+	// const errorCodes = failedSyncs.map(sync => sync.failedCode);
 
-	// const errorCodes = [
-	// 	"CONNECTION_ERROR", "CONNECTION_ERROR", "CONNECTION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR",
-	// 	"AUTHENTICATION_ERROR", "AUTHORIZATION_ERROR", "AUTHORIZATION_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR",
-	// 	"PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "NOT_FOUND_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR",
-	// 	"SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "CURSOR_ERROR", "CURSOR_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR"
-	// ];
+	const errorCodes = [
+		"CONNECTION_ERROR", "CONNECTION_ERROR", "CONNECTION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR", "AUTHENTICATION_ERROR",
+		"AUTHENTICATION_ERROR", "AUTHORIZATION_ERROR", "AUTHORIZATION_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR",
+		"PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "PERMISSIONS_ERROR", "NOT_FOUND_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR",
+		"SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "SERVER_ERROR", "CURSOR_ERROR", "CURSOR_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR", "UNKNOWN_ERROR"
+	];
 	const errorCount = countBy(errorCodes);
 	const { AUTHORIZATION_ERROR, AUTHENTICATION_ERROR, CURSOR_ERROR, UNKNOWN_ERROR } = errorCount;
 	// Group the errors that don't have an individual message to display
