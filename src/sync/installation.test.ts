@@ -4,7 +4,6 @@ import { getTargetTasks, handleBackfillError, isRetryableWithSmallerRequest, may
 import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
-import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
@@ -14,7 +13,6 @@ import { ConnectionTimedOutError, Sequelize } from "sequelize";
 import { AxiosError, AxiosResponse } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
 
-jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock("~/src/sync/deduplicator", () => ({
 	...jest.requireActual("~/src/sync/deduplicator"),
@@ -89,46 +87,52 @@ describe("sync/installation", () => {
 	describe("processInstallation", () => {
 
 		it("should process the installation with deduplication for cloud", async () => {
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation(jest.fn())(JOB_DATA, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-cloud`, expect.anything());
 		});
 
 		it("should process the installation with deduplication for GHES", async () => {
-			await processInstallation()(JOB_DATA_GHES, sentry, TEST_LOGGER);
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(JOB_DATA_GHES, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghes-ghaid-${GITHUB_APP_ID}`, expect.anything());
 		});
 
 		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(1);
+			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
 		});
 
 		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
 	});
 
 	describe("maybeScheduleNextTask", () => {
 		it("does nothing if there is no next task", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(0);
+			const sendSqsMessage = jest.fn();
+			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [], TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(0);
 		});
 
 		it("when multiple tasks, picks the one with the highest delay", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
+			const sendSqsMessage = jest.fn();
+			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(1);
+			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
 		});
 
 		it("not passing delay to queue when not provided", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [0], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 0, expect.anything());
+			const sendSqsMessage = jest.fn();
+			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [0], TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 0, expect.anything());
 		});
 	});
 

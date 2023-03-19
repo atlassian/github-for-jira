@@ -51,7 +51,7 @@ describe("backfill", () => {
 			const mockedProcessor = jest.fn();
 			mocked(processInstallation).mockReturnValue(mockedProcessor);
 			mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));
-			await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT).catch(e => getLogger("test").warn(e));
+			await backfillQueueMessageHandler({ queue: undefined })(BACKFILL_MESSAGE_CONTEXT).catch(e => getLogger("test").warn(e));
 			expect(sentryCaptureExceptionMock).toBeCalled();
 		});
 

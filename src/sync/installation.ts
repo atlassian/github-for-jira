@@ -17,13 +17,13 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
-import { sqsQueues } from "../sqs/queues";
 import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
+import { SQS } from "aws-sdk";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -427,6 +427,7 @@ export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscript
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export const maybeScheduleNextTask = async (
+	sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>,
 	jobData: BackfillMessagePayload,
 	nextTaskDelaysMs: Array<number>,
 	logger: Logger
@@ -438,7 +439,7 @@ export const maybeScheduleNextTask = async (
 		}
 		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
-		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
+		await sendSQSBackfillMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
 	}
 };
 
@@ -446,7 +447,7 @@ const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
 
-export const processInstallation = () => {
+export const processInstallation = (sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>) => {
 	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 	const deduplicator = new Deduplicator(
 		inProgressStorage, 1_000
@@ -480,11 +481,11 @@ export const processInstallation = () => {
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					await maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+					await maybeScheduleNextTask(sendSQSBackfillMessage, data, nextTaskDelaysMs, logger);
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
-					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
+					await sendSQSBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
@@ -499,7 +500,7 @@ export const processInstallation = () => {
 					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
-					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+					await sendSQSBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
 					break;
 				}
 			}

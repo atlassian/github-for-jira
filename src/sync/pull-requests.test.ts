@@ -282,7 +282,7 @@ describe("sync/pull-request", () => {
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
 
-				await expect(processInstallation()({
+				await expect(processInstallation(jest.fn())({
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
@@ -341,7 +341,7 @@ describe("sync/pull-request", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -398,7 +398,7 @@ describe("sync/pull-request", () => {
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1", 2)).reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -429,7 +429,7 @@ describe("sync/pull-request", () => {
 				.get("/repos/integrations/test-repo-name/pulls?per_page=100&page=6&state=all&sort=created&direction=desc")
 				.reply(200, []);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -448,7 +448,7 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -465,7 +465,7 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -597,7 +597,7 @@ describe("sync/pull-request", () => {
 				}
 			};
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 
@@ -637,7 +637,7 @@ describe("sync/pull-request", () => {
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOldCloud("1")).reply(200);
 
 
-				await expect(processInstallation()({
+				await expect(processInstallation(jest.fn())({
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
@@ -654,7 +654,7 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -671,7 +671,7 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -723,7 +723,7 @@ describe("sync/pull-request", () => {
 				}
 			};
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 });

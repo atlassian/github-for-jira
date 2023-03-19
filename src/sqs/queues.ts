@@ -12,8 +12,13 @@ const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
 
 // TODO: Make this a class
-export const sqsQueues = {
-	backfill: new SqsQueue<BackfillMessagePayload>({
+
+const backfillQueueHolder: { queue: SqsQueue<BackfillMessagePayload> | undefined } = {
+	queue: undefined
+};
+
+backfillQueueHolder.queue = new SqsQueue<BackfillMessagePayload>(
+	{
 		queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
 		queueRegion: envVars.SQS_BACKFILL_QUEUE_REGION,
@@ -21,9 +26,12 @@ export const sqsQueues = {
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	backfillQueueMessageHandler,
+	backfillQueueMessageHandler(backfillQueueHolder),
 	jiraAndGitHubErrorsHandler
-	),
+);
+
+export const sqsQueues = {
+	backfill: backfillQueueHolder.queue,
 
 	push: new SqsQueue<PushQueueMessagePayload>({
 		queueName: "push",
