@@ -197,9 +197,10 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getFailedSyncErrors = async (subscription: Subscription) => {
+	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
 	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
 	const errorCodes = failedSyncs.map(sync => sync.failedCode);
-	const retryableErrorCodes = errorCodes.filter(errorCode => errorCode === "PERMISSIONS_ERROR" || errorCode === "CONNECTION_ERROR");
+	const retryableErrorCodes = errorCodes.filter(errorCode => RETRYABLE_ERROR_CODES.includes(errorCode || ""));
 
 	if (retryableErrorCodes.length === 0) {
 		return undefined;

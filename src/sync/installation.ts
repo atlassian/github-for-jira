@@ -407,28 +407,27 @@ export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscript
 const getFailedCode = (err): string => {
 	const { status, message, code } = err;
 
-	const randomError = Math.random();
 	// Socket is closed or Client network socket disconnected before secure TLS connection was established
-	if (randomError < 0.1 || code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
+	if (code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
 		return "CONNECTION_ERROR";
 	}
-	if (randomError < 0.2 || status === 401) {
+	if (status === 401) {
 		return "AUTHENTICATION_ERROR";
 	}
 	// A generic catch for authorization issues, invalid permissions on the JWT
-	if (randomError < 0.3 || status === 403) {
+	if (status === 403) {
 		return "AUTHORIZATION_ERROR";
 	}
 	// If the user hasn't accepted updated permissions for the app.
-	if (randomError < 0.4 || status === 200 && message === "Resource not accessible by integration") {
+	if (status === 200 && message === "Resource not accessible by integration") {
 		return "PERMISSIONS_ERROR";
 	}
 	// Server error, Could be GitHub or Jira
-	if (randomError < 0.5 || status === 500 || status === 502 || status === 503) {
+	if (status === 500 || status === 502 || status === 503) {
 		return "SERVER_ERROR";
 	}
 	// After we have tried all variations of pages sizes down to 1
-	if (randomError < 0.6 || message?.includes("Error processing task after trying all page sizes")) {
+	if (message?.includes("Error processing task after trying all page sizes")) {
 		return "CURSOR_ERROR";
 	}
 	return "UNKNOWN_ERROR";
