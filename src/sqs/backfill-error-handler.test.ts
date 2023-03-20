@@ -6,6 +6,9 @@ import { Sequelize } from "sequelize";
 import { TaskError } from "~/src/sync/installation";
 import { Repository } from "models/subscription";
 import { Task } from "~/src/sync/sync.types";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import _ from "lodash";
+import { RepoSyncState } from "models/reposyncstate";
 
 describe("backfillErrorHandler", () => {
 	const mockPayload = {
@@ -88,5 +91,31 @@ describe("backfillErrorHandler", () => {
 			retryDelaySec: 540,
 			retryable: true
 		});
+	});
+
+	it("marks task as failed and reschedules message on last attempt", async () => {
+		const { subscription, repoSyncState } = await new DatabaseStateCreator().withActiveRepoSyncState().create();
+
+		const context = createContext(5, true);
+		context.payload = {
+			jiraHost,
+			installationId: subscription.gitHubInstallationId
+		};
+
+		const task = _.cloneDeep(TASK);
+		task.repositoryId = repoSyncState?.repoId || -1;
+
+		const sendMessageMock = jest.fn();
+		const result = await backfillErrorHandler(
+			{ queue: { sendMessage: sendMessageMock } as unknown as SqsQueue<any> }
+		)(new TaskError(task, new Error("boom")), context);
+
+		expect(result).toEqual({
+			isFailure: false
+		});
+		expect(sendMessageMock.mock.calls[0]).toEqual([
+			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }, 0
+		]);
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
 	});
 });

@@ -1,18 +1,26 @@
 import { BackfillMessagePayload, ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { SqsQueue } from "./sqs";
-import { TaskError } from "~/src/sync/installation";
+import { markCurrentTaskAsFailedAndContinue, TaskError } from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { handleUnknownError } from "~/src/sqs/error-handlers";
 import Logger from "bunyan";
 
-const handleTaskError = async (_: SqsQueue<BackfillMessagePayload>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
+const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
 	const log = rootLogger.child({ task });
 	log.info({ task }, "Handling error task");
 
 	// TODO: add task-related logic: e.g. mark as complete for 404; retry RateLimiting errors;
 
-	// TODO: if last attempt mark task as failed and continue
+	if (context.lastAttempt) {
+		// Otherwise the sync will be "stuck", not something we want
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, async (delayMs) => {
+			return await backfillQueue.sendMessage(context.payload, delayMs / 1000);
+		}, log);
+		return {
+			isFailure: false
+		};
+	}
 
 	return handleUnknownError(cause, context);
 };
