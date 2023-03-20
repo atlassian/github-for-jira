@@ -16,7 +16,12 @@
       </div>
       {{#if syncErrors.CONNECTION_ERROR}}
       <p>
-         We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b> repositories due to unexpected issue, please retry.
+        <b>{{syncErrors.CONNECTION_ERROR}}</b> tasks have not been backfilled. Please
+        <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
+           href="{{html_url}}"
+           data-installation-link="{{html_url}}"
+           target="_blank">accept permissions</a>
+        on GitHub (you must be the admin of your organization), then retry backfill.</div>
       </p>
       {{/if}}
 
