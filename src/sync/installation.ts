@@ -264,9 +264,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	try {
 
-		if (task === "commit") {
-			throw new Error();
-		}
 		const taskPayload = await execute();
 		if (taskPayload.jiraPayload) {
 			try {
@@ -334,9 +331,7 @@ export const handleBackfillError = async (
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
 	const logger = rootLogger.child({ err });
-	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask, err, logger);
 
-	return;
 	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
 
 	if (isRateLimitError) {
