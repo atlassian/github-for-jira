@@ -7,8 +7,12 @@ import Logger from "bunyan";
 
 const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
-	const log = rootLogger.child({ task });
-	log.info({ task }, "Handling error task");
+	const log = rootLogger.child({
+		task,
+		receiveCount: context.receiveCount,
+		lastAttempt: context.lastAttempt
+	});
+	log.info("Handling error task");
 
 	// TODO: add task-related logic: e.g. mark as complete for 404; retry RateLimiting errors;
 
