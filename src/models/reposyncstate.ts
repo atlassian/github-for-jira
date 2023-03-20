@@ -34,6 +34,8 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	commitFrom?: Date;
+
 
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
@@ -136,6 +138,15 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async deleteRepoForSubscription(subscription: Subscription, repoId: number, options: DestroyOptions = {}): Promise<number> {
+		return RepoSyncState.destroy(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				repoId
+			}
+		}));
+	}
+
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
 		return RepoSyncState.update({
@@ -149,7 +160,8 @@ export class RepoSyncState extends Model {
 			buildStatus: null,
 			buildCursor: null,
 			deploymentStatus: null,
-			deploymentCursor: null
+			deploymentCursor: null,
+			commitFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -202,6 +214,7 @@ RepoSyncState.init({
 	pullCursor: STRING,
 	buildCursor: STRING,
 	deploymentCursor: STRING,
+	commitFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,

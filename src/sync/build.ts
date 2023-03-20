@@ -5,7 +5,9 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
@@ -29,25 +31,69 @@ export const getBuildTask = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursorOrigStr: string | number = 1,
-	perPageOrig: number
+	cursor: string | number = 1,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
+) => {
+	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
+	if (!pageSizeCoef) {
+		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
+	} else {
+		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
+		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
+		// overcomplicate it too much and limit ourselves to 2 pages.
+		const limitedPageSizeCoef = Math.min(5, pageSizeCoef);
+		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
+
+		const scaledPageSize = perPage * limitedPageSizeCoef;
+
+		// Cursor 1, 2, 3, 4, 5 should be mapped to scaled cursor 1;
+		// Cursor 6, 7, 8, 9, 10 shoul be mapped to scaled cursor 2;
+		// etc
+		// Given that the page counter starts from 1, we need to deduct 1 first and then add 1 back to the outcome
+		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
+
+		const data = await fetchNextPagesInParallel(
+			shouldFetchNextPageInParallel ? 10 : 1,
+			scaledCursor,
+			(scaledPageNoToFetch) =>
+				doGetBuildTask(
+					logger, gitHubInstallationClient, jiraHost, repository,
+					scaledPageNoToFetch,
+					scaledPageSize,
+					messagePayload
+				)
+		);
+
+		(data.edges || []).forEach(edge => {
+			// Cursor is scaled... scaling back!
+			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+			// scaled pages:   ----1--------, --------2-----
+			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
+			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
+		});
+
+		return data;
+	}
+};
+
+const doGetBuildTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	cursor: string | number = 1,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ) => {
 	logger.info("Syncing Builds: started");
-	const cursorOrig = Number(cursorOrigStr);
-	let cursor = cursorOrig;
-	let perPage = perPageOrig;
-	let nextPage = cursorOrig + 1;
+	cursor = Number(cursor);
 
-	const pageSizeCoef = await numberFlag(NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF, 0, jiraHost);
-	if (pageSizeCoef > 0) {
-		// An experiment to speed up a particular customer by increasing the page size
-		perPage = perPageOrig * pageSizeCoef;
-		cursor = Math.floor(cursorOrig / pageSizeCoef);
-		nextPage = cursorOrig + pageSizeCoef;
-	}
-
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor);
+	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor, fromDate);
 	const { workflow_runs } = data;
+	const nextPage = cursor + 1;
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
 
 	if (!workflow_runs?.length) {

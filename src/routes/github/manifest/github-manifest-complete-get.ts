@@ -12,7 +12,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!jiraHost) {
 		throw new Error("Jira Host not found");
 	}
-	const gheHost = req.session.temp?.gheHost;
+	const gheHost = req.params.gheHost;
 	if (!gheHost) {
 		throw new Error("GitHub Enterprise Host not found");
 	}
@@ -38,7 +38,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			privateKey:  gitHubAppConfig.pem,
 			installationId: installation.id
 		}, jiraHost);
-		req.session.temp = undefined;
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
@@ -62,6 +61,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			success: false
 		});
 
-		res.redirect(`/error/${errorQueryParam}?retryUrl=/session&baseUrl=${gheHost}&ghRedirect=to&autoApp=1`);
+		res.redirect(`/error/${errorQueryParam}?retryUrl=/github-manifest`);
 	}
 };

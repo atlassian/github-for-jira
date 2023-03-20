@@ -1,4 +1,4 @@
-import { canLogHeader } from "./http-headers";
+import { canLogHeader, isUniquelyGitHubServerHeader } from "./http-headers";
 
 describe("canLogHeader", () => {
 	it.each(["content-type", "Accept-encoding", "x-forwarded-for"])("allows to log %s header", (header) =>
@@ -15,5 +15,15 @@ describe("canLogHeader", () => {
 
 	it.each(["blah", "foo"])("does not allow to log unknown header %s", (header) =>
 		expect(canLogHeader(header)).toBeFalsy()
+	);
+});
+
+describe("isUniquelyGitHubServerHeader", () => {
+	it.each(["content-type", "Accept-encoding", "x-forwarded-for"])("does not identify %s header as GitHub's one", (header) =>
+		expect(isUniquelyGitHubServerHeader(header)).toBeFalsy()
+	);
+
+	it.each(["X-github-delivery", "x-github-event", "x-github-hook-id"])("identies %s as GitHub header", (header) =>
+		expect(isUniquelyGitHubServerHeader(header)).toBeTruthy()
 	);
 });

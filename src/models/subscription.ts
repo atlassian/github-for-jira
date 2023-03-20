@@ -136,15 +136,10 @@ export class Subscription extends Model {
 		});
 	}
 
-	// TODO: currently, this function returns the first subscription that matches the jiraHost
-	// and installationId. Theoretically, the same Jira instance can have two subscriptions
-	// with the same installation ID (for example, when they have multiple GitHub Enterprise Servers
-	// connected). All calls of this function must be changed to pass in an additional appId parameter
-	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId?: number,
-		gitHubAppId?: number
+		gitHubInstallationId: number,
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {

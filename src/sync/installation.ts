@@ -18,7 +18,7 @@ import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
 import { sqsQueues } from "../sqs/queues";
-import { RateLimitingError } from "../github/client/github-client-errors";
+import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
@@ -43,6 +43,7 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 
 	return allTaskTypes;
 };
+
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	if (subscription.repositoryStatus !== "complete") {
 		return {
@@ -54,8 +55,8 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"]] });
+	// Order on "id" is to have deterministic behaviour when there are records without "repoUpdatedAt"
+	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"], ["id", "DESC"]] });
 
 	for (const syncState of repoSyncStates) {
 		const task = tasks.find(
@@ -110,7 +111,19 @@ export const updateJobStatus = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
-	await updateRepo(subscription, repositoryId, { [getStatusKey(task)]: status });
+
+	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
+
+	if (isComplete && task === "commit" && data.commitsFromDate) {
+		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
+		const commitsFromDate =  new Date(data.commitsFromDate);
+		// Set commitsFromDate in RepoSyncState only if its the later date
+		if (repoSync &&	(!repoSync.commitFrom || repoSync.commitFrom.getTime() > commitsFromDate.getTime())) {
+			updateRepoSyncFields["commitFrom"] = commitsFromDate;
+		}
+	}
+
+	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
 
 	if (!isComplete) {
 		// there's more data to get
@@ -148,23 +161,9 @@ export const updateJobStatus = async (
 export const isRetryableWithSmallerRequest = (err) =>
 	err?.isRetryable || false;
 
-// Checks if parsed error type is NOT_FOUND / status is 404 which come from 2 different sources
-// - GraphqlError: https://github.com/octokit/graphql.js/tree/master#errors
-// - RequestError: https://github.com/octokit/request.js/blob/5cef43ea4008728139686b6e542a62df28bb112a/src/fetch-wrapper.ts#L77
-export const isNotFoundError = (
-	err: any,
-	logger: Logger
-): boolean | undefined => {
-	const isNotFoundErrorType =
-		err?.errors && err.errors?.filter((error) => error.type === "NOT_FOUND");
-
-	const isNotFoundError = isNotFoundErrorType?.length > 0 || err?.status === 404;
-
-	isNotFoundError &&
-	logger.info("Repository deleted after discovery, skipping initial sync");
-
-	return isNotFoundError;
-};
+const isNotFoundGithubError = (err: GithubClientError) => () =>
+	(err.status === 404) ||
+	(err instanceof GithubClientGraphQLError && err.isNotFound());
 
 const sendJiraFailureToSentry = (err, sentry: Hub) => {
 	if (err?.response?.status === 400) {
@@ -400,18 +399,19 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	// Continue sync when a 404/NOT_FOUND is returned
-	if (isNotFoundError(err, logger)) {
+	// Continue sync when a 404/NOT_FOUND is returned from GitHub
+	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
 		// No edges left to process since the repository doesn't exist
+		logger.info("Repo was deleted, marking the task as completed");
 		await updateJobStatus(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 
 	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentRepositoryAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+	await markCurrentTaskAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
 };
 
-export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);

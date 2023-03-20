@@ -79,8 +79,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		await Promise.all(
 			[
-				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
-				findOrStartSync(subscription, req.log, true, "full")
+				saveConfiguredAppProperties(jiraHost, req.log, true),
+				findOrStartSync(subscription, req.log, "full")
 			]
 		);
 

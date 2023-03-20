@@ -136,7 +136,6 @@ export type BranchMessagePayload = BaseMessagePayload & {
 }
 
 export type BackfillMessagePayload = BaseMessagePayload & {
-	isInitialSync?: boolean,
 	syncType?: SyncType,
 	startTime?: string,
 	commitsFromDate?: string, //main commits from date, ISO string
