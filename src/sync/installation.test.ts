@@ -8,11 +8,14 @@ import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 import { mockNotFoundErrorOctokitGraphql, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError, Sequelize } from "sequelize";
 import { AxiosError, AxiosResponse } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
+import { updateJobStatus } from "./installation";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
 
 jest.mock("../sqs/queues");
 const mockedExecuteWithDeduplication = jest.fn();
@@ -354,6 +357,57 @@ describe("sync/installation", () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
+		});
+	});
+
+	describe("Update job status", () => {
+		const GITHUB_INSTALLATION_ID = 1111;
+		const REPO_ID = 12345;
+		const commitsFromDate = new Date();
+		let data: BackfillMessagePayload;
+		let sub: Subscription;
+		let repoSync: RepoSyncState;
+		beforeEach(async ()=> {
+			sub = await Subscription.install({ host: jiraHost, installationId: GITHUB_INSTALLATION_ID, gitHubAppId: undefined, hashedClientKey: "client-key" });
+			repoSync = await RepoSyncState.create({
+				subscriptionId: sub.id, repoId: REPO_ID, repoName: "name", repoUrl: "url", repoOwner: "owner", repoFullName: "full name",
+				repoPushedAt: new Date(), repoUpdatedAt: new Date(), repoCreatedAt: new Date()
+			});
+			data = {
+				installationId: GITHUB_INSTALLATION_ID,
+				jiraHost: jiraHost,
+				commitsFromDate: commitsFromDate.toISOString()
+			};
+		});
+		it("should update backfill from date upon success complete and existing backfill date is empty", async () => {
+			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.pullFrom!.toISOString()).toEqual(commitsFromDate.toISOString());
+		});
+		it("should update backfill from date upon success complete and new backfill date is earlier", async () => {
+			repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
+			await repoSync.save();
+			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.pullFrom!.toISOString()).toEqual(commitsFromDate.toISOString());
+		});
+		it("should skip update backfill from date upon success complete and new backfill date is more recent", async () => {
+			const oldDate = new Date(commitsFromDate.getTime() - 100000);
+			repoSync.pullFrom = oldDate;
+			await repoSync.save();
+			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.pullFrom!.toISOString()).toEqual(oldDate.toISOString());
+		});
+		it("should skip update backfill from date if task is branch", async () => {
+			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "branch", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+		});
+		it("should nott update backfill from date is job is not complete", async () => {
+			await updateJobStatus(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.pullFrom).toBeNull();
 		});
 	});
 
