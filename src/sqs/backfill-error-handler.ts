@@ -14,6 +14,7 @@ const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, 
 
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
+		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, async (delayMs) => {
 			return await backfillQueue.sendMessage(context.payload, delayMs / 1000);
 		}, log);
