@@ -40,6 +40,8 @@ export const backfillQueueMessageHandler =
 				});
 				await processor(backfillData, sentry, context.log);
 			} catch (err) {
+				context.log.warn({ err }, "processInstallation threw a error");
+
 				sentry.setExtra("job", {
 					id: context.message.MessageId,
 					attemptsMade: parseInt(context.message.Attributes?.ApproximateReceiveCount || "1"),

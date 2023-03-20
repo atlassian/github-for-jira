@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
-import { getTargetTasks, handleBackfillError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
+import {
+	getTargetTasks,
+	handleBackfillError,
+	isRetryableWithSmallerRequest,
+	maybeScheduleNextTask,
+	processInstallation,
+	TaskError
+} from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
@@ -118,6 +125,18 @@ describe("sync/installation", () => {
 			const sendSqsMessage = jest.fn();
 			await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
 			expect(sendSqsMessage).toBeCalledTimes(1);
+		});
+
+		it("should rethrow errors", async () => {
+			mockedExecuteWithDeduplication.mockRejectedValue(new Error(":haha:"));
+			const sendSqsMessage = jest.fn();
+			let err;
+			try {
+				await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err.message).toEqual(":haha:");
 		});
 	});
 
@@ -259,7 +278,7 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
 		});
 
-		it("60s delay if abuse detection triggered", async () => {
+		it("rethrows abuse detection error", async () => {
 			const abuseDetectionError = {
 				...new Error(),
 				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
@@ -279,8 +298,15 @@ describe("sync/installation", () => {
 				status: 403
 			};
 
-			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
+			let err;
+			try {
+				await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err).toBeInstanceOf(TaskError);
+			expect(err.task).toEqual(TASK);
+			expect(err.cause.status).toEqual(403);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
@@ -303,16 +329,23 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("30s delay if cannot connect to database", async () => {
+		it("rethrows cannot connect to database error", async () => {
 			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
 
-			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
+			let err;
+			try {
+				await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err).toBeInstanceOf(TaskError);
+			expect(err.task).toEqual(TASK);
+			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("30s delay when sequelize connection error", async () => {
+		it("rethrows connection error", async () => {
 			let sequelizeConnectionError: Error | undefined = undefined;
 			try {
 				const sequelize = new Sequelize({
@@ -328,8 +361,15 @@ describe("sync/installation", () => {
 				sequelizeConnectionError = err;
 			}
 
-			await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
+			let err;
+			try {
+				await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err).toBeInstanceOf(TaskError);
+			expect(err.task).toEqual(TASK);
+			expect(err.cause).toEqual(sequelizeConnectionError);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
