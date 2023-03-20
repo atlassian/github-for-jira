@@ -338,7 +338,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
  * Handles an error and takes action based on the error type and parameters
  */
 export const handleBackfillError = async (
-	err,
+	err: Error,
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	rootLogger: Logger,
@@ -346,17 +346,14 @@ export const handleBackfillError = async (
 
 	const logger = rootLogger.child({ err });
 
-	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
-
 	// TODO: rethrow as TaskError and handle in SQS error handler
-	if (isRateLimitError) {
-		const rateLimit = err instanceof RateLimitingError ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
-		const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
+	if (err instanceof RateLimitingError) {
+		const delayMs = Math.max(err.rateLimitReset * 1000 - Date.now(), 0);
 
-		if (delay) {
+		if (delayMs) {
 			// if not NaN or 0
-			logger.info({ delay }, `Delaying job for ${delay}ms`);
-			scheduleNextTask(delay);
+			logger.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
+			scheduleNextTask(delayMs);
 		} else {
 			//Retry immediately if rate limiting reset already
 			logger.info("Rate limit was reset already. Scheduling next task");
@@ -488,8 +485,8 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, logger, (delay: number) =>
-					nextTaskDelaysMs.push(delay)
+				() => doProcessInstallation(data, sentry, logger, (delayMs: number) =>
+					nextTaskDelaysMs.push(delayMs)
 				));
 
 			switch (result) {

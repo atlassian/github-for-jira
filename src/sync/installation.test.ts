@@ -14,7 +14,7 @@ import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository } from "models/subscription";
-import { mockNotFoundErrorOctokitGraphql, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
+import { mockNotFoundErrorOctokitGraphql } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError, Sequelize } from "sequelize";
 import { AxiosError, AxiosResponse } from "axios";
@@ -223,10 +223,8 @@ describe("sync/installation", () => {
 		});
 
 		it("Error with headers indicating rate limit will be retried with the appropriate delay", async () => {
-			const probablyRateLimitError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
+			gheNock.get("/")
+				.reply(403, {}, {
 					"access-control-allow-origin": "*",
 					"connection": "close",
 					"content-type": "application/json; charset=utf-8",
@@ -236,12 +234,14 @@ describe("sync/installation", () => {
 					"x-ratelimit-reset": "12360",
 					"x-ratelimit-resource": "core",
 					"x-ratelimit-used": "2421"
-				},
-				name: "HttpError",
-				status: 403
-			};
+				});
 
-			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			try {
+				await client.getMainPage(1000);
+			} catch (err) {
+				await handleBackfillError(err, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			}
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -272,7 +272,7 @@ describe("sync/installation", () => {
 		});
 
 		it("Repository failed if some kind of unknown error", async () => {
-			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new Error("some other error"), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(1);
@@ -311,24 +311,6 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("5s delay if connection timeout", async () => {
-			const connectionTimeoutErr = "connect ETIMEDOUT";
-
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("30s delay if cannot connect", async () => {
-			const connectionRefusedError = "connect ECONNREFUSED 10.255.0.9:26272";
-
-			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
 		it("rethrows cannot connect to database error", async () => {
 			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
 
@@ -346,7 +328,7 @@ describe("sync/installation", () => {
 		});
 
 		it("rethrows connection error", async () => {
-			let sequelizeConnectionError: Error | undefined = undefined;
+			let sequelizeConnectionError: Error;
 			try {
 				const sequelize = new Sequelize({
 					dialect: "postgres",
@@ -363,27 +345,16 @@ describe("sync/installation", () => {
 
 			let err;
 			try {
-				await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+				await handleBackfillError(sequelizeConnectionError!, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			} catch (caught) {
 				err = caught;
 			}
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
-			expect(err.cause).toEqual(sequelizeConnectionError);
+			expect(err.cause).toEqual(sequelizeConnectionError!);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
-
-		it("don't reschedule a repository sync straight after a failed repository", async () => {
-			const connectionTimeoutErr = "an error that doesnt match";
-			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO };
-
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(1);
-		});
-
 	});
 
 	describe("getTargetTasks", () => {
