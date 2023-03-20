@@ -92,13 +92,9 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost, targetTasks } = data;
+	const { targetTasks } = data;
 	// Get a fresh subscription instance
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		installationId,
-		data.gitHubAppConfig?.gitHubAppId
-	);
+	const subscription = await findSubscriptionForMessage(data);
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
@@ -192,12 +188,9 @@ const sendJiraFailureToSentry = (err, sentry: Hub) => {
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		gitHubInstallationId,
-		data.gitHubAppConfig?.gitHubAppId
-	);
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+	const { installationId: gitHubInstallationId, jiraHost } = data;
+	const subscription = await findSubscriptionForMessage(data);
 
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) {
@@ -326,7 +319,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
+		await handleBackfillError(err, data, nextTask, logger, scheduleNextTask);
 	}
 };
 
@@ -337,7 +330,6 @@ export const handleBackfillError = async (
 	err,
 	data: BackfillMessagePayload,
 	nextTask: Task,
-	subscription: Subscription,
 	rootLogger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
@@ -408,10 +400,23 @@ export const handleBackfillError = async (
 	}
 
 	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentTaskAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+	await markCurrentTaskAsFailedAndContinue(data, nextTask, scheduleNextTask, logger);
 };
 
-export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
+	Subscription.getSingleInstallation(
+		data.jiraHost,
+		data.installationId,
+		data.gitHubAppConfig?.gitHubAppId
+	);
+
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
+	const subscription = await findSubscriptionForMessage(data);
+	if (!subscription) {
+		log.warn("No subscription found, nothing to do");
+		return;
+	}
+
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
@@ -474,7 +479,7 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
+				() => doProcessInstallation(data, sentry, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
 
