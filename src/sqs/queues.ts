@@ -13,11 +13,18 @@ const logger = getLogger("sqs-queues");
 
 // TODO: Make this a class
 
-const backfillQueueHolder: { queue: SqsQueue<BackfillMessagePayload> | undefined } = {
-	queue: undefined
+let backfillQueue: SqsQueue<BackfillMessagePayload> | undefined = undefined;
+
+const backfillQueueMessageSender = (message, delaySec, logger) => {
+	if (backfillQueue) {
+		return backfillQueue.sendMessage(message, delaySec, logger);
+	} else {
+		logger.error("Cannot send a message: queue is not initialised yet. Should never happen!");
+		throw new Error("Queue is not ready");
+	}
 };
 
-backfillQueueHolder.queue = new SqsQueue<BackfillMessagePayload>(
+backfillQueue = new SqsQueue<BackfillMessagePayload>(
 	{
 		queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
@@ -26,12 +33,12 @@ backfillQueueHolder.queue = new SqsQueue<BackfillMessagePayload>(
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	backfillQueueMessageHandler(backfillQueueHolder),
+	backfillQueueMessageHandler(backfillQueueMessageSender),
 	jiraAndGitHubErrorsHandler
 );
 
 export const sqsQueues = {
-	backfill: backfillQueueHolder.queue,
+	backfill: backfillQueue,
 
 	push: new SqsQueue<PushQueueMessagePayload>({
 		queueName: "push",
