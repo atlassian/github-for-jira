@@ -10,7 +10,9 @@ const handleTaskError = async (_: SqsQueue<BackfillMessagePayload>, task: Task, 
 	const log = rootLogger.child({ task });
 	log.info({ task }, "Handling error task");
 
-	// TODO add task-related logic: e.g. mark as complete for 404; retry RateLimiting errors;
+	// TODO: add task-related logic: e.g. mark as complete for 404; retry RateLimiting errors;
+
+	// TODO: if last attempt mark task as failed and continue
 
 	return handleUnknownError(cause, context);
 };
