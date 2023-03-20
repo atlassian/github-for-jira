@@ -212,13 +212,6 @@
                         {{syncStatus}}
                       </span>
                       {{!-- Display any sync warnings --}}
-                      {{#if (isMissingPermissions syncWarning)}}
-                        <div class="jiraConfiguration__syncWarning">
-                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                            Sync failed warnings
-                          </span>
-                        </div>
-                      {{/if}}
                       {{#if (inProgressOrPendingSync syncStatus)}}
                         <div class="jiraConfiguration__loaderContainer">
                           <aui-spinner size="small"></aui-spinner>

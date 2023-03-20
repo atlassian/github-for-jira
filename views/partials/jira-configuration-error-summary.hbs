@@ -15,14 +15,13 @@
         Description
       </div>
       {{#if syncErrors.CONNECTION_ERROR}}
-      <p>
+      <div>
         <b>{{syncErrors.CONNECTION_ERROR}}</b> tasks have not been backfilled. Please
-        <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-           href="{{html_url}}"
+        <a href="{{html_url}}"
            data-installation-link="{{html_url}}"
            target="_blank">accept permissions</a>
-        on GitHub (you must be the admin of your organization), then retry backfill.</div>
-      </p>
+        on GitHub (you must be the admin of your organization), then retry backfill.
+      </div>
       {{/if}}
 
       {{#if syncErrors.PERMISSIONS_ERROR}}
