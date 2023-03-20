@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as installation from "~/src/sync/installation";
 import { getTargetTasks, handleBackfillError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
-import { Task } from "~/src/sync/sync.types";
+import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { sqsQueues } from "~/src/sqs/queues";
@@ -379,35 +379,47 @@ describe("sync/installation", () => {
 				commitsFromDate: commitsFromDate.toISOString()
 			};
 		});
-		it("should update backfill from date upon success complete and existing backfill date is empty", async () => {
-			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
-			await repoSync.reload();
-			expect(repoSync.pullFrom!.toISOString()).toEqual(commitsFromDate.toISOString());
-		});
-		it("should update backfill from date upon success complete and new backfill date is earlier", async () => {
-			repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
-			await repoSync.save();
-			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
-			await repoSync.reload();
-			expect(repoSync.pullFrom!.toISOString()).toEqual(commitsFromDate.toISOString());
-		});
-		it("should skip update backfill from date upon success complete and new backfill date is more recent", async () => {
-			const oldDate = new Date(commitsFromDate.getTime() - 100000);
-			repoSync.pullFrom = oldDate;
-			await repoSync.save();
-			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
-			await repoSync.reload();
-			expect(repoSync.pullFrom!.toISOString()).toEqual(oldDate.toISOString());
-		});
 		it("should skip update backfill from date if task is branch", async () => {
 			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "branch", REPO_ID, getLogger("test"), jest.fn());
 			await repoSync.reload();
 			expect(repoSync.branchFrom).toBeNull();
 		});
-		it("should nott update backfill from date is job is not complete", async () => {
-			await updateJobStatus(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+		it("should skip update backfill from date if task is repository", async () => {
+			await updateJobStatus(data, { edges: [], jiraPayload: undefined }, "repository", REPO_ID, getLogger("test"), jest.fn());
 			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+			expect(repoSync.commitFrom).toBeNull();
 			expect(repoSync.pullFrom).toBeNull();
+			expect(repoSync.buildFrom).toBeNull();
+			expect(repoSync.deploymentFrom).toBeNull();
+		});
+		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (task: TaskType) => {
+			const colTaskFrom = `${task}From`;
+			it(`${task}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
+				await updateJobStatus(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${task}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
+				repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
+				await repoSync.save();
+				await updateJobStatus(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${task}: should skip update backfill from date upon success complete and new backfill date is more recent`, async () => {
+				const oldDate = new Date(commitsFromDate.getTime() - 100000);
+				repoSync[colTaskFrom]= oldDate;
+				await repoSync.save();
+				await updateJobStatus(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(oldDate.toISOString());
+			});
+			it(`${task}: should not update backfill from date is job is not complete`, async () => {
+				await updateJobStatus(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync.pullFrom).toBeNull();
+			});
 		});
 	});
 
