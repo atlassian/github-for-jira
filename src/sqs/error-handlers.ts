@@ -26,7 +26,7 @@ export const handleUnknownError: ErrorHandler<unknown> = async (
 	context: SQSMessageContext<unknown>
 ): Promise<ErrorHandlingResult> => {
 	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
-	context.log.warn({ err }, `no error result found, retrying with exponential backoff`);
+	context.log.warn({ err, delaySec }, `retrying with exponential backoff`);
 	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 };
 
