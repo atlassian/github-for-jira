@@ -23,7 +23,6 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { SQS } from "aws-sdk";
-import { ConnectionTimedOutError } from "sequelize";
 import _ from "lodash";
 
 const tasks: TaskProcessors = {
@@ -362,39 +361,6 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	if (String(err).includes("connect ETIMEDOUT")) {
-		logger.warn("ETIMEDOUT error, use SQS error handler");
-		throw new TaskError(nextTask, err);
-	}
-
-	if (String(err).includes("connect ECONNREFUSED")) {
-		logger.warn("ECONNREFUSED error, use SQS error handler");
-		throw new TaskError(nextTask, err);
-	}
-
-	if (err instanceof ConnectionTimedOutError) {
-		logger.warn("ConnectionTimedOutError error, use SQS error handler");
-		throw new TaskError(nextTask, err);
-	}
-
-	// TODO: replace with "instanceof" when sequelize version is upgraded to some modern one
-	// Capturing errors like SequelizeConnectionError, SequelizeConnectionAcquireTimeoutError etc
-	// that are not exported from sequelize
-	if (String(err.name).toLowerCase().includes("sequelize")) {
-		logger.warn("sequelize error, retrying in 30 seconds, use SQS error handler");
-		throw new TaskError(nextTask, err);
-	}
-
-	if (
-		String(err.message).includes(
-			"You have triggered an abuse detection mechanism"
-		)
-	) {
-		// Too much server processing time, wait 60 seconds and try again
-		logger.warn("Abuse detection triggered, use SQS error handler");
-		throw new TaskError(nextTask, err);
-	}
-
 	// TODO: throw TaskError and handle in SQS error handler
 	// Continue sync when a 404/NOT_FOUND is returned from GitHub
 	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
@@ -404,9 +370,8 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	// TODO: throw TaskError and handle in SQS error handler
-	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentTaskAsFailedAndContinue(data, nextTask, scheduleNextTask, logger);
+	logger.info("Rethrow unknown error to retry in SQS error handler");
+	throw new TaskError(nextTask, err);
 };
 
 const findSubscriptionForMessage = (data: BackfillMessagePayload) =>

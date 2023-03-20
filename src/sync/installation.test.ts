@@ -16,7 +16,7 @@ import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client
 import { Repository } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
-import { ConnectionTimedOutError, Sequelize } from "sequelize";
+import { ConnectionTimedOutError } from "sequelize";
 import { AxiosError, AxiosResponse } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
@@ -264,54 +264,13 @@ describe("sync/installation", () => {
 		});
 
 		it("Repository ignored if GraphQL not found error", async () => {
-
 			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
 			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository failed if some kind of unknown error", async () => {
-			await handleBackfillError(new Error("some other error"), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(1);
-		});
-
-		it("rethrows abuse detection error", async () => {
-			const abuseDetectionError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "6479",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				},
-				message: "You have triggered an abuse detection mechanism",
-				name: "HttpError",
-				status: 403
-			};
-
-			let err;
-			try {
-				await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			} catch (caught) {
-				err = caught;
-			}
-			expect(err).toBeInstanceOf(TaskError);
-			expect(err.task).toEqual(TASK);
-			expect(err.cause.status).toEqual(403);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("rethrows cannot connect to database error", async () => {
+		it("rethrows unknown error", async () => {
 			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
 
 			let err;
@@ -327,34 +286,6 @@ describe("sync/installation", () => {
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("rethrows connection error", async () => {
-			let sequelizeConnectionError: Error;
-			try {
-				const sequelize = new Sequelize({
-					dialect: "postgres",
-					host: "1.2.3.400",
-					port: 3306,
-					username: "your_username",
-					password: "your_password",
-					database: "your_database"
-				});
-				await sequelize.authenticate();
-			} catch (err) {
-				sequelizeConnectionError = err;
-			}
-
-			let err;
-			try {
-				await handleBackfillError(sequelizeConnectionError!, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			} catch (caught) {
-				err = caught;
-			}
-			expect(err).toBeInstanceOf(TaskError);
-			expect(err.task).toEqual(TASK);
-			expect(err.cause).toEqual(sequelizeConnectionError!);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
 	});
 
 	describe("getTargetTasks", () => {
