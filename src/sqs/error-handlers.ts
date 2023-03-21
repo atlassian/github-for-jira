@@ -20,6 +20,16 @@ const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
 type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Error;
+
+export const handleUnknownError: ErrorHandler<unknown> = async (
+	err: ErrorTypes,
+	context: SQSMessageContext<unknown>
+): Promise<ErrorHandlingResult> => {
+	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
+	context.log.warn({ err, delaySec }, "Unknown error: retrying with exponential backoff");
+	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+};
+
 export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
 	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
@@ -34,10 +44,7 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: E
 		return maybeResult;
 	}
 
-	//In case if error is unknown we should use exponential backoff
-	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
-	context.log.warn({ error }, `no error result found, retrying`);
-	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+	return handleUnknownError(error, context);
 };
 
 

@@ -6,7 +6,6 @@ import { envVars } from "config/env";
 import { Errors } from "config/errors";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
@@ -153,7 +152,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
-		if (await booleanFlag(BooleanFlags.RENEW_GITHUB_TOKEN, res.locals.jiraHost) && req.session?.githubRefreshToken) {
+		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
 			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, logger);
 			if (token) {

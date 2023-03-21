@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -18,11 +17,11 @@ import { getBuildTask } from "./build";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 
 
-jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/builds", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
+	const mockBackfillQueueSendMessage = jest.fn();
 
 	const makeExpectedJiraResponse = (builds) => ({
 		builds,
@@ -96,8 +95,8 @@ describe("sync/builds", () => {
 			}
 		]);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
 	it("should get proper jira payload that within from date when increment ff on", async () => {
@@ -145,7 +144,7 @@ describe("sync/builds", () => {
 
 	it("should use scaled per_page and cursor when FF is ON", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(5);
@@ -168,8 +167,8 @@ describe("sync/builds", () => {
 			.post("/rest/builds/0.1/bulk")
 			.reply(200);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 		expect(nock.isDone()).toBeTruthy();
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
 	});
@@ -180,7 +179,7 @@ describe("sync/builds", () => {
 		const SCALE_COEF = 5;
 
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(6);
@@ -203,8 +202,8 @@ describe("sync/builds", () => {
 			.post("/rest/builds/0.1/bulk")
 			.reply(200);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
@@ -213,7 +212,7 @@ describe("sync/builds", () => {
 
 	it("should finish task with parallel fetching when no more data", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF,
+			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(6);
@@ -227,7 +226,7 @@ describe("sync/builds", () => {
 				.reply(200, []);
 		});
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
 	});
 
@@ -297,8 +296,8 @@ describe("sync/builds", () => {
 			}
 		]);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-		expect(sqsQueues.backfill.sendMessage).toBeCalledWith(data, 0, expect.anything());
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
 	it("should not call Jira if no issue keys are present", async () => {
@@ -319,7 +318,7 @@ describe("sync/builds", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
@@ -335,7 +334,7 @@ describe("sync/builds", () => {
 		const interceptor = jiraNock.post(/.*/);
 		const scope = interceptor.reply(200);
 
-		await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
 	});
