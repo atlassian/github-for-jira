@@ -278,6 +278,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	};
 
 	try {
+		if (jiraHost === "https://bgvozdev.atlassian.net") {
+			logger.info("bgvozdev testing...");
+			if (Math.random() < 0.4) {
+				throw new Error("bgvozdev testing.... boom!");
+			}
+		}
+
 		const taskPayload = await execute();
 		if (taskPayload.jiraPayload) {
 			try {
