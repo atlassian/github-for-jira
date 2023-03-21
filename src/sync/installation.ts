@@ -17,13 +17,13 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
-import { sqsQueues } from "../sqs/queues";
 import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
 import { ConnectionTimedOutError } from "sequelize";
+import { SQS } from "aws-sdk";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -94,13 +94,9 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost, targetTasks } = data;
+	const { targetTasks } = data;
 	// Get a fresh subscription instance
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		installationId,
-		data.gitHubAppConfig?.gitHubAppId
-	);
+	const subscription = await findSubscriptionForMessage(data);
 
 	// handle promise rejection when an org is removed during a sync
 	if (!subscription) {
@@ -198,12 +194,9 @@ const sendJiraFailureToSentry = (err, sentry: Hub) => {
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, gitHubInstallationId: number, jiraHost: string, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
-	const subscription = await Subscription.getSingleInstallation(
-		jiraHost,
-		gitHubInstallationId,
-		data.gitHubAppConfig?.gitHubAppId
-	);
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+	const { installationId: gitHubInstallationId, jiraHost } = data;
+	const subscription = await findSubscriptionForMessage(data);
 
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) {
@@ -332,7 +325,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, subscription, logger, scheduleNextTask);
+		await handleBackfillError(err, data, nextTask, logger, scheduleNextTask);
 	}
 };
 
@@ -343,7 +336,6 @@ export const handleBackfillError = async (
 	err,
 	data: BackfillMessagePayload,
 	nextTask: Task,
-	subscription: Subscription,
 	rootLogger: Logger,
 	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
 
@@ -414,10 +406,23 @@ export const handleBackfillError = async (
 	}
 
 	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentTaskAsFailedAndContinue(subscription, nextTask, scheduleNextTask);
+	await markCurrentTaskAsFailedAndContinue(data, nextTask, scheduleNextTask, logger);
 };
 
-export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
+	Subscription.getSingleInstallation(
+		data.jiraHost,
+		data.installationId,
+		data.gitHubAppConfig?.gitHubAppId
+	);
+
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
+	const subscription = await findSubscriptionForMessage(data);
+	if (!subscription) {
+		log.warn("No subscription found, nothing to do");
+		return;
+	}
+
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
@@ -433,6 +438,7 @@ export const markCurrentTaskAsFailedAndContinue = async (subscription: Subscript
 
 // Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
 export const maybeScheduleNextTask = async (
+	sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>,
 	jobData: BackfillMessagePayload,
 	nextTaskDelaysMs: Array<number>,
 	logger: Logger
@@ -444,7 +450,7 @@ export const maybeScheduleNextTask = async (
 		}
 		const delayMs = nextTaskDelaysMs.shift();
 		logger.info("Scheduling next job with a delay = " + delayMs);
-		await sqsQueues.backfill.sendMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
+		await sendSQSBackfillMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
 	}
 };
 
@@ -452,7 +458,7 @@ const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
 
-export const processInstallation = () => {
+export const processInstallation = (sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>) => {
 	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 	const deduplicator = new Deduplicator(
 		inProgressStorage, 1_000
@@ -479,18 +485,18 @@ export const processInstallation = () => {
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, installationId, jiraHost, logger, (delay: number) =>
+				() => doProcessInstallation(data, sentry, logger, (delay: number) =>
 					nextTaskDelaysMs.push(delay)
 				));
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					await maybeScheduleNextTask(data, nextTaskDelaysMs, logger);
+					await maybeScheduleNextTask(sendSQSBackfillMessage, data, nextTaskDelaysMs, logger);
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
-					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC, logger);
+					await sendSQSBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
@@ -505,7 +511,7 @@ export const processInstallation = () => {
 					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
 					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
 					// is finished.
-					await sqsQueues.backfill.sendMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+					await sendSQSBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
 					break;
 				}
 			}
