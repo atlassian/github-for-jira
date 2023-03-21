@@ -18,7 +18,6 @@ export const findOrStartSync = async (
 	targetTasks?: TaskType[],
 	metricTags?: Record<string, string>
 ): Promise<void> => {
-	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
@@ -31,7 +30,6 @@ export const findOrStartSync = async (
 	await resetTargetedTasks(subscription, syncType, targetTasks);
 
 	if (syncType === "full" && !targetTasks?.length) {
-		fullSyncStartTime = new Date().toISOString();
 		await subscription.update({
 			totalNumberOfRepos: null,
 			repositoryCursor: null,
@@ -51,7 +49,7 @@ export const findOrStartSync = async (
 		installationId,
 		jiraHost,
 		syncType,
-		startTime: fullSyncStartTime,
+		startTime: new Date().toISOString(),
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
