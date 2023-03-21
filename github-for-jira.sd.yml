@@ -351,6 +351,9 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
+          domain:
+            - github.dev.atlassian.com
           ip_whitelist:
             - public
           routes: &blackholeSpammingIPs
