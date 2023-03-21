@@ -351,6 +351,7 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
           ip_whitelist:
             - public
           routes: &blackholeSpammingIPs
