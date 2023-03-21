@@ -41,8 +41,4 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 			}
 
 			return handleUnknownError(err, context);
-
-			return {
-				isFailure: false
-			};
 		};
