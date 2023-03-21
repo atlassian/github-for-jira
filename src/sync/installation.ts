@@ -12,6 +12,7 @@ import { getCommitTask } from "./commits";
 import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
+import { repoCountToBucket } from "config/metric-helpers";
 import { isBlocked } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
@@ -149,7 +150,11 @@ export const updateJobStatus = async (
 		if (startTime) {
 			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
 			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, { gitHubProduct });
+			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, {
+				...data.metricTags,
+				gitHubProduct,
+				repos: repoCountToBucket(subscription.totalNumberOfRepos)
+			});
 		}
 
 		logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
