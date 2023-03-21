@@ -8,13 +8,15 @@ import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/cli
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { SyncType, TaskType } from "~/src/sync/sync.types";
 import { sqsQueues } from "../sqs/queues";
+import { backfillFromDateToBucket } from "config/metric-helpers";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
-	targetTasks?: TaskType[]
+	targetTasks?: TaskType[],
+	metricTags?: Record<string, string>
 ): Promise<void> => {
 	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
@@ -53,7 +55,12 @@ export const findOrStartSync = async (
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
-		gitHubAppConfig
+		gitHubAppConfig,
+		metricTags: {
+			...metricTags,
+			backfillFrom: backfillFromDateToBucket(mainCommitsFromDate),
+			syncType: syncType ? String(syncType) : "empty"
+		}
 	}, 0, logger);
 };
 
