@@ -16,14 +16,10 @@ const logger = getLogger("sqs-queues");
 
 let backfillQueue: SqsQueue<BackfillMessagePayload> | undefined = undefined;
 
-const backfillQueueMessageSender = (message, delaySec, logger) => {
-	if (backfillQueue) {
-		return backfillQueue.sendMessage(message, delaySec, logger);
-	} else {
-		logger.error("Cannot send a message: queue is not initialised yet. Should never happen!");
-		throw new Error("Queue is not ready");
-	}
-};
+const backfillQueueMessageSender = (message, delaySec, logger) =>
+	// Given the single-threaded nature of Node.js, backfillQueue is always initialised
+	// because SqsQueue is not triggering messageHandler from ctor
+	backfillQueue!.sendMessage(message, delaySec, logger);
 
 backfillQueue = new SqsQueue<BackfillMessagePayload>(
 	{
