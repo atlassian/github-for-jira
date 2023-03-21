@@ -195,7 +195,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
 	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
 	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
