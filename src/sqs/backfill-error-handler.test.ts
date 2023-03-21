@@ -1,7 +1,6 @@
 import { BackfillMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { getLogger } from "config/logger";
 import { backfillErrorHandler } from "~/src/sqs/backfill-error-handler";
-import { SqsQueue } from "~/src/sqs/sqs";
 import { Sequelize } from "sequelize";
 import { TaskError } from "~/src/sync/installation";
 import { Repository } from "models/subscription";
@@ -60,7 +59,7 @@ describe("backfillErrorHandler", () => {
 			name: "HttpError",
 			status: 403
 		};
-		const result = await backfillErrorHandler({ queue: jest.fn() as unknown as SqsQueue<any> })(abuseDetectionError, createContext(2, false));
+		const result = await backfillErrorHandler(jest.fn())(abuseDetectionError, createContext(2, false));
 		expect(result).toEqual({
 			isFailure: true,
 			retryDelaySec: 540,
@@ -85,7 +84,7 @@ describe("backfillErrorHandler", () => {
 			sequelizeConnectionError = err;
 		}
 
-		const result = await backfillErrorHandler({ queue: jest.fn() as unknown as SqsQueue<any> })(new TaskError(TASK, sequelizeConnectionError), createContext(2, false));
+		const result = await backfillErrorHandler(jest.fn())(new TaskError(TASK, sequelizeConnectionError), createContext(2, false));
 		expect(result).toEqual({
 			isFailure: true,
 			retryDelaySec: 540,
@@ -106,16 +105,15 @@ describe("backfillErrorHandler", () => {
 		task.repositoryId = repoSyncState?.repoId || -1;
 
 		const sendMessageMock = jest.fn();
-		const result = await backfillErrorHandler(
-			{ queue: { sendMessage: sendMessageMock } as unknown as SqsQueue<any> }
-		)(new TaskError(task, new Error("boom")), context);
+		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new Error("boom")), context);
 
 		expect(result).toEqual({
 			isFailure: false
 		});
-		expect(sendMessageMock.mock.calls[0]).toEqual([
-			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }, 0
-		]);
+		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
+		);
+		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
 	});
 });

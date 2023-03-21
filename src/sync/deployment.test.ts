@@ -46,6 +46,7 @@ describe("sync/deployments", () => {
 				})
 				.query(true)
 				.reply(200, deploymentsResponse);
+			githubUserTokenNock(installationId);
 		};
 
 		const createJiraNock = (deployments) => {
@@ -65,8 +66,6 @@ describe("sync/deployments", () => {
 				.repoSyncStatePendingForDeployments()
 				.create();
 			repoSyncState = dbState.repoSyncState!;
-
-			githubUserTokenNock(installationId);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -86,6 +85,7 @@ describe("sync/deployments", () => {
 				jiraHost
 			).mockResolvedValue(true);
 
+			githubUserTokenNock(installationId);
 			githubNock
 				.post("/graphql", {
 					query: getDeploymentsQuery,
@@ -414,9 +414,9 @@ describe("sync/deployments", () => {
 		it("should not call Jira if no issue keys are present", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
-			githubUserTokenNock(installationId);
-
 			createGitHubNock(deploymentNodesFixture);
+
+			githubUserTokenNock(installationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 				.reply(200, {
 					commit: {
@@ -430,6 +430,11 @@ describe("sync/deployments", () => {
 					html_url: `test-repo-url/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`
 				});
 
+			githubUserTokenNock(installationId);
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
+				.query(true)
+				.reply(200, []);
+
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
@@ -440,7 +445,16 @@ describe("sync/deployments", () => {
 
 		it("should not call Jira if no data is returned", async () => {
 			const data = { installationId, jiraHost };
-			createGitHubNock();
+
+			createGitHubNock({
+				data: {
+					repository: {
+						deployments: {
+							edges: []
+						}
+					}
+				}
+			});
 
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
@@ -454,6 +468,7 @@ describe("sync/deployments", () => {
 	describe("server", () => {
 
 		const createGitHubServerNock = (deploymentsResponse?) => {
+			gheUserTokenNock(installationId);
 			gheNock
 				.post("/api/graphql", {
 					query: getDeploymentsQuery,
@@ -486,8 +501,6 @@ describe("sync/deployments", () => {
 				.create();
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
-
-			gheUserTokenNock(installationId);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {

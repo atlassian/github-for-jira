@@ -78,6 +78,21 @@ describe("fetchNextPagesInParallel", () => {
 		});
 	});
 
+	test("throws a error if any of the pages throws a error", async () => {
+		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor) => {
+			if (pageCursor == 2) {
+				return Promise.reject(new Error("foo"));
+			}
+			const edges = [{
+				cursor: pageCursor,
+				node: { id: "id" + pageCursor }
+			}];
+			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor }] };
+			return Promise.resolve({ edges, jiraPayload });
+		});
+		await expect(fetchNextPagesInParallel(2, 1, singlePageFetchFactory)).rejects.toThrowError("foo");
+	});
+
 	test("returns empty page if both are empty", async () => {
 		const singlePageFetchFactory = jest.fn().mockImplementation(() => {
 			return Promise.resolve({

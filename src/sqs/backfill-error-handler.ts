@@ -1,11 +1,11 @@
 import { BackfillMessagePayload, ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
-import { SqsQueue } from "./sqs";
 import { markCurrentTaskAsFailedAndContinue, TaskError } from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { handleUnknownError } from "~/src/sqs/error-handlers";
 import Logger from "bunyan";
+import { SQS } from "aws-sdk";
 
-const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
+const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
 	const log = rootLogger.child({
 		task,
@@ -20,7 +20,7 @@ const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, 
 		// Otherwise the sync will be "stuck", not something we want
 		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, async (delayMs) => {
-			return await backfillQueue.sendMessage(context.payload, delayMs / 1000);
+			return await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
 		}, log);
 		return {
 			isFailure: false
@@ -30,22 +30,14 @@ const handleTaskError = async (backfillQueue: SqsQueue<BackfillMessagePayload>, 
 	return handleUnknownError(cause, context);
 };
 
-export const backfillErrorHandler: (backfillQueueHolder: { queue: SqsQueue<BackfillMessagePayload> | undefined }) => ErrorHandler<BackfillMessagePayload> =
-	(backfillQueueHolder) =>
+export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>) => ErrorHandler<BackfillMessagePayload> =
+	(sendSQSBackfillMessage) =>
 		async (err: Error, context: SQSMessageContext<BackfillMessagePayload>): Promise<ErrorHandlingResult> => {
 			const log = context.log.child({ err });
 			log.info("Handling error");
 
-			if (!backfillQueueHolder.queue) {
-				log.warn("Queue was not ready, retry");
-				return {
-					isFailure: true,
-					retryable: true
-				};
-			}
-
 			if (err instanceof TaskError) {
-				return await handleTaskError(backfillQueueHolder.queue, err.task, err.cause, context, log);
+				return await handleTaskError(sendSQSBackfillMessage, err.task, err.cause, context, log);
 			}
 
 			return handleUnknownError(err, context);

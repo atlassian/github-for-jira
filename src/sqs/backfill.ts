@@ -3,10 +3,10 @@ import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { BackfillMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
-import { SqsQueue } from "~/src/sqs/sqs";
+import { SQS } from "aws-sdk";
 
 export const backfillQueueMessageHandler =
-	(backfillQueueHolder: { queue: SqsQueue<BackfillMessagePayload> | undefined }): MessageHandler<BackfillMessagePayload> =>
+	(sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>): MessageHandler<BackfillMessagePayload> =>
 		async (context: SQSMessageContext<BackfillMessagePayload>) => {
 			const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 			sentry.configureScope((scope) =>
@@ -30,14 +30,7 @@ export const backfillQueueMessageHandler =
 			}
 
 			try {
-				const processor = await processInstallation((message, delay, logger) => {
-					if (backfillQueueHolder.queue) {
-						return backfillQueueHolder.queue.sendMessage(message, delay, logger);
-					} else {
-						logger.error("Cannot send a message: queue is not initialised yet. Should never happen!");
-						throw new Error("Queue is not ready");
-					}
-				});
+				const processor = await processInstallation(sendSQSBackfillMessage);
 				await processor(backfillData, sentry, context.log);
 			} catch (err) {
 				context.log.warn({ err }, "processInstallation threw a error");
