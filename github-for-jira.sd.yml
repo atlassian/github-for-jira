@@ -351,9 +351,6 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
-          default_vanity_dns: false
-          domain:
-            -  github-for-jira.dev.services.atlassian.com
           ip_whitelist:
             - public
           routes: &blackholeSpammingIPs
