@@ -25,6 +25,11 @@ export class RepoSyncState extends Model {
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -34,7 +39,6 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
-	commitFrom?: Date;
 
 
 	get status(): TaskStatus {
@@ -215,6 +219,10 @@ RepoSyncState.init({
 	buildCursor: STRING,
 	deploymentCursor: STRING,
 	commitFrom: DATE,
+	branchFrom: DATE,
+	pullFrom: DATE,
+	buildFrom: DATE,
+	deploymentFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,
