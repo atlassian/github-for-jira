@@ -7,6 +7,7 @@ import { deploymentQueueMessageHandler } from "./deployment";
 import { branchQueueMessageHandler } from "./branch";
 import { getLogger } from "config/logger";
 import type { BackfillMessagePayload, PushQueueMessagePayload, DeploymentMessagePayload, BranchMessagePayload } from "./sqs.types";
+import { backfillErrorHandler } from "~/src/sqs/backfill-error-handler";
 
 const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
@@ -30,7 +31,7 @@ backfillQueue = new SqsQueue<BackfillMessagePayload>(
 		maxAttempts: 3
 	},
 	backfillQueueMessageHandler(backfillQueueMessageSender),
-	jiraAndGitHubErrorsHandler
+	backfillErrorHandler(backfillQueueMessageSender)
 );
 
 export const sqsQueues = {

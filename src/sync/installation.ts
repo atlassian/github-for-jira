@@ -23,8 +23,8 @@ import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
-import { ConnectionTimedOutError } from "sequelize";
 import { SQS } from "aws-sdk";
+import _ from "lodash";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -44,6 +44,16 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 
 	return allTaskTypes;
 };
+
+export class TaskError extends Error {
+	task: Task;
+	cause: Error;
+	constructor(task: Task, cause: Error) {
+		super(cause.message);
+		this.task = _.cloneDeep(task);
+		this.cause = cause;
+	}
+}
 
 const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
 	if (subscription.repositoryStatus !== "complete") {
@@ -332,7 +342,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
  * Handles an error and takes action based on the error type and parameters
  */
 export const handleBackfillError = async (
-	err,
+	err: Error,
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	rootLogger: Logger,
@@ -340,16 +350,14 @@ export const handleBackfillError = async (
 
 	const logger = rootLogger.child({ err });
 
-	const isRateLimitError = err instanceof RateLimitingError || Number(err?.headers?.["x-ratelimit-remaining"]) == 0;
+	// TODO: rethrow as TaskError and handle in SQS error handler
+	if (err instanceof RateLimitingError) {
+		const delayMs = Math.max(err.rateLimitReset * 1000 - Date.now(), 0);
 
-	if (isRateLimitError) {
-		const rateLimit = err instanceof RateLimitingError ? err.rateLimitReset : Number(err?.headers?.["x-ratelimit-reset"]);
-		const delay = Math.max(rateLimit * 1000 - Date.now(), 0);
-
-		if (delay) {
+		if (delayMs) {
 			// if not NaN or 0
-			logger.info({ delay }, `Delaying job for ${delay}ms`);
-			scheduleNextTask(delay);
+			logger.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
+			scheduleNextTask(delayMs);
 		} else {
 			//Retry immediately if rate limiting reset already
 			logger.info("Rate limit was reset already. Scheduling next task");
@@ -358,44 +366,7 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	if (String(err).includes("connect ETIMEDOUT")) {
-		logger.warn("ETIMEDOUT error, retrying in 5 seconds");
-		scheduleNextTask(5_000);
-		return;
-	}
-
-	if (String(err).includes("connect ECONNREFUSED")) {
-		logger.warn("ECONNREFUSED error, retrying in 30 seconds");
-		scheduleNextTask(30_000);
-		return;
-	}
-
-	if (err instanceof ConnectionTimedOutError) {
-		logger.warn("ConnectionTimedOutError error, retrying in 30 seconds");
-		scheduleNextTask(30_000);
-		return;
-	}
-
-	// TODO: replace with "instanceof" when sequelize version is upgraded to some modern one
-	// Capturing errors like SequelizeConnectionError, SequelizeConnectionAcquireTimeoutError etc
-	// that are not exported from sequelize
-	if (String(err.name).toLowerCase().includes("sequelize")) {
-		logger.warn("sequelize error, retrying in 30 seconds");
-		scheduleNextTask(30_000);
-		return;
-	}
-
-	if (
-		String(err.message).includes(
-			"You have triggered an abuse detection mechanism"
-		)
-	) {
-		// Too much server processing time, wait 60 seconds and try again
-		logger.warn("Abuse detection triggered. Retrying in 60 seconds");
-		scheduleNextTask(60_000);
-		return;
-	}
-
+	// TODO: throw TaskError and handle in SQS error handler
 	// Continue sync when a 404/NOT_FOUND is returned from GitHub
 	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
 		// No edges left to process since the repository doesn't exist
@@ -404,8 +375,8 @@ export const handleBackfillError = async (
 		return;
 	}
 
-	logger.warn({ err, nextTask }, "Task failed, continuing with next task");
-	await markCurrentTaskAsFailedAndContinue(data, nextTask, scheduleNextTask, logger);
+	logger.info("Rethrow unknown error to retry in SQS error handler");
+	throw new TaskError(nextTask, err);
 };
 
 const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
@@ -484,8 +455,8 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, logger, (delay: number) =>
-					nextTaskDelaysMs.push(delay)
+				() => doProcessInstallation(data, sentry, logger, (delayMs: number) =>
+					nextTaskDelaysMs.push(delayMs)
 				));
 
 			switch (result) {
@@ -515,9 +486,8 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 				}
 			}
 		} catch (err) {
-			// Error because looks like the installation sync has been stuck for the poor customer with
-			// some error we were not anticipated and shouldn't have occurred in the first place
-			logger.error({ err }, "Process installation failed");
+			logger.error({ err }, "Process installation failed.");
+			throw err;
 		}
 	};
 };
