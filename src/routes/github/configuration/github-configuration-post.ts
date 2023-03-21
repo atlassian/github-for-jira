@@ -80,7 +80,9 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		await Promise.all(
 			[
 				saveConfiguredAppProperties(jiraHost, req.log, true),
-				findOrStartSync(subscription, req.log, "full")
+				findOrStartSync(subscription, req.log, "full", undefined, undefined, {
+					"source": "initial-sync"
+				})
 			]
 		);
 
