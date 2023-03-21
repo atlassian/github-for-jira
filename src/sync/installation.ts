@@ -102,7 +102,7 @@ export const updateJobStatus = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { installationId, jiraHost, targetTasks } = data;
+	const { targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
 
@@ -382,13 +382,14 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, scheduleNextTask: (delayMs: number) => void, log: Logger, err: Error): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
 		return;
 	}
-  // marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
+
+	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
 	const failedCode = getFailedCode(err);
 
 	// marking the current task as failed

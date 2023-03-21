@@ -15,13 +15,12 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	log.info("Handling error task");
 
 	// TODO: add task-related logic: e.g. mark as complete for 404; retry RateLimiting errors;
-
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
 		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, async (delayMs) => {
 			return await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
-		}, log);
+		}, log, cause);
 		return {
 			isFailure: false
 		};
