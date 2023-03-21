@@ -12,8 +12,16 @@ const LONG_POLLING_INTERVAL_SEC = 3;
 const logger = getLogger("sqs-queues");
 
 // TODO: Make this a class
-export const sqsQueues = {
-	backfill: new SqsQueue<BackfillMessagePayload>({
+
+let backfillQueue: SqsQueue<BackfillMessagePayload> | undefined = undefined;
+
+const backfillQueueMessageSender = (message, delaySec, logger) =>
+	// Given the single-threaded nature of Node.js, backfillQueue is always initialised
+	// because SqsQueue is not triggering messageHandler from ctor
+	backfillQueue!.sendMessage(message, delaySec, logger);
+
+backfillQueue = new SqsQueue<BackfillMessagePayload>(
+	{
 		queueName: "backfill",
 		queueUrl: envVars.SQS_BACKFILL_QUEUE_URL,
 		queueRegion: envVars.SQS_BACKFILL_QUEUE_REGION,
@@ -21,9 +29,12 @@ export const sqsQueues = {
 		timeoutSec: 10 * 60,
 		maxAttempts: 3
 	},
-	backfillQueueMessageHandler,
+	backfillQueueMessageHandler(backfillQueueMessageSender),
 	jiraAndGitHubErrorsHandler
-	),
+);
+
+export const sqsQueues = {
+	backfill: backfillQueue,
 
 	push: new SqsQueue<PushQueueMessagePayload>({
 		queueName: "push",

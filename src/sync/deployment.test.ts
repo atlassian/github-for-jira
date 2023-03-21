@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -18,13 +17,12 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
 
-jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
 	const sentry: Hub = { setUser: jest.fn() } as any;
-	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
+	const mockBackfillQueueSendMessage = jest.fn();
 	const makeExpectedJiraResponse = (deployments) => ({
 		deployments,
 		properties: {
@@ -242,7 +240,7 @@ describe("sync/deployments", () => {
 					}]
 			}]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -409,7 +407,7 @@ describe("sync/deployments", () => {
 				}
 			]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -435,7 +433,7 @@ describe("sync/deployments", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
@@ -447,7 +445,7 @@ describe("sync/deployments", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
@@ -627,7 +625,7 @@ describe("sync/deployments", () => {
 					}]
 			}]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
