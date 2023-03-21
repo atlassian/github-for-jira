@@ -21,7 +21,7 @@ import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { Task, TaskPayload, TaskProcessors, TaskType } from "./sync.types";
+import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
 import { SQS } from "aws-sdk";
 import _ from "lodash";
 
@@ -93,10 +93,18 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-// Exported for testing
-export const updateJobStatus = async (
+/**
+ *
+ * @param data
+ * @param taskResultPayload - when edges.length is 0 or undefined, the task is considered to be completed
+ * @param task
+ * @param repositoryId
+ * @param logger
+ * @param scheduleNextTask
+ */
+const updateTaskStatusAndContinue = async (
 	data: BackfillMessagePayload,
-	taskPayload: TaskPayload,
+	taskResultPayload: TaskResultPayload,
 	task: TaskType,
 	repositoryId: number,
 	logger: Logger,
@@ -111,7 +119,7 @@ export const updateJobStatus = async (
 		logger.info("Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
-	const { edges } = taskPayload;
+	const { edges } = taskResultPayload;
 	const isComplete = !edges?.length;
 
 	const status = isComplete ? "complete" : "pending";
@@ -237,48 +245,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	const processor = tasks[task];
 
-	const execute = async (): Promise<TaskPayload> => {
-		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
-		//
-		// We are not using "big" numbers here (e.g. 100) to speed up the process; API returns smaller pages faster and
-		// they will more likely not to break.
-		//
-		// Also this logic is broken for any rest queries (where cursor is the page number), because when the page size
-		// changes the cursor is broken (as it is just an interger specifically for the original page size).
-		//
-		for (const perPage of [20, 10, 5, 1]) {
-			// try for decreasing page sizes in case GitHub returns errors that should be retryable with smaller requests
-			try {
-				return await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, data);
-			} catch (err) {
-				const errorLog = logger.child({ err });
-				// TODO - need a better way to manage GitHub errors globally
-				// In the event that the customer has not accepted the required permissions.
-				// We will continue to process the data per usual while omitting the tasks the app does not have access too.
-				// The GraphQL errors do not return a status so we check 403 or undefined
-				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
-					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
-					errorLog.error(`Invalid permissions for ${task} task`);
-					// Return undefined objects so the sync can complete while skipping this task
-					return { edges: undefined, jiraPayload: undefined };
-				}
-
-				errorLog.warn(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
-				if (!isRetryableWithSmallerRequest(err)) {
-					// error is not retryable, re-throwing it
-					errorLog.warn(`Not retryable error, rethrowing`);
-					throw err;
-				}
-				// error is retryable, retrying with next smaller page size
-				errorLog.info(`Retryable error, try again with a smaller page size`);
-			}
-		}
-		logger.error("Error processing task after trying all page sizes");
-		throw new Error(`Error processing task after trying all page sizes: installationId=${gitHubInstallationId}, repositoryId=${nextTask.repositoryId}, task=${task}`);
-	};
-
 	try {
-		const taskPayload = await execute();
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+		// TODO: increase page size to 100 and remove scaling logic from commits, prs and builds
+		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, 20, data);
 		if (taskPayload.jiraPayload) {
 			try {
 				// In "try" because it could fail if cryptor throws a error, and we don't want to kill the whole backfilling in this case
@@ -310,14 +280,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			} catch (err) {
 				logger.warn({ err }, "Failed to send data to Jira");
 				sendJiraFailureToSentry(err, sentry);
-
-				// TODO: this won't reach SQS handler but will be stuck in handleBackfillError and will mark the task as failed.
-				//       Something we should fix sooner rather than later...
 				throw err;
 			}
 		}
 
-		await updateJobStatus(
+		await updateTaskStatusAndContinue(
 			data,
 			taskPayload,
 			task,
@@ -366,7 +333,7 @@ export const handleBackfillError = async (
 	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
 		// No edges left to process since the repository doesn't exist
 		logger.info("Repo was deleted, marking the task as completed");
-		await updateJobStatus(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
+		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
 		return;
 	}
 
@@ -488,11 +455,11 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 };
 
 const updateRepo = async (subscription: Subscription, repoId: number, values: Record<string, unknown>) => {
-	const repoStates = pick(values, ["repositoryStatus", "repositoryCursor"]);
-	const rest = omit(values, ["repositoryStatus", "repositoryCursor"]);
+	const subscriptionRepoStateValues = pick(values, ["repositoryStatus", "repositoryCursor"]);
+	const repoSyncStateValues = omit(values, ["repositoryStatus", "repositoryCursor"]);
 	await Promise.all([
-		Object.keys(repoStates).length && subscription.update(repoStates),
-		Object.keys(rest).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, rest)
+		Object.keys(subscriptionRepoStateValues).length && subscription.update(subscriptionRepoStateValues),
+		Object.keys(repoSyncStateValues).length && RepoSyncState.updateRepoFromSubscription(subscription, repoId, repoSyncStateValues)
 	]);
 };
 

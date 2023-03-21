@@ -1,4 +1,4 @@
-import { TaskPayload } from "~/src/sync/sync.types";
+import { TaskResultPayload } from "~/src/sync/sync.types";
 
 const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 	if (!jiraPayload1 && !jiraPayload2) {
@@ -23,8 +23,8 @@ const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 export const fetchNextPagesInParallel = async (
 	pagesToFetch: number,
 	nextPageCursor: number,
-	singlePageFetchFactory: (pageCursor: number) => Promise<TaskPayload>
-): Promise<TaskPayload> => {
+	singlePageFetchFactory: (pageCursor: number) => Promise<TaskResultPayload>
+): Promise<TaskResultPayload> => {
 	const tasks = Array.from(
 		{
 			length: pagesToFetch
@@ -32,13 +32,13 @@ export const fetchNextPagesInParallel = async (
 		(_, index) => singlePageFetchFactory(nextPageCursor + index)
 	);
 	const fetchedData = await Promise.allSettled(tasks);
-	const emptyValue: TaskPayload = {
+	const emptyValue: TaskResultPayload = {
 		edges: [],
 		jiraPayload: undefined
 	};
 	return fetchedData.reduce((prev, curr) => {
 		if (curr.status === "fulfilled") {
-			const page: TaskPayload = curr.value;
+			const page: TaskResultPayload = curr.value;
 			return {
 				edges: [...(prev.edges || []), ...(page.edges || [])],
 				jiraPayload:

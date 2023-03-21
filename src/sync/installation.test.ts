@@ -20,6 +20,7 @@ import { ConnectionTimedOutError } from "sequelize";
 import { AxiosError, AxiosResponse } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { RepoSyncState } from "models/reposyncstate";
 
 const mockedExecuteWithDeduplication = jest.fn();
 jest.mock("~/src/sync/deduplicator", () => ({
@@ -33,9 +34,31 @@ describe("sync/installation", () => {
 
 	let JOB_DATA;
 	let JOB_DATA_GHES;
+	let repoSyncState: RepoSyncState;
+
+	const TEST_LOGGER = getLogger("test");
+	const GITHUB_APP_ID = 123;
+
+	const TEST_REPO: Repository = {
+		id: 123,
+		name: "Test",
+		full_name: "Test/Test",
+		owner: { login: "test" },
+		html_url: "https://test",
+		updated_at: "1234"
+	};
+
+	const TASK: Task = { task: "branch", repositoryId: 123, repository: TEST_REPO };
 
 	beforeEach(async () => {
-		await new DatabaseStateCreator().create();
+		const res = await new DatabaseStateCreator()
+			.withActiveRepoSyncState()
+			.repoSyncStatePendingForBranches()
+			.repoSyncStatePendingForCommits()
+			.create();
+		repoSyncState = res.repoSyncState!;
+		TASK.repositoryId = repoSyncState.repoId;
+
 		JOB_DATA = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 		JOB_DATA_GHES = {
 			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
@@ -50,20 +73,6 @@ describe("sync/installation", () => {
 			}
 		};
 	});
-
-	const TEST_LOGGER = getLogger("test");
-	const GITHUB_APP_ID = 123;
-
-	const TEST_REPO: Repository = {
-		id: 123,
-		name: "Test",
-		full_name: "Test/Test",
-		owner: { login: "test" },
-		html_url: "https://test",
-		updated_at: "1234"
-	};
-
-	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -164,15 +173,12 @@ describe("sync/installation", () => {
 	describe("handleBackfillError", () => {
 
 		const scheduleNextTask = jest.fn();
-		let updateStatusSpy;
 		let failRepoSpy;
 
 		beforeEach(() => {
 
-			updateStatusSpy = jest.spyOn(installation, "updateJobStatus");
 			failRepoSpy = jest.spyOn(installation, "markCurrentTaskAsFailedAndContinue");
 
-			updateStatusSpy.mockReturnValue(Promise.resolve());
 			failRepoSpy.mockReturnValue(Promise.resolve());
 
 			mockSystemTime(12345678);
@@ -198,7 +204,7 @@ describe("sync/installation", () => {
 			);
 
 			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
@@ -218,7 +224,7 @@ describe("sync/installation", () => {
 				response: axiosResponse
 			} as unknown as AxiosError), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
@@ -243,11 +249,11 @@ describe("sync/installation", () => {
 				await handleBackfillError(err, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			}
 			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
-		it("Repository ignored if not found error", async () => {
+		it("Task ignored if not found error", async () => {
 			gheNock.get("/")
 				.reply(404, {});
 
@@ -258,15 +264,15 @@ describe("sync/installation", () => {
 				await handleBackfillError(err, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
 			}
 
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Repository ignored if GraphQL not found error", async () => {
 			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
+			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
@@ -282,7 +288,7 @@ describe("sync/installation", () => {
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
