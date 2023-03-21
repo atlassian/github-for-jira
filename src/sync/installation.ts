@@ -243,11 +243,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				// The GraphQL errors do not return a status so we check 403 or undefined
 				if ((err.status === 403 || err.status === undefined) && err.message?.includes("Resource not accessible by integration")) {
 					await subscription?.update({ syncWarning: `Invalid permissions for ${task} task` });
+					await updateRepo(subscription, nextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
 					errorLog.error(`Invalid permissions for ${task} task`);
 					// Return undefined objects so the sync can complete while skipping this task
 					return { edges: undefined, jiraPayload: undefined };
 				}
-
 				errorLog.warn(`Error processing job with page size ${perPage}, retrying with next smallest page size`);
 				if (!isRetryableWithSmallerRequest(err)) {
 					// error is not retryable, re-throwing it
@@ -434,7 +434,7 @@ const getFailedCode = (err): string => {
 };
 
 export const markCurrentRepositoryAsFailedAndContinue = async (subscription: Subscription, nextTask: Task, scheduleNextTask: (delayMs: number) => void, err, logger: Logger): Promise<void> => {
-	// marking the current task as failed
+	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
 	const failedCode = getFailedCode(err);
 	logger.warn({ failedCode, err }, "Backfill task failed");
 

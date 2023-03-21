@@ -14,9 +14,9 @@
       <div class="error-summary-errors-header">
         Description
       </div>
-      {{#if syncErrors.CONNECTION_ERROR}}
+      {{#if syncErrors.PERMISSIONS_ERROR}}
       <div>
-        <b>{{syncErrors.CONNECTION_ERROR}}</b> tasks have not been backfilled. Please
+        <b>{{syncErrors.PERMISSIONS_ERROR}}</b> tasks have not been backfilled. Please
         <a href="{{html_url}}"
            data-installation-link="{{html_url}}"
            target="_blank">accept permissions</a>
@@ -24,9 +24,9 @@
       </div>
       {{/if}}
 
-      {{#if syncErrors.PERMISSIONS_ERROR}}
+      {{#if syncErrors.CONNECTION_ERROR}}
       <p>
-        We were unable to complete backfill for <b>{{syncErrors.PERMISSIONS_ERROR}}</b> repositories, because of GitHub Permissions, please check your GitHub permissions before attempting backfill again.
+        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b> repositories, because of GitHub Permissions, please check your GitHub permissions before attempting backfill again.
       </p>
       {{/if}}
     </div>

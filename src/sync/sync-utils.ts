@@ -22,7 +22,8 @@ export const findOrStartSync = async (
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
 		numberOfSyncedRepos: 0,
-		syncWarning: null
+		syncWarning: null,
+		failedCode: null
 	});
 
 	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");

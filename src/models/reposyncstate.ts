@@ -238,5 +238,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	failedCode: STRING
 }, { sequelize });
