@@ -34,9 +34,9 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 
 		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, res.locals.installation.jiraHost);
 		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription, syncType, commitsFromDate)) {
-			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, ["pull", "branch", "commit", "build", "deployment"]);
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, ["pull", "branch", "commit", "build", "deployment"], { source: "user-trigger" });
 		} else {
-			await findOrStartSync(subscription, req.log, syncType, commitsFromDate);
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, undefined, { source: "user-trigger" });
 		}
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
