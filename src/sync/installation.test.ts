@@ -9,7 +9,7 @@ import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
@@ -264,6 +264,21 @@ describe("sync/installation", () => {
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
+		});
+
+		it("rethrows github error", async () => {
+			const connectionRefusedError = new GithubClientError("foo", { code: "foo" } as unknown as AxiosError);
+
+			let err;
+			try {
+				await handleBackfillError(connectionRefusedError, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err).toBeInstanceOf(TaskError);
+			expect(err.task).toEqual(TASK);
+			expect(err.cause).toBeInstanceOf(GithubClientError);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
 		});
 

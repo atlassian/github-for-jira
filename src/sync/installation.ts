@@ -165,7 +165,7 @@ export const updateTaskStatusAndContinue = async (
 export const isRetryableWithSmallerRequest = (err) =>
 	err?.isRetryable || false;
 
-const isNotFoundGithubError = (err: GithubClientError) => () =>
+const isNotFoundGithubError = (err: GithubClientError) =>
 	(err.status === 404) ||
 	(err instanceof GithubClientGraphQLError && err.isNotFound());
 
