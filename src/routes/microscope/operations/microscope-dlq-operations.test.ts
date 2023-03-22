@@ -8,6 +8,7 @@ import {
 	requeueMessage,
 	requeueMessages
 } from "./microscope-dlq-operations";
+import { DlqService } from "@atlassian/sqs-queue-dlq-service";
 
 const queueName = "push";
 const getQueuesResponse = {
@@ -31,32 +32,21 @@ const queryQueueMessagesResponse = {
 	messageAttributes: {}
 };
 
-const getQueuesMock = jest.fn().mockReturnValue(getQueuesResponse);
-const getQueuesAttributesMock = jest.fn().mockReturnValue(queryQueuesAttributesResponse);
-const getMessagesMock = jest.fn().mockReturnValue(queryQueueMessagesResponse);
-const requeueMessageMock = jest.fn();
-const requeueMessagesMock = jest.fn();
-const deleteMessageMock = jest.fn();
-const deleteMessagesMock = jest.fn();
 
-jest.mock("@atlassian/sqs-queue-dlq-service", () => {
-	return {
-		DlqService: jest.fn(() => ({
-			getQueues: () => getQueuesMock(),
-			getQueuesAttributes: () => getQueuesAttributesMock(),
-			getMessages: () => getMessagesMock(),
-			requeueMessage: () => requeueMessageMock(),
-			requeueMessages: () => requeueMessagesMock(),
-			deleteMessage: () => deleteMessageMock(),
-			deleteMessages: () => deleteMessagesMock()
-		}))
-	};
-});
+jest.mock("@atlassian/sqs-queue-dlq-service");
 
 describe("microscope dlq", () => {
 	let req, res;
 
 	beforeEach(async () => {
+
+		jest.spyOn(DlqService.prototype, "getQueues").mockResolvedValue([getQueuesResponse]);
+		jest.spyOn(DlqService.prototype, "getQueuesAttributes").mockResolvedValue([queryQueuesAttributesResponse]);
+		jest.spyOn(DlqService.prototype, "getMessages").mockResolvedValue({ messages: [queryQueueMessagesResponse] });
+		jest.spyOn(DlqService.prototype, "requeueMessages");
+		jest.spyOn(DlqService.prototype, "deleteMessage");
+		jest.spyOn(DlqService.prototype, "deleteMessages");
+
 		req = {
 			query: {},
 			params: {}
@@ -83,14 +73,14 @@ describe("microscope dlq", () => {
 		await queryQueues(req, res);
 
 		expect(res.status).toHaveBeenCalledWith(200);
-		expect(res.send).toHaveBeenCalledWith(getQueuesResponse);
+		expect(res.send).toHaveBeenCalledWith([getQueuesResponse]);
 	});
 
 	it("query queue attributes should return list of attributes", async () => {
 		await queryQueueAttributes(req, res);
 
 		expect(res.status).toHaveBeenCalledWith(200);
-		expect(res.send).toHaveBeenCalledWith(queryQueuesAttributesResponse);
+		expect(res.send).toHaveBeenCalledWith([queryQueuesAttributesResponse]);
 	});
 
 	it("query queue messages should return list of visible messages", async () => {
@@ -99,7 +89,7 @@ describe("microscope dlq", () => {
 		await queryQueueMessages(req, res);
 
 		expect(res.status).toHaveBeenCalledWith(200);
-		expect(res.send).toHaveBeenCalledWith(queryQueueMessagesResponse);
+		expect(res.send).toHaveBeenCalledWith({ messages: [queryQueueMessagesResponse] });
 	});
 
 	it("requeue message should return 200", async () => {
