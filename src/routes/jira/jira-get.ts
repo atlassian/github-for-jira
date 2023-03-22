@@ -196,6 +196,9 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
+	if (!(await booleanFlag(BooleanFlags.SHOW_RETRYABLE_ERRORS_MODAL))){
+		return undefined;
+	}
 	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
 	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
 	const errorCodes = failedSyncs.map(sync => sync.failedCode);
