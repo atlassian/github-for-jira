@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
-import { DlqService } from "@atlassian/sqs-queue-dlq-service";
+import { optionalRequire } from "optional-require";
+
+const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
 
 const log: Logger = getLogger("microscope-dlq");
 
@@ -16,7 +18,11 @@ type DeleteMessageRequest = {
 	receiptHandle: string;
 };
 
-const dlqService = new DlqService(log, {
+if (!DlqService) {
+	log.info("No dlqService package - skipping dlq operations");
+}
+
+const dlqServiceClient = new DlqService(log, {
 	sqs: {
 		region: process.env.SQS_PUSH_QUEUE_REGION
 	}
@@ -29,19 +35,19 @@ export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promi
 
 export const queryQueues = async (_: Request, res: Response): Promise<void> => {
 	res.status(200);
-	res.send(await dlqService.getQueues());
+	res.send(await dlqServiceClient.getQueues());
 };
 
 export const queryQueueAttributes = async (_: Request, res: Response): Promise<void> => {
 	res.status(200);
-	res.send(await dlqService.getQueuesAttributes());
+	res.send(await dlqServiceClient.getQueuesAttributes());
 };
 
 export const queryQueueMessages = async (req: Request, res: Response): Promise<void> => {
 	const limit = req.query.limit;
 
 	res.status(200);
-	res.send(await dlqService.getMessages({
+	res.send(await dlqServiceClient.getMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
 	}));
@@ -49,7 +55,7 @@ export const queryQueueMessages = async (req: Request, res: Response): Promise<v
 
 export const requeueMessage = async (req: Request, res: Response): Promise<void> => {
 	res.status(200);
-	res.send(await dlqService.requeueMessage({
+	res.send(await dlqServiceClient.requeueMessage({
 		queueName: req.params.queueName,
 		message: req.body as RequeueMessageRequest
 	}));
@@ -57,7 +63,7 @@ export const requeueMessage = async (req: Request, res: Response): Promise<void>
 
 export const deleteMessage = async (req: Request, res: Response): Promise<void> => {
 	res.status(200);
-	res.send(await dlqService.deleteMessage({
+	res.send(await dlqServiceClient.deleteMessage({
 		queueName: req.params.queueName,
 		message: req.body as DeleteMessageRequest
 	}));
@@ -67,7 +73,7 @@ export const requeueMessages = async (req: Request, res: Response): Promise<void
 	const limit = req.query.limit;
 
 	res.status(200);
-	res.send(await dlqService.requeueMessages({
+	res.send(await dlqServiceClient.requeueMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
 	}));
@@ -77,7 +83,7 @@ export const deleteMessages = async (req: Request, res: Response): Promise<void>
 	const limit = req.query.limit;
 
 	res.status(200);
-	res.send(await dlqService.deleteMessages({
+	res.send(await dlqServiceClient.deleteMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
 	}));
