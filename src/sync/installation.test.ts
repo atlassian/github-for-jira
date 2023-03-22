@@ -3,9 +3,9 @@ import {
 	handleBackfillError,
 	isRetryableWithSmallerRequest, markCurrentTaskAsFailedAndContinue,
 	processInstallation,
-	TaskError
+	TaskError, updateTaskStatusAndContinue
 } from "~/src/sync/installation";
-import { Task } from "~/src/sync/sync.types";
+import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -20,6 +20,7 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 
 const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
@@ -333,6 +334,72 @@ describe("sync/installation", () => {
 
 			const refreshedSubscription = await Subscription.findByPk(subscription.id);
 			expect(refreshedSubscription.syncWarning).toEqual("Invalid permissions for branch task");
+		});
+	});
+
+	describe("updateTaskStatusAndContinue", () => {
+		const GITHUB_INSTALLATION_ID = 1111;
+		const REPO_ID = 12345;
+		const commitsFromDate = new Date();
+		let data: BackfillMessagePayload;
+		let sub: Subscription;
+		let repoSync: RepoSyncState;
+		beforeEach(async ()=> {
+			sub = await Subscription.install({ host: jiraHost, installationId: GITHUB_INSTALLATION_ID, gitHubAppId: undefined, hashedClientKey: "client-key" });
+			repoSync = await RepoSyncState.create({
+				subscriptionId: sub.id, repoId: REPO_ID, repoName: "name", repoUrl: "url", repoOwner: "owner", repoFullName: "full name",
+				repoPushedAt: new Date(), repoUpdatedAt: new Date(), repoCreatedAt: new Date()
+			});
+			data = {
+				installationId: GITHUB_INSTALLATION_ID,
+				jiraHost: jiraHost,
+				commitsFromDate: commitsFromDate.toISOString()
+			};
+		});
+
+		it("should skip update backfill from date if task is branch", async () => {
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, "branch", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+		});
+
+		it("should skip update backfill from date if task is repository", async () => {
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, "repository", REPO_ID, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+			expect(repoSync.commitFrom).toBeNull();
+			expect(repoSync.pullFrom).toBeNull();
+			expect(repoSync.buildFrom).toBeNull();
+			expect(repoSync.deploymentFrom).toBeNull();
+		});
+
+		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (task: TaskType) => {
+			const colTaskFrom = `${task}From`;
+			it(`${task}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${task}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
+				repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
+				await repoSync.save();
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${task}: should skip update backfill from date upon success complete and new backfill date is more recent`, async () => {
+				const oldDate = new Date(commitsFromDate.getTime() - 100000);
+				repoSync[colTaskFrom]= oldDate;
+				await repoSync.save();
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(oldDate.toISOString());
+			});
+			it(`${task}: should not update backfill from date is job is not complete`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync.pullFrom).toBeNull();
+			});
 		});
 	});
 

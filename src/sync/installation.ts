@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { intersection, omit, pick } from "lodash";
+import { intersection, omit, pick, without } from "lodash";
 import IORedis from "ioredis";
 import Logger from "bunyan";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
@@ -35,6 +35,7 @@ const tasks: TaskProcessors = {
 };
 
 const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 	if (targetTasks?.length) {
@@ -92,8 +93,10 @@ const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[])
 
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
+const getFromDateKey = (type: TaskType) => `${type}From`;
 
 /**
+ * Export for testing: TODO: test only public interface!!
  *
  * @param data
  * @param taskResultPayload - when edges.length is 0 or undefined, the task is considered to be completed
@@ -102,7 +105,7 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
  * @param logger
  * @param sendBackfillMessage
  */
-const updateTaskStatusAndContinue = async (
+export const updateTaskStatusAndContinue = async (
 	data: BackfillMessagePayload,
 	taskResultPayload: TaskResultPayload,
 	task: TaskType,
@@ -127,12 +130,16 @@ const updateTaskStatusAndContinue = async (
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
 
-	if (isComplete && task === "commit" && data.commitsFromDate) {
+	//Set the complete date on success for tasks.
+	//Skip branches as it sync all history
+	if (isComplete && allTasksExceptBranch.includes(task) && data.commitsFromDate) {
 		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
-		const commitsFromDate =  new Date(data.commitsFromDate);
-		// Set commitsFromDate in RepoSyncState only if its the later date
-		if (repoSync &&	(!repoSync.commitFrom || repoSync.commitFrom.getTime() > commitsFromDate.getTime())) {
-			updateRepoSyncFields["commitFrom"] = commitsFromDate;
+		if (repoSync) {
+			const newFromDate =  new Date(data.commitsFromDate);
+			const existingFromDate = repoSync[getFromDateKey(task)];
+			if (!existingFromDate || newFromDate.getTime() < existingFromDate.getTime()) {
+				updateRepoSyncFields[getFromDateKey(task)] = newFromDate;
+			}
 		}
 	}
 
