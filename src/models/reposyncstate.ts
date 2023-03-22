@@ -25,6 +25,11 @@ export class RepoSyncState extends Model {
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -34,9 +39,8 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
-	commitFrom?: Date;
 
-
+	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
 		if (statuses.some(s => s === "failed")) {
@@ -50,8 +54,8 @@ export class RepoSyncState extends Model {
 		return "pending";
 	}
 
-	static async countSyncedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFullySyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
@@ -62,8 +66,8 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async countFailedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFailedSyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				[Op.or]: {
 					pullStatus: "failed",
@@ -80,7 +84,7 @@ export class RepoSyncState extends Model {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
-	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+	private static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
 		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -215,6 +219,10 @@ RepoSyncState.init({
 	buildCursor: STRING,
 	deploymentCursor: STRING,
 	commitFrom: DATE,
+	branchFrom: DATE,
+	pullFrom: DATE,
+	buildFrom: DATE,
+	deploymentFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,

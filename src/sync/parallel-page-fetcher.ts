@@ -1,4 +1,4 @@
-import { TaskPayload } from "~/src/sync/sync.types";
+import { TaskResultPayload } from "~/src/sync/sync.types";
 
 const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 	if (!jiraPayload1 && !jiraPayload2) {
@@ -23,23 +23,29 @@ const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 export const fetchNextPagesInParallel = async (
 	pagesToFetch: number,
 	nextPageCursor: number,
-	singlePageFetchFactory: (pageCursor: number) => Promise<TaskPayload>
-): Promise<TaskPayload> => {
+	singlePageFetchFactory: (pageCursor: number) => Promise<TaskResultPayload>
+): Promise<TaskResultPayload> => {
 	const tasks = Array.from(
 		{
 			length: pagesToFetch
 		},
 		(_, index) => singlePageFetchFactory(nextPageCursor + index)
 	);
-	const fetchedData = await Promise.all(tasks);
-	return fetchedData.reduce((prev, curr) => {
-		return {
-			edges: [...(prev.edges || []), ...(curr.edges || [])],
-			jiraPayload:
-				mergeJiraPayload(prev.jiraPayload, curr.jiraPayload)
-		};
-	}, {
+	const fetchedData = await Promise.allSettled(tasks);
+	const emptyValue: TaskResultPayload = {
 		edges: [],
 		jiraPayload: undefined
-	});
+	};
+	return fetchedData.reduce((prev, curr) => {
+		if (curr.status === "fulfilled") {
+			const page: TaskResultPayload = curr.value;
+			return {
+				edges: [...(prev.edges || []), ...(page.edges || [])],
+				jiraPayload:
+					mergeJiraPayload(prev.jiraPayload, page.jiraPayload)
+			};
+		} else {
+			throw curr.reason;
+		}
+	}, emptyValue);
 };
