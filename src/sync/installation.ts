@@ -18,12 +18,18 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
-import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "../github/client/github-client-errors";
+import {
+	GithubClientError,
+	GithubClientGraphQLError,
+	InvalidPermissionsError,
+	RateLimitingError
+} from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
 import _ from "lodash";
+import { AxiosError } from "axios";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -247,6 +253,37 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const processor = tasks[task];
 
 	try {
+
+		const random = Math.random();
+		logger.info("bgvozdev testing " + random);
+		if (random < 0.2) {
+			logger.info("bgvozdev testing unknown error");
+			throw new Error("boom");
+		}
+		if (random < 0.4) {
+			logger.info("bgvozdev testing ratelimiting error");
+			const DELAY = 20;
+
+			const nowInSeconds = Math.floor(Date.now() / 1000);
+			const rateLimitResetInSeconds = nowInSeconds + DELAY;
+
+			const errorResponse = {
+				code: "codeBlah",
+				response: {
+					headers: {
+						"x-ratelimit-reset": rateLimitResetInSeconds.toString()
+					}
+				}
+			};
+
+			throw new RateLimitingError(errorResponse as unknown as AxiosError);
+		}
+		if (random < 0.6) {
+			logger.info("bgvozdev testing permission error");
+			throw new InvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
+		}
+
+
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 		// TODO: increase page size to 100 and remove scaling logic from commits, prs and builds
 		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, 20, data);
