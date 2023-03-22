@@ -278,6 +278,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				logger.info("bgvozdev testing permission error");
 				throw new GithubClientInvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
 			}
+			if (random < 0.7) {
+				logger.info("bgvozdev testing deletion of repo");
+				throw new GithubNotFoundError({ code: "codeBlah" } as unknown as AxiosError);
+			}
 		}
 
 
