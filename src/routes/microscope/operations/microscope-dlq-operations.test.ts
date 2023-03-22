@@ -56,7 +56,7 @@ jest.mock("@atlassian/sqs-queue-dlq-service", () => {
 describe("microscope dlq", () => {
 	let req, res;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		req = {
 			query: {},
 			params: {}
@@ -66,6 +66,10 @@ describe("microscope dlq", () => {
 			send: jest.fn(),
 			status: jest.fn()
 		};
+	});
+
+	afterEach(async () => {
+		jest.clearAllMocks();
 	});
 
 	it("healthcheck should respond with 200", async () => {
