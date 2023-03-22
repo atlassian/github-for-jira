@@ -22,8 +22,7 @@ export const findOrStartSync = async (
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
 		numberOfSyncedRepos: 0,
-		syncWarning: null,
-		failedCode: null
+		syncWarning: null
 	});
 
 	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");
@@ -39,6 +38,8 @@ export const findOrStartSync = async (
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
 	}
+
+	await resetRepoFailedCodes(subscription, syncType);
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
@@ -108,6 +109,13 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 		await subscription.update(updateSubscriptionTasks);
 	}
 
+};
+
+const resetRepoFailedCodes = async (subscription: Subscription, syncType?: SyncType) => {
+	if (syncType != "partial") {
+		return;
+	}
+	await RepoSyncState.updateFromSubscription(subscription, { failedCode: undefined });
 };
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
