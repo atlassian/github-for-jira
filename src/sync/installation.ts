@@ -18,7 +18,9 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
-import { GithubClientError, GithubClientGraphQLError, RateLimitingError } from "../github/client/github-client-errors";
+import {
+	GithubClientRateLimitingError, GithubNotFoundError
+} from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
@@ -159,10 +161,6 @@ export const updateTaskStatusAndContinue = async (
 export const isRetryableWithSmallerRequest = (err) =>
 	err?.isRetryable || false;
 
-const isNotFoundGithubError = (err: GithubClientError) => () =>
-	(err.status === 404) ||
-	(err instanceof GithubClientGraphQLError && err.isNotFound());
-
 const sendJiraFailureToSentry = (err, sentry: Hub) => {
 	if (err?.response?.status === 400) {
 		sentry.setExtra(
@@ -247,6 +245,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const processor = tasks[task];
 
 	try {
+
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 		// TODO: increase page size to 100 and remove scaling logic from commits, prs and builds
 		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, 20, data);
@@ -315,7 +314,7 @@ export const handleBackfillError = async (
 	const logger = rootLogger.child({ err });
 
 	// TODO: rethrow as TaskError and handle in SQS error handler
-	if (err instanceof RateLimitingError) {
+	if (err instanceof GithubClientRateLimitingError) {
 		const delayMs = Math.max(err.rateLimitReset * 1000 - Date.now(), 0);
 
 		if (delayMs) {
@@ -332,7 +331,7 @@ export const handleBackfillError = async (
 
 	// TODO: throw TaskError and handle in SQS error handler
 	// Continue sync when a 404/NOT_FOUND is returned from GitHub
-	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
+	if (err instanceof GithubNotFoundError) {
 		// No edges left to process since the repository doesn't exist
 		logger.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, sendBackfillMessage);
@@ -363,7 +362,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 
 	if (isPermissionError) {
 		await subscription?.update({ syncWarning: `Invalid permissions for ${nextTask.task} task` });
-		log.error(`Invalid permissions for ${nextTask} task`);
+		log.error(`Invalid permissions for ${nextTask.task} task`);
 	}
 
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
