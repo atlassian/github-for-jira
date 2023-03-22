@@ -109,7 +109,7 @@ const updateTaskStatusAndContinue = async (
 	task: TaskType,
 	repositoryId: number,
 	logger: Logger,
-	scheduleNextTask: (delay) => void
+	sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>
 ): Promise<void> => {
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
@@ -137,13 +137,12 @@ const updateTaskStatusAndContinue = async (
 		}
 	}
 
-	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
-
-	if (!isComplete) {
-		// there's more data to get
-		await updateRepo(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
+	if ((edges?.length || 0) > 0) {
+		updateRepoSyncFields[getCursorKey(task)] = edges![edges!.length - 1].cursor;
 	}
-	scheduleNextTask(0);
+
+	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
+	await sendSQSBackfillMessage(data, 0, logger);
 };
 
 /**
@@ -208,7 +207,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 };
 
 // TODO: type queues
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
 
@@ -286,13 +285,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			task,
 			nextTask.repositoryId,
 			logger,
-			scheduleNextTask
+			sendSQSBackfillMessage
 		);
 
 		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, logger, scheduleNextTask);
+		await handleBackfillError(err, data, nextTask, logger, sendSQSBackfillMessage);
 	}
 };
 
@@ -304,7 +303,7 @@ export const handleBackfillError = async (
 	data: BackfillMessagePayload,
 	nextTask: Task,
 	rootLogger: Logger,
-	scheduleNextTask: (delayMs: number) => void): Promise<void> => {
+	sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>): Promise<void> => {
 
 	const logger = rootLogger.child({ err });
 
@@ -315,11 +314,11 @@ export const handleBackfillError = async (
 		if (delayMs) {
 			// if not NaN or 0
 			logger.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
-			scheduleNextTask(delayMs);
+			await sendSQSBackfillMessage(data, delayMs / 1000, logger);
 		} else {
 			//Retry immediately if rate limiting reset already
 			logger.info("Rate limit was reset already. Scheduling next task");
-			scheduleNextTask(0);
+			await sendSQSBackfillMessage(data, 0, logger);
 		}
 		return;
 	}
@@ -329,7 +328,7 @@ export const handleBackfillError = async (
 	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
 		// No edges left to process since the repository doesn't exist
 		logger.info("Repo was deleted, marking the task as completed");
-		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, scheduleNextTask);
+		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, sendSQSBackfillMessage);
 		return;
 	}
 
@@ -370,24 +369,6 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	scheduleNextTask(0);
 };
 
-// Export for unit testing. TODO: consider improving encapsulation by making this logic as part of Deduplicator, if needed
-export const maybeScheduleNextTask = async (
-	sendSQSBackfillMessage: (message, delay, logger) => Promise<SQS.SendMessageResult>,
-	jobData: BackfillMessagePayload,
-	nextTaskDelaysMs: Array<number>,
-	logger: Logger
-) => {
-	if (nextTaskDelaysMs.length) {
-		nextTaskDelaysMs.sort().reverse();
-		if (nextTaskDelaysMs.length > 1) {
-			logger.warn("Multiple next jobs were scheduled, scheduling one with the highest priority");
-		}
-		const delayMs = nextTaskDelaysMs.shift();
-		logger.info("Scheduling next job with a delay = " + delayMs);
-		await sendSQSBackfillMessage(jobData, Math.ceil((delayMs || 0) / 1000), logger);
-	}
-};
-
 const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
@@ -415,18 +396,14 @@ export const processInstallation = (sendSQSBackfillMessage: (message, delay, log
 				jiraHost
 			});
 
-			const nextTaskDelaysMs: Array<number> = [];
-
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, logger, (delayMs: number) =>
-					nextTaskDelaysMs.push(delayMs)
-				));
+				() => doProcessInstallation(data, sentry, logger, sendSQSBackfillMessage)
+			);
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					await maybeScheduleNextTask(sendSQSBackfillMessage, data, nextTaskDelaysMs, logger);
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");

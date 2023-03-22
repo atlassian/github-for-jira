@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import * as installation from "~/src/sync/installation";
 import {
 	getTargetTasks,
 	handleBackfillError,
 	isRetryableWithSmallerRequest, markCurrentTaskAsFailedAndContinue,
-	maybeScheduleNextTask,
 	processInstallation,
 	TaskError
 } from "~/src/sync/installation";
@@ -21,8 +18,10 @@ import { AxiosError, AxiosResponse } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
+import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
+import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 
-const mockedExecuteWithDeduplication = jest.fn();
+const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
 	...jest.requireActual("~/src/sync/deduplicator"),
 	Deduplicator: function() {
@@ -160,65 +159,56 @@ describe("sync/installation", () => {
 
 			expect((await Subscription.findByPk(subscription.id)).syncStatus).toEqual(SyncStatus.COMPLETE);
 		});
-	});
 
-	describe("maybeScheduleNextTask", () => {
-		it("does nothing if there is no next task", async () => {
+		it("should update cursor and continue sync", async () => {
 			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [], TEST_LOGGER);
-			expect(sendSqsMessage).toBeCalledTimes(0);
-		});
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
-		it("when multiple tasks, picks the one with the highest delay", async () => {
-			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [30_000, 60_000, 0], TEST_LOGGER);
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
 			expect(sendSqsMessage).toBeCalledTimes(1);
-			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 60, expect.anything());
-		});
-
-		it("not passing delay to queue when not provided", async () => {
-			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [0], TEST_LOGGER);
-			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
 		});
 	});
 
 	describe("handleBackfillError", () => {
 
 		const scheduleNextTask = jest.fn();
-		let failRepoSpy;
+		const MOCKED_TIMESTAMP_MSECS = 12_345_678;
 
 		beforeEach(() => {
-
-			failRepoSpy = jest.spyOn(installation, "markCurrentTaskAsFailedAndContinue");
-
-			failRepoSpy.mockReturnValue(Promise.resolve());
-
-			mockSystemTime(12345678);
+			mockSystemTime(MOCKED_TIMESTAMP_MSECS);
 		});
 
 		it("Rate limiting error will be retried with the correct delay", async () => {
-			const axiosResponse = {
-				data: "Rate Limit",
-				status: 403,
-				statusText: "RateLimit",
-				headers: {
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-remaining": "0"
-				},
-				config: {}
-			};
+			const RATE_LIMIT_RESET_TIMESTAMP_SECS = 12360;
+			gheNock.get("/")
+				.reply(403, {}, {
+					"access-control-allow-origin": "*",
+					"connection": "close",
+					"content-type": "application/json; charset=utf-8",
+					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
+					"x-ratelimit-limit": "8900",
+					"x-ratelimit-remaining": "0",
+					"x-ratelimit-reset": "" + RATE_LIMIT_RESET_TIMESTAMP_SECS,
+					"x-ratelimit-resource": "core",
+					"x-ratelimit-used": "2421"
+				});
 
-			await handleBackfillError(
-				new RateLimitingError(
-					{ response: axiosResponse } as unknown as AxiosError
-				),
-				MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask
-			);
+			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			try {
+				await client.getMainPage(1000);
+			} catch (err) {
+				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+			}
 
-			expect(scheduleNextTask).toBeCalledWith(14322);
+			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, (RATE_LIMIT_RESET_TIMESTAMP_SECS * 1000 - MOCKED_TIMESTAMP_MSECS) / 1000, expect.anything());
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("No delay if rate limit already reset", async () => {
@@ -236,34 +226,8 @@ describe("sync/installation", () => {
 			await handleBackfillError(new RateLimitingError({
 				response: axiosResponse
 			} as unknown as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toBeCalledWith(0);
+			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("Error with headers indicating rate limit will be retried with the appropriate delay", async () => {
-			gheNock.get("/")
-				.reply(403, {}, {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "0",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				});
-
-			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
-			try {
-				await client.getMainPage(1000);
-			} catch (err) {
-				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			}
-			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Task ignored if not found error", async () => {
@@ -279,14 +243,12 @@ describe("sync/installation", () => {
 
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("Repository ignored if GraphQL not found error", async () => {
 			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 		it("rethrows unknown error", async () => {
@@ -302,7 +264,6 @@ describe("sync/installation", () => {
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
 		});
 
 	});
