@@ -25,7 +25,7 @@ export class GithubClientTimeoutError extends GithubClientError {
 	}
 }
 
-export class RateLimitingError extends GithubClientError {
+export class GithubClientRateLimitingError extends GithubClientError {
 	/**
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.
 	 */
@@ -39,18 +39,25 @@ export class RateLimitingError extends GithubClientError {
 	}
 }
 
-export class BlockedIpError extends GithubClientError {
+export class GithubClientBlockedIpError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Blocked by GitHub allowlist", cause);
 		this.isRetryable = false;
 	}
 }
 
-export class InvalidPermissionsError extends GithubClientError {
+export class GithubClientInvalidPermissionsError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Resource not accessible by integration", cause);
 	}
 }
+
+export class GithubNotFoundError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Not found", cause);
+	}
+}
+
 
 /**
  * Type for errors section in GraphQL response
@@ -102,15 +109,11 @@ export class GithubClientGraphQLError extends GithubClientError {
 				error.message?.startsWith("Something went wrong while executing your query")
 		);
 	}
-
-	isNotFound() {
-		return !!this.errors.find(error => error.type === "NOT_FOUND");
-	}
 }
 
 // TODO: the name doesn't make sense: it returns true for any GraphQL error...
 export const isChangedFilesError = (logger: Logger, err: GithubClientError): boolean => {
-	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
+	const bool = err instanceof GithubClientGraphQLError || !(err instanceof GithubClientRateLimitingError || err instanceof GithubClientTimeoutError);
 	logger.warn({ isChangedFilesError: bool , err }, "isChangedFilesError");
 	return bool;
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));

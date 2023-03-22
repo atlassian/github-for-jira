@@ -1,7 +1,7 @@
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
+import { GithubClientBlockedIpError, GithubClientError, GithubClientTimeoutError, GithubClientRateLimitingError } from "./github-client-errors";
 import { getInstallationId } from "./installation-id";
 import nock from "nock";
 import { when } from "jest-when";
@@ -158,7 +158,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(4600);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
@@ -185,7 +185,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
@@ -208,7 +208,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(BlockedIpError);
+		expect(error).toBeInstanceOf(GithubClientBlockedIpError);
 		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" });
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
 	});
@@ -233,7 +233,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");

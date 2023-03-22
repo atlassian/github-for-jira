@@ -19,10 +19,8 @@ import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
 import {
-	GithubClientError,
-	GithubClientGraphQLError,
-	InvalidPermissionsError,
-	RateLimitingError
+	GithubClientInvalidPermissionsError,
+	GithubClientRateLimitingError, GithubNotFoundError
 } from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
@@ -165,10 +163,6 @@ export const updateTaskStatusAndContinue = async (
 export const isRetryableWithSmallerRequest = (err) =>
 	err?.isRetryable || false;
 
-const isNotFoundGithubError = (err: GithubClientError) =>
-	(err.status === 404) ||
-	(err instanceof GithubClientGraphQLError && err.isNotFound());
-
 const sendJiraFailureToSentry = (err, sentry: Hub) => {
 	if (err?.response?.status === 400) {
 		sentry.setExtra(
@@ -278,11 +272,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 					}
 				};
 
-				throw new RateLimitingError(errorResponse as unknown as AxiosError);
+				throw new GithubClientRateLimitingError(errorResponse as unknown as AxiosError);
 			}
 			if (random < 0.6) {
 				logger.info("bgvozdev testing permission error");
-				throw new InvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
+				throw new GithubClientInvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
 			}
 		}
 
@@ -355,7 +349,7 @@ export const handleBackfillError = async (
 	const logger = rootLogger.child({ err });
 
 	// TODO: rethrow as TaskError and handle in SQS error handler
-	if (err instanceof RateLimitingError) {
+	if (err instanceof GithubClientRateLimitingError) {
 		const delayMs = Math.max(err.rateLimitReset * 1000 - Date.now(), 0);
 
 		if (delayMs) {
@@ -372,7 +366,7 @@ export const handleBackfillError = async (
 
 	// TODO: throw TaskError and handle in SQS error handler
 	// Continue sync when a 404/NOT_FOUND is returned from GitHub
-	if (err instanceof GithubClientError && isNotFoundGithubError(err)) {
+	if (err instanceof GithubNotFoundError) {
 		// No edges left to process since the repository doesn't exist
 		logger.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, sendBackfillMessage);

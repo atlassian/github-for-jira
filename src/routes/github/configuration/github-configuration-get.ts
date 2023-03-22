@@ -10,7 +10,7 @@ import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { BlockedIpError } from "~/src/github/client/github-client-errors";
+import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
 import {
 	createAppClient,
 	createInstallationClient,
@@ -102,7 +102,7 @@ const getInstallationsWithAdmin = async (
 			...installation,
 			numberOfRepos,
 			isAdmin,
-			isIPBlocked: !!errors.find(err => err instanceof BlockedIpError)
+			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError)
 		};
 	}));
 };

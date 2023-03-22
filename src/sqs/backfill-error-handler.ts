@@ -4,7 +4,7 @@ import { Task } from "~/src/sync/sync.types";
 import { handleUnknownError } from "~/src/sqs/error-handlers";
 import Logger from "bunyan";
 import { SQS } from "aws-sdk";
-import { InvalidPermissionsError } from "~/src/github/client/github-client-errors";
+import { GithubClientInvalidPermissionsError } from "~/src/github/client/github-client-errors";
 
 const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
@@ -18,7 +18,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	// TODO: add more task-related logic: e.g. mark as complete for 404; retry on RateLimiting errors etc
 
 
-	if (cause instanceof InvalidPermissionsError) {
+	if (cause instanceof GithubClientInvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log);
 		return {

@@ -2,7 +2,7 @@ import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "./sqs.types";
-import { RateLimitingError } from "../github/client/github-client-errors";
+import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
 import { getLogger } from "config/logger";
 
 /**
@@ -19,7 +19,7 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Error;
+type ErrorTypes = JiraClientError | Octokit.HookError | GithubClientRateLimitingError | Error;
 
 export const handleUnknownError: ErrorHandler<unknown> = async (
 	err: ErrorTypes,
@@ -89,7 +89,7 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 };
 
 const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
-	if (error instanceof RateLimitingError) {
+	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };
