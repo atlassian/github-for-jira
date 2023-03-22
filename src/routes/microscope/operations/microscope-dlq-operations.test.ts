@@ -13,12 +13,14 @@ const queueName = "push";
 const getQueuesResponse = {
 	shortName: queueName
 };
+
 const queryQueuesAttributesResponse = {
 	queueShortName: queueName,
 	attributes: {
 		ApproximateNumberOfMessages: "3"
 	}
 };
+
 const queryQueueMessagesResponse = {
 	messageId: "id",
 	receiptHandle: "handler",
@@ -60,59 +62,63 @@ describe("microscope dlq", () => {
 			params: {}
 		};
 
-		jest.clearAllMocks();
+		res = {
+			send: jest.fn(),
+			status: jest.fn()
+		};
 	});
 
 	it("healthcheck should respond with 200", async () => {
 		await microscopeDlqHealthcheck(req, res);
 
-		expect(res.body).toEqual("UP");
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.send).toHaveBeenCalledWith("OK");
 	});
 
 	it("query queues should return list of service queues", async () => {
 		await queryQueues(req, res);
 
-		expect(res.body).toEqual(getQueuesResponse);
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.send).toHaveBeenCalledWith(getQueuesResponse);
 	});
 
 	it("query queue attributes should return list of attributes", async () => {
 		await queryQueueAttributes(req, res);
 
-		expect(res.body).toEqual(queryQueuesAttributesResponse);
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.send).toHaveBeenCalledWith(queryQueuesAttributesResponse);
 	});
 
 	it("query queue messages should return list of visible messages", async () => {
 		req.params = { queueName };
+		req.query.limit = 5;
 		await queryQueueMessages(req, res);
 
-		expect(res.body).toEqual(queryQueueMessagesResponse);
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(res.send).toHaveBeenCalledWith(queryQueueMessagesResponse);
 	});
 
 	it("requeue message should return 200", async () => {
 		await requeueMessage(req, res);
 
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
 	});
 
 	it("requeue messages should return 200", async () => {
 		await requeueMessages(req, res);
 
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
 	});
 
 	it("delete message should return 200", async () => {
 		await deleteMessage(req, res);
 
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
 	});
 
 	it("delete messages should return 200", async () => {
 		await deleteMessages(req, res);
 
-		expect(res.status).toEqual(200);
+		expect(res.status).toHaveBeenCalledWith(200);
 	});
 });
