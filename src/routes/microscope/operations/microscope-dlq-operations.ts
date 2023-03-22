@@ -18,15 +18,17 @@ type DeleteMessageRequest = {
 	receiptHandle: string;
 };
 
+let dlqServiceClient;
+
 if (!DlqService) {
 	log.info("No dlqService package - skipping dlq operations");
+} else {
+	dlqServiceClient = new DlqService(log, {
+		sqs: {
+			region: process.env.SQS_PUSH_QUEUE_REGION
+		}
+	});
 }
-
-const dlqServiceClient = new DlqService(log, {
-	sqs: {
-		region: process.env.SQS_PUSH_QUEUE_REGION
-	}
-});
 
 export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promise<void> => {
 	res.status(200);

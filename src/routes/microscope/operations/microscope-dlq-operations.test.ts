@@ -8,7 +8,9 @@ import {
 	requeueMessage,
 	requeueMessages
 } from "./microscope-dlq-operations";
-import { DlqService } from "@atlassian/sqs-queue-dlq-service";
+import { optionalRequire } from "optional-require";
+
+const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
 
 const queueName = "push";
 const getQueuesResponse = {
@@ -54,10 +56,6 @@ describe("microscope dlq", () => {
 			send: jest.fn(),
 			status: jest.fn()
 		};
-	});
-
-	afterEach(async () => {
-		jest.clearAllMocks();
 	});
 
 	it("healthcheck should respond with 200", async () => {
