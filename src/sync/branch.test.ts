@@ -20,9 +20,10 @@ describe("sync/branches", () => {
 
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const sentry: Hub = { setUser: jest.fn() } as any;
+	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
 
 	beforeEach(() => {
-		mockSystemTime(12345678);
+		mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 	});
 
 	const makeExpectedResponseCloudServer = (branchName: string, repoId: string) => ({
@@ -238,9 +239,10 @@ describe("sync/branches", () => {
 
 		it("should reschedule message with delay if there is rate limit", async () => {
 			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-			nockGitHubGraphQlRateLimit("12360");
+			const RATE_LIMIT_RESET_TIMESTMAMP_SECS = 12360;
+			nockGitHubGraphQlRateLimit(String(RATE_LIMIT_RESET_TIMESTMAMP_SECS));
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-			await verifyMessageSent(data, 15);
+			await verifyMessageSent(data, (RATE_LIMIT_RESET_TIMESTMAMP_SECS * 1000 - MOCK_SYSTEM_TIMESTAMP_SEC) / 1000);
 		});
 
 		describe("Branch sync date", () => {
