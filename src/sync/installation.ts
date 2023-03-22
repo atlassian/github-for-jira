@@ -254,33 +254,36 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	try {
 
-		const random = Math.random();
-		logger.info("bgvozdev testing " + random);
-		if (random < 0.2) {
-			logger.info("bgvozdev testing unknown error");
-			throw new Error("boom");
-		}
-		if (random < 0.4) {
-			logger.info("bgvozdev testing ratelimiting error");
-			const DELAY = 20;
+		if (jiraHost === "https://bgvozdev.atlassian.net") {
 
-			const nowInSeconds = Math.floor(Date.now() / 1000);
-			const rateLimitResetInSeconds = nowInSeconds + DELAY;
+			const random = Math.random();
+			logger.info("bgvozdev testing " + random);
+			if (random < 0.2) {
+				logger.info("bgvozdev testing unknown error");
+				throw new Error("boom");
+			}
+			if (random < 0.4) {
+				logger.info("bgvozdev testing ratelimiting error");
+				const DELAY = 20;
 
-			const errorResponse = {
-				code: "codeBlah",
-				response: {
-					headers: {
-						"x-ratelimit-reset": rateLimitResetInSeconds.toString()
+				const nowInSeconds = Math.floor(Date.now() / 1000);
+				const rateLimitResetInSeconds = nowInSeconds + DELAY;
+
+				const errorResponse = {
+					code: "codeBlah",
+					response: {
+						headers: {
+							"x-ratelimit-reset": rateLimitResetInSeconds.toString()
+						}
 					}
-				}
-			};
+				};
 
-			throw new RateLimitingError(errorResponse as unknown as AxiosError);
-		}
-		if (random < 0.6) {
-			logger.info("bgvozdev testing permission error");
-			throw new InvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
+				throw new RateLimitingError(errorResponse as unknown as AxiosError);
+			}
+			if (random < 0.6) {
+				logger.info("bgvozdev testing permission error");
+				throw new InvalidPermissionsError({ code: "codeBlah" } as unknown as AxiosError);
+			}
 		}
 
 
