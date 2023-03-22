@@ -20,9 +20,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof InvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
-		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, async (delayMs) => {
-			return await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
-		}, log);
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log);
 		return {
 			isFailure: false
 		};
@@ -31,9 +29,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
 		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
-		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, async (delayMs) => {
-			return await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
-		}, log);
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log);
 		return {
 			isFailure: false
 		};

@@ -100,7 +100,7 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
  * @param task
  * @param repositoryId
  * @param logger
- * @param scheduleNextTask
+ * @param sendBackfillMessage
  */
 const updateTaskStatusAndContinue = async (
 	data: BackfillMessagePayload,
@@ -343,7 +343,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger) => Promise<unknown>, log: Logger): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -365,8 +365,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
-	// queueing the job again to pick up the next task
-	scheduleNextTask(0);
+
+	await sendBackfillMessage(data, 0, log);
 };
 
 const redis = new IORedis(getRedisInfo("installations-in-progress"));
