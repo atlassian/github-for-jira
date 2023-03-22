@@ -3,7 +3,7 @@ import * as installation from "~/src/sync/installation";
 import {
 	getTargetTasks,
 	handleBackfillError,
-	isRetryableWithSmallerRequest,
+	isRetryableWithSmallerRequest, markCurrentTaskAsFailedAndContinue,
 	maybeScheduleNextTask,
 	processInstallation,
 	TaskError
@@ -13,7 +13,7 @@ import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
-import { Repository } from "models/subscription";
+import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { mockNotFoundErrorOctokitGraphql } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError } from "sequelize";
@@ -32,9 +32,10 @@ jest.mock("~/src/sync/deduplicator", () => ({
 
 describe("sync/installation", () => {
 
-	let JOB_DATA;
-	let JOB_DATA_GHES;
+	let MESSAGE_PAYLOAD;
+	let MESSAGE_PAYLOAD_GHE;
 	let repoSyncState: RepoSyncState;
+	let subscription: Subscription;
 
 	const TEST_LOGGER = getLogger("test");
 	const GITHUB_APP_ID = 123;
@@ -57,10 +58,12 @@ describe("sync/installation", () => {
 			.repoSyncStatePendingForCommits()
 			.create();
 		repoSyncState = res.repoSyncState!;
+		subscription = res.subscription;
+
 		TASK.repositoryId = repoSyncState.repoId;
 
-		JOB_DATA = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-		JOB_DATA_GHES = {
+		MESSAGE_PAYLOAD = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+		MESSAGE_PAYLOAD_GHE = {
 			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 			jiraHost,
 			gitHubAppConfig: {
@@ -109,14 +112,14 @@ describe("sync/installation", () => {
 	describe("processInstallation", () => {
 
 		it("should process the installation with deduplication for cloud", async () => {
-			await processInstallation(jest.fn())(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation(jest.fn())(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-${DatabaseStateCreator.GITHUB_INSTALLATION_ID}-${jiraHost}-ghaid-cloud`, expect.anything());
 		});
 
 		it("should process the installation with deduplication for GHES", async () => {
 			const sendSqsMessage = jest.fn();
-			await processInstallation(sendSqsMessage)(JOB_DATA_GHES, sentry, TEST_LOGGER);
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_GHE, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
 			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-${DatabaseStateCreator.GITHUB_INSTALLATION_ID}-${jiraHost}-ghaid-${GITHUB_APP_ID}`, expect.anything());
 		});
@@ -124,15 +127,15 @@ describe("sync/installation", () => {
 		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
 			const sendSqsMessage = jest.fn();
-			await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			expect(sendSqsMessage).toBeCalledTimes(1);
-			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
+			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 60, expect.anything());
 		});
 
 		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
 			const sendSqsMessage = jest.fn();
-			await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
 
@@ -141,32 +144,42 @@ describe("sync/installation", () => {
 			const sendSqsMessage = jest.fn();
 			let err;
 			try {
-				await processInstallation(sendSqsMessage)(JOB_DATA, sentry, TEST_LOGGER);
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			} catch (caught) {
 				err = caught;
 			}
 			expect(err.message).toEqual(":haha:");
+		});
+
+		it("should mark subscription as successful when no other tasks left", async () => {
+			await repoSyncState.destroy();
+			const sendSqsMessage = jest.fn();
+
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect((await Subscription.findByPk(subscription.id)).syncStatus).toEqual(SyncStatus.COMPLETE);
 		});
 	});
 
 	describe("maybeScheduleNextTask", () => {
 		it("does nothing if there is no next task", async () => {
 			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [], TEST_LOGGER);
+			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [], TEST_LOGGER);
 			expect(sendSqsMessage).toBeCalledTimes(0);
 		});
 
 		it("when multiple tasks, picks the one with the highest delay", async () => {
 			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
+			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [30_000, 60_000, 0], TEST_LOGGER);
 			expect(sendSqsMessage).toBeCalledTimes(1);
-			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
+			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 60, expect.anything());
 		});
 
 		it("not passing delay to queue when not provided", async () => {
 			const sendSqsMessage = jest.fn();
-			await maybeScheduleNextTask(sendSqsMessage, JOB_DATA, [0], TEST_LOGGER);
-			expect(sendSqsMessage).toBeCalledWith(JOB_DATA, 0, expect.anything());
+			await maybeScheduleNextTask(sendSqsMessage, MESSAGE_PAYLOAD, [0], TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
 		});
 	});
 
@@ -200,7 +213,7 @@ describe("sync/installation", () => {
 				new RateLimitingError(
 					{ response: axiosResponse } as unknown as AxiosError
 				),
-				JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask
+				MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask
 			);
 
 			expect(scheduleNextTask).toBeCalledWith(14322);
@@ -222,7 +235,7 @@ describe("sync/installation", () => {
 
 			await handleBackfillError(new RateLimitingError({
 				response: axiosResponse
-			} as unknown as AxiosError), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			} as unknown as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(0);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -246,7 +259,7 @@ describe("sync/installation", () => {
 			try {
 				await client.getMainPage(1000);
 			} catch (err) {
-				await handleBackfillError(err, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			}
 			expect(scheduleNextTask).toBeCalledWith(14322);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
@@ -261,7 +274,7 @@ describe("sync/installation", () => {
 			try {
 				await client.getMainPage(1000);
 			} catch (err) {
-				await handleBackfillError(err, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			}
 
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
@@ -270,7 +283,7 @@ describe("sync/installation", () => {
 		});
 
 		it("Repository ignored if GraphQL not found error", async () => {
-			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
 			expect(failRepoSpy).toHaveBeenCalledTimes(0);
@@ -281,7 +294,7 @@ describe("sync/installation", () => {
 
 			let err;
 			try {
-				await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_LOGGER, scheduleNextTask);
+				await handleBackfillError(connectionRefusedError, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			} catch (caught) {
 				err = caught;
 			}
@@ -312,6 +325,53 @@ describe("sync/installation", () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
+		});
+	});
+
+	describe("markCurrentTaskAsFailedAndContinue", () => {
+		it("does nothing when there's no subscription", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue({
+				...MESSAGE_PAYLOAD,
+				installationId: MESSAGE_PAYLOAD.installationId + 1
+			}, TASK, false, sendMessageMock, getLogger("test"));
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState.get({ plain: true }));
+			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+			expect(sendMessageMock).toBeCalledTimes(0);
+		});
+
+		it("updates status in RepoSyncState table", async () => {
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(refreshedRepoSyncState.branchStatus).toEqual("failed");
+			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+		});
+
+		it("does not update cursor in RepoSyncState table", async () => {
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			expect(refreshedRepoSyncState.branchCursor).toEqual(repoSyncState.branchCursor);
+		});
+
+		it("schedules next message", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"));
+
+			expect(sendMessageMock).toBeCalledTimes(1);
+		});
+
+		it("sets up sync warning on permission error", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"));
+
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(refreshedSubscription.syncWarning).toEqual("Invalid permissions for branch task");
 		});
 	});
 

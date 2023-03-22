@@ -111,7 +111,6 @@ const updateTaskStatusAndContinue = async (
 	logger: Logger,
 	scheduleNextTask: (delay) => void
 ): Promise<void> => {
-	const { targetTasks } = data;
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
 
@@ -143,33 +142,8 @@ const updateTaskStatusAndContinue = async (
 	if (!isComplete) {
 		// there's more data to get
 		await updateRepo(subscription, repositoryId, { [getCursorKey(task)]: edges[edges.length - 1].cursor });
-		scheduleNextTask(0);
-		// no more data (last page was processed of this job type)
-	} else if (!(await getNextTask(subscription, targetTasks))) {
-		await subscription.update({
-			syncStatus: SyncStatus.COMPLETE,
-			backfillSince: await getBackfillSince(data, logger)
-		});
-		const endTime = Date.now();
-		const startTime = data?.startTime || 0;
-		const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
-		const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-
-		if (startTime) {
-			// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
-			// startTime will be passed in when this sync job is queued from the discovery
-			statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, {
-				...data.metricTags,
-				gitHubProduct,
-				repos: repoCountToBucket(subscription.totalNumberOfRepos)
-			});
-		}
-
-		logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
-	} else {
-		logger.info("Sync status is pending");
-		scheduleNextTask(0);
 	}
+	scheduleNextTask(0);
 };
 
 /**
@@ -210,6 +184,29 @@ const sendJiraFailureToSentry = (err, sentry: Hub) => {
 	}
 };
 
+const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscription: Subscription, logger: Logger) => {
+	await subscription.update({
+		syncStatus: SyncStatus.COMPLETE,
+		backfillSince: await getBackfillSince(data, logger)
+	});
+	const endTime = Date.now();
+	const startTime = data?.startTime || 0;
+	const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+
+	if (startTime) {
+		// full_sync measures the duration from start to finish of a complete scan and sync of github issues translated to tickets
+		// startTime will be passed in when this sync job is queued from the discovery
+		statsd.histogram(metricSyncStatus.fullSyncDuration, timeDiff, {
+			...data.metricTags,
+			gitHubProduct,
+			repos: repoCountToBucket(subscription.totalNumberOfRepos)
+		});
+	}
+
+	logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
+};
+
 // TODO: type queues
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, scheduleNextTask: (delayMs) => void): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
@@ -224,27 +221,21 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
-	if (!nextTask) {
-		await subscription.update({
-			syncStatus: "COMPLETE",
-			backfillSince: await getBackfillSince(data, rootLogger)
-		});
-		statsd.increment(metricSyncStatus.complete, { gitHubProduct });
-		rootLogger.info({ gitHubProduct }, "Sync complete");
-
-		return;
-	}
-
-	await subscription.update({ syncStatus: "ACTIVE" });
-
-	const { task, cursor, repository } = nextTask;
-
 	const logger = rootLogger.child({
 		task: nextTask,
 		gitHubProduct,
 		startTime: data.startTime,
 		commitsFromDate: data.commitsFromDate
 	});
+
+	if (!nextTask) {
+		await markSyncAsCompleteAndStop(data, subscription, logger);
+		return;
+	}
+
+	await subscription.update({ syncStatus: "ACTIVE" });
+
+	const { task, cursor, repository } = nextTask;
 
 	logger.info("Starting task");
 
@@ -353,7 +344,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, scheduleNextTask: (delayMs: number) => void, log: Logger): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -363,6 +354,12 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	// marking the current task as failed
 	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
+
+	if (isPermissionError) {
+		await subscription?.update({ syncWarning: `Invalid permissions for ${nextTask.task} task` });
+		log.error(`Invalid permissions for ${nextTask} task`);
+	}
+
 	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	if (nextTask.task === "repository") {
