@@ -5,7 +5,7 @@ import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { TaskPayload } from "~/src/sync/sync.types";
+import { TaskResultPayload } from "~/src/sync/sync.types";
 import { numberFlag, NumberFlags } from "config/feature-flags";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
@@ -26,7 +26,7 @@ export const getCommitTask = async (
 	repository: Repository,
 	cursor: string | number | undefined,
 	perPage: number,
-	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
+	messagePayload?: BackfillMessagePayload): Promise<TaskResultPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
 
 	const accelerateBackfillSpeedCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 

@@ -134,10 +134,10 @@ export class DatabaseStateCreator {
 		}) : undefined;
 
 		return {
-			installation,
-			subscription,
-			gitHubServerApp,
-			repoSyncState
+			installation: await Installation.findByPk(installation.id),
+			subscription: await Subscription.findByPk(subscription.id),
+			gitHubServerApp: gitHubServerApp ? await GitHubServerApp.findByPk(gitHubServerApp.id) : undefined,
+			repoSyncState: repoSyncState ? await RepoSyncState.findByPk(repoSyncState.id) : undefined
 		};
 	}
 

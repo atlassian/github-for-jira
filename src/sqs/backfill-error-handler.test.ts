@@ -3,11 +3,13 @@ import { getLogger } from "config/logger";
 import { backfillErrorHandler } from "~/src/sqs/backfill-error-handler";
 import { Sequelize } from "sequelize";
 import { TaskError } from "~/src/sync/installation";
-import { Repository } from "models/subscription";
+import { Repository, Subscription } from "models/subscription";
 import { Task } from "~/src/sync/sync.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import _ from "lodash";
 import { RepoSyncState } from "models/reposyncstate";
+import { InvalidPermissionsError } from "~/src/github/client/github-client-errors";
+import { AxiosError } from "axios";
 
 describe("backfillErrorHandler", () => {
 	const mockPayload = {
@@ -115,5 +117,31 @@ describe("backfillErrorHandler", () => {
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
+	});
+
+	it("marks task as failed and reschedules message on permission error", async () => {
+		const { subscription, repoSyncState } = await new DatabaseStateCreator().withActiveRepoSyncState().create();
+
+		const context = createContext(5, true);
+		context.payload = {
+			jiraHost,
+			installationId: subscription.gitHubInstallationId
+		};
+
+		const task = _.cloneDeep(TASK);
+		task.repositoryId = repoSyncState?.repoId || -1;
+
+		const sendMessageMock = jest.fn();
+		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new InvalidPermissionsError({ } as unknown as AxiosError)), context);
+
+		expect(result).toEqual({
+			isFailure: false
+		});
+		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
+		);
+		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
+		expect((await Subscription.findByPk(repoSyncState!.subscriptionId)).syncWarning).toEqual("Invalid permissions for commit task");
 	});
 });
