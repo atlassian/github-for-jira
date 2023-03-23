@@ -26,7 +26,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
 import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsOperationalEventsEnum } from "interfaces/common";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -206,10 +206,11 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			gitHubProduct,
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
 		});
-		sendAnalytics(AnalyticsEventTypes.OperationalEvent, {
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			...data.metricTags,
-			name: AnalyticsOperationalEventsEnum.BackfullSyncOperationEventName,
-			actionSubject: AnalyticsOperationalEventsEnum.BackfullSyncOperationEventName,
+			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
+			source: data.metricTags?.source || "worker",
+			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
 			action: "complete",
 			gitHubProduct,
 			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),

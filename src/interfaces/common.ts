@@ -46,11 +46,8 @@ export enum AnalyticsTrackEventsEnum {
 	DisconnectToOrgTrackEventName = "disconnectOrg",
 	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
 	RemoveGitHubServerTrackEventName = "removeGitHubServer",
-	CommitsPushedTrackEventName = "commitsPushed"
-}
-
-export enum AnalyticsOperationalEventsEnum {
-	BackfullSyncOperationEventName = "backfullSyncOperation",
+	CommitsPushedTrackEventName = "commitsPushed",
+	BackfullSyncOperationEventName = "backfillSync"
 }
 
 export enum AnalyticsTrackSource {
