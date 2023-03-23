@@ -49,12 +49,20 @@ $(".configure-connection-link").click(function(event) {
 	openChildWindow($(event.target).data("installation-link"));
 });
 
-const initializeBackfillDateInput = function () {
+const initializeBackfillDateInput = function (event) {
 	const dateElement = document.getElementById('backfill-date-picker');
-	const date = new Date();
-	date.setFullYear(date.getFullYear() - 1);
-	dateElement.value = date.toISOString().split('T')[0];
-	dateElement.max = new Date().toISOString().split('T')[0];
+	const isIncrementalBackfillEnabled = $("body").data("is-incremental-backfill-enabled");
+	if(isIncrementalBackfillEnabled) {
+		const newBackfillDate = $(event.target).data('connection-backfill-since') ? new Date($(event.target).data('connection-backfill-since')) : new Date();
+		newBackfillDate.setMonth(newBackfillDate.getMonth() - 6);
+		dateElement.value = newBackfillDate.toISOString().split('T')[0];
+		dateElement.max = new Date().toISOString().split('T')[0];
+	} else {
+		const date = new Date();
+		date.setFullYear(date.getFullYear() - 1);
+		dateElement.value = date.toISOString().split('T')[0];
+		dateElement.max = new Date().toISOString().split('T')[0];
+	}
 }
 
 const setDisabledStatus = (el, status) => {
@@ -100,7 +108,7 @@ $(".sync-connection-link").click(event => {
 	});
 });
 
-initializeBackfillDateInput();
+$("#restart-backfill-action-button, #restart-backfill").click(initializeBackfillDateInput);
 
 $('.jiraConfiguration__option').click(function (event) {
 	event.preventDefault();
