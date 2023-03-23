@@ -49,6 +49,10 @@ export enum AnalyticsTrackEventsEnum {
 	CommitsPushedTrackEventName = "commitsPushed"
 }
 
+export enum AnalyticsOperationalEventsEnum {
+	BackfullSyncOperationEventName = "backfullSyncOperation",
+}
+
 export enum AnalyticsTrackSource {
 	Cloud = "cloud",
 	GitHubEnterprise = "gitHubEnterprise",
