@@ -40,6 +40,7 @@
   font-size: 20px;
 }
 
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
   cursor: pointer;
   font-size: 20px;
@@ -80,6 +81,7 @@
   font-size: 20px;
 }
 
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
   cursor: pointer;
   font-size: 20px;
@@ -495,6 +497,7 @@ so changing the position of the tooltips for the first two rows to bottom
 }
 
 .jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
   border-radius: 3px;
   cursor: pointer;
@@ -502,6 +505,7 @@ so changing the position of the tooltips for the first two rows to bottom
   position: relative;
 }
 .jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
   background: #091E4208;
 }

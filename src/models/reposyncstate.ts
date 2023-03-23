@@ -39,6 +39,7 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	failedCode?: string;
 
 	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
@@ -78,6 +79,24 @@ export class RepoSyncState extends Model {
 				}
 			}
 		});
+	}
+
+
+	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+
+		const result = await RepoSyncState.findAll(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
+				}
+			}
+		}));
+		return result || [];
 	}
 
 	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
@@ -231,5 +250,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	failedCode: STRING
 }, { sequelize });
