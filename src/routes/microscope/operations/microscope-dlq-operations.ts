@@ -44,8 +44,9 @@ export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promi
 };
 
 export const queryQueues = async (_: Request, res: Response): Promise<void> => {
+	const queues = await dlqServiceClient.getQueues();
+	res.send(queues);
 	res.status(200);
-	res.send(await dlqServiceClient.getQueues());
 };
 
 export const queryQueueAttributes = async (_: Request, res: Response): Promise<void> => {
