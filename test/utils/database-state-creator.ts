@@ -6,10 +6,10 @@ import fs from "fs";
 import path from "path";
 
 interface CreatorResult {
-	installation: Installation,
-	subscription: Subscription,
-	gitHubServerApp?: GitHubServerApp,
-	repoSyncState?: RepoSyncState
+	installation: Installation | null;
+	subscription: Subscription | null;
+	repoSyncState: RepoSyncState | null | undefined;
+	gitHubServerApp: GitHubServerApp | null | undefined
 }
 
 export class DatabaseStateCreator {

@@ -170,7 +170,7 @@ describe("sync/builds", () => {
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 		expect(nock.isDone()).toBeTruthy();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor)?.toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
 	});
 
 	const NUMBER_OF_PARALLEL_FETCHES = 10;
@@ -207,7 +207,7 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + SCALE_COEF * NUMBER_OF_PARALLEL_FETCHES));
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + SCALE_COEF * NUMBER_OF_PARALLEL_FETCHES));
 	});
 
 	it("should finish task with parallel fetching when no more data", async () => {
@@ -227,7 +227,7 @@ describe("sync/builds", () => {
 		});
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {

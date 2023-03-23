@@ -38,7 +38,7 @@ describe("sync/installation", () => {
 	let MESSAGE_PAYLOAD;
 	let MESSAGE_PAYLOAD_GHE;
 	let repoSyncState: RepoSyncState;
-	let subscription: Subscription;
+	let subscription: Subscription | null;
 
 	const TEST_LOGGER = getLogger("test");
 	const GITHUB_APP_ID = 123;
@@ -161,7 +161,7 @@ describe("sync/installation", () => {
 			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
-			expect((await Subscription.findByPk(subscription.id)).syncStatus).toEqual(SyncStatus.COMPLETE);
+			expect((await Subscription.findByPk(subscription?.id))?.syncStatus).toEqual(SyncStatus.COMPLETE);
 		});
 
 		it("should update cursor and continue sync", async () => {
@@ -212,7 +212,7 @@ describe("sync/installation", () => {
 			}
 
 			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, (RATE_LIMIT_RESET_TIMESTAMP_SECS * 1000 - MOCKED_TIMESTAMP_MSECS) / 1000, expect.anything());
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.status).toEqual("pending");
 		});
 
 		it("No delay if rate limit already reset", async () => {
@@ -231,7 +231,7 @@ describe("sync/installation", () => {
 				response: axiosResponse
 			} as unknown as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).status).toEqual("pending");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.status).toEqual("pending");
 		});
 
 		it("Task ignored if not found error", async () => {
@@ -246,13 +246,13 @@ describe("sync/installation", () => {
 			}
 
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("complete");
 		});
 
 		it("Repository ignored if not found error", async () => {
 			await handleBackfillError(new GithubNotFoundError({ } as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("complete");
 		});
 
 		it("rethrows unknown error", async () => {
@@ -267,7 +267,7 @@ describe("sync/installation", () => {
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("pending");
 		});
 
 		it("rethrows github error", async () => {
@@ -282,7 +282,7 @@ describe("sync/installation", () => {
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(GithubClientError);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("pending");
 		});
 
 	});
@@ -317,9 +317,9 @@ describe("sync/installation", () => {
 			}, TASK, false, sendMessageMock, getLogger("test"));
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription.id);
-			expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState.get({ plain: true }));
-			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+			expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState?.get({ plain: true }));
+			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 			expect(sendMessageMock).toBeCalledTimes(0);
 		});
 
@@ -327,16 +327,16 @@ describe("sync/installation", () => {
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription.id);
-			expect(refreshedRepoSyncState.branchStatus).toEqual("failed");
-			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+			expect(refreshedRepoSyncState?.branchStatus).toEqual("failed");
+			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 		});
 
 		it("does not update cursor in RepoSyncState table", async () => {
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			expect(refreshedRepoSyncState.branchCursor).toEqual(repoSyncState.branchCursor);
+			expect(refreshedRepoSyncState?.branchCursor).toEqual(repoSyncState.branchCursor);
 		});
 
 		it("schedules next message", async () => {
@@ -350,8 +350,8 @@ describe("sync/installation", () => {
 			const sendMessageMock = jest.fn();
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"));
 
-			const refreshedSubscription = await Subscription.findByPk(subscription.id);
-			expect(refreshedSubscription.syncWarning).toEqual("Invalid permissions for branch task");
+			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
+			expect(refreshedSubscription?.syncWarning).toEqual("Invalid permissions for branch task");
 		});
 	});
 

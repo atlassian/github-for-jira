@@ -353,7 +353,7 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nock.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 5));
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 5));
 		});
 
 		it("uses parallel fetching of 2 pages when FF is over 5", async () => {
@@ -411,7 +411,7 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 10));
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 10));
 		});
 
 		it("processing of PRs with parallel fetching ON should stop when no more PRs from GitHub", async () => {
@@ -439,7 +439,7 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
 		});
 
 		it("should not sync if nodes are empty", async () => {

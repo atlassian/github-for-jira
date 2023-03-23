@@ -44,12 +44,14 @@ Dummy.init({
 }, {
 	hooks: {
 		beforeSave: async (app, opts) => {
-			await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
+			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+			await app.encryptChangedSecretFields(optsFields, getLogger("test"));
 		},
 
 		beforeBulkCreate: async (apps, opts) => {
 			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
+				const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+				await app.encryptChangedSecretFields(optsFields, getLogger("test"));
 			}
 		}
 	},
@@ -80,8 +82,8 @@ describe("Encrypted model", () => {
 		const id = newId();
 		await Dummy.create({ id, name: "test", a: "aaa1", b: "bbb1" });
 		const dummy = await Dummy.findOne({ where: { name: "test" } });
-		await dummy.decrypt("a");
-		await dummy.decrypt("b");
+		await dummy?.decrypt("a", getLogger("test"));
+		await dummy?.decrypt("b", getLogger("test"));
 		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "encrypted:aaa1", { "name": "test" });
 		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "encrypted:bbb1", { "name": "test" });
 	});

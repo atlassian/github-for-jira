@@ -100,7 +100,9 @@ describe("backfillErrorHandler", () => {
 		const context = createContext(5, true);
 		context.payload = {
 			jiraHost,
-			installationId: subscription.gitHubInstallationId
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			installationId: subscription?.gitHubInstallationId
 		};
 
 		const task = _.cloneDeep(TASK);
@@ -116,7 +118,7 @@ describe("backfillErrorHandler", () => {
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 	});
 
 	it("marks task as failed and reschedules message on permission error", async () => {
@@ -125,7 +127,9 @@ describe("backfillErrorHandler", () => {
 		const context = createContext(5, true);
 		context.payload = {
 			jiraHost,
-			installationId: subscription.gitHubInstallationId
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			installationId: subscription?.gitHubInstallationId
 		};
 
 		const task = _.cloneDeep(TASK);
@@ -141,7 +145,7 @@ describe("backfillErrorHandler", () => {
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
-		expect((await Subscription.findByPk(repoSyncState!.subscriptionId)).syncWarning).toEqual("Invalid permissions for commit task");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
+		expect((await Subscription.findByPk(repoSyncState!.subscriptionId))?.syncWarning).toEqual("Invalid permissions for commit task");
 	});
 });

@@ -133,7 +133,7 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const installation: Installation = await Installation.findByPk(gitHubServerApp.installationId);
+		const installation: Installation | null = await Installation.findByPk(gitHubServerApp.installationId);
 		if (!installation) {
 			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
 		}

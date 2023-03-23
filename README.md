@@ -68,7 +68,6 @@ Next, you will need to [configure the app](#configure-app).
 5. When the app is installed, a flag will pop up in the top-right corner. Click **Get Started** to connect your GitHub
    account. If you missed this flag, click **Configure integration** from the Apps menu.
 
-
 Next, you will need to [configure the app](#configure-app).
 
 ### Install from GitHub Marketplace

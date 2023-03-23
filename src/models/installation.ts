@@ -142,12 +142,15 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_SAVE);
+			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
+			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+
 			for (const instance of instances) {
-				if (!opts.fields) return;
-				await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_BULK_CREATE);
+				if (!optsFields) return;
+				await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_BULK_CREATE);
 			}
 		}
 	},
