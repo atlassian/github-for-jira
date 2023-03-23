@@ -1,6 +1,5 @@
 import {
 	getTargetTasks,
-	handleBackfillError,
 	isRetryableWithSmallerRequest, markCurrentTaskAsFailedAndContinue,
 	processInstallation,
 	TaskError, updateTaskStatusAndContinue
@@ -9,21 +8,15 @@ import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import {
-	GithubClientError,
-	GithubClientRateLimitingError,
-	GithubNotFoundError
-} from "~/src/github/client/github-client-errors";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { v4 as UUID } from "uuid";
-import { ConnectionTimedOutError } from "sequelize";
-import { AxiosError } from "axios";
-import { createAnonymousClient } from "utils/get-github-client-config";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { JiraClientError } from "~/src/jira/client/axios";
+import { GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
 
 const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
@@ -178,113 +171,49 @@ describe("sync/installation", () => {
 
 			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
-	});
 
-	describe("handleBackfillError", () => {
-
-		const scheduleNextTask = jest.fn();
-		const MOCKED_TIMESTAMP_MSECS = 12_345_678;
-
-		beforeEach(() => {
-			mockSystemTime(MOCKED_TIMESTAMP_MSECS);
-		});
-
-		it("Rate limiting error will be retried with the correct delay", async () => {
-			const RATE_LIMIT_RESET_TIMESTAMP_SECS = 12360;
-			gheNock.get("/")
-				.reply(403, {}, {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "0",
-					"x-ratelimit-reset": "" + RATE_LIMIT_RESET_TIMESTAMP_SECS,
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				});
-
-			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
-			try {
-				await client.getMainPage(1000);
-			} catch (err) {
-				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			}
-
-			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, (RATE_LIMIT_RESET_TIMESTAMP_SECS * 1000 - MOCKED_TIMESTAMP_MSECS) / 1000, expect.anything());
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.status).toEqual("pending");
-		});
-
-		it("No delay if rate limit already reset", async () => {
-			const axiosResponse = {
-				data: "Rate Limit",
-				status: 403,
-				statusText: "RateLimit",
-				headers: {
-					"x-ratelimit-reset": "12345",
-					"x-ratelimit-remaining": "0"
-				},
-				config: {}
-			};
-
-			await handleBackfillError(new GithubClientRateLimitingError({
-				response: axiosResponse
-			} as unknown as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.status).toEqual("pending");
-		});
-
-		it("Task ignored if not found error", async () => {
-			gheNock.get("/")
+		it("should rethrow GitHubClient error", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.times(2)
+				.query(true)
 				.reply(404, {});
 
-			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			let err: TaskError;
 			try {
-				await client.getMainPage(1000);
-			} catch (err) {
-				await handleBackfillError(err, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			}
-
-			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("complete");
-		});
-
-		it("Repository ignored if not found error", async () => {
-			await handleBackfillError(new GithubNotFoundError({ } as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("complete");
-		});
-
-		it("rethrows unknown error", async () => {
-			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
-
-			let err;
-			try {
-				await handleBackfillError(connectionRefusedError, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+				await mockedExecuteWithDeduplication.mock.calls[0][1]();
 			} catch (caught) {
 				err = caught;
 			}
-			expect(err).toBeInstanceOf(TaskError);
-			expect(err.task).toEqual(TASK);
-			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("pending");
+			expect(err!).toBeInstanceOf(TaskError);
+			expect(err!.task!.task).toEqual("branch");
+			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
 		});
 
-		it("rethrows github error", async () => {
-			const connectionRefusedError = new GithubClientError("foo", { code: "foo" } as unknown as AxiosError);
+		it("should rethrow Jira error", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(500);
 
-			let err;
+			let err: TaskError;
 			try {
-				await handleBackfillError(connectionRefusedError, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+				await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
 			} catch (caught) {
 				err = caught;
 			}
-			expect(err).toBeInstanceOf(TaskError);
-			expect(err.task).toEqual(TASK);
-			expect(err.cause).toBeInstanceOf(GithubClientError);
-			expect((await RepoSyncState.findByPk(repoSyncState.id)!)?.branchStatus).toEqual("pending");
+			expect(err!).toBeInstanceOf(TaskError);
+			expect(err!.task!.task).toEqual("branch");
+			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
-
 	});
 
 	describe("getTargetTasks", () => {
@@ -362,6 +291,16 @@ describe("sync/installation", () => {
 		let data: BackfillMessagePayload;
 		let sub: Subscription;
 		let repoSync: RepoSyncState;
+
+		const TEST_REPO: Repository = {
+			id: REPO_ID,
+			name: "Test",
+			full_name: "Test/Test",
+			owner: { login: "test" },
+			html_url: "https://test",
+			updated_at: "1234"
+		};
+
 		beforeEach(async ()=> {
 			sub = await Subscription.install({ host: jiraHost, installationId: GITHUB_INSTALLATION_ID, gitHubAppId: undefined, hashedClientKey: "client-key" });
 			repoSync = await RepoSyncState.create({
@@ -376,13 +315,23 @@ describe("sync/installation", () => {
 		});
 
 		it("should skip update backfill from date if task is branch", async () => {
-			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, "branch", REPO_ID, getLogger("test"), jest.fn());
+			const task: Task = {
+				task: "branch",
+				repositoryId: REPO_ID,
+				repository: TEST_REPO
+			};
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 			await repoSync.reload();
 			expect(repoSync.branchFrom).toBeNull();
 		});
 
 		it("should skip update backfill from date if task is repository", async () => {
-			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, "repository", REPO_ID, getLogger("test"), jest.fn());
+			const task: Task = {
+				task: "repository",
+				repositoryId: 0,
+				repository: TEST_REPO
+			};
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 			await repoSync.reload();
 			expect(repoSync.branchFrom).toBeNull();
 			expect(repoSync.commitFrom).toBeNull();
@@ -391,30 +340,35 @@ describe("sync/installation", () => {
 			expect(repoSync.deploymentFrom).toBeNull();
 		});
 
-		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (task: TaskType) => {
-			const colTaskFrom = `${task}From`;
-			it(`${task}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (taskType: TaskType) => {
+			const colTaskFrom = `${taskType}From`;
+			const task: Task = {
+				task: taskType,
+				repositoryId: REPO_ID,
+				repository: TEST_REPO
+			};
+			it(`${taskType}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
 			});
-			it(`${task}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
+			it(`${taskType}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
 				repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
 				await repoSync.save();
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
 			});
-			it(`${task}: should skip update backfill from date upon success complete and new backfill date is more recent`, async () => {
+			it(`${taskType}: should skip update backfill from date upon success complete and new backfill date is more recent`, async () => {
 				const oldDate = new Date(commitsFromDate.getTime() - 100000);
 				repoSync[colTaskFrom]= oldDate;
 				await repoSync.save();
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, REPO_ID, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(oldDate.toISOString());
 			});
-			it(`${task}: should not update backfill from date is job is not complete`, async () => {
-				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, "pull", REPO_ID, getLogger("test"), jest.fn());
+			it(`${taskType}: should not update backfill from date is job is not complete`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync.pullFrom).toBeNull();
 			});
