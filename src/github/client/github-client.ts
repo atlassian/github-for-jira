@@ -6,7 +6,7 @@ import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import {
 	buildAxiosStubErrorForGraphQlErrors,
 	GithubClientGraphQLError, GithubClientInvalidPermissionsError,
-	GithubClientRateLimitingError, GithubNotFoundError
+	GithubClientRateLimitingError, GithubClientNotFoundError
 } from "~/src/github/client/github-client-errors";
 import {
 	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
@@ -112,7 +112,7 @@ export class GitHubClient {
 
 			} else if (graphqlErrors.find(graphQLError => graphQLError.type == "NOT_FOUND")) {
 				this.logger.info({ err }, "Mapping GraphQL error to not found");
-				return Promise.reject(new GithubNotFoundError(buildAxiosStubErrorForGraphQlErrors(response)));
+				return Promise.reject(new GithubClientNotFoundError(buildAxiosStubErrorForGraphQlErrors(response)));
 			}
 			return Promise.reject(err);
 		}

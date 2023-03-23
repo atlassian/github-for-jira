@@ -52,7 +52,7 @@ export class GithubClientInvalidPermissionsError extends GithubClientError {
 	}
 }
 
-export class GithubNotFoundError extends GithubClientError {
+export class GithubClientNotFoundError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Not found", cause);
 	}

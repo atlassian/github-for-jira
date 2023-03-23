@@ -5,7 +5,7 @@ import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
 import { getLogger } from "config/logger";
 import {
 	GithubClientInvalidPermissionsError,
-	GithubClientRateLimitingError, GithubNotFoundError
+	GithubClientRateLimitingError, GithubClientNotFoundError
 } from "~/src/github/client/github-client-errors";
 
 class TestGitHubClient extends GitHubClient {
@@ -128,7 +128,7 @@ describe("GitHub Client (nock)", () => {
 			} catch (caught) {
 				err = caught;
 			}
-			expect(err!).toBeInstanceOf(GithubNotFoundError);
+			expect(err!).toBeInstanceOf(GithubClientNotFoundError);
 		});
 	});
 
