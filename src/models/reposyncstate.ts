@@ -40,7 +40,7 @@ export class RepoSyncState extends Model {
 	updatedAt: Date;
 	createdAt: Date;
 	failedCode?: string;
-  
+
 	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];

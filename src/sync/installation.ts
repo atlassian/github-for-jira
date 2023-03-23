@@ -349,7 +349,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger, err: Error) => Promise<unknown>, log: Logger): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -364,7 +364,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
-    await updateRepo(subscription, nextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
+		await updateRepo(subscription, nextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
 		await subscription?.update({ syncWarning: `Invalid permissions for ${nextTask.task} task` });
 		log.error(`Invalid permissions for ${nextTask.task} task`);
 	}
@@ -375,7 +375,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
-	await sendBackfillMessage(data, 0, log);
+	await sendBackfillMessage(data, 0, log, err);
 };
 
 

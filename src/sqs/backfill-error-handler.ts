@@ -19,7 +19,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
-		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log);
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false
 		};
