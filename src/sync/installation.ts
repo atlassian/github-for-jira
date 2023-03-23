@@ -216,7 +216,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),
 			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,
 			reposBucket: repoCountToBucket(subscription.totalNumberOfRepos),
-			repos: subscription.totalNumberOfRepos
+			reposCount: subscription.totalNumberOfRepos
 		});
 	}
 
