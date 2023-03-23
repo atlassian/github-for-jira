@@ -4,7 +4,7 @@ import {
 	GithubClientTimeoutError,
 	GithubClientInvalidPermissionsError,
 	GithubClientRateLimitingError,
-	GithubNotFoundError
+	GithubClientNotFoundError
 } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
@@ -147,7 +147,7 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 			}
 
 			if (status === 404) {
-				const mappedError = new GithubNotFoundError(err);
+				const mappedError = new GithubClientNotFoundError(err);
 				logger.warn({
 					err: mappedError,
 					remote: response.data.message
