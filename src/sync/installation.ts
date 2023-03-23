@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { intersection, omit, pick, without } from "lodash";
+import { intersection, omit, pick, without, cloneDeep } from "lodash";
 import IORedis from "ioredis";
 import Logger from "bunyan";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
@@ -22,7 +22,8 @@ import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
-import _ from "lodash";
+import { sendAnalytics } from "utils/analytics-client";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -49,7 +50,7 @@ export class TaskError extends Error {
 	cause: Error;
 	constructor(task: Task, cause: Error) {
 		super(cause.message);
-		this.task = _.cloneDeep(task);
+		this.task = cloneDeep(task);
 		this.cause = cause;
 	}
 }
@@ -202,6 +203,18 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			...data.metricTags,
 			gitHubProduct,
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
+		});
+		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			...data.metricTags,
+			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
+			source: data.metricTags?.source || "worker",
+			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
+			action: "complete",
+			gitHubProduct,
+			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),
+			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,
+			reposBucket: repoCountToBucket(subscription.totalNumberOfRepos),
+			reposCount: subscription.totalNumberOfRepos
 		});
 	}
 
