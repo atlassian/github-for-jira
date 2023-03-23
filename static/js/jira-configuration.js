@@ -108,6 +108,27 @@ $(".sync-connection-link").click(event => {
 	});
 });
 
+$(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
+	const installationId = $(event.target).data("installation-id");
+	document.getElementById(`error-summary-modal-${installationId}`).style.display = "none";
+});
+
+$(".jiraConfiguration__errorSummary__btn").click(event => {
+	const installationId = $(event.target).parent().data("installation-id");
+	const jiraHost = $(event.target).data("jira-host");
+	const appId = $(event.target).data("app-id");
+	const csrfToken = document.getElementById("_csrf").value;
+
+	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
+
+	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
+		event.preventDefault();
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, undefined, appId});
+		});
+	});
+});
+
 $("#restart-backfill-action-button, #restart-backfill").click(initializeBackfillDateInput);
 
 $('.jiraConfiguration__option').click(function (event) {
