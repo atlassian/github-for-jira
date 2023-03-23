@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
-import { optionalRequire } from "optional-require";
+// import { optionalRequire } from "optional-require";
+//
+// const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
 
-const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true) || {};
+import { DlqService } from "@atlassian/sqs-queue-dlq-service";
 
 const log: Logger = getLogger("microscope-dlq");
 
@@ -18,17 +20,23 @@ type DeleteMessageRequest = {
 	receiptHandle: string;
 };
 
-let dlqServiceClient;
+// let dlqServiceClient;
+//
+// if (!DlqService) {
+// 	log.info("No dlqService package - skipping dlq operations");
+// } else {
+// 	dlqServiceClient = new DlqService(log, {
+// 		sqs: {
+// 			region: process.env.SQS_PUSH_QUEUE_REGION
+// 		}
+// 	});
+// }
 
-if (!DlqService) {
-	log.info("No dlqService package - skipping dlq operations");
-} else {
-	dlqServiceClient = new DlqService(log, {
-		sqs: {
-			region: process.env.SQS_PUSH_QUEUE_REGION
-		}
-	});
-}
+const dlqServiceClient = new DlqService(log, {
+	sqs: {
+		region: process.env.SQS_PUSH_QUEUE_REGION
+	}
+});
 
 export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promise<void> => {
 	res.status(200);
