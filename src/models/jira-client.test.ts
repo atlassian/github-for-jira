@@ -4,7 +4,7 @@ import { JiraClient } from "./jira-client";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("JiraClient", () => {
-	let jiraClient: null | JiraClient;
+	let jiraClient: JiraClient | null;
 	beforeEach(async () => {
 		const { installation } = await new DatabaseStateCreator().create();
 		jiraClient = installation && await JiraClient.getNewClient(installation, getLogger("test"));

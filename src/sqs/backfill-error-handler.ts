@@ -1,10 +1,16 @@
 import { BackfillMessagePayload, ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
-import { markCurrentTaskAsFailedAndContinue, TaskError } from "~/src/sync/installation";
+import {
+	markCurrentTaskAsFailedAndContinue,
+	TaskError,
+	updateTaskStatusAndContinue
+} from "~/src/sync/installation";
 import { Task } from "~/src/sync/sync.types";
 import { handleUnknownError } from "~/src/sqs/error-handlers";
 import Logger from "bunyan";
 import { SQS } from "aws-sdk";
-import { GithubClientInvalidPermissionsError } from "~/src/github/client/github-client-errors";
+import {
+	GithubClientInvalidPermissionsError, GithubClientNotFoundError, GithubClientRateLimitingError
+} from "~/src/github/client/github-client-errors";
 
 const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
@@ -15,12 +21,34 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	});
 	log.info("Handling error task");
 
-	// TODO: add more task-related logic: e.g. mark as complete for 404; retry on RateLimiting errors etc
-
-
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log);
+		return {
+			isFailure: false
+		};
+	}
+
+	if (cause instanceof GithubClientRateLimitingError) {
+		const delayMs = Math.max(cause.rateLimitReset * 1000 - Date.now(), 0);
+
+		// Always schedule a new message: rate-limiting might take long and we
+		// don't want to exhaust all retries
+		if (delayMs) {
+			log.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
+			await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
+		} else {
+			log.info("Rate limit was reset already. Scheduling next task");
+			await sendSQSBackfillMessage(context.payload, 0, log);
+		}
+		return {
+			isFailure: false
+		};
+	}
+
+	if (cause instanceof GithubClientNotFoundError) {
+		log.info("Repo was deleted, marking the task as completed");
+		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
 			isFailure: false
 		};
