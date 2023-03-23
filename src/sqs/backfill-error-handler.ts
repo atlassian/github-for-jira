@@ -21,9 +21,6 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	});
 	log.info("Handling error task");
 
-	// TODO: add more task-related logic: e.g. mark as complete for 404; retry on RateLimiting errors etc
-
-
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log);
