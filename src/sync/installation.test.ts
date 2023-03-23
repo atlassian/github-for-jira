@@ -9,12 +9,15 @@ import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import {
+	GithubClientError,
+	GithubClientRateLimitingError,
+	GithubNotFoundError
+} from "~/src/github/client/github-client-errors";
 import { Repository, Subscription, SyncStatus } from "models/subscription";
-import { mockNotFoundErrorOctokitGraphql } from "test/mocks/error-responses";
 import { v4 as UUID } from "uuid";
 import { ConnectionTimedOutError } from "sequelize";
-import { AxiosError, AxiosResponse } from "axios";
+import { AxiosError } from "axios";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
@@ -224,7 +227,7 @@ describe("sync/installation", () => {
 				config: {}
 			};
 
-			await handleBackfillError(new RateLimitingError({
+			await handleBackfillError(new GithubClientRateLimitingError({
 				response: axiosResponse
 			} as unknown as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toBeCalledWith(MESSAGE_PAYLOAD, 0, expect.anything());
@@ -246,8 +249,8 @@ describe("sync/installation", () => {
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
 		});
 
-		it("Repository ignored if GraphQL not found error", async () => {
-			await handleBackfillError(new GithubClientGraphQLError({ } as AxiosResponse, mockNotFoundErrorOctokitGraphql.errors), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+		it("Repository ignored if not found error", async () => {
+			await handleBackfillError(new GithubNotFoundError({ } as AxiosError), MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
 			expect(scheduleNextTask).toHaveBeenCalledTimes(1);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("complete");
 		});
@@ -264,6 +267,21 @@ describe("sync/installation", () => {
 			expect(err).toBeInstanceOf(TaskError);
 			expect(err.task).toEqual(TASK);
 			expect(err.cause).toBeInstanceOf(ConnectionTimedOutError);
+			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
+		});
+
+		it("rethrows github error", async () => {
+			const connectionRefusedError = new GithubClientError("foo", { code: "foo" } as unknown as AxiosError);
+
+			let err;
+			try {
+				await handleBackfillError(connectionRefusedError, MESSAGE_PAYLOAD, TASK, TEST_LOGGER, scheduleNextTask);
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err).toBeInstanceOf(TaskError);
+			expect(err.task).toEqual(TASK);
+			expect(err.cause).toBeInstanceOf(GithubClientError);
 			expect((await RepoSyncState.findByPk(repoSyncState.id)!).branchStatus).toEqual("pending");
 		});
 
