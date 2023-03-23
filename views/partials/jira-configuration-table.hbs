@@ -12,11 +12,6 @@
 
           </span>
         </th>
-        {{! Restart Button }}
-        {{#if isIncrementalBackfillEnabled}}
-        <th class="jiraConfiguration__table__head__title"></th>
-        {{/if}}
-        {{! Restart Button -- end}}
         <th class="jiraConfiguration__table__head__title">Settings</th>
       </tr>
       </thead>
@@ -123,24 +118,6 @@
             </div>
           </td>
 
-          {{! Restart Button }}
-          {{#if ../isIncrementalBackfillEnabled}}
-          <td class="jiraConfiguration__table__cell jiraConfiguration__table__cell__action__inline">
-            <button
-                class="sync-connection-link restart-backfill-button-inline aui-button aui-button-secondary"
-                data-jira-host="{{ ../host }}"
-                data-installation-id="{{ id }}"
-                data-app-id="{{ ../gitHubAppId }}"
-                data-connection-backfill-since="{{connection.backfillSince}}"
-                id="restart-backfill-action-button"
-            >
-              Continue backfill
-            </button>
-            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-          </td>
-          {{/if}}
-          {{! Restart Button -- end}}
-
           {{! Settings }}
           <td class="jiraConfiguration__table__cell__settings">
             <button
@@ -164,7 +141,6 @@
                 >
                   Configure
                 </a>
-                {{#unless ../isIncrementalBackfillEnabled}}
                 <div class="jiraConfiguration__table__cell__settings__dropdownItem">
                   <button
                       class="sync-connection-link restart-backfill-button"
@@ -173,11 +149,15 @@
                       data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"
                   >
+                    {{#unless ../isIncrementalBackfillEnabled}}
                     Restart backfill
+                    {{/unless}}
+                    {{#if ../isIncrementalBackfillEnabled}}
+                    Continue backfill
+                    {{/if}}
                   </button>
                   <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                 </div>
-                {{/unless}}
                 <button
                     class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
                     data-installation-id="{{id}}"
