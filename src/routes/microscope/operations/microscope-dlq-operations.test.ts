@@ -34,7 +34,9 @@ const queryQueueMessagesResponse = {
 	messageAttributes: {}
 };
 
-jest.mock("@atlassian/sqs-queue-dlq-service");
+if (DlqService) {
+	jest.mock("@atlassian/sqs-queue-dlq-service");
+}
 
 describe("microscope dlq", () => {
 	let req, res;
