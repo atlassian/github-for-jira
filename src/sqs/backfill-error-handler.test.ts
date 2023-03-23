@@ -8,7 +8,7 @@ import { Task } from "~/src/sync/sync.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import _ from "lodash";
 import { RepoSyncState } from "models/reposyncstate";
-import { InvalidPermissionsError } from "~/src/github/client/github-client-errors";
+import { GithubClientInvalidPermissionsError } from "~/src/github/client/github-client-errors";
 import { AxiosError } from "axios";
 
 describe("backfillErrorHandler", () => {
@@ -132,7 +132,7 @@ describe("backfillErrorHandler", () => {
 		task.repositoryId = repoSyncState?.repoId || -1;
 
 		const sendMessageMock = jest.fn();
-		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new InvalidPermissionsError({ } as unknown as AxiosError)), context);
+		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new GithubClientInvalidPermissionsError({ } as unknown as AxiosError)), context);
 
 		expect(result).toEqual({
 			isFailure: false
