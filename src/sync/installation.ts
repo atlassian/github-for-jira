@@ -18,9 +18,6 @@ import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } f
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { Hub } from "@sentry/types/dist/hub";
-import {
-	GithubClientRateLimitingError, GithubNotFoundError
-} from "../github/client/github-client-errors";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
@@ -103,15 +100,13 @@ const getFromDateKey = (type: TaskType) => `${type}From`;
  * @param data
  * @param taskResultPayload - when edges.length is 0 or undefined, the task is considered to be completed
  * @param task
- * @param repositoryId
  * @param logger
  * @param sendBackfillMessage
  */
 export const updateTaskStatusAndContinue = async (
 	data: BackfillMessagePayload,
 	taskResultPayload: TaskResultPayload,
-	task: TaskType,
-	repositoryId: number,
+	task: Task,
 	logger: Logger,
 	sendBackfillMessage: (message, delay, logger) => Promise<unknown>
 ): Promise<void> => {
@@ -123,6 +118,7 @@ export const updateTaskStatusAndContinue = async (
 		logger.info("Organization has been deleted. Other active syncs will continue.");
 		return;
 	}
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 	const { edges } = taskResultPayload;
 	const isComplete = !edges?.length;
 
@@ -130,26 +126,28 @@ export const updateTaskStatusAndContinue = async (
 
 	logger.info({ status }, "Updating job status");
 
-	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task)]: status };
+	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
-	//Set the complete date on success for tasks.
-	//Skip branches as it sync all history
-	if (isComplete && allTasksExceptBranch.includes(task) && data.commitsFromDate) {
-		const repoSync = await RepoSyncState.findByRepoId(subscription, repositoryId);
-		if (repoSync) {
-			const newFromDate =  new Date(data.commitsFromDate);
-			const existingFromDate = repoSync[getFromDateKey(task)];
-			if (!existingFromDate || newFromDate.getTime() < existingFromDate.getTime()) {
-				updateRepoSyncFields[getFromDateKey(task)] = newFromDate;
+	if (isComplete) {
+		//Skip branches as it sync all history
+		if (allTasksExceptBranch.includes(task.task) && data.commitsFromDate) {
+			const repoSync = await RepoSyncState.findByRepoId(subscription, task.repositoryId);
+			if (repoSync) {
+				const newFromDate =  new Date(data.commitsFromDate);
+				const existingFromDate = repoSync[getFromDateKey(task.task)];
+				if (!existingFromDate || newFromDate.getTime() < existingFromDate.getTime()) {
+					updateRepoSyncFields[getFromDateKey(task.task)] = newFromDate;
+				}
 			}
 		}
+
+		statsd.increment(metricTaskStatus.complete, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+	} else {
+		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
+		statsd.increment(metricTaskStatus.pending, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	}
 
-	if ((edges?.length || 0) > 0) {
-		updateRepoSyncFields[getCursorKey(task)] = edges![edges!.length - 1].cursor;
-	}
-
-	await updateRepo(subscription, repositoryId, updateRepoSyncFields);
+	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
 	await sendBackfillMessage(data, 0, logger);
 };
 
@@ -210,7 +208,34 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 	logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");
 };
 
-// TODO: type queues
+const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry: Hub, logger: Logger) => {
+	try {
+		switch (task) {
+			case "build":
+				await jiraClient.workflow.submit(jiraPayload, {
+					preventTransitions: true,
+					operationType: "BACKFILL"
+				});
+				break;
+			case "deployment":
+				await jiraClient.deployment.submit(jiraPayload, {
+					preventTransitions: true,
+					operationType: "BACKFILL"
+				});
+				break;
+			default:
+				await jiraClient.devinfo.repository.update(jiraPayload, {
+					preventTransitions: true,
+					operationType: "BACKFILL"
+				});
+		}
+	} catch (err) {
+		logger.warn({ err }, "Failed to send data to Jira");
+		sendJiraFailureToSentry(err, sentry);
+		throw err;
+	}
+};
+
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message, delay, logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
@@ -231,115 +256,50 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		commitsFromDate: data.commitsFromDate
 	});
 
-	if (!nextTask) {
-		await markSyncAsCompleteAndStop(data, subscription, logger);
-		return;
-	}
-
-	await subscription.update({ syncStatus: "ACTIVE" });
-
-	const { task, cursor, repository } = nextTask;
-
-	logger.info("Starting task");
-
-	const processor = tasks[task];
-
 	try {
+		if (!nextTask) {
+			await markSyncAsCompleteAndStop(data, subscription, logger);
+			return;
+		}
+
+		await subscription.update({ syncStatus: "ACTIVE" });
+
+		const { task, cursor, repository } = nextTask;
+
+		logger.info("Starting task");
 
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+
 		// TODO: increase page size to 100 and remove scaling logic from commits, prs and builds
+		const processor = tasks[task];
 		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, 20, data);
 		if (taskPayload.jiraPayload) {
-			try {
-				// In "try" because it could fail if cryptor throws a error, and we don't want to kill the whole backfilling in this case
-				const jiraClient = await getJiraClient(
-					subscription.jiraHost,
-					gitHubInstallationId,
-					data.gitHubAppConfig?.gitHubAppId,
-					logger
-				);
-				switch (task) {
-					case "build":
-						await jiraClient.workflow.submit(taskPayload.jiraPayload, {
-							preventTransitions: true,
-							operationType: "BACKFILL"
-						});
-						break;
-					case "deployment":
-						await jiraClient.deployment.submit(taskPayload.jiraPayload, {
-							preventTransitions: true,
-							operationType: "BACKFILL"
-						});
-						break;
-					default:
-						await jiraClient.devinfo.repository.update(taskPayload.jiraPayload, {
-							preventTransitions: true,
-							operationType: "BACKFILL"
-						});
-				}
-			} catch (err) {
-				logger.warn({ err }, "Failed to send data to Jira");
-				sendJiraFailureToSentry(err, sentry);
-				throw err;
-			}
+			const jiraClient = await getJiraClient(
+				subscription.jiraHost,
+				gitHubInstallationId,
+				data.gitHubAppConfig?.gitHubAppId,
+				logger
+			);
+			await sendPayloadToJira(task, jiraClient, taskPayload.jiraPayload, sentry, logger);
 		}
 
 		await updateTaskStatusAndContinue(
 			data,
 			taskPayload,
-			task,
-			nextTask.repositoryId,
+			nextTask,
 			logger,
 			sendBackfillMessage
 		);
 
-		statsd.increment(metricTaskStatus.complete, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
-
 	} catch (err) {
-		await handleBackfillError(err, data, nextTask, logger, sendBackfillMessage);
-	}
-};
-
-// TODO: killwithfire once we move all error handling to SQS error handler
-/**
- * Handles an error and takes action based on the error type and parameters
- */
-export const handleBackfillError = async (
-	err: Error,
-	data: BackfillMessagePayload,
-	nextTask: Task,
-	rootLogger: Logger,
-	sendBackfillMessage: (message, delay, logger) => Promise<unknown>): Promise<void> => {
-
-	const logger = rootLogger.child({ err });
-
-	// TODO: rethrow as TaskError and handle in SQS error handler
-	if (err instanceof GithubClientRateLimitingError) {
-		const delayMs = Math.max(err.rateLimitReset * 1000 - Date.now(), 0);
-
-		if (delayMs) {
-			// if not NaN or 0
-			logger.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
-			await sendBackfillMessage(data, delayMs / 1000, logger);
+		if (nextTask) {
+			logger.info({ err, nextTask }, "rethrowing as a task error");
+			throw new TaskError(nextTask, err);
 		} else {
-			//Retry immediately if rate limiting reset already
-			logger.info("Rate limit was reset already. Scheduling next task");
-			await sendBackfillMessage(data, 0, logger);
+			logger.info({ err, nextTask }, "task is undefined, rethrowing as it is");
+			throw err;
 		}
-		return;
 	}
-
-	// TODO: throw TaskError and handle in SQS error handler
-	// Continue sync when a 404/NOT_FOUND is returned from GitHub
-	if (err instanceof GithubNotFoundError) {
-		// No edges left to process since the repository doesn't exist
-		logger.info("Repo was deleted, marking the task as completed");
-		await updateTaskStatusAndContinue(data, { edges: [] }, nextTask.task, nextTask.repositoryId, logger, sendBackfillMessage);
-		return;
-	}
-
-	logger.info("Rethrow unknown error to retry in SQS error handler");
-	throw new TaskError(nextTask, err);
 };
 
 const findSubscriptionForMessage = (data: BackfillMessagePayload) =>

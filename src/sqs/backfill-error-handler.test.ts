@@ -8,38 +8,101 @@ import { Task } from "~/src/sync/sync.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import _ from "lodash";
 import { RepoSyncState } from "models/reposyncstate";
-import { GithubClientInvalidPermissionsError } from "~/src/github/client/github-client-errors";
+import {
+	GithubClientError,
+	GithubClientInvalidPermissionsError, GithubClientNotFoundError, GithubClientRateLimitingError
+} from "~/src/github/client/github-client-errors";
 import { AxiosError } from "axios";
+import { createAnonymousClient } from "utils/get-github-client-config";
+import { JiraClientError } from "~/src/jira/client/axios";
+import { JiraClient } from "models/jira-client";
+import { Installation } from "models/installation";
+
+const TEST_REPO: Repository = {
+	id: 123,
+	name: "Test",
+	full_name: "Test/Test",
+	owner: { login: "test" },
+	html_url: "https://test",
+	updated_at: "1234"
+};
 
 describe("backfillErrorHandler", () => {
-	const mockPayload = {
-		repository: {
-			id: 0,
-			name: "string",
-			full_name: "string",
-			html_url: "string",
-			owner: "string"
-		},
-		shas: [],
-		jiraHost: "string",
-		installationId: 0,
-		webhookId: "string"
+	const MOCKED_TIMESTAMP_MSECS = 12_345_678;
+
+	let installation: Installation;
+	let subscription: Subscription;
+	let repoSyncState: RepoSyncState;
+	let task: Task;
+	let sendMessageMock: jest.Mock;
+
+	beforeEach(async () => {
+		mockSystemTime(MOCKED_TIMESTAMP_MSECS);
+
+		const ret = await new DatabaseStateCreator().withActiveRepoSyncState().create();
+		installation = ret.installation;
+		subscription = ret.subscription;
+		repoSyncState = ret.repoSyncState!;
+
+		task = { task: "commit", repositoryId: repoSyncState?.repoId, repository: _.cloneDeep(TEST_REPO) };
+		sendMessageMock = jest.fn();
+	});
+
+	const createRateLimitingError = async (resetTime: number): Promise<GithubClientRateLimitingError | undefined> => {
+		gheNock.get("/")
+			.reply(403, {}, {
+				"access-control-allow-origin": "*",
+				"connection": "close",
+				"content-type": "application/json; charset=utf-8",
+				"date": "Fri, 04 Mar 2022 21:09:27 GMT",
+				"x-ratelimit-limit": "8900",
+				"x-ratelimit-remaining": "0",
+				"x-ratelimit-reset": "" + resetTime,
+				"x-ratelimit-resource": "core",
+				"x-ratelimit-used": "2421"
+			});
+
+		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		try {
+			await client.getMainPage(1000);
+		} catch (err) {
+			return err;
+		}
+		return undefined;
 	};
 
-	const TEST_REPO: Repository = {
-		id: 123,
-		name: "Test",
-		full_name: "Test/Test",
-		owner: { login: "test" },
-		html_url: "https://test",
-		updated_at: "1234"
+	const create500FromGitHub = async (): Promise<GithubClientError | undefined> => {
+		gheNock.get("/")
+			.reply(500);
+
+		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		try {
+			await client.getMainPage(1000);
+		} catch (err) {
+			return err;
+		}
+		return undefined;
 	};
 
-	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const create500FromJira = async (): Promise<JiraClientError | undefined> => {
+		const client = await JiraClient.getNewClient(installation, getLogger("test"));
+
+		jiraNock.get(/.*/).reply(500, { });
+
+		try {
+			await client.appPropertiesGet();
+		} catch (ex) {
+			return ex;
+		}
+		return undefined;
+	};
 
 	const createContext = (receiveCount: number, lastAttempt: boolean): SQSMessageContext<BackfillMessagePayload> =>
 		({
-			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: mockPayload
+			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: {
+				jiraHost,
+				installationId: subscription.gitHubInstallationId
+			}
 		});
 
 	it("retries unknown errors with exponential timeout", async () => {
@@ -86,7 +149,31 @@ describe("backfillErrorHandler", () => {
 			sequelizeConnectionError = err;
 		}
 
-		const result = await backfillErrorHandler(jest.fn())(new TaskError(TASK, sequelizeConnectionError), createContext(2, false));
+		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, sequelizeConnectionError), createContext(2, false));
+		expect(result).toEqual({
+			isFailure: true,
+			retryDelaySec: 540,
+			retryable: true
+		});
+	});
+
+	it("retries 500s from GitHub with exponential timeout", async () => {
+		const result = await backfillErrorHandler(jest.fn())(
+			new TaskError(task, (await create500FromGitHub())!),
+			createContext(2, false)
+		);
+		expect(result).toEqual({
+			isFailure: true,
+			retryDelaySec: 540,
+			retryable: true
+		});
+	});
+
+	it("retries 500s from Jira with exponential timeout", async () => {
+		const result = await backfillErrorHandler(jest.fn())(
+			new TaskError(task, (await create500FromJira())!),
+			createContext(2, false)
+		);
 		expect(result).toEqual({
 			isFailure: true,
 			retryDelaySec: 540,
@@ -95,19 +182,10 @@ describe("backfillErrorHandler", () => {
 	});
 
 	it("marks task as failed and reschedules message on last attempt", async () => {
-		const { subscription, repoSyncState } = await new DatabaseStateCreator().withActiveRepoSyncState().create();
-
-		const context = createContext(5, true);
-		context.payload = {
-			jiraHost,
-			installationId: subscription.gitHubInstallationId
-		};
-
-		const task = _.cloneDeep(TASK);
-		task.repositoryId = repoSyncState?.repoId || -1;
-
-		const sendMessageMock = jest.fn();
-		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new Error("boom")), context);
+		const result = await backfillErrorHandler(sendMessageMock)(
+			new TaskError(task, new Error("boom")),
+			createContext(5, true)
+		);
 
 		expect(result).toEqual({
 			isFailure: false
@@ -120,19 +198,10 @@ describe("backfillErrorHandler", () => {
 	});
 
 	it("marks task as failed and reschedules message on permission error", async () => {
-		const { subscription, repoSyncState } = await new DatabaseStateCreator().withActiveRepoSyncState().create();
-
-		const context = createContext(5, true);
-		context.payload = {
-			jiraHost,
-			installationId: subscription.gitHubInstallationId
-		};
-
-		const task = _.cloneDeep(TASK);
-		task.repositoryId = repoSyncState?.repoId || -1;
-
-		const sendMessageMock = jest.fn();
-		const result = await backfillErrorHandler(sendMessageMock)(new TaskError(task, new GithubClientInvalidPermissionsError({ } as unknown as AxiosError)), context);
+		const result = await backfillErrorHandler(sendMessageMock)(
+			new TaskError(task, new GithubClientInvalidPermissionsError({ } as unknown as AxiosError)),
+			createContext(5, true)
+		);
 
 		expect(result).toEqual({
 			isFailure: false
@@ -143,5 +212,53 @@ describe("backfillErrorHandler", () => {
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
 		expect((await Subscription.findByPk(repoSyncState!.subscriptionId)).syncWarning).toEqual("Invalid permissions for commit task");
+	});
+
+	it("reschedules rate-limited errors with the correct delay", async () => {
+		const RATE_LIMIT_RESET_TIMESTAMP_SECS = 12360;
+
+		const context = createContext(3, false);
+		const result =  await backfillErrorHandler(sendMessageMock)(
+			new TaskError(
+				task,
+				(await createRateLimitingError(RATE_LIMIT_RESET_TIMESTAMP_SECS))!
+			),
+			context
+		);
+
+		expect(sendMessageMock).toBeCalledWith(context.payload, (RATE_LIMIT_RESET_TIMESTAMP_SECS * 1000 - MOCKED_TIMESTAMP_MSECS) / 1000, expect.anything());
+		expect(result.isFailure).toBeFalsy();
+	});
+
+	it("reschedules rate-limited errors with the correct delay when header points to the past", async () => {
+		const RATE_LIMIT_RESET_TIMESTAMP_SECS = 12;
+
+		const context = createContext(3, false);
+		const result =  await backfillErrorHandler(sendMessageMock)(
+			new TaskError(
+				task,
+				(await createRateLimitingError(RATE_LIMIT_RESET_TIMESTAMP_SECS))!
+			),
+			context
+		);
+
+		expect(sendMessageMock).toBeCalledWith(context.payload, 0, expect.anything());
+		expect(result.isFailure).toBeFalsy();
+	});
+
+	it("not found error marks the task as done and continues", async () => {
+		const result = await backfillErrorHandler(sendMessageMock)(
+			new TaskError(task, new GithubClientNotFoundError({ } as unknown as AxiosError)),
+			createContext(3, false)
+		);
+
+		expect(result).toEqual({
+			isFailure: false
+		});
+		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
+		);
+		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("complete");
 	});
 });

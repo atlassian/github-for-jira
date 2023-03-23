@@ -39,6 +39,7 @@ export const metricSyncStatus = {
 
 export const metricTaskStatus = {
 	complete: `${server}.task-status.complete`,
+	pending: `${server}.task-status.pending`,
 	failed: `${server}.task-status.failed`
 };
 
