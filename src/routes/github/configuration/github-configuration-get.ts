@@ -126,6 +126,9 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 };
 
 export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started");
+	const requestStartTime = new Date().getTime();
+
 	const {
 		jiraHost,
 		githubToken,
@@ -144,6 +147,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
 
 	const gitHubProduct = gitHubAppId ? "server" : "cloud";
+
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
 
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
@@ -235,6 +240,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			gitHubAppUuid
 		});
 
+		req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request finished in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 		req.log.debug(`rendered page`);
 
 	} catch (err) {

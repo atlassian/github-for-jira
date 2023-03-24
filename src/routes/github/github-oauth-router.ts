@@ -231,6 +231,7 @@ const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
 };
 
 const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: GitHubAppConfig, jiraHost: string, logger: Logger) => {
+	logger.info("Trying to renewGitHubToken");
 	try {
 		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
 		if (clientSecret) {
