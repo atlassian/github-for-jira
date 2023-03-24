@@ -59,48 +59,45 @@ const getCommitsFromDates = async (jiraHost: string, commitsFromDate: Date | und
 
 const resetRepoTaskStatusAndCursor = async (subscription: Subscription, syncType: SyncType, targetTasks?: TaskType[]) => {
 
-	const hasTargetTasks = !!targetTasks?.length;
-	const hasRepositoryTask = (targetTasks || []).includes("repository");
+	const repoSyncTasks = (targetTasks || []).filter(t => t !== "repository");
+	const targetTaskIsEmpty = (targetTasks || []).length === 0;
+	const hasSubscriptionRepositoryTask = (targetTasks || []).includes("repository");
+	const hasRepoSyncTask = repoSyncTasks.length > 0;
 
 	if (syncType == "full") {
-		if (hasTargetTasks) {
-			//should do a full sync only for the specified tasks
-			await resetTargetedTasks(subscription, syncType, targetTasks);
-			if (hasRepositoryTask) {
-				await subscription.update({ totalNumberOfRepos: null, repositoryStatus: null, repositoryCursor: null });
-			}
-			await RepoSyncState.update({ failedCode: null }, { where: { subscriptionId: subscription.id } });
-		} else {
+		//For full sync
+		if (targetTaskIsEmpty) {
 			// Didn't provide any target tasks for a full sync, so remove all state as we're starting anew
 			await subscription.update({ totalNumberOfRepos: null, repositoryCursor: null, repositoryStatus: null });
 			await RepoSyncState.deleteFromSubscription(subscription);
+		} else {
+			if (hasRepoSyncTask) {
+				await resetTargetedTasks({ subscription, repoSyncTasks, resetCursor: true });
+			}
+			if (hasSubscriptionRepositoryTask) {
+				await subscription.update({ totalNumberOfRepos: null, repositoryStatus: null, repositoryCursor: null });
+			}
+			await RepoSyncState.update({ failedCode: null }, { where: { subscriptionId: subscription.id } });
 		}
 	} else {
 		//For partial sync
-		if (hasTargetTasks) {
-			await resetTargetedTasks(subscription, syncType, targetTasks);
-			if (hasRepositoryTask) {
-				await subscription.update({ repositoryStatus: null });
-			}
-		} else {
-			//do nothing on resetting status/cursor/fail
+		if (hasRepoSyncTask) {
+			await resetTargetedTasks({ subscription, repoSyncTasks, resetCursor: false });
+		}
+		if (hasSubscriptionRepositoryTask) {
+			await subscription.update({ repositoryStatus: null });
 		}
 	}
 };
 
 
-const resetTargetedTasks = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<void> => {
-
-	const repoSyncTasks = (targetTasks || []).filter(t => t !== "repository");
-
-	if (repoSyncTasks.length === 0) {
-		return;
-	}
+type ResetTargetedTasksParam = { subscription: Subscription, resetCursor: boolean, repoSyncTasks: TaskType[] };
+const resetTargetedTasks = async ({ subscription, resetCursor, repoSyncTasks }: ResetTargetedTasksParam): Promise<void> => {
 
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
 
 	repoSyncTasks.forEach(task => {
-		if (syncType === "full") {
+		if (resetCursor) {
 			updateRepoSyncTasks[`${task}Cursor`] = null;
 		}
 		updateRepoSyncTasks[`${task}Status`] = null;
