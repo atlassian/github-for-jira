@@ -111,6 +111,26 @@ const censorUrl = (url) => {
 	return url;
 };
 
+const MSG_WITH_REPO_NAME_REGEX = /^(.*) Repository with the name '(.*)\/(.*)'.$/;
+
+const censorMessage = (msg) => {
+	if (!msg) {
+		return msg;
+	}
+	if (typeof msg === "string") {
+		if (msg.match(MSG_WITH_REPO_NAME_REGEX)) {
+			return msg.replace(MSG_WITH_REPO_NAME_REGEX, (_, prefix, orgName, repoName) => {
+				return [
+					prefix,
+					"Repository with the name",
+					`'${createHashWithSharedSecret(orgName)}/${createHashWithSharedSecret(repoName)}'.`
+				].join(" ");
+			});
+		}
+	}
+	return msg;
+};
+
 const headersSerializer = (headers) => {
 	if (!headers) {
 		return headers;
@@ -168,6 +188,15 @@ const graphQlErrorsSerializer = (errors: Array<any>) => (
 	}
 );
 
+const sanitiseStackTrace = (stack: string) => {
+	const splitAndSanitised = stack.split("\n").map(line => line.trim()).filter(line => line.startsWith("at "));
+	if (splitAndSanitised.length > 10) {
+		return splitAndSanitised.splice(0, 10).join("\n") + "\n...";
+	} else {
+		return splitAndSanitised.join("\n");
+	}
+};
+
 const errorSerializer = (err) => {
 	if (!err) {
 		return err;
@@ -182,11 +211,13 @@ const errorSerializer = (err) => {
 	const res = {
 		...err,
 		... (err.cause && err.cause !== err ? { cause: errorSerializer(err.cause) } : { }),
-		message: err.message,
+		message: censorMessage(err.message),
 		config: axiosConfigSerializer(err.config),
 		response: responseSerializer(err.response, false, !err.request),
 		request: requestSerializer(err.request),
-		... (err.errors && Array.isArray(err.errors) ? graphQlErrorsSerializer(err.errors) : {})
+		... (err.errors && Array.isArray(err.errors) ? graphQlErrorsSerializer(err.errors) : { }),
+		... (err.task ? { task: taskSerializer(err.task) } : { }),
+		... (err.stack ? { stack: sanitiseStackTrace(err.stack.toString()) } : { })
 	};
 
 	delete res.toJSON;
