@@ -269,12 +269,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		commitsFromDate: data.commitsFromDate
 	});
 
-	try {
-		if (!nextTask) {
-			await markSyncAsCompleteAndStop(data, subscription, logger);
-			return;
-		}
+	if (!nextTask) {
+		await markSyncAsCompleteAndStop(data, subscription, logger);
+		return;
+	}
 
+	try {
 		await subscription.update({ syncStatus: "ACTIVE" });
 
 		const { task, cursor, repository } = nextTask;
@@ -305,13 +305,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		);
 
 	} catch (err) {
-		if (nextTask) {
-			logger.info({ err, nextTask }, "rethrowing as a task error");
-			throw new TaskError(nextTask, err);
-		} else {
-			logger.info({ err, nextTask }, "task is undefined, rethrowing as it is");
-			throw err;
-		}
+		logger.info({ err, nextTask }, "rethrowing as a task error");
+		throw new TaskError(nextTask, err);
 	}
 };
 
