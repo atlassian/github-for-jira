@@ -27,7 +27,7 @@ export const findOrStartSync = async (
 
 	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");
 
-	await resetRepoTaskStatusAndCursor(subscription, syncType, targetTasks);
+	await resetSyncStatus(subscription, syncType, targetTasks);
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
@@ -57,7 +57,7 @@ const getCommitsFromDates = async (jiraHost: string, commitsFromDate: Date | und
 	return { mainCommitsFromDate, branchCommitsFromDate };
 };
 
-const resetRepoTaskStatusAndCursor = async (subscription: Subscription, syncType: SyncType, targetTasks?: TaskType[]) => {
+const resetSyncStatus = async (subscription: Subscription, syncType: SyncType, targetTasks?: TaskType[]) => {
 
 	const repoSyncTasks = (targetTasks || []).filter(t => t !== "repository");
 	const targetTaskIsEmpty = (targetTasks || []).length === 0;
