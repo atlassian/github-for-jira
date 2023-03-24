@@ -19,7 +19,7 @@ export enum BooleanFlags {
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
-	RENEW_GITHUB_TOKEN = "renew-github-token"
+	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
 }
 
 export enum StringFlags {
@@ -35,7 +35,7 @@ export enum NumberFlags {
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
-	INCREASE_BUILDS_AND_PRS_PAGE_SIZE_COEF = "increase-builds-page-size-coef"
+	ACCELERATE_BACKFILL_COEF = "increase-builds-page-size-coef"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

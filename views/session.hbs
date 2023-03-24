@@ -19,7 +19,6 @@
 {{> loading-screen
     title=title
 }}
-</body>
 <script
     src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
@@ -39,13 +38,10 @@
     }
   });
 </script>
-{{#if loadAutoAppCreation}}
-      <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
-    {{else}}
-      <script nonce="{{nonce}}">
-        $(function() {
-          window.location = "{{{redirectUrl}}}";
-        });
-      </script>
-{{/if}}
+<script nonce="{{nonce}}">
+  $(function() {
+    window.location = "{{{redirectUrl}}}";
+  });
+</script>
+</body>
 </html>

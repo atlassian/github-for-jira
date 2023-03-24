@@ -253,6 +253,7 @@ export const getLogger = (name: string, options: LoggerOptions = {}): Logger => 
 		serializers: {
 			err: errorSerializer,
 			error: errorSerializer,
+			cause: errorSerializer,
 			config: axiosConfigSerializer,
 			res: responseSerializer,
 			response: responseSerializer,

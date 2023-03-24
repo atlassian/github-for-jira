@@ -1,4 +1,11 @@
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, InvalidPermissionsError, RateLimitingError } from "./github-client-errors";
+import {
+	GithubClientBlockedIpError,
+	GithubClientError,
+	GithubClientTimeoutError,
+	GithubClientInvalidPermissionsError,
+	GithubClientRateLimitingError,
+	GithubClientNotFoundError
+} from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -76,9 +83,9 @@ export const instrumentRequest = (metricName, host) =>
 export const instrumentFailedRequest = (metricName: string, host: string) =>
 	(error) => {
 		const gitHubProduct = getCloudOrServerFromHost(host);
-		if (error instanceof RateLimitingError) {
+		if (error instanceof GithubClientRateLimitingError) {
 			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting");
-		} else if (error instanceof BlockedIpError) {
+		} else if (error instanceof GithubClientBlockedIpError) {
 			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp");
 			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct });
 		} else if (error instanceof GithubClientTimeoutError) {
@@ -112,29 +119,42 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 		}
 
 		if (response) {
+			// Please keep in sync with GraphQL error mappings!!!!
+			// TODO: consider moving both into some single error mapper to keep them close and avoid being not in sync
+
 			const status = response?.status;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
-				const mappedError = new RateLimitingError(err);
+				const mappedError = new GithubClientRateLimitingError(err);
 				logger.warn({ err: mappedError }, "Rate limiting error");
 				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				const mappedError = new BlockedIpError(err);
+				const mappedError = new GithubClientBlockedIpError(err);
 				logger.warn({ err: mappedError, remote: response.data.message }, "Blocked by GitHub allowlist");
 				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
-				const mappedError = new InvalidPermissionsError(err);
+				const mappedError = new GithubClientInvalidPermissionsError(err);
 				logger.warn({
 					err: mappedError,
 					remote: response.data.message
 				}, "unauthorized");
 				return Promise.reject(mappedError);
 			}
+
+			if (status === 404) {
+				const mappedError = new GithubClientNotFoundError(err);
+				logger.warn({
+					err: mappedError,
+					remote: response.data.message
+				}, "not found");
+				return Promise.reject(mappedError);
+			}
+
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			if (isWarning) {

@@ -17,11 +17,11 @@ export interface TaskProcessors {
 		cursor: string | number | undefined,
 		perPage: number,
 		messagePayload: BackfillMessagePayload
-	) => Promise<TaskPayload>;
+	) => Promise<TaskResultPayload>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface TaskPayload<E = any, P = any> {
+export interface TaskResultPayload<E = any, P = any> {
 	edges?: E[];
 	jiraPayload?: P;
 }

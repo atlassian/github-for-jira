@@ -263,7 +263,8 @@ const knownSafe = new Set([
 // 	"set-cookie2",
 // ]);
 
-const knownGitHubSafe = new Set([
+export const knownGitHubSafe = new Set([
+	"x-github-enterprise-version",
 	"x-github-request-id",
 	"x-ratelimit-limit",
 	"x-ratelimit-remaining",
@@ -273,11 +274,19 @@ const knownGitHubSafe = new Set([
 	"x-github-delivery",
 	"x-github-event",
 	"x-github-hook-id",
-	"x-ratelimit-used"
+	"x-ratelimit-used",
+	"x-github-api-version-selected",
+	"x-github-media-type",
+	"x-ratelimit-resource"
 ]);
 
 export const canLogHeader = (httpHeader: string) => {
 	const sanitisedHeader = httpHeader.trim().toLowerCase();
 	return knownSafe.has(sanitisedHeader) || knownGitHubSafe.has(sanitisedHeader);
+};
+
+export const isUniquelyGitHubServerHeader = (httpHeader: string) => {
+	const sanitisedHeader = httpHeader.trim().toLowerCase();
+	return sanitisedHeader.includes("x-github");
 };
 

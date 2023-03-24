@@ -5,8 +5,8 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import {
 	buildAxiosStubErrorForGraphQlErrors,
-	GithubClientGraphQLError,
-	RateLimitingError
+	GithubClientGraphQLError, GithubClientInvalidPermissionsError,
+	GithubClientRateLimitingError, GithubClientNotFoundError
 } from "~/src/github/client/github-client-errors";
 import {
 	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
@@ -98,9 +98,21 @@ export class GitHubClient {
 		if (graphqlErrors?.length) {
 			const err = new GithubClientGraphQLError(response, graphqlErrors);
 			this.logger.warn({ err }, "GraphQL errors");
+
+			// Please keep in sync with REST error mappings!!!!
+			// TODO: consider moving both into some single error mapper to keep them close and avoid being not in sync
+
 			if (graphqlErrors.find(graphQLError => graphQLError.type == "RATE_LIMITED")) {
 				this.logger.info({ err }, "Mapping GraphQL errors to a rate-limiting error");
-				return Promise.reject(new RateLimitingError(buildAxiosStubErrorForGraphQlErrors(response)));
+				return Promise.reject(new GithubClientRateLimitingError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && graphqlError.message === "Resource not accessible by integration")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a InvalidPermission error");
+				return Promise.reject(new GithubClientInvalidPermissionsError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphQLError => graphQLError.type == "NOT_FOUND")) {
+				this.logger.info({ err }, "Mapping GraphQL error to not found");
+				return Promise.reject(new GithubClientNotFoundError(buildAxiosStubErrorForGraphQlErrors(response)));
 			}
 			return Promise.reject(err);
 		}

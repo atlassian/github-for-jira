@@ -4,7 +4,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { RepositoryNode } from "../github/client/github-queries";
 import { RepoSyncState } from "models/reposyncstate";
-import { TaskPayload } from "~/src/sync/sync.types";
+import { TaskResultPayload } from "~/src/sync/sync.types";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { updateRepoConfigsFromGitHub } from "services/user-config-service";
 
@@ -16,7 +16,7 @@ export const getRepositoryTask = async (
 	cursor?: string | number,
 	perPage?: number,
 	messagePayload?: BackfillMessagePayload
-): Promise<TaskPayload> => {
+): Promise<TaskResultPayload> => {
 
 	logger.debug("Repository Discovery: started");
 	const installationId = newGithub.githubInstallationId.installationId;

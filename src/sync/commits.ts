@@ -5,7 +5,8 @@ import Logger from "bunyan";
 import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { TaskPayload } from "~/src/sync/sync.types";
+import { TaskResultPayload } from "~/src/sync/sync.types";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -21,14 +22,23 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 export const getCommitTask = async (
 	logger: Logger,
 	gitHubClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
-	cursor?: string | number,
-	perPage?: number,
-	messagePayload?: BackfillMessagePayload): Promise<TaskPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
+	cursor: string | number | undefined,
+	perPage: number,
+	messagePayload?: BackfillMessagePayload): Promise<TaskResultPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
+
+	const accelerateBackfillSpeedCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 
 	const commitSince = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
+	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, Math.min(
+		perPage * (accelerateBackfillSpeedCoef ? accelerateBackfillSpeedCoef : 1), 100
+	));
+
+	if (commits.length > 0) {
+		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate}`);
+	}
+
 	const jiraPayload = transformCommit(
 		{ commits, repository },
 		messagePayload?.gitHubAppConfig?.gitHubBaseUrl
