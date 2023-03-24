@@ -13,7 +13,7 @@ import { backfillFromDateToBucket } from "config/metric-helpers";
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
-	syncType?: SyncType,
+	syncType: SyncType,
 	commitsFromDate?: Date,
 	targetTasks?: TaskType[],
 	metricTags?: Record<string, string>
@@ -27,25 +27,11 @@ export const findOrStartSync = async (
 
 	logger.info({ subscriptionId: subscription.id, syncType }, "Starting sync");
 
-	await resetTargetedTasks(subscription, syncType, targetTasks);
-
-	if (syncType === "full" && !targetTasks?.length) {
-		await subscription.update({
-			totalNumberOfRepos: null,
-			repositoryCursor: null,
-			repositoryStatus: null
-		});
-		// Remove all state as we're starting anew
-		await RepoSyncState.deleteFromSubscription(subscription);
-	}
-
-	// reset failedCode for Partial or targetted syncs
-	await resetFailedCode(subscription, syncType, targetTasks);
+	await resetRepoTaskStatusAndCursor(subscription, syncType, targetTasks);
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
-	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
-	const branchCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const { mainCommitsFromDate, branchCommitsFromDate } = await getCommitsFromDates(jiraHost, commitsFromDate);
 
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
@@ -65,21 +51,52 @@ export const findOrStartSync = async (
 	}, 0, logger);
 };
 
-type SubscriptionUpdateTasks = {
-	totalNumberOfRepos?: number | null;
-	repositoryCursor?: string | null;
-	repositoryStatus?: string | null;
-}
+const getCommitsFromDates = async (jiraHost: string, commitsFromDate: Date | undefined) => {
+	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const branchCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	return { mainCommitsFromDate, branchCommitsFromDate };
+};
 
-const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]): Promise<void> => {
-	if (!targetTasks?.length) {
+const resetRepoTaskStatusAndCursor = async (subscription: Subscription, syncType: SyncType, targetTasks?: TaskType[]) => {
+
+	const hasTargetTasks = !!targetTasks?.length;
+	const hasRepositoryTask = (targetTasks || []).includes("repository");
+
+	if (syncType == "full") {
+		if (hasTargetTasks) {
+			//should do a full sync only for the specified tasks
+			await resetTargetedTasks(subscription, syncType, targetTasks);
+			if (hasRepositoryTask) {
+				await subscription.update({ totalNumberOfRepos: null, repositoryStatus: null, repositoryCursor: null });
+			}
+			await RepoSyncState.update({ failedCode: null }, { where: { subscriptionId: subscription.id } });
+		} else {
+			// Didn't provide any target tasks for a full sync, so remove all state as we're starting anew
+			await subscription.update({ totalNumberOfRepos: null, repositoryCursor: null, repositoryStatus: null });
+			await RepoSyncState.deleteFromSubscription(subscription);
+		}
+	} else {
+		//For partial sync
+		if (hasTargetTasks) {
+			await resetTargetedTasks(subscription, syncType, targetTasks);
+			if (hasRepositoryTask) {
+				await subscription.update({ repositoryStatus: null });
+			}
+		} else {
+			//do nothing on resetting status/cursor/fail
+		}
+	}
+};
+
+
+const resetTargetedTasks = async (subscription: Subscription, syncType: SyncType, targetTasks: TaskType[]): Promise<void> => {
+
+	const repoSyncTasks = (targetTasks || []).filter(t => t !== "repository");
+
+	if (repoSyncTasks.length === 0) {
 		return;
 	}
 
-	// Reset RepoSync states - target tasks: ("pull" | "commit" | "branch" | "build" | "deployment")
-	// Full sync resets cursor and status
-	// Partial sync only resets status (continues from existing cursor)
-	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
 
 	repoSyncTasks.forEach(task => {
@@ -95,33 +112,6 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 		}
 	});
 
-	// Reset Subscription Repo state -  target tasks: ("repository")
-	// Full sync resets cursor and status and totalNumberOfRepos
-	// Partial sync only resets status (continues from existing cursor)
-	if (targetTasks.includes("repository")) {
-		const updateSubscriptionTasks: SubscriptionUpdateTasks = {
-			repositoryStatus: null
-		};
-
-		if (syncType === "full") {
-			updateSubscriptionTasks.totalNumberOfRepos = null;
-			updateSubscriptionTasks.repositoryCursor = null;
-		}
-		await subscription.update(updateSubscriptionTasks);
-	}
-
-};
-
-const resetFailedCode = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]) => {
-	// a full sync without target tasks has reposyncstates removed so dont update.
-	if (syncType === "full" && !targetTasks?.length) {
-		return;
-	}
-	await RepoSyncState.update({ failedCode: null }, {
-		where: {
-			subscriptionId: subscription.id
-		}
-	});
 };
 
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {

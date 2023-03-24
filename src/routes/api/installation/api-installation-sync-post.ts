@@ -22,7 +22,7 @@ export const ApiInstallationSyncPost = async (req: Request, res: Response): Prom
 			return;
 		}
 
-		await findOrStartSync(subscription, req.log, resetType, undefined, undefined, { source: "api-installation-sync" });
+		await findOrStartSync(subscription, req.log, resetType || "partial", undefined, undefined, { source: "api-installation-sync" });
 
 		res.status(202).json({
 			message: `Successfully (re)started sync for ${githubInstallationId}`
