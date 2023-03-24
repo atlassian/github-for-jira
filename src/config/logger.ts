@@ -111,15 +111,15 @@ const censorUrl = (url) => {
 	return url;
 };
 
-const MSG_WITH_REGEX = /^(.*) Repository with the name '(.*)\/(.*)'.$/;
+const MSG_WITH_REPO_NAME_REGEX = /^(.*) Repository with the name '(.*)\/(.*)'.$/;
 
 const censorMessage = (msg) => {
 	if (!msg) {
 		return msg;
 	}
 	if (typeof msg === "string") {
-		if (msg.match(MSG_WITH_REGEX)) {
-			return msg.replace(MSG_WITH_REGEX, (_, prefix, orgName, repoName) => {
+		if (msg.match(MSG_WITH_REPO_NAME_REGEX)) {
+			return msg.replace(MSG_WITH_REPO_NAME_REGEX, (_, prefix, orgName, repoName) => {
 				return [
 					prefix,
 					"Repository with the name",
