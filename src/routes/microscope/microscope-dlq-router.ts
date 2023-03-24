@@ -5,13 +5,12 @@ import {
 } from "routes/microscope/operations/microscope-dlq-operations";
 
 export const MicroscopeDlqRouter = Router();
-const subRouter = Router({ mergeParams: true });
 
-subRouter.get("/healthcheck", microscopeDlqHealthcheck);
-subRouter.get("/queues", queryQueues);
-subRouter.post("/attributes", queryQueueAttributes);
-subRouter.get("/queue/:queueName/messages", queryQueueMessages);
-subRouter.post("/queue/:queueName/message", requeueMessage);
-subRouter.delete("/queue/:queueName/message", deleteMessage);
-subRouter.post("/queue/:queueName/requeue", requeueMessages);
-subRouter.delete("/queue/:queueName/messages", deleteMessages);
+MicroscopeDlqRouter.get("/healthcheck", microscopeDlqHealthcheck);
+MicroscopeDlqRouter.get("/queues", queryQueues);
+MicroscopeDlqRouter.post("/attributes", queryQueueAttributes);
+MicroscopeDlqRouter.get("/queue/:queueName/messages", queryQueueMessages);
+MicroscopeDlqRouter.post("/queue/:queueName/message", requeueMessage);
+MicroscopeDlqRouter.delete("/queue/:queueName/message", deleteMessage);
+MicroscopeDlqRouter.post("/queue/:queueName/requeue", requeueMessages);
+MicroscopeDlqRouter.delete("/queue/:queueName/messages", deleteMessages);

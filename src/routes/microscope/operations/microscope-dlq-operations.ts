@@ -44,21 +44,16 @@ export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promi
 };
 
 export const queryQueues = async (_: Request, res: Response): Promise<void> => {
-	const queues = await dlqServiceClient.getQueues();
-	log.info("found queues ===> " + queues);
-	res.send({ queues });
-	res.status(200);
+	res.send(await dlqServiceClient.getQueues());
 };
 
 export const queryQueueAttributes = async (_: Request, res: Response): Promise<void> => {
-	res.status(200);
 	res.send(await dlqServiceClient.getQueuesAttributes());
 };
 
 export const queryQueueMessages = async (req: Request, res: Response): Promise<void> => {
 	const limit = req.query.limit;
 
-	res.status(200);
 	res.send(await dlqServiceClient.getMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
@@ -66,7 +61,6 @@ export const queryQueueMessages = async (req: Request, res: Response): Promise<v
 };
 
 export const requeueMessage = async (req: Request, res: Response): Promise<void> => {
-	res.status(200);
 	res.send(await dlqServiceClient.requeueMessage({
 		queueName: req.params.queueName,
 		message: req.body as RequeueMessageRequest
@@ -74,7 +68,6 @@ export const requeueMessage = async (req: Request, res: Response): Promise<void>
 };
 
 export const deleteMessage = async (req: Request, res: Response): Promise<void> => {
-	res.status(200);
 	res.send(await dlqServiceClient.deleteMessage({
 		queueName: req.params.queueName,
 		message: req.body as DeleteMessageRequest
@@ -84,7 +77,6 @@ export const deleteMessage = async (req: Request, res: Response): Promise<void> 
 export const requeueMessages = async (req: Request, res: Response): Promise<void> => {
 	const limit = req.query.limit;
 
-	res.status(200);
 	res.send(await dlqServiceClient.requeueMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
@@ -94,7 +86,6 @@ export const requeueMessages = async (req: Request, res: Response): Promise<void
 export const deleteMessages = async (req: Request, res: Response): Promise<void> => {
 	const limit = req.query.limit;
 
-	res.status(200);
 	res.send(await dlqServiceClient.deleteMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
