@@ -4,6 +4,8 @@ import { createHashWithSharedSecret as hash } from "utils/encryption";
 import { GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { noop } from "lodash";
+import { TaskError } from "~/src/sync/installation";
+import { AxiosResponse } from "axios";
 
 describe("logger behaviour", () => {
 
@@ -166,6 +168,114 @@ describe("logger behaviour", () => {
 					"task": "pull"
 				}
 			);
+		});
+
+		it("should remove UGC from tasks error", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error(
+				{ err: new TaskError({
+					cursor: 18,
+					repository: {
+						full_name: "raise-of-machines/top-secret",
+						html_url: "https://github.com/top-secret",
+						id: 123456,
+						name: "top-secret",
+						owner: {
+							login: "raise-of-machines"
+						},
+						updated_at: "2022-01-01T19:59:53.000Z"
+					},
+					repositoryId: 54321,
+					task: "pull"
+				}, new Error("boom")) }, "surprise!");
+
+			expect(JSON.parse(ringBuffer.records[0]).err.task).toEqual(
+				{
+					"cursor": 18,
+					"repository": {
+						"fullName": hash("raise-of-machines/top-secret"),
+						"id": 123456,
+						"name": hash("top-secret"),
+						"owner": {
+							"login": hash("raise-of-machines")
+						},
+						"updatedAt": "2022-01-01T19:59:53.000Z"
+					},
+					"repositoryId": 54321,
+					"task": "pull"
+				}
+			);
+		});
+
+		it("should remove repo name from error message", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+			logger.error(
+				{
+					err: new GithubClientGraphQLError({} as unknown as AxiosResponse, [
+						{
+							type: "SOME_OTHER_ERROR",
+							path: ["repository"],
+							locations: [
+								{
+									line: 7,
+									column: 3
+								}
+							],
+							message:
+								"Could not resolve to a Repository with the name 'some-org/some-repo'."
+						}
+					])
+				}, "surprise!");
+
+			expect(JSON.parse(ringBuffer.records[0]).err).toEqual(
+				{
+					cause: {
+						isAxiosError: true,
+						message: "GraphQLError(s)",
+						name: "GraphQLError",
+						response: { }
+					},
+					errors: [
+						{
+							locations: [
+								{
+									column: 3,
+									line: 7
+								}
+							],
+							message: `Could not resolve to a Repository with the name '${hash("some-org")}/${hash("some-repo")}'.`,
+							path: [
+								"repository"
+							],
+							type: "SOME_OTHER_ERROR"
+						}
+					],
+					isRetryable: false,
+					message: `Could not resolve to a Repository with the name '${hash("some-org")}/${hash("some-repo")}'.`,
+					stack: expect.anything()
+				}
+			);
+		});
+
+		it("should log stacktrace", () => {
+			const logger = getLogger("test case");
+			logger.addStream({ stream: ringBuffer as Stream });
+
+			const theThrowingFunction = () => {
+				throw new Error("foo");
+			};
+
+			let err: Error;
+			try {
+				theThrowingFunction();
+			} catch (caught) {
+				err = caught;
+			}
+			logger.error({ err: err! }, "surprise!");
+
+			expect(JSON.parse(ringBuffer.records[0]).err.stack).toContain("theThrowingFunction");
 		});
 
 		it("Should remove branch from URL", () => {

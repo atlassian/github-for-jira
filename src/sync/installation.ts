@@ -269,12 +269,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		commitsFromDate: data.commitsFromDate
 	});
 
-	try {
-		if (!nextTask) {
-			await markSyncAsCompleteAndStop(data, subscription, logger);
-			return;
-		}
+	if (!nextTask) {
+		await markSyncAsCompleteAndStop(data, subscription, logger);
+		return;
+	}
 
+	try {
 		await subscription.update({ syncStatus: "ACTIVE" });
 
 		const { task, cursor, repository } = nextTask;
@@ -305,13 +305,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		);
 
 	} catch (err) {
-		if (nextTask) {
-			logger.info({ err, nextTask }, "rethrowing as a task error");
-			throw new TaskError(nextTask, err);
-		} else {
-			logger.info({ err, nextTask }, "task is undefined, rethrowing as it is");
-			throw err;
-		}
+		logger.info({ err, nextTask }, "rethrowing as a task error");
+		throw new TaskError(nextTask, err);
 	}
 };
 
@@ -322,18 +317,22 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger) => Promise<unknown>, log: Logger): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
 		return;
 	}
 
+	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
+	const failedCode = getFailedCode(err);
+
 	// marking the current task as failed
-	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed" });
+	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
+		await updateRepo(subscription, nextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
 		await subscription?.update({ syncWarning: `Invalid permissions for ${nextTask.task} task` });
 		log.error(`Invalid permissions for ${nextTask.task} task`);
 	}
@@ -344,8 +343,37 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
+	await sendBackfillMessage(data, 0, log, err);
+};
 
-	await sendBackfillMessage(data, 0, log);
+
+const getFailedCode = (err): string => {
+	const { status, message, code } = err;
+
+	// Socket is closed or Client network socket disconnected before secure TLS connection was established
+	if (code === "ERR_SOCKET_CLOSED" || code === "ECONNRESET") {
+		return "CONNECTION_ERROR";
+	}
+	if (status === 401) {
+		return "AUTHENTICATION_ERROR";
+	}
+	// A generic catch for authorization issues, invalid permissions on the JWT
+	if (status === 403) {
+		return "AUTHORIZATION_ERROR";
+	}
+	// If the user hasn't accepted updated permissions for the app.
+	if (status === 200 && message === "Resource not accessible by integration") {
+		return "PERMISSIONS_ERROR";
+	}
+	// Server error, Could be GitHub or Jira
+	if (status === 500 || status === 502 || status === 503) {
+		return "SERVER_ERROR";
+	}
+	// After we have tried all variations of pages sizes down to 1
+	if (message?.includes("Error processing task after trying all page sizes")) {
+		return "CURSOR_ERROR";
+	}
+	return "UNKNOWN_ERROR";
 };
 
 const redis = new IORedis(getRedisInfo("installations-in-progress"));

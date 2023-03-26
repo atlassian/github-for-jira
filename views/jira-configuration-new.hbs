@@ -143,9 +143,9 @@
                 <div class="field-group">
                   <label for="backfill-date-picker">
                     {{#if isIncrementalBackfillEnabled }}
-                    Backfill data from 
+                    Backfill data from
                     {{else}}
-                    Backfill commits from 
+                    Backfill commits from
                     {{/if}}
                   <span class="jiraConfiguration__restartBackfillModal__required">*</span>
                   </label>
@@ -314,12 +314,5 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    {{#if isIncrementalBackfillEnabled }}
-    <style>
-    .jiraConfiguration__table__head__title:not(:last-child) {
-        width: 23%;
-    }
-    </style>
-    {{/if}}
   </body>
 </html>

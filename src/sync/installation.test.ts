@@ -238,12 +238,13 @@ describe("sync/installation", () => {
 	});
 
 	describe("markCurrentTaskAsFailedAndContinue", () => {
+		const mockError = new Error("Oh noes, An error occurred");
 		it("does nothing when there's no subscription", async () => {
 			const sendMessageMock = jest.fn();
 			await markCurrentTaskAsFailedAndContinue({
 				...MESSAGE_PAYLOAD,
 				installationId: MESSAGE_PAYLOAD.installationId + 1
-			}, TASK, false, sendMessageMock, getLogger("test"));
+			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
@@ -253,7 +254,7 @@ describe("sync/installation", () => {
 		});
 
 		it("updates status in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
@@ -262,7 +263,7 @@ describe("sync/installation", () => {
 		});
 
 		it("does not update cursor in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"));
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			expect(refreshedRepoSyncState?.branchCursor).toEqual(repoSyncState.branchCursor);
@@ -270,14 +271,14 @@ describe("sync/installation", () => {
 
 		it("schedules next message", async () => {
 			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"));
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"), mockError);
 
 			expect(sendMessageMock).toBeCalledTimes(1);
 		});
 
 		it("sets up sync warning on permission error", async () => {
 			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"));
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
 			expect(refreshedSubscription?.syncWarning).toEqual("Invalid permissions for branch task");
