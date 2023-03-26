@@ -39,39 +39,19 @@ export const getBuildTask = async (
 	if (!pageSizeCoef) {
 		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
 	} else {
-		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
-		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
-		// overcomplicate it too much and limit ourselves to 2 pages.
-		const limitedPageSizeCoef = Math.min(5, pageSizeCoef);
 		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
-
-		const scaledPageSize = perPage * limitedPageSizeCoef;
-
-		// Cursor 1, 2, 3, 4, 5 should be mapped to scaled cursor 1;
-		// Cursor 6, 7, 8, 9, 10 shoul be mapped to scaled cursor 2;
-		// etc
-		// Given that the page counter starts from 1, we need to deduct 1 first and then add 1 back to the outcome
-		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
 
 		const data = await fetchNextPagesInParallel(
 			shouldFetchNextPageInParallel ? 10 : 1,
-			scaledCursor,
+			Number(cursor),
 			(scaledPageNoToFetch) =>
 				doGetBuildTask(
 					logger, gitHubInstallationClient, jiraHost, repository,
 					scaledPageNoToFetch,
-					scaledPageSize,
+					perPage,
 					messagePayload
 				)
 		);
-
-		(data.edges || []).forEach(edge => {
-			// Cursor is scaled... scaling back!
-			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-			// scaled pages:   ----1--------, --------2-----
-			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
-			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
-		});
 
 		return data;
 	}

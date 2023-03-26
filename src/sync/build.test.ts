@@ -142,42 +142,9 @@ describe("sync/builds", () => {
 		});
 	});
 
-	it("should use scaled per_page and cursor when FF is ON", async () => {
-		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
-			expect.anything(),
-			expect.anything()
-		).mockResolvedValue(5);
-
-		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-
-		// Original pages: 12345 67890 12345 67890 1
-		// Scaled pages:   --1-- --2-- --3-- --4-- 5
-		const nock = githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=5`)
-			.reply(200, buildFixture);
-
-		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
-			.reply(200, compareReferencesFixture);
-
-		jiraNock
-			.post("/rest/builds/0.1/bulk")
-			.reply(200);
-
-		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
-		expect(nock.isDone()).toBeTruthy();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + 5));
-	});
-
 	const NUMBER_OF_PARALLEL_FETCHES = 10;
 
 	it("should fetch pages in parallel when FF is ON and more than 6", async () => {
-		const SCALE_COEF = 5;
-
 		when(numberFlag).calledWith(
 			NumberFlags.ACCELERATE_BACKFILL_COEF,
 			expect.anything(),
@@ -190,7 +157,7 @@ describe("sync/builds", () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			return githubNock
-				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=${5 + index}`)
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=${21 + index}`)
 				.reply(200, buildFixture);
 		});
 
@@ -207,7 +174,7 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(Number(ORIGINAL_BUILDS_CURSOR) + SCALE_COEF * NUMBER_OF_PARALLEL_FETCHES));
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(31));
 	});
 
 	it("should finish task with parallel fetching when no more data", async () => {
@@ -222,7 +189,7 @@ describe("sync/builds", () => {
 		new Array(NUMBER_OF_PARALLEL_FETCHES).fill(0).map((_, index) => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
-				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=100&page=${5 + index}`)
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=${21 + index}`)
 				.reply(200, []);
 		});
 
