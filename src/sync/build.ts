@@ -8,8 +8,9 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
-type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
+type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
@@ -35,66 +36,52 @@ export const getBuildTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
+	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
+	if (!pageSizeCoef || pageSizeCoef <= 5) {
+		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
-		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
-		// overcomplicate it too much and limit ourselves to 2 pages.
-		const limitedPageSizeCoef = Math.min(5, pageSizeCoef);
-		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
-
-		const scaledPageSize = perPage * limitedPageSizeCoef;
-
-		// Cursor 1, 2, 3, 4, 5 should be mapped to scaled cursor 1;
-		// Cursor 6, 7, 8, 9, 10 shoul be mapped to scaled cursor 2;
-		// etc
-		// Given that the page counter starts from 1, we need to deduct 1 first and then add 1 back to the outcome
-		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
-
-		const data = await fetchNextPagesInParallel(
-			shouldFetchNextPageInParallel ? 10 : 1,
-			scaledCursor,
-			(scaledPageNoToFetch) =>
-				doGetBuildTask(
-					logger, gitHubInstallationClient, jiraHost, repository,
-					scaledPageNoToFetch,
-					scaledPageSize,
-					messagePayload
-				)
-		);
-
-		(data.edges || []).forEach(edge => {
-			// Cursor is scaled... scaling back!
-			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-			// scaled pages:   ----1--------, --------2-----
-			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
-			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
-		});
-
-		return data;
+		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
+
+const doGetBuildTaskInParallel = (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
+) => fetchNextPagesInParallel(
+	10,
+	pageSizeAwareCursor,
+	(pageCursor) =>
+		doGetBuildTask(
+			logger,
+			gitHubInstallationClient,
+			jiraHost,
+			repository,
+			pageCursor,
+			messagePayload
+		)
+);
 
 const doGetBuildTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage: number,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.info("Syncing Builds: started");
-	cursor = Number(cursor);
 
 	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor, fromDate);
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo, fromDate);
 	const { workflow_runs } = data;
-	const nextPage = cursor + 1;
-	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
+	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(pageSizeAwareCursor.pageNo + 1).serialise();
+
+	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
 	if (!workflow_runs?.length) {
 		return {

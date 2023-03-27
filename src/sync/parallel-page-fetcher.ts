@@ -1,4 +1,5 @@
 import { TaskResultPayload } from "~/src/sync/sync.types";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 	if (!jiraPayload1 && !jiraPayload2) {
@@ -22,14 +23,14 @@ const mergeJiraPayload = (jiraPayload1?: any, jiraPayload2?: any) => {
 
 export const fetchNextPagesInParallel = async (
 	pagesToFetch: number,
-	nextPageCursor: number,
-	singlePageFetchFactory: (pageCursor: number) => Promise<TaskResultPayload>
+	nextPageCursor: PageSizeAwareCounterCursor,
+	singlePageFetchFactory: (pageCursor: PageSizeAwareCounterCursor) => Promise<TaskResultPayload>
 ): Promise<TaskResultPayload> => {
 	const tasks = Array.from(
 		{
 			length: pagesToFetch
 		},
-		(_, index) => singlePageFetchFactory(nextPageCursor + index)
+		(_, index) => singlePageFetchFactory(nextPageCursor.copyWithPageNo(nextPageCursor.pageNo + index))
 	);
 	const fetchedData = await Promise.allSettled(tasks);
 	const emptyValue: TaskResultPayload = {
