@@ -10,21 +10,20 @@ export const getBranchTask = async (
 	gitHubClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
-	cursor?: string | number,
-	perPage?: number,
-	messagePayload?: BackfillMessagePayload) => {
-	// TODO: fix typings for graphql
-	logger.debug("Syncing branches: started");
-	perPage = perPage || 20;
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload) => {
 
-	const commitSince = messagePayload?.branchCommitsFromDate ? new Date(messagePayload.branchCommitsFromDate) : undefined;
+	logger.info("Syncing branches: started");
+
+	const commitSince = messagePayload.branchCommitsFromDate ? new Date(messagePayload.branchCommitsFromDate) : undefined;
 	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
 
 	logger.debug("Syncing branches: finished");
 
-	const jiraPayload = transformBranches({ branches, repository }, messagePayload?.gitHubAppConfig?.gitHubBaseUrl);
+	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
 
 	return {
 		edges,

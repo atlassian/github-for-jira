@@ -7,20 +7,21 @@ import { RepoSyncState } from "models/reposyncstate";
 import { TaskResultPayload } from "~/src/sync/sync.types";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { updateRepoConfigsFromGitHub } from "services/user-config-service";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 export const getRepositoryTask = async (
 	logger: Logger,
-	newGithub: GitHubInstallationClient,
+	githubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
-	cursor?: string | number,
-	perPage?: number,
-	messagePayload?: BackfillMessagePayload
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
 ): Promise<TaskResultPayload> => {
 
 	logger.debug("Repository Discovery: started");
-	const installationId = newGithub.githubInstallationId.installationId;
-	const gitHubAppId = messagePayload?.gitHubAppConfig?.gitHubAppId;
+	const installationId = githubInstallationClient.githubInstallationId.installationId;
+	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
 		installationId,
@@ -38,18 +39,18 @@ export const getRepositoryTask = async (
 	let edges: RepositoryNode[];
 	let repositories: Repository[];
 	if (await booleanFlag(BooleanFlags.USE_REST_API_FOR_DISCOVERY, jiraHost)) {
-		const page = Number(cursor) || 1;
-		const response = await newGithub.getRepositoriesPageOld(page);
+		const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
+		const response = await githubInstallationClient.getRepositoriesPageOld(smartCursor.perPage, smartCursor.pageNo);
 		hasNextPage = response.hasNextPage;
 		totalCount = response.data.total_count;
-		nextCursor = (page + 1).toString();
+		nextCursor = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 		repositories = response.data.repositories;
 		edges = repositories?.map(repo => ({
 			node: repo,
 			cursor: nextCursor
 		}));
 	} else {
-		const response = await newGithub.getRepositoriesPage(perPage, cursor as string);
+		const response = await githubInstallationClient.getRepositoriesPage(perPage, cursor as string);
 		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 		totalCount = response.viewer.repositories.totalCount;
 		nextCursor = response.viewer.repositories.pageInfo.endCursor;
@@ -71,7 +72,6 @@ export const getRepositoryTask = async (
 	})), { updateOnDuplicate: ["subscriptionId", "repoId"] });
 
 	logger.debug({
-		repositories,
 		repositoriesAdded: repositories.length,
 		hasNextPage,
 		totalCount,
@@ -80,7 +80,7 @@ export const getRepositoryTask = async (
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, newGithub.githubInstallationId, jiraHost, gitHubAppId);
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient.githubInstallationId, jiraHost, gitHubAppId);
 
 	return {
 		edges,

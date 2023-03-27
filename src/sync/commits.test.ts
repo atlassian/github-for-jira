@@ -11,10 +11,6 @@ import { getCommitsQueryWithChangedFiles } from "~/src/github/client/github-quer
 import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 describe("sync/commits", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
@@ -87,41 +83,6 @@ describe("sync/commits", () => {
 			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
 			createGitHubNock(commitNodesFixture);
-			const commits = [
-				{
-					"author": {
-						"name": "test-author-name",
-						"email": "test-author-email@example.com"
-					},
-					"authorTimestamp": "test-authored-date",
-					"displayId": "test-o",
-					"fileCount": 0,
-					"hash": "test-oid",
-					"id": "test-oid",
-					"issueKeys": [
-						"TES-17"
-					],
-					"message": "[TES-17] test-commit-message",
-					"url": "https://github.com/test-login/test-repo/commit/test-sha",
-					"updateSequenceId": 12345678
-				}
-			];
-			createJiraNock(commits);
-
-			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-			await verifyMessageSent(data);
-		});
-
-		it("should use increased page size when FF is on", async () => {
-			const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-
-			when(numberFlag).calledWith(
-				NumberFlags.ACCELERATE_BACKFILL_COEF,
-				expect.anything(),
-				expect.anything()
-			).mockResolvedValue(5);
-
-			createGitHubNock(commitNodesFixture, { per_page: 100 });
 			const commits = [
 				{
 					"author": {
