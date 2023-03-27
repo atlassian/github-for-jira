@@ -28,7 +28,8 @@ export const processDeployment = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	rootLogger: Logger,
-	gitHubAppId: number | undefined
+	gitHubAppId: number | undefined,
+	rateLimited: boolean | undefined
 ) => {
 
 	const logger = rootLogger.child({
@@ -71,7 +72,8 @@ export const processDeployment = async (
 		}, "Jira API rejected deployment!");
 	}
 
-	emitWebhookProcessedMetrics(
+	// TODO - remove the rate limited test once valid metrics have been decided
+	!rateLimited && emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
 		"deployment_status",
 		logger,
