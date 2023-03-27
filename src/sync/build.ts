@@ -54,14 +54,14 @@ const doGetBuildTaskInParallel = (
 	messagePayload: BackfillMessagePayload
 ) => fetchNextPagesInParallel(
 	10,
-	pageSizeAwareCursor.pageNo,
-	(pageToFetch) =>
+	pageSizeAwareCursor,
+	(pageCursor) =>
 		doGetBuildTask(
 			logger,
 			gitHubInstallationClient,
 			jiraHost,
 			repository,
-			pageSizeAwareCursor.copyWithPageNo(pageToFetch),
+			pageCursor,
 			messagePayload
 		)
 );

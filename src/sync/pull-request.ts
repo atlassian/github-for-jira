@@ -73,11 +73,11 @@ const doGetPullRequestTaskInParallel = (
 	messagePayload: BackfillMessagePayload
 ) => fetchNextPagesInParallel(
 	2,
-	pageSizeAwareCursor.pageNo,
-	(pageToFetch) =>
+	pageSizeAwareCursor,
+	(pageCursor) =>
 		doGetPullRequestTask(
 			logger, gitHubInstallationClient, jiraHost, repository,
-			pageSizeAwareCursor.copyWithPageNo(pageToFetch),
+			pageCursor,
 			messagePayload
 		)
 );
