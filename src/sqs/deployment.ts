@@ -24,6 +24,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		jiraHost,
 		installationId,
 		context.log,
-		messagePayload.gitHubAppConfig?.gitHubAppId
+		messagePayload.gitHubAppConfig?.gitHubAppId,
+		messagePayload.rateLimited
 	);
 };
