@@ -11,7 +11,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
-import { doGetPullRequestTask  } from "./pull-request";
+import { getPullRequestTask } from "./pull-request";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import _ from "lodash";
 
@@ -462,7 +462,7 @@ describe("sync/pull-request", () => {
 			mockPullRequestList();
 
 			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
-			expect(await doGetPullRequestTask(getLogger("test"),
+			expect(await getPullRequestTask(getLogger("test"),
 				gitHubClient,
 				jiraHost,
 				{

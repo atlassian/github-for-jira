@@ -8,7 +8,7 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { PageSizeAwareCounterCursor, scaleCursor } from "~/src/sync/sync-utils";
+import { PageSizeAwareCounterCursor } from "~/src/sync/sync-utils";
 
 type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
@@ -37,56 +37,50 @@ export const getBuildTask = async (
 	messagePayload: BackfillMessagePayload
 ) => {
 	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
+	if (!pageSizeCoef || pageSizeCoef <= 5) {
+		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, new PageSizeAwareCounterCursor(cursor, perPage), messagePayload);
 	} else {
-		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
-
-		const data = await fetchNextPagesInParallel(
-			shouldFetchNextPageInParallel ? 10 : 1,
-			Number(cursor),
-			(scaledPageNoToFetch) =>
-				doGetBuildTask(
-					logger, gitHubInstallationClient, jiraHost, repository,
-					scaledPageNoToFetch,
-					perPage,
-					messagePayload
-				)
-		);
-
-		return data;
+		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, new PageSizeAwareCounterCursor(cursor, perPage), messagePayload);
 	}
 };
+
+const doGetBuildTaskInParallel = (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
+) => fetchNextPagesInParallel(
+	10,
+	pageSizeAwareCursor.pageNo,
+	(pageToFetch) =>
+		doGetBuildTask(
+			logger,
+			gitHubInstallationClient,
+			jiraHost,
+			repository,
+			pageSizeAwareCursor.copyWithPageNo(pageToFetch),
+			messagePayload
+		)
+);
 
 const doGetBuildTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage: number,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.info("Syncing Builds: started");
-	let pageSizeAwareCursor: PageSizeAwareCounterCursor;
-	if (Number(cursor)) {
-		pageSizeAwareCursor = {
-			perPage: perPage,
-			pageNo: Number(cursor)
-		};
-	} else {
-		pageSizeAwareCursor = scaleCursor(JSON.parse("" + cursor) as PageSizeAwareCounterCursor, perPage);
-	}
 
 	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo, fromDate);
 	const { workflow_runs } = data;
-	const nextPageCursor = JSON.stringify({
-		perPage: pageSizeAwareCursor.perPage,
-		pageNo: pageSizeAwareCursor.pageNo + 1
-	});
-	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursor }];
+	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(pageSizeAwareCursor.pageNo + 1).serialise();
+
+	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
 	if (!workflow_runs?.length) {
 		return {

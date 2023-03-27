@@ -17,7 +17,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { PageSizeAwareCounterCursor, scaleCursor } from "~/src/sync/sync-utils";
+import { PageSizeAwareCounterCursor } from "~/src/sync/sync-utils";
 
 /**
  * Find the next page number from the response headers.
@@ -55,48 +55,42 @@ export const getPullRequestTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
+	const pageSizeAwareCursor = new PageSizeAwareCounterCursor(cursor, perPage);
 	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
+	if (!pageSizeCoef || pageSizeCoef <= 5) {
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, pageSizeAwareCursor, messagePayload);
 	} else {
-		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
-
-		const data = await fetchNextPagesInParallel(
-			shouldFetchNextPageInParallel ? 2 : 1,
-			Number(cursor),
-			(scaledPageNoToFetch) =>
-				doGetPullRequestTask(
-					logger, gitHubInstallationClient, jiraHost, repository,
-					scaledPageNoToFetch,
-					perPage,
-					messagePayload
-				)
-		);
-
-		return data;
+		return doGetPullRequestTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, pageSizeAwareCursor, messagePayload);
 	}
 };
 
-export const doGetPullRequestTask = async (
+const doGetPullRequestTaskInParallel = (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage: number,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
+) => fetchNextPagesInParallel(
+	2,
+	pageSizeAwareCursor.pageNo,
+	(pageToFetch) =>
+		doGetPullRequestTask(
+			logger, gitHubInstallationClient, jiraHost, repository,
+			pageSizeAwareCursor.copyWithPageNo(pageToFetch),
+			messagePayload
+		)
+);
+
+const doGetPullRequestTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
 	logger.debug("Syncing PRs: started");
-
-	let pageSizeAwareCursor: PageSizeAwareCounterCursor;
-	if (Number(cursor)) {
-		pageSizeAwareCursor = {
-			perPage: perPage,
-			pageNo: Number(cursor)
-		};
-	} else {
-		pageSizeAwareCursor = scaleCursor(JSON.parse("" + cursor) as PageSizeAwareCounterCursor, perPage);
-	}
 
 	const startTime = Date.now();
 
@@ -124,11 +118,7 @@ export const doGetPullRequestTask = async (
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
-	const nextPageCursor = {
-		pageNo: nextPageNo,
-		perPage: pageSizeAwareCursor.perPage
-	};
-	const nextPageCursorStr = JSON.stringify(nextPageCursor);
+	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
 
 	let filteredEdges = edges;
 	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
