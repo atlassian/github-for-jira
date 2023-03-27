@@ -36,11 +36,12 @@ export const getBuildTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
+	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
 	if (!pageSizeCoef || pageSizeCoef <= 5) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, new PageSizeAwareCounterCursor(cursor, perPage), messagePayload);
+		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, new PageSizeAwareCounterCursor(cursor, perPage), messagePayload);
+		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
