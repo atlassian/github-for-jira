@@ -15,7 +15,7 @@ describe("fetchNextPagesInParallel", () => {
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(3, new PageSizeAwareCounterCursor(1), singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(3, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
 				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } },
@@ -42,7 +42,7 @@ describe("fetchNextPagesInParallel", () => {
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(1, new PageSizeAwareCounterCursor(1), singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(1, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
 				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } }
@@ -70,7 +70,7 @@ describe("fetchNextPagesInParallel", () => {
 			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor(1), singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
 				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } }
@@ -91,7 +91,7 @@ describe("fetchNextPagesInParallel", () => {
 			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		await expect(fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor(1), singlePageFetchFactory)).rejects.toThrowError("foo");
+		await expect(fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory)).rejects.toThrowError("foo");
 	});
 
 	test("returns empty page if both are empty", async () => {
@@ -101,7 +101,7 @@ describe("fetchNextPagesInParallel", () => {
 				jiraPayload: undefined
 			});
 		});
-		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor(1), singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [ ],
 			jiraPayload: undefined
