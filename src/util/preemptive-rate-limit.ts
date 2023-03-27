@@ -6,8 +6,8 @@ import { SqsQueue } from "~/src/sqs/sqs";
 import type { BaseMessagePayload } from "~/src/sqs/sqs.types";
 
 // List of queues we want to apply the preemptive rate limiting on
-const TARGETTED_QUEUES = ["backfill", "deployment"];
-export const DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS = 10 * 60; //10 minutes
+const TARGETED_QUEUES = ["backfill", "deployment"];
+export const DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS = 10 * 60; // 10 minutes
 
 type PreemptyRateLimitCheckResult = {
 	isExceedThreshold: boolean;
@@ -17,7 +17,7 @@ type PreemptyRateLimitCheckResult = {
 // Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
 export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(context: SQSMessageContext<T>, sqsQueue: SqsQueue<T>) : Promise<PreemptyRateLimitCheckResult> => {
 
-	if (!TARGETTED_QUEUES.includes(sqsQueue.queueName))
+	if (!TARGETED_QUEUES.includes(sqsQueue.queueName))
 	{
 		return { isExceedThreshold: false };
 	}
