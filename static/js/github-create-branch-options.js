@@ -37,8 +37,12 @@ $(document).ready(() => {
     const uuid = $("#ghServers").select2("val");
 
     if ($(".optionsCard.selected").data('type') === "cloud") {
+			console.log("TRY CLICK CLOUD");
+			console.log(createUrlForGH(undefined, true));
       goToCreateBranch(createUrlForGH(undefined, true));
     } else {
+			console.log("TRY CLICK GHE");
+			console.log(createUrlForGH(uuid, true));
       goToCreateBranch(createUrlForGH(uuid, true));
     }
   });
