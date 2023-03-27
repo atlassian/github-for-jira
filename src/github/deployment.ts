@@ -29,7 +29,7 @@ export const processDeployment = async (
 	gitHubInstallationId: number,
 	rootLogger: Logger,
 	gitHubAppId: number | undefined,
-	rateLimited: boolean | undefined
+	rateLimited?: boolean
 ) => {
 
 	const logger = rootLogger.child({
