@@ -15,12 +15,11 @@ export class PageSizeAwareCounterCursor {
 	/**
 	 *
 	 * @param pageNoOrSerialisedCursor - when a serialized cursor is provided it will scale it according to perPage value.
-* 																	 		Otherwise (number) it will assume page size as 20 - the original behaviour.
-	 * @param perPage - ignored is plain pageNo is provided, for migration of the cursors. "Plain number" means that
-	 * 									the old sync is still in progress with pageNo size equals 20
+	 * 																	 		Otherwise (number) it will assume page size as 20 - the original behaviour.
 	 */
-	constructor(pageNoOrSerialisedCursor: string | number) {
-		if (!pageNoOrSerialisedCursor || Number(pageNoOrSerialisedCursor)) {
+	constructor(pageNoOrSerialisedCursor: string | undefined) {
+		const isNumberOrEmpty = (!pageNoOrSerialisedCursor || Number(pageNoOrSerialisedCursor));
+		if (isNumberOrEmpty) {
 			this.pageNo = Number(pageNoOrSerialisedCursor) || 1;
 			// Page size we were using together with plain-number cursors.
 			this.perPage = LEGACY_PAGE_SIZE;
@@ -48,7 +47,8 @@ export class PageSizeAwareCounterCursor {
 	}
 
 	copyWithPageNo(pageNo: number): PageSizeAwareCounterCursor {
-		const ret = new PageSizeAwareCounterCursor(pageNo);
+		const ret = new PageSizeAwareCounterCursor(undefined);
+		ret.pageNo = pageNo;
 		ret.perPage = this.perPage;
 		return ret;
 	}

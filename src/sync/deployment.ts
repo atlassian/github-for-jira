@@ -52,16 +52,23 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 		.flat();
 };
 
-
-export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, repository: Repository, cursor?: string | number, perPage?: number, data?: BackfillMessagePayload) => {
+export const getDeploymentTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
+) => {
 	logger.debug("Syncing Deployments: started");
 
 	const shouldUseIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
 	if (shouldUseIncrementalBackfill) {
-		const fromDate = data?.commitsFromDate ? new Date(data?.commitsFromDate) : undefined;
-		if (isAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
 			return {
 				edges: [],
 				jiraPayload: undefined
@@ -80,7 +87,7 @@ export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient
 	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
 	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
 
-	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, data?.gitHubAppConfig?.gitHubAppId);
+	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
@@ -91,7 +98,7 @@ export const getDeploymentTask = async (logger: Logger, gitHubInstallationClient
 	};
 };
 
-const isAllEdgesEarlierThanFromDate  = (edges: DeploymentQueryNode[], fromDate: Date | undefined) => {
+const areAllEdgesEarlierThanFromDate  = (edges: DeploymentQueryNode[], fromDate: Date | undefined) => {
 	if (!fromDate) return false;
 	const edgeCountEarlierThanFromDate = edges.filter(edge => {
 		const edgeCreatedAt = new Date(edge.node.createdAt);

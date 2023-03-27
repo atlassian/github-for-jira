@@ -19,6 +19,10 @@ import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { JiraClientError } from "~/src/jira/client/axios";
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
@@ -164,6 +168,30 @@ describe("sync/installation", () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect(sendSqsMessage).toBeCalledTimes(1);
+		});
+
+		it("should use page size from FF", async () => {
+			when(numberFlag).calledWith(
+				NumberFlags.BACKFILL_PAGE_SIZE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(100);
+
+
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const query = branchesNoLastCursor();
+			query.variables.per_page = 100;
+			githubNock
+				.post("/graphql", query)
 				.query(true)
 				.reply(200, branchNodesFixture);
 			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);

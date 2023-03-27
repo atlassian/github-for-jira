@@ -24,7 +24,7 @@ describe("sync/pull-request", () => {
 		mockSystemTime(12345678);
 
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(0);
@@ -296,15 +296,15 @@ describe("sync/pull-request", () => {
 			});
 		});
 
-		it("uses parallel fetching of 2 pages when FF is over 5", async () => {
+		it("uses parallel fetching when FF is more than 1", async () => {
 			const modifiedList = _.cloneDeep(pullRequestList);
 			modifiedList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.ACCELERATE_BACKFILL_COEF,
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 				expect.anything(),
 				expect.anything()
-			).mockResolvedValue(6);
+			).mockResolvedValue(2);
 
 			for (let i = 0; i < 12; i++) {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -357,12 +357,12 @@ describe("sync/pull-request", () => {
 			});
 		});
 
-		it("processing of PRs with parallel fetching ON should stop when no more PRs from GitHub", async () => {
+		it("processing of PRs with parallel fetching should stop when no more PRs from GitHub", async () => {
 			when(numberFlag).calledWith(
-				NumberFlags.ACCELERATE_BACKFILL_COEF,
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 				expect.anything(),
 				expect.anything()
-			).mockResolvedValue(6);
+			).mockResolvedValue(2);
 
 			for (let i = 0; i < 2; i++) {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
