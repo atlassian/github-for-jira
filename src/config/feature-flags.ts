@@ -18,7 +18,8 @@ export enum BooleanFlags {
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
-	REPO_CREATED_EVENT = "repo-created-event"
+	REPO_CREATED_EVENT = "repo-created-event",
+	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
 }
 
 export enum StringFlags {
