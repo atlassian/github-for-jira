@@ -8,7 +8,7 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { PageSizeAwareCounterCursor } from "~/src/sync/sync-utils";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 

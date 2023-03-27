@@ -10,55 +10,6 @@ import { SyncType, TaskType } from "~/src/sync/sync.types";
 import { sqsQueues } from "../sqs/queues";
 import { backfillFromDateToBucket } from "config/metric-helpers";
 
-export class PageSizeAwareCounterCursor {
-
-	/**
-	 *
-	 * @param pageNoOrSerialisedCursor - when a serialized cursor is provided it will scale it according to perPage value
-	 * @param perPage - ignored is plain pageNo is provided, for migration of the cursors. "Plain number" means that
-	 * 									the old sync is still in progress with pageNo size equals 20
-	 */
-	constructor(pageNoOrSerialisedCursor: string | number, perPage: number) {
-		if (!pageNoOrSerialisedCursor || Number(pageNoOrSerialisedCursor)) {
-			this.pageNo = Number(pageNoOrSerialisedCursor) || 1;
-			// Historical value we used to have in our code which was used for plain-number cursors.
-			// Ignoring perPage argument for seamless migration
-			this.perPage = 20;
-		} else {
-			const parsed = JSON.parse("" + pageNoOrSerialisedCursor) as PageSizeAwareCounterCursor;
-
-			if (parsed.perPage === perPage) {
-				this.perPage = parsed.perPage;
-				this.pageNo = parsed.pageNo;
-				return ;
-			}
-
-			const processedPages = (parsed.pageNo - 1) * parsed.perPage;
-
-			const fullyProcessedScaledPages = Math.floor(processedPages / perPage);
-
-			this.perPage = perPage;
-			this.pageNo = fullyProcessedScaledPages + 1;
-		}
-	}
-	perPage: number;
-	pageNo: number; // starting from 1; the very first page has cursor with pageNo=1
-
-	copyWithPageNo(pageNo: number): PageSizeAwareCounterCursor {
-		const ret = new PageSizeAwareCounterCursor(1, 1);
-		ret.pageNo = pageNo || 1;
-		ret.perPage = this.perPage;
-		return ret;
-	}
-
-	serialise() {
-		return JSON.stringify({
-			perPage: this.perPage,
-			pageNo: this.pageNo
-		});
-	}
-}
-
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,

@@ -17,7 +17,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { PageSizeAwareCounterCursor } from "~/src/sync/sync-utils";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 /**
  * Find the next page number from the response headers.
