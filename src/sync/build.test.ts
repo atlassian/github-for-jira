@@ -174,7 +174,10 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor).toEqual(String(31));
+		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor)).toStrictEqual({
+			perPage: 20,
+			pageNo: 31
+		});
 	});
 
 	it("should finish task with parallel fetching when no more data", async () => {
@@ -192,6 +195,23 @@ describe("sync/builds", () => {
 				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=${21 + index}`)
 				.reply(200, []);
 		});
+
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+	});
+
+	it("scales cursor if necessary", async () => {
+		repoSyncState.buildCursor = JSON.stringify({
+			perPage: 100, pageNo: 2
+		});
+		await repoSyncState.save();
+
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=6`)
+			.reply(200, []);
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");

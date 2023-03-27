@@ -351,7 +351,10 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor).toEqual(String(Number(PRS_INITIAL_CURSOR) + 2));
+			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor)).toStrictEqual({
+				pageNo: 23,
+				perPage: 20
+			});
 		});
 
 		it("processing of PRs with parallel fetching ON should stop when no more PRs from GitHub", async () => {
@@ -379,6 +382,26 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
+			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
+		});
+
+		it("scales cursor if necessary", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			repoSyncState.pullCursor = JSON.stringify({
+				perPage: 100, pageNo: 2
+			});
+			await repoSyncState.save();
+
+			const nockPage = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=6&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			await expect(processInstallation(jest.fn())({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage.isDone()).toBeTruthy();
 			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
 		});
 

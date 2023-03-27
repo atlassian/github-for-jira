@@ -17,6 +17,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { PageSizeAwareCounterCursor, scaleCursor } from "~/src/sync/sync-utils";
 
 /**
  * Find the next page number from the response headers.
@@ -43,7 +44,7 @@ type Headers = AxiosResponseHeaders & {
 	link?: string;
 }
 
-type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
+type PullRequestWithCursor = { cursor: string } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: Logger,
@@ -87,7 +88,16 @@ export const doGetPullRequestTask = async (
 ) => {
 	logger.debug("Syncing PRs: started");
 
-	cursor = Number(cursor);
+	let pageSizeAwareCursor: PageSizeAwareCounterCursor;
+	if (Number(cursor)) {
+		pageSizeAwareCursor = {
+			perPage: perPage,
+			pageNo: Number(cursor)
+		};
+	} else {
+		pageSizeAwareCursor = scaleCursor(JSON.parse("" + cursor) as PageSizeAwareCounterCursor, perPage);
+	}
+
 	const startTime = Date.now();
 
 	const {
@@ -98,8 +108,8 @@ export const doGetPullRequestTask = async (
 	} =	await gitHubInstallationClient
 		.getPullRequests(repository.owner.login, repository.name,
 			{
-				per_page: perPage,
-				page: cursor,
+				per_page: pageSizeAwareCursor.perPage	,
+				page: pageSizeAwareCursor.pageNo,
 				state: PullRequestState.ALL,
 				sort: PullRequestSort.CREATED,
 				direction: SortDirection.DES
@@ -113,7 +123,12 @@ export const doGetPullRequestTask = async (
 		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = getNextPage(logger, headers) || cursor + 1;
+	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
+	const nextPageCursor = {
+		pageNo: nextPageNo,
+		perPage: pageSizeAwareCursor.perPage
+	};
+	const nextPageCursorStr = JSON.stringify(nextPageCursor);
 
 	let filteredEdges = edges;
 	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
@@ -126,7 +141,7 @@ export const doGetPullRequestTask = async (
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: PullRequestWithCursor[] = filteredEdges.map((edge) => ({ ...edge, cursor: nextPage }));
+	const edgesWithCursor: PullRequestWithCursor[] = filteredEdges.map((edge) => ({ ...edge, cursor: nextPageCursorStr }));
 
 	// TODO: change this to reduce
 	const pullRequests = (

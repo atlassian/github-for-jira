@@ -9,6 +9,27 @@ import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { SyncType, TaskType } from "~/src/sync/sync.types";
 import { sqsQueues } from "../sqs/queues";
 import { backfillFromDateToBucket } from "config/metric-helpers";
+import _ from "lodash";
+
+export interface PageSizeAwareCounterCursor {
+	perPage: number;
+	pageNo: number; // starting from 1; the very first page has cursor with pageNo=1
+}
+
+export const scaleCursor = (cursor: PageSizeAwareCounterCursor, newPerPage: number): PageSizeAwareCounterCursor => {
+	if (newPerPage === cursor.perPage) {
+		return _.cloneDeep(cursor);
+	}
+
+	const processedPages = (cursor.pageNo - 1) * cursor.perPage;
+
+	const fullyProcessedScaledPages = Math.floor(processedPages / newPerPage);
+
+	return {
+		perPage: newPerPage,
+		pageNo: fullyProcessedScaledPages + 1
+	};
+};
 
 export const findOrStartSync = async (
 	subscription: Subscription,

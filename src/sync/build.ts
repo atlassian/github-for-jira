@@ -8,8 +8,9 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { PageSizeAwareCounterCursor, scaleCursor } from "~/src/sync/sync-utils";
 
-type BuildWithCursor = { cursor: number } & Octokit.ActionsListRepoWorkflowRunsResponse;
+type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
 const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
@@ -67,14 +68,25 @@ const doGetBuildTask = async (
 	messagePayload: BackfillMessagePayload
 ) => {
 	logger.info("Syncing Builds: started");
-	cursor = Number(cursor);
+	let pageSizeAwareCursor: PageSizeAwareCounterCursor;
+	if (Number(cursor)) {
+		pageSizeAwareCursor = {
+			perPage: perPage,
+			pageNo: Number(cursor)
+		};
+	} else {
+		pageSizeAwareCursor = scaleCursor(JSON.parse("" + cursor) as PageSizeAwareCounterCursor, perPage);
+	}
 
 	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, perPage, cursor, fromDate);
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo, fromDate);
 	const { workflow_runs } = data;
-	const nextPage = cursor + 1;
-	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPage }];
+	const nextPageCursor = JSON.stringify({
+		perPage: pageSizeAwareCursor.perPage,
+		pageNo: pageSizeAwareCursor.pageNo + 1
+	});
+	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursor }];
 
 	if (!workflow_runs?.length) {
 		return {
