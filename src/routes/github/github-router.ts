@@ -30,6 +30,16 @@ const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, nex
 	next();
 };
 
+// TODO - remove function once rollout complete
+// False flag wont parse the jwt query param so we need to allow current functionality to work while this happens
+const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
+	if (req.query.jwt && req.query.jwt !== "{jwt}") {
+		return jiraSymmetricJwtMiddleware(req, res, next);
+	}
+	return next();
+};
+
+
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
@@ -41,7 +51,8 @@ subRouter.post("/webhooks",
 	WebhookReceiverPost);
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+// Todo able to move under the jirasymmetric middleware once flag completed
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
