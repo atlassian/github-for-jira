@@ -3,7 +3,6 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
 import { statsd } from "config/statsd";
-import { getLogger } from "config/logger";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { jiraAuthMiddleware } from "utils/axios/jira-auth-middleware";
@@ -148,6 +147,12 @@ const instrumentRequest = (response) => {
  */
 const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 	return async (error: AxiosError) => {
+		if (error.response) {
+			// TODO: pretty sure this whole function is some dead code that we can delete, because in getErrorMiddleware
+			// TODO: the error is mapped to JiraClientError. If that's the case, the log line below should never be logged
+			// TODO: and we are safe to kill the thing.
+			logger.info("Ok, looks like still works.");
+		}
 		instrumentRequest(error?.response);
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
@@ -177,9 +182,8 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 export const getAxiosInstance = (
 	baseURL: string,
 	secret: string,
-	logger?: Logger
+	logger: Logger
 ): AxiosInstance => {
-	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
 		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
