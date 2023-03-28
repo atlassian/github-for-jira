@@ -51,6 +51,12 @@ describe("sync/builds", () => {
 			.withBuildsCustomCursor(String(ORIGINAL_BUILDS_CURSOR))
 			.create()).repoSyncState!;
 
+		when(numberFlag).calledWith(
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(0);
+
 	});
 
 	it("should sync builds to Jira when build message contains issue key", async () => {
@@ -143,12 +149,12 @@ describe("sync/builds", () => {
 
 	const NUMBER_OF_PARALLEL_FETCHES = 10;
 
-	it("should fetch pages in parallel when FF is ON and more than 6", async () => {
+	it("should fetch pages in parallel when FF is ON", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(6);
+		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
@@ -181,10 +187,10 @@ describe("sync/builds", () => {
 
 	it("should finish task with parallel fetching when no more data", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(6);
+		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 

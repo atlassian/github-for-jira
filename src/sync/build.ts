@@ -32,20 +32,21 @@ export const getBuildTask = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
+	cursor: string | undefined,
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
-	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef || pageSizeCoef <= 5) {
+	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
+	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
 		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
 const doGetBuildTaskInParallel = (
+	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
@@ -53,7 +54,7 @@ const doGetBuildTaskInParallel = (
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => fetchNextPagesInParallel(
-	10,
+	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	(pageCursor) =>
 		doGetBuildTask(

@@ -35,7 +35,9 @@ export enum NumberFlags {
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
-	ACCELERATE_BACKFILL_COEF = "increase-builds-page-size-coef"
+	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
+	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
+	BACKFILL_PAGE_SIZE = "backfill-page-size"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

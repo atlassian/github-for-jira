@@ -199,5 +199,5 @@ export const mockNextTask:Task = {
 		html_url: "https://github.com/some-org/some-repo",
 		updated_at: "23132123"
 	},
-	cursor: 1
+	cursor: "1"
 };
