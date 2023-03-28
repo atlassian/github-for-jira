@@ -284,8 +284,12 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 
 		const processor = tasks[task];
-		// "|| 20" is purely to simplify testing and avoid mocking it all the time
-		const nPages = await numberFlag(NumberFlags.BACKFILL_PAGE_SIZE, 20, jiraHost) || 20;
+		const nPages = Math.min(
+			// "|| 20" is purely to simplify testing and avoid mocking it all the time
+			await numberFlag(NumberFlags.BACKFILL_PAGE_SIZE, 20, jiraHost) || 20,
+			// The majority of GitHub APIs hard-limit the page size to 100
+			100
+		);
 		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, nPages, data);
 		if (taskPayload.jiraPayload) {
 			const jiraClient = await getJiraClient(

@@ -183,8 +183,30 @@ describe("sync/installation", () => {
 				NumberFlags.BACKFILL_PAGE_SIZE,
 				expect.anything(),
 				expect.anything()
-			).mockResolvedValue(100);
+			).mockResolvedValue(90);
 
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const query = branchesNoLastCursor();
+			query.variables.per_page = 90;
+			githubNock
+				.post("/graphql", query)
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect(sendSqsMessage).toBeCalledTimes(1);
+		});
+
+		it("should not allow page sizes larger than 100", async () => {
+			when(numberFlag).calledWith(
+				NumberFlags.BACKFILL_PAGE_SIZE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(120);
 
 			const sendSqsMessage = jest.fn();
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
