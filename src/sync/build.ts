@@ -78,8 +78,16 @@ const doGetBuildTask = async (
 
 	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo, fromDate);
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
+
+	if (areAllBuildsEarlierThanFromDate(workflow_runs, fromDate)) {
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
+	}
+
 	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(pageSizeAwareCursor.pageNo + 1).serialise();
 
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
@@ -114,4 +122,15 @@ const doGetBuildTask = async (
 		edges: edgesWithCursor,
 		jiraPayload
 	};
+};
+
+const areAllBuildsEarlierThanFromDate = (builds: Octokit.ActionsListRepoWorkflowRunsResponseWorkflowRunsItem[], fromDate: Date | undefined): boolean => {
+
+	if (!fromDate) return false;
+
+	return builds.every(build => {
+		const createdAt = new Date(build.created_at);
+		return createdAt.getTime() < fromDate.getTime();
+	});
+
 };
