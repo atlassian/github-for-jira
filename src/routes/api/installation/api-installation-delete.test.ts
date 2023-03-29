@@ -3,6 +3,7 @@ import { ApiInstallationDelete } from "./api-installation-delete";
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import { RepoSyncState } from "~/src/models/reposyncstate";
 
 
 jest.mock("~/src/jira/client/jira-client");
@@ -11,14 +12,35 @@ describe("ApiInstallationDelete", ()=>{
 	describe("GHES support", ()=>{
 		const GHES_GITHUB_INSTALLATION_ID = 123;
 		const GHES_GITHUB_APP_ID = 456;
+		let subscription;
 		let mockJiraClient;
 		beforeEach(async ()=>{
-			await Subscription.install({
+			subscription = await Subscription.install({
 				installationId: GHES_GITHUB_INSTALLATION_ID,
 				host: jiraHost,
 				gitHubAppId: GHES_GITHUB_APP_ID,
 				hashedClientKey: "key"
 			});
+			await RepoSyncState.create({
+				subscriptionId: subscription.id,
+				repoId: 1,
+				repoName: "test-repo-name",
+				repoOwner: "integrations",
+				repoFullName: "test-repo-name",
+				repoUrl: "test-repo-url",
+				repoPushedAt: new Date(),
+				repoUpdatedAt: new Date(),
+				repoCreatedAt: new Date(),
+				branchStatus: "complete",
+				branchCursor: "bCursor",
+				commitStatus: "complete",
+				commitCursor: "cCursor",
+				pullStatus: "complete",
+				pullCursor: "pCursor",
+				updatedAt: new Date(),
+				createdAt: new Date()
+			});
+
 			mockJiraClient = {
 				devinfo: {
 					installation: {
@@ -45,6 +67,10 @@ describe("ApiInstallationDelete", ()=>{
 			}), res);
 			expect(res.status).toBeCalledWith(200);
 			expect(mockJiraClient.devinfo.installation.delete).toBeCalledWith(GHES_GITHUB_INSTALLATION_ID.toString());
+			const repoSyncState = await RepoSyncState.findByRepoId(subscription, 1);
+			expect(repoSyncState?.branchCursor).toBeNull();
+			expect(repoSyncState?.commitCursor).toBeNull();
+			expect(repoSyncState?.pullCursor).toBeNull();
 		});
 	});
 	const getReq = (opts: any = {}): any => {
