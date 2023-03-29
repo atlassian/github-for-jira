@@ -20,10 +20,11 @@ export abstract class EncryptedModel extends Model {
 			//error TS2731: Implicit conversion of a 'symbol' to a 'string' will fail at runtime. Consider wrapping this expression in 'String(...)'.
 			throw new Error(`Cannot decrypt '${String(field)}', it is not a string.`);
 		}
+		logger.info("DECRYPTING:", value);
 		try {
 			return await EncryptionClient.decrypt(value, await this.getEncryptContext(field));
 		} catch (err) {
-			logger.error({ err }, `Fail to decrypt field ${String(field)}`);
+			logger.error({ err }, `Failed to decrypt field ${String(field)}`);
 			throw err;
 		}
 	}
