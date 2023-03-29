@@ -27,7 +27,7 @@ import {
 } from "./github-client.types";
 import { isChangedFilesError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -45,10 +45,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
 		jiraHost: string,
+		metrics: Metrics,
 		logger: Logger,
 		gshaId?: number
 	) {
-		super(gitHubConfig, logger);
+		super(gitHubConfig, metrics, logger);
 		this.jiraHost = jiraHost;
 
 		this.installationTokenCache = InstallationTokenCache.getInstance();

@@ -30,6 +30,11 @@ export interface GitHubConfig {
 	apiKeyConfig?: GitHubClientApiKeyConfig;
 }
 
+export interface Metrics {
+	trigger: string,
+	sub_trigger?: string,
+}
+
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
  */
@@ -43,15 +48,18 @@ export class GitHubClient {
 	protected readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;
+	protected readonly metrics: Metrics;
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		metrics: Metrics,
 		logger: Logger
 	) {
 		this.logger = logger;
 		this.baseUrl = gitHubConfig.baseUrl;
 		this.restApiUrl = gitHubConfig.apiUrl;
 		this.graphqlUrl = gitHubConfig.graphqlUrl;
+		this.metrics = metrics;
 
 		this.axios = axios.create({
 			baseURL: this.restApiUrl,
@@ -69,8 +77,12 @@ export class GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl, {
+				...this.metrics
+			}),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, {
+				...this.metrics
+			})
 		);
 
 		if (gitHubConfig.apiKeyConfig) {
