@@ -721,6 +721,7 @@ describe("sync/pull-request", () => {
 				_.cloneDeep(pullRequestList[0])
 			];
 
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
 			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
 			twoPRs[0].created_at = new Date().toISOString();
 			twoPRs[1].created_at = new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString();
@@ -747,7 +748,7 @@ describe("sync/pull-request", () => {
 				{
 					jiraHost,
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-					commitsFromDate: "2023-01-01T00:00:00Z"
+					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
 				}
 			);
 			expect(result).toEqual({
