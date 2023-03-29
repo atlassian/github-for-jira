@@ -196,10 +196,10 @@ it will automatically trigger the backfilling process for the allowed repositori
 2. All commits from the default branch will be backfilled. The commit message must contain the Jira issue key.
 3. Only the latest 50 commits from non-default branches will be backfilled.
 4. Unreachable commits (e.g. from deleted branches) will NOT be backfilled.
-5. All pull requests, regardless of their statuses, will be backfilled. The Jira issue key should be included either in
-   the title of the pull request, in the description of the pull request or in the name of the source branch
+5. All pull requests, regardless of their statuses, will be backfilled. The Jira issue key should be included either in 
+   the title of the pull request, in the description of the pull request or in the name of the source branch 
    of the pull request.
-6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include
+6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include 
    issue keys to the builds and deployments [here](#see-github-builds-and-deployments-in-jira).
 
 

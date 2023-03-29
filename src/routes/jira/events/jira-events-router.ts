@@ -16,7 +16,6 @@ JiraEventsRouter.post("/enabled", async (req: Request, res: Response) => {
 
 	try {
 		const appProperties = await getConfiguredAppProperties(baseUrl, req.log);
-		req.log.info("appProperties", appProperties);
 		if (!appProperties || appProperties.status !== 200) {
 			await saveConfiguredAppProperties(baseUrl, req.log, false);
 			req.log.info("App property set to false after installation for ", baseUrl);

@@ -21,7 +21,6 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		}
 
 		const installation = await Installation.getForClientKey(issuer);
-		req.log.info("INSTALLATION: ", installation);
 		if (!installation) {
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");

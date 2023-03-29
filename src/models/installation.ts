@@ -142,11 +142,13 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+			const optsFields = opts.fields?.filter(field => typeof field === "string" && field.includes("encryptedSharedSecret"));
+			if (typeof optsFields !== "string") return;
 			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
-			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+			const optsFields = opts.fields?.filter(field => typeof field === "string" && field.includes("encryptedSharedSecret"));
+			if (typeof optsFields !== "string") return;
 
 			for (const instance of instances) {
 				if (!optsFields) return;
