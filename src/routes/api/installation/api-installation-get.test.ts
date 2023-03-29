@@ -33,7 +33,7 @@ describe("ApiInstallationGet", () => {
 			}), res);
 
 			expect(createAppClient)
-				.toBeCalledWith(expect.anything(), undefined, GHES_GITHUB_APP_ID);
+				.toBeCalledWith(expect.anything(), undefined, GHES_GITHUB_APP_ID, { trigger: "api_installation_get" });
 		});
 	});
 	const getReq = (opts: any = {}): any => {
