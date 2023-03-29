@@ -20,6 +20,7 @@ if (!process.env.STORAGE_SECRET) {
 }
 
 export const getHashedKey = (clientKey: string): string => {
+	logger.info("clientKey", clientKey)
 	const keyHash = crypto.createHmac("sha256", process.env.STORAGE_SECRET || "");
 	keyHash.update(clientKey);
 	return keyHash.digest("hex");
