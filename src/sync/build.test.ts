@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
+import { cloneDeep } from "lodash";
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
@@ -51,6 +52,12 @@ describe("sync/builds", () => {
 			.withBuildsCustomCursor(String(ORIGINAL_BUILDS_CURSOR))
 			.create()).repoSyncState!;
 
+		when(numberFlag).calledWith(
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(0);
+
 	});
 
 	it("should sync builds to Jira when build message contains issue key", async () => {
@@ -98,57 +105,14 @@ describe("sync/builds", () => {
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
-	it("should get proper jira payload that within from date when increment ff on", async () => {
-		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, commitsFromDate: "2023-01-01" };
-
-		when(booleanFlag).calledWith(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost).mockResolvedValue(true);
-
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-
-		githubNock
-			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=1&created=%3E%3D2023-01-01T00:00:00.000Z`)
-			.reply(200, buildFixture);
-
-		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
-			.reply(200, compareReferencesFixture);
-
-		const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
-		expect(await getBuildTask(
-			getLogger("test"),
-			gitHubClient,
-			jiraHost,
-			{
-				id: repoSyncState.repoId,
-				name: repoSyncState.repoName,
-				full_name: repoSyncState.repoFullName,
-				owner: { login: repoSyncState.repoOwner },
-				html_url: repoSyncState.repoUrl,
-				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
-			},
-			undefined,
-			20,
-			data
-		)).toEqual({
-			edges: expect.anything(),
-			jiraPayload: expect.objectContaining({
-				id: "1",
-				name: "test-repo-name",
-				builds: expect.arrayContaining([expect.objectContaining({
-					"buildNumber": 59
-				})])
-			})
-		});
-	});
-
 	const NUMBER_OF_PARALLEL_FETCHES = 10;
 
-	it("should fetch pages in parallel when FF is ON and more than 6", async () => {
+	it("should fetch pages in parallel when FF is ON", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(6);
+		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
@@ -173,7 +137,7 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor)).toStrictEqual({
+		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor || "")).toStrictEqual({
 			perPage: 20,
 			pageNo: 31
 		});
@@ -181,10 +145,10 @@ describe("sync/builds", () => {
 
 	it("should finish task with parallel fetching when no more data", async () => {
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
-		).mockResolvedValue(6);
+		).mockResolvedValue(NUMBER_OF_PARALLEL_FETCHES);
 
 		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 
@@ -213,7 +177,7 @@ describe("sync/builds", () => {
 			.reply(200, []);
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
@@ -323,6 +287,145 @@ describe("sync/builds", () => {
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 		expect(scope).not.toBeDone();
 		removeInterceptor(interceptor);
+	});
+
+	describe("incremental backfill", () => {
+
+		let repoSyncState: RepoSyncState;
+		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				jiraHost
+			).mockResolvedValue(true);
+			const dbState = await new DatabaseStateCreator()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForDeployments()
+				.create();
+			repoSyncState = dbState.repoSyncState!;
+		});
+
+		it("should not miss build data when page contains older build", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`).reply(200, compareReferencesFixture);
+			githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`).reply(200, compareReferencesFixture);
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+
+			const dateNow = new Date();
+			const dateOneMonthAgo = new Date(new Date().getTime() - ONE_MONTH_IN_MILLISEC);
+			const twoBuilds = {
+				"total_count": 2,
+				"workflow_runs": [
+					Object.assign({}, cloneDeep(buildFixture.workflow_runs[0]), {
+						"created_at": dateNow.toISOString(),
+						"updated_at": dateNow.toISOString()
+					}),
+					Object.assign({}, cloneDeep(buildFixture.workflow_runs[0]), {
+						"created_at": dateOneMonthAgo.toISOString(),
+						"updated_at": dateOneMonthAgo.toISOString()
+					})
+				]
+			};
+			githubNock
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=2&page=1`)
+				.reply(200, twoBuilds);
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const result = await getBuildTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				2,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+
+			expect(result).toEqual({
+				edges: [expect.objectContaining({
+					total_count: 2,
+					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
+				})],
+				jiraPayload: expect.objectContaining({
+					builds: [expect.objectContaining({
+						lastUpdated: dateNow.toISOString()
+					}), expect.objectContaining({
+						lastUpdated: dateOneMonthAgo.toISOString()
+					})]
+				})
+			});
+		});
+
+		it("should not include build data when all data are older build", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			const TWO_MONTH_IN_MILLISEC = 2 * 31 * 24 * 60 * 60 * 1000;
+
+			const dateOneMonthAgo = new Date(new Date().getTime() - ONE_MONTH_IN_MILLISEC);
+			const dateTwoMonthAgo = new Date(new Date().getTime() - TWO_MONTH_IN_MILLISEC);
+			const twoBuilds = {
+				"total_count": 2,
+				"workflow_runs": [
+					Object.assign({}, cloneDeep(buildFixture.workflow_runs[0]), {
+						"created_at": dateOneMonthAgo.toISOString(),
+						"updated_at": dateOneMonthAgo.toISOString()
+					}),
+					Object.assign({}, cloneDeep(buildFixture.workflow_runs[0]), {
+						"created_at": dateTwoMonthAgo.toISOString(),
+						"updated_at": dateTwoMonthAgo.toISOString()
+					})
+				]
+			};
+			githubNock
+				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=2&page=1`)
+				.reply(200, twoBuilds);
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const result = await getBuildTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				2,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+
+			expect(result).toEqual({
+				edges: [],
+				jiraPayload: undefined
+			});
+		});
 	});
 
 });

@@ -24,7 +24,7 @@ describe("sync/pull-request", () => {
 		mockSystemTime(12345678);
 
 		when(numberFlag).calledWith(
-			NumberFlags.ACCELERATE_BACKFILL_COEF,
+			NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 			expect.anything(),
 			expect.anything()
 		).mockResolvedValue(0);
@@ -296,15 +296,15 @@ describe("sync/pull-request", () => {
 			});
 		});
 
-		it("uses parallel fetching of 2 pages when FF is over 5", async () => {
+		it("uses parallel fetching when FF is more than 1", async () => {
 			const modifiedList = _.cloneDeep(pullRequestList);
 			modifiedList[0].title = "TES-15";
 
 			when(numberFlag).calledWith(
-				NumberFlags.ACCELERATE_BACKFILL_COEF,
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 				expect.anything(),
 				expect.anything()
-			).mockResolvedValue(6);
+			).mockResolvedValue(2);
 
 			for (let i = 0; i < 12; i++) {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -351,18 +351,18 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor)).toStrictEqual({
+			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor || "")).toStrictEqual({
 				pageNo: 23,
 				perPage: 20
 			});
 		});
 
-		it("processing of PRs with parallel fetching ON should stop when no more PRs from GitHub", async () => {
+		it("processing of PRs with parallel fetching should stop when no more PRs from GitHub", async () => {
 			when(numberFlag).calledWith(
-				NumberFlags.ACCELERATE_BACKFILL_COEF,
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
 				expect.anything(),
 				expect.anything()
-			).mockResolvedValue(6);
+			).mockResolvedValue(2);
 
 			for (let i = 0; i < 2; i++) {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -402,7 +402,7 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
 		});
 
 		it("should not sync if nodes are empty", async () => {
@@ -694,6 +694,71 @@ describe("sync/pull-request", () => {
 			};
 
 			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
+		});
+	});
+
+	describe("incremental backfill", () => {
+
+		let repoSyncState: RepoSyncState;
+		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				jiraHost
+			).mockResolvedValue(true);
+			const dbState = await new DatabaseStateCreator()
+				.withActiveRepoSyncState()
+				.repoSyncStatePendingForDeployments()
+				.create();
+			repoSyncState = dbState.repoSyncState!;
+		});
+
+		it("should not miss pull request data when page contains older prs", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			const twoPRs = [
+				_.cloneDeep(pullRequestList[0]),
+				_.cloneDeep(pullRequestList[0])
+			];
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			twoPRs[0].created_at = new Date().toISOString();
+			twoPRs[1].created_at = new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString();
+
+			githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=2&page=1&state=all&sort=created&direction=desc")
+				.reply(200, twoPRs);
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				2,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+			expect(result).toEqual({
+				edges: [expect.objectContaining({
+					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
+				}), expect.objectContaining({
+					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
+				})],
+				jiraPayload: undefined
+			});
 		});
 	});
 });

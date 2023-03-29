@@ -14,7 +14,7 @@ export interface TaskProcessors {
 		gitHubInstallationClient: GitHubInstallationClient,
 		jiraHost: string,
 		repository: Repository,
-		cursor: string | number | undefined,
+		cursor: string | undefined,
 		perPage: number,
 		messagePayload: BackfillMessagePayload
 	) => Promise<TaskResultPayload>;
@@ -30,5 +30,5 @@ export interface Task {
 	task: TaskType;
 	repositoryId: number;
 	repository: Repository;
-	cursor?: string | number;
+	cursor?: string;
 }

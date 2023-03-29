@@ -32,20 +32,21 @@ export const getBuildTask = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
+	cursor: string | undefined,
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
-	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef || pageSizeCoef <= 5) {
+	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
+	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
 		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		return doGetBuildTaskInParallel(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
 const doGetBuildTaskInParallel = (
+	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
@@ -53,7 +54,7 @@ const doGetBuildTaskInParallel = (
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => fetchNextPagesInParallel(
-	10,
+	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	(pageCursor) =>
 		doGetBuildTask(
@@ -77,8 +78,16 @@ const doGetBuildTask = async (
 
 	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo, fromDate);
+	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
+
+	if (areAllBuildsEarlierThanFromDate(workflow_runs, fromDate)) {
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
+	}
+
 	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(pageSizeAwareCursor.pageNo + 1).serialise();
 
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
@@ -113,4 +122,15 @@ const doGetBuildTask = async (
 		edges: edgesWithCursor,
 		jiraPayload
 	};
+};
+
+const areAllBuildsEarlierThanFromDate = (builds: Octokit.ActionsListRepoWorkflowRunsResponseWorkflowRunsItem[], fromDate: Date | undefined): boolean => {
+
+	if (!fromDate) return false;
+
+	return builds.every(build => {
+		const createdAt = new Date(build.created_at);
+		return createdAt.getTime() < fromDate.getTime();
+	});
+
 };

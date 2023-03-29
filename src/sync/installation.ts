@@ -13,7 +13,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { repoCountToBucket } from "config/metric-helpers";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, numberFlag, NumberFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -283,9 +283,14 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
 
-		// TODO: increase page size to 100 and remove scaling logic from commits, prs and builds
 		const processor = tasks[task];
-		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, 20, data);
+		const nPages = Math.min(
+			// "|| 20" is purely to simplify testing and avoid mocking it all the time
+			await numberFlag(NumberFlags.BACKFILL_PAGE_SIZE, 20, jiraHost) || 20,
+			// The majority of GitHub APIs hard-limit the page size to 100
+			100
+		);
+		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, nPages, data);
 		if (taskPayload.jiraPayload) {
 			const jiraClient = await getJiraClient(
 				subscription.jiraHost,

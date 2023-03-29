@@ -113,9 +113,9 @@ describe("PageSizeAwareCounterCursor", () => {
 		});
 	});
 
-	describe("plain numbers provided", () => {
+	describe("plain number or undefined provided", () => {
 		it("uses 20 as default page size", () => {
-			expect(new PageSizeAwareCounterCursor(100)).toEqual({
+			expect(new PageSizeAwareCounterCursor("100")).toEqual({
 				pageNo: 100,
 				perPage: 20
 			});
@@ -127,18 +127,25 @@ describe("PageSizeAwareCounterCursor", () => {
 				perPage: 20
 			});
 		});
+
+		it("maps undefined to page 1", () => {
+			expect(new PageSizeAwareCounterCursor("")).toEqual({
+				pageNo: 1,
+				perPage: 20
+			});
+		});
 	});
 
 	describe("copyWithPageNo", () => {
 		it("correctly updates pageNo value", () => {
-			expect(new PageSizeAwareCounterCursor(100).scale(30).copyWithPageNo(2)).toEqual({
+			expect(new PageSizeAwareCounterCursor("100").scale(30).copyWithPageNo(2)).toEqual({
 				pageNo: 2,
 				perPage: 30
 			});
 		});
 
 		it("maps zero page to page 1", () => {
-			expect(new PageSizeAwareCounterCursor(100).copyWithPageNo(1)).toEqual({
+			expect(new PageSizeAwareCounterCursor("100").copyWithPageNo(1)).toEqual({
 				pageNo: 1,
 				perPage: 20
 			});
@@ -147,7 +154,7 @@ describe("PageSizeAwareCounterCursor", () => {
 
 	describe("serialize", () => {
 		it("round trips", () => {
-			expect(new PageSizeAwareCounterCursor(new PageSizeAwareCounterCursor(100).scale(30).serialise())).toEqual({
+			expect(new PageSizeAwareCounterCursor(new PageSizeAwareCounterCursor("100").scale(30).serialise())).toEqual({
 				pageNo: 67,
 				perPage: 30
 			});
