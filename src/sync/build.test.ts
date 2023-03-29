@@ -105,6 +105,30 @@ describe("sync/builds", () => {
 		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
 	});
 
+	it("should not explode when returned payload doesn't have head_commit", async () => {
+		const data: BackfillMessagePayload = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+		const fixture = cloneDeep(buildFixture);
+		fixture.workflow_runs[0].head_commit = null as unknown as any;
+
+		githubNock
+			.get(`/repos/integrations/test-repo-name/actions/runs?per_page=20&page=21`)
+			.reply(200, fixture);
+
+		githubNock.get(`/repos/integrations/integration-test-jira/compare/BASE_REF...HEAD_REF`)
+			.reply(200, compareReferencesFixture);
+
+		jiraNock
+			.post("/rest/builds/0.1/bulk")
+			.reply(200);
+
+		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
+		expect(mockBackfillQueueSendMessage).toBeCalledWith(data, 0, expect.anything());
+	});
+
 	const NUMBER_OF_PARALLEL_FETCHES = 10;
 
 	it("should fetch pages in parallel when FF is ON", async () => {
