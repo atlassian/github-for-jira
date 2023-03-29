@@ -32,7 +32,7 @@ export interface GitHubConfig {
 
 export interface Metrics {
 	trigger: string,
-	sub_trigger?: string,
+	subTrigger?: string,
 }
 
 /**

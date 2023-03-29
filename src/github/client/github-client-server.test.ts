@@ -83,6 +83,7 @@ describe("GitHub Client", () => {
 				graphqlUrl: gheApiUrl  + "/graphql"
 			},
 			jiraHost,
+			{ trigger: "test" },
 			getLogger("test")
 		);
 

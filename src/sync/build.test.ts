@@ -335,7 +335,7 @@ describe("sync/builds", () => {
 				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=2&page=1`)
 				.reply(200, twoBuilds);
 
-			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			const result = await getBuildTask(
 				getLogger("test"),
 				gitHubClient,
@@ -399,7 +399,7 @@ describe("sync/builds", () => {
 				.get(`/repos/integrations/test-repo-name/actions/runs?per_page=2&page=1`)
 				.reply(200, twoBuilds);
 
-			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			const result = await getBuildTask(
 				getLogger("test"),
 				gitHubClient,

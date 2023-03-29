@@ -59,7 +59,11 @@ export const getRepositoryTask = async (
 	logger.info(`Added ${repositories.length} Repositories to state`);
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient.githubInstallationId, jiraHost, gitHubAppId);
+	const metrics = {
+		trigger: "backfill",
+		subTrigger: "discovery"
+	};
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient.githubInstallationId, jiraHost, gitHubAppId, metrics);
 
 	return {
 		edges,

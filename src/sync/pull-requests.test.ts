@@ -461,7 +461,7 @@ describe("sync/pull-request", () => {
 
 			mockPullRequestList();
 
-			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			expect(await getPullRequestTask(getLogger("test"),
 				gitHubClient,
 				jiraHost,
@@ -730,7 +730,7 @@ describe("sync/pull-request", () => {
 				.get("/repos/integrations/test-repo-name/pulls?per_page=2&page=1&state=all&sort=created&direction=desc")
 				.reply(200, twoPRs);
 
-			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			const result = await getPullRequestTask(
 				getLogger("test"),
 				gitHubClient,

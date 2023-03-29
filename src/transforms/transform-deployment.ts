@@ -229,7 +229,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
+export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, metrics: {trigger: string, subTrigger?: string}, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
@@ -254,7 +254,9 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			githubInstallationClient.githubInstallationId,
 			payload.repository.id,
 			payload.repository.owner.login,
-			payload.repository.name);
+			payload.repository.name,
+			metrics
+		);
 	} else {
 		logger.warn({
 			jiraHost,

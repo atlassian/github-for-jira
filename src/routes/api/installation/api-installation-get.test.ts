@@ -21,7 +21,7 @@ describe("ApiInstallationGet", () => {
 		it("should find correct github app with id", async () => {
 
 			when(jest.mocked(createAppClient))
-				.calledWith(expect.anything(), jiraHost, GHES_GITHUB_APP_ID)
+				.calledWith(expect.anything(), jiraHost, GHES_GITHUB_APP_ID, expect.anything())
 				.mockResolvedValue({ getInstallation: jest.fn() } as any);
 			const res = getRes();
 
