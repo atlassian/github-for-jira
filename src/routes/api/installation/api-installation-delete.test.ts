@@ -4,9 +4,11 @@ import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { RepoSyncState } from "~/src/models/reposyncstate";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 
 jest.mock("~/src/jira/client/jira-client");
+jest.mock("config/feature-flags");
 
 describe("ApiInstallationDelete", ()=>{
 	describe("GHES support", ()=>{
@@ -48,6 +50,11 @@ describe("ApiInstallationDelete", ()=>{
 					}
 				}
 			};
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				expect.anything()
+			).mockResolvedValue(true);
 		});
 		it("should get subcription with gitHubAppid", async ()=>{
 			when(jest.mocked(getJiraClient))
