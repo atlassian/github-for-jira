@@ -142,17 +142,18 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			const optsFields = opts.fields?.filter(field => typeof field === "string" && field.includes("encryptedSharedSecret"));
-			if (typeof optsFields !== "string") return;
-			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
+			// TODO - update type check
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
-			const optsFields = opts.fields?.filter(field => typeof field === "string" && field.includes("encryptedSharedSecret"));
-			if (typeof optsFields !== "string") return;
-
 			for (const instance of instances) {
-				if (!optsFields) return;
-				await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_BULK_CREATE);
+				if (!opts.fields) return;
+				// TODO - update type check
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_BULK_CREATE);
 			}
 		}
 	},
