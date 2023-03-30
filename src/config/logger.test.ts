@@ -175,7 +175,7 @@ describe("logger behaviour", () => {
 			logger.addStream({ stream: ringBuffer as Stream });
 			logger.error(
 				{ err: new TaskError({
-					cursor: 18,
+					cursor: "18",
 					repository: {
 						full_name: "raise-of-machines/top-secret",
 						html_url: "https://github.com/top-secret",
@@ -192,7 +192,7 @@ describe("logger behaviour", () => {
 
 			expect(JSON.parse(ringBuffer.records[0]).err.task).toEqual(
 				{
-					"cursor": 18,
+					"cursor": "18",
 					"repository": {
 						"fullName": hash("raise-of-machines/top-secret"),
 						"id": 123456,
@@ -483,7 +483,7 @@ describe("logger behaviour", () => {
 			gheNock.get("/")
 				.reply(200, {}, { "foo": "bar" });
 
-			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 
 			const response = await client.getMainPage(1000);
 
@@ -559,7 +559,7 @@ describe("logger behaviour", () => {
 					"X-RateLimit-Reset": "1613088454"
 				});
 
-			const client = await createAnonymousClient(gheUrl, jiraHost, logger);
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, logger);
 
 			await client.getMainPage(1000).catch(noop);
 

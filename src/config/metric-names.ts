@@ -56,4 +56,3 @@ export const metricCreateBranch = {
 	created: `${server}.create-branch.created`,
 	failed: `${server}.create-branch.failed`
 };
-

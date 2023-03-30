@@ -28,7 +28,8 @@ export const processDeployment = async (
 	jiraHost: string,
 	gitHubInstallationId: number,
 	rootLogger: Logger,
-	gitHubAppId: number | undefined
+	gitHubAppId: number | undefined,
+	rateLimited?: boolean
 ) => {
 
 	const logger = rootLogger.child({
@@ -45,7 +46,10 @@ export const processDeployment = async (
 
 	logger.info("processing deployment message!");
 
-	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, logger, gitHubAppId);
+	const metrics = {
+		trigger: "deployment_queue"
+	};
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, metrics, logger, gitHubAppId);
 
 	logger.info("deployment message transformed");
 
@@ -71,7 +75,8 @@ export const processDeployment = async (
 		}, "Jira API rejected deployment!");
 	}
 
-	emitWebhookProcessedMetrics(
+	// TODO - remove the rate limited test once valid metrics have been decided
+	!rateLimited && emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
 		"deployment_status",
 		logger,

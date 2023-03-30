@@ -4,7 +4,7 @@ import { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
 import { AuthToken } from "~/src/github/client/auth-token";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -17,11 +17,12 @@ export class GitHubAppClient extends GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		metrics: Metrics,
 		logger: Logger,
 		appId: string,
 		privateKey: string
 	) {
-		super(gitHubConfig, logger);
+		super(gitHubConfig, metrics, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
