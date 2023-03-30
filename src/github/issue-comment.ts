@@ -30,7 +30,11 @@ export const issueCommentWebhookHandler = async (
 
 	let linkifiedBody;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
+	const metrics = {
+		trigger: "webhook",
+		subTrigger: "issueComment"
+	};
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
 
 	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
 		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);

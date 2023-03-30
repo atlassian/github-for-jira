@@ -73,7 +73,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.status(400).json({ error: getErrorMessages(400) });
 		return;
 	}
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-create-branch" }, req.log, gitHubAppConfig.gitHubAppId);
 
 	try {
 		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;

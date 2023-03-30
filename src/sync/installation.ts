@@ -281,7 +281,11 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 		logger.info("Starting task");
 
-		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, logger, data.gitHubAppConfig?.gitHubAppId);
+		const metrics = {
+			trigger: "backfill",
+			subTrigger: task
+		};
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, metrics, logger, data.gitHubAppConfig?.gitHubAppId);
 
 		const processor = tasks[task];
 		const nPages = Math.min(

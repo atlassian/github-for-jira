@@ -15,7 +15,7 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		return;
 	}
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-branch-get" }, req.log, gitHubAppConfig.gitHubAppId);
 	try {
 		await gitHubUserClient.getReference(owner, repo, ref);
 		res.sendStatus(200);
