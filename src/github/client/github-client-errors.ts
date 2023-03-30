@@ -25,7 +25,7 @@ export class GithubClientTimeoutError extends GithubClientError {
 	}
 }
 
-export class RateLimitingError extends GithubClientError {
+export class GithubClientRateLimitingError extends GithubClientError {
 	/**
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.
 	 */
@@ -39,18 +39,25 @@ export class RateLimitingError extends GithubClientError {
 	}
 }
 
-export class BlockedIpError extends GithubClientError {
+export class GithubClientBlockedIpError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Blocked by GitHub allowlist", cause);
 		this.isRetryable = false;
 	}
 }
 
-export class InvalidPermissionsError extends GithubClientError {
+export class GithubClientInvalidPermissionsError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Resource not accessible by integration", cause);
 	}
 }
+
+export class GithubClientNotFoundError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Not found", cause);
+	}
+}
+
 
 /**
  * Type for errors section in GraphQL response
@@ -58,19 +65,18 @@ export class InvalidPermissionsError extends GithubClientError {
 export type GraphQLError = {
 	message: string;
 	type: string;
-	path?: [string];
+	path?: string[];
 	extensions?: {
 		code?: string;
 		timestamp?: string;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		[key: string]: any;
 	};
-	locations?: [
+	locations?:
 		{
 			line: number;
 			column: number;
-		}
-	];
+		}[];
 };
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
@@ -97,7 +103,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 			buildAxiosStubErrorForGraphQlErrors(response)
 		);
 		this.errors = errors;
-		this.isRetryable = !!errors?.find(
+		this.isRetryable = !!errors.find(
 			(error) =>
 				"MAX_NODE_LIMIT_EXCEEDED" == error.type ||
 				error.message?.startsWith("Something went wrong while executing your query")
@@ -107,7 +113,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 
 // TODO: the name doesn't make sense: it returns true for any GraphQL error...
 export const isChangedFilesError = (logger: Logger, err: GithubClientError): boolean => {
-	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
+	const bool = err instanceof GithubClientGraphQLError || !(err instanceof GithubClientRateLimitingError || err instanceof GithubClientTimeoutError);
 	logger.warn({ isChangedFilesError: bool , err }, "isChangedFilesError");
 	return bool;
 	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));

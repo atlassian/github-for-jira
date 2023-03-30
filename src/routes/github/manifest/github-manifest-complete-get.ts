@@ -12,7 +12,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!jiraHost) {
 		throw new Error("Jira Host not found");
 	}
-	const gheHost = req.session.temp?.gheHost;
+	const gheHost = req.params.gheHost;
 	if (!gheHost) {
 		throw new Error("GitHub Enterprise Host not found");
 	}
@@ -25,7 +25,10 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	}
 
 	try {
-		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, req.log);
+		const metrics = {
+			trigger: "manifest"
+		};
+		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, metrics, req.log);
 		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
@@ -38,7 +41,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			privateKey:  gitHubAppConfig.pem,
 			installationId: installation.id
 		}, jiraHost);
-		req.session.temp = undefined;
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
@@ -62,6 +64,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			success: false
 		});
 
-		res.redirect(`/error/${errorQueryParam}?retryUrl=/session&baseUrl=${gheHost}&ghRedirect=to&autoApp=1`);
+		res.redirect(`/error/${errorQueryParam}?retryUrl=/github-manifest`);
 	}
 };

@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { groupBy, chain, difference } from "lodash";
+import { groupBy, chain, difference, countBy } from "lodash";
 import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -38,14 +38,15 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
+export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
 		case "COMPLETE":
 			return "FINISHED";
 		default:
-			return syncStatus;
+			return syncStatus as ConnectionSyncStatus;
 	}
 };
 
@@ -64,7 +65,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 
 const getInstallation = async (subscription: Subscription, gitHubAppId: number | undefined, log: Logger): Promise<AppInstallation> => {
 	const { jiraHost, gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId, { trigger: "jira-get" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
@@ -74,7 +75,9 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
-			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			numberOfSyncedRepos: await RepoSyncState.countFullySyncedReposForSubscription(subscription),
+			backfillSince: subscription.backfillSince,
+			failedSyncErrors: await getRetryableFailedSyncErrors(subscription),
 			jiraHost
 		};
 
@@ -122,7 +125,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const { jiraHost, nonce } = res.locals;
 
-	const shouldPromoteBackfillButtonToTableRow = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
+	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
@@ -161,7 +164,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration-new.hbs", {
 		host: jiraHost,
-		shouldPromoteBackfillButtonToTableRow,
+		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
@@ -192,6 +195,21 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
+const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
+	if (!(await booleanFlag(BooleanFlags.SHOW_RETRYABLE_ERRORS_MODAL))){
+		return undefined;
+	}
+	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
+	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
+	const errorCodes = failedSyncs.map(sync => sync.failedCode);
+	const retryableErrorCodes = errorCodes.filter(errorCode => errorCode && RETRYABLE_ERROR_CODES.includes(errorCode));
+
+	if (retryableErrorCodes.length === 0) {
+		return undefined;
+	}
+	return countBy(retryableErrorCodes);
+};
+
 export const JiraGet = async (
 	req: Request,
 	res: Response,
@@ -199,7 +217,6 @@ export const JiraGet = async (
 ): Promise<void> => {
 	try {
 		const { jiraHost } = res.locals;
-
 		if (!jiraHost) {
 			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
 			res.status(404).send(`Missing Jira Host '${jiraHost}'`);

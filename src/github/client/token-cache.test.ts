@@ -31,8 +31,8 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 		const generateInitialInstallationToken = jest.fn().mockImplementation(() => Promise.resolve(initialInstallationToken));
 
 		jest.setSystemTime(date);
-		const token1 = await installationTokenCache.getInstallationToken(githubInstallationId, generateInitialInstallationToken);
-		const token2 = await installationTokenCache.getInstallationToken(githubInstallationId, generateInitialInstallationToken);
+		const token1 = await installationTokenCache.getInstallationToken(githubInstallationId, undefined, generateInitialInstallationToken);
+		const token2 = await installationTokenCache.getInstallationToken(githubInstallationId, undefined, generateInitialInstallationToken);
 		expect(token1).toEqual(initialInstallationToken);
 		expect(token2).toEqual(initialInstallationToken);
 		expect(generateInitialInstallationToken).toHaveBeenCalledTimes(2);

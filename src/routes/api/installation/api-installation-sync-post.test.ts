@@ -32,7 +32,7 @@ describe("ApiInstallationSyncPost", ()=>{
 			expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
 				gitHubInstallationId: GHES_GITHUB_INSTALLATION_ID,
 				gitHubAppId: GHES_GITHUB_APP_ID
-			}), expect.anything(), false, undefined);
+			}), expect.anything(), undefined, undefined, undefined, { "source": "api-installation-sync" });
 		});
 	});
 	const getReq = (opts: any = {}): any => {

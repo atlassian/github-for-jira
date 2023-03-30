@@ -60,8 +60,11 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 	req.log.debug("Received add subscription request");
 
 	try {
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppId);
-		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+		const metrics = {
+			trigger: "github-configuration-post"
+		};
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, req.log, gitHubAppId);
+		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, metrics);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, req.log)) {
@@ -79,8 +82,10 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		await Promise.all(
 			[
-				saveConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, req.log, true),
-				findOrStartSync(subscription, req.log, true, "full")
+				saveConfiguredAppProperties(jiraHost, req.log, true),
+				findOrStartSync(subscription, req.log, "full", undefined, undefined, {
+					source: "initial-sync"
+				})
 			]
 		);
 
