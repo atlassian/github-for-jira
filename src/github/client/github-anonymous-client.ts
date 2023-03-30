@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { AxiosResponse } from "axios";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { getLogger } from "config/logger";
 
 export interface CreatedGitHubAppResponse {
@@ -16,8 +16,8 @@ export interface CreatedGitHubAppResponse {
  * A GitHub client without any authentication
  */
 export class GitHubAnonymousClient extends GitHubClient {
-	constructor(githubConfig: GitHubConfig, logger: Logger) {
-		super(githubConfig, logger);
+	constructor(githubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
+		super(githubConfig, metrics, logger);
 	}
 
 	public getMainPage(timeoutMs: number): Promise<AxiosResponse> {

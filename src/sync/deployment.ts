@@ -42,7 +42,11 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				state: deployment.latestStatus?.state
 			}
 		} as WebhookPayloadDeploymentStatus;
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, logger, gitHubAppId);
+		const metrics = {
+			trigger: "backfill",
+			subTrigger: "deployment"
+		};
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, metrics, logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);

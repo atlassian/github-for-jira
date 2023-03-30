@@ -10,7 +10,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 	const gitHubAppId = parseInt(gitHubAppIdStr) || undefined;
 
 	const { jiraHost } = res.locals;
-	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "api_installation_get" });
 
 	try {
 		const subscriptions = await Subscription.getAllForInstallation(Number(installationId), gitHubAppId);
