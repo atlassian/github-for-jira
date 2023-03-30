@@ -44,14 +44,18 @@ Dummy.init({
 }, {
 	hooks: {
 		beforeSave: async (app, opts) => {
-			const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
-			await app.encryptChangedSecretFields(optsFields, getLogger("test"));
+			// const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			//@ts-ignore
+			await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
 		},
 
 		beforeBulkCreate: async (apps, opts) => {
 			for (const app of apps) {
-				const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
-				await app.encryptChangedSecretFields(optsFields, getLogger("test"));
+				// const optsFields = typeof opts.fields === "string" ? opts.fields : undefined;
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				//@ts-ignore
+				await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
 			}
 		}
 	},

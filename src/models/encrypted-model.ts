@@ -43,7 +43,6 @@ export abstract class EncryptedModel extends Model {
 	}
 
 	async encryptChangedSecretFields(fieldsChanged: string[] = [], logger: Logger): Promise<void> {
-		logger.info("fieldsChanged", fieldsChanged);
 		const fieldsChangedTyped = fieldsChanged as (keyof StringValues<this>)[];
 		await Promise.all(
 			this.getSecretFields()
