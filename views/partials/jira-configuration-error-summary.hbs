@@ -10,25 +10,27 @@
         You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
     </div>
 
-    <div class="error-summary-border-bottom">
-      <div class="error-summary-errors-header error-summary-border-bottom">
-        Description
-      </div>
+    <div class="error-summary-border-top">
+      <h4 class="error-summary-errors-header">
+        Please resolve the following errors:
+      </h4>
+      <ul>
       {{#if syncErrors.PERMISSIONS_ERROR}}
-      <div>
+      <li>
         <b>{{syncErrors.PERMISSIONS_ERROR}}</b> tasks have not been backfilled. Please
         <a href="{{html_url}}"
            data-installation-link="{{html_url}}"
-           target="_blank">accept permissions</a>
-        on GitHub (you must be the admin of your organization), then retry backfill.
-      </div>
+           target="_blank">accept permissions on GitHub</a>
+         (you must be the admin of your organization), then retry backfill.
+      </li>
       {{/if}}
 
       {{#if syncErrors.CONNECTION_ERROR}}
-      <p>
-        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b> repositories, because something unexpected occurred, please retry the backfill.
-      </p>
+      <li>
+        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b> repositories, because something unexpected occurred, please retry the backfill or rasie a support ticket.
+      </li>
       {{/if}}
+      </ul>
     </div>
 
     <form class="jiraConfiguration__errorSummaryModal__form">

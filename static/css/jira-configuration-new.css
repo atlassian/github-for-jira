@@ -88,14 +88,12 @@
 }
 
 .error-summary-errors-header {
-    font-size: 12px;
-    color: #6b778c;
+    padding-top: 1rem;
 }
 
-.error-summary-border-bottom {
-    border-bottom: 1px solid #dfe1e6;
+.error-summary-border-top {
+    border-top: 1px solid #dfe1e6;
     margin: 0.5rem 0;
-    padding-bottom: 0.5rem;
 }
 
 .jiraConfiguration__restartBackfillModal__date {
