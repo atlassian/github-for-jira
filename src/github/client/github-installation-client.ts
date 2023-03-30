@@ -340,6 +340,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId.installationId,
+			this.gitHubServerAppId,
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
