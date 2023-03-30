@@ -143,7 +143,7 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			const optsFields = opts.fields.filter((it): it is string => !!it);
+			const optsFields = opts.fields.filter((field): field is string => !!field);
 			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
