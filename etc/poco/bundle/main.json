@@ -57,6 +57,22 @@
           ]
         }
       }
-    }
+    },
+		{
+			"description": "Microscope Panel Routes",
+			"paths": [
+				"/microscope/**"
+			],
+			"methods": [
+				"*"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"micros/manager-service"
+					]
+				}
+			}
+		}
   ]
 }

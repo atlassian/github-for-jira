@@ -1,12 +1,9 @@
 import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
-import { mocked } from "ts-jest/utils";
 import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { cleanAll } from "nock";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { sqsQueues } from "../sqs/queues";
-
 import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 
 import branchCommitsHaveKeys from "fixtures/api/graphql/branch-commits-have-keys.json";
@@ -19,15 +16,14 @@ import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-jest.mock("../sqs/queues");
-
 describe("sync/branches", () => {
 
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const sentry: Hub = { setUser: jest.fn() } as any;
+	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
 
 	beforeEach(() => {
-		mockSystemTime(12345678);
+		mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 	});
 
 	const makeExpectedResponseCloudServer = (branchName: string, repoId: string) => ({
@@ -100,30 +96,13 @@ describe("sync/branches", () => {
 			return makeExpectedResponseCloudServer(branchName, "1");
 		};
 
-		const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
-			githubNock
-				.post("/graphql", branchesNoLastCursor())
-				.query(true)
-				.reply(200, {
-					"errors": [
-						{
-							"type": "RATE_LIMITED",
-							"message": "API rate limit exceeded for user ID 42425541."
-						}
-					]
-				}, {
-					"X-RateLimit-Reset": rateLimitReset,
-					"X-RateLimit-Remaining": "10"
-				});
-		};
-
 		const nockBranchRequest = (response: object, variables?: Record<string, unknown>) =>
 			githubNock
 				.post("/graphql", branchesNoLastCursor(variables))
 				.query(true)
 				.reply(200, response);
 
-		const mockBackfillQueueSendMessage = mocked(sqsQueues.backfill.sendMessage);
+		const mockBackfillQueueSendMessage = jest.fn();
 
 		beforeEach(async () => {
 
@@ -157,7 +136,7 @@ describe("sync/branches", () => {
 				)
 				.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -172,7 +151,7 @@ describe("sync/branches", () => {
 				)
 				.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -225,7 +204,7 @@ describe("sync/branches", () => {
 				})
 				.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -235,17 +214,10 @@ describe("sync/branches", () => {
 
 			jiraNock.post(/.*/).reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(jiraNock).not.toBeDone();
 			cleanAll();
 			await verifyMessageSent(data);
-		});
-
-		it("should reschedule message with delay if there is rate limit", async () => {
-			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-			nockGitHubGraphQlRateLimit("12360");
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
-			await verifyMessageSent(data, 15);
 		});
 
 		describe("Branch sync date", () => {
@@ -266,7 +238,7 @@ describe("sync/branches", () => {
 						)
 						.reply(200);
 
-					await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+					await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 					await verifyMessageSent(data);
 				});
 			});
@@ -321,7 +293,7 @@ describe("sync/branches", () => {
 				)
 				.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 });

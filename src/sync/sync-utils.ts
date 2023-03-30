@@ -1,23 +1,23 @@
-import { RepoSyncState } from "models/reposyncstate";
-import { sqsQueues } from "../sqs/queues";
-import { Subscription, SyncStatus } from "models/subscription";
 import Logger from "bunyan";
-import { numberFlag, NumberFlags } from "config/feature-flags";
-import { TaskType, SyncType } from "~/src/sync/sync.types";
-import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { envVars } from "config/env";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
+import { RepoSyncState } from "models/reposyncstate";
+import { Subscription, SyncStatus } from "models/subscription";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { GitHubAppConfig } from "~/src/sqs/sqs.types";
+import { SyncType, TaskType } from "~/src/sync/sync.types";
+import { sqsQueues } from "../sqs/queues";
+import { backfillFromDateToBucket } from "config/metric-helpers";
 
 export const findOrStartSync = async (
 	subscription: Subscription,
 	logger: Logger,
-	isInitialSync: boolean,
 	syncType?: SyncType,
 	commitsFromDate?: Date,
-	targetTasks?: TaskType[]
+	targetTasks?: TaskType[],
+	metricTags?: Record<string, string>
 ): Promise<void> => {
-	let fullSyncStartTime;
 	const { gitHubInstallationId: installationId, jiraHost } = subscription;
 	await subscription.update({
 		syncStatus: SyncStatus.PENDING,
@@ -30,7 +30,6 @@ export const findOrStartSync = async (
 	await resetTargetedTasks(subscription, syncType, targetTasks);
 
 	if (syncType === "full" && !targetTasks?.length) {
-		fullSyncStartTime = new Date().toISOString();
 		await subscription.update({
 			totalNumberOfRepos: null,
 			repositoryCursor: null,
@@ -39,6 +38,9 @@ export const findOrStartSync = async (
 		// Remove all state as we're starting anew
 		await RepoSyncState.deleteFromSubscription(subscription);
 	}
+
+	// reset failedCode for Partial or targetted syncs
+	await resetFailedCode(subscription, syncType, targetTasks);
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
@@ -49,13 +51,17 @@ export const findOrStartSync = async (
 	await sqsQueues.backfill.sendMessage({
 		installationId,
 		jiraHost,
-		isInitialSync,
 		syncType,
-		startTime: fullSyncStartTime,
+		startTime: new Date().toISOString(),
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
 		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
-		gitHubAppConfig
+		gitHubAppConfig,
+		metricTags: {
+			...metricTags,
+			backfillFrom: backfillFromDateToBucket(mainCommitsFromDate),
+			syncType: syncType ? String(syncType) : "empty"
+		}
 	}, 0, logger);
 };
 
@@ -75,6 +81,7 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 	// Partial sync only resets status (continues from existing cursor)
 	const repoSyncTasks = targetTasks.filter(task => task !== "repository");
 	const updateRepoSyncTasks = { repoUpdatedAt: null };
+
 	repoSyncTasks.forEach(task => {
 		if (syncType === "full") {
 			updateRepoSyncTasks[`${task}Cursor`] = null;
@@ -105,13 +112,25 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 
 };
 
+const resetFailedCode = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]) => {
+	// a full sync without target tasks has reposyncstates removed so dont update.
+	if (syncType === "full" && !targetTasks?.length) {
+		return;
+	}
+	await RepoSyncState.update({ failedCode: null }, {
+		where: {
+			subscriptionId: subscription.id
+		}
+	});
+};
+
 export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
 		return new Date(commitsFromDate);
 	}
 	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
-	if (!timeCutoffMsecs) {
-		return;
+	if (!timeCutoffMsecs || timeCutoffMsecs === -1) {
+		return undefined;
 	}
 	return new Date(Date.now() - timeCutoffMsecs);
 };
@@ -127,7 +146,7 @@ const getGitHubAppConfig = async (subscription: Subscription, logger: Logger): P
 	const gitHubServerApp = await GitHubServerApp.findByPk(gitHubAppId);
 	if (!gitHubServerApp) {
 		logger.error("Cannot find gitHubServerApp by pk", { gitHubAppId: gitHubAppId, subscriptionId: subscription.id });
-		throw new Error("Error duing find and start sync. Reason: Cannot find ghes record from subscription.");
+		throw new Error("Error during find and start sync. Reason: Cannot find ghes record from subscription.");
 	}
 	return ghesGitHubAppConfig(gitHubServerApp);
 

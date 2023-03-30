@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -13,9 +12,6 @@ import { waitUntil } from "test/utils/wait-until";
 import { GitHubServerApp } from "models/github-server-app";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
-jest.mock("../sqs/queues");
-jest.mock("config/feature-flags");
-
 describe("sync/commits", () => {
 	const sentry: Hub = { setUser: jest.fn() } as any;
 
@@ -24,7 +20,7 @@ describe("sync/commits", () => {
 	});
 
 	describe("for cloud", () => {
-		const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
+		const mockBackfillQueueSendMessage = jest.fn();
 
 		const makeExpectedJiraResponse = (commits) => ({
 			preventTransitions: true,
@@ -108,7 +104,7 @@ describe("sync/commits", () => {
 			];
 			createJiraNock(commits);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -175,7 +171,7 @@ describe("sync/commits", () => {
 			];
 			createJiraNock(commits);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -187,7 +183,7 @@ describe("sync/commits", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
@@ -199,7 +195,7 @@ describe("sync/commits", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
@@ -297,7 +293,7 @@ describe("sync/commits", () => {
 			];
 			await createJiraNock(commits);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
 		});
 
 	});
