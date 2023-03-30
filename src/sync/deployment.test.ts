@@ -98,7 +98,7 @@ describe("sync/deployments", () => {
 				.query(true)
 				.reply(200, deploymentNodesFixture);
 
-			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			expect(await getDeploymentTask(getLogger("test"),
 				gitHubClient,
 				jiraHost,

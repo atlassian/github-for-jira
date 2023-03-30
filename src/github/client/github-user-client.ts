@@ -2,7 +2,7 @@ import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import { AxiosRequestConfig, AxiosResponse } from "axios";
 import { CreateReferenceBody } from "~/src/github/client/github-client.types";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import {
 	GetRepositoriesQuery,
 	GetRepositoriesResponse, SearchedRepositoriesResponse,
@@ -17,8 +17,8 @@ import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, githubConfig: GitHubConfig, logger: Logger) {
-		super(githubConfig, logger);
+	constructor(userToken: string, gitHubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
+		super(gitHubConfig, metrics, logger);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
