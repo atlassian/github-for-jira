@@ -15,8 +15,8 @@ jest.mock("config/feature-flags");
 const DATE_NOW = new Date("2023-03-04T05:06:07.000Z");
 jest.useFakeTimers().setSystemTime(DATE_NOW);
 
-describe("findOrStartSync", () => {
-	describe("Syncing logic", () => {
+describe("sync utils", () => {
+	describe("findOrStartSync: Syncing logic", () => {
 		const JIRA_INSTALLATION_ID = 1111;
 		const JIRA_CLIENT_KEY = "jira-client-key";
 		const CUTOFF_IN_MSECS = 1000;

@@ -92,7 +92,7 @@ export const JiraConnectEnterprisePost = async (
 	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
 	try {
-		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
+		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
 		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
 
 		if (!isResponseFromGhe(req.log, response)) {

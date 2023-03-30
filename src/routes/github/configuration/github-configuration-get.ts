@@ -76,7 +76,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log, gitHubAppId);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -126,6 +126,9 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 };
 
 export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started");
+	const requestStartTime = new Date().getTime();
+
 	const {
 		jiraHost,
 		githubToken,
@@ -145,13 +148,15 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	const gitHubProduct = gitHubAppId ? "server" : "cloud";
 
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
 		jiraHost,
 		gitHubProduct
 	});
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log, gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 	req.log.debug("found github token");
 
@@ -179,7 +184,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId, { trigger: "github-configuration-get" });
 
 		req.log.debug(`found installation in DB with id ${installation.id}`);
 
@@ -235,6 +240,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			gitHubAppUuid
 		});
 
+		req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request finished in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 		req.log.debug(`rendered page`);
 
 	} catch (err) {

@@ -194,7 +194,7 @@ describe("SQS", () => {
 			await waitUntil(async () => expect(queueDeletionSpy).toBeCalledTimes(1));
 			await waitUntil(async () => expect(queueSendSpy).toBeCalledWith(expect.objectContaining({
 				DelaySeconds: 123,
-				MessageBody: JSON.stringify(payload)
+				MessageBody: JSON.stringify({ ...payload, rateLimited: true })
 			})));
 			expect(Date.now() - time).toBeGreaterThanOrEqual(1000); // wait 1 second to make sure everything's processed
 		});

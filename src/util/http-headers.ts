@@ -31,6 +31,7 @@ const knownSafe = new Set([
 	"archived-at",
 	"article-names",
 	"article-updates",
+	"atl-traceid",
 	"auto-submitted",
 	"autoforwarded",
 	"autosubmitted",
