@@ -90,7 +90,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -113,7 +113,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -150,7 +150,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -177,7 +177,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -200,7 +200,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -225,7 +225,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -251,7 +251,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -279,7 +279,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});

@@ -27,7 +27,7 @@ import {
 } from "./github-client.types";
 import { isChangedFilesError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -45,10 +45,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		githubInstallationId: InstallationId,
 		gitHubConfig: GitHubConfig,
 		jiraHost: string,
+		metrics: Metrics,
 		logger: Logger,
 		gshaId?: number
 	) {
-		super(gitHubConfig, logger);
+		super(gitHubConfig, metrics, logger);
 		this.jiraHost = jiraHost;
 
 		this.installationTokenCache = InstallationTokenCache.getInstance();
@@ -174,9 +175,9 @@ export class GitHubInstallationClient extends GitHubClient {
 	};
 
 	// TODO: remove this function after discovery backfill is deployed
-	public getRepositoriesPageOld = async (page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
+	public getRepositoriesPageOld = async (perPage: number, page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
 		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
-			perPage: 100,
+			perPage,
 			page
 		});
 		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
@@ -209,9 +210,9 @@ export class GitHubInstallationClient extends GitHubClient {
 		);
 	};
 
-	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number, fromDate?: Date): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
+	public listWorkflowRuns = async (owner: string, repo: string, per_page, cursor?: number): Promise<AxiosResponse<ActionsListRepoWorkflowRunsResponseEnhanced>> => {
 		return await this.get<ActionsListRepoWorkflowRunsResponseEnhanced>(`/repos/{owner}/{repo}/actions/runs`,
-			{ per_page, page: cursor, ...(fromDate ? { "created": `>=${fromDate.toISOString()}` } : {}) },
+			{ per_page, page: cursor },
 			{ owner, repo }
 		);
 	};
@@ -339,6 +340,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId.installationId,
+			this.gitHubServerAppId,
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {

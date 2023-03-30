@@ -12,8 +12,11 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	logger.debug("Received DELETE subscription request");
 
 	const gitHubAppId = gitHubAppConfig?.gitHubAppId;
-	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, gitHubAppId);
+	const metrics = {
+		trigger: "github-subscription-delete"
+	};
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId, metrics);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, logger, gitHubAppId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	if (!githubToken) {

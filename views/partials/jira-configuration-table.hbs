@@ -88,6 +88,7 @@
                   <span class="jiraConfiguration__info__backfillDate">
                       {{#if connection.backfillSince}}
                         Backfilled from: <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
+                        <span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
                       {{else}}
                         All commits backfilled
                       {{/if}}

@@ -62,7 +62,7 @@ describe("backfillErrorHandler", () => {
 				"x-ratelimit-used": "2421"
 			});
 
-		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getMainPage(1000);
 		} catch (err) {
@@ -75,7 +75,7 @@ describe("backfillErrorHandler", () => {
 		gheNock.get("/")
 			.reply(500);
 
-		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getMainPage(1000);
 		} catch (err) {

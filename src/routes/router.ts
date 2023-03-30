@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -20,6 +20,15 @@ import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
 
 export const RootRouter = Router();
+
+// TODO - remove function once rollout complete
+// False flag wont parse the jwt query param so we need to allow current functionality to work while this happens
+const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
+	if (req.query.jwt && req.query.jwt !== "{jwt}") {
+		return jiraSymmetricJwtMiddleware(req, res, next);
+	}
+	return next();
+};
 
 // The request handler must be the first middleware on the app
 RootRouter.use(Sentry.Handlers.requestHandler());
@@ -63,7 +72,7 @@ RootRouter.use(cookieSessionMiddleware);
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
 
-RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
@@ -71,7 +80,7 @@ RootRouter.use("/jira", JiraRouter);
 // On base path, redirect to Github App Marketplace URL
 RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
-	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "root_path" });
 	const { data: info } = await gitHubAppClient.getApp();
 
 	return res.redirect(info.external_url);
