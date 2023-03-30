@@ -69,6 +69,7 @@ describe("Encrypted model", () => {
 		EncryptionClient.encrypt = jest.fn((_, p) => "encrypted:" + p) as any;
 		EncryptionClient.decrypt = jest.fn((c) => c.substring("encrypted".length)) as any;
 	});
+
 	it("should encrypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();
@@ -77,6 +78,7 @@ describe("Encrypted model", () => {
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(1, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "aaa1", { "name": "test" });
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(2, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "bbb1", { "name": "test" });
 	});
+
 	it("should decrypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();

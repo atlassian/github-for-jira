@@ -29,7 +29,7 @@ describe("getPullRequestReviews", () => {
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
 			.reply(200, { stuff: "things" });
-		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, logger);
+		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual({ stuff: "things" });
@@ -40,7 +40,7 @@ describe("getPullRequestReviews", () => {
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
 			.reply(404);
-		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, logger);
+		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
@@ -65,7 +65,7 @@ describe("getPullRequestReviews", () => {
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
 			.replyWithError("something awful happened");
-		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, logger);
+		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);

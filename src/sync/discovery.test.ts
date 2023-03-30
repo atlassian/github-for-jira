@@ -54,7 +54,7 @@ describe("discovery", () => {
 			}
 		});
 
-		const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, getLogger("test"), undefined);
+		const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 		expect(await getRepositoryTask(
 			getLogger("test"),
 			gitHubClient,

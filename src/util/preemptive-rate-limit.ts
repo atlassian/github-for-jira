@@ -52,7 +52,10 @@ export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(con
 const getRateRateLimitStatus = async (context: SQSMessageContext<BaseMessagePayload>) => {
 	const { installationId, jiraHost } = context.payload;
 	const gitHubAppId = context.payload.gitHubAppConfig?.gitHubAppId;
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, gitHubAppId);
+	const metrics = {
+		trigger: "ratelimit_check"
+	};
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, gitHubAppId);
 	return await gitHubInstallationClient.getRateLimit();
 };
 

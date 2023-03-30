@@ -483,7 +483,7 @@ describe("logger behaviour", () => {
 			gheNock.get("/")
 				.reply(200, {}, { "foo": "bar" });
 
-			const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 
 			const response = await client.getMainPage(1000);
 
@@ -559,7 +559,7 @@ describe("logger behaviour", () => {
 					"X-RateLimit-Reset": "1613088454"
 				});
 
-			const client = await createAnonymousClient(gheUrl, jiraHost, logger);
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, logger);
 
 			await client.getMainPage(1000).catch(noop);
 
