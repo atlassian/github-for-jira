@@ -73,7 +73,7 @@
                 >
                   {{connection.syncStatus}}
                 </span>
-<!--              {{#if connection.failedSyncErrors}}-->
+              {{#if connection.failedSyncErrors}}
                 <a
                         class="jiraConfiguration__errorSummary__btn"
                         href="#"
@@ -82,7 +82,7 @@
                 >
                   <span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
                 </a>
-<!--              {{/if}}-->
+              {{/if}}
               {{#if ../isIncrementalBackfillEnabled}}
                 {{#if (isAllSyncSuccess connection)}}
                   <span class="jiraConfiguration__info__backfillDate">
