@@ -1,5 +1,4 @@
 import { AxiosError, AxiosResponse } from "axios";
-import Logger from "bunyan";
 
 export class GithubClientError extends Error {
 	cause: AxiosError;
@@ -109,14 +108,10 @@ export class GithubClientGraphQLError extends GithubClientError {
 				error.message?.startsWith("Something went wrong while executing your query")
 		);
 	}
-}
 
-// TODO: the name doesn't make sense: it returns true for any GraphQL error...
-export const isChangedFilesError = (logger: Logger, err: GithubClientError): boolean => {
-	const bool = err instanceof GithubClientGraphQLError || !(err instanceof GithubClientRateLimitingError || err instanceof GithubClientTimeoutError);
-	logger.warn({ isChangedFilesError: bool , err }, "isChangedFilesError");
-	return bool;
-	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
-};
+	isChangedFilesError(): boolean {
+		return !!this.errors.find(err => err.message.includes("changedFiles"));
+	}
+}
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;
