@@ -399,6 +399,13 @@
 .jiraConfiguration__info__backfillDate {
   color: #42526e;
   padding: 0.2em 0.3em;
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+}
+
+.jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
+    margin-left: 5px;
 }
 
 .jiraConfiguration__table__pending,
