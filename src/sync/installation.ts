@@ -43,7 +43,8 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 		return intersection(allTaskTypes, targetTasks);
 	}
 
-	return allTaskTypes;
+	// TODO: add a test to make sure sorting/shuffling of the returned data doesn't affect future invocations
+	return cloneDeep(allTaskTypes);
 };
 
 export class TaskError extends Error {
