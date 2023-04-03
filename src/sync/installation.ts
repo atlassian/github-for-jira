@@ -222,17 +222,9 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry
 const logResultAndRethrowMainTaskFailure = (results: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
 	results.forEach((result, index) => {
 		if (result.status === "rejected") {
-			if (isMainTask(index)) {
-				logger.warn({ err: result.reason }, "Main task failed!");
-			}	else {
-				logger.warn({ err: result.reason, taskIndex: index }, "Subtask failed!");
-			}
+			logger.warn({ err: result.reason, taskIndex: index }, "Main task failed!");
 		} else {
-			if (isMainTask(index)) {
-				logger.warn("Main task finished!");
-			}	else {
-				logger.warn({ taskIndex: index }, "Subtask finished!");
-			}
+			logger.warn({ taskIndex: index }, "Subtask finished!");
 		}
 	});
 	const mainTaskResult = results[0];
@@ -335,7 +327,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			err,
 			task: mainTask
 		});
-		errLogger.info("rethrowing as a task error");
+		errLogger.info({ taskIndex: 0 }, "rethrowing as a task error");
 		throw new TaskError(mainTask, err);
 	}
 };
