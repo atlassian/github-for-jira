@@ -66,7 +66,8 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-	// Order on "id" is to have strongly deterministic behaviour
+	// Order on "id" is to have strongly deterministic behaviour. Relying on something less definite (e.g. repoLastUpdated)
+	// may result in a error being retried with a different (good) task, thus resetting the retry counter
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["id", "DESC"]] });
 
 	const withSideTasks = await booleanFlag(BooleanFlags.USE_SUBTASKS_FOR_BACKFILL, subscription.jiraHost);
@@ -75,6 +76,11 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	const otherTasks: Task[] = [];
 
 	for (const syncState of repoSyncStates) {
+		if (mainTask) {
+			// To make sure that PRs are not always coming first, because they are too greedy in terms of rate-limiting.
+			// However the main task must always remain same, therefore only for other tasks
+			tasks.sort(() => Math.random() - 0.5);
+		}
 		const task = tasks.find(
 			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
 		);
@@ -96,9 +102,6 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 
 		if (!withSideTasks) {
 			return [mappedTask];
-		} else {
-			// To make sure that PRs are not always coming first, because they are too greedy in terms of rate-limiting
-			tasks.sort(() => Math.random() - 0.5);
 		}
 
 		// The main task is always goes first. This is guaranteed by the ordering when we retrieve the records from Db.
