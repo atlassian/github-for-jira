@@ -266,7 +266,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
-	const taskExecutor = async (nextTask: Task, sendBackfillMessage) => {
+	const taskExecutor = async (nextTask: Task, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>) => {
 		const logger = commonLogger.child({
 			task: nextTask
 		});
