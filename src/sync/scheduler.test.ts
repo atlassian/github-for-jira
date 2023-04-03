@@ -1,13 +1,13 @@
 // describe("scheduler", () => {
-// 	it("always returns repo task if not complete", async () => {
+// 	it("always returns repo task if not complete yet", async () => {
 //
 // 	});
 //
-// 	it("first task is always defined", async () => {
+// 	it("first (main) task is always same (deterministic)", async () => {
 //
 // 	});
 //
-// 	it("returns only one task when FF is off", async () => {
+// 	it("returns only main task when FF is off", async () => {
 //
 // 	});
 //
@@ -26,4 +26,9 @@
 // 	it("shuffles the tail", () => {
 //
 // 	});
+//
+// 	it("should return main task only when rate-limiting endpoint errors out", () => {
+//
+// 	});
+//
 // });

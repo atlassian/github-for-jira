@@ -12,6 +12,38 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 /**
  *
  * @param subscription
+ * @param logger
+ * @param mainTask
+ * @param otherTasks - the array will be shuffled after the call, BEWARE!
+ */
+const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscription, logger: Logger, mainTask: Task, otherTasks: Task[]) => {
+	try {
+		const metrics = {
+			trigger: "ratelimit_check_backfill"
+		};
+		const rateLimitResponse = await (await createInstallationClient(subscription.gitHubInstallationId, subscription.jiraHost, metrics, logger, subscription.gitHubAppId)).getRateLimit();
+		const rateLimitData = rateLimitResponse.data;
+		const availQuota = Math.min(rateLimitData.resources.core.remaining, rateLimitData.resources.graphql.remaining);
+		const nSubTasks = Math.min(Math.floor(availQuota / 1000), 10);
+
+		logger.info({ nSubTasks, rateLimitData }, "Using subtasks: " + nSubTasks);
+
+		if (nSubTasks === 0) {
+			return [mainTask];
+		}
+
+		return [mainTask, ...(
+			otherTasks.sort(() => Math.random() - 0.5).slice(0, nSubTasks)
+		)];
+	} catch (err) {
+		logger.warn({ err }, "Cannot determine rate limit, return only main task");
+		return [mainTask];
+	}
+};
+
+/**
+ *
+ * @param subscription
  * @param targetTasks - the first task is always deterministic! The tail is random from not complete ones
  * @param logger
  */
@@ -60,7 +92,7 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 
 		// The main task is always goes first. This is guaranteed by the ordering when we retrieve the records from Db.
 		// This is important for the sync to always look only at the error of the first task (and ignore the rest as
-		// they are best effort)
+		// they are best effort only)
 		if (!mainTask) {
 			mainTask = mappedTask;
 		} else {
@@ -76,21 +108,6 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 		return [mainTask];
 	}
 
-	const metrics = {
-		trigger: "ratelimit_check_backfill"
-	};
-	const rateLimit = await (await createInstallationClient(subscription.gitHubInstallationId, subscription.jiraHost, metrics, logger, subscription.gitHubAppId)).getRateLimit();
-	const availQuota = Math.min(rateLimit.data.resources.core.remaining, rateLimit.data.resources.graphql.remaining);
-	const nSubTasks = Math.min(Math.floor(availQuota / 1000), 10);
-
-	logger.info({ nSubTasks, rateLimit }, "Using " + nSubTasks + " subtasks");
-
-	if (nSubTasks === 0) {
-		return [mainTask];
-	}
-
-	return [mainTask, ...(
-		otherTasks.sort(() => Math.random() - 0.5).slice(0, nSubTasks)
-	)];
+	return await calculateTasksUsingGitHubRateLimitQuota(subscription, logger, mainTask, otherTasks);
 
 };
