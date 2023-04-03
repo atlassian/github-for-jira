@@ -214,25 +214,6 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry
 	}
 };
 
-/**
- * @param results - main task (as we watch for the errors) is number 0, because it is deterministic. The others are random
- * 								  and best effort.
- * @param logger
- */
-const logResultAndRethrowMainTaskFailure = (results: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
-	results.forEach((result, index) => {
-		if (result.status === "rejected") {
-			logger.warn({ err: result.reason, taskIndex: index }, "Main task failed!");
-		} else {
-			logger.warn({ taskIndex: index }, "Subtask finished!");
-		}
-	});
-	const mainTaskResult = results[0];
-	if (mainTaskResult.status === "rejected") {
-		throw mainTaskResult.reason;
-	}
-};
-
 const getTaskMetricsTags = (nextTask: Task) => {
 	const metrics = {
 		trigger: "backfill",
@@ -271,64 +252,70 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
 	const taskExecutor = async (nextTask: Task, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, parentLogger: Logger) => Promise<unknown>, parentLogger: Logger) => {
-		const logger = parentLogger.child({
-			task: nextTask
-		});
+		try {
+			const logger = parentLogger.child({
+				task: nextTask
+			});
 
-		logger.info("Starting task");
+			logger.info("Starting task");
 
-		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
+			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
 
-		const { task, cursor, repository } = nextTask;
-		const processor = tasks[task];
-		const nPages = Math.min(
-			// "|| 20" is purely to simplify testing and avoid mocking it all the time
-			await numberFlag(NumberFlags.BACKFILL_PAGE_SIZE, 20, jiraHost) || 20,
-			// The majority of GitHub APIs hard-limit the page size to 100
-			100
-		);
-		const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, nPages, data);
-		if (taskPayload.jiraPayload) {
-			const jiraClient = await getJiraClient(
-				subscription.jiraHost,
-				gitHubInstallationId,
-				data.gitHubAppConfig?.gitHubAppId,
-				logger
+			const { task, cursor, repository } = nextTask;
+			const processor = tasks[task];
+			const nPages = Math.min(
+				// "|| 20" is purely to simplify testing and avoid mocking it all the time
+				await numberFlag(NumberFlags.BACKFILL_PAGE_SIZE, 20, jiraHost) || 20,
+				// The majority of GitHub APIs hard-limit the page size to 100
+				100
 			);
-			await sendPayloadToJira(task, jiraClient, taskPayload.jiraPayload, sentry, logger);
-		}
+			const taskPayload = await processor(logger, gitHubInstallationClient, jiraHost, repository, cursor, nPages, data);
+			if (taskPayload.jiraPayload) {
+				const jiraClient = await getJiraClient(
+					subscription.jiraHost,
+					gitHubInstallationId,
+					data.gitHubAppConfig?.gitHubAppId,
+					logger
+				);
+				await sendPayloadToJira(task, jiraClient, taskPayload.jiraPayload, sentry, logger);
+			}
 
-		await updateTaskStatusAndContinue(
-			data,
-			taskPayload,
-			nextTask,
-			logger,
-			sendBackfillMessage
-		);
+			await updateTaskStatusAndContinue(
+				data,
+				taskPayload,
+				nextTask,
+				logger,
+				sendBackfillMessage
+			);
+		} catch (err) {
+			logger.warn({ err }, "Error while executing the task, rethrowing");
+			throw err;
+		}
 	};
 
-	try {
-		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask,
-			isMainTask(index)
-				? sendBackfillMessage
-				: () => Promise.resolve(),
-			logger.child({ taskIndex: index })
-		));
+	const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask,
+		isMainTask(index)
+			// Only the first task is responsible for error handling, the other tasks are best-effort and not
+			// supposed to schedule anything
+			? sendBackfillMessage
+			: () => Promise.resolve(),
+		logger.child({ taskIndex: index })
+	));
 
-		const result = await Promise.allSettled(executors);
-		logResultAndRethrowMainTaskFailure(result, logger);
-
-	} catch (err) {
+	const results = await Promise.allSettled(executors);
+	const mainTaskResult = results[0];
+	if (mainTaskResult.status === "rejected") {
 		// Because scheduler deterministically returns the first task only, we treat it as the "main" one (that contributes
 		// to retries etc). The others are treated as "best effort" and errors are ignored: in the worst case they will be
 		// retried again
 		const mainTask = nextTasks[0];
 		const errLogger = logger.child({
-			err,
-			task: mainTask
+			err: mainTaskResult.reason,
+			task: mainTask,
+			taskIndex: 0
 		});
 		errLogger.info({ taskIndex: 0 }, "rethrowing as a task error");
-		throw new TaskError(mainTask, err);
+		throw new TaskError(mainTask, mainTaskResult.reason);
 	}
 };
 
