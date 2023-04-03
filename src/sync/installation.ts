@@ -74,7 +74,7 @@ export const updateTaskStatusAndContinue = async (
 	taskResultPayload: TaskResultPayload,
 	task: Task,
 	logger: Logger,
-	sendBackfillMessage: (message, delay, logger) => Promise<unknown>
+	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>
 ): Promise<void> => {
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
@@ -241,7 +241,7 @@ const getTaskMetricsTags = (nextTask: Task) => {
 
 const isMainTask = (taskIndex: number) => taskIndex === 0;
 
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delaySecs: number, logger: Logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
 
@@ -334,7 +334,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delay, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -397,7 +397,7 @@ const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
 
-export const processInstallation = (sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>) => {
+export const processInstallation = (sendBackfillMessage: (message: BackfillMessagePayload, delaySecs: number, logger: Logger) => Promise<unknown>) => {
 	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 	const deduplicator = new Deduplicator(
 		inProgressStorage, 1_000
@@ -422,18 +422,18 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 
 			let hasNextMessage = false;
 			let nextMessage: BackfillMessagePayload | undefined = undefined;
-			let nextMessageDelay: number | undefined = undefined;
+			let nextMessageDelaySecs: number | undefined = undefined;
 			let nextMessageLogger: Logger | undefined = undefined;
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, logger, (message, delay, logger) => {
+				() => doProcessInstallation(data, sentry, logger, (message, delaySecs, logger) => {
 					// We cannot send off the message straight away because otherwise it will be
 					// de-duplicated as we are still processing the current message. Send it
 					// only after deduplicator (tm) releases the flag.
 					hasNextMessage = true;
 					nextMessage = message;
-					nextMessageDelay = delay;
+					nextMessageDelaySecs = delaySecs;
 					nextMessageLogger = logger;
 					return Promise.resolve();
 				})
@@ -444,7 +444,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
 						nextMessageLogger!.info("Sending off a new message");
-						await sendBackfillMessage(nextMessage!, nextMessageDelay!, nextMessageLogger!);
+						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
