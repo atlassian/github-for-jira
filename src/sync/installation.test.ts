@@ -311,6 +311,18 @@ describe("sync/installation", () => {
 			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 		});
 
+		// it("for multiple tasks throws error only for the first one", () => {
+		//
+		// });
+		//
+		// it("for multiple tasks updates schedules only one message", () => {
+		//
+		// });
+		//
+		// it("for multiple tasks updates the status for all tasks", () => {
+		//
+		// });
+
 		it("does not update cursor in RepoSyncState table", async () => {
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
 

@@ -2,7 +2,7 @@
 import { intersection, omit, pick, without, cloneDeep } from "lodash";
 import IORedis from "ioredis";
 import Logger from "bunyan";
-import { Repository, Subscription, SyncStatus } from "models/subscription";
+import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { getJiraClient } from "../jira/client/jira-client";
 import { statsd } from "config/statsd";
@@ -24,6 +24,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
+import { getNextTask } from "~/src/sync/scheduler";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -54,42 +55,6 @@ export class TaskError extends Error {
 		this.cause = cause;
 	}
 }
-
-const getNextTask = async (subscription: Subscription, targetTasks?: TaskType[]): Promise<Task | undefined> => {
-	if (subscription.repositoryStatus !== "complete") {
-		return {
-			task: "repository",
-			repositoryId: 0,
-			repository: {} as Repository,
-			cursor: subscription.repositoryCursor || undefined
-		};
-	}
-
-	const tasks = getTargetTasks(targetTasks);
-	// Order on "id" is to have deterministic behaviour when there are records without "repoUpdatedAt"
-	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"], ["id", "DESC"]] });
-
-	for (const syncState of repoSyncStates) {
-		const task = tasks.find(
-			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
-		);
-		if (!task) continue;
-		return {
-			task,
-			repositoryId: syncState.repoId,
-			repository: {
-				id: syncState.repoId,
-				name: syncState.repoName,
-				full_name: syncState.repoFullName,
-				owner: { login: syncState.repoOwner },
-				html_url: syncState.repoUrl,
-				updated_at: syncState.repoUpdatedAt?.toISOString()
-			},
-			cursor: syncState[getCursorKey(task)] || undefined
-		};
-	}
-	return undefined;
-};
 
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
@@ -249,6 +214,25 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry
 	}
 };
 
+const logResultAndRethrowMainTaskFailure = (result: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
+	result.forEach((result) => {
+		logger.info({
+			...(result.status === "rejected" ? { err: result.reason } : { })
+		}, "Subtask finished: " + result.status);
+	});
+	if (result[0].status === "rejected") {
+		throw result[0].reason;
+	}
+};
+
+const getTaskMetricsTags = (nextTask: Task) => {
+	const metrics = {
+		trigger: "backfill",
+		subTrigger: nextTask.task
+	};
+	return metrics;
+};
+
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message, delay, logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
@@ -259,34 +243,31 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		return;
 	}
 
-	const nextTask = await getNextTask(subscription, data.targetTasks);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-
-	const logger = rootLogger.child({
-		task: nextTask,
+	const commonLogger = rootLogger.child({
 		gitHubProduct,
 		startTime: data.startTime,
 		commitsFromDate: data.commitsFromDate
 	});
 
-	if (!nextTask) {
-		await markSyncAsCompleteAndStop(data, subscription, logger);
+	const nextTasks = await getNextTask(subscription, data.targetTasks || [], commonLogger);
+	if (nextTasks.length === 0){
+		await markSyncAsCompleteAndStop(data, subscription, commonLogger);
 		return;
 	}
 
-	try {
-		await subscription.update({ syncStatus: "ACTIVE" });
+	await subscription.update({ syncStatus: "ACTIVE" });
 
-		const { task, cursor, repository } = nextTask;
+	const taskExecutor = async (nextTask: Task, sendBackfillMessage) => {
+		const logger = commonLogger.child({
+			task: nextTask
+		});
 
 		logger.info("Starting task");
 
-		const metrics = {
-			trigger: "backfill",
-			subTrigger: task
-		};
-		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, metrics, logger, data.gitHubAppConfig?.gitHubAppId);
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
 
+		const { task, cursor, repository } = nextTask;
 		const processor = tasks[task];
 		const nPages = Math.min(
 			// "|| 20" is purely to simplify testing and avoid mocking it all the time
@@ -312,10 +293,27 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			logger,
 			sendBackfillMessage
 		);
+	};
+
+	try {
+		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask, index === 0
+			? sendBackfillMessage
+			: Promise.resolve
+		));
+
+		const result = await Promise.allSettled(executors);
+		logResultAndRethrowMainTaskFailure(result, commonLogger);
 
 	} catch (err) {
-		logger.info({ err, nextTask }, "rethrowing as a task error");
-		throw new TaskError(nextTask, err);
+		// Because scheduler deterministically returns the first task only, we treat it as the "main" one (that contributes
+		// to retries etc). The others are treated as "best effort" and errors are ignored: in the worst case they will be
+		// retried again
+		const errLogger = commonLogger.child({
+			err,
+			task: nextTasks[0]
+		});
+		errLogger.info("rethrowing as a task error");
+		throw new TaskError(nextTasks[0], err);
 	}
 };
 
