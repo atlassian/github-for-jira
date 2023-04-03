@@ -351,7 +351,7 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id)).pullCursor)).toStrictEqual({
+			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor || "")).toStrictEqual({
 				pageNo: 23,
 				perPage: 20
 			});
@@ -382,7 +382,7 @@ describe("sync/pull-request", () => {
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage1.isDone()).toBeTruthy();
 			expect(nockPage2.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
 		});
 
 		it("scales cursor if necessary", async () => {
@@ -402,7 +402,7 @@ describe("sync/pull-request", () => {
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(nockPage.isDone()).toBeTruthy();
-			expect((await RepoSyncState.findByPk(repoSyncState!.id)).pullStatus).toEqual("complete");
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
 		});
 
 		it("should not sync if nodes are empty", async () => {
