@@ -7,7 +7,6 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } f
 import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-
 	const { installationId: gitHubInstallationId, appId: gitHubAppId } = req.body;
 
 	// A date to start fetching commit history(main and branch) from.
