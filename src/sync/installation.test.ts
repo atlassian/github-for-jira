@@ -227,7 +227,6 @@ describe("sync/installation", () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql")
-				.times(2)
 				.query(true)
 				.reply(404, {});
 
