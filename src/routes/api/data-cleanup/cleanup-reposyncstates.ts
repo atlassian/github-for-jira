@@ -24,6 +24,11 @@ export const RepoSyncStateCleanUpOrphanDataPost = async (req: Request, res: Resp
 		const cleanUpFromWhereSql = getCleanupSql(repoSyncStateId);
 		const sql = commitToDB === true ? getCommitInDBSql(cleanUpFromWhereSql) : getDryRunSql(cleanUpFromWhereSql);
 		const result = await RepoSyncState.sequelize?.query(sql);
+
+		if (!result) {
+			throw new Error("Repo sync data not found");
+		}
+
 		const parsedResult = result && safeParseResult(result, commitToDB);
 		log.info({ result: parsedResult }, `Orphan RepoSyncStates data ${ commitToDB === true ? "deleted" : "found" }`);
 		res.status(200).end("Done. Result: " + parsedResult);
