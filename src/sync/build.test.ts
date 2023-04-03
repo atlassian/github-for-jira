@@ -161,7 +161,7 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor)).toStrictEqual({
+		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor || "")).toStrictEqual({
 			perPage: 20,
 			pageNo: 31
 		});
@@ -184,7 +184,7 @@ describe("sync/builds", () => {
 		});
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("scales cursor if necessary", async () => {
@@ -201,7 +201,7 @@ describe("sync/builds", () => {
 			.reply(200, []);
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {

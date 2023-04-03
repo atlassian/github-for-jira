@@ -2,13 +2,14 @@ import { Installation } from "./installation";
 import { QueryTypes } from "sequelize";
 import { v4 as UUID } from "uuid";
 import { getHashedKey } from "models/sequelize";
+import { getLogger } from "config/logger";
 
 describe("Installation", () => {
 	describe("Retrieving plainClientKey", () => {
 		it("should save origin unhashed plainClientKey", async () => {
 			const inst = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
 			const found = await Installation.findByPk(inst.id);
-			expect(found.plainClientKey).toBe("1234");
+			expect(found?.plainClientKey).toBe("1234");
 		});
 		it("should update origin unhashed plainClientKey for existing record", async () => {
 			//prepare
@@ -16,16 +17,16 @@ describe("Installation", () => {
 			await Installation.sequelize?.query(`update "Installations" set "plainClientKey" = null where "id" = ${origin.id}`);
 			const nullPlainClientKeyInst = await Installation.findByPk(origin.id);
 			//make sure plainClientKey is null
-			expect(nullPlainClientKeyInst.id).toBe(origin.id);
-			expect(nullPlainClientKeyInst.plainClientKey).toBeNull();
+			expect(nullPlainClientKeyInst?.id).toBe(origin.id);
+			expect(nullPlainClientKeyInst?.plainClientKey).toBeNull();
 
 			//update it
 			const updatedInst = await Installation.install({ clientKey: "1234", host: jiraHost, sharedSecret: "sss" });
 			const finalResultInst = await Installation.findByPk(updatedInst.id);
 
 			expect(updatedInst.id).toBe(origin.id);
-			expect(finalResultInst.id).toBe(origin.id);
-			expect(finalResultInst.plainClientKey).toBe("1234");
+			expect(finalResultInst?.id).toBe(origin.id);
+			expect(finalResultInst?.plainClientKey).toBe("1234");
 		});
 	});
 	describe("Decryption with cryptor", () => {
@@ -33,8 +34,8 @@ describe("Installation", () => {
 			const clientKey = UUID();
 			await insertNewInstallation({ clientKey });
 			const installation = await Installation.findOne({ where: { clientKey } });
-			expect(installation.encryptedSharedSecret).toBe("encrypted:some-plain-text");
-			expect(await installation.decrypt("encryptedSharedSecret")).toBe("some-plain-text");
+			expect(installation?.encryptedSharedSecret).toBe("encrypted:some-plain-text");
+			expect(await installation?.decrypt("encryptedSharedSecret", getLogger("test"))).toBe("some-plain-text");
 		});
 	});
 	describe("Encryption with cryptor", () => {
@@ -56,7 +57,7 @@ describe("Installation", () => {
 				sharedSecret: "old-shared-secret"
 			});
 			const installation = await Installation.findOne({ where: { clientKey: getHashedKey(clientKey) } });
-			await installation.update({
+			await installation?.update({
 				encryptedSharedSecret: "new-shared-secret"
 			});
 			const encryptedSharedSecretInDB = await findEncryptedSharedSecretBy({ clientKey });
