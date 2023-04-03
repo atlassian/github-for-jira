@@ -116,9 +116,11 @@ a:focus {
 .jiraConfiguration__retryMsg,
 .jiraConfiguration__syncWarningMessage,
 .gitHubConfiguration__notAdminMsg,
-.gitHubConfiguration__manageSubscriptions,
-.gitHubConfiguration__manageSubscriptions--notAdmin,
-.gitHubConfiguration__failedSyncWarningLabel {
+.gitHubConfiguration__deleteSubscription,
+.gitHubConfiguration__deleteSubscription--notAdmin,
+.gitHubConfiguration__failedSyncWarningLabel,
+.gitHubSubscriptions__deleteSubscription,
+.gitHubConfiguration__deleteSubscription--notConnected {
   background-color: #172b4d;
   border-radius: 3px;
   display: none;
@@ -155,6 +157,7 @@ a:focus {
 
 /* Modals */
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
 .modal__modalOverlay {
@@ -165,6 +168,7 @@ a:focus {
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__restartBackfillModal,
+.jiraConfiguration__errorSummaryModal,
 .githubSetup__newJiraSiteModal,
 .modal {
   display: none;
@@ -172,6 +176,8 @@ a:focus {
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModal,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModal,
@@ -186,6 +192,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__errorSummaryModalContent,
 .jiraConfiguration__restartBackfillModalContent,
 .githubSetup__newJiraSiteModalContent,
 .modal__modalContent {
@@ -201,6 +208,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__errorSummaryModalContent,
 .jiraConfiguration__restartBackfillModalContent {
   top: 15%;
   width: 56%;
@@ -210,12 +218,17 @@ a:focus {
   max-width: 540px;
 }
 
+.jiraConfiguration__errorSummaryModalContent{
+  max-width: 740px;
+}
+
 .githubSetup__newJiraSiteModalContent {
   top: 30%;
   width: 60%;
 }
 
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
 .modal__modalOverlay {

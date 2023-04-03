@@ -5,8 +5,6 @@ import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { v4 as newUUID } from "uuid";
 
 jest.mock("config/feature-flags");
@@ -43,7 +41,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 		await supertest(app)
@@ -75,13 +73,9 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
@@ -123,13 +117,13 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 123,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp2.id
 		});
 
@@ -161,13 +155,13 @@ describe("GitHub Create Branch Options Get", () => {
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
 		await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
-			clientKey: "key-123",
+			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
 

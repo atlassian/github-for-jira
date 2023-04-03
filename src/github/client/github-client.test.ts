@@ -3,19 +3,20 @@ import "config/env";
 
 import * as axios from "axios";
 import { GitHubClient, GitHubConfig } from "~/src/github/client/github-client";
+import { getLogger } from "config/logger";
 
 jest.mock("axios");
 
 class TestGitHubClient extends GitHubClient {
 	constructor(config: GitHubConfig) {
-		super(config);
+		super(config, { trigger: "test" }, getLogger("test"));
 	}
 	public doTestGraphqlCall() {
 		return this.graphql("foo", {});
 	}
 }
 
-describe("GitHub Client", () => {
+describe("GitHub Client (mocks)", () => {
 	const mockedAxiosPost = jest.fn();
 
 	beforeEach(async () => {

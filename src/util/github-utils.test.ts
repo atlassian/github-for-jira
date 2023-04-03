@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isUserAdminOfOrganization } from "./github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
+import { getLogger } from "config/logger";
 
 describe("GitHub Utils", () => {
 	describe("isUserAdminOfOrganization", () => {
 		let githubUserClient: GitHubUserClient;
 		beforeEach(() => {
-			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig);
+			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig, { trigger: "test" }, getLogger("test"));
 		});
 
 		it("should return true if user is admin of a given organization", async () => {
@@ -18,7 +19,8 @@ describe("GitHub Utils", () => {
 				githubUserClient,
 				"test-org",
 				"test-user",
-				"Organization"
+				"Organization",
+				getLogger("test")
 			)).toBe(true);
 		});
 
@@ -31,7 +33,8 @@ describe("GitHub Utils", () => {
 				githubUserClient,
 				"test-org",
 				"test-user",
-				"Organization"
+				"Organization",
+				getLogger("test")
 			)).toBe(false);
 		});
 
@@ -40,7 +43,8 @@ describe("GitHub Utils", () => {
 				githubUserClient,
 				"test-user",
 				"test-user",
-				"User"
+				"User",
+				getLogger("test")
 			)).toBe(true);
 		});
 
@@ -49,7 +53,8 @@ describe("GitHub Utils", () => {
 				githubUserClient,
 				"different-user",
 				"test-user",
-				"User"
+				"User",
+				getLogger("test")
 			)).toBe(false);
 		});
 	});

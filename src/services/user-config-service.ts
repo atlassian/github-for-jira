@@ -5,7 +5,6 @@ import YAML from "yaml";
 import { InstallationId } from "../github/client/installation-id";
 import { Subscription } from "models/subscription";
 import { createInstallationClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
 const logger = getLogger("services.user-config");
@@ -30,7 +29,9 @@ export const updateRepoConfig = async (
 	subscription: Subscription,
 	repositoryId: number,
 	githubInstallationId: InstallationId,
-	modifiedFiles: string[] = []): Promise<void> => {
+	metrics: { trigger: string, subTrigger?: string },
+	modifiedFiles: string[] = []
+): Promise<void> => {
 
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
@@ -44,7 +45,7 @@ export const updateRepoConfig = async (
 				return;
 			}
 
-			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId);
+			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId, metrics);
 		} catch (err) {
 			logger.error({
 				err,
@@ -63,7 +64,8 @@ export const getRepoConfig = async (
 	installationId: InstallationId,
 	repositoryId: number,
 	repoOwner: string,
-	repoName: string
+	repoName: string,
+	metrics: { trigger: string, subTrigger?: string }
 ): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
@@ -72,8 +74,8 @@ export const getRepoConfig = async (
 	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
-		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId);
-		return await convertYamlToUserConfig(yamlConfig, subscription.jiraHost);
+		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId, metrics);
+		return convertYamlToUserConfig(yamlConfig);
 	}
 
 	// Standard case: we return the config from our database.
@@ -83,8 +85,8 @@ export const getRepoConfig = async (
 /**
  * Fetches contents from CONFIG_PATH from GitHub via GitHub's API, transforms it from base64 to ascii and returns the transformed string.
  */
-const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId?: number): Promise<string | undefined> => {
-	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, logger, gitHubAppId);
+const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<string | undefined> => {
+	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, metrics, logger, gitHubAppId);
 	const contents = await client.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
 
 	if (!contents) {
@@ -109,7 +111,7 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 /**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
-const convertYamlToUserConfig = async (input?: string, jiraHost?: string): Promise<Config> => {
+const convertYamlToUserConfig = (input?: string): Config => {
 
 	if (!input) {
 		return {};
@@ -128,12 +130,10 @@ const convertYamlToUserConfig = async (input?: string, jiraHost?: string): Promi
 				production: configDeployments.environmentMapping.production
 			};
 		}
-		if (await booleanFlag(BooleanFlags.SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS, jiraHost)) {
-			if (configDeployments.services?.ids) {
-				deployments["services"] = {
-					ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
-				};
-			}
+		if (configDeployments.services?.ids) {
+			deployments["services"] = {
+				ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
+			};
 		}
 	}
 
@@ -151,9 +151,9 @@ const convertYamlToUserConfig = async (input?: string, jiraHost?: string): Promi
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
-	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId);
-	const config = await convertYamlToUserConfig(yamlConfig, jiraHost);
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<void> => {
+	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId, metrics);
+	const config = convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
 };
 
@@ -166,9 +166,9 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubIn
  * @param jiraHost
  * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
  */
-export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined): Promise<void> => {
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
-		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId)
+		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId, metrics)
 			.catch(err => logger.error({
 				err,
 				githubInstallationId,

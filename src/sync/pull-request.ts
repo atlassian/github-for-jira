@@ -1,6 +1,6 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import { transformPullRequest } from "../transforms/transform-pull-request";
+import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
 import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
@@ -13,7 +13,11 @@ import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { isEmpty } from "lodash";
+import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
+import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 /**
  * Find the next page number from the response headers.
@@ -40,19 +44,55 @@ type Headers = AxiosResponseHeaders & {
 	link?: string;
 }
 
-type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
+type PullRequestWithCursor = { cursor: string } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	_jiraHost: string,
+	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage?: number
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
+) => {
+	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
+	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
+	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+	} else {
+		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+	}
+};
+
+const doGetPullRequestTaskInParallel = (
+	numberOfPagesToFetchInParallel: number,
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
+) => fetchNextPagesInParallel(
+	numberOfPagesToFetchInParallel,
+	pageSizeAwareCursor,
+	(pageCursor) =>
+		doGetPullRequestTask(
+			logger, gitHubInstallationClient, jiraHost, repository,
+			pageCursor,
+			messagePayload
+		)
+);
+
+const doGetPullRequestTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
 ) => {
 	logger.debug("Syncing PRs: started");
 
-	cursor = Number(cursor);
 	const startTime = Date.now();
 
 	const {
@@ -63,8 +103,8 @@ export const getPullRequestTask = async (
 	} =	await gitHubInstallationClient
 		.getPullRequests(repository.owner.login, repository.name,
 			{
-				per_page: perPage,
-				page: cursor,
+				per_page: pageSizeAwareCursor.perPage	,
+				page: pageSizeAwareCursor.pageNo,
 				state: PullRequestState.ALL,
 				sort: PullRequestSort.CREATED,
 				direction: SortDirection.DES
@@ -78,16 +118,38 @@ export const getPullRequestTask = async (
 		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = getNextPage(logger, headers) || cursor + 1;
+	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
+	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
+
+	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
+		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+		//Because GitHub rest api  doesn't support supply a from date in the query param,
+		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
+	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPage }));
+	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPageCursorStr }));
 
 	// TODO: change this to reduce
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
+
+				if (isEmpty(extractIssueKeysFromPr(pull))) {
+					logger.info({
+						prId: pull.id
+					}, "Skip PR cause it has no issue keys");
+					return undefined;
+				}
+
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
@@ -98,7 +160,7 @@ export const getPullRequestTask = async (
 				}
 
 				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
-				const data = await transformPullRequestSync(
+				const data = transformPullRequestSync(
 					{ pullRequest: pull, repository },
 					prDetails,
 					gitHubInstallationClient.baseUrl,
@@ -110,16 +172,27 @@ export const getPullRequestTask = async (
 		)
 	).filter((value) => !!value);
 
-	logger.debug("Syncing PRs: finished");
+	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
 
 	return {
 		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length
 				? {
-					... await transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+					... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 					pullRequests
 				}
 				: undefined
 	};
+};
+
+const areAllEdgesEarlierThanFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined): boolean => {
+
+	if (!fromDate) return false;
+
+	return edges.every(edge => {
+		const edgeCreatedAt = new Date(edge.created_at);
+		return edgeCreatedAt.getTime() < fromDate.getTime();
+	});
+
 };

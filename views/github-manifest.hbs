@@ -1,0 +1,82 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/public/css/loading-screen.css" media="all" />
+  <link
+      rel="stylesheet"
+      href="/public/aui/aui-prototyping.css"
+      integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+  />
+  <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+</head>
+<body class="session___body">
+{{> loading-screen
+    title=title
+}}
+<script
+    src="/public/aui/aui-prototyping.js"
+    integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    nonce="{{nonce}}"
+></script>
+<script nonce="{{nonce}}">
+  $(function() {
+    if (window.gheHost) {
+      const appManifest = {
+        "name": "Jira",
+        "url": "https://github.com/marketplace/jira-software-github",
+        "redirect_url": "{{appHost}}/github/manifest/{{uuid}}/" + encodeURIComponent(window.gheHost),
+        "hook_attributes": {
+          "url": "{{appHost}}/github/{{uuid}}/webhooks"
+        },
+        "setup_url": "{{appHost}}/github/{{uuid}}/setup" ,
+        "callback_url": "{{appHost}}/github/{{uuid}}/callback" ,
+        "public": true,
+        "default_permissions": {
+          "actions": "read",
+          "security_events": "read",
+          "contents": "write",
+          "deployments": "read",
+          "issues": "write",
+          "metadata": "read",
+          "pull_requests": "write",
+          "members": "read"
+        },
+        "default_events": [
+          "code_scanning_alert",
+          "commit_comment",
+          "create",
+          "delete",
+          "deployment_status",
+          "issue_comment",
+          "issues",
+          "pull_request",
+          "pull_request_review",
+          "push",
+          "repository",
+          "workflow_run"
+        ]
+      };
+       const newForm = jQuery("<form>", {
+          "action": window.gheHost + "/settings/apps/new",
+          "method": "post",
+          "target": "_self"
+        }).append(jQuery("<input>", {
+          "name": "manifest",
+          "id": "manifest",
+          "value": JSON.stringify(appManifest),
+          "type": "hidden"
+        }));
+        $(document.body).append(newForm);
+        newForm.submit();
+    }
+  });
+</script>
+</body>
+</html>

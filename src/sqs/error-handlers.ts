@@ -2,7 +2,7 @@ import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "./sqs.types";
-import { RateLimitingError } from "../github/client/github-client-errors";
+import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
 import { getLogger } from "config/logger";
 
 /**
@@ -19,7 +19,17 @@ const RATE_LIMITING_DELAY_BUFFER_SEC = 10;
 const EXPONENTIAL_BACKOFF_BASE_SEC = 60;
 const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
-type ErrorTypes = JiraClientError | Octokit.HookError | RateLimitingError | Error;
+type ErrorTypes = JiraClientError | Octokit.HookError | GithubClientRateLimitingError | Error;
+
+export const handleUnknownError: ErrorHandler<unknown> = async (
+	err: ErrorTypes,
+	context: SQSMessageContext<unknown>
+): Promise<ErrorHandlingResult> => {
+	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
+	context.log.warn({ err, delaySec }, "Unknown error: retrying with exponential backoff");
+	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+};
+
 export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
 	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
 
@@ -34,10 +44,7 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: E
 		return maybeResult;
 	}
 
-	//In case if error is unknown we should use exponential backoff
-	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
-	context.log.warn({ error }, `no error result found, retrying`);
-	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
+	return handleUnknownError(error, context);
 };
 
 
@@ -70,7 +77,7 @@ const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unkn
 
 const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
 	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
-	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a calss, so we'll just rely on status
+	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a class, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
 	//TODO When we get rid of Octokit completely add check if (error instanceof GithubClientError) before the following code
 	const maybeErrorWithStatus: any = error;
@@ -82,7 +89,7 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 };
 
 const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
-	if (error instanceof RateLimitingError) {
+	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);
 		return { retryable: true, retryDelaySec: delaySec, isFailure: true };

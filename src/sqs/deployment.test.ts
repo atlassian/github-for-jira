@@ -4,8 +4,38 @@ import { Subscription } from "models/subscription";
 import { waitUntil } from "test/utils/wait-until";
 import { sqsQueues } from "../sqs/queues";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
-
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import deploymentStatusBasic from "fixtures/deployment_status-basic.json";
+
+jest.mock("config/feature-flags");
+
+const mockGitHubRateLimit = (limit: number, remaining: number, resetTime: number) => {
+	githubUserTokenNock(1234);
+	githubNock.get(`/rate_limit`)
+		.reply(200, {
+			"resources": {
+				"core": {
+					"limit": limit,
+					"remaining": remaining,
+					"reset": resetTime
+				},
+				"graphql": {
+					"limit": 5000,
+					"remaining": 5000,
+					"reset": resetTime
+				}
+			}
+		});
+};
+
+const mockRatelimitThreshold = (threshold: number) => {
+	when(numberFlag).calledWith(
+		NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
+		expect.anything(),
+		expect.anything()
+	).mockResolvedValue(threshold);
+};
 
 describe("Deployment Webhook", () => {
 	let app: WebhookApp;
@@ -16,6 +46,10 @@ describe("Deployment Webhook", () => {
 	});
 
 	beforeEach(async () => {
+
+		mockGitHubRateLimit(100, 90, 100000);
+		mockRatelimitThreshold(100);
+
 		app = await createWebhookApp();
 
 		await Subscription.create({
@@ -162,7 +196,9 @@ describe("Deployment Webhook", () => {
 				properties:
 					{
 						gitHubInstallationId: 1234
-					}
+					},
+				preventTransitions: false,
+				operationType: "NORMAL"
 			}).reply(200);
 
 			await expect(app.receive(deploymentStatusBasic as any)).toResolve();

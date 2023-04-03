@@ -17,17 +17,13 @@ describe("github-manifest-complete-get", () => {
 	beforeEach(async () => {
 		req = {
 			params: {
-				uuid
+				uuid,
+				gheHost: "https://github.mydomain.com"
 			},
 			query: {
 				code: "ABCDEFGH"
 			},
-			log: getLogger("test"),
-			session: {
-				temp: {
-					gheHost: "https://github.mydomain.com"
-				}
-			}
+			log: getLogger("test")
 		};
 		res = {
 			locals: {
@@ -52,9 +48,6 @@ describe("github-manifest-complete-get", () => {
 		req = {
 			params: {
 				uuid: "12345"
-			},
-			session: {
-				temp: {}
 			}
 		};
 		await expect(GithubManifestCompleteGet(req, res))

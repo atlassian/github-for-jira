@@ -10,8 +10,6 @@ import express, { Application } from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
@@ -82,10 +80,6 @@ describe("Jira Configuration Suite", () => {
 
 	it("should return success message after page is rendered", async () => {
 		const response = mockResponse();
-		when(booleanFlag).calledWith(
-			BooleanFlags.GHE_SERVER,
-			expect.anything()
-		).mockResolvedValue(true);
 		githubNock
 			.get(`/app/installations/15`)
 			.reply(200, singleInstallation);
@@ -282,11 +276,11 @@ describe.each([
 	{
 		url: "/jira/configuration",
 		testSharedSecret: "test-secret",
-		testQsh: "db37a424af6f7376d21db2662904db65628a7c2e4af73b67fa13df5e4bedbae3"
+		testQsh: "03bb62de90d9a341a303b5d4bb97ebf50fa8f9701aadc9de46b744d9abbd43bd"
 	}, {
 		url: "/jira",
 		testSharedSecret: "test-secret",
-		testQsh: "220ebb06872fa43907db98520b898b10f3509824e84602d342d202a1d6c392e6"
+		testQsh: "25af23d03ec867427e41d0f9d53ddbd8afc043869f24b0ab2aaaced7acaf34eb"
 	}
 ])("Jira Route", (testData) => {
 	const { url, testSharedSecret, testQsh } = testData;

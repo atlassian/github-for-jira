@@ -11,12 +11,12 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
+import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -104,9 +104,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(deleteBranchWebhookHandler)(context);
 			break;
 		case "repository":
-			if (context.action === "deleted") {
-				await GithubWebhookMiddleware(deleteRepositoryWebhookHandler)(context);
-			}
+			await GithubWebhookMiddleware(repositoryWebhookHandler)(context);
 			break;
 		case "workflow_run":
 			await GithubWebhookMiddleware(workflowWebhookHandler)(context);

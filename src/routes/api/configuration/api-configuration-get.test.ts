@@ -3,6 +3,7 @@ import { getLogger } from "config/logger";
 import { ApiConfigurationGet } from "./api-configuration-get";
 import { Subscription } from "models/subscription";
 import { getConfiguredAppProperties } from  "utils/app-properties-utils";
+import { AxiosResponse } from "axios";
 
 jest.mock("utils/app-properties-utils", ()=> ({
 	getConfiguredAppProperties: jest.fn()
@@ -13,7 +14,7 @@ describe("GitHub Configured Get", () => {
 	let req, res;
 	const INSTALLATION_ID = 123;
 	beforeEach(async () => {
-		jest.mocked(getConfiguredAppProperties).mockResolvedValue({ data: "things" });
+		jest.mocked(getConfiguredAppProperties).mockResolvedValue({ data: "things" } as AxiosResponse);
 
 		req = {
 			log: getLogger("request"),
@@ -38,7 +39,7 @@ describe("GitHub Configured Get", () => {
 			installationId: INSTALLATION_ID,
 			host: jiraHost,
 			gitHubAppId: undefined,
-			clientKey: "key"
+			hashedClientKey: "key"
 		});
 	});
 

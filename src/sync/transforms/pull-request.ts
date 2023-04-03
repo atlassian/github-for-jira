@@ -1,9 +1,10 @@
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "models/subscription";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { mapStatus } from "~/src/transforms/transform-pull-request";
+import { extractIssueKeysFromPr } from "~/src/transforms/transform-pull-request";
 
 interface Payload {
 	pullRequest: Octokit.PullsListResponseItem;
@@ -17,17 +18,17 @@ interface Payload {
  * @param gitHubBaseUrl - can be undefined for Cloud
  * @param ghUser
  */
-export const transformPullRequest =  async (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
-	const { pullRequest, repository } = payload;
+export const transformPullRequest =  (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
+	const { repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
-	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}`);
+	const issueKeys = extractIssueKeysFromPr(payload.pullRequest);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
 	}
 
 	return {
-		... await transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
+		... transformRepositoryDevInfoBulk(repository, gitHubBaseUrl),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.author` doesn't have it

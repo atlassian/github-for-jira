@@ -40,8 +40,6 @@ $(document).ready(function() {
 		if (selectedVersion === "cloud") {
 			AP.context.getToken(function(token) {
 				const child = openChildWindow("/session/github/configuration");
-				// Remove below line on cleaning up NEW_JWT_VALIDATION flag
-				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
 			});
 		} else if(selectedVersion === "server"){
@@ -67,9 +65,10 @@ $(document).ready(function() {
 			);
 		} else {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session?ghRedirect=to&autoApp=1&baseUrl=" + gitHubServerBaseUrl);
+				const child = openChildWindow("/github-manifest");
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
+				child.window.gheHost = gitHubServerBaseUrl;
 			});
 		}
 	});

@@ -32,7 +32,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
 			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret"));
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("should return 202 when correct uuid and installation id are passed", async () => {

@@ -8,6 +8,7 @@ jest.mock("config/feature-flags");
 
 describe("RepoSyncState", () => {
 	let sub: Subscription;
+	let otherSub: Subscription;
 	let repo;
 
 	beforeEach(async () => {
@@ -16,6 +17,11 @@ describe("RepoSyncState", () => {
 			gitHubInstallationId: 123,
 			jiraHost,
 			jiraClientKey: "myClientKey"
+		});
+		otherSub = await Subscription.create({
+			gitHubInstallationId: 124,
+			jiraHost,
+			jiraClientKey: "myClientKey2"
 		});
 
 		repo = {
@@ -29,19 +35,19 @@ describe("RepoSyncState", () => {
 
 	});
 
-	describe("countSyncedReposFromSubscription", () => {
+	describe("countFullySyncedReposForSubscription", () => {
 		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			let result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
-			result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 		});
 
@@ -64,31 +70,31 @@ describe("RepoSyncState", () => {
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000),
+				subscriptionId: otherSub.id,
 				pullStatus: "complete",
 				commitStatus: "complete",
 				branchStatus: "complete",
 				buildStatus: "complete",
 				deploymentStatus: "complete"
 			});
-			const result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			const result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(1);
 		});
 	});
 
-	describe("countFailedReposFromSubscription", () => {
+	describe("countFailedSyncedReposForSubscription", () => {
 		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			let result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
-			result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 		});
 
@@ -107,54 +113,13 @@ describe("RepoSyncState", () => {
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000),
+				subscriptionId: otherSub.id,
 				pullStatus: "complete",
 				commitStatus: "complete",
 				branchStatus: "complete"
 			});
-			const result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			const result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(1);
-		});
-	});
-
-	describe("countFromSubscription", () => {
-		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(0);
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
-			});
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
-			});
-			result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(0);
-		});
-
-		it("Should only count repos that have a failed status from specific subscription", async () => {
-			await RepoSyncState.create({
-				...repo,
-				pullStatus: "complete",
-				commitStatus: "pending",
-				branchStatus: "complete"
-			});
-			await RepoSyncState.create({
-				...repo,
-				pullStatus: "failed",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: Math.round(Math.random() * 10000),
-				pullStatus: "complete",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-			const result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(2);
 		});
 	});
 
@@ -164,11 +129,11 @@ describe("RepoSyncState", () => {
 			expect(result.length).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			result = await RepoSyncState.findAllFromSubscription(sub);
 			expect(result.length).toEqual(0);
@@ -178,7 +143,7 @@ describe("RepoSyncState", () => {
 			await RepoSyncState.create(repo);
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			const result = await RepoSyncState.findAllFromSubscription(sub);
 			expect(result.length).toEqual(1);
@@ -192,11 +157,11 @@ describe("RepoSyncState", () => {
 			expect(result).toBeFalsy();
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			result = await RepoSyncState.findOneFromSubscription(sub);
 			expect(result).toBeFalsy();
@@ -206,7 +171,7 @@ describe("RepoSyncState", () => {
 			await RepoSyncState.create(repo);
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			const result = await RepoSyncState.findOneFromSubscription(sub);
 			expect(result).toBeTruthy();
@@ -244,7 +209,7 @@ describe("RepoSyncState", () => {
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000)
+				subscriptionId: otherSub.id
 			});
 			let repos = await RepoSyncState.findAllFromSubscription(sub);
 			expect(repos.length).toEqual(2);
@@ -269,7 +234,7 @@ describe("RepoSyncState", () => {
 			});
 			await RepoSyncState.create({
 				...repo,
-				subscriptionId: Math.round(Math.random() * 10000),
+				subscriptionId: otherSub.id,
 				branchStatus: "complete",
 				branchCursor: "foo",
 				commitStatus: "complete",
@@ -286,6 +251,46 @@ describe("RepoSyncState", () => {
 			expect(result[0].commitCursor).toEqual(null);
 			expect(result[0].pullStatus).toEqual(null);
 			expect(result[0].pullCursor).toEqual(null);
+		});
+	});
+
+	describe("Foreign key relation with subscriptions", () => {
+		it("should delete related RepoSyncStates when Subscription is deleted", async () => {
+
+			const subToBeDeleted: Subscription  = await Subscription.create({
+				gitHubInstallationId: 789,
+				jiraHost,
+				jiraClientKey: "myClientKey"
+			});
+			const repoStateThatShouldBeDeleted: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: subToBeDeleted.id
+			});
+			const repoStateThatShouldStay: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: otherSub.id
+			});
+
+			await subToBeDeleted.destroy();
+
+			expect(await RepoSyncState.findByPk(repoStateThatShouldBeDeleted.id)).toBeNull();
+			const remainingState: RepoSyncState = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
+			expect(remainingState.subscriptionId).toBe(otherSub.id);
+
+		});
+		it("should NOT delete parent Subscription when RepoSyncState is deleted", async () => {
+
+			const stateToDelete: RepoSyncState = await RepoSyncState.create({
+				...repo,
+				subscriptionId: sub.id
+			});
+
+			await stateToDelete.destroy();
+
+			const foundSub: Subscription = await Subscription.findByPk(sub.id);
+			expect(foundSub.id).toBe(sub.id);
+			expect(foundSub.jiraHost).toBe(sub.jiraHost);
+
 		});
 	});
 });

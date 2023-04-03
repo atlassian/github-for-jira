@@ -7,19 +7,10 @@ import nock from "nock";
 import { envVars } from "config/env";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
 describe("github-oauth-router", () => {
-
-	beforeEach(() => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER,
-			expect.anything()
-		).mockResolvedValue(true);
-	});
 
 	describe("GithubOAuthCallbackGet", () => {
 
@@ -94,6 +85,47 @@ describe("github-oauth-router", () => {
 				await GithubAuthMiddleware(req, res, next);
 				expect(next.mock.calls).toHaveLength(1);
 			});
+
+			it("with expired token", async () => {
+				githubNock.get("/")
+					.matchHeader("Authorization", "Bearer the-token")
+					.reply(401);
+
+				nock("https://github.com")
+					.post("/login/oauth/access_token")
+					.matchHeader("accept", "application/json")
+					.matchHeader("content-type", "application/json")
+					.reply(200, {
+						"access_token": "new_access_token",
+						"refresh_token": "new_refresh_token"
+					});
+
+				const next = jest.fn();
+
+				const req = {
+					log: getLogger("test"),
+					session: {
+						githubToken: "the-token",
+						githubRefreshToken: "refresh-token"
+					}
+				};
+
+				const res = {
+					locals: {
+						gitHubAppConfig: {},
+						jiraHost,
+						githubToken: ""
+					}
+				};
+
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				await GithubAuthMiddleware(req, res, next);
+				expect(next.mock.calls).toHaveLength(1);
+				expect(req.session.githubToken).toBe("new_access_token");
+				expect(req.session.githubRefreshToken).toBe("new_refresh_token");
+				expect(res.locals.githubToken).toBe("new_access_token");
+			});
 		});
 
 		describe("server", () => {
@@ -101,11 +133,6 @@ describe("github-oauth-router", () => {
 			beforeEach(async () => {
 				const creatorResult = await new DatabaseStateCreator().forServer().create();
 				gitHubServerApp = creatorResult.gitHubServerApp!;
-
-				when(booleanFlag).calledWith(
-					BooleanFlags.GHE_SERVER,
-					expect.anything()
-				).mockResolvedValue(true);
 			});
 
 			it("with token", async () => {

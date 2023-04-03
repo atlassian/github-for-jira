@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { validateUrl } from "utils/validate-url";
@@ -6,7 +7,9 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GithubClientError } from "~/src/github/client/github-client-errors";
+import { AxiosError, AxiosResponse } from "axios";
+import { isUniquelyGitHubServerHeader } from "utils/http-headers";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -33,6 +36,15 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
+};
+
+const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
+	if (!response) {
+		logger.info("No response, cannot conclude if coming from GHE or not");
+		return false;
+	}
+	return !!Object.keys(response.headers).find(isUniquelyGitHubServerHeader) ||
+		response.headers["server"] === "GitHub.com";
 };
 
 export const JiraConnectEnterprisePost = async (
@@ -69,19 +81,32 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
-	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
+	const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
-		if (gitHubServerApps?.length) {
-			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-			res.status(200).send({ success: true, appExists: true });
+	if (gitHubServerApps?.length) {
+		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
+		res.status(200).send({ success: true, appExists: true });
+		return;
+	}
+
+	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+
+	try {
+		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
+		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+
+		if (!isResponseFromGhe(req.log, response)) {
+			req.log.warn("Received OK response, but not GHE server");
+			res.status(200).send({
+				success: false, errors: [{
+					code: ErrorResponseCode.CANNOT_CONNECT,
+					reason: "Received OK, but the host is not GitHub Enterprise server"
+				}]
+			});
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
 			return;
 		}
 
-		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
-
-		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
-		await client.getMainPage(TIMEOUT_PERIOD_MS);
 		res.status(200).send({ success: true, appExists: false });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
@@ -90,28 +115,40 @@ export const JiraConnectEnterprisePost = async (
 			jiraHost: jiraHost
 		});
 	} catch (err) {
-		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
-		const codeOrStatus = "" + (err.code || err.response.status);
+		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
-		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
-			req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${!err.code && err.response?.status}`);
-			if (!err.code && err.response?.status) {
-				//err.code means there's error on the tcp/https connection,
-				//err.status means traffic reach signals, but server reject it.
-				//as long as there's no code and a status, means server returns something
-				//so the domain name is reachable, it is just it required some api tokens to be accessible
-				res.status(200).send({ success: true, appExists: false });
-				return;
-			}
+		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
+		if (isResponseFromGhe(req.log, axiosError.response)) {
+			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
+			res.status(200).send({ success: true, appExists: false });
+			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				source: AnalyticsTrackSource.GitHubEnterprise,
+				jiraHost: jiraHost
+			});
+			return;
 		}
+
+		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status);
+		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
+
+		const reasons = [err.message];
+		reasons.push(axiosError.message || "");
+
+		reasons.push(
+			isInteger(codeOrStatus)
+				? `Received ${codeOrStatus} response.`
+				: codeOrStatus
+		);
 
 		res.status(200).send({
 			success: false, errors: [{
 				code: ErrorResponseCode.CANNOT_CONNECT,
-				reason:
-					isInteger(codeOrStatus)
-						? `received ${codeOrStatus} response`
-						: codeOrStatus
+				reason: reasons
+					.filter(item => !!item)
+					.map(reason =>
+						reason.trim().replace(/\.*$/, ""))
+					.join(". ")
 			}]
 		});
 		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, codeOrStatus);

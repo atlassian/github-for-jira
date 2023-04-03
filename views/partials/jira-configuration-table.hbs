@@ -49,13 +49,13 @@
               </span>
             {{/if}}
             <a
-                class="jiraConfiguration__table__editContainer"
-                href="{{html_url}}"
-                data-installation-link="{{html_url}}"
-                target="_blank"
+              class="jiraConfiguration__table__editContainer"
+              href="{{html_url}}"
+              data-installation-link="{{html_url}}"
+              target="_blank"
             >
               <span
-                  class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
+                class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit">
                 Edit
               </span>
             </a>
@@ -73,24 +73,30 @@
                 >
                   {{connection.syncStatus}}
                 </span>
-              {{!-- Display any sync warnings --}}
-              {{#if (isMissingPermissions connection.syncWarning)}}
-                <div class="jiraConfiguration__syncWarning">
-                    <span
-                        class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                      Sync failed warnings
-                    </span>
-                  <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                    <div>Some tasks have not been backfilled. Please
-                      <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                         href="{{html_url}}"
-                         data-installation-link="{{html_url}}"
-                         target="_blank">accept permissions</a>
-                      on GitHub (you must be the admin of your organization), then retry backfill.
-                    </div>
-                  </div>
-                </div>
+              {{#if connection.failedSyncErrors}}
+                <a
+                        class="jiraConfiguration__errorSummary__btn"
+                        href="#"
+                        data-installation-id="{{connection.id}}"
+                        id="error-summary"
+                >
+                  <span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
+                </a>
               {{/if}}
+              {{#if ../isIncrementalBackfillEnabled}}
+                {{#if (isAllSyncSuccess connection)}}
+                  <div class="jiraConfiguration__info__backfillDate">
+                      {{#if connection.backfillSince}}
+                        <span>Backfilled from:</span>
+                        <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
+                        <span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
+                      {{else}}
+                        All commits backfilled
+                      {{/if}}
+                  </div>
+                {{/if}}
+              {{/if}}
+              {{!-- Display any sync warnings --}}
               {{#if (inProgressOrPendingSync connection.syncStatus)}}
                 <div class="jiraConfiguration__infoSpinner">
                   <aui-spinner size="small"></aui-spinner>
@@ -113,6 +119,7 @@
               {{/if}}
             </div>
           </td>
+
           {{! Settings }}
           <td class="jiraConfiguration__table__cell__settings">
             <button
@@ -144,7 +151,12 @@
                       data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"
                   >
+                    {{#unless ../isIncrementalBackfillEnabled}}
                     Restart backfill
+                    {{/unless}}
+                    {{#if ../isIncrementalBackfillEnabled}}
+                    Continue backfill
+                    {{/if}}
                   </button>
                   <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
                 </div>
@@ -160,6 +172,16 @@
             </aui-dropdown-menu>
           </td>
         </tr>
+
+        <!-- Error Summary Modal -->
+        {{> jira-configuration-error-summary
+          id=id
+          host=host
+          html_url=html_url
+          syncErrors=connection.failedSyncErrors
+          csrfToken=csrfToken
+        }}
+
       {{/each}}
       </tbody>
     </table>
@@ -195,3 +217,4 @@
     </div>
   </div>
 {{/each}}
+

@@ -1,18 +1,14 @@
 import { processInstallation } from "../sync/installation";
-import { mocked } from "ts-jest/utils";
+import { mocked } from "jest-mock";
 import { backfillQueueMessageHandler } from "./backfill";
 import { BackfillMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { getLogger } from "config/logger";
 import * as Sentry from "@sentry/node";
 
+jest.mock("config/feature-flags");
 jest.mock("../sync/installation");
 jest.mock("@sentry/node");
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-mocked(Sentry.getCurrentHub).mockImplementation(() => ({
-	getClient: jest.fn()
-}));
+jest.mock("~/src/sqs/queues");
 
 const sentryCaptureExceptionMock = jest.fn();
 
@@ -24,6 +20,15 @@ mocked(Sentry.Hub).mockImplementation(() => ({
 	setExtra: jest.fn(),
 	captureException: sentryCaptureExceptionMock
 } as Sentry.Hub));
+
+const mockSentryGetClient = () => {
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	mocked(Sentry.getCurrentHub).mockImplementation(() => ({
+		getClient: jest.fn()
+	}));
+};
+
 
 describe("backfill", () => {
 	const BACKFILL_MESSAGE_CONTEXT: SQSMessageContext<BackfillMessagePayload> = {
@@ -37,15 +42,22 @@ describe("backfill", () => {
 		lastAttempt: false
 	};
 
-	afterEach(() => {
-		sentryCaptureExceptionMock.mockReset();
+	describe("Sentry", () => {
+		beforeEach(() => {
+			mockSentryGetClient();
+		});
+
+		it("sentry captures exception", async () => {
+			const mockedProcessor = jest.fn();
+			mocked(processInstallation).mockReturnValue(mockedProcessor);
+			mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));
+			await backfillQueueMessageHandler(jest.fn())(BACKFILL_MESSAGE_CONTEXT).catch(e => getLogger("test").warn(e));
+			expect(sentryCaptureExceptionMock).toBeCalled();
+		});
+
+		afterEach(() => {
+			sentryCaptureExceptionMock.mockReset();
+		});
 	});
 
-	it("sentry captures exception", async () => {
-		const mockedProcessor = jest.fn();
-		mocked(processInstallation).mockReturnValue(mockedProcessor);
-		mockedProcessor.mockRejectedValue(new Error("something went horribly wrong"));
-		await backfillQueueMessageHandler(BACKFILL_MESSAGE_CONTEXT).catch(e => getLogger("test").warn(e));
-		expect(sentryCaptureExceptionMock).toBeCalled();
-	});
 });

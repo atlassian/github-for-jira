@@ -127,7 +127,7 @@ resources:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
       parameters:
-        DBType: postgres125
+        DBType: postgres1211
         CustomParameters:
           log_min_duration_statement: 5000
 
@@ -351,6 +351,9 @@ environmentOverrides:
       - type: globaledge
         name: proxy
         attributes:
+          default_vanity_dns: false
+          domain:
+            - github.dev.atlassian.com
           ip_whitelist:
             - public
           routes: &blackholeSpammingIPs

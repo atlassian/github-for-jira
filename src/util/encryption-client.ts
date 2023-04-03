@@ -4,7 +4,7 @@ import { retry } from "ts-retry-promise";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
-	JIRA_INSTANCE_SECRETS = "jira-instance-secrets",
+	JIRA_INSTANCE_SECRETS = "jira-instance-secrets"
 }
 
 export type EncryptionContext = Record<string, string | number>;

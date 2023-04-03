@@ -2,12 +2,13 @@
 import supertest from "supertest";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
-import { Subscription } from "models/subscription";
+import { Subscription, SyncStatus } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
 import { ApiRouter } from "routes/api/api-router";
 import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("API Router", () => {
 	let app: Application;
@@ -31,13 +32,6 @@ describe("API Router", () => {
 	};
 
 	beforeEach(async () => {
-		locals = {
-			client: {
-				apps: {
-					getInstallation: jest.fn().mockResolvedValue({ data: {} })
-				}
-			}
-		};
 		app = createApp();
 
 		installation = await Installation.create({
@@ -50,7 +44,8 @@ describe("API Router", () => {
 		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
-			jiraClientKey: "client-key"
+			jiraClientKey: "client-key",
+			syncStatus: SyncStatus.PENDING
 		});
 
 		gitHubServerApp = await GitHubServerApp.install({
@@ -163,7 +158,21 @@ describe("API Router", () => {
 					});
 			});
 
-			it("should return information for an existing installation", async () => {
+			it("should return a failed connection when subscription is fucked", async () => {
+				githubNock.get(`/app/installations/${gitHubInstallationId}`).reply(500, { boom: "kaboom" });
+				return supertest(app)
+					.get(`/api/${gitHubInstallationId}`)
+					.set("host", "127.0.0.1")
+					.send({ jiraHost })
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toMatchSnapshot();
+					});
+			});
+
+			it("should return a connection when subscription is OK", async () => {
+				githubNock.get(`/app/installations/${gitHubInstallationId}`).reply(200, { foo: "bar" });
 				return supertest(app)
 					.get(`/api/${gitHubInstallationId}`)
 					.set("host", "127.0.0.1")
@@ -400,6 +409,58 @@ describe("API Router", () => {
 					});
 			});
 
+		});
+
+		describe("ApiResetSubscriptionFailedTasks", () => {
+			it("Should drop failed status for all failed tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toBeNull();
+			});
+
+			it("Should drop failed status for passed tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId,
+						targetTasks: ["branch"]
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toBeNull();
+			});
+
+			it("Should not update status for other tasks", async () => {
+				const repoSyncState = (await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStateFailedForBranches().create()).repoSyncState!;
+
+				await supertest(app)
+					.post("/api/reset-subscription-failed-tasks")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						subscriptionId: repoSyncState.subscriptionId,
+						targetTasks: ["commit"]
+					})
+					.expect(200);
+
+				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
+				expect(oneMore.branchStatus).toEqual("failed");
+			});
 		});
 	});
 

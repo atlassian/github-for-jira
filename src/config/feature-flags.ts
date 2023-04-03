@@ -13,34 +13,30 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	REGEX_FIX = "regex-fix",
-	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
-	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER = "ghe_server",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
-	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
-	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
-	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
-	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
-	NEW_JWT_VALIDATION = "new-jwt-validation",
-	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check"
+	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
+	REPO_CREATED_EVENT = "repo-created-event",
+	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
+	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
+	GHE_API_KEY = "ghe-encrypted-api-key"
 }
 
 export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
+	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
+	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
+	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
+	BACKFILL_PAGE_SIZE = "backfill-page-size"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
@@ -90,8 +86,4 @@ export const isBlocked = async (installationId: number, logger: Logger): Promise
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
-};
-
-export const shouldTagBackfillRequests = async (): Promise<boolean> => {
-	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS);
 };
