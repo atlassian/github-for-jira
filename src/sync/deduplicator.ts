@@ -125,7 +125,7 @@ export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 		}
 		const flagOldParsed = JSON.parse(flagOld) as Flag;
 		if (flagOldParsed.jobRunnerId !== jobRunnerId) {
-			// Cannot tell, other node might haved pick up the job and updated the flag
+			// Cannot tell, other node might have pick up the job and updated the flag
 			return false;
 		}
 

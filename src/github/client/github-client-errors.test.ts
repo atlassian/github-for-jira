@@ -1,9 +1,9 @@
-import { BlockedIpError } from "./github-client-errors";
+import { GithubClientBlockedIpError } from "./github-client-errors";
 
 describe("GitHubClientError", () => {
 
 	it("propagates the stacktrace", async () => {
-		const error = new BlockedIpError({
+		const error = new GithubClientBlockedIpError({
 			name: "BlockedIpError",
 			message: "ignored",
 			stack: "existing stack trace line 1\nexisting stack trace line 2\nexisting stack trace line 3",

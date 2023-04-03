@@ -60,13 +60,14 @@ export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubA
 const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, githubToken:string, logger: Logger): Promise<RepositoryNode[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
+			const metrics = { trigger: "github-repo-get" };
 			const [orgName, gitHubInstallationClient, gitHubUserClient] = await Promise.all([
 				getOrgName(subscription, jiraHost, logger).then(orgName => {
 					logger.info({ orgName }, "Found orgName");
 					return orgName;
 				}),
-				createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId),
-				createUserClient(githubToken, jiraHost, logger, subscription.gitHubAppId)
+				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId),
+				createUserClient(githubToken, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
 			const verboseLoggingEnabled = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
@@ -146,7 +147,8 @@ const sortByScoreAndUpdatedAt = (a, b) => {
 };
 
 const getOrgName = async (subscription: Subscription, jiraHost: string, logger: Logger) => {
-	const gitHubAppClient = await createAppClient(logger, jiraHost, subscription.gitHubAppId);
+	const metrics = { trigger: "github-repo-get" };
+	const gitHubAppClient = await createAppClient(logger, jiraHost, subscription.gitHubAppId, metrics);
 	const response = await gitHubAppClient.getInstallation(subscription.gitHubInstallationId);
 	return response.data?.account?.login;
 };

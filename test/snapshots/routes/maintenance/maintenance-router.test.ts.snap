@@ -158,7 +158,7 @@ Object {
     "jiraDevelopmentTool": Object {
       "actions": Object {
         "createBranch": Object {
-          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}",
+          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
         },
       },
       "application": Object {

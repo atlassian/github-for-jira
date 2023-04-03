@@ -1,20 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import * as installation from "~/src/sync/installation";
-import { getTargetTasks, handleBackfillError, isNotFoundError, isRetryableWithSmallerRequest, maybeScheduleNextTask, processInstallation } from "~/src/sync/installation";
-import { Task } from "~/src/sync/sync.types";
+import {
+	getTargetTasks,
+	isRetryableWithSmallerRequest, markCurrentTaskAsFailedAndContinue,
+	processInstallation,
+	TaskError, updateTaskStatusAndContinue
+} from "~/src/sync/installation";
+import { Task, TaskType } from "~/src/sync/sync.types";
 import { DeduplicatorResult } from "~/src/sync/deduplicator";
 import { getLogger } from "config/logger";
-import { sqsQueues } from "~/src/sqs/queues";
 import { Hub } from "@sentry/types/dist/hub";
-import { RateLimitingError } from "~/src/github/client/github-client-errors";
-import { Repository, Subscription } from "models/subscription";
-import { mockNotFoundErrorOctokitGraphql, mockNotFoundErrorOctokitRequest, mockOtherError, mockOtherOctokitGraphqlErrors, mockOtherOctokitRequestErrors } from "test/mocks/error-responses";
+import {
+	GithubClientNotFoundError
+} from "~/src/github/client/github-client-errors";
+import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { v4 as UUID } from "uuid";
-import { ConnectionTimedOutError, Sequelize } from "sequelize";
-import { AxiosError } from "axios";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { RepoSyncState } from "models/reposyncstate";
+import { branchesNoLastCursor } from "fixtures/api/graphql/branch-queries";
+import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
+import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { JiraClientError } from "~/src/jira/client/axios";
+import { when } from "jest-when";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 
-jest.mock("../sqs/queues");
-const mockedExecuteWithDeduplication = jest.fn();
+jest.mock("config/feature-flags");
+
+const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
 	...jest.requireActual("~/src/sync/deduplicator"),
 	Deduplicator: function() {
@@ -24,21 +34,13 @@ jest.mock("~/src/sync/deduplicator", () => ({
 
 describe("sync/installation", () => {
 
+	let MESSAGE_PAYLOAD;
+	let MESSAGE_PAYLOAD_GHE;
+	let repoSyncState: RepoSyncState;
+	let subscription: Subscription;
+
 	const TEST_LOGGER = getLogger("test");
-	const JOB_DATA = { installationId: 1, jiraHost: "http://foo" };
 	const GITHUB_APP_ID = 123;
-	const JOB_DATA_GHES = {
-		installationId: 1,
-		jiraHost: "http://foo-ghes",
-		gitHubAppConfig: {
-			gitHubAppId: GITHUB_APP_ID,
-			appId: 2,
-			clientId: "client_id",
-			gitHubBaseUrl: "http://ghes.server",
-			gitHubApiUrl: "http://ghes.server",
-			uuid: UUID()
-		}
-	};
 
 	const TEST_REPO: Repository = {
 		id: 123,
@@ -49,9 +51,33 @@ describe("sync/installation", () => {
 		updated_at: "1234"
 	};
 
-	const TASK: Task = { task: "commit", repositoryId: 123, repository: TEST_REPO };
+	const TASK: Task = { task: "branch", repositoryId: 123, repository: TEST_REPO };
 
-	const TEST_SUBSCRIPTION: Subscription = {} as any;
+	beforeEach(async () => {
+		const res = await new DatabaseStateCreator()
+			.withActiveRepoSyncState()
+			.repoSyncStatePendingForBranches()
+			.repoSyncStatePendingForCommits()
+			.create();
+		repoSyncState = res.repoSyncState!;
+		subscription = res.subscription;
+
+		TASK.repositoryId = repoSyncState.repoId;
+
+		MESSAGE_PAYLOAD = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
+		MESSAGE_PAYLOAD_GHE = {
+			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			jiraHost,
+			gitHubAppConfig: {
+				gitHubAppId: GITHUB_APP_ID,
+				appId: 2,
+				clientId: "client_id",
+				gitHubBaseUrl: "http://ghes.server",
+				gitHubApiUrl: "http://ghes.server",
+				uuid: UUID()
+			}
+		};
+	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -88,320 +114,157 @@ describe("sync/installation", () => {
 	describe("processInstallation", () => {
 
 		it("should process the installation with deduplication for cloud", async () => {
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
+			await processInstallation(jest.fn())(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
-			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghaid-cloud`, expect.anything());
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-${DatabaseStateCreator.GITHUB_INSTALLATION_ID}-${jiraHost}-ghaid-cloud`, expect.anything());
 		});
 
 		it("should process the installation with deduplication for GHES", async () => {
-			await processInstallation()(JOB_DATA_GHES, sentry, TEST_LOGGER);
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_GHE, sentry, TEST_LOGGER);
 			expect(mockedExecuteWithDeduplication.mock.calls.length).toBe(1);
-			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-1-http://foo-ghes-ghaid-${GITHUB_APP_ID}`, expect.anything());
+			expect(mockedExecuteWithDeduplication).toBeCalledWith(`i-${DatabaseStateCreator.GITHUB_INSTALLATION_ID}-${jiraHost}-ghaid-${GITHUB_APP_ID}`, expect.anything());
 		});
 
 		it("should reschedule the job if deduplicator is unsure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER);
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(1);
+			expect(sendSqsMessage).toBeCalledWith(MESSAGE_PAYLOAD, 60, expect.anything());
 		});
 
 		it("should also reschedule the job if deduplicator is sure", async () => {
 			mockedExecuteWithDeduplication.mockResolvedValue(DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB);
-			await processInstallation()(JOB_DATA, sentry, TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-		});
-	});
-
-	describe("maybeScheduleNextTask", () => {
-		it("does nothing if there is no next task", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(0);
+			const sendSqsMessage = jest.fn();
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
 
-		it("when multiple tasks, picks the one with the highest delay", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [30_000, 60_000, 0], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledTimes(1);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 60, expect.anything());
-		});
-
-		it("not passing delay to queue when not provided", async () => {
-			await maybeScheduleNextTask(JOB_DATA, [0], TEST_LOGGER);
-			expect(sqsQueues.backfill.sendMessage).toBeCalledWith(JOB_DATA, 0, expect.anything());
-		});
-	});
-
-	describe("handleBackfillError", () => {
-
-		const scheduleNextTask = jest.fn();
-		let updateStatusSpy;
-		let failRepoSpy;
-
-		beforeEach(() => {
-
-			updateStatusSpy = jest.spyOn(installation, "updateJobStatus");
-			failRepoSpy = jest.spyOn(installation, "markCurrentRepositoryAsFailedAndContinue");
-
-			updateStatusSpy.mockReturnValue(Promise.resolve());
-			failRepoSpy.mockReturnValue(Promise.resolve());
-
-			mockSystemTime(12345678);
-		});
-
-		it("Rate limiting error will be retried with the correct delay", async () => {
-			const axiosResponse = {
-				data: "Rate Limit",
-				status: 403,
-				statusText: "RateLimit",
-				headers: {
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-remaining": "0"
-				},
-				config: {}
-			};
-
-			await handleBackfillError(
-				new RateLimitingError(
-					{ response: axiosResponse } as unknown as AxiosError
-				),
-				JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask
-			);
-
-			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
-		});
-
-		it("No delay if rate limit already reset", async () => {
-			const axiosResponse = {
-				data: "Rate Limit",
-				status: 403,
-				statusText: "RateLimit",
-				headers: {
-					"x-ratelimit-reset": "12345",
-					"x-ratelimit-remaining": "0"
-				},
-				config: {}
-			};
-
-			await handleBackfillError(new RateLimitingError({
-				response: axiosResponse
-			} as unknown as AxiosError), JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toBeCalledWith(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-
-		});
-
-		it("Error with headers indicating rate limit will be retried with the appropriate delay", async () => {
-			const probablyRateLimitError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "0",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				},
-				name: "HttpError",
-				status: 403
-			};
-
-			await handleBackfillError(probablyRateLimitError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toBeCalledWith(14322);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("Repository ignored if not found error", async () => {
-			const notFoundError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "6479",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				},
-				name: "HttpError",
-				status: 404
-			};
-
-			await handleBackfillError(notFoundError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("Repository ignored if GraphQL not found error", async () => {
-
-			await handleBackfillError(mockNotFoundErrorOctokitGraphql, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(1);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("Repository failed if some kind of unknown error", async () => {
-			await handleBackfillError(mockOtherOctokitRequestErrors, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(1);
-		});
-
-		it("60s delay if abuse detection triggered", async () => {
-			const abuseDetectionError = {
-				...new Error(),
-				documentation_url: "https://docs.github.com/rest/reference/pulls#list-pull-requests",
-				headers: {
-					"access-control-allow-origin": "*",
-					"connection": "close",
-					"content-type": "application/json; charset=utf-8",
-					"date": "Fri, 04 Mar 2022 21:09:27 GMT",
-					"x-ratelimit-limit": "8900",
-					"x-ratelimit-remaining": "6479",
-					"x-ratelimit-reset": "12360",
-					"x-ratelimit-resource": "core",
-					"x-ratelimit-used": "2421"
-				},
-				message: "You have triggered an abuse detection mechanism",
-				name: "HttpError",
-				status: 403
-			};
-
-			await handleBackfillError(abuseDetectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(60_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("5s delay if connection timeout", async () => {
-			const connectionTimeoutErr = "connect ETIMEDOUT";
-
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(5_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("30s delay if cannot connect", async () => {
-			const connectionRefusedError = "connect ECONNREFUSED 10.255.0.9:26272";
-
-			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("30s delay if cannot connect to database", async () => {
-			const connectionRefusedError = new ConnectionTimedOutError(new Error("foo"));
-
-			await handleBackfillError(connectionRefusedError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
-		});
-
-		it("30s delay when sequelize connection error", async () => {
-			let sequelizeConnectionError: Error | undefined = undefined;
+		it("should rethrow errors", async () => {
+			mockedExecuteWithDeduplication.mockRejectedValue(new Error(":haha:"));
+			const sendSqsMessage = jest.fn();
+			let err;
 			try {
-				const sequelize = new Sequelize({
-					dialect: "postgres",
-					host: "1.2.3.400",
-					port: 3306,
-					username: "your_username",
-					password: "your_password",
-					database: "your_database"
-				});
-				await sequelize.authenticate();
-			} catch (err) {
-				sequelizeConnectionError = err;
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			} catch (caught) {
+				err = caught;
 			}
-
-			await handleBackfillError(sequelizeConnectionError, JOB_DATA, TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledWith(30_000);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(0);
+			expect(err.message).toEqual(":haha:");
 		});
 
-		it("don't reschedule a repository sync straight after a failed repository", async () => {
-			const connectionTimeoutErr = "an error that doesnt match";
-			const MOCK_REPO_TASK: Task = { task: "repository", repositoryId: 0, repository: TEST_REPO };
+		it("should mark subscription as successful when no other tasks left", async () => {
+			await repoSyncState.destroy();
+			const sendSqsMessage = jest.fn();
 
-			await handleBackfillError(connectionTimeoutErr, JOB_DATA, MOCK_REPO_TASK, TEST_SUBSCRIPTION, TEST_LOGGER, scheduleNextTask);
-			expect(scheduleNextTask).toHaveBeenCalledTimes(0);
-			expect(updateStatusSpy).toHaveBeenCalledTimes(0);
-			expect(failRepoSpy).toHaveBeenCalledTimes(1);
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect((await Subscription.findByPk(subscription.id)).syncStatus).toEqual(SyncStatus.COMPLETE);
 		});
 
-	});
+		it("should update cursor and continue sync", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
-	describe("handleNotFoundErrors", () => {
-		it("should continue sync if 404 status is sent in response from octokit/request", (): void => {
-			// returns true if status is 404 so sync will continue
-			expect(
-				isNotFoundError(
-					mockNotFoundErrorOctokitRequest,
-					getLogger("test")
-				)
-			).toBeTruthy();
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
 
-		it("should continue sync if NOT FOUND error is sent in response from octokit/graphql", (): void => {
-			// returns true if error object has type 'NOT_FOUND' so sync will continue
-			expect(
-				isNotFoundError(
-					mockNotFoundErrorOctokitGraphql,
-					getLogger("test")
-				)
-			).toBeTruthy();
+		it("should use page size from FF", async () => {
+			when(numberFlag).calledWith(
+				NumberFlags.BACKFILL_PAGE_SIZE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(90);
+
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const query = branchesNoLastCursor();
+			query.variables.per_page = 90;
+			githubNock
+				.post("/graphql", query)
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
 
-		it("handleNotFoundErrors should not continue sync for any other error response type", () => {
-			expect(
-				isNotFoundError(
-					mockOtherOctokitRequestErrors,
-					getLogger("test")
-				)
-			).toBeFalsy();
+		it("should not allow page sizes larger than 100", async () => {
+			when(numberFlag).calledWith(
+				NumberFlags.BACKFILL_PAGE_SIZE,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(120);
 
-			expect(
-				isNotFoundError(
-					mockOtherOctokitGraphqlErrors,
-					getLogger("test")
-				)
-			).toBeFalsy();
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const query = branchesNoLastCursor();
+			query.variables.per_page = 100;
+			githubNock
+				.post("/graphql", query)
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
-			expect(
-				isNotFoundError(
-					mockOtherError,
-					getLogger("test")
-				)
-			).toBeFalsy();
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+			await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
-			expect(
-				isNotFoundError(
-					null,
-					getLogger("test")
-				)
-			).toBeFalsy();
+			expect(sendSqsMessage).toBeCalledTimes(1);
+		});
 
-			expect(
-				isNotFoundError(
-					"",
-					getLogger("test")
-				)
-			).toBeFalsy();
+		it("should rethrow GitHubClient error", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.query(true)
+				.reply(404, {});
+
+			let err: TaskError;
+			try {
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+				await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err!).toBeInstanceOf(TaskError);
+			expect(err!.task!.task).toEqual("branch");
+			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
+		});
+
+		it("should rethrow Jira error", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, branchNodesFixture);
+			jiraNock.post("/rest/devinfo/0.10/bulk").reply(500);
+
+			let err: TaskError;
+			try {
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+				await mockedExecuteWithDeduplication.mock.calls[0][1]();
+
+			} catch (caught) {
+				err = caught;
+			}
+			expect(err!).toBeInstanceOf(TaskError);
+			expect(err!.task!.task).toEqual("branch");
+			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
 	});
 
@@ -425,4 +288,144 @@ describe("sync/installation", () => {
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
 	});
+
+	describe("markCurrentTaskAsFailedAndContinue", () => {
+		const mockError = new Error("Oh noes, An error occurred");
+		it("does nothing when there's no subscription", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue({
+				...MESSAGE_PAYLOAD,
+				installationId: MESSAGE_PAYLOAD.installationId + 1
+			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(repoSyncState.get({ plain: true })).toStrictEqual(refreshedRepoSyncState.get({ plain: true }));
+			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+			expect(sendMessageMock).toBeCalledTimes(0);
+		});
+
+		it("updates status in RepoSyncState table", async () => {
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(refreshedRepoSyncState.branchStatus).toEqual("failed");
+			expect(refreshedSubscription.get({ plain: true })).toStrictEqual(subscription.get({ plain: true }));
+		});
+
+		it("does not update cursor in RepoSyncState table", async () => {
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+
+			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
+			expect(refreshedRepoSyncState.branchCursor).toEqual(repoSyncState.branchCursor);
+		});
+
+		it("schedules next message", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"), mockError);
+
+			expect(sendMessageMock).toBeCalledTimes(1);
+		});
+
+		it("sets up sync warning on permission error", async () => {
+			const sendMessageMock = jest.fn();
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"), mockError);
+
+			const refreshedSubscription = await Subscription.findByPk(subscription.id);
+			expect(refreshedSubscription.syncWarning).toEqual("Invalid permissions for branch task");
+		});
+	});
+
+	describe("updateTaskStatusAndContinue", () => {
+		const GITHUB_INSTALLATION_ID = 1111;
+		const REPO_ID = 12345;
+		const commitsFromDate = new Date();
+		let data: BackfillMessagePayload;
+		let sub: Subscription;
+		let repoSync: RepoSyncState;
+
+		const TEST_REPO: Repository = {
+			id: REPO_ID,
+			name: "Test",
+			full_name: "Test/Test",
+			owner: { login: "test" },
+			html_url: "https://test",
+			updated_at: "1234"
+		};
+
+		beforeEach(async ()=> {
+			sub = await Subscription.install({ host: jiraHost, installationId: GITHUB_INSTALLATION_ID, gitHubAppId: undefined, hashedClientKey: "client-key" });
+			repoSync = await RepoSyncState.create({
+				subscriptionId: sub.id, repoId: REPO_ID, repoName: "name", repoUrl: "url", repoOwner: "owner", repoFullName: "full name",
+				repoPushedAt: new Date(), repoUpdatedAt: new Date(), repoCreatedAt: new Date()
+			});
+			data = {
+				installationId: GITHUB_INSTALLATION_ID,
+				jiraHost: jiraHost,
+				commitsFromDate: commitsFromDate.toISOString()
+			};
+		});
+
+		it("should skip update backfill from date if task is branch", async () => {
+			const task: Task = {
+				task: "branch",
+				repositoryId: REPO_ID,
+				repository: TEST_REPO
+			};
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+		});
+
+		it("should skip update backfill from date if task is repository", async () => {
+			const task: Task = {
+				task: "repository",
+				repositoryId: 0,
+				repository: TEST_REPO
+			};
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+			await repoSync.reload();
+			expect(repoSync.branchFrom).toBeNull();
+			expect(repoSync.commitFrom).toBeNull();
+			expect(repoSync.pullFrom).toBeNull();
+			expect(repoSync.buildFrom).toBeNull();
+			expect(repoSync.deploymentFrom).toBeNull();
+		});
+
+		describe.each(["pull", "commit", "build", "deployment"] as TaskType[])("Update jobs status for each tasks", (taskType: TaskType) => {
+			const colTaskFrom = `${taskType}From`;
+			const task: Task = {
+				task: taskType,
+				repositoryId: REPO_ID,
+				repository: TEST_REPO
+			};
+			it(`${taskType}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${taskType}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
+				repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
+				await repoSync.save();
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
+			});
+			it(`${taskType}: should skip update backfill from date upon success complete and new backfill date is more recent`, async () => {
+				const oldDate = new Date(commitsFromDate.getTime() - 100000);
+				repoSync[colTaskFrom]= oldDate;
+				await repoSync.save();
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(oldDate.toISOString());
+			});
+			it(`${taskType}: should not update backfill from date is job is not complete`, async () => {
+				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await repoSync.reload();
+				expect(repoSync.pullFrom).toBeNull();
+			});
+		});
+	});
+
 });

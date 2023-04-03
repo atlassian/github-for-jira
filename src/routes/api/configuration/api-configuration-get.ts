@@ -24,9 +24,9 @@ export const ApiConfigurationGet = async (req: Request, res: Response): Promise<
 		return;
 	}
 
-	const { jiraHost, gitHubInstallationId, gitHubAppId } = subscription;
-	const isConfigured = await getConfiguredAppProperties(jiraHost, gitHubInstallationId, gitHubAppId, logger);
-	const configStatus = isConfigured.data;
+	const { jiraHost } = subscription;
+	const response = await getConfiguredAppProperties(jiraHost, logger);
+	const configStatus = response?.data;
 	res.status(200);
 	res.send({ configStatus });
 };

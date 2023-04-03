@@ -65,9 +65,10 @@ $(document).ready(function() {
 			);
 		} else {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session?ghRedirect=to&autoApp=1&baseUrl=" + gitHubServerBaseUrl);
+				const child = openChildWindow("/github-manifest");
 				child.window.jiraHost = jiraHost;
 				child.window.jwt = token;
+				child.window.gheHost = gitHubServerBaseUrl;
 			});
 		}
 	});

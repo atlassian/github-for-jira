@@ -1,8 +1,9 @@
-import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
+import { getJiraAuthor } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { Octokit } from "@octokit/rest";
 import { Repository } from "models/subscription";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { extractIssueKeysFromPr } from "~/src/transforms/transform-pull-request";
 
 // TODO: better typings in file
 const mapStatus = ({ state, merged_at }): string => {
@@ -26,9 +27,9 @@ interface Payload {
  * @param ghUser
  */
 export const transformPullRequest =  (payload: Payload, prDetails: Octokit.PullsGetResponse, gitHubBaseUrl?: string, ghUser?: Octokit.UsersGetByUsernameResponse) => {
-	const { pullRequest, repository } = payload;
+	const { repository } = payload;
 	// This is the same thing we do in transforms, concat'ing these values
-	const issueKeys = jiraIssueKeyParser(`${pullRequest.title}\n${pullRequest.head.ref}\n${pullRequest.body}`);
+	const issueKeys = extractIssueKeysFromPr(payload.pullRequest);
 
 	if (isEmpty(issueKeys)) {
 		return undefined;
