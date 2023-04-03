@@ -72,7 +72,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should use existing privateKey if new privateKey is not passed in as body", async () => {
 
-		let existingApp: GitHubServerApp | null = await GitHubServerApp.install({
+		let existingApp: GitHubServerApp = await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -104,7 +104,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			.send(payload)
 			.expect(202);
 
-		existingApp = await GitHubServerApp.findByPk(existingApp.id);
+		existingApp =(await GitHubServerApp.findByPk(existingApp.id))!;
 
 		expect(await existingApp?.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
 	});
