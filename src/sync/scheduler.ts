@@ -9,6 +9,9 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
+const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 1000;
+const MAX_NUMBER_OF_SUBTASKS = 10;
+
 /**
  *
  * @param subscription
@@ -23,8 +26,13 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 		};
 		const rateLimitResponse = await (await createInstallationClient(subscription.gitHubInstallationId, subscription.jiraHost, metrics, logger, subscription.gitHubAppId)).getRateLimit();
 		const rateLimitData = rateLimitResponse.data;
+
 		const availQuota = Math.min(rateLimitData.resources.core.remaining, rateLimitData.resources.graphql.remaining);
-		const nSubTasks = Math.min(Math.floor(availQuota / 1000), 10);
+		// We need to reserve for the main task
+		const availQuotaForSubtasks = Math.max(0, availQuota - RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
+		const allowedSubtasks = Math.floor(availQuotaForSubtasks / RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
+
+		const nSubTasks = Math.min(allowedSubtasks, MAX_NUMBER_OF_SUBTASKS);
 
 		logger.info({ nSubTasks, rateLimitData }, "Using subtasks: " + nSubTasks);
 
