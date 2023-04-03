@@ -30,8 +30,8 @@ const TEST_REPO: Repository = {
 describe("backfillErrorHandler", () => {
 	const MOCKED_TIMESTAMP_MSECS = 12_345_678;
 
-	let installation: Installation;
-	let subscription: Subscription;
+	let installation: Installation | null;
+	let subscription: Subscription | null;
 	let repoSyncState: RepoSyncState;
 	let task: Task;
 	let sendMessageMock: jest.Mock;
@@ -85,12 +85,12 @@ describe("backfillErrorHandler", () => {
 	};
 
 	const create500FromJira = async (): Promise<JiraClientError | undefined> => {
-		const client = await JiraClient.getNewClient(installation, getLogger("test"));
+		const client = installation && await JiraClient.getNewClient(installation, getLogger("test"));
 
 		jiraNock.get(/.*/).reply(500, { });
 
 		try {
-			await client.appPropertiesGet();
+			await client?.appPropertiesGet();
 		} catch (ex) {
 			return ex;
 		}
@@ -101,7 +101,9 @@ describe("backfillErrorHandler", () => {
 		({
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: {
 				jiraHost,
-				installationId: subscription.gitHubInstallationId
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				installationId: subscription?.gitHubInstallationId
 			}
 		});
 
@@ -194,7 +196,7 @@ describe("backfillErrorHandler", () => {
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
 	});
 
 	it("marks task as failed and reschedules message on permission error", async () => {
@@ -210,8 +212,8 @@ describe("backfillErrorHandler", () => {
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("failed");
-		expect((await Subscription.findByPk(repoSyncState!.subscriptionId)).syncWarning).toEqual("Invalid permissions for commit task");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("failed");
+		expect((await Subscription.findByPk(repoSyncState!.subscriptionId))?.syncWarning).toEqual("Invalid permissions for commit task");
 	});
 
 	it("reschedules rate-limited errors with the correct delay", async () => {
@@ -259,6 +261,6 @@ describe("backfillErrorHandler", () => {
 			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
 		);
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).commitStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
 	});
 });
