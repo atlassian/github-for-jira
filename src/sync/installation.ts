@@ -241,33 +241,33 @@ const getTaskMetricsTags = (nextTask: Task) => {
 
 const isMainTask = (taskIndex: number) => taskIndex === 0;
 
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delaySecs: number, logger: Logger) => Promise<unknown>): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, parentLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delaySecs: number, logger: Logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
 
 	// TODO: should this reject instead? it's just ignoring an error
 	if (!subscription) {
-		rootLogger.warn("No subscription found. Exiting backfill");
+		parentLogger.warn("No subscription found. Exiting backfill");
 		return;
 	}
 
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
-	const commonLogger = rootLogger.child({
+	const logger = parentLogger.child({
 		gitHubProduct,
 		startTime: data.startTime,
 		commitsFromDate: data.commitsFromDate
 	});
 
-	const nextTasks = await getNextTask(subscription, data.targetTasks || [], commonLogger);
+	const nextTasks = await getNextTask(subscription, data.targetTasks || [], logger);
 	if (nextTasks.length === 0){
-		await markSyncAsCompleteAndStop(data, subscription, commonLogger);
+		await markSyncAsCompleteAndStop(data, subscription, logger);
 		return;
 	}
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
-	const taskExecutor = async (nextTask: Task, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>) => {
-		const logger = commonLogger.child({
+	const taskExecutor = async (nextTask: Task, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, parentLogger: Logger) => Promise<unknown>, parentLogger: Logger) => {
+		const logger = parentLogger.child({
 			task: nextTask
 		});
 
@@ -307,18 +307,19 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask,
 			isMainTask(index)
 				? sendBackfillMessage
-				: () => Promise.resolve()
+				: () => Promise.resolve(),
+			logger.child({ taskIndex: index })
 		));
 
 		const result = await Promise.allSettled(executors);
-		logResultAndRethrowMainTaskFailure(result, commonLogger);
+		logResultAndRethrowMainTaskFailure(result, logger);
 
 	} catch (err) {
 		// Because scheduler deterministically returns the first task only, we treat it as the "main" one (that contributes
 		// to retries etc). The others are treated as "best effort" and errors are ignored: in the worst case they will be
 		// retried again
 		const mainTask = nextTasks[0];
-		const errLogger = commonLogger.child({
+		const errLogger = logger.child({
 			err,
 			task: mainTask
 		});
