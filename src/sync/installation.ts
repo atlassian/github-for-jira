@@ -220,10 +220,20 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry
  * @param logger
  */
 const logResultAndRethrowMainTaskFailure = (results: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
-	results.forEach((result) => {
-		logger.info({
-			...(result.status === "rejected" ? { err: result.reason } : { })
-		}, "Subtask finished: " + result.status);
+	results.forEach((result, index) => {
+		if (result.status === "rejected") {
+			if (isMainTask(index)) {
+				logger.warn({ err: result.reason }, "Main task failed!");
+			}	else {
+				logger.warn({ err: result.reason, taskIndex: index }, "Subtask failed!");
+			}
+		} else {
+			if (isMainTask(index)) {
+				logger.warn("Main task finished!");
+			}	else {
+				logger.warn({ taskIndex: index }, "Subtask finished!");
+			}
+		}
 	});
 	const mainTaskResult = results[0];
 	if (mainTaskResult.status === "rejected") {
@@ -258,8 +268,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		commitsFromDate: data.commitsFromDate
 	});
 
+	// The idea is to always process the main task (the first one from the list) and handle its errors while do the
+	// best effort for the other tasks (tail) that are picked randomly to use rate-limiting quota efficiently.
 	const nextTasks = await getNextTask(subscription, data.targetTasks || [], logger);
-	if (nextTasks.length === 0){
+	if (nextTasks.length === 0) {
 		await markSyncAsCompleteAndStop(data, subscription, logger);
 		return;
 	}
