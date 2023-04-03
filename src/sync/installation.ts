@@ -410,14 +410,26 @@ export const processInstallation = (sendBackfillMessage: (message, delay, logger
 				jiraHost
 			});
 
+			let nextMessageDelay = undefined;
+			let nextMessage = undefined;
+			let nextMessageLogger = undefined;
+
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
-				() => doProcessInstallation(data, sentry, logger, sendBackfillMessage)
+				() => doProcessInstallation(data, sentry, logger, (message, delay, logger) => {
+					nextMessage = message;
+					nextMessageDelay = delay;
+					nextMessageLogger = logger;
+					return Promise.resolve();
+				})
 			);
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
+					if (nextMessage || nextMessageDelay || nextMessageLogger) {
+						await sendBackfillMessage(nextMessage, nextMessageDelay, nextMessageLogger);
+					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
 					logger.warn("Possible duplicate job was detected, rescheduling");
