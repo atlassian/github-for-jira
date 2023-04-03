@@ -96,6 +96,9 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 
 		if (!withSideTasks) {
 			return [mappedTask];
+		} else {
+			// To make sure that PRs are not always coming first, because they are too greedy in terms of rate-limiting
+			tasks.sort(() => Math.random() - 0.5);
 		}
 
 		// The main task is always goes first. This is guaranteed by the ordering when we retrieve the records from Db.
