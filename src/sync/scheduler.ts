@@ -83,7 +83,7 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	const availQuota = Math.min(rateLimit.data.resources.core.remaining, rateLimit.data.resources.graphql.remaining);
 	const nSubTasks = Math.min(Math.floor(availQuota / 1000), 10);
 
-	logger.info({ nSubTasks }, "Using " + nSubTasks + " subtasks");
+	logger.info({ nSubTasks, rateLimit }, "Using " + nSubTasks + " subtasks");
 
 	if (nSubTasks === 0) {
 		return [mainTask];
