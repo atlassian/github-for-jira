@@ -29,7 +29,7 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	// Order on "id" is to have deterministic behaviour when there are records without "repoUpdatedAt"
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["repoUpdatedAt", "DESC"], ["id", "DESC"]] });
 
-	const withSideTasks = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, subscription.jiraHost);
+	const withSideTasks = await booleanFlag(BooleanFlags.USE_SUBTASKS_FOR_BACKFILL, subscription.jiraHost);
 
 	let mainTask: Task | undefined = undefined;
 	const otherTasks: Task[] = [];
