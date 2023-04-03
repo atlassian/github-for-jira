@@ -298,7 +298,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	try {
 		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask, index === 0
 			? sendBackfillMessage
-			: Promise.resolve
+			: () => Promise.resolve()
 		));
 
 		const result = await Promise.allSettled(executors);
