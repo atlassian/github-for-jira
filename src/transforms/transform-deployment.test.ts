@@ -34,6 +34,7 @@ const mockGetRepoConfig = () => {
 		expect.anything(),
 		expect.anything(),
 		expect.anything(),
+		expect.anything(),
 		expect.anything()
 	).mockResolvedValue(mockConfig);
 };
@@ -161,7 +162,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 	describe("cloud", () => {
 
 		beforeEach(async () => {
-			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, getLogger("test"));
+			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 
 			await new DatabaseStateCreator().create();
 		});
@@ -230,7 +231,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			mockGetRepoConfig();
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 
 			expect(jiraPayload?.deployments[0].associations).toStrictEqual(
@@ -321,7 +322,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("Q4ua5dPnvDaW8CQgbnC7IiOQ8emND4bTv6ibK2Vh5LsGukmAF7VFE7MWZBwiPWON2fbqWL9q1jyjilgOMmt79WgMgDbT2opGlh6at5WfTYlYQVV77FXiLtPIOs8szN02ldD4slvScLRRynPQpzShisQpVfYU4PL5vCl2OzIYBIJ3zJJIY9g3EMSxtwe0rGaDBuINFBBgWYS2WOh8UAZxSR0w2wetYgq1Adv11Qy85rffGG3GkRHpFNvQ22n6Jqp",  [
 				{
@@ -406,7 +407,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("testing",  [
 				{
@@ -493,7 +494,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 						]
 					});
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
 				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1));
@@ -525,7 +526,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 				mockGetRepoConfig();
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
 
@@ -569,10 +570,11 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					expect.anything(),
 					expect.anything(),
 					expect.anything(),
+					expect.anything(),
 					expect.anything()
 				).mockResolvedValue(mockConfig);
 
-				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
@@ -660,7 +662,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			mockGetRepoConfig();
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 			expect(jiraPayload?.deployments[0].environment.type).toBe("development");
 		});
 
@@ -684,6 +686,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					graphqlUrl: gheApiUrl + "/graphql"
 				},
 				jiraHost,
+				{ trigger: "test" },
 				getLogger("test"),
 				builderOutput.gitHubServerApp!.id
 			);
@@ -751,7 +754,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					]
 				});
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 				{

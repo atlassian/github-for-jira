@@ -43,6 +43,7 @@
     font-size: 20px;
 }
 
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
     cursor: pointer;
     font-size: 20px;
@@ -72,14 +73,29 @@
     line-height: 1.6;
 }
 
+.jiraConfiguration__errorSummaryModal__header__container,
 .jiraConfiguration__restartBackfillModal__header__container {
-    margin-bottom: 1.3em;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.2em;
 }
 
+.jiraConfiguration__errorSummaryModal__header__content,
 .jiraConfiguration__restartBackfillModal__header__content {
     color: #344563;
     font-size: 1.01rem;
     margin-bottom: 1.2em;
+}
+
+.error-summary-errors-header {
+    font-size: 12px;
+    color: #6b778c;
+}
+
+.error-summary-border-bottom {
+    border-bottom: 1px solid #dfe1e6;
+    margin: 0.5rem 0;
+    padding-bottom: 0.5rem;
 }
 
 .jiraConfiguration__restartBackfillModal__date {
@@ -92,6 +108,7 @@
     color: #bf2600;
 }
 
+.jiraConfiguration__errorSummaryModal__actions,
 .jiraConfiguration__restartBackfillModal__actions {
     display: flex;
     justify-content: flex-end;
@@ -141,6 +158,7 @@
     border-bottom: none;
     border-top: none;
     padding: 0.8em 0;
+    vertical-align: middle;
 }
 
 .jiraConfiguration__retryContainer, .jiraConfiguration__retryContainer {
@@ -154,7 +172,6 @@
     margin-left: 0.2em;
     margin: 0.2em auto auto 0.5em;
     font-size: 1.2rem;
-    position: absolute;
     transform: scaleX(-1) rotate(30deg);
     background: inherit;
     border: none;
@@ -174,6 +191,7 @@
 
 .jiraConfiguration__infoContainer {
     display: flex;
+    align-items: center;
 }
 .jiraConfiguration__infoSpinner {
     margin-left: 8px;
@@ -378,6 +396,18 @@
     padding: 0.2em 0.3em;
 }
 
+.jiraConfiguration__info__backfillDate {
+  color: #42526e;
+  padding: 0.2em 0.3em;
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+}
+
+.jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
+    margin-left: 5px;
+}
+
 .jiraConfiguration__table__pending,
 .syncStatusPending {
     background-color: #dfe1e6;
@@ -468,6 +498,7 @@
 }
 
 .jiraConfiguration__table__editContainer,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
     border-radius: 3px;
     cursor: pointer;
@@ -476,6 +507,7 @@
 }
 
 .jiraConfiguration__table__editContainer:hover,
+.jiraConfiguration__syncErrorSummaryModal__closeBtn:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
     background: #091E4208;
 }
@@ -513,7 +545,7 @@
 .jiraConfiguration__cloudConnections {
     box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
     border-radius: 12px;
-    padding: 1.5em 1.5em;
+    padding: 1.5em 3em;
 }
 
 .jiraConfiguration__enterpriseServer {

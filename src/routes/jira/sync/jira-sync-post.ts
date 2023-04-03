@@ -4,6 +4,8 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
+import { SyncType } from "~/src/sync/sync.types";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, syncType, appId: gitHubAppId } = req.body;
@@ -29,7 +31,13 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			res.status(400).send("Invalid date value, cannot select a future date!");
 			return;
 		}
-		await findOrStartSync(subscription, req.log, false, syncType, commitsFromDate);
+
+		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, res.locals.installation.jiraHost);
+		if (shouldUseBackfillAlgoIncremental && isIncrementalBackfilling(subscription, syncType, commitsFromDate)) {
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, ["pull", "branch", "commit", "build", "deployment"], { source: "backfill-button" });
+		} else {
+			await findOrStartSync(subscription, req.log, syncType, commitsFromDate, undefined, { source: "backfill-button" });
+		}
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
@@ -58,4 +66,11 @@ const MILLISECONDS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
 const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	if (commitsFromDate === undefined) return undefined;
 	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
+};
+
+const isIncrementalBackfilling = (subscription: Subscription, syncType: SyncType, commitsFromDate?: Date): boolean => {
+	if (subscription.syncStatus === "FAILED" || syncType === "full" || !commitsFromDate) {
+		return false;
+	}
+	return true;
 };

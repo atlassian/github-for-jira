@@ -79,6 +79,14 @@
 			"mechanism": "group",
 			"principals": ["micros-sv--github-for-jira-dl-admins"],
 			"allowed": true
+		},
+		{
+			"name": "Allow micros manager-service to microscope endpoints",
+			"path": "/microscope/dlq/queues",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": ["micros/manager-service"],
+			"allowed": true
 		}
 	]
 }

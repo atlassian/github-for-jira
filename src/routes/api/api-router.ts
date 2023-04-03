@@ -20,6 +20,9 @@ import { RecoverClientKeyPost } from "./client-key/recover-client-key";
 import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
 import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
+import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed-tasks";
+import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
+import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 
 export const ApiRouter = Router();
 
@@ -82,6 +85,11 @@ ApiRouter.post(
 	ApiResyncPost
 );
 
+ApiRouter.post(
+	`/reset-subscription-failed-tasks`,
+	ApiResetSubscriptionFailedTasks
+);
+
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
 
@@ -134,6 +142,8 @@ ApiRouter.use("/db-migration", DBMigrationsRouter);
 ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
 ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
+ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
+ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

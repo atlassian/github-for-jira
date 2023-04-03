@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { removeInterceptor } from "nock";
 import { processInstallation } from "./installation";
-import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -12,14 +11,18 @@ import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { getDeploymentTask } from "./deployment";
+import { RepoSyncState } from "models/reposyncstate";
 
-jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
 	const sentry: Hub = { setUser: jest.fn() } as any;
-	const mockBackfillQueueSendMessage = jest.mocked(sqsQueues.backfill.sendMessage);
+	const mockBackfillQueueSendMessage = jest.fn();
 	const makeExpectedJiraResponse = (deployments) => ({
 		deployments,
 		properties: {
@@ -43,6 +46,7 @@ describe("sync/deployments", () => {
 				})
 				.query(true)
 				.reply(200, deploymentsResponse);
+			githubUserTokenNock(installationId);
 		};
 
 		const createJiraNock = (deployments) => {
@@ -51,16 +55,17 @@ describe("sync/deployments", () => {
 				.reply(200);
 		};
 
+		let repoSyncState: RepoSyncState;
+
 		beforeEach(async () => {
 
 			mockSystemTime(12345678);
 
-			await new DatabaseStateCreator()
+			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()
 				.create();
-
-			githubUserTokenNock(installationId);
+			repoSyncState = dbState.repoSyncState!;
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -72,6 +77,50 @@ describe("sync/deployments", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls[0][0]).toEqual(data);
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 		};
+
+		it("should sync nothing to jira if all edges are earlier than fromDate -- when ff is on", async () => {
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
+				jiraHost
+			).mockResolvedValue(true);
+
+			githubUserTokenNock(installationId);
+			githubNock
+				.post("/graphql", {
+					query: getDeploymentsQuery,
+					variables: {
+						owner: "integrations",
+						repo: "test-repo-name",
+						per_page: 20
+					}
+				})
+				.query(true)
+				.reply(200, deploymentNodesFixture);
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			expect(await getDeploymentTask(getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				20,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: "2023-01-01T00:00:00Z"
+				}
+			)).toEqual({
+				edges: []
+			});
+		});
 
 		it("should sync to Jira when Deployment messages have jira references", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
@@ -191,7 +240,7 @@ describe("sync/deployments", () => {
 					}]
 			}]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
@@ -358,16 +407,16 @@ describe("sync/deployments", () => {
 				}
 			]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
 		it("should not call Jira if no issue keys are present", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
-			githubUserTokenNock(installationId);
-
 			createGitHubNock(deploymentNodesFixture);
+
+			githubUserTokenNock(installationId);
 			githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`)
 				.reply(200, {
 					commit: {
@@ -381,22 +430,36 @@ describe("sync/deployments", () => {
 					html_url: `test-repo-url/commits/51e16759cdac67b0d2a94e0674c9603b75a840f6`
 				});
 
+			githubUserTokenNock(installationId);
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments`)
+				.query(true)
+				.reply(200, []);
+
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
 
 		it("should not call Jira if no data is returned", async () => {
 			const data = { installationId, jiraHost };
-			createGitHubNock();
+
+			createGitHubNock({
+				data: {
+					repository: {
+						deployments: {
+							edges: []
+						}
+					}
+				}
+			});
 
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
 		});
@@ -405,6 +468,7 @@ describe("sync/deployments", () => {
 	describe("server", () => {
 
 		const createGitHubServerNock = (deploymentsResponse?) => {
+			gheUserTokenNock(installationId);
 			gheNock
 				.post("/api/graphql", {
 					query: getDeploymentsQuery,
@@ -437,8 +501,6 @@ describe("sync/deployments", () => {
 				.create();
 
 			gitHubServerApp = builderOutput.gitHubServerApp!;
-
-			gheUserTokenNock(installationId);
 		});
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec ?: number) => {
@@ -576,7 +638,7 @@ describe("sync/deployments", () => {
 					}]
 			}]);
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
 			await verifyMessageSent(data);
 		});
 
