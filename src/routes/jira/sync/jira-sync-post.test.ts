@@ -79,8 +79,7 @@ describe("sync", () => {
 			})
 			.send({
 				installationId: installationIdForCloud,
-				jiraHost,
-				syncType: "full"
+				jiraHost
 			})
 			.expect(202)
 			.then(() => {
@@ -102,7 +101,6 @@ describe("sync", () => {
 			.send({
 				installationId: installationIdForServer,
 				jiraHost,
-				syncType: "full",
 				appId: gitHubServerApp.id
 			})
 			.expect(202)
@@ -135,7 +133,6 @@ describe("sync", () => {
 			})
 			.send({
 				installationId: installationIdForServer,
-				syncType: "partial",
 				jiraHost,
 				appId: gitHubServerApp.id,
 				commitsFromDate
