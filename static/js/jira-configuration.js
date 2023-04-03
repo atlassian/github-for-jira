@@ -96,13 +96,7 @@ $(".sync-connection-link").click(event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
 		window.AP.context.getToken(function (jwt) {
-			const isIncrementalBackfillEnabled = $("body")
-				.data("is-incremental-backfill-enabled");
-			if(isIncrementalBackfillEnabled) {
-				restartBackfillPost({jwt, _csrf: csrfToken, syncType: "partial", installationId, commitsFromDate, appId});
-			} else {
-				restartBackfillPost({jwt, _csrf: csrfToken, syncType: "full", installationId, commitsFromDate, appId});
-			}
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId});
 		});
 	});
 });
@@ -122,7 +116,7 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, syncType: "partial", installationId, undefined, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId});
 		});
 	});
 });
