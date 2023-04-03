@@ -60,7 +60,7 @@ describe("API Router", () => {
 			webhookSecret: "webhook-secret"
 		}, jiraHost);
 
-		Subscription.create({
+		await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
@@ -425,7 +425,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should drop failed status for passed tasks", async () => {
@@ -442,7 +442,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should not update status for other tasks", async () => {
@@ -459,7 +459,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toEqual("failed");
+				expect(oneMore?.branchStatus).toEqual("failed");
 			});
 		});
 	});

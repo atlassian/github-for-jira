@@ -25,9 +25,9 @@ import {
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
 } from "./github-client.types";
-import { isChangedFilesError } from "./github-client-errors";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
+import { GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -242,12 +242,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(this.logger, err)) {
-					return Promise.reject(err);
+				if (err instanceof GithubClientGraphQLError && err.isChangedFilesError()) {
+					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
+					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
 				}
-
-				this.logger.warn("retrying branch graphql query without changedFiles");
-				return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+				return Promise.reject(err);
 			});
 		return response?.data?.data;
 	}
@@ -278,11 +277,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (!isChangedFilesError(this.logger, err)) {
-					return Promise.reject(err);
+				if (err instanceof GithubClientGraphQLError && err.isChangedFilesError()) {
+					this.logger.warn({ err },"retrying commit graphql query without changedFiles");
+					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
 				}
-				this.logger.warn("retrying commit graphql query without changedFiles");
-				return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
+				return Promise.reject(err);
 			});
 		return response?.data?.data;
 	}
@@ -340,6 +339,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	private async installationAuthenticationHeaders(): Promise<Partial<AxiosRequestConfig>> {
 		const installationToken = await this.installationTokenCache.getInstallationToken(
 			this.githubInstallationId.installationId,
+			this.gitHubServerAppId,
 			() => this.createInstallationToken(this.githubInstallationId.installationId));
 		return {
 			headers: {
