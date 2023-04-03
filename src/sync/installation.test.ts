@@ -22,11 +22,20 @@ import { GithubClientNotFoundError } from "~/src/github/client/github-client-err
 
 jest.mock("config/feature-flags");
 
+let dedupCallThrough = false;
 const mockedExecuteWithDeduplication = jest.fn().mockResolvedValue(DeduplicatorResult.E_OK);
 jest.mock("~/src/sync/deduplicator", () => ({
 	...jest.requireActual("~/src/sync/deduplicator"),
 	Deduplicator: function() {
-		return { executeWithDeduplication: mockedExecuteWithDeduplication };
+		return {
+			executeWithDeduplication: (jobId, execution) => {
+				if (dedupCallThrough){
+					return execution().then(() => DeduplicatorResult.E_OK);
+				} else {
+					return mockedExecuteWithDeduplication(jobId, execution);
+				}
+			}
+		};
 	}
 }));
 
@@ -52,6 +61,7 @@ describe("sync/installation", () => {
 	const TASK: Task = { task: "branch", repositoryId: 123, repository: TEST_REPO };
 
 	beforeEach(async () => {
+		dedupCallThrough = false;
 		const res = await new DatabaseStateCreator()
 			.withActiveRepoSyncState()
 			.repoSyncStatePendingForBranches()
@@ -170,8 +180,8 @@ describe("sync/installation", () => {
 				.reply(200, branchNodesFixture);
 			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
+			dedupCallThrough = true;
 			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-			await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
 			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
@@ -193,8 +203,8 @@ describe("sync/installation", () => {
 				.reply(200, branchNodesFixture);
 			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
+			dedupCallThrough = true;
 			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-			await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
 			expect(sendSqsMessage).toBeCalledTimes(1);
 		});
@@ -216,8 +226,8 @@ describe("sync/installation", () => {
 				.reply(200, branchNodesFixture);
 			jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
 
+			dedupCallThrough = true;
 			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
-			await mockedExecuteWithDeduplication.mock.calls[0][1]();
 
 			expect(sendSqsMessage).toBeCalledTimes(1);
 		});

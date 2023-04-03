@@ -233,7 +233,7 @@ const getTaskMetricsTags = (nextTask: Task) => {
 	return metrics;
 };
 
-const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message, delay, logger) => Promise<unknown>): Promise<void> => {
+const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
 	const subscription = await findSubscriptionForMessage(data);
 
@@ -387,7 +387,7 @@ const redis = new IORedis(getRedisInfo("installations-in-progress"));
 
 const RETRY_DELAY_BASE_SEC = 60;
 
-export const processInstallation = (sendBackfillMessage: (message, delay, logger) => Promise<unknown>) => {
+export const processInstallation = (sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>) => {
 	const inProgressStorage = new RedisInProgressStorageWithTimeout(redis);
 	const deduplicator = new Deduplicator(
 		inProgressStorage, 1_000
@@ -410,13 +410,18 @@ export const processInstallation = (sendBackfillMessage: (message, delay, logger
 				jiraHost
 			});
 
-			let nextMessageDelay = undefined;
-			let nextMessage = undefined;
-			let nextMessageLogger = undefined;
+			let hasNextMessage = false;
+			let nextMessage: BackfillMessagePayload | undefined = undefined;
+			let nextMessageDelay: number | undefined = undefined;
+			let nextMessageLogger: Logger | undefined = undefined;
 
 			const result = await deduplicator.executeWithDeduplication(
 				`i-${installationId}-${jiraHost}-ghaid-${gitHubAppId || "cloud"}`,
 				() => doProcessInstallation(data, sentry, logger, (message, delay, logger) => {
+					// We cannot send off the message straight away because otherwise it will be
+					// de-duplicated as we are still processing the current message. Send it
+					// only after deduplicator (tm) releases the flag.
+					hasNextMessage = true;
 					nextMessage = message;
 					nextMessageDelay = delay;
 					nextMessageLogger = logger;
@@ -427,8 +432,9 @@ export const processInstallation = (sendBackfillMessage: (message, delay, logger
 			switch (result) {
 				case DeduplicatorResult.E_OK:
 					logger.info("Job was executed by deduplicator");
-					if (nextMessage || nextMessageDelay || nextMessageLogger) {
-						await sendBackfillMessage(nextMessage, nextMessageDelay, nextMessageLogger);
+					if (hasNextMessage) {
+						nextMessageLogger!.info("Sending off a new message");
+						await sendBackfillMessage(nextMessage!, nextMessageDelay!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
