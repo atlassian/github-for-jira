@@ -122,7 +122,7 @@ describe("anonymous client", () => {
 ;
 
 describe("user client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
@@ -143,8 +143,8 @@ describe("user client", () => {
 });
 
 describe("installation client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
-	let subscription: Subscription | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
+	let subscription: Subscription | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
@@ -169,7 +169,7 @@ describe("installation client", () => {
 });
 
 describe("app client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
