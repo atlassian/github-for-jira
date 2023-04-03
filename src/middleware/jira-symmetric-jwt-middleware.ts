@@ -11,7 +11,6 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
 
 	if (token) {
-
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);

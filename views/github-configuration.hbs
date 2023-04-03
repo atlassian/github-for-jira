@@ -205,14 +205,14 @@
   <div class="gitHubConfiguration__serverError">
     {{> server-error-message-box }}
   </div>
-    
+
   <div class="text-center">
     <div class="no-organization-in-github">
       Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.
     </div>
     <a
       class="aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
-      href="{{info.html_url}}/installations/new"
+      href="configuration/app-installations"
       target="_self"
     >
       Install GitHub for Jira on a new organization
