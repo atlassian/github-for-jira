@@ -214,14 +214,20 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, sentry
 	}
 };
 
-const logResultAndRethrowMainTaskFailure = (result: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
-	result.forEach((result) => {
+/**
+ * @param results - main task (as we watch for the errors) is number 0, because it is deterministic. The others are random
+ * 								  and best effort.
+ * @param logger
+ */
+const logResultAndRethrowMainTaskFailure = (results: Array<PromiseSettledResult<Awaited<Promise<void>>>>, logger: Logger) => {
+	results.forEach((result) => {
 		logger.info({
 			...(result.status === "rejected" ? { err: result.reason } : { })
 		}, "Subtask finished: " + result.status);
 	});
-	if (result[0].status === "rejected") {
-		throw result[0].reason;
+	const mainTaskResult = results[0];
+	if (mainTaskResult.status === "rejected") {
+		throw mainTaskResult.reason;
 	}
 };
 
@@ -232,6 +238,8 @@ const getTaskMetricsTags = (nextTask: Task) => {
 	};
 	return metrics;
 };
+
+const isMainTask = (taskIndex: number) => taskIndex === 0;
 
 const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, rootLogger: Logger, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, logger: Logger) => Promise<unknown>): Promise<void> => {
 	const { installationId: gitHubInstallationId, jiraHost } = data;
@@ -296,9 +304,10 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	};
 
 	try {
-		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask, index === 0
-			? sendBackfillMessage
-			: () => Promise.resolve()
+		const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask,
+			isMainTask(index)
+				? sendBackfillMessage
+				: () => Promise.resolve()
 		));
 
 		const result = await Promise.allSettled(executors);
@@ -308,12 +317,13 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		// Because scheduler deterministically returns the first task only, we treat it as the "main" one (that contributes
 		// to retries etc). The others are treated as "best effort" and errors are ignored: in the worst case they will be
 		// retried again
+		const mainTask = nextTasks[0];
 		const errLogger = commonLogger.child({
 			err,
-			task: nextTasks[0]
+			task: mainTask
 		});
 		errLogger.info("rethrowing as a task error");
-		throw new TaskError(nextTasks[0], err);
+		throw new TaskError(mainTask, err);
 	}
 };
 
