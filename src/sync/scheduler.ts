@@ -10,7 +10,7 @@ const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
 const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 1000;
-const MAX_NUMBER_OF_SUBTASKS = 10;
+const MAX_NUMBER_OF_SUBTASKS = 20;
 
 /**
  *
