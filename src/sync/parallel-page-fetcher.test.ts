@@ -1,25 +1,26 @@
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 describe("fetchNextPagesInParallel", () => {
 
 	test("fetches data from multiple pages and merges the results", async () => {
-		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor) => {
+		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
 			const edges = [{
-				cursor: pageCursor,
-				node: { id: "id" + pageCursor }
+				cursor: pageCursor.serialise(),
+				node: { id: "id" + pageCursor.pageNo }
 			}];
 			const jiraPayload = {
-				pullRequests: [{ id: "pid" + pageCursor }],
-				builds: [{ id: "bid" + pageCursor }]
+				pullRequests: [{ id: "pid" + pageCursor.pageNo }],
+				builds: [{ id: "bid" + pageCursor.pageNo }]
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(3, 1, singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(3, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
-				{ cursor: 1, node: { id: "id1" } },
-				{ cursor: 2, node: { id: "id2" } },
-				{ cursor: 3, node: { id: "id3" } }
+				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } },
+				{ cursor: "{\"perPage\":20,\"pageNo\":2}", node: { id: "id2" } },
+				{ cursor: "{\"perPage\":20,\"pageNo\":3}", node: { id: "id3" } }
 			],
 			jiraPayload: {
 				pullRequests: [{ id: "pid1" }, { id: "pid2" }, { id: "pid3" }],
@@ -29,22 +30,22 @@ describe("fetchNextPagesInParallel", () => {
 	});
 
 	test("can fetch just one page", async () => {
-		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor) => {
+		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
 			const edges = [{
-				cursor: pageCursor,
-				node: { id: "id" + pageCursor }
+				cursor: pageCursor.serialise(),
+				node: { id: "id" + pageCursor.pageNo }
 			}];
 			const jiraPayload = {
 				foo: "bar",
-				pullRequests: [{ id: "pid" + pageCursor }],
-				builds: [{ id: "bid" + pageCursor }]
+				pullRequests: [{ id: "pid" + pageCursor.pageNo }],
+				builds: [{ id: "bid" + pageCursor.pageNo }]
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(1, 1, singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(1, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
-				{ cursor: 1, node: { id: "id1" } }
+				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } }
 			],
 			jiraPayload: {
 				foo: "bar",
@@ -55,27 +56,42 @@ describe("fetchNextPagesInParallel", () => {
 	});
 
 	test("returns the first page if 2nd one is empty", async () => {
-		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor) => {
-			if (pageCursor == 2) {
+		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
+			if (pageCursor.pageNo == 2) {
 				return Promise.resolve({
 					edges: [],
 					jiraPayload: undefined
 				});
 			}
 			const edges = [{
-				cursor: pageCursor,
-				node: { id: "id" + pageCursor }
+				cursor: pageCursor.serialise(),
+				node: { id: "id" + pageCursor.pageNo }
 			}];
-			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor }] };
+			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
 			return Promise.resolve({ edges, jiraPayload });
 		});
-		const fetchedData = await fetchNextPagesInParallel(2, 1, singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [
-				{ cursor: 1, node: { id: "id1" } }
+				{ cursor: "{\"perPage\":20,\"pageNo\":1}", node: { id: "id1" } }
 			],
 			jiraPayload: { pullRequests: [{ id: "pid1" }] }
 		});
+	});
+
+	test("throws a error if any of the pages throws a error", async () => {
+		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
+			if (pageCursor.pageNo == 2) {
+				return Promise.reject(new Error("foo"));
+			}
+			const edges = [{
+				cursor: pageCursor.serialise(),
+				node: { id: "id" + pageCursor.pageNo }
+			}];
+			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
+			return Promise.resolve({ edges, jiraPayload });
+		});
+		await expect(fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory)).rejects.toThrowError("foo");
 	});
 
 	test("returns empty page if both are empty", async () => {
@@ -85,7 +101,7 @@ describe("fetchNextPagesInParallel", () => {
 				jiraPayload: undefined
 			});
 		});
-		const fetchedData = await fetchNextPagesInParallel(2, 1, singlePageFetchFactory);
+		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
 		expect(fetchedData).toEqual({
 			edges: [ ],
 			jiraPayload: undefined

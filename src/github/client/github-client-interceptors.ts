@@ -1,4 +1,11 @@
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, InvalidPermissionsError, RateLimitingError } from "./github-client-errors";
+import {
+	GithubClientBlockedIpError,
+	GithubClientError,
+	GithubClientTimeoutError,
+	GithubClientInvalidPermissionsError,
+	GithubClientRateLimitingError,
+	GithubClientNotFoundError
+} from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
 import { metricError } from "config/metric-names";
@@ -34,7 +41,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, gitHubProduct: string, response?: any, status?: string | number) => {
+const sendResponseMetrics = (metricName: string, gitHubProduct: string, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -46,7 +53,8 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, response
 		gitHubProduct,
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
-		status: status
+		status: status,
+		...extraTags
 	};
 
 	statsd.histogram(metricName, requestDurationMs, tags);
@@ -55,14 +63,14 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, response
 	return response;
 };
 
-export const instrumentRequest = (metricName, host) =>
+export const instrumentRequest = (metricName, host, extraTags?: Record<string, string | undefined>) =>
 	(response) => {
 		if (!response) {
 			return;
 		}
 
 		const gitHubProduct = getCloudOrServerFromHost(host);
-		return sendResponseMetrics(metricName, gitHubProduct, response);
+		return sendResponseMetrics(metricName, gitHubProduct, response, undefined, extraTags);
 	};
 
 /**
@@ -73,20 +81,20 @@ export const instrumentRequest = (metricName, host) =>
  * @param host - The rest API url for cloud/server
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-export const instrumentFailedRequest = (metricName: string, host: string) =>
+export const instrumentFailedRequest = (metricName: string, host: string, extraTags?: Record<string, string | undefined>) =>
 	(error) => {
 		const gitHubProduct = getCloudOrServerFromHost(host);
-		if (error instanceof RateLimitingError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting");
-		} else if (error instanceof BlockedIpError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp");
+		if (error instanceof GithubClientRateLimitingError) {
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting", extraTags);
+		} else if (error instanceof GithubClientBlockedIpError) {
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp", extraTags);
 			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "timeout");
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "timeout", extraTags);
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, undefined, extraTags);
 		} else {
-			sendResponseMetrics(metricName, gitHubProduct, error.response);
+			sendResponseMetrics(metricName, gitHubProduct, error.response, undefined, extraTags);
 		}
 		return Promise.reject(error);
 	};
@@ -112,29 +120,42 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 		}
 
 		if (response) {
+			// Please keep in sync with GraphQL error mappings!!!!
+			// TODO: consider moving both into some single error mapper to keep them close and avoid being not in sync
+
 			const status = response?.status;
 
 			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
-				const mappedError = new RateLimitingError(err);
+				const mappedError = new GithubClientRateLimitingError(err);
 				logger.warn({ err: mappedError }, "Rate limiting error");
 				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("has an IP allow list enabled")) {
-				const mappedError = new BlockedIpError(err);
+				const mappedError = new GithubClientBlockedIpError(err);
 				logger.warn({ err: mappedError, remote: response.data.message }, "Blocked by GitHub allowlist");
 				return Promise.reject(mappedError);
 			}
 
 			if (status === 403 && response.data?.message?.includes("Resource not accessible by integration")) {
-				const mappedError = new InvalidPermissionsError(err);
+				const mappedError = new GithubClientInvalidPermissionsError(err);
 				logger.warn({
 					err: mappedError,
 					remote: response.data.message
 				}, "unauthorized");
 				return Promise.reject(mappedError);
 			}
+
+			if (status === 404) {
+				const mappedError = new GithubClientNotFoundError(err);
+				logger.warn({
+					err: mappedError,
+					remote: response.data.message
+				}, "not found");
+				return Promise.reject(mappedError);
+			}
+
 			const isWarning = status && (status >= 300 && status < 500 && status !== 400);
 
 			if (isWarning) {

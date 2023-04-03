@@ -46,6 +46,7 @@
 .jiraSelectGitHubProduct__options__card.vertical {
     flex-direction: column;
     padding: 2em;
+    max-width: 40%;
 }
 
 .jiraSelectGitHubProduct__options__card.horizontal {

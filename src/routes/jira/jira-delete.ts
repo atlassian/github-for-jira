@@ -15,7 +15,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	const gitHubInstallationId = Number(req.params.installationId) || Number(req.body.gitHubInstallationId);
 	const gitHubAppId = req.body.appId;
 
-	req.log.debug({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
+	req.log.info({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
 
 	if (!jiraHost) {
 		req.log.error("Missing Jira Host");
@@ -30,7 +30,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 
 	if (!gitHubAppId) {
-		req.log.debug("No gitHubAppId passed. Disconnecting cloud subscription.");
+		req.log.info("No gitHubAppId passed. Disconnecting cloud subscription.");
 	}
 
 	const subscription = await Subscription.getSingleInstallation(
@@ -40,6 +40,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	);
 
 	if (!subscription) {
+		req.log.warn("Cannot find subscription");
 		res.status(404).send("Cannot find Subscription");
 		return;
 	}

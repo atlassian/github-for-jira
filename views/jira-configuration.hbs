@@ -222,21 +222,6 @@
                         {{syncStatus}}
                       </span>
                       {{!-- Display any sync warnings --}}
-                      {{#if (isMissingPermissions syncWarning)}}
-                        <div class="jiraConfiguration__syncWarning">
-                          <span class="jiraConfiguration__syncWarning__connectFailed__warningIcon aui-icon aui-icon-small aui-iconfont-warning">
-                            Sync failed warnings
-                          </span>
-                          <div class="jiraConfiguration__syncWarningMessage warning-popup">
-                            <div>Some tasks have not been backfilled. Please
-                              <a class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                                  href="{{html_url}}"
-                                  data-installation-link="{{html_url}}"
-                                  target="_blank">accept permissions</a>
-                               on GitHub (you must be the admin of your organization), then retry backfill.</div>
-                            </div>
-                        </div>
-                      {{/if}}
                       {{#if (inProgressOrPendingSync syncStatus)}}
                         <div class="jiraConfiguration__loaderContainer">
                           <aui-spinner size="small"></aui-spinner>
