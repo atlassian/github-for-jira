@@ -9,8 +9,9 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
 
-const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 750;
-const MAX_NUMBER_OF_SUBTASKS = 40;
+// These numbers were obtained experimentally by syncing a large customer with 60K quota from GitHub
+const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 500;
+const MAX_NUMBER_OF_SUBTASKS = 100;
 
 /**
  *
