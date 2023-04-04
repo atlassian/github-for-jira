@@ -83,16 +83,16 @@ describe("User Config Service", () => {
 	};
 
 	it("should not update config in database when config file hasn't been touched", async () => {
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
 		expect(config).toBeFalsy();
 	});
 
 	it("should update config in database when config file has been touched", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
@@ -100,16 +100,16 @@ describe("User Config Service", () => {
 	it("no Write perms case should be tolerated", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsAccessNotAllowed();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
 		expect(config).toBeFalsy();
 	});
 
 	it("should get service ids", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.services?.ids).toHaveLength(4);
 	});
@@ -122,7 +122,7 @@ describe("User Config Service", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile(unknownRepoOwner, unknownRepoName);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), unknownRepoId, unknownRepoOwner, unknownRepoName);
+		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), unknownRepoId, unknownRepoOwner, unknownRepoName, { trigger: "test" });
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});

@@ -1,6 +1,7 @@
 import Logger from "bunyan";
 import { AxiosResponse } from "axios";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
+import { getLogger } from "config/logger";
 
 export interface CreatedGitHubAppResponse {
 	id: number;
@@ -15,8 +16,8 @@ export interface CreatedGitHubAppResponse {
  * A GitHub client without any authentication
  */
 export class GitHubAnonymousClient extends GitHubClient {
-	constructor(githubConfig: GitHubConfig, logger: Logger) {
-		super(githubConfig, logger);
+	constructor(githubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
+		super(githubConfig, metrics, logger);
 	}
 
 	public getMainPage(timeoutMs: number): Promise<AxiosResponse> {
@@ -64,7 +65,9 @@ export class GitHubAnonymousClient extends GitHubClient {
 		});
 	}
 
-	public async renewGitHubToken(refreshToken: string,clientId: string,	clientSecret: string): Promise<{ accessToken: string, refreshToken: string }> {
+	public async renewGitHubToken(refreshToken: string, clientId: string,	clientSecret: string): Promise<{ accessToken: string, refreshToken: string }> {
+		const logger = getLogger("GitHubAnonymousClient");
+		logger.info("GitHubAnonymousClient trying to renewGitHubToken");
 		const res = await this.axios.post(`/login/oauth/access_token`,
 			{
 				refresh_token: refreshToken,

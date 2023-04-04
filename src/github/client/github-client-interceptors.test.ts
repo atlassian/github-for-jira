@@ -1,6 +1,6 @@
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
-import { GithubClientInvalidPermissionsError, GithubNotFoundError } from "~/src/github/client/github-client-errors";
+import { GithubClientInvalidPermissionsError, GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
 
 describe("github-client-interceptors", () => {
 	it("correctly maps invalid permission error", async () => {
@@ -10,7 +10,7 @@ describe("github-client-interceptors", () => {
 		});
 
 		let error: Error;
-		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getMainPage(1000);
 		} catch (err) {
@@ -26,13 +26,13 @@ describe("github-client-interceptors", () => {
 		});
 
 		let error: Error;
-		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
 			await client.getMainPage(1000);
 		} catch (err) {
 			error = err;
 		}
-		expect(error!).toBeInstanceOf(GithubNotFoundError);
+		expect(error!).toBeInstanceOf(GithubClientNotFoundError);
 	});
 
 

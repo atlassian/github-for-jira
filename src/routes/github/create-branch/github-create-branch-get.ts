@@ -50,7 +50,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return;
 	}
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, req.log, gitHubAppConfig.gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-create-branch" }, req.log, gitHubAppConfig.gitHubAppId);
 	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
 
@@ -111,7 +111,7 @@ const sortByDateString = (a, b) => {
 const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Logger, jiraHost: string): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
-			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, logger, subscription.gitHubAppId);
+			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-create-branch" }, logger, subscription.gitHubAppId);
 			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
 			return response.viewer.repositories.edges;
 		} catch (err) {

@@ -273,13 +273,13 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
-				//We have found out that the rate limite quota has been used and exceed the configured threshold.
-				//Next step is to postpone the processing.
-				//For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
-				//Therefore sendign a new msg instead of keep polling github until rate limit is raised.
-				const { MessageId } = await this.sendMessage(payload, rateLimitCheckResult.resetTimeInSeconds, context.log);
+				// We have found out that the rate limit quota has been used and exceed the configured threshold.
+				// Next step is to postpone the processing.
+				// For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
+				// Therefore, sending a new msg instead of keep polling GitHub until rate limit is raised.
+				const { MessageId } = await this.sendMessage({ ...payload, rateLimited: true }, rateLimitCheckResult.resetTimeInSeconds, context.log);
 				await this.deleteMessage(context);
-				context.log.info({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
+				context.log.warn({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
 				return;
 			}
 

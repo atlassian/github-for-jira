@@ -196,7 +196,7 @@ describe("RepoSyncState", () => {
 			});
 			const result = await RepoSyncState.findOneFromSubscription(sub);
 			expect(result).toBeTruthy();
-			expect(result.repoId).toEqual(2);
+			expect(result?.repoId).toEqual(2);
 		});
 	});
 
@@ -274,8 +274,8 @@ describe("RepoSyncState", () => {
 			await subToBeDeleted.destroy();
 
 			expect(await RepoSyncState.findByPk(repoStateThatShouldBeDeleted.id)).toBeNull();
-			const remainingState: RepoSyncState = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
-			expect(remainingState.subscriptionId).toBe(otherSub.id);
+			const remainingState: RepoSyncState | null = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
+			expect(remainingState?.subscriptionId).toBe(otherSub.id);
 
 		});
 		it("should NOT delete parent Subscription when RepoSyncState is deleted", async () => {
@@ -287,9 +287,9 @@ describe("RepoSyncState", () => {
 
 			await stateToDelete.destroy();
 
-			const foundSub: Subscription = await Subscription.findByPk(sub.id);
-			expect(foundSub.id).toBe(sub.id);
-			expect(foundSub.jiraHost).toBe(sub.jiraHost);
+			const foundSub: Subscription | null = await Subscription.findByPk(sub.id);
+			expect(foundSub?.id).toBe(sub.id);
+			expect(foundSub?.jiraHost).toBe(sub.jiraHost);
 
 		});
 	});

@@ -96,23 +96,6 @@ describe("sync/branches", () => {
 			return makeExpectedResponseCloudServer(branchName, "1");
 		};
 
-		const nockGitHubGraphQlRateLimit = (rateLimitReset: string) => {
-			githubNock
-				.post("/graphql", branchesNoLastCursor())
-				.query(true)
-				.reply(200, {
-					"errors": [
-						{
-							"type": "RATE_LIMITED",
-							"message": "API rate limit exceeded for user ID 42425541."
-						}
-					]
-				}, {
-					"X-RateLimit-Reset": rateLimitReset,
-					"X-RateLimit-Remaining": "10"
-				});
-		};
-
 		const nockBranchRequest = (response: object, variables?: Record<string, unknown>) =>
 			githubNock
 				.post("/graphql", branchesNoLastCursor(variables))
@@ -235,14 +218,6 @@ describe("sync/branches", () => {
 			expect(jiraNock).not.toBeDone();
 			cleanAll();
 			await verifyMessageSent(data);
-		});
-
-		it("should reschedule message with delay if there is rate limit", async () => {
-			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
-			const RATE_LIMIT_RESET_TIMESTMAMP_SECS = 12360;
-			nockGitHubGraphQlRateLimit(String(RATE_LIMIT_RESET_TIMESTMAMP_SECS));
-			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-			await verifyMessageSent(data, (RATE_LIMIT_RESET_TIMESTMAMP_SECS * 1000 - MOCK_SYSTEM_TIMESTAMP_SEC) / 1000);
 		});
 
 		describe("Branch sync date", () => {

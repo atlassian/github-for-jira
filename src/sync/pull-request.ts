@@ -17,6 +17,7 @@ import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/featu
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 
 /**
  * Find the next page number from the response headers.
@@ -43,70 +44,55 @@ type Headers = AxiosResponseHeaders & {
 	link?: string;
 }
 
-type PullRequestWithCursor = { cursor: number } & Octokit.PullsListResponseItem;
+type PullRequestWithCursor = { cursor: string } & Octokit.PullsListResponseItem;
 
 export const getPullRequestTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
+	cursor: string | undefined,
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
-	const pageSizeCoef = await numberFlag(NumberFlags.ACCELERATE_BACKFILL_COEF, 0, jiraHost);
-	if (!pageSizeCoef) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, cursor, perPage, messagePayload);
+	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
+	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
+	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		// GitHub PR API has limits to 100 items per page, therefore we cannot multiply to more than 5
-		// Fetch in parallel instead. Given that's an expermient for a single customer, let's not
-		// overcomplicate it too much and limit ourselves to 2 pages.
-		const limitedPageSizeCoef = Math.min(5, pageSizeCoef);
-		const shouldFetchNextPageInParallel = pageSizeCoef > 5;
-
-		const scaledPageSize = perPage * limitedPageSizeCoef;
-
-		// Cursor 1, 2, 3, 4, 5 should be mapped to scaled cursor 1;
-		// Cursor 6, 7, 8, 9, 10 shoul be mapped to scaled cursor 2;
-		// etc
-		// Given that the page counter starts from 1, we need to deduct 1 first and then add 1 back to the outcome
-		const scaledCursor = 1 + Math.floor((Number(cursor) - 1) / limitedPageSizeCoef);
-
-		const data = await fetchNextPagesInParallel(
-			shouldFetchNextPageInParallel ? 2 : 1,
-			scaledCursor,
-			(scaledPageNoToFetch) =>
-				doGetPullRequestTask(
-					logger, gitHubInstallationClient, jiraHost, repository,
-					scaledPageNoToFetch,
-					scaledPageSize,
-					messagePayload
-				)
-		);
-		(data.edges || []).forEach(edge => {
-			// Cursor is scaled... scaling back!
-			// original pages: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-			// scaled pages:   ----1--------, --------2-----
-			// Same as above: the counter starts from 1, therefore need to deduct it first and then add back to the result
-			edge.cursor = 1 + (edge.cursor - 1) * limitedPageSizeCoef;
-		});
-
-		return data;
+		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
-export const doGetPullRequestTask = async (
+const doGetPullRequestTaskInParallel = (
+	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
-	cursor: string | number = 1,
-	perPage: number,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
+	messagePayload: BackfillMessagePayload
+) => fetchNextPagesInParallel(
+	numberOfPagesToFetchInParallel,
+	pageSizeAwareCursor,
+	(pageCursor) =>
+		doGetPullRequestTask(
+			logger, gitHubInstallationClient, jiraHost, repository,
+			pageCursor,
+			messagePayload
+		)
+);
+
+const doGetPullRequestTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
 	logger.debug("Syncing PRs: started");
 
-	cursor = Number(cursor);
 	const startTime = Date.now();
 
 	const {
@@ -117,8 +103,8 @@ export const doGetPullRequestTask = async (
 	} =	await gitHubInstallationClient
 		.getPullRequests(repository.owner.login, repository.name,
 			{
-				per_page: perPage,
-				page: cursor,
+				per_page: pageSizeAwareCursor.perPage	,
+				page: pageSizeAwareCursor.pageNo,
 				state: PullRequestState.ALL,
 				sort: PullRequestSort.CREATED,
 				direction: SortDirection.DES
@@ -132,20 +118,25 @@ export const doGetPullRequestTask = async (
 		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
-	const nextPage = getNextPage(logger, headers) || cursor + 1;
+	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
+	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
 
-	let filteredEdges = edges;
 	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
 		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
 		//Because GitHub rest api  doesn't support supply a from date in the query param,
 		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
 		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		filteredEdges = filterEdgesSinceFromDate(edges, fromDate);
+		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+			return {
+				edges: [],
+				jiraPayload: undefined
+			};
+		}
 	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edgesWithCursor: PullRequestWithCursor[] = filteredEdges.map((edge) => ({ ...edge, cursor: nextPage }));
+	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPageCursorStr }));
 
 	// TODO: change this to reduce
 	const pullRequests = (
@@ -195,13 +186,13 @@ export const doGetPullRequestTask = async (
 	};
 };
 
-const filterEdgesSinceFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined) => {
+const areAllEdgesEarlierThanFromDate = (edges: Octokit.PullsListResponseItem[], fromDate: Date | undefined): boolean => {
 
-	if (!fromDate) return edges;
+	if (!fromDate) return false;
 
-	return edges.filter(edge => {
+	return edges.every(edge => {
 		const edgeCreatedAt = new Date(edge.created_at);
-		return edgeCreatedAt.getTime() > fromDate.getTime();
+		return edgeCreatedAt.getTime() < fromDate.getTime();
 	});
 
 };

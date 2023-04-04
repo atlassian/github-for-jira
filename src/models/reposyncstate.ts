@@ -39,6 +39,7 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	failedCode?: string;
 
 	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
@@ -80,6 +81,24 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+
+	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+
+		const result = await RepoSyncState.findAll(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
+				}
+			}
+		}));
+		return result || [];
+	}
+
 	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
@@ -109,7 +128,7 @@ export class RepoSyncState extends Model {
 		return result || [];
 	}
 
-	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
+	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState | null> {
 		return RepoSyncState.findOne(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -118,7 +137,7 @@ export class RepoSyncState extends Model {
 		} as FindOptions));
 	}
 
-	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.update(values, merge(options || {}, {
 			where: {
 				subscriptionId: subscription.id
@@ -126,7 +145,7 @@ export class RepoSyncState extends Model {
 		} as UpdateOptions));
 	}
 
-	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.updateFromSubscription(subscription, values, merge(options, {
 			where: {
 				repoId
@@ -152,7 +171,7 @@ export class RepoSyncState extends Model {
 	}
 
 	// Nullify statuses and cursors to start anew
-	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {
 		return RepoSyncState.update({
 			repoUpdatedAt: null,
 			branchStatus: null,
@@ -231,5 +250,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	failedCode: STRING
 }, { sequelize });
