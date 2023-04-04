@@ -24,7 +24,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
-import { getNextTask } from "~/src/sync/scheduler";
+import { getNextTasks } from "~/src/sync/scheduler";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -244,7 +244,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	// The idea is to always process the main task (the first one from the list) and handle its errors while do the
 	// best effort for the other tasks (tail) that are picked randomly to use rate-limiting quota efficiently.
-	const nextTasks = await getNextTask(subscription, data.targetTasks || [], logger);
+	const nextTasks = await getNextTasks(subscription, data.targetTasks || [], logger);
 	if (nextTasks.length === 0) {
 		await markSyncAsCompleteAndStop(data, subscription, logger);
 		return;
@@ -327,7 +327,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, nextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, mainNextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -338,18 +338,18 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	const failedCode = getFailedCode(err);
 
 	// marking the current task as failed
-	await updateRepo(subscription, nextTask.repositoryId, { [getStatusKey(nextTask.task)]: "failed", failedCode });
+	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
-		await updateRepo(subscription, nextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
-		await subscription?.update({ syncWarning: `Invalid permissions for ${nextTask.task} task` });
-		log.error(`Invalid permissions for ${nextTask.task} task`);
+		await updateRepo(subscription, mainNextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
+		await subscription?.update({ syncWarning: `Invalid permissions for ${mainNextTask.task} task` });
+		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	statsd.increment(metricTaskStatus.failed, [`type:${nextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	statsd.increment(metricTaskStatus.failed, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
-	if (nextTask.task === "repository") {
+	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}

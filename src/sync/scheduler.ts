@@ -12,6 +12,7 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 // These numbers were obtained experimentally by syncing a large customer with 60K quota from GitHub
 const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 500;
 const MAX_NUMBER_OF_SUBTASKS = 100;
+const SUBTASKS_POLL_MAX_SIZE = MAX_NUMBER_OF_SUBTASKS * 10;
 
 /**
  *
@@ -29,7 +30,7 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 		const rateLimitData = rateLimitResponse.data;
 
 		const availQuota = Math.min(rateLimitData.resources.core.remaining, rateLimitData.resources.graphql.remaining);
-		// We need to reserve for the main task
+		// We need to reserve some quota for the main task, too
 		const availQuotaForSubtasks = Math.max(0, availQuota - RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 		const allowedSubtasks = Math.floor(availQuotaForSubtasks / RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 
@@ -42,7 +43,7 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 		}
 
 		return [mainTask, ...(
-			otherTasks.sort(() => Math.random() - 0.5).slice(0, nSubTasks)
+			otherTasks.slice(0, nSubTasks).sort(() => Math.random() - 0.5)
 		)];
 	} catch (err) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
@@ -50,13 +51,39 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 	}
 };
 
+const mapSyncStateToTasks = (tasks: TaskType[], syncState: RepoSyncState): Task[] => {
+	const ret: Task[] = [];
+	tasks.forEach(
+		(taskType) => {
+			if (!syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending") {
+				ret.push({
+					task: taskType,
+					repositoryId: syncState.repoId,
+					repository: {
+						id: syncState.repoId,
+						name: syncState.repoName,
+						full_name: syncState.repoFullName,
+						owner: { login: syncState.repoOwner },
+						html_url: syncState.repoUrl,
+						updated_at: syncState.repoUpdatedAt?.toISOString()
+					},
+					cursor: syncState[getCursorKey(taskType)] || undefined
+				});
+			}
+		}
+	);
+	return ret;
+};
+
 /**
  *
  * @param subscription
- * @param targetTasks - the first task is always deterministic! The tail is random from not complete ones
+ * @param targetTasks - the first task is always same/deterministic! The tail is random from not complete ones tasks.
+ * 											The caller can call this function after some delay again (e.g. SQS exponential backoff) and
+ * 											it is guaranteed they will receive same task as the very first one (a.k.a. "main task")
  * @param logger
  */
-export const getNextTask = async (subscription: Subscription, targetTasks: TaskType[], logger: Logger): Promise<Task[]> => {
+export const getNextTasks = async (subscription: Subscription, targetTasks: TaskType[], logger: Logger): Promise<Task[]> => {
 	if (subscription.repositoryStatus !== "complete") {
 		return [{
 			task: "repository",
@@ -67,8 +94,11 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	}
 
 	const tasks = getTargetTasks(targetTasks);
-	// Order on "id" is to have strongly deterministic behaviour. Relying on something less definite (e.g. repoLastUpdated)
-	// may result in a error being retried with a different (good) task, thus resetting the retry counter
+
+	// Order by "id" to have strongly deterministic behaviour. Relying on something less definite (e.g. repoLastUpdated
+	// that might be changed may result in a erroneous flicking between being the main task and a subtask, thus
+	// slowing down the sync (when it is main, exponential retry is used; when it becomes subtask, other main task resets
+	// retry counter)
 	const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, { order: [["id", "DESC"]] });
 
 	const withSideTasks = await booleanFlag(BooleanFlags.USE_SUBTASKS_FOR_BACKFILL, subscription.jiraHost);
@@ -77,41 +107,30 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	const otherTasks: Task[] = [];
 
 	for (const syncState of repoSyncStates) {
-		if (mainTask) {
-			// To make sure that PRs are not always coming first, because they are too greedy in terms of rate-limiting.
-			// However the main task must always remain same, therefore only for other tasks
-			tasks.sort(() => Math.random() - 0.5);
-		}
-		const task = tasks.find(
-			(taskType) => !syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending"
-		);
-		if (!task) continue;
+		const syncStateTasks = mapSyncStateToTasks(tasks, syncState);
 
-		const mappedTask = {
-			task,
-			repositoryId: syncState.repoId,
-			repository: {
-				id: syncState.repoId,
-				name: syncState.repoName,
-				full_name: syncState.repoFullName,
-				owner: { login: syncState.repoOwner },
-				html_url: syncState.repoUrl,
-				updated_at: syncState.repoUpdatedAt?.toISOString()
-			},
-			cursor: syncState[getCursorKey(task)] || undefined
-		};
+		if (syncStateTasks.length === 0) {
+			continue;
+		}
 
 		if (!withSideTasks) {
-			return [mappedTask];
+			return [syncStateTasks[0]];
 		}
 
-		// The main task is always goes first. This is guaranteed by the ordering when we retrieve the records from Db.
-		// This is important for the sync to always look only at the error of the first task (and ignore the rest as
-		// they are best effort only)
+		// The main task always comes first. This is guaranteed by the ordering, when we retrieve the records from Db.
+		// It is very important: the sync will handle errors of the main task only (retries, SQS exponential backoff etc),
+		// we must be sure that on retry the same error will be retried, not some other random task.
 		if (!mainTask) {
-			mainTask = mappedTask;
+			mainTask = syncStateTasks[0];
+			otherTasks.push(...syncStateTasks.slice((1)));
 		} else {
-			otherTasks.push(mappedTask);
+			otherTasks.push(...syncStateTasks);
+		}
+
+		// To prevent churn: in case of a large number of repos we want to process those subtasks that soon will become
+		// the main one, otherwise a cursor might become invalid
+		if (otherTasks.length > SUBTASKS_POLL_MAX_SIZE) {
+			break;
 		}
 	}
 
@@ -124,5 +143,4 @@ export const getNextTask = async (subscription: Subscription, targetTasks: TaskT
 	}
 
 	return await calculateTasksUsingGitHubRateLimitQuota(subscription, logger, mainTask, otherTasks);
-
 };
