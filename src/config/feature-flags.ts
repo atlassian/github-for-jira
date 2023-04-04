@@ -18,7 +18,7 @@ export enum BooleanFlags {
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
-	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
+	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill"
 }
 
 export enum StringFlags {

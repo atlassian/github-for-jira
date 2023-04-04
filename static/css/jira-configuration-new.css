@@ -88,14 +88,12 @@
 }
 
 .error-summary-errors-header {
-    font-size: 12px;
-    color: #6b778c;
+    padding-top: 1em;
 }
 
-.error-summary-border-bottom {
-    border-bottom: 1px solid #dfe1e6;
+.error-summary-border-top {
+    border-top: 1px solid #dfe1e6;
     margin: 0.5rem 0;
-    padding-bottom: 0.5rem;
 }
 
 .jiraConfiguration__restartBackfillModal__date {
@@ -399,6 +397,13 @@
 .jiraConfiguration__info__backfillDate {
   color: #42526e;
   padding: 0.2em 0.3em;
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+}
+
+.jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
+    margin-left: 5px;
 }
 
 .jiraConfiguration__table__pending,

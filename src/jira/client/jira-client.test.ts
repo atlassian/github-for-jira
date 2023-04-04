@@ -144,12 +144,12 @@ describe("Test getting a jira client", () => {
 
 	describe("Reading encryptedSharedSecret", () => {
 		beforeEach(async ()=>{
-			const inst: Installation = await Installation.findOne({
+			const inst: Installation | null = await Installation.findOne({
 				where: {
 					clientKey: getHashedKey("client-key")
 				}
 			});
-			await inst.update({
+			await inst?.update({
 				encryptedSharedSecret: "new-encrypted-shared-secret"
 			});
 		});
