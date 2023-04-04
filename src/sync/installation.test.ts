@@ -321,6 +321,7 @@ describe("sync/installation", () => {
 			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 		});
 
+		// TODO: bgvozdev to finish off before enabling the FF for everyone
 		// it("for multiple tasks throws error only for the first one", () => {
 		//
 		// });
