@@ -52,11 +52,11 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 };
 
 const mapSyncStateToTasks = (tasks: TaskType[], syncState: RepoSyncState): Task[] => {
-	const ret: Task[] = [];
+	const mappedTasks: Task[] = [];
 	tasks.forEach(
 		(taskType) => {
 			if (!syncState[getStatusKey(taskType)] || syncState[getStatusKey(taskType)] === "pending") {
-				ret.push({
+				mappedTasks.push({
 					task: taskType,
 					repositoryId: syncState.repoId,
 					repository: {
@@ -72,7 +72,7 @@ const mapSyncStateToTasks = (tasks: TaskType[], syncState: RepoSyncState): Task[
 			}
 		}
 	);
-	return ret;
+	return mappedTasks;
 };
 
 /**
