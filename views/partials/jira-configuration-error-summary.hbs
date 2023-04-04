@@ -17,7 +17,13 @@
       <ul>
       {{#if syncErrors.PERMISSIONS_ERROR}}
       <li>
-        <b>{{syncErrors.PERMISSIONS_ERROR}}</b> tasks have not been backfilled. Please
+        <b>{{syncErrors.PERMISSIONS_ERROR}}</b>
+        {{#if (gt syncErrors.PERMISSIONS_ERROR 1)}}
+        tasks have
+        {{else}}
+        task has
+        {{/if}}
+        not been backfilled. Please
         <a href="{{html_url}}"
            data-installation-link="{{html_url}}"
            target="_blank">accept permissions on GitHub</a>
@@ -27,7 +33,13 @@
 
       {{#if syncErrors.CONNECTION_ERROR}}
       <li>
-        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b> repositories because something unexpected occurred. Please retry the backfill or raise a support ticket.
+        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b>
+        {{#if (gt syncErrors.CONNECTION_ERROR 1)}}
+        repositories
+        {{else}}
+        repository
+        {{/if}}
+        because something unexpected occurred. Please retry the backfill or raise a support ticket.
       </li>
       {{/if}}
       </ul>
