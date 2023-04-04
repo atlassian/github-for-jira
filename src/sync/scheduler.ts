@@ -36,14 +36,14 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 
 		const nSubTasks = Math.min(allowedSubtasks, MAX_NUMBER_OF_SUBTASKS);
 
-		logger.info({ nSubTasks, rateLimitData }, "Using subtasks: " + nSubTasks);
+		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 
 		if (nSubTasks === 0) {
 			return [mainTask];
 		}
 
 		return [mainTask, ...(
-			otherTasks.slice(0, nSubTasks).sort(() => Math.random() - 0.5)
+			otherTasks.sort(() => Math.random() - 0.5).slice(0, nSubTasks)
 		)];
 	} catch (err) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
