@@ -160,21 +160,20 @@ describe("scheduler", () => {
 		expect(tasks.length).toEqual(1);
 	});
 
-	// TODO: Not sure how to test it correctly, since the window is pretty large, the test will time out during setup
-	// it("subtasks are picked only from tasks that would become main tasks soon", async () => {
-	// 	when(booleanFlag).calledWith(
-	// 		BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-	// 		expect.anything()
-	// 	).mockResolvedValue(true);
-	//
-	// 	configureRateLimit(10000, 10000);
-	//
-	// 	githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-	// 	const tasks = await getNextTasks(subscription, [], getLogger("test"));
-	// 	tasks.forEach(task => {
-	// 		expect(task.repositoryId).toBeGreaterThan(100);
-	// 	});
-	// });
+	it("subtasks are picked only from tasks that would become main tasks soon", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
+			expect.anything()
+		).mockResolvedValue(true);
+
+		configureRateLimit(2000, 10000);
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, [], getLogger("test"));
+		tasks.forEach(task => {
+			expect(task.repositoryId).toBeGreaterThan(100);
+		});
+	});
 
 	it("all returned tasks are unique", async () => {
 		when(booleanFlag).calledWith(

@@ -12,13 +12,11 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 // These numbers were obtained experimentally by syncing a large customer with 60K quota from GitHub
 const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 500;
 const MAX_NUMBER_OF_SUBTASKS = 100;
-const SUBTASKS_POLL_MAX_SIZE = MAX_NUMBER_OF_SUBTASKS * 10;
+// Coefficient to determine pool size of the selection for the subtasks
+const SUBTASKS_POOL_COEF = 10;
 
 /**
  *
- * @param subscription
- * @param logger
- * @param mainTask
  * @param otherTasks - the array will be shuffled after the call, BEWARE!
  */
 const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscription, logger: Logger, mainTask: Task, otherTasks: Task[]) => {
@@ -43,7 +41,7 @@ const calculateTasksUsingGitHubRateLimitQuota = async (subscription: Subscriptio
 		}
 
 		return [mainTask, ...(
-			otherTasks.sort(() => Math.random() - 0.5).slice(0, nSubTasks)
+			otherTasks.slice(0, nSubTasks * SUBTASKS_POOL_COEF).sort(() => Math.random() - 0.5).slice(0, nSubTasks)
 		)];
 	} catch (err) {
 		logger.warn({ err }, "Cannot determine rate limit, return only main task");
@@ -129,7 +127,7 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 
 		// To prevent churn: in case of a large number of repos we want to process those subtasks that soon will become
 		// the main one, otherwise a cursor might become invalid
-		if (otherTasks.length > SUBTASKS_POLL_MAX_SIZE) {
+		if (otherTasks.length > MAX_NUMBER_OF_SUBTASKS * SUBTASKS_POOL_COEF) {
 			break;
 		}
 	}
@@ -138,7 +136,7 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 		return [];
 	}
 
-	if (otherTasks.length == 0) {
+	if (otherTasks.length === 0) {
 		return [mainTask];
 	}
 
