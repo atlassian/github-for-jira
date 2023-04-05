@@ -39,9 +39,6 @@ Object {
       "addForIssue": [Function],
     },
   },
-  "permissions": Object {
-    "checkAdmin": [Function],
-  },
   "remoteLink": Object {
     "submit": [Function],
   },
