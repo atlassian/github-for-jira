@@ -150,7 +150,7 @@ describe("sync", () => {
 			});
 	});
 
-	it("should run full sync if explicit selected by user", async () => {
+	it("should run full sync if explicitly selected by user", async () => {
 		const commitsFromDate = new Date(new Date().getTime() - 2000);
 		return supertest(app)
 			.post("/jira/sync")

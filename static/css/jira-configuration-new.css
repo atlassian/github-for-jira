@@ -113,8 +113,9 @@
     margin-top: 1em;
 }
 
-#jiraConfiguration__restartBackfillModal__form .jiraConfiguration__restartBackfillModal__fullsync_label {
+#jiraConfiguration__restartBackfillModal__form .jiraConfiguration__restartBackfillModal__fullsync__label {
   display: inline;
+  cursor: pointer;
 }
 
 .jiraConfiguration__tableContainer {
