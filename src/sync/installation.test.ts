@@ -17,8 +17,9 @@ import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { JiraClientError } from "~/src/jira/client/axios";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
+import { cloneDeep } from "lodash";
 
 jest.mock("config/feature-flags");
 
@@ -38,6 +39,24 @@ jest.mock("~/src/sync/deduplicator", () => ({
 		};
 	}
 }));
+
+const configureRateLimit = (coreQuotaRemainig: number, graphQlQuotaRemaining: number) => {
+	githubNock
+		.persist()
+		.get(`/rate_limit`)
+		.reply(200, {
+			"resources": {
+				"core": {
+					"limit": coreQuotaRemainig * 10,
+					"remaining": coreQuotaRemainig
+				},
+				"graphql": {
+					"limit": graphQlQuotaRemaining * 10,
+					"remaining": graphQlQuotaRemaining
+				}
+			}
+		});
+};
 
 describe("sync/installation", () => {
 
@@ -184,6 +203,27 @@ describe("sync/installation", () => {
 			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
 
 			expect(sendSqsMessage).toBeCalledTimes(1);
+			await repoSyncState.reload();
+			expect(repoSyncState.branchCursor).toEqual("MQ");
+			expect(repoSyncState.branchStatus).toEqual("pending");
+		});
+
+		it("should mark task as finished and continue sync", async () => {
+			const sendSqsMessage = jest.fn();
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const fixture = cloneDeep(branchNodesFixture);
+			fixture.data.repository.refs.edges = [];
+			githubNock
+				.post("/graphql", branchesNoLastCursor())
+				.query(true)
+				.reply(200, fixture);
+
+			dedupCallThrough = true;
+			await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD, sentry, TEST_LOGGER);
+
+			expect(sendSqsMessage).toBeCalledTimes(1);
+			await repoSyncState.reload();
+			expect(repoSyncState.branchStatus).toEqual("complete");
 		});
 
 		it("should use page size from FF", async () => {
@@ -322,17 +362,116 @@ describe("sync/installation", () => {
 		});
 
 		// TODO: bgvozdev to finish off before enabling the FF for everyone
-		// it("for multiple tasks throws error only for the first one", () => {
-		//
-		// });
-		//
-		// it("for multiple tasks updates schedules only one message", () => {
-		//
-		// });
-		//
-		// it("for multiple tasks updates the status for all tasks", () => {
-		//
-		// });
+		describe("parallel sync", () => {
+			let MESSAGE_PAYLOAD_BRANCHES_ONLY;
+
+			beforeEach(async () => {
+				MESSAGE_PAYLOAD_BRANCHES_ONLY = {
+					...MESSAGE_PAYLOAD,
+					targetTasks: ["branch"]
+				};
+
+				const	newRepoSyncStatesData: any[] = [];
+				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
+					const newRepoSyncState = { ...repoSyncState.get() };
+					delete newRepoSyncState["id"];
+					delete newRepoSyncState["branchStatus"];
+					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
+					if (newRepoStateNo < 49) {
+						// the last one should be main
+						newRepoSyncState["repoName"] = repoSyncState.repoName + "_subtask";
+						newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + "_subtask";
+					} else {
+						newRepoSyncState["repoName"] = repoSyncState.repoName + "_main";
+						newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + "_main";
+					}
+					newRepoSyncStatesData.push(newRepoSyncState);
+				}
+				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
+
+				when(booleanFlag).calledWith(
+					BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
+					expect.anything()
+				).mockResolvedValue(true);
+
+				// That would give 2 tasks: one main and one subtask
+				configureRateLimit(1000, 1000);
+			});
+
+			it("for multiple tasks throws error only for the first one", async () => {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+				const sendSqsMessage = jest.fn();
+				dedupCallThrough = true;
+				let capturedError;
+				try {
+					// Both tasks will fail because no nock was not setup
+					await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
+				} catch (err) {
+					capturedError = err;
+				}
+				expect(capturedError).toBeInstanceOf(TaskError);
+				expect((capturedError as TaskError).task.repository.full_name).toEqual("test-repo-name_main");
+			});
+
+			it("for multiple tasks updates cursors and schedules only one message", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.post("/graphql", branchesNoLastCursor({
+						repo: "test-repo-name_main"
+					}))
+					.query(true)
+					.reply(200, branchNodesFixture);
+
+				githubNock
+					.post("/graphql", branchesNoLastCursor({
+						repo: "test-repo-name_subtask"
+					}))
+					.query(true)
+					.reply(200, branchNodesFixture);
+
+				jiraNock.post("/rest/devinfo/0.10/bulk").times(2).reply(200);
+
+				dedupCallThrough = true;
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
+
+				expect(sendSqsMessage).toBeCalledTimes(1);
+				const updatedRows = await RepoSyncState.findAll({ where: {
+					branchCursor: "MQ"
+				} });
+				expect(updatedRows!.length).toEqual(2);
+			});
+
+			it("for multiple tasks ignores failures of non-main tasks", async () => {
+				const sendSqsMessage = jest.fn();
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.post("/graphql", branchesNoLastCursor({
+						repo: "test-repo-name_main"
+					}))
+					.query(true)
+					.reply(200, branchNodesFixture);
+
+				githubNock
+					.post("/graphql", branchesNoLastCursor({
+						repo: "test-repo-name_subtask"
+					}))
+					.query(true)
+					.reply(500);
+
+				jiraNock.post("/rest/devinfo/0.10/bulk").reply(200);
+
+				dedupCallThrough = true;
+				await processInstallation(sendSqsMessage)(MESSAGE_PAYLOAD_BRANCHES_ONLY, sentry, TEST_LOGGER);
+
+				expect(sendSqsMessage).toBeCalledTimes(1);
+				const updatedRows = await RepoSyncState.findAll({ where: {
+					branchCursor: "MQ"
+				} });
+				expect(updatedRows!.length).toEqual(1);
+			});
+		});
 
 		it("does not update cursor in RepoSyncState table", async () => {
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
