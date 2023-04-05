@@ -156,6 +156,18 @@
                          name="backfill-date-picker"
                   />
                 </div>
+                {{#if isIncrementalBackfillEnabled }}
+                <div class="field-group">
+                  <input class="jiraConfiguration__restartBackfillModal__fullsync"
+                         type="checkbox"
+                         id="backfill-fullsync-checkbox"
+                         name="backfill-fullsync-checkbox"
+                  />
+                  <label for="backfill-fullsync-checkbox" class="jiraConfiguration__restartBackfillModal__fullsync_label">
+                    Erase history and restart backfill
+                  </label>
+                </div>
+                {{/if}}
                 <div class="jiraConfiguration__restartBackfillModal__actions">
                   <button class="aui-button aui-button-secondary" type="button" id="cancel-backfill">Cancel</button>
                   <button type="submit" id="submit-backfill-data" class="aui-button aui-button-primary">Backfill data</button>

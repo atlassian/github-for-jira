@@ -150,4 +150,31 @@ describe("sync", () => {
 			});
 	});
 
+	it("should run full sync if explicit selected by user", async () => {
+		const commitsFromDate = new Date(new Date().getTime() - 2000);
+		return supertest(app)
+			.post("/jira/sync")
+			.query({
+				jwt
+			})
+			.send({
+				installationId: installationIdForServer,
+				jiraHost,
+				appId: gitHubServerApp.id,
+				commitsFromDate,
+				syncType: "full"
+			})
+			.expect(202)
+			.then(() => {
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					syncType: "full",
+					installationId: installationIdForServer,
+					jiraHost,
+					commitsFromDate: commitsFromDate.toISOString(),
+					targetTasks: undefined,
+					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
+				}), expect.anything(), expect.anything());
+			});
+	});
+
 });
