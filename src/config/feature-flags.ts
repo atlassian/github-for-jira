@@ -30,8 +30,6 @@ export enum StringFlags {
 }
 
 export enum NumberFlags {
-	PERCENTAGE_FLAG_1 = "percentage-flag-1",
-	PERCENTAGE_FLAG_2 = "percentage-flag-2",
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
 	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
