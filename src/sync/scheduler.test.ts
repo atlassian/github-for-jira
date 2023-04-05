@@ -15,17 +15,19 @@ describe("scheduler", () => {
 		const ret = await new DatabaseStateCreator().withActiveRepoSyncState().create();
 		subscription = ret.subscription;
 		const repoSyncState = ret.repoSyncState!;
+		const newRepoSyncStatesData: any[] = [];
 		for (let newRepoStateNo = 1; newRepoStateNo < 500; newRepoStateNo++) {
-			const plainObj = repoSyncState.get();
-			delete plainObj["id"];
-			delete plainObj["commitStatus"];
-			delete plainObj["branchStatus"];
-			const newRepoSyncState = new RepoSyncState(plainObj);
-			newRepoSyncState.repoId = repoSyncState.repoId + newRepoStateNo;
-			newRepoSyncState.repoName = repoSyncState.repoName + newRepoStateNo;
-			newRepoSyncState.repoFullName = repoSyncState.repoFullName + newRepoStateNo;
-			await newRepoSyncState.save();
+			const newRepoSyncState = { ...repoSyncState.get() };
+			delete newRepoSyncState["id"];
+			delete newRepoSyncState["commitStatus"];
+			delete newRepoSyncState["branchStatus"];
+			newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
+			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
+			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo;
+			newRepoSyncStatesData.push(newRepoSyncState);
 		}
+		await RepoSyncState.bulkCreate(newRepoSyncStatesData);
+
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
 			expect.anything()
@@ -53,7 +55,7 @@ describe("scheduler", () => {
 	it("always returns repo task if not complete yet", async () => {
 		subscription.repositoryStatus = undefined;
 		const nextTasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(nextTasks[0].task).toEqual("repository");
+		expect(nextTasks.mainTask!.task).toEqual("repository");
 	});
 
 	it("first (main) task is always same (deterministic), when FF off", async () => {
@@ -83,7 +85,9 @@ describe("scheduler", () => {
 	});
 
 	it("returns only main task when FF is off", async () => {
-		expect((await getNextTasks(subscription, [], getLogger("test"))).length).toEqual(1);
+		const outcome = await getNextTasks(subscription, [], getLogger("test"));
+		expect(outcome.mainTask).toBeDefined();
+		expect(outcome.otherTasks.length).toEqual(0);
 	});
 
 	it("uses smallest quota between core and graphql to determine number of subtasks", async () => {
@@ -96,7 +100,9 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.length).toEqual(4);
+		// 2000 quota is for 4 tasks (500 reserved for each): 1 main task + 3 other tasks
+		expect(tasks.mainTask).toBeDefined();
+		expect(tasks.otherTasks.length).toEqual(3);
 	});
 
 	it("number of tasks never exceeds some limit", async () => {
@@ -109,7 +115,9 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.length).toEqual(101);
+		expect(tasks.mainTask).toBeDefined();
+		// 100 is the max number of subtasks
+		expect(tasks.otherTasks.length).toEqual(100);
 	});
 
 	it("does not blow up when quota is higher than available number of tasks", async () => {
@@ -127,7 +135,9 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.length).toEqual(20);
+		// We have 10 reposyncstate records, each holds 2 tasks
+		expect(tasks.mainTask).toBeDefined();
+		expect(tasks.otherTasks.length).toEqual(19);
 	});
 
 	it("shuffles the tail", async () => {
@@ -157,7 +167,8 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.length).toEqual(1);
+		expect(tasks.mainTask).toBeDefined();
+		expect(tasks.otherTasks.length).toEqual(0);
 	});
 
 	it("subtasks are picked only from tasks that would become main tasks soon", async () => {
@@ -170,7 +181,8 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		tasks.forEach(task => {
+		expect(tasks.mainTask?.repositoryId).toBeGreaterThan(100);
+		tasks.otherTasks.forEach(task => {
 			expect(task.repositoryId).toBeGreaterThan(100);
 		});
 	});
@@ -186,10 +198,35 @@ describe("scheduler", () => {
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		const repoIdsAndTaskType = new Set<string>();
-		tasks.forEach(task => {
+		tasks.otherTasks.forEach(task => {
 			repoIdsAndTaskType.add("" + task.repositoryId + task.task);
 		});
-		expect(tasks.length).toEqual(repoIdsAndTaskType.size);
+		repoIdsAndTaskType.add("" + tasks.mainTask!.repositoryId + tasks.mainTask!.task);
+		expect(tasks.otherTasks.length + 1).toEqual(repoIdsAndTaskType.size);
+	});
+
+	it("all returned other tasks are within some pool", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
+			expect.anything()
+		).mockResolvedValue(true);
+
+		configureRateLimit(10000, 10000);
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const otherTasksAndTaskTypes = new Set<string>();
+		for (let i = 0; i < 50; i++) {
+			const tasks = await getNextTasks(subscription, [], getLogger("test"));
+			tasks.otherTasks.forEach(task => {
+				otherTasksAndTaskTypes.add("" + task.repositoryId);
+			});
+		}
+		// The pool size should be 100:
+		// 10000 / 500  = 20 - this is the number of subtasks
+		// 20 * 10 (POOL_SIZE_COEF) = 200 - number of repos to fetch
+		// each repo has 2 tasks, therefore only top 100 repos will be fetched
+		expect(otherTasksAndTaskTypes.size).toBeGreaterThan(80);
+		expect(otherTasksAndTaskTypes.size).toBeLessThan(101);
 	});
 
 	it("returns empty when all tasks are finished", async () => {
@@ -201,7 +238,10 @@ describe("scheduler", () => {
 		}));
 
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
-		expect(tasks.length).toEqual(0);
+		expect(tasks).toStrictEqual({
+			mainTask: undefined,
+			otherTasks: []
+		});
 	});
 
 	it("filters by provided tasks", async () => {
@@ -214,7 +254,8 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, ["commit"], getLogger("test"));
-		tasks.forEach(task => {
+		expect(tasks.mainTask!.task).toEqual("commit");
+		tasks.otherTasks.forEach(task => {
 			expect(task.task).toEqual("commit");
 		});
 	});
