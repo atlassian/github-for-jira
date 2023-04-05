@@ -9,6 +9,21 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
+	if (req.query?.nukeAll) {
+		const repos = (await RepoSyncState.findAll({}));
+		for (let i =0; i < repos.length; i++) {
+			const repo = repos[i];
+			repo.commitStatus = "complete";
+			repo.pullStatus = "complete";
+			repo.branchStatus = "complete";
+			repo.buildStatus = "complete";
+			repo.deploymentStatus = "complete";
+			await repo.save();
+		}
+		res.status(200).send("Done");
+		return;
+	}
+
 	if (!jiraHost || !gitHubInstallationId) {
 		const msg = "Missing Jira Host or Installation ID";
 		req.log.warn({ req, res }, msg);
