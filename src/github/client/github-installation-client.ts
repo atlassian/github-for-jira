@@ -27,7 +27,7 @@ import {
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
-import { GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
+import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -242,7 +242,10 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (err instanceof GithubClientGraphQLError && err.isChangedFilesError()) {
+				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
+					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
+					(err instanceof GithubClientError && err.status === 502)
+				) {
 					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
 					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
 				}
@@ -277,7 +280,10 @@ export class GitHubInstallationClient extends GitHubClient {
 		const config = await this.installationAuthenticationHeaders();
 		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
 			.catch((err) => {
-				if (err instanceof GithubClientGraphQLError && err.isChangedFilesError()) {
+				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
+					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
+					(err instanceof GithubClientError && err.status === 502)
+				) {
 					this.logger.warn({ err },"retrying commit graphql query without changedFiles");
 					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
 				}
