@@ -5,6 +5,31 @@ import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
+import { getJiraClient } from "~/src/jira/client/jira-client";
+
+export const setJiraAdminPrivileges = async (req: Request, claims, jiraHost, installationId) => {
+	// We only need to add this to the session if it doesn't exist
+	if (req.session.isJiraAdmin !== undefined) {
+		return;
+	}
+	try {
+		const userAccountId = claims.sub;
+		const jiraClient = await getJiraClient(
+			jiraHost,
+			installationId,
+			undefined
+		);
+
+		// Make jira call to permissions with userAccountId.
+		const permissions = await jiraClient.permissions.checkAdmin(userAccountId);
+		const hasAdminPermissions = permissions.data.globalPermissions.includes("ADMINISTER");
+
+		req.session.isJiraAdmin = hasAdminPermissions;
+		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
+	} catch (err) {
+		req.log.error({ err }, "Failed to fetch Jira Admin rights");
+	}
+};
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -29,8 +54,10 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		const secret = await installation.decrypt("encryptedSharedSecret", req.log);
 
 		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		let verifiedClaims;
 		try {
-			verifySymmetricJwt(token, secret, req, tokenType, req.log);
+			verifiedClaims = verifySymmetricJwt(token, secret, req.log);
+			verifyJwtClaims(verifiedClaims, tokenType, req);
 		} catch (err) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
 			return res.status(401).send("Unauthorised");
@@ -39,6 +66,9 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
+
+		// Check whether logged in user has Jira Admin permissions and save it to the session
+		await setJiraAdminPrivileges(req, verifiedClaims, installation.jiraHost, installation.id);
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
@@ -83,19 +113,15 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-const verifySymmetricJwt = (token: string, secret: string, req: Request, tokenType: TokenType, logger: Logger): boolean => {
+const verifySymmetricJwt = (token: string, secret: string, logger: Logger) => {
 	const algorithm = getAlgorithm(token);
 
-	/* eslint-disable @typescript-eslint/no-explicit-any*/
-	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
-		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
+		return decodeSymmetric(token, secret, algorithm, false);
 	} catch (err) {
 		logger.warn({ err }, "Invalid JWT");
 		throw new Error(`Unable to decode JWT token: ${err.message}`);
 	}
-
-	return verifyJwtClaims(verifiedClaims, tokenType, req);
 };
 
 export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, tokenType: TokenType, req: Request): boolean => {

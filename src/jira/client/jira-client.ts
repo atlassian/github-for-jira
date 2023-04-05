@@ -327,6 +327,19 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		permissions: {
+			checkAdmin: async (accountId: string) => {
+				const payload = {
+					accountId,
+					globalPermissions: [
+						"ADMINISTER"
+					]
+				};
+				logger.info("Requesting user permissions from jira.");
+				const response: AxiosResponse = await instance.post("/rest/api/latest/permissions/check", payload);
+				return response;
+			}
 		}
 	};
 
