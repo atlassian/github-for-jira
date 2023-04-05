@@ -44,8 +44,7 @@ export const findOrStartSync = async (
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
-	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
-	const branchCommitsFromDate = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?.toISOString());
+	const mainCommitsFromDate = await getCommitSinceDate(jiraHost, commitsFromDate?.toISOString());
 
 	// Start sync
 	await sqsQueues.backfill.sendMessage({
@@ -54,7 +53,6 @@ export const findOrStartSync = async (
 		syncType,
 		startTime: new Date().toISOString(),
 		commitsFromDate: mainCommitsFromDate?.toISOString(),
-		branchCommitsFromDate: branchCommitsFromDate?.toISOString(),
 		targetTasks,
 		gitHubAppConfig,
 		metricTags: {
@@ -124,11 +122,11 @@ const resetFailedCode = async (subscription: Subscription, syncType?: SyncType, 
 	});
 };
 
-export const getCommitSinceDate = async (jiraHost: string, flagName: NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT | NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, commitsFromDate?: string): Promise<Date | undefined> => {
+export const getCommitSinceDate = async (jiraHost: string, commitsFromDate?: string): Promise<Date | undefined> => {
 	if (commitsFromDate) {
 		return new Date(commitsFromDate);
 	}
-	const timeCutoffMsecs = await numberFlag(flagName, NaN, jiraHost);
+	const timeCutoffMsecs = await numberFlag(NumberFlags.SYNC_MAIN_COMMIT_TIME_LIMIT, NaN, jiraHost);
 	if (!timeCutoffMsecs || timeCutoffMsecs === -1) {
 		return undefined;
 	}
