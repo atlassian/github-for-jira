@@ -279,4 +279,21 @@ describe("setJiraAdminPrivileges",  () => {
 
 		expect(mockRequest.session.isJiraAdmin).toBe(false);
 	});
+
+	it("should exit early when claim has no sub", async () => {
+		const mockClaimsNoSub = {};
+		mockRequest.session.isJiraAdmin = undefined;
+
+		await setJiraAdminPrivileges(mockRequest, mockClaimsNoSub, installation);
+
+		expect(mockRequest.session.isJiraAdmin).toBe(undefined);
+	});
+
+	it("should return session value without JiraClient request if already exists", async () => {
+		mockRequest.session.isJiraAdmin = "true";
+
+		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
+
+		expect(mockRequest.session.isJiraAdmin).toBe("true");
+	});
 });

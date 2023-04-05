@@ -16,8 +16,11 @@ export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, a
 
 	try {
 		const userAccountId = claims.sub;
+		// Can't check permissions without userAccountId
+		if (!userAccountId) {
+			return;
+		}
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
-
 		// Make jira call to permissions with userAccountId.
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 		const hasAdminPermissions = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
