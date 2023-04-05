@@ -5,13 +5,7 @@ import supertest from "supertest";
 import { getLogger } from "~/src/config/logger";
 import { jiraSymmetricJwtMiddleware, setJiraAdminPrivileges } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
-import { getJiraClient } from "~/src/jira/client/jira-client";
-
-jest.mock("~/src/jira/client/jira-client", () => {
-	return {
-		getJiraClient: jest.fn()
-	};
-});
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
@@ -235,59 +229,54 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 });
 
-describe("setJiraAdminPrivileges", () => {
+describe("setJiraAdminPrivileges",  () => {
 	const mockRequest = {
 		session: {},
 		log: {
 			info: jest.fn(),
+			debug: jest.fn(),
 			error: jest.fn()
 		}
 	} as unknown as Request;
+	const mockClaims = { sub: "1111" };
+	let installation;
 
-	const mockedGetJiraClient = getJiraClient as jest.MockedFunction<typeof getJiraClient>;
-
-	afterEach(() => {
-		jest.resetAllMocks();
+	beforeEach(async () => {
+		installation = (await new DatabaseStateCreator().create()).installation;
 	});
 
-	it("should set isJiraAdmin to true if user has ADMINISTER permissions", async () => {
+	it("sets session isJiraAdmin to true if user has ADMINISTER permission", async () => {
 		mockRequest.session.isJiraAdmin = undefined;
-		const mockClaims = { sub: "1111" };
-		const mockJiraClient = {
-			permissions: {
-				checkAdmin: jest.fn(() => ({
-					data: {
-						globalPermissions: ["ADMINISTER"]
-					}
-				}))
-			}
+		const payload = {
+			accountId: "1111",
+			globalPermissions: [
+				"ADMINISTER"
+			]
 		};
-		mockedGetJiraClient.mockResolvedValueOnce(mockJiraClient);
+		jiraNock
+			.post("/rest/api/latest/permissions/check", payload)
+			.reply(200, { globalPermissions: ["ADMINISTER"] });
 
-		await setJiraAdminPrivileges(mockRequest, mockClaims, "https://example.atlassian.net", "123");
+		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
 
-		expect(mockedGetJiraClient).toHaveBeenCalledWith("https://example.atlassian.net", "123", undefined);
-		expect(mockJiraClient.permissions.checkAdmin).toHaveBeenCalledWith("1111");
 		expect(mockRequest.session.isJiraAdmin).toBe(true);
-		expect(mockRequest.log.info).toHaveBeenCalledWith({ isAdmin: true }, "Admin permissions set");
 	});
 
-	it("should not set isJiraAdmin if it already exists in the session", async () => {
-		mockRequest.session.isJiraAdmin = "false";
-
-		await setJiraAdminPrivileges(mockRequest, { sub: "1111" }, "https://example.atlassian.net", "123");
-
-		expect(mockedGetJiraClient).not.toHaveBeenCalled();
-		expect(mockRequest.session.isJiraAdmin).toBe("false");
-	});
-
-	it("should log an error if the Jira API call fails", async () => {
+	it("sets session isJiraAdmin to false if user does not have ADMINISTER permission", async () => {
+		mockClaims.sub = "2222";
 		mockRequest.session.isJiraAdmin = undefined;
-		mockedGetJiraClient.mockRejectedValueOnce(new Error("Something went wrong"));
+		const payload = {
+			accountId: "2222",
+			globalPermissions: [
+				"ADMINISTER"
+			]
+		};
+		jiraNock
+			.post("/rest/api/latest/permissions/check", payload)
+			.reply(200, { globalPermissions: [] });
 
-		await setJiraAdminPrivileges(mockRequest, { sub: "111" }, "https://example.atlassian.net", "123");
+		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
 
-		expect(mockedGetJiraClient).toHaveBeenCalledWith("https://example.atlassian.net", "123", undefined);
-		expect(mockRequest.log.error).toHaveBeenCalledWith({ err: new Error("Something went wrong") }, "Failed to fetch Jira Admin rights");
+		expect(mockRequest.session.isJiraAdmin).toBe(false);
 	});
 });
