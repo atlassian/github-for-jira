@@ -128,106 +128,6 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	// Function can be removed with use-shared-pr-transform feature flag
-	const buildJiraPayloadOldCloud = (repoId: string) => {
-		return {
-			"preventTransitions": true,
-			operationType: "BACKFILL",
-			"repositories":
-				[
-					{
-						"id": repoId,
-						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author":
-										{
-											"avatar": "test-pull-request-author-avatar",
-											"name": "test-pull-request-author-login",
-											"email": "test-pull-request-author-login@noreply.user.github.com",
-											"url": "test-pull-request-author-url"
-										},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "test-repo-url/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys":
-										[
-											"TES-15"
-										],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl": "test-repo-url/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
-						"url": "test-repo-url",
-						"updateSequenceId": 12345678
-					}
-				],
-			"properties":
-				{
-					"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
-				}
-		};
-	};
-
-	// Function can be removed with use-shared-pr-transform feature flag
-	const buildJiraPayloadOld = (repoId: string) => {
-		return {
-			"preventTransitions": true,
-			operationType: "BACKFILL",
-			"repositories":
-				[
-					{
-						"id": repoId,
-						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author":
-										{
-											"avatar":"https://avatars0.githubusercontent.com/u/173?v=4",
-											"name": "test-pull-request-author-login",
-											"email": "test-pull-request-author-login@noreply.user.github.com",
-											"url":"https://github.com/test-pull-request-author-login"
-										},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "test-repo-url/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys":
-										[
-											"TES-15"
-										],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl":"test-repo-url/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
-						"url": "test-repo-url",
-						"updateSequenceId": 12345678
-					}
-				],
-			"properties":
-				{
-					"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
-				}
-		};
-	};
-
 	describe("cloud", () => {
 
 		let repoSyncState: RepoSyncState;
@@ -240,10 +140,6 @@ describe("sync/pull-request", () => {
 				.repoSyncStatePendingForPrs()
 				.withPrsCustomCursor(String(PRS_INITIAL_CURSOR))
 				.create()).repoSyncState!;
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_SHARED_PR_TRANSFORM)
-				.mockResolvedValue(true);
 		});
 
 		describe.each([
@@ -499,11 +395,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_SHARED_PR_TRANSFORM, expect.anything())
-				.mockResolvedValue(true);
-
 			const buildResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -551,134 +442,6 @@ describe("sync/pull-request", () => {
 				});
 
 			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("6769746875626d79646f6d61696e636f6d-1")).reply(200);
-
-			const data: BackfillMessagePayload = {
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-				jiraHost,
-				gitHubAppConfig: {
-					uuid: gitHubServerApp.uuid,
-					gitHubAppId: gitHubServerApp.id,
-					appId: gitHubServerApp.appId,
-					clientId: gitHubServerApp.gitHubClientId,
-					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
-				}
-			};
-
-			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
-		});
-	});
-
-	// These tests can be removed with use-shared-pr-transform feature flag clean up
-	describe("cloud - false ff use-shared-pr-transform", () => {
-
-		beforeEach(async () => {
-			await new DatabaseStateCreator()
-				.withActiveRepoSyncState()
-				.repoSyncStatePendingForPrs()
-				.create();
-		});
-
-		describe.each([
-			["[TES-15] Evernote Test", "use-the-force"],
-			["Evernote Test", "TES-15"]
-		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
-			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-				const modifiedList = _.cloneDeep(pullRequestList);
-				modifiedList[0].title = title;
-				modifiedList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubNock
-					.get("/repos/integrations/test-repo-name/pulls")
-					.query(true)
-					.reply(200, modifiedList)
-					.get("/repos/integrations/test-repo-name/pulls/51")
-					.reply(200, pullRequest)
-					.get("/users/test-pull-request-author-login")
-					.reply(200, {
-						login: "test-pull-request-author-login",
-						avatar_url: "test-pull-request-author-avatar",
-						html_url: "test-pull-request-author-url"
-					});
-
-				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOldCloud("1")).reply(200);
-
-
-				await expect(processInstallation(jest.fn())({
-					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-					jiraHost
-				}, sentry, getLogger("test"))).toResolve();
-			});
-		});
-
-		it("should not sync if nodes are empty", async () => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubNock
-				.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, []);
-
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
-
-			await expect(processInstallation(jest.fn())({
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-				jiraHost
-			}, sentry, getLogger("test"))).toResolve();
-			expect(scope).not.toBeDone();
-			removeInterceptor(interceptor);
-		});
-
-		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
-			githubNock.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, pullRequestList);
-
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
-
-			await expect(processInstallation(jest.fn())({
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-				jiraHost
-			}, sentry, getLogger("test"))).toResolve();
-			expect(scope).not.toBeDone();
-			removeInterceptor(interceptor);
-		});
-
-	});
-
-	// These tests can be removed with use-shared-pr-transform feature flag clean up
-	describe("server - false ff use-shared-pr-transform", () => {
-
-		let gitHubServerApp: GitHubServerApp;
-
-		beforeEach(async () => {
-
-			const buildResult = await new DatabaseStateCreator()
-				.forServer()
-				.withActiveRepoSyncState()
-				.repoSyncStatePendingForPrs()
-				.create();
-			gitHubServerApp = buildResult.gitHubServerApp!;
-		});
-
-		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-			const modifiedList = _.cloneDeep(pullRequestList);
-			modifiedList[0].title = "[TES-15] Evernote Test";
-			modifiedList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheApiNock
-				.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, modifiedList)
-				.get("/repos/integrations/test-repo-name/pulls/51")
-				.reply(200, pullRequest);
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOld("6769746875626d79646f6d61696e636f6d-1")).reply(200);
 
 			const data: BackfillMessagePayload = {
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
