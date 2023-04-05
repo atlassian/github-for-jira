@@ -244,6 +244,49 @@ describe("scheduler", () => {
 		});
 	});
 
+	it("returns empty when all tasks are finished with FF ON", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
+			expect.anything()
+		).mockResolvedValue(true);
+
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStats.map((record) => {
+			record.branchStatus = "complete";
+			record.commitStatus = "complete";
+			return record.save();
+		}));
+
+		const tasks = await getNextTasks(subscription, [], getLogger("test"));
+		expect(tasks).toStrictEqual({
+			mainTask: undefined,
+			otherTasks: []
+		});
+	});
+
+	it("returns empty when all tasks are finished with FF ON and quota provided", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
+			expect.anything()
+		).mockResolvedValue(true);
+
+		configureRateLimit(10000, 10000);
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStats.map((record) => {
+			record.branchStatus = "complete";
+			record.commitStatus = "complete";
+			return record.save();
+		}));
+
+		const tasks = await getNextTasks(subscription, [], getLogger("test"));
+		expect(tasks).toStrictEqual({
+			mainTask: undefined,
+			otherTasks: []
+		});
+	});
+
 	it("filters by provided tasks", async () => {
 		when(booleanFlag).calledWith(
 			BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,

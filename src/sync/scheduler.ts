@@ -107,6 +107,13 @@ const calculateNextTasksWithSubtasks = (repoSyncStatesWithPendingTasks: RepoSync
 	let mainTask: Task | undefined = undefined;
 	const otherTasks: Task[] = [];
 
+	if (repoSyncStatesWithPendingTasks.length === 0) {
+		return {
+			mainTask: undefined,
+			otherTasks: []
+		};
+	}
+
 	for (const syncStateWithPendingTasks of repoSyncStatesWithPendingTasks) {
 		const pendingTasks = mapSyncStateToTasks(tasks, syncStateWithPendingTasks);
 
@@ -169,6 +176,12 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 		}
 
 		const pendingRepoSyncState = await fetchPendingRepoSyncStates(subscription, tasks, 1);
+		if (pendingRepoSyncState.length === 0) {
+			return {
+				mainTask: undefined,
+				otherTasks: []
+			};
+		}
 		return {
 			// Both SQL and mapSyncStateToTasks are deterministic => mainTask is deterministic
 			mainTask: mapSyncStateToTasks(tasks, pendingRepoSyncState[0])[0],
