@@ -78,6 +78,7 @@
                         class="jiraConfiguration__errorSummary__btn"
                         href="#"
                         data-installation-id="{{connection.id}}"
+                        data-app-id="{{ ../gitHubAppId }}"
                         id="error-summary"
                 >
                   <span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
@@ -106,7 +107,6 @@
                 <div class="jiraConfiguration__retryContainer">
                   <button
                       class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                      data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
                       data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"
@@ -146,7 +146,6 @@
                 <div class="jiraConfiguration__table__cell__settings__dropdownItem">
                   <button
                       class="sync-connection-link restart-backfill-button"
-                      data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
                       data-app-id="{{ ../gitHubAppId }}"
                       id="restart-backfill"

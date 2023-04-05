@@ -34,6 +34,24 @@ describe("github-installation-client", () => {
 			const data = await client.getCommitsPage("testOwner", "testRepoName");
 			expect(data).toStrictEqual({ foo: "bar" });
 		});
+
+		it("retries 502 error", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const client = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+
+			githubNock
+				.post("/graphql")
+				.reply(502)
+				.post("/graphql")
+				.reply(200, {
+					data: {
+						foo: "bar"
+					}
+				});
+
+			const data = await client.getCommitsPage("testOwner", "testRepoName");
+			expect(data).toStrictEqual({ foo: "bar" });
+		});
 	});
 
 	describe("getBranchesPage", () => {
@@ -59,6 +77,24 @@ describe("github-installation-client", () => {
 					foo: "bar"
 				}
 			});
+
+			const data = await client.getBranchesPage("testOwner", "testRepoName");
+			expect(data).toStrictEqual({ foo: "bar" });
+		});
+
+		it("retries 502 error", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const client = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+
+			githubNock
+				.post("/graphql")
+				.reply(502)
+				.post("/graphql")
+				.reply(200, {
+					data: {
+						foo: "bar"
+					}
+				});
 
 			const data = await client.getBranchesPage("testOwner", "testRepoName");
 			expect(data).toStrictEqual({ foo: "bar" });

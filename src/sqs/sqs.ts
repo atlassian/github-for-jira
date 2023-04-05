@@ -279,7 +279,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				// Therefore, sending a new msg instead of keep polling GitHub until rate limit is raised.
 				const { MessageId } = await this.sendMessage({ ...payload, rateLimited: true }, rateLimitCheckResult.resetTimeInSeconds, context.log);
 				await this.deleteMessage(context);
-				context.log.info({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
+				context.log.warn({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
 				return;
 			}
 

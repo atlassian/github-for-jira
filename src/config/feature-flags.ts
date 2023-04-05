@@ -18,7 +18,7 @@ export enum BooleanFlags {
 	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
-	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
+	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill"
 }
 
 export enum StringFlags {
@@ -30,9 +30,10 @@ export enum StringFlags {
 }
 
 export enum NumberFlags {
+	PERCENTAGE_FLAG_1 = "percentage-flag-1",
+	PERCENTAGE_FLAG_2 = "percentage-flag-2",
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
-	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
