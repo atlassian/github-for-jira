@@ -1,5 +1,5 @@
 import { when } from "jest-when";
-import { ApiInstallationDeletePollinator, STAGE_POLLINATOR_JIRA_HOST, PROD_POLLINATOR_JIRA_HOST } from "./api-installation-delete-pollinator";
+import { ApiInstallationDeleteForPollinator, STAGE_POLLINATOR_JIRA_HOST, PROD_POLLINATOR_JIRA_HOST } from "./api-installation-delete-pollinator";
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
@@ -8,7 +8,7 @@ import { RepoSyncState } from "~/src/models/reposyncstate";
 jest.mock("~/src/jira/client/jira-client");
 jest.mock("config/feature-flags");
 
-describe("ApiInstallationDeletePollinator", ()=>{
+describe("ApiInstallationDeleteForPollinator", ()=>{
 	describe("GHES support", ()=>{
 		const GHES_GITHUB_INSTALLATION_ID = 123;
 		const GHES_GITHUB_APP_ID = 456;
@@ -41,7 +41,7 @@ describe("ApiInstallationDeletePollinator", ()=>{
 
 		it("should throw error if jiraHost is not within pollinator site", async ()=>{
 			const res = getRes();
-			await ApiInstallationDeletePollinator(getReq({
+			await ApiInstallationDeleteForPollinator(getReq({
 				params: {
 					jiraHost: "https://whatever.atlassian.net",
 					installationId: 1,
@@ -66,7 +66,7 @@ describe("ApiInstallationDeletePollinator", ()=>{
 			expect((await RepoSyncState.findAllFromSubscription(sub)).length).toBe(1);
 
 			const res = getRes();
-			await ApiInstallationDeletePollinator(getReq({
+			await ApiInstallationDeleteForPollinator(getReq({
 				params: {
 					jiraHost: jiraSiteUrl,
 					installationId: GHES_GITHUB_INSTALLATION_ID.toString(),

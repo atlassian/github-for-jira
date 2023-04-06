@@ -6,7 +6,7 @@ import { RepoSyncState } from "~/src/models/reposyncstate";
 export const STAGE_POLLINATOR_JIRA_HOST = "https://fusion-arc-pollinator-staging-app.atlassian.net";
 export const PROD_POLLINATOR_JIRA_HOST = "https://fusion-pollinator.atlassian.net";
 
-export const ApiInstallationDeletePollinator = async (req: Request, res: Response): Promise<void> => {
+export const ApiInstallationDeleteForPollinator = async (req: Request, res: Response): Promise<void> => {
 	const gitHubInstallationId = Number(req.params.installationId);
 	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
