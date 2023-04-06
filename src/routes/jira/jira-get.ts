@@ -11,7 +11,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface FailedConnection {
 	id: number;
@@ -121,31 +121,11 @@ const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number =>
 	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
 };
 
-const trackWhetherDifferentFlagsBindToSamePercentageForSameUserKey = async (jiraHost: string) => {
-	const ffPer1 = await numberFlag(NumberFlags.PERCENTAGE_FLAG_1, NaN, jiraHost);
-	const ffPer2 = await numberFlag(NumberFlags.PERCENTAGE_FLAG_2, NaN, jiraHost);
-	const isSamePercentageBucket =
-		(ffPer1 && ffPer2)
-		||
-		(!ffPer1 && !ffPer2);
-	statsd.increment("github-for-jira.app.server.flags-percentage", {
-		ffMainCommitsFrom: "" + ffPer1,
-		ffBranchCommitsFrom: "" + ffPer2,
-		isSamePercentageBucket: "" + isSamePercentageBucket
-	});
-};
-
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 
 	const { jiraHost, nonce } = res.locals;
 
 	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-
-	try {
-		await trackWhetherDifferentFlagsBindToSamePercentageForSameUserKey(jiraHost);
-	} catch (e) {
-		req.log.warn({ err: e }, `Error tracking flags percentage experiment`);
-	}
 
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];

@@ -66,6 +66,7 @@ declare global {
 				githubToken?: string;
 				githubRefreshToken?: string;
 				gitHubUuid?: string;
+				isJiraAdmin?: string;
 				temp?:  {
 					[key: string]: string;
 				}
