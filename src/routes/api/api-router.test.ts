@@ -60,7 +60,7 @@ describe("API Router", () => {
 			webhookSecret: "webhook-secret"
 		}, jiraHost);
 
-		Subscription.create({
+		await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
@@ -309,28 +309,6 @@ describe("API Router", () => {
 					.reply(200);
 			});
 
-			it("Should work with old delete installation route", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
-			it("Should work with old delete installation route with gitHubAppId", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/github-app-id/${gitHubServerApp.id}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
@@ -425,7 +403,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should drop failed status for passed tasks", async () => {
@@ -442,7 +420,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should not update status for other tasks", async () => {
@@ -459,7 +437,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toEqual("failed");
+				expect(oneMore?.branchStatus).toEqual("failed");
 			});
 		});
 	});

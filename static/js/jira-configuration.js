@@ -94,7 +94,6 @@ $("#cancel-backfill").click(() => {
 
 $(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
 	const appId = $(event.target).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
@@ -103,14 +102,13 @@ $(".sync-connection-link").click(event => {
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
+		let syncType = undefined;
+		if (fullSyncCheckbox && fullSyncCheckbox.checked) {
+			syncType = "full";
+		}
 		window.AP.context.getToken(function (jwt) {
-			const isIncrementalBackfillEnabled = $("body")
-				.data("is-incremental-backfill-enabled");
-			if(isIncrementalBackfillEnabled) {
-				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, commitsFromDate, appId});
-			} else {
-				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
-			}
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
 		});
 	});
 });
@@ -121,9 +119,8 @@ $(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
 });
 
 $(".jiraConfiguration__errorSummary__btn").click(event => {
-	const installationId = $(event.target).parent().data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const appId = $(event.target).data("app-id");
+	const installationId = $(event.currentTarget).data("installation-id");
+	const appId = $(event.currentTarget).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
@@ -131,7 +128,7 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, undefined, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
 		});
 	});
 });

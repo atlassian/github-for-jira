@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { processInstallation } from "../sync/installation";
 import * as Sentry from "@sentry/node";
 import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
@@ -6,7 +7,7 @@ import { BackfillMessagePayload, MessageHandler, SQSMessageContext } from "./sqs
 import { SQS } from "aws-sdk";
 
 export const backfillQueueMessageHandler =
-	(sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>): MessageHandler<BackfillMessagePayload> =>
+	(sendSQSBackfillMessage: (message: BackfillMessagePayload, delaySec: number, logger: Logger) => Promise<SQS.SendMessageResult>): MessageHandler<BackfillMessagePayload> =>
 		async (context: SQSMessageContext<BackfillMessagePayload>) => {
 			const sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
 			sentry.configureScope((scope) =>

@@ -6,10 +6,10 @@ import fs from "fs";
 import path from "path";
 
 interface CreatorResult {
-	installation: Installation,
-	subscription: Subscription,
-	gitHubServerApp?: GitHubServerApp,
-	repoSyncState?: RepoSyncState
+	installation: Installation;
+	subscription: Subscription;
+	repoSyncState: RepoSyncState | undefined;
+	gitHubServerApp: GitHubServerApp | undefined
 }
 
 export class DatabaseStateCreator {
@@ -134,10 +134,10 @@ export class DatabaseStateCreator {
 		}) : undefined;
 
 		return {
-			installation: await Installation.findByPk(installation.id),
-			subscription: await Subscription.findByPk(subscription.id),
-			gitHubServerApp: gitHubServerApp ? await GitHubServerApp.findByPk(gitHubServerApp.id) : undefined,
-			repoSyncState: repoSyncState ? await RepoSyncState.findByPk(repoSyncState.id) : undefined
+			installation: (await Installation.findByPk(installation.id))!,
+			subscription: (await Subscription.findByPk(subscription.id))!,
+			gitHubServerApp: (gitHubServerApp ? await GitHubServerApp.findByPk(gitHubServerApp.id) : undefined)!,
+			repoSyncState:(repoSyncState ? await RepoSyncState.findByPk(repoSyncState.id) : undefined)!
 		};
 	}
 
