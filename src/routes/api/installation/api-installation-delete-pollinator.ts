@@ -39,7 +39,7 @@ export const ApiInstallationDeleteForPollinator = async (req: Request, res: Resp
 
 	try {
 		const jiraClient = await getJiraClient(jiraHost, Number(gitHubInstallationId), gitHubAppId, req.log);
-		req.log.info({ jiraHost, gitHubInstallationId }, `Deleting DevInfo`);
+		req.log.info({ jiraHost, gitHubInstallationId }, "Deleting DevInfo");
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 		await subscription.update({
 			syncStatus: null,
