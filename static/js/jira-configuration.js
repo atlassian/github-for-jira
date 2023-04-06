@@ -314,3 +314,7 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
 	}
 });
+
+$(document).ready(function() {
+	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
+});
