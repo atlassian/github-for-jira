@@ -7,7 +7,7 @@ export const STAGE_POLLINATOR_JIRA_HOST = "https://fusion-arc-pollinator-staging
 export const PROD_POLLINATOR_JIRA_HOST = "https://fusion-pollinator.atlassian.net";
 
 export const ApiInstallationDeletePollinator = async (req: Request, res: Response): Promise<void> => {
-	const gitHubInstallationId = req.params.installationId;
+	const gitHubInstallationId = Number(req.params.installationId);
 	const gitHubAppId = Number(req.params.gitHubAppId) || undefined;
 	const jiraHost = req.params.jiraHost;
 
@@ -27,7 +27,7 @@ export const ApiInstallationDeletePollinator = async (req: Request, res: Respons
 
 	const subscription: Subscription | null = await Subscription.getSingleInstallation(
 		jiraHost,
-		Number(gitHubInstallationId),
+		gitHubInstallationId,
 		gitHubAppId
 	);
 
