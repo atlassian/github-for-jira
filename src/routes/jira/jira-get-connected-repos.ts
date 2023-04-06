@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from "express";
+import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
 
@@ -17,6 +18,9 @@ export const JiraGetConnectedRepos = async (
 		const { jiraHost, nonce } = res.locals;
 		const subscriptionId = Number(req.params.subscriptionId);
 		const page = Number(req.query.page || 1);
+		const pageSize = Number(req.query.pageSize || 10);
+		const repoName = req.query.repoName || "";
+		const syncStatusFilter = req.query.syncStatus || undefined;
 
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");
@@ -26,7 +30,54 @@ export const JiraGetConnectedRepos = async (
 
 		const subscription = await Subscription.findByPk(subscriptionId);
 
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		let syncStatusCondition = {};
+		if (syncStatusFilter && syncStatusFilter !== "all") {
+			syncStatusCondition = {
+				[Op.or]: [
+					{ branchStatus: `${syncStatusFilter}` },
+					{ commitStatus: `${syncStatusFilter}` },
+					{ pullStatus: `${syncStatusFilter}` },
+					{ buildStatus: `${syncStatusFilter}` },
+					{ deploymentStatus: `${syncStatusFilter}` }
+				]
+			};
+		}
+
+		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
+			where: {
+				[Op.and]: [
+					{
+						repoName: {
+							[Op.like]: `%${repoName}%`
+						}
+					},
+					{
+						...syncStatusCondition
+					}
+				]
+
+			}
+		});
+
+		const offset = page == 1 ? 0 : (page - 1) * pageSize;
+
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
+			where: {
+				[Op.and]: [
+					{
+						repoName: {
+							[Op.like]: `%${repoName}%`
+						}
+					},
+					{
+						...syncStatusCondition
+					}
+				]
+
+			},
+			limit: pageSize,
+			offset
+		});
 		const repos = repoSyncStates.map((repoSyncState) => {
 			return {
 				name: repoSyncState.repoFullName,
@@ -35,21 +86,18 @@ export const JiraGetConnectedRepos = async (
 				commitStatus: repoSyncState?.commitStatus,
 				pullStatus: repoSyncState?.pullStatus,
 				buildStatus: repoSyncState?.buildStatus,
-				deploymentStatus: repoSyncState?.deploymentStatus
+				deploymentStatus: repoSyncState?.deploymentStatus,
+				failedCode: repoSyncState.failedCode
 			};
 		});
 
-		const pageSize = 10;
-		const startPageIndex = (page - 1) * pageSize;
-		const repoPage = repos.slice(startPageIndex, startPageIndex + pageSize);
-
 		res.render("jira-connected-repos.hbs", {
 			host: jiraHost,
-			repos: repoPage,
+			repos: repos,
 			subscriptionId,
 			csrfToken: req.csrfToken(),
 			nonce,
-			...getPaginationState(page, pageSize, repos)
+			...getPaginationState(page, pageSize, reposCount)
 		});
 
 	} catch (error) {
@@ -57,9 +105,9 @@ export const JiraGetConnectedRepos = async (
 	}
 };
 
-const getPaginationState = (page: number, pageSize: number, repos: any[]) => {
+const getPaginationState = (page: number, pageSize: number, reposCount: number) => {
 
-	const totalPages = Math.ceil(repos.length / pageSize);
+	const totalPages = Math.ceil(reposCount / pageSize);
 	const hasPrevPage = page > 1;
 	const prevPageNum = page - 1;
 	const hasNextPage = page < totalPages;

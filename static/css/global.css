@@ -160,6 +160,7 @@ a:focus {
 .jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
+.jiraConnectedRepos__backfillStatusModalOverlay,
 .modal__modalOverlay {
   background: #091e42;
   opacity: 54%;
@@ -169,6 +170,7 @@ a:focus {
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__errorSummaryModal,
+.jiraConnectedRepos__backfillStatusModal,
 .githubSetup__newJiraSiteModal,
 .modal {
   display: none;
@@ -180,6 +182,8 @@ a:focus {
 .jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__restartBackfillModalOverlay,
+.jiraConnectedRepos__backfillStatusModal,
+.jiraConnectedRepos__backfillStatusModalOverlay,
 .githubSetup__newJiraSiteModal,
 .githubSetup__newJiraSiteModalOverlay,
 .modal,
@@ -194,6 +198,7 @@ a:focus {
 .jiraConfiguration__syncRetryModalContent,
 .jiraConfiguration__errorSummaryModalContent,
 .jiraConfiguration__restartBackfillModalContent,
+.jiraConnectedRepos__backfillStatusModalContent,
 .githubSetup__newJiraSiteModalContent,
 .modal__modalContent {
   -webkit-transform: translateX(-50%);
@@ -209,9 +214,14 @@ a:focus {
 
 .jiraConfiguration__syncRetryModalContent,
 .jiraConfiguration__errorSummaryModalContent,
-.jiraConfiguration__restartBackfillModalContent {
+.jiraConfiguration__restartBackfillModalContent{
   top: 15%;
   width: 56%;
+}
+
+.jiraConnectedRepos__backfillStatusModalContent {
+  top: 15%;
+  width: 25%;
 }
 
 .jiraConfiguration__restartBackfillModalContent {
@@ -230,6 +240,7 @@ a:focus {
 .jiraConfiguration__syncRetryModalOverlay,
 .jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
+.jiraConnectedRepos__backfillStatusModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
 .modal__modalOverlay {
   background: #091e42;

@@ -7,8 +7,8 @@
     <meta name="public-url" content="{{APP_URL}}" />
     <title>{{title}}</title>
     <link rel="stylesheet" href="/public/aui/aui-prototyping.css"
-          integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+        integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
     <link rel="stylesheet" href="/public/css/global.css" media="all" />
@@ -17,84 +17,148 @@
 </head>
 
 <body class="aui-page-hybrid">
-<div class="jiraConnectedRepos">
-    <div class="jiraConnectedRepos__header">
-        <div>
-            <button class="navigation__backButton__container navigation__link go-back">
-                <img src="/public/assets/arrow-left.svg" alt="Go back" />
-            </button>
+    <div class="jiraConnectedRepos">
+        <div class="jiraConnectedRepos__header">
+            <div>
+                <button class="navigation__backButton__container navigation__link go-back">
+                    <img src="/public/assets/arrow-left.svg" alt="Go back" />
+                </button>
+            </div>
+            <div class="jiraConnectedRepos__header__title">
+                <h1>
+                    GitHub connected repositories
+                </h1>
+            </div>
         </div>
-        <div class="jiraConnectedRepos__header__title">
-            <h1>
-                GitHub connected repositories
-            </h1>
-        </div>
-    </div>
 
-    <section class="jiraConnectedRepos_content">
+        <section class="jiraConnectedRepos_content">
+            <form class="aui">
+                <div class="jiraConnectedRepos__actionContainer">
+                    <div class="jiraConnectedRepos__action__statusFilter">
+                        <select class="select" id="status-filter">
+                            <option value="all">All</option>
+                            <option value="pending">In Progress</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                    <input type="search" id="repo-search" placeholder="Search Repo">
+                    <button id="repo-search-btn" type="button" class="aui-button aui-button-link">{{!-- <span
+                            class="aui-icon aui-icon-small aui-iconfont-configure"></span> --}}Search</button>
+                </div>
+            </form>
+            <div class="jiraConnectedRepos__tableContainer">
+                <table class="jiraConnectedRepos__table aui">
+                    <thead class="jiraConnectedRepos__table__head">
+                        <tr class="jiraConnectedRepos__table__head_row">
+                            <th class="jiraConnectedRepos__table__head__title">Repository</th>
+                            <th class="jiraConnectedRepos__table__head__title">Backfill Status</th>
+                        </tr>
+                    </thead>
 
-        <div class="jiraConnectedRepos__tableContainer">
-            <table class="jiraConnectedRepos__table aui">
-                <thead class="jiraConnectedRepos__table__head">
-                <tr class="jiraConnectedRepos__table__head_row">
-                    <th class="jiraConnectedRepos__table__head__title">Repository</th>
-                    <th class="jiraConnectedRepos__table__head__title">Backfill</th>
-                </tr>
-                </thead>
+                    <tbody class="jiraConnectedRepos__table__body">
+                        {{#each repos}}
+                        <tr class="jiraConnectedRepos__table__row">
 
-                <tbody class="jiraConnectedRepos__table__body">
-                {{#each repos}}
-                <tr class="jiraConnectedRepos__table__row">
+                            {{! Repo name }}
+                            <td class="jiraConnectedRepos__table__cell">
+                                <a href="#" class="jiraConnectedRepos__table__cell__repoName" data-repo-name="{{name}}"
+                                    data-branch-status="{{branchStatus}}" data-commit-status="{{commitStatus}}"
+                                    data-pull-request-status="{{pullStatus}}" data-build-status="{{buildStatus}}"
+                                    data-deployment-status="{{deploymentStatus}}" data-failed-code="{{failedCode}}">
+                                    {{name}}
+                                </a>
+                            </td>
 
-                    {{! Repo name }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        {{name}}
-                    </td>
-
-                    {{! Backfill status }}
-                    <td class="jiraConnectedRepos__table__cell">
-                        <div class="jiraConnectedRepos__table__cell__syncStatus">
-                            <span class="jiraConnectedRepos__table__{{toLowerCase
+                            {{! Backfill status }}
+                            <td class="jiraConnectedRepos__table__cell">
+                                <div class="jiraConnectedRepos__table__cell__syncStatus">
+                                    <span class="jiraConnectedRepos__table__{{toLowerCase
                                                     (replaceSpaceWithHyphen syncStatus)
                                                   }}
                                                   jiraConnectedRepos__table__syncStatus">
-                            {{syncStatus}}
-                            </span>
-                        </div>
-                    </td>
+                                        {{syncStatus}}
+                                    </span>
+                                </div>
+                            </td>
 
-                </tr>
-                {{/each}}
-                </tbody>
-            </table>
-        </div>
-        <div class="jiraConnectedRepos_pagination" data-subscription-id="{{subscriptionId}}">
-            {{#if hasPrevPage}}
-            <a href="#" class="prev-page page-selector" data-page-num="{{prevPageNum}}">Prev</a>
-            {{/if}}
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+            <div class="jiraConnectedRepos_pagination" data-subscription-id="{{subscriptionId}}">
+                {{#if hasPrevPage}}
+                <a href="#" class="prev-page page-selector" data-page-num="{{prevPageNum}}">Prev</a>
+                {{/if}}
 
-            {{#each pages}}
+                {{#each pages}}
                 {{#if isCurrentPage}}
                 <span class="current-page">{{pageNum}}</span>
                 {{else}}
                 <a href="#" class="page-num-link page-selector" data-page-num="{{pageNum}}">{{pageNum}}</a>
                 {{/if}}
-            {{/each}}
+                {{/each}}
 
-            {{#if hasNextPage}}
-            <a href="#" class="next-page page-selector" data-page-num="{{nextPageNum}}">Next</a>
-            {{/if}}
+                {{#if hasNextPage}}
+                <a href="#" class="next-page page-selector" data-page-num="{{nextPageNum}}">Next</a>
+                {{/if}}
+            </div>
+        </section>
+
+        <!--Backfill status modal-->
+        <div class='jiraConnectedRepos__backfillStatusModal' id="backfill-status-modal">
+            <div class='jiraConnectedRepos__backfillStatusModalContent'>
+                <div class="jiraConnectedRepos__backfillStatusModal__header__container">
+                    <h4><span id="jiraConnectedRepos__backfillStatusModal__header__repoName"></span></h4>
+                    <span
+                        class="jiraConnectedRepos__backfillStatusModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+                </div>
+                <div class="jiraConfiguration__restartBackfillModal__content">
+                    <div class="jiraConfiguration__restartBackfillModal__content__desc"> You can find the status of each
+                        backfill task below</div>
+                    <div class="jiraConfiguration__restartBackfillModal__content__backfillTaskStatuses">
+                        <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
+                            <div class="jiraConfiguration__restartBackfillModal__content__taskName">Branches</div>
+                            <div class="jiraConfiguration__restartBackfillModal__content__branchStatus"><span></span>
+                            </div>
+                        </div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
+                            <div class="jiraConfiguration__restartBackfillModal__content__taskName">Commits</div>
+                            <div class="jiraConfiguration__restartBackfillModal__content__commitStatus"><span></span>
+                            </div>
+                        </div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
+                            <div class="jiraConfiguration__restartBackfillModal__content__taskName">Pull Requests</div>
+                            <div class="jiraConfiguration__restartBackfillModal__content__pullRequestStatus">
+                                <span></span></div>
+                        </div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
+                            <div class="jiraConfiguration__restartBackfillModal__content__taskName">Builds</div>
+                            <div class="jiraConfiguration__restartBackfillModal__content__buildStatus"><span></span>
+                            </div>
+                        </div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
+                            <div class="jiraConfiguration__restartBackfillModal__content__taskName">Deployments</div>
+                            <div class="jiraConfiguration__restartBackfillModal__content__deploymentStatus">
+                                <span></span></div>
+                        </div>
+                    </div>
+                    <div class="jiraConfiguration__restartBackfillModal__content__ErrorContainer ">
+                        <div class="jiraConfiguration__restartBackfillModal__content__error">Reason for failure - <span class="errorReason"></span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="jiraConnectedRepos__backfillStatusModalOverlay"></div>
         </div>
-    </section>
-</div>
+    </div>
 
-<script src="/public/js/jira-connected-repos.js" nonce="{{nonce}}"></script>
-<!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
-<!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
-<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
-<script src="/public/aui/aui-prototyping.js" crossorigin="anonymous" referrerpolicy="no-referrer"
+    <script src="/public/js/jira-connected-repos.js" nonce="{{nonce}}"></script>
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+    <script src="/public/aui/aui-prototyping.js" crossorigin="anonymous" referrerpolicy="no-referrer"
         nonce="{{nonce}}"></script>
-<script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+    <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
 </body>
 
 </html>

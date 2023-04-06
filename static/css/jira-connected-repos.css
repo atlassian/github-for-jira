@@ -103,5 +103,80 @@
 
 .jiraConnectedRepos_pagination {
     margin: 1rem;
+    display: flex;
+    justify-content: center;
+    font-size: 1.2em;
 }
+
+.jiraConnectedRepos_pagination .page-num-link,
+.jiraConnectedRepos_pagination .current-page {
+    margin: 0px 5px;
+}
+
+.jiraConnectedRepos__actionContainer {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.jiraConnectedRepos__action__statusFilter {
+    margin-right: 15px;
+}
+
+.jiraConnectedRepos__backfillStatusModal__header__container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.2em;
+}
+
+.jiraConnectedRepos__backfillStatusModal__closeBtn {
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.jiraConfiguration__restartBackfillModal__content__desc {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #344563;
+    font-size: 1.1rem;
+    margin-bottom: 1.2em
+}
+
+.jiraConfiguration__restartBackfillModal__content__taskContainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.jiraConfiguration__restartBackfillModal__content__taskName {
+    width: 150px;
+    font-size: 1.05em;
+}
+
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-check {
+    color: blue;
+    align-items: center;
+}
+
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-cross {
+    color: red;
+    align-items: center;
+}
+
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-progress {
+    align-items: center;
+}
+
+.jiraConfiguration__restartBackfillModal__content__backfillTaskStatuses{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.jiraConfiguration__restartBackfillModal__content__ErrorContainer {
+    display: none;
+    align-items: center;
+    margin: 20px 0px;
+}
+
 
