@@ -79,6 +79,19 @@ describe("ApiInstallationDeletePollinator", ()=>{
 			expect(res.status).toBeCalledWith(200);
 			expect(mockJiraClient.devinfo.installation.delete).toBeCalledWith(GHES_GITHUB_INSTALLATION_ID.toString());
 			expect((await RepoSyncState.findAllFromSubscription(sub)).length).toBe(0);
+
+			await sub.reload();
+
+			expect(sub).toEqual(expect.objectContaining({
+				...sub,
+				syncStatus: null,
+				syncWarning: null,
+				backfillSince: null,
+				totalNumberOfRepos: null,
+				numberOfSyncedRepos: null,
+				repositoryCursor: null,
+				repositoryStatus: null
+			}));
 		});
 	});
 	const getReq = (opts: any = {}): any => {

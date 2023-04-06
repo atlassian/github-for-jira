@@ -25,7 +25,7 @@ export const ApiInstallationDeletePollinator = async (req: Request, res: Respons
 		return;
 	}
 
-	const subscription = await Subscription.getSingleInstallation(
+	const subscription: Subscription | null = await Subscription.getSingleInstallation(
 		jiraHost,
 		Number(gitHubInstallationId),
 		gitHubAppId
@@ -41,6 +41,15 @@ export const ApiInstallationDeletePollinator = async (req: Request, res: Respons
 		const jiraClient = await getJiraClient(jiraHost, Number(gitHubInstallationId), gitHubAppId, req.log);
 		req.log.info({ jiraHost, gitHubInstallationId }, `Deleting DevInfo`);
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+		await subscription.update({
+			syncStatus: null,
+			syncWarning: null,
+			backfillSince: null,
+			totalNumberOfRepos: null,
+			numberOfSyncedRepos: null,
+			repositoryCursor: null,
+			repositoryStatus: null
+		});
 		await RepoSyncState.deleteFromSubscription(subscription);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
 	} catch (err) {
