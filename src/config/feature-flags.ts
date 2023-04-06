@@ -13,6 +13,7 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
+	INNO_DRAFT_PR = "inno-draft-pr",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
