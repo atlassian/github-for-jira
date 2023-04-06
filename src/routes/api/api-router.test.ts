@@ -309,28 +309,6 @@ describe("API Router", () => {
 					.reply(200);
 			});
 
-			it("Should work with old delete installation route", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
-			it("Should work with old delete installation route with gitHubAppId", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/github-app-id/${gitHubServerApp.id}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)

@@ -9,7 +9,7 @@ import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
-import { ApiInstallationDelete } from "./installation/api-installation-delete";
+import { ApiInstallationDeleteForPollinator } from "./installation/api-installation-delete-pollinator";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
@@ -101,14 +101,14 @@ ApiRouter.delete(
 	param("installationId").isInt(),
 	param("jiraHost").isString(),
 	returnOnValidationError,
-	ApiInstallationDelete
+	ApiInstallationDeleteForPollinator
 );
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
 	param("installationId").isInt(),
 	param("jiraHost").isString(),
 	returnOnValidationError,
-	ApiInstallationDelete
+	ApiInstallationDeleteForPollinator
 );
 
 // TODO: remove the debug endpoint
