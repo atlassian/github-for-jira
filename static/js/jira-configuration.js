@@ -95,8 +95,13 @@ $(".sync-connection-link").click(event => {
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
+		let syncType = undefined;
+		if (fullSyncCheckbox && fullSyncCheckbox.checked) {
+			syncType = "full";
+		}
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
 		});
 	});
 });
@@ -116,7 +121,7 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
 		});
 	});
 });
