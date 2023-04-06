@@ -89,7 +89,7 @@ const getStatusIconInfo = (status) => {
 
 const mapErrorToMessage = (errorCode) => {
 	if(errorCode == "CONNECTION_ERROR") {
-		return "This is caused due to connection error. Restart of backfilling may rectify the error. If error persists, please contact the Atlassian support team."
+		return "This is caused due to the connection error. Restart of backfilling may rectify the error. If error persists, please contact the Atlassian support team."
 	} 
 	return errorCode;
 };
