@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, any>, installation: Installation) => {
 	const ADMIN_PERMISSION = "ADMINISTER";
@@ -29,6 +30,9 @@ export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, a
 
 export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const hasAdminPermissions = req.session;
+	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
+		return next();
+	}
 
 	if (hasAdminPermissions === undefined) {
 		// User permissions could bot be extracted from the Jira JWT, check that the jwt middleware has run
