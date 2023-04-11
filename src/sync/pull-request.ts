@@ -1,7 +1,6 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
-import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -12,7 +11,6 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
-import { getGithubUser } from "services/github/user";
 import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
@@ -153,19 +151,8 @@ const doGetPullRequestTask = async (
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
-				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
-					const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
-					const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
-					return data?.pullRequests[0];
-				}
-
-				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
-				const data = transformPullRequestSync(
-					{ pullRequest: pull, repository },
-					prDetails,
-					gitHubInstallationClient.baseUrl,
-					ghUser
-				);
+				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
+				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 
 			})
