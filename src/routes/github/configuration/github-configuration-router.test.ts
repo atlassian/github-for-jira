@@ -156,12 +156,6 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get(`/app`)
-				.reply(200, {
-					html_url: "https://github.com/apps/jira"
-				});
-
-			githubNock
 				.post("/graphql", { query: ViewerRepositoryCountQuery })
 				.query(true)
 				.reply(200, {
@@ -220,12 +214,6 @@ describe("Github Configuration", () => {
 				.get("/user/memberships/orgs/test-org")
 				.reply(200, {
 					role: "admin"
-				});
-
-			githubNock
-				.get("/app")
-				.reply(200, {
-					html_url: "https://github.com/apps/jira"
 				});
 
 			githubNock
