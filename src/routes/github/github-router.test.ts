@@ -87,7 +87,7 @@ describe("GitHub router", () => {
 						const resultUrl = response.headers.location;
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
 						const redirectUrl = `${envVars.APP_URL}/github/callback`;
-						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});
 			});
@@ -156,7 +156,7 @@ describe("GitHub router", () => {
 						const resultUrl = response.headers.location;
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
 						const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
-						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});
 			});
