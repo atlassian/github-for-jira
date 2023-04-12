@@ -10,6 +10,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
+import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -192,43 +193,6 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
 };
 
-const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, next: NextFunction) => {
-
-	const stateKey = req.query.state as string;
-	if (!stateKey) {
-		req.log.warn("State key is empty");
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return;
-	}
-	if (!req.session[stateKey]) {
-		req.log.warn("State is empty in req.session for callback redirect");
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return;
-	}
-
-	let url;
-	try {
-		let redirectUrl = req.session[stateKey];
-		if (!redirectUrl.startsWith("http")) {
-			redirectUrl = "https://dummy.domain" + redirectUrl;
-		}
-		url = new URL(redirectUrl);
-	} catch (e) {
-		req.log.warn("Error passing redirect url in callback", e);
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return;
-	}
-	const jiraHost = url.searchParams.get("jiraHost");
-	if (!jiraHost) {
-		req.log.warn("jiraHost is missing in state redirect uri");
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return;
-	}
-
-	res.locals.jiraHost = jiraHost;
-	next();
-};
-
 const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
 	if (!jiraHost) return url;
 	if (url.indexOf("?") === -1) url = url + "?";
@@ -259,4 +223,4 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 // in the same file as they reference each other
 export const GithubOAuthRouter = Router({ mergeParams: true });
 GithubOAuthRouter.get("/login", GithubServerAppMiddleware, GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackSubPath, TempGetJiraHostFromStateMiddleware, GithubServerAppMiddleware, GithubOAuthCallbackGet);
+GithubOAuthRouter.get(callbackSubPath, jiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubOAuthCallbackGet);
