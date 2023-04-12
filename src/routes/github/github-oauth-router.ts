@@ -13,7 +13,7 @@ import Logger from "bunyan";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
-const scopes = ["user", "repo"];
+const scopes = ["repo"];
 const callbackSubPath = "/callback";
 const callbackPathCloud = `/github${callbackSubPath}`;
 const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
