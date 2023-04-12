@@ -10,10 +10,10 @@ import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
+import { stringFlag, StringFlags } from "config/feature-flags";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
-const scopes = ["repo"];
 const callbackSubPath = "/callback";
 const callbackPathCloud = `/github${callbackSubPath}`;
 const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
@@ -24,6 +24,9 @@ const getRedirectUrl = async (res, state) => {
 	if (res.locals?.gitHubAppConfig?.uuid) {
 		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
 	}
+
+	const definedScopes = await stringFlag(StringFlags.GITHUB_SCOPES, "user,repo", res.locals.jiraHost);
+	const scopes = definedScopes.split(",");
 
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
 	const callbackURI = `${appUrl}${callbackPath}`;
