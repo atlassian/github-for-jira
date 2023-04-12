@@ -57,8 +57,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		const metrics = {
 			trigger: "github-configuration-post"
 		};
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, req.log, gitHubAppId);
-		const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, metrics);
+		const gitHubUserClient = await createUserClient(githubToken, installation.jiraHost, metrics, req.log, gitHubAppId);
+		const gitHubAppClient = await createAppClient(req.log, installation.jiraHost, gitHubAppId, metrics);
 
 		// Check if the user that posted this has access to the installation ID they're requesting
 		if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, req.log)) {
@@ -78,7 +78,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 
 		await Promise.all(
 			[
-				saveConfiguredAppProperties(jiraHost, req.log, true),
+				saveConfiguredAppProperties(installation.jiraHost, req.log, true),
 				findOrStartSync(subscription, req.log, "full", undefined, undefined, {
 					source: "initial-sync"
 				})
@@ -88,7 +88,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
-			jiraHost,
+			jiraHost: installation.jiraHost,
 			success: true,
 			gitHubProduct
 		});
@@ -99,7 +99,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
-			jiraHost,
+			jiraHost: installation.jiraHost,
 			success: false,
 			gitHubProduct
 		});
