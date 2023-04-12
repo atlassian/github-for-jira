@@ -31,27 +31,21 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
  * Handle the when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppId } = res.locals;
+	const { githubToken, gitHubAppId, installation } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
-	if (!githubToken || !jiraHost) {
+	if (!githubToken) {
+		req.log.warn("GitHub token wasn't found");
 		res.sendStatus(401);
 		return;
 	}
 
 	if (!gitHubInstallationId) {
+		req.log.warn("gitHubInstallationId token wasn't found");
 		res.status(400)
 			.json({
 				err: "An Installation ID must be provided to link an installation."
-			});
-		return;
-	}
-
-	if (!req.body.clientKey) {
-		res.status(400)
-			.json({
-				err: "A clientKey must be provided to link an installation."
 			});
 		return;
 	}
@@ -74,11 +68,13 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		}
 
 		const subscription: Subscription = await Subscription.install({
-			hashedClientKey: req.body.clientKey,
+			hashedClientKey: installation.clientKey,
 			installationId: gitHubInstallationId,
-			host: jiraHost,
+			host: installation.jiraHost,
 			gitHubAppId
 		});
+
+		req.log.info({ subscriptionId: subscription.id }, "Subscription was created");
 
 		await Promise.all(
 			[

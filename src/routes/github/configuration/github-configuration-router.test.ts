@@ -14,6 +14,7 @@ jest.mock("config/feature-flags");
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: Subscription;
+	let installation: Installation;
 
 	const authenticatedUserResponse = { login: "test-user" };
 	const adminUserResponse = { login: "admin-user" };
@@ -26,7 +27,7 @@ describe("Github Configuration", () => {
 			jiraClientKey: "myClientKey"
 		});
 
-		await Installation.create({
+		installation = await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
 			//TODO: why? Comment this out make test works?
@@ -373,13 +374,10 @@ describe("Github Configuration", () => {
 				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": true })
 				.reply(200, "OK");
 
-			const hashedJiraClientKey = "hashed-a-unique-client-key-" + new Date().getTime();
-
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
-					installationId: 1,
-					clientKey: hashedJiraClientKey
+					installationId: 1
 				})
 				.type("form")
 				.set(
@@ -391,11 +389,11 @@ describe("Github Configuration", () => {
 				)
 				.expect(200);
 
-			const subInDB = await Subscription.getAllForClientKey(hashedJiraClientKey);
+			const subInDB = await Subscription.getAllForClientKey(installation.clientKey);
 			expect(subInDB.length).toBe(1);
 			expect(subInDB[0]).toEqual(expect.objectContaining({
 				gitHubInstallationId: 1,
-				jiraClientKey: hashedJiraClientKey,
+				jiraClientKey: installation.clientKey,
 				plainClientKey: null
 			}));
 		});
