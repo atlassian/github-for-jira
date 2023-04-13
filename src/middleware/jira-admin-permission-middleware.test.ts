@@ -1,6 +1,9 @@
 import { Request } from "express";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-import { jiraAdminPermissionsMiddleware, setJiraAdminPrivileges } from "middleware/jira-admin-permission-middleware";
+import {
+	fetchAndSaveUserJiraAdminStatus,
+	jiraAdminPermissionsMiddleware
+} from "middleware/jira-admin-permission-middleware";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 
@@ -86,7 +89,7 @@ describe("jiraAdminPermissionsMiddleware - feature flag off", () => {
 	});
 });
 
-describe("setJiraAdminPrivileges",  () => {
+describe("fetchAndSaveUserJiraAdminStatus",  () => {
 	const mockRequest = {
 		session: {},
 		log: {
@@ -114,7 +117,7 @@ describe("setJiraAdminPrivileges",  () => {
 			.post("/rest/api/latest/permissions/check", payload)
 			.reply(200, { globalPermissions: ["ADMINISTER"] });
 
-		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(true);
 	});
@@ -132,7 +135,7 @@ describe("setJiraAdminPrivileges",  () => {
 			.post("/rest/api/latest/permissions/check", payload)
 			.reply(200, { globalPermissions: [] });
 
-		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(false);
 	});
@@ -141,7 +144,7 @@ describe("setJiraAdminPrivileges",  () => {
 		const mockClaimsNoSub = {};
 		mockRequest.session.isJiraAdmin = undefined;
 
-		await setJiraAdminPrivileges(mockRequest, mockClaimsNoSub, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaimsNoSub, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(undefined);
 	});
@@ -149,7 +152,7 @@ describe("setJiraAdminPrivileges",  () => {
 	it("should return session value without JiraClient request if already exists", async () => {
 		mockRequest.session.isJiraAdmin = true;
 
-		await setJiraAdminPrivileges(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(true);
 	});

@@ -5,7 +5,7 @@ import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
-import { setJiraAdminPrivileges } from "middleware/jira-admin-permission-middleware";
+import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -38,7 +38,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		req.session.jiraHost = installation.jiraHost;
 
 		// Check whether logged in user has Jira Admin permissions and save it to the session
-		await setJiraAdminPrivileges(req, verifiedClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
