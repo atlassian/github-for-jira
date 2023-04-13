@@ -19,7 +19,7 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Reco
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 
-		req.session.isJiraAdmin = !permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
+		req.session.isJiraAdmin = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
 		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
 	} catch (err) {
 		req.log.error({ err }, "Failed to fetch Jira Admin rights");
