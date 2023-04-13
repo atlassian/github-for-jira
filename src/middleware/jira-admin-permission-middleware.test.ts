@@ -6,14 +6,14 @@ import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 
-describe.skip("jiraAdminPermissionsMiddleware", () => {
+describe("jiraAdminPermissionsMiddleware", () => {
 	let mockRequest;
 	let mockResponse;
 	let mockNext;
 
 	beforeEach(() => {
 		mockRequest = {
-			session: undefined,
+			session: {},
 			log: { info: jest.fn() }
 		};
 		mockResponse = {
@@ -46,14 +46,14 @@ describe.skip("jiraAdminPermissionsMiddleware", () => {
 });
 
 // Delete this describe block during flag clean up
-describe.skip("jiraAdminPermissionsMiddleware - feature flag off", () => {
+describe("jiraAdminPermissionsMiddleware - feature flag off", () => {
 	let mockRequest;
 	let mockResponse;
 	let mockNext;
 
 	beforeEach(() => {
 		mockRequest = {
-			session: undefined,
+			session: {},
 			log: { info: jest.fn() }
 		};
 		mockResponse = {
@@ -68,6 +68,7 @@ describe.skip("jiraAdminPermissionsMiddleware - feature flag off", () => {
 	});
 
 	test("should return 403 Forbidden if session is undefined", async () => {
+		delete mockRequest.session.isJiraAdmin;
 		await jiraAdminPermissionsMiddleware(mockRequest, mockResponse, mockNext);
 		expect(mockNext).toHaveBeenCalled();
 	});
