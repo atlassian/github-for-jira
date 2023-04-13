@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, any>, installation: Installation) => {
+export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, any>, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
 	// We only need to add this to the session if it doesn't exist
 	if (req.session.isJiraAdmin !== undefined) {
@@ -28,7 +28,7 @@ export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, a
 	}
 };
 
-export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void | Response>  => {
 	const hasAdminPermissions = req.session;
 	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
 		return next();
@@ -44,5 +44,5 @@ export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response
 		req.log.info("User does not have Jira admin permissions.");
 		return res.status(403).send("Forbidden - User does not have Jira administer permissions.");
 	}
-	return next();
+	next();
 };
