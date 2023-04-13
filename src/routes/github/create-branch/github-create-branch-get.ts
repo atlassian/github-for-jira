@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Errors } from "config/errors";
-import { createInstallationClient, createUserClient } from "utils/get-github-client-config";
+import { createInstallationClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { Repository, Subscription } from "models/subscription";
@@ -50,8 +50,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		return;
 	}
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-create-branch" }, req.log, gitHubAppConfig.gitHubAppId);
-	const gitHubUser = (await gitHubUserClient.getUser()).data.login;
 	const repos = await getReposBySubscriptions(subscriptions, req.log, jiraHost);
 
 	res.render("github-create-branch.hbs", {
@@ -66,7 +64,6 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		repos,
 		hostname: gitHubAppConfig.hostname,
 		uuid: gitHubAppConfig.uuid,
-		gitHubUser,
 		multiGHInstance
 	});
 

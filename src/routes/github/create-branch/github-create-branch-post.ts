@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createUserClient } from "~/src/util/get-github-client-config";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { statsd } from "~/src/config/statsd";
@@ -16,25 +16,25 @@ import { Subscription } from "models/subscription";
  * @param repoOwner
  * @param repoName
  */
-const getGitHubConfigurationLink = async (
-	userLogin: string,
-	jiraHost: string,
-	hostname: string,
-	repoOwner: string,
-	repoName: string
-) => {
-	// URL for the app configuration for different repoOwners/organizations in GitHub, used during 403 errors
-	let url = `${hostname}/organizations/${repoOwner}/settings/installations/`;
-
-	// If the repoOwners/organizations is the same as the user's login, then the url is different
-	if (userLogin === repoOwner) {
-		url = `${hostname}/settings/installations/`;
-	}
-
-	const subscription = await Subscription.findForRepoNameAndOwner(repoName, repoOwner, jiraHost);
-
-	return url + subscription?.gitHubInstallationId;
-};
+// const getGitHubConfigurationLink = async (
+// 	userLogin: string,
+// 	jiraHost: string,
+// 	hostname: string,
+// 	repoOwner: string,
+// 	repoName: string
+// ) => {
+// 	// URL for the app configuration for different repoOwners/organizations in GitHub, used during 403 errors
+// 	let url = `${hostname}/organizations/${repoOwner}/settings/installations/`;
+//
+// 	// If the repoOwners/organizations is the same as the user's login, then the url is different
+// 	if (userLogin === repoOwner) {
+// 		url = `${hostname}/settings/installations/`;
+// 	}
+//
+// 	const subscription = await Subscription.findForRepoNameAndOwner(repoName, repoOwner, jiraHost);
+//
+// 	return url + subscription?.gitHubInstallationId;
+// };
 
 const getErrorMessages = (statusCode: number, url?: string): string => {
 	switch (statusCode) {
@@ -61,24 +61,24 @@ const getErrorMessages = (statusCode: number, url?: string): string => {
 };
 
 export const GithubCreateBranchPost = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, gitHubAppConfig, jiraHost } = res.locals;
+	const { gitHubAppConfig, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
-
-	if (!githubToken) {
-		res.sendStatus(401);
-		return;
-	}
 
 	if (!owner || !repo || !sourceBranchName || !newBranchName) {
 		res.status(400).json({ error: getErrorMessages(400) });
 		return;
 	}
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-create-branch" }, req.log, gitHubAppConfig.gitHubAppId);
+	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
+	if (!subscription) {
+		throw Error("nah no deal");
+	}
+
+	const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
 
 	try {
-		const baseBranchSha = (await gitHubUserClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
+		const baseBranchSha = (await gitHubInstallationClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 
-		await gitHubUserClient.createReference(owner, repo, {
+		await gitHubInstallationClient.createReference(owner, repo, {
 			owner,
 			repo,
 			ref: `refs/heads/${newBranchName}`,
@@ -95,9 +95,10 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		req.log.error({ err }, "Error creating branch");
 
 		if (err.status === 403) {
-			const user = await gitHubUserClient.getUser();
-			const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.hostname, owner, repo);
-			res.status(err.status).json({ error: getErrorMessages(err.status, gitHubConfigurationLink) });
+			// todo go to correct place
+			// const user = await gitHubUserClient.getUser();
+			// const gitHubConfigurationLink = await getGitHubConfigurationLink(user.data.login, jiraHost, gitHubAppConfig.hostname, owner, repo);
+			// res.status(err.status).json({ error: getErrorMessages(err.status, gitHubConfigurationLink) });
 		} else {
 			res.status(err.status).json({ error: getErrorMessages(err.status) });
 		}

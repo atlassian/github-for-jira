@@ -103,25 +103,6 @@ export class GitHubUserClient extends GitHubClient {
 			});
 	}
 
-	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
-		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {
-			urlParams: {
-				owner,
-				repo,
-				per_page
-			}
-		});
-	}
-
-	public async getRepository(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
-		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {
-			urlParams: {
-				owner,
-				repo
-			}
-		});
-	}
-
 	public async searchRepositories(queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> {
 		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`, {
 			urlParams: {

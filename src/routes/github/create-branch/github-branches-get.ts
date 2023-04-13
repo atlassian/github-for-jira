@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { createUserClient } from "~/src/util/get-github-client-config";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import { Subscription } from "models/subscription";
 
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost, gitHubAppConfig } = res.locals;
+	const { jiraHost, gitHubAppConfig } = res.locals;
 
-	if (!githubToken || !gitHubAppConfig) {
+	if (!gitHubAppConfig) {
 		res.sendStatus(401);
 		return;
 	}
@@ -16,10 +17,15 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 	}
 
 	try {
-		const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
+		const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
+		if (!subscription) {
+			throw Error("nah no deal");
+		}
+
+		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
 		const [ branches, repository ] = await Promise.all([
-			gitHubUserClient.getReferences(owner, repo),
-			gitHubUserClient.getRepository(owner, repo)
+			gitHubInstallationClient.getReferences(owner, repo),
+			gitHubInstallationClient.getRepositoryByOwnerRepo(owner, repo)
 		]);
 
 		res.send({
