@@ -1,10 +1,16 @@
 
 import { getLogger } from "config/logger";
 import { GithubBranchesGet } from "~/src/routes/github/create-branch/github-branches-get";
+import { Subscription } from "models/subscription";
+import { mocked } from "ts-jest/utils";
+
+jest.mock("models/subscription");
 
 describe("GitHub Branches Get", () => {
 
 	let req, res;
+	const gitHubInstallationId = 15;
+
 	beforeEach(async () => {
 
 		req = {
@@ -26,16 +32,24 @@ describe("GitHub Branches Get", () => {
 				gitHubAppConfig: {}
 			}
 		};
+
+		await Subscription.create({
+			gitHubInstallationId,
+			owner: "ARC",
+			repo: "repo-1",
+			jiraHost
+		});
 	});
 
 	it("Should fetch branches", async () => {
 		setupNock();
+		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
 		await GithubBranchesGet(req, res);
 		expect(res.send).toBeCalledWith(response);
 	});
 
-	it.each(["githubToken", "gitHubAppConfig"])("Should 401 without permission attributes", async (attribute) => {
-		delete res.locals[attribute];
+	it("Should 401 without gitHubAppConfig attributes", async () => {
+		delete res.locals.gitHubAppConfig;
 		await GithubBranchesGet(req, res);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
@@ -51,6 +65,17 @@ describe("GitHub Branches Get", () => {
 
 const defaultBranch = "sample-patch-2";
 const setupNock = () => {
+
+	const gitHubInstallationId = 15;
+
+	githubNock
+		.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+		.reply(200);
+
+	githubNock
+		.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+		.reply(200);
+
 	githubNock
 		.get("/repos/ARC/repo-1/branches?per_page=100")
 		.reply(200, allBranches);

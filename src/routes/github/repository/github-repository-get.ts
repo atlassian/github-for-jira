@@ -62,8 +62,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
-			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`; // maybe org:${gitHubUser}
-			// const searchQueryUserString = `${repoName} org:${orgName} in:name`;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
 
 			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
 				.then(responseInstallationSearch => {

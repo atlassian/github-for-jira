@@ -74,16 +74,8 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 2 }, { full_name: "second", id: 1 }]
-			});
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 2 }]
 			});
 
 			await supertest(app)
@@ -99,7 +91,7 @@ describe("GitHub Repository Search", () => {
 				});
 		});
 
-		it("should only return repos that user and installation have access too", async () => {
+		it("should return repos that the installation has access too", async () => {
 			const gitHubInstallationId = 15;
 			const orgName = "orgName";
 
@@ -121,16 +113,8 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
-			});
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
 			});
 
 			await supertest(app)
@@ -142,7 +126,7 @@ describe("GitHub Repository Search", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body?.repositories).toHaveLength(1);
+					expect(res.body?.repositories).toHaveLength(3);
 					expect(res.body?.repositories[0].id).toEqual(1);
 				});
 		});
@@ -182,22 +166,11 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId + 1}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.times(2)
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
 			});
 
 			nockSearchRepos422(`${randomString} org:${orgName + "1"} in:name`);
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
-			});
-
-			nockSearchRepos422(`${randomString} org:${orgName + "1"} org:test-account in:name`);
 
 			await supertest(app)
 				.get("/github/repository").set(
@@ -208,7 +181,7 @@ describe("GitHub Repository Search", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body?.repositories).toHaveLength(1);
+					expect(res.body?.repositories).toHaveLength(3);
 					expect(res.body?.repositories[0].id).toEqual(1);
 				});
 		});

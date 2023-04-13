@@ -1,9 +1,13 @@
 import { Request, Response } from "express";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { Subscription } from "models/subscription";
+import { getLogger } from "config/logger";
 
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, gitHubAppConfig } = res.locals;
+	const logger = getLogger("github-branches-get", {
+		fields: req.log?.fields
+	});
 
 	if (!gitHubAppConfig) {
 		res.sendStatus(401);
@@ -12,6 +16,7 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 
 	const { owner, repo } = req.params;
 	if (!owner || !repo) {
+		logger.warn("Missing required data.");
 		res.status(400).json({ err: "Missing required data." });
 		return;
 	}
@@ -19,7 +24,8 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 	try {
 		const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 		if (!subscription) {
-			throw Error("nah no deal");
+			logger.error("No Subscription found!");
+			throw Error("No Subscription found!");
 		}
 
 		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
@@ -33,7 +39,7 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 			defaultBranch: repository.data.default_branch
 		});
 	} catch (err) {
-		req.log.error({ err }, "Error while fetching branches");
+		logger.error({ err }, "Error while fetching branches");
 		res.sendStatus(500);
 	}
 };

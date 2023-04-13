@@ -5,6 +5,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
+import { getLogger } from "config/logger";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -13,14 +14,17 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		gitHubAppConfig,
 		jiraHost
 	} = res.locals;
+	const logger = getLogger("github-create-branch-get", {
+		fields: req.log?.fields
+	});
 
 	if (!githubToken) {
-		req.log.warn(Errors.MISSING_GITHUB_TOKEN);
+		logger.warn(Errors.MISSING_GITHUB_TOKEN);
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
 	if (!jiraHost) {
-		req.log.warn(Errors.MISSING_JIRA_HOST);
+		logger.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
 	}
@@ -30,6 +34,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	const issueSummary = req.query.issueSummary as string;
 
 	if (!issueKey) {
+		logger.error(Errors.MISSING_ISSUE_KEY);
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);
