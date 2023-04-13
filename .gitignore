@@ -56,3 +56,5 @@ test/e2e/test-results/
 
 *.drawio.bkp
 *.drawio.dtmp
+
+./.scannerwork/*
