@@ -349,6 +349,31 @@ describe("API Router", () => {
 
 		});
 
+		describe("Recrypt data", () => {
+
+			it("Should recrypt data in different context", () => {
+				return supertest(app)
+					.post("/api/recrypt")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						encryptedValue: "encrypted:blah",
+						key: "github-server-app-secrets",
+						oldContext: {
+							jiraHost: "https://blah.atlassian.com"
+						},
+						newContext: {
+							jiraHost: "https://foo.atlassian.com"
+						}
+					})
+					.expect(200)
+					.then((response) => {
+						expect(response.body!.recryptedValue).toEqual("encrypted:blah");
+					});
+			});
+
+		});
+
 		describe("Ping", () => {
 
 			it("Should fail on missing url", () => {
