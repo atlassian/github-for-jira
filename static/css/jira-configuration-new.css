@@ -409,6 +409,7 @@
 
 .jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
     margin-left: 5px;
+    cursor: default;
 }
 
 .jiraConfiguration__table__pending,
