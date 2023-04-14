@@ -6,7 +6,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getLogger } from "config/logger";
 
-// TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
+// TODO - this entire route could be abstracted out into a generic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
 	const { issueKey, tenantUrl } = req.query;
@@ -50,7 +50,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
-
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;

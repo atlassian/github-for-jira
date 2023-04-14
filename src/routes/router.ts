@@ -64,6 +64,8 @@ RootRouter.use("/microscope/dlq", MicroscopeDlqRouter);
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
 
+RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
+
 // Session redirect
 RootRouter.get(["/session", "/session/*"], SessionGet);
 
@@ -71,8 +73,6 @@ RootRouter.use(cookieSessionMiddleware);
 
 // App Manifest flow route
 RootRouter.get("/github-manifest", GithubManifestGet);
-
-RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

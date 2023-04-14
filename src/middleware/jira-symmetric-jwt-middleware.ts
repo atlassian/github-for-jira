@@ -58,12 +58,14 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not verify symmetric JWT");
 			return res.status(401).send("Unauthorised");
 		}
+
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
-		req.session.jiraHost = installation.jiraHost;
-
-		// Check whether logged in user has Jira Admin permissions and save it to the session
-		await setJiraAdminPrivileges(req, verifiedClaims, installation);
+		if (req.session) {
+			req.session.jiraHost = installation.jiraHost;
+			// Check whether logged in user has Jira Admin permissions and save it to the session
+			await setJiraAdminPrivileges(req, verifiedClaims, installation);
+		}
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");

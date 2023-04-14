@@ -10,18 +10,12 @@ const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
-		githubToken,
 		gitHubAppConfig,
 		jiraHost
 	} = res.locals;
 	const logger = getLogger("github-create-branch-get", {
 		fields: req.log?.fields
 	});
-
-	if (!githubToken) {
-		logger.warn(Errors.MISSING_GITHUB_TOKEN);
-		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
-	}
 
 	if (!jiraHost) {
 		logger.warn(Errors.MISSING_JIRA_HOST);
