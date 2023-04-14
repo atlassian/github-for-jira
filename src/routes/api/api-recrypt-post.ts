@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 
 const strToKey = (keyStr: string): EncryptionSecretKeyEnum | null => {
-	const validValues = Object.values(EncryptionSecretKeyEnum); // get all the valid values of the enum
-	if (validValues.includes(keyStr as EncryptionSecretKeyEnum)) { // check if the input color is a valid value of the enum
-		return keyStr as EncryptionSecretKeyEnum; // type cast the string to the enum
+	const validValues = Object.values(EncryptionSecretKeyEnum);
+	if (validValues.includes(keyStr as EncryptionSecretKeyEnum)) {
+		return keyStr as EncryptionSecretKeyEnum;
 	} else {
-		return null; // if the input color is not valid, return null
+		return null;
 	}
 };
 
