@@ -320,6 +320,18 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 	}
 });
 
-$(document).ready(function() {
-	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
+$(document).ready(function () {
+	const isIncrementalBackfillEnabled = $("body").data("is-incremental-backfill-enabled");
+	if (isIncrementalBackfillEnabled) {
+		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
+		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+		
+		$(".jiraConfiguration__info__backfillDate-label").each(function () {
+			if ($(this).attr("data-backfill-since")) {
+				const backfillDate = new Date($(this).attr("data-backfill-since"));
+				$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
+				$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
+			}
+		});
+	}
 });
