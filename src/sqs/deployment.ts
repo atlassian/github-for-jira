@@ -14,7 +14,10 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 
 	context.log.info("Handling deployment message from the SQS queue");
 
-	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
+	const metrics = {
+		trigger: "deployment_queue"
+	};
+	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
 
 	await processDeployment(
 		gitHubInstallationClient,
@@ -24,6 +27,7 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 		jiraHost,
 		installationId,
 		context.log,
-		messagePayload.gitHubAppConfig?.gitHubAppId
+		messagePayload.gitHubAppConfig?.gitHubAppId,
+		messagePayload.rateLimited
 	);
 };

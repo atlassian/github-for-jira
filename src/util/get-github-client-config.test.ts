@@ -114,7 +114,7 @@ describe("anonymous client", () => {
 		gheNock.get("/")
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
-		const client = await createAnonymousClient(gheUrl, jiraHost, getLogger("test"));
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		const response = await client.getMainPage(1000);
 		expect(response).toBeDefined();
 	});
@@ -122,7 +122,7 @@ describe("anonymous client", () => {
 ;
 
 describe("user client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
@@ -136,15 +136,15 @@ describe("user client", () => {
 		gheApiNock.get("/user")
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
-		const client = await createUserClient("MY_TOKEN", jiraHost, getLogger("test"), gitHubServerApp?.id);
+		const client = await createUserClient("MY_TOKEN", jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
 		const response = await client.getUser();
 		expect(response).toBeDefined();
 	});
 });
 
 describe("installation client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
-	let subscription: Subscription | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
+	let subscription: Subscription | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
@@ -162,14 +162,14 @@ describe("installation client", () => {
 		gheApiNock.get("/rate_limit")
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
-		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, getLogger("test"), gitHubServerApp?.id);
+		const client = await createInstallationClient(subscription!.gitHubInstallationId, jiraHost, { trigger: "test" }, getLogger("test"), gitHubServerApp?.id);
 		const response = await client.getRateLimit();
 		expect(response).toBeDefined();
 	});
 });
 
 describe("app client", () => {
-	let gitHubServerApp: GitHubServerApp | undefined = undefined;
+	let gitHubServerApp: GitHubServerApp | null | undefined = undefined;
 	beforeEach(async () => {
 		const res = await new DatabaseStateCreator().forServer().create();
 		gitHubServerApp = res.gitHubServerApp;
@@ -183,7 +183,7 @@ describe("app client", () => {
 		gheAppTokenNock()
 			.matchHeader("ApiKeyHeader", "super-key");
 
-		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp?.id);
+		const client = await createAppClient(getLogger("test"), jiraHost, gitHubServerApp?.id, { trigger: "test" });
 		const response = await client.getApp();
 		expect(response).toBeDefined();
 	});

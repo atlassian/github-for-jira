@@ -10,7 +10,7 @@ import { AuthToken } from "./auth-token";
  */
 export class InstallationTokenCache {
 	private static instance: InstallationTokenCache;
-	private readonly installationTokenCache: LRUCache<number, AuthToken>;
+	private readonly installationTokenCache: LRUCache<string, AuthToken>;
 
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
@@ -19,7 +19,7 @@ export class InstallationTokenCache {
 	 * number, the least recently used tokens are evicted from the cache.
 	 */
 	constructor() {
-		this.installationTokenCache = new LRUCache<number, AuthToken>({ max: 1000 });
+		this.installationTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
 	}
 
 	public static getInstance(): InstallationTokenCache {
@@ -39,12 +39,13 @@ export class InstallationTokenCache {
 	 */
 	public async getInstallationToken(
 		githubInstallationId: number,
+		gitHubAppId: number | undefined,
 		generateNewInstallationToken: () => Promise<AuthToken>): Promise<AuthToken> {
-		let token = this.installationTokenCache.get(githubInstallationId);
+		let token = this.installationTokenCache.get(this.key(githubInstallationId, gitHubAppId));
 
 		if (!token || token.isAboutToExpire()) {
 			token = await generateNewInstallationToken();
-			this.installationTokenCache.set(githubInstallationId, token, token.millisUntilAboutToExpire());
+			this.installationTokenCache.set(this.key(githubInstallationId, gitHubAppId), token, token.millisUntilAboutToExpire());
 		}
 
 		return token;
@@ -52,5 +53,9 @@ export class InstallationTokenCache {
 
 	public clear(): void {
 		this.installationTokenCache.reset();
+	}
+
+	private key(githubInstallationId: number, gitHubAppId: number | undefined): string {
+		return `${githubInstallationId}_${gitHubAppId}`;
 	}
 }

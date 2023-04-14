@@ -27,7 +27,7 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
-  <body class="aui-page-hybrid">
+  <body class="aui-page-hybrid" data-is-incremental-backfill-enabled="{{isIncrementalBackfillEnabled}}">
     <div class="jiraConfiguration">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
@@ -133,12 +133,21 @@
                 <h3>Backfill your data</h3>
               </div>
               <div class="jiraConfiguration__restartBackfillModal__header__content">
+                {{#if isIncrementalBackfillEnabled }}
+                <p>Backfilling data can take a long time, so we’ll only backfill your data from the last 6 months. If you want to backfill more data, choose a date below. Branches will be backfilled regardless of their age.</p>
+                {{else}}
                 <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+                 {{/if}}
               </div>
               <form id="jiraConfiguration__restartBackfillModal__form" class="aui top-label">
                 <div class="field-group">
                   <label for="backfill-date-picker">
-                  Backfill commits from <span class="jiraConfiguration__restartBackfillModal__required">*</span>
+                    {{#if isIncrementalBackfillEnabled }}
+                    Backfill data from
+                    {{else}}
+                    Backfill commits from
+                    {{/if}}
+                  <span class="jiraConfiguration__restartBackfillModal__required">*</span>
                   </label>
                   <input class="jiraConfiguration__restartBackfillModal__date text full-width-field"
                          type="date"
@@ -147,6 +156,18 @@
                          name="backfill-date-picker"
                   />
                 </div>
+                {{#if isIncrementalBackfillEnabled }}
+                <div class="field-group">
+                  <input class="jiraConfiguration__restartBackfillModal__fullsync"
+                         type="checkbox"
+                         id="backfill-fullsync-checkbox"
+                         name="backfill-fullsync-checkbox"
+                  />
+                  <label for="backfill-fullsync-checkbox" class="jiraConfiguration__restartBackfillModal__fullsync__label">
+                    Erase history and restart backfill
+                  </label>
+                </div>
+                {{/if}}
                 <div class="jiraConfiguration__restartBackfillModal__actions">
                   <button class="aui-button aui-button-secondary" type="button" id="cancel-backfill">Cancel</button>
                   <button type="submit" id="submit-backfill-data" class="aui-button aui-button-primary">Backfill data</button>
@@ -181,7 +202,7 @@
                 {{> jira-configuration-table
                     id=id
                     host=host
-                    shouldPromoteBackfillButtonToTableRow=shouldPromoteBackfillButtonToTableRow
+                    isIncrementalBackfillEnabled=isIncrementalBackfillEnabled
                     elementIdPrefix="ghCloud-"
                     html_url=html_url
                     csrfToken=csrfToken
@@ -255,7 +276,7 @@
                             {{> jira-configuration-table
                                 id=id
                                 host=../../host
-                                shouldPromoteBackfillButtonToTableRow=../../shouldPromoteBackfillButtonToTableRow
+                                isIncrementalBackfillEnabled=../../isIncrementalBackfillEnabled
                                 hideAvatar=true
                                 elementIdPrefix="gheServer-"
                                 html_url=html_url
@@ -305,12 +326,5 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    {{#if shouldPromoteBackfillButtonToTableRow }}
-    <style>
-    .jiraConfiguration__table__head__title:not(:last-child) {
-        width: 23%;
-    }
-    </style>
-    {{/if}}
   </body>
 </html>

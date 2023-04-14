@@ -39,6 +39,7 @@ export const metricSyncStatus = {
 
 export const metricTaskStatus = {
 	complete: `${server}.task-status.complete`,
+	pending: `${server}.task-status.pending`,
 	failed: `${server}.task-status.failed`
 };
 
@@ -55,4 +56,3 @@ export const metricCreateBranch = {
 	created: `${server}.create-branch.created`,
 	failed: `${server}.create-branch.failed`
 };
-

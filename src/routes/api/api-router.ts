@@ -9,7 +9,7 @@ import { ApiJiraRouter } from "./jira/api-jira-router";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { ApiInstallationRouter } from "./installation/api-installation-router";
 import { json, urlencoded } from "body-parser";
-import { ApiInstallationDelete } from "./installation/api-installation-delete";
+import { ApiInstallationDeleteForPollinator } from "./installation/api-installation-delete-pollinator";
 import { ApiHashPost } from "./api-hash-post";
 import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import { ApiPingPost } from "routes/api/api-ping-post";
@@ -20,6 +20,9 @@ import { RecoverClientKeyPost } from "./client-key/recover-client-key";
 import { ReEncryptGitHubServerAppKeysPost } from "./ghes-app-encryption-ctx/re-encrypt-ghes-app-keys";
 import { ApiConfigurationRouter } from "routes/api/configuration/api-configuration-router";
 import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
+import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed-tasks";
+import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
+import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
 
 export const ApiRouter = Router();
@@ -83,6 +86,11 @@ ApiRouter.post(
 	ApiResyncPost
 );
 
+ApiRouter.post(
+	`/reset-subscription-failed-tasks`,
+	ApiResetSubscriptionFailedTasks
+);
+
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
 
@@ -97,14 +105,14 @@ ApiRouter.delete(
 	param("installationId").isInt(),
 	param("jiraHost").isString(),
 	returnOnValidationError,
-	ApiInstallationDelete
+	ApiInstallationDeleteForPollinator
 );
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost",
 	param("installationId").isInt(),
 	param("jiraHost").isString(),
 	returnOnValidationError,
-	ApiInstallationDelete
+	ApiInstallationDeleteForPollinator
 );
 
 // TODO: remove the debug endpoint
@@ -138,6 +146,8 @@ ApiRouter.use("/db-migration", DBMigrationsRouter);
 ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
 ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);
 ApiRouter.use("/data-cleanup", DataCleanupRouter);
+ApiRouter.post("/recover-commits-from-date", RecoverCommitsFromDatePost);
+ApiRouter.post("/reset-failed-pending-deployment-cursor", ResetFailedAndPendingDeploymentCursorPost);
 
 ApiRouter.use("/jira", ApiJiraRouter);
 ApiRouter.use("/:installationId", param("installationId").isInt(), returnOnValidationError, ApiInstallationRouter);

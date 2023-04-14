@@ -157,6 +157,7 @@ a:focus {
 
 /* Modals */
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
 .modal__modalOverlay {
@@ -167,6 +168,7 @@ a:focus {
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__restartBackfillModal,
+.jiraConfiguration__errorSummaryModal,
 .githubSetup__newJiraSiteModal,
 .modal {
   display: none;
@@ -174,6 +176,8 @@ a:focus {
 
 .jiraConfiguration__syncRetryModal,
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModal,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModal,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModal,
@@ -188,6 +192,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__errorSummaryModalContent,
 .jiraConfiguration__restartBackfillModalContent,
 .githubSetup__newJiraSiteModalContent,
 .modal__modalContent {
@@ -203,6 +208,7 @@ a:focus {
 }
 
 .jiraConfiguration__syncRetryModalContent,
+.jiraConfiguration__errorSummaryModalContent,
 .jiraConfiguration__restartBackfillModalContent {
   top: 15%;
   width: 56%;
@@ -212,12 +218,17 @@ a:focus {
   max-width: 540px;
 }
 
+.jiraConfiguration__errorSummaryModalContent{
+  max-width: 740px;
+}
+
 .githubSetup__newJiraSiteModalContent {
   top: 30%;
   width: 60%;
 }
 
 .jiraConfiguration__syncRetryModalOverlay,
+.jiraConfiguration__errorSummaryModalOverlay,
 .jiraConfiguration__restartBackfillModalOverlay,
 .githubSetup__newJiraSiteModalOverlay,
 .modal__modalOverlay {

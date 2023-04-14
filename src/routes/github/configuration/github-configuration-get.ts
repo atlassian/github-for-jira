@@ -10,9 +10,8 @@ import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { BlockedIpError } from "~/src/github/client/github-client-errors";
+import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
 import {
-	createAppClient,
 	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
@@ -76,7 +75,7 @@ const getInstallationsWithAdmin = async (
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, log, gitHubAppId);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -102,7 +101,7 @@ const getInstallationsWithAdmin = async (
 			...installation,
 			numberOfRepos,
 			isAdmin,
-			isIPBlocked: !!errors.find(err => err instanceof BlockedIpError)
+			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError)
 		};
 	}));
 };
@@ -126,6 +125,9 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 };
 
 export const GithubConfigurationGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started");
+	const requestStartTime = new Date().getTime();
+
 	const {
 		jiraHost,
 		githubToken,
@@ -145,13 +147,15 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	const gitHubProduct = gitHubAppId ? "server" : "cloud";
 
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
+
 	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
 		jiraHost,
 		gitHubProduct
 	});
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, log, gitHubAppId);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 	req.log.debug("found github token");
 
@@ -179,8 +183,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
-
 		req.log.debug(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
@@ -198,12 +200,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		req.log.debug(`got user's installations with admin status from GitHub`);
-		const { data: info } = await gitHubAppClient.getApp();
-		req.log.debug(`got user's authenticated apps from GitHub`);
-
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
-			log.info({ info }, `verbose logging: getAuthenticated`);
-		}
 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
@@ -227,7 +223,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			installations: sortedInstallation,
 			jiraHost,
 			nonce: res.locals.nonce,
-			info,
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
@@ -235,6 +230,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			gitHubAppUuid
 		});
 
+		req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request finished in ${(new Date().getTime() - requestStartTime) / 1000} seconds`);
 		req.log.debug(`rendered page`);
 
 	} catch (err) {

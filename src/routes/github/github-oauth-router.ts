@@ -6,7 +6,6 @@ import { envVars } from "config/env";
 import { Errors } from "config/errors";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
@@ -101,7 +100,10 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	try {
 
-		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+		const metrics = {
+			trigger: "oauth"
+		};
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, logger);
 		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
 			clientId, clientSecret: gitHubClientSecret, code, state
 		});
@@ -143,7 +145,10 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		}
 		req.log.debug("found github token in session. validating token with API.");
 
-		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, logger);
+		const metrics = {
+			trigger: "oauth"
+		};
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, logger);
 		await gitHubAnonymousClient.checkGitHubToken(githubToken);
 
 		req.log.debug(`Github token is valid, continuing...`);
@@ -153,7 +158,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		return next();
 	} catch (e) {
 		req.log.debug(`Github token is not valid.`);
-		if (await booleanFlag(BooleanFlags.RENEW_GITHUB_TOKEN, res.locals.jiraHost) && req.session?.githubRefreshToken) {
+		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
 			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, logger);
 			if (token) {
@@ -232,10 +237,14 @@ const appendJiraHostIfNeeded = (url: string, jiraHost: string): string => {
 };
 
 const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: GitHubAppConfig, jiraHost: string, logger: Logger) => {
+	logger.info("Trying to renewGitHubToken");
 	try {
 		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
 		if (clientSecret) {
-			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig?.gitHubAppId, jiraHost, logger);
+			const metrics = {
+				trigger: "auth-middleware"
+			};
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig?.gitHubAppId, jiraHost, metrics, logger);
 			const res = await gitHubAnonymousClient.renewGitHubToken(githubRefreshToken, gitHubAppConfig.clientId, clientSecret);
 			return { accessToken: res.accessToken, refreshToken: res.refreshToken };
 		}

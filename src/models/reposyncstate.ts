@@ -25,6 +25,11 @@ export class RepoSyncState extends Model {
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -34,7 +39,9 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	failedCode?: string;
 
+	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
 		if (statuses.some(s => s === "failed")) {
@@ -48,8 +55,8 @@ export class RepoSyncState extends Model {
 		return "pending";
 	}
 
-	static async countSyncedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFullySyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
@@ -60,8 +67,8 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async countFailedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFailedSyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				[Op.or]: {
 					pullStatus: "failed",
@@ -74,11 +81,29 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+
+	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+
+		const result = await RepoSyncState.findAll(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
+				}
+			}
+		}));
+		return result || [];
+	}
+
 	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
-	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+	private static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
 		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -103,7 +128,7 @@ export class RepoSyncState extends Model {
 		return result || [];
 	}
 
-	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
+	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState | null> {
 		return RepoSyncState.findOne(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -112,7 +137,7 @@ export class RepoSyncState extends Model {
 		} as FindOptions));
 	}
 
-	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.update(values, merge(options || {}, {
 			where: {
 				subscriptionId: subscription.id
@@ -120,7 +145,7 @@ export class RepoSyncState extends Model {
 		} as UpdateOptions));
 	}
 
-	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.updateFromSubscription(subscription, values, merge(options, {
 			where: {
 				repoId
@@ -136,8 +161,17 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async deleteRepoForSubscription(subscription: Subscription, repoId: number, options: DestroyOptions = {}): Promise<number> {
+		return RepoSyncState.destroy(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				repoId
+			}
+		}));
+	}
+
 	// Nullify statuses and cursors to start anew
-	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {
 		return RepoSyncState.update({
 			repoUpdatedAt: null,
 			branchStatus: null,
@@ -149,7 +183,8 @@ export class RepoSyncState extends Model {
 			buildStatus: null,
 			buildCursor: null,
 			deploymentStatus: null,
-			deploymentCursor: null
+			deploymentCursor: null,
+			commitFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -202,6 +237,11 @@ RepoSyncState.init({
 	pullCursor: STRING,
 	buildCursor: STRING,
 	deploymentCursor: STRING,
+	commitFrom: DATE,
+	branchFrom: DATE,
+	pullFrom: DATE,
+	buildFrom: DATE,
+	deploymentFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,
@@ -210,5 +250,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	failedCode: STRING
 }, { sequelize });

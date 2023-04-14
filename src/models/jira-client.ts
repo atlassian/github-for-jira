@@ -2,8 +2,10 @@ import { getAxiosInstance, JiraClientError } from "../jira/client/axios";
 import { AxiosInstance } from "axios";
 import { Installation } from "./installation";
 import Logger from "bunyan";
+import { getAppKey } from "utils/app-properties-utils";
 
 // TODO: why are there 2 jira clients?
+// Probably because this one has types :mindpop:
 export class JiraClient {
 	axios: AxiosInstance;
 
@@ -36,4 +38,29 @@ export class JiraClient {
 			return false;
 		}
 	}
+
+	async appPropertiesCreate(isConfiguredState: boolean) {
+		return await this.axios.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
+			"isConfigured": isConfiguredState
+		});
+	}
+
+	async appPropertiesGet() {
+		return await this.axios.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`);
+	}
+
+	async appPropertiesDelete() {
+		return await this.axios.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`);
+	}
+
+	async checkAdminPermissions(accountId: string) {
+		const payload = {
+			accountId,
+			globalPermissions: [
+				"ADMINISTER"
+			]
+		};
+		return await this.axios.post("/rest/api/latest/permissions/check", payload);
+	}
+
 }

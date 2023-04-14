@@ -35,9 +35,9 @@ describe("RepoSyncState", () => {
 
 	});
 
-	describe("countSyncedReposFromSubscription", () => {
+	describe("countFullySyncedReposForSubscription", () => {
 		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			let result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
@@ -47,7 +47,7 @@ describe("RepoSyncState", () => {
 				...repo,
 				subscriptionId: otherSub.id
 			});
-			result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 		});
 
@@ -77,14 +77,14 @@ describe("RepoSyncState", () => {
 				buildStatus: "complete",
 				deploymentStatus: "complete"
 			});
-			const result = await RepoSyncState.countSyncedReposFromSubscription(sub);
+			const result = await RepoSyncState.countFullySyncedReposForSubscription(sub);
 			expect(result).toEqual(1);
 		});
 	});
 
-	describe("countFailedReposFromSubscription", () => {
+	describe("countFailedSyncedReposForSubscription", () => {
 		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			let result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 			await RepoSyncState.create({
 				...repo,
@@ -94,7 +94,7 @@ describe("RepoSyncState", () => {
 				...repo,
 				subscriptionId: otherSub.id
 			});
-			result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(0);
 		});
 
@@ -118,49 +118,8 @@ describe("RepoSyncState", () => {
 				commitStatus: "complete",
 				branchStatus: "complete"
 			});
-			const result = await RepoSyncState.countFailedReposFromSubscription(sub);
+			const result = await RepoSyncState.countFailedSyncedReposForSubscription(sub);
 			expect(result).toEqual(1);
-		});
-	});
-
-	describe("countFromSubscription", () => {
-		it("Should count no repos", async () => {
-			let result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(0);
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: otherSub.id
-			});
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: otherSub.id
-			});
-			result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(0);
-		});
-
-		it("Should only count repos that have a failed status from specific subscription", async () => {
-			await RepoSyncState.create({
-				...repo,
-				pullStatus: "complete",
-				commitStatus: "pending",
-				branchStatus: "complete"
-			});
-			await RepoSyncState.create({
-				...repo,
-				pullStatus: "failed",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-			await RepoSyncState.create({
-				...repo,
-				subscriptionId: otherSub.id,
-				pullStatus: "complete",
-				commitStatus: "complete",
-				branchStatus: "complete"
-			});
-			const result = await RepoSyncState.countFromSubscription(sub);
-			expect(result).toEqual(2);
 		});
 	});
 
@@ -237,7 +196,7 @@ describe("RepoSyncState", () => {
 			});
 			const result = await RepoSyncState.findOneFromSubscription(sub);
 			expect(result).toBeTruthy();
-			expect(result.repoId).toEqual(2);
+			expect(result?.repoId).toEqual(2);
 		});
 	});
 
@@ -315,8 +274,8 @@ describe("RepoSyncState", () => {
 			await subToBeDeleted.destroy();
 
 			expect(await RepoSyncState.findByPk(repoStateThatShouldBeDeleted.id)).toBeNull();
-			const remainingState: RepoSyncState = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
-			expect(remainingState.subscriptionId).toBe(otherSub.id);
+			const remainingState: RepoSyncState | null = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
+			expect(remainingState?.subscriptionId).toBe(otherSub.id);
 
 		});
 		it("should NOT delete parent Subscription when RepoSyncState is deleted", async () => {
@@ -328,9 +287,9 @@ describe("RepoSyncState", () => {
 
 			await stateToDelete.destroy();
 
-			const foundSub: Subscription = await Subscription.findByPk(sub.id);
-			expect(foundSub.id).toBe(sub.id);
-			expect(foundSub.jiraHost).toBe(sub.jiraHost);
+			const foundSub: Subscription | null = await Subscription.findByPk(sub.id);
+			expect(foundSub?.id).toBe(sub.id);
+			expect(foundSub?.jiraHost).toBe(sub.jiraHost);
 
 		});
 	});

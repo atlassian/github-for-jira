@@ -38,6 +38,8 @@ export interface AppInstallation extends Octokit.AppsGetInstallationResponse {
 	syncWarning?: string;
 	totalNumberOfRepos?: number;
 	numberOfSyncedRepos?: number;
+	backfillSince?: Date;
+	failedSyncErrors?: Record<string, number>
 	jiraHost: string;
 }
 

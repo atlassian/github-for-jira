@@ -16,6 +16,7 @@ import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Errors } from "config/errors";
 import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
+import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 
 //  DO NOT USE THIS MIDDLEWARE ELSE WHERE EXCEPT FOR CREATE BRANCH FLOW AS THIS HAS SECURITY HOLE
 // TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
@@ -30,6 +31,16 @@ const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, nex
 	next();
 };
 
+// TODO - remove function once rollout complete
+// False flag wont parse the jwt query param so we need to allow current functionality to work while this happens
+const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
+	if (req.query.jwt && req.query.jwt !== "{jwt}") {
+		return jiraSymmetricJwtMiddleware(req, res, next);
+	}
+	return next();
+};
+
+
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
@@ -41,7 +52,8 @@ subRouter.post("/webhooks",
 	WebhookReceiverPost);
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+// Todo able to move under the jirasymmetric middleware once flag completed
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
@@ -51,6 +63,7 @@ subRouter.use("/branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddle
 subRouter.use(GithubOAuthRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
+subRouter.use(jiraAdminPermissionsMiddleware); // This must stay after jiraSymmetricJwtMiddleware
 subRouter.use(GithubServerAppMiddleware);
 
 subRouter.post("/encrypt/header", GithubEncryptHeaderPost);

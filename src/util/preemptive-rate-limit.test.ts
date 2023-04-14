@@ -97,7 +97,7 @@ describe("Preemptive rate limit check - Cloud", () => {
 		});
 	});
 
-	it(`Should not attempt to preempt when invalid quene name`, async () => {
+	it(`Should not attempt to preempt when invalid queue name`, async () => {
 		sqsQueue.queueName = "cats";
 		expect(await preemptiveRateLimitCheck(message, sqsQueue)).toEqual({
 			isExceedThreshold: false

@@ -333,6 +333,7 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
 export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
+		createdAt: string,
 		repository: Repository,
 		databaseId: string,
 		commitOid: string,
@@ -363,10 +364,11 @@ export type getDeploymentsResponse = {
 
 export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){
-    deployments(first: $per_page, after: $cursor) {
+    deployments(first: $per_page, after: $cursor, orderBy: { direction: DESC, field: CREATED_AT }) {
       edges {
         cursor
         node {
+					createdAt
           repository {
             id: databaseId
             node_id: id
