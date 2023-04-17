@@ -243,7 +243,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
-	private async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
+	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>): Promise<boolean> {
 		const TARGETED_QUEUES = ["deployment"];
 		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
 			return false;
@@ -252,7 +252,6 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		const messageBody = JSON.parse(message.Body);
 		const { webhookReceived } = messageBody;
 
-		// If the webhook too old, currently set to greater than one day.
 		if (Date.now() - webhookReceived > ONE_DAY_MILLI) {
 			try {
 				await this.deleteMessage(context);
@@ -301,11 +300,11 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
+			if (await this.deleteStaleMessages(message, context)) return;
+
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
 
-				// Remove stale messages
-				if (await this.deleteStaleMessages(message, context)) return;
 				// We have found out that the rate limit quota has been used and exceed the configured threshold.
 				// Next step is to postpone the processing.
 				// For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
