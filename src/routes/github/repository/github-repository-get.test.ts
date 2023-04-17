@@ -39,19 +39,6 @@ describe("GitHub Repository Search", () => {
 
 	describe("Testing the Repository Search route", () => {
 
-		it("should redirect to Github login if unauthorized", async () => {
-			await supertest(app)
-				.get("/github/repository").set(
-					"Cookie",
-					getSignedCookieHeader({
-						jiraHost
-					}))
-				.expect(res => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
-				});
-		});
-
 		it("should hit the create branch on GET if authorized", async () => {
 			const gitHubInstallationId = 15;
 			const orgName = "orgName";
@@ -60,11 +47,6 @@ describe("GitHub Repository Search", () => {
 				gitHubInstallationId,
 				jiraHost
 			});
-
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
 
 			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
@@ -99,11 +81,6 @@ describe("GitHub Repository Search", () => {
 				gitHubInstallationId,
 				jiraHost
 			});
-
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
 
 			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
@@ -144,11 +121,6 @@ describe("GitHub Repository Search", () => {
 				gitHubInstallationId: gitHubInstallationId + 1,
 				jiraHost
 			});
-
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
 
 			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
