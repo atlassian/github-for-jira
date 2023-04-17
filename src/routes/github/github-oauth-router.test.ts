@@ -17,7 +17,8 @@ describe("github-oauth-router", () => {
 		let locals = {};
 		let session = {};
 
-		beforeEach(() => {
+		beforeEach(async () => {
+			await new DatabaseStateCreator().create();
 			locals = {};
 			session = {
 				jiraHost,
