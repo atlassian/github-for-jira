@@ -252,7 +252,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		const messageBody = JSON.parse(message.Body);
 		const { webhookReceived } = messageBody;
 
-		// Is the webhook too old
+		// If the webhook too old, currently set to greater than one day.
 		if (Date.now() - webhookReceived > ONE_DAY_MILLI) {
 			try {
 				await this.deleteMessage(context);
@@ -304,7 +304,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
 
-				// TEMP FIX - this captures stale deployment messages and deleted them instead of trying to consume them later
+				// Remove stale messages
 				if (await this.deleteStaleMessages(message, context)) return;
 				// We have found out that the rate limit quota has been used and exceed the configured threshold.
 				// Next step is to postpone the processing.
