@@ -243,7 +243,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
-	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost: string): Promise<boolean> {
+	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
 		if (!await booleanFlag(BooleanFlags.REMOVE_STALE_MESSAGES, jiraHost)) {
 			return false;
 		}
@@ -303,7 +303,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
-			if (await this.deleteStaleMessages(message, context, jiraHost)) return;
+			if (await this.deleteStaleMessages(message, context, payload?.jiraHost)) return;
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
