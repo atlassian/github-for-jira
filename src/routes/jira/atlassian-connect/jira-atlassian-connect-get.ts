@@ -10,12 +10,14 @@ const isProd = (instance === EnvironmentEnum.production);
 export const postInstallUrl = "/jira";
 export const APP_NAME = `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
 export const APP_KEY = `com.github.integration${instance ? `.${instance}` : ""}`;
+export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
 	{
 		condition: "user_is_admin"
 	}
 ];
+
 const modules = {
 	jiraDevelopmentTool: {
 		application: {
@@ -32,7 +34,7 @@ const modules = {
 			}
 		},
 		key: "github-development-tool",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub"
 		},
@@ -43,12 +45,12 @@ const modules = {
 		name: {
 			value: "GitHub Actions"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com/features/actions"
 	},
 	jiraBuildInfoProvider: {
 		key: "github-actions",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub Actions"
 		},
@@ -59,8 +61,27 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
+	},
+	jiraTempThingy: {
+		key: "github-containers",
+		name: {
+			value: "GitHub"
+		},
+		logoUrl: LOGO_URL,
+		homeUrl: "https://github.com",
+		actions: {
+			searchConnectedWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/workspaces/fetch`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/fetch`
+			},
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/search`
+			}
+		}
 	},
 	postInstallPage: {
 		key: "github-post-install-page",
