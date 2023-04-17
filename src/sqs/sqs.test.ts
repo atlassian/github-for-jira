@@ -5,10 +5,12 @@ import { waitUntil } from "test/utils/wait-until";
 import { statsd }  from "config/statsd";
 import { sqsQueueMetrics } from "config/metric-names";
 import { Request as AwsRequest } from "aws-sdk";
-import { BaseMessagePayload } from "~/src/sqs/sqs.types";
+import { BaseMessagePayload, SQSMessageContext } from "~/src/sqs/sqs.types";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
+jest.mock("config/feature-flags");
 jest.mock("utils/preemptive-rate-limit");
 
 const delay = (time: number) => new Promise(resolve => setTimeout(resolve, time));
@@ -46,6 +48,11 @@ describe("SQS", () => {
 			mockErrorHandler);
 		when(jest.mocked(preemptiveRateLimitCheck))
 			.calledWith(expect.anything(), expect.anything()) .mockResolvedValue({ isExceedThreshold: false });
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.REMOVE_STALE_MESSAGES,
+			expect.anything()
+		).mockResolvedValue(true);
 	});
 
 	afterEach(async () => {
@@ -242,21 +249,41 @@ describe("SQS", () => {
 				warn: jest.fn(),
 				error: jest.fn()
 			}
-		};
+		} as unknown as SQSMessageContext<BaseMessagePayload>;
 
 		beforeEach(() => {
 			queue = createSqsQueue(1);
 			queue.start();
+			when(booleanFlag).calledWith(
+				BooleanFlags.REMOVE_STALE_MESSAGES,
+				expect.anything()
+			).mockResolvedValue(true);
 		});
+
+		// Test case for when feature flag is turned off
+		it("should return false when feature flag is false", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.REMOVE_STALE_MESSAGES,
+				expect.anything()
+			).mockResolvedValue(false);
+			const message = {
+				Body: JSON.stringify({
+					webhookReceived: Date.now() - 2 * 24 * 60 * 60 * 1000 // Two days ago
+				}),
+				MessageId: "12345"
+			};
+
+			const result = await queue.deleteStaleMessages(message, context, jiraHost);
+			expect(result).toBe(false);
+		});
+
 		// Test case for when the message is not from the targeted queue
 		it("should return false when message is not from targeted queue", async () => {
 			const message = {
 				Body: JSON.stringify({}),
 				MessageId: "12345"
 			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			const result = await queue.deleteStaleMessages(message, context);
+			const result = await queue.deleteStaleMessages(message, context, jiraHost);
 			expect(result).toBe(false);
 		});
 
@@ -265,9 +292,7 @@ describe("SQS", () => {
 			const message = {
 				MessageId: "12345"
 			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			const result = await queue.deleteStaleMessages(message, context);
+			const result = await queue.deleteStaleMessages(message, context, jiraHost);
 			expect(result).toBe(false);
 		});
 
@@ -284,9 +309,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
 			expect(result).toBe(true);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			expect(context.log.warn).toHaveBeenCalledWith(
@@ -303,9 +326,7 @@ describe("SQS", () => {
 				}),
 				MessageId: "12345"
 			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			const result = await queue.deleteStaleMessages(message, context);
+			const result = await queue.deleteStaleMessages(message, context, jiraHost);
 			expect(result).toBe(false);
 		});
 
@@ -322,9 +343,7 @@ describe("SQS", () => {
 				queueName: "deployment",
 				deleteMessage
 			};
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			const result = await queue.deleteStaleMessages.call(mockThis, message, context);
+			const result = await queue.deleteStaleMessages.call(mockThis, message, context, jiraHost);
 			expect(result).toBe(false);
 			expect(deleteMessage).toHaveBeenCalledWith(context);
 			expect(context.log.error).toHaveBeenCalledWith(
