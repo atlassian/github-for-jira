@@ -115,6 +115,7 @@ export class Installation extends EncryptedModel {
 const LOGGER_HOOK_BEFORE_SAVE = getLogger("installation-hook-beforeSave");
 const LOGGER_HOOK_BEFORE_BULK_CREATE = getLogger("installation-hook-beforeBulkCreate");
 
+
 Installation.init({
 	id: {
 		type: DataTypes.INTEGER,
@@ -142,12 +143,14 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_SAVE);
+			const optsFields = opts.fields.filter((field): field is string => typeof field === "string");
+			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
 				if (!opts.fields) return;
-				await instance.encryptChangedSecretFields(opts.fields, LOGGER_HOOK_BEFORE_BULK_CREATE);
+				const optsFields = opts.fields.filter((field): field is string => typeof field === "string");
+				await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_BULK_CREATE);
 			}
 		}
 	},

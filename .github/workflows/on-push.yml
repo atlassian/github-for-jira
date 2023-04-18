@@ -59,6 +59,7 @@ jobs:
           AWS_ACCESS_KEY_ID: localkey
           AWS_SECRET_ACCESS_KEY: localsecret
           AWS_EC2_METADATA_DISABLED: true
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: yarn test
       - uses: actions/upload-artifact@v3
         if: always()

@@ -12,7 +12,6 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
 import {
-	createAppClient,
 	createInstallationClient,
 	createUserClient
 } from "~/src/util/get-github-client-config";
@@ -184,8 +183,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			return;
 		}
 
-		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId, { trigger: "github-configuration-get" });
-
 		req.log.debug(`found installation in DB with id ${installation.id}`);
 
 		const { data: { installations }, headers } = await gitHubUserClient.getInstallations();
@@ -203,12 +200,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		}
 
 		req.log.debug(`got user's installations with admin status from GitHub`);
-		const { data: info } = await gitHubAppClient.getApp();
-		req.log.debug(`got user's authenticated apps from GitHub`);
-
-		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
-			log.info({ info }, `verbose logging: getAuthenticated`);
-		}
 
 		const connectedInstallations = await installationConnectedStatus(
 			jiraHost,
@@ -232,7 +223,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			installations: sortedInstallation,
 			jiraHost,
 			nonce: res.locals.nonce,
-			info,
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
