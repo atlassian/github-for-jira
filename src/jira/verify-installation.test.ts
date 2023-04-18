@@ -36,6 +36,8 @@ describe("verify-installation", () => {
 		});
 	};
 
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
 	it("returns true when Jira responds with 200", async () => {
 		mockJiraResponse(200);
 		expect(await verifyJiraInstallation(installation, getLogger("test"))()).toBeTruthy();

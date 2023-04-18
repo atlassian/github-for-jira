@@ -11,14 +11,12 @@ import pullRequestTriggeredByBot from "fixtures/pull-request-triggered-by-bot.js
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
+describe("Pull Request Webhook", () => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 	const issueKeys = ["TEST-123", "TEST-321", "TEST-124"];
@@ -78,10 +76,6 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SHARED_PR_TRANSFORM,
-			expect.anything()
-		).mockResolvedValue(useSharedPrFlag);
 
 	});
 

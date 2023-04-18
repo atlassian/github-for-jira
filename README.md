@@ -189,8 +189,9 @@ When a workflow (e.g. GitHub Action) or development event (e.g. pull request, co
 
 ## How the backfill works
 The app is designed to backfill historical data into Jira. Once you have installed and configured the app successfully,
-it will automatically trigger the backfilling process for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits.
+it will automatically trigger the backfilling process, for 6 months, for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits. Once the initial backfilling process is complete, you will be able to view the backfilled date and status on the user interface. All branches will be backfilled, regardless of their creation date. However, pull requests, deployments, builds, and commits will only be backfilled for the last six months. If you wish to pull more historical data in Jira, you may continue the backfill process for older dates by selecting 'Continue backfill' from the action menu. If the historical data is substantial, we recommend backfilling your data in 6 month segments, and continuing the process until you've reached the desired backfilled date. 
 
+The historical data that meets the following criteria will be available in Jira:
 1. The backfilling process attempts to connect all branches that fulfill at least one of the following criteria:
     - The branch name contains the issue key.
     - The title of the latest pull request associated with the branch contains the issue key.
@@ -204,7 +205,7 @@ it will automatically trigger the backfilling process for the allowed repositori
 6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include 
    issue keys to the builds and deployments [here](#see-github-builds-and-deployments-in-jira).
 
-
+If an error occurs during the backfilling process, the app will prompt you to retry the backfilling for the failed repositories without having to restart the entire backfill process. However, this does not account for permission errors. You will need to resolve any permissions errors before retrying the backfill process.
 
 ## Migrate from the DVCS Connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:

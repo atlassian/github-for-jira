@@ -7,17 +7,18 @@ import { JiraConnectEnterpriseAppRouter } from "routes/jira/connect/enterprise/a
 import { JiraConnectEnterpriseServerAppGet } from "routes/jira/connect/enterprise/server_app/jira-connect-enterprise-server-app-get";
 import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-create-or-edit";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 
 export const JiraConnectEnterpriseRouter = Router();
 
 JiraConnectEnterpriseRouter.route("/")
-	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseGet)
-	.post(jiraSymmetricJwtMiddleware, JiraConnectEnterprisePost)
-	.delete(jiraSymmetricJwtMiddleware, JiraConnectEnterpriseDelete);
+	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseGet)
+	.post(jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterprisePost)
+	.delete(jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseDelete);
 
 JiraConnectEnterpriseRouter.use("/app", JiraConnectEnterpriseAppRouter);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseAppCreateOrEdit);
+JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseAppCreateOrEdit);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app", csrfMiddleware, jiraSymmetricJwtMiddleware, JiraConnectEnterpriseServerAppGet);
+JiraConnectEnterpriseRouter.get("/:serverUrl/app", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseServerAppGet);
 
