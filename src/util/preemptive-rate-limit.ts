@@ -27,6 +27,7 @@ export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(con
 
 	try {
 		const rateLimitResponse = (await getRateRateLimitStatus(context)).data;
+
 		if (Math.random() < 0.05) {
 			context.log.info({ rateLimitResponse }, "Rate limit check result (sampled)");
 		}
