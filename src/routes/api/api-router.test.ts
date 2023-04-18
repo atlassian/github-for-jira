@@ -309,28 +309,6 @@ describe("API Router", () => {
 					.reply(200);
 			});
 
-			it("Should work with old delete installation route", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
-			it("Should work with old delete installation route with gitHubAppId", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/github-app-id/${gitHubServerApp.id}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
@@ -366,6 +344,31 @@ describe("API Router", () => {
 					.then((response) => {
 						expect(response.body?.originalValue).toEqual("encrypt_this_yo");
 						expect(response.body?.hashedValue).toEqual("a539e6c6809cabace5719df6c7fb52071ee15e722ba89675f6ad06840edaa287");
+					});
+			});
+
+		});
+
+		describe("Recrypt data", () => {
+
+			it("Should recrypt data in different context", () => {
+				return supertest(app)
+					.post("/api/recrypt")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						encryptedValue: "encrypted:blah",
+						key: "github-server-app-secrets",
+						oldContext: {
+							jiraHost: "https://blah.atlassian.com"
+						},
+						newContext: {
+							jiraHost: "https://foo.atlassian.com"
+						}
+					})
+					.expect(200)
+					.then((response) => {
+						expect(response.body!.recryptedValue).toEqual("encrypted:blah");
 					});
 			});
 

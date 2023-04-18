@@ -6,9 +6,20 @@ import { getLogger } from "~/src/config/logger";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
 
-
 jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
+
+const getToken = ({
+	secret = "secret",
+	iss = "jira-client-key",
+	exp = Date.now() / 1000 + 10000,
+	qsh = "context-qsh" }): any => {
+	return encodeSymmetric({
+		qsh,
+		iss,
+		exp
+	}, secret);
+};
 
 describe("jiraSymmetricJwtMiddleware", () => {
 	let app: Application;
@@ -216,15 +227,3 @@ describe("jiraSymmetricJwtMiddleware", () => {
 	};
 
 });
-
-const getToken = ({
-	secret = "secret",
-	iss = "jira-client-key",
-	exp = Date.now() / 1000 + 10000,
-	qsh = "context-qsh" }): any => {
-	return encodeSymmetric({
-		qsh,
-		iss,
-		exp
-	}, secret);
-};

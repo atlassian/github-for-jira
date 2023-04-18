@@ -6,10 +6,12 @@ import { JiraConnectEnterpriseAppPut } from "routes/jira/connect/enterprise/app/
 import { JiraConnectEnterpriseAppPost } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-post";
 import { JiraConnectEnterpriseAppCreateOrEdit } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-create-or-edit";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 
 export const JiraConnectEnterpriseAppRouter = Router();
 
 JiraConnectEnterpriseAppRouter.use(jiraSymmetricJwtMiddleware);
+JiraConnectEnterpriseAppRouter.use(jiraAdminPermissionsMiddleware);
 
 JiraConnectEnterpriseAppRouter.post("/", JiraConnectEnterpriseAppPost);
 

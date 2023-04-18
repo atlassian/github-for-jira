@@ -113,6 +113,11 @@
     margin-top: 1em;
 }
 
+#jiraConfiguration__restartBackfillModal__form .jiraConfiguration__restartBackfillModal__fullsync__label {
+  display: inline;
+  cursor: pointer;
+}
+
 .jiraConfiguration__tableContainer {
     padding: 0 0 1em;
 }
@@ -404,6 +409,7 @@
 
 .jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
     margin-left: 5px;
+    cursor: default;
 }
 
 .jiraConfiguration__table__pending,
