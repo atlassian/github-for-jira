@@ -46,7 +46,6 @@ describe("GitHub Branches Get", () => {
 		await GithubBranchesGet(req, res);
 		expect(res.status).toHaveBeenCalledWith(400);
 	});
-
 });
 
 const defaultBranch = "sample-patch-2";
@@ -60,7 +59,6 @@ const setupNock = () => {
 			default_branch: defaultBranch
 		});
 };
-
 const allBranches = [
 	{
 		"name": "sample-patch-1",
@@ -78,4 +76,74 @@ const allBranches = [
 const response = {
 	branches: allBranches.filter(branch => branch.name !== defaultBranch),
 	defaultBranch: "sample-patch-2"
+};
+
+describe("Getting GitHub Branches securely avoiding XSS attacks", () => {
+	let req, res;
+	beforeEach(async () => {
+
+		req = {
+			log: getLogger("request"),
+			params: {
+				owner: "Hacker",
+				repo: "xss-test"
+			}
+		};
+
+		res = {
+			sendStatus: jest.fn(),
+			send: jest.fn(),
+			status: jest.fn(),
+			json: jest.fn(),
+			locals: {
+				jiraHost,
+				githubToken: "random-token",
+				gitHubAppConfig: {}
+			}
+		};
+	});
+	it("Should fetch branches securely", async () => {
+		setupNockForXSSBranches();
+		await GithubBranchesGet(req, res);
+		expect(res.send).toBeCalledWith(responseForXSSBranches);
+	});
+});
+
+const defaultBranchForXSS = "DEFAULTTESTXSS\"><script>alert('🔫🔫🔫🔫🔫🔫')</script>";
+const setupNockForXSSBranches = () => {
+	githubNock
+		.get("/repos/Hacker/xss-test/branches?per_page=100")
+		.reply(200, XSSBranches);
+	githubNock
+		.get("/repos/Hacker/xss-test")
+		.reply(200, {
+			default_branch: defaultBranchForXSS
+		});
+};
+const XSSBranches = [
+	{
+		"name": "TESTXSS\"><img/src/onerror=alert(\"You've been hit by\")>",
+		"id": "first-xss"
+	},
+	{
+		"name": "TESTXSS2\"><script>alert('A smooth criminal!!')</script>",
+		"id": "second-xss"
+	},
+	{
+		"name": "DEFAULTTESTXSS\"><script>alert('🔫🔫🔫🔫🔫🔫')</script>",
+		"id": "default-xss"
+	}
+];
+const responseForXSSBranches = {
+	branches: [
+		{
+			"name": "TESTXSS\"&gt;",
+			"id": "first-xss"
+		},
+		{
+			"name": "TESTXSS2\"&gt;",
+			"id": "second-xss"
+		}
+	],
+	defaultBranch: "DEFAULTTESTXSS\"&gt;"
 };
