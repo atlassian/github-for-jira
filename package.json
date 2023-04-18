@@ -58,7 +58,7 @@
 		"@octokit/graphql-schema": "^10.73.0",
 		"@sentry/node": "^6.8.0",
 		"atlassian-jwt": "^2.0.0",
-		"aws-sdk": "^2.1015.0",
+		"aws-sdk": "2.1300.0",
 		"axios": "^0.26.0",
 		"body-parser": "^1.19.2",
 		"bottleneck": "^2.19.5",
