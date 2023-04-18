@@ -18,10 +18,12 @@ export enum BooleanFlags {
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
 	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
-	JIRA_ADMIN_CHECK = "jira-admin-check"
+	JIRA_ADMIN_CHECK = "jira-admin-check",
+	REMOVE_STALE_MESSAGES = "remove-stale-messages"
 }
 
 export enum StringFlags {
+	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
 	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
