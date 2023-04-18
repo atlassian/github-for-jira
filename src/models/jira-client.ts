@@ -52,4 +52,15 @@ export class JiraClient {
 	async appPropertiesDelete() {
 		return await this.axios.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`);
 	}
+
+	async checkAdminPermissions(accountId: string) {
+		const payload = {
+			accountId,
+			globalPermissions: [
+				"ADMINISTER"
+			]
+		};
+		return await this.axios.post("/rest/api/latest/permissions/check", payload);
+	}
+
 }

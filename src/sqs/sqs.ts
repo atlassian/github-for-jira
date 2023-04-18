@@ -7,7 +7,7 @@ import { statsd } from "config/statsd";
 import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
-import { stringFlag, StringFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
@@ -18,6 +18,7 @@ const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12 * 60 * 60 - 1;
 const DEFAULT_LONG_POLLING_INTERVAL = 4;
 const PROCESSING_DURATION_HISTOGRAM_BUCKETS = "10_100_500_1000_2000_3000_5000_10000_30000_60000";
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
+const ONE_DAY_MILLI = 24 * 60 * 60 * 1000;
 
 const isNotAFailure = (errorHandlingResult: ErrorHandlingResult) => {
 	return !errorHandlingResult.isFailure;
@@ -242,6 +243,38 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
+	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
+		if (!await booleanFlag(BooleanFlags.REMOVE_STALE_MESSAGES, jiraHost)) {
+			return false;
+		}
+		const TARGETED_QUEUES = ["deployment"];
+		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
+			return false;
+		}
+
+		const messageBody = JSON.parse(message.Body);
+		const { webhookReceived } = messageBody;
+
+		if (Date.now() - webhookReceived > ONE_DAY_MILLI) {
+			try {
+				await this.deleteMessage(context);
+				context.log.warn(
+					{ deletedMessageId: message.MessageId },
+					`Deleted stale message from ${this.queueName} queue`
+				);
+				return true;
+			} catch (error) {
+				context.log.error(
+					{ error, deletedMessageId: message.MessageId },
+					`Failed to delete stale message from ${this.queueName} queue`
+				);
+				return false;
+			}
+		}
+
+		return false;
+	}
+
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
 		const payload: MessagePayload = message.Body ? JSON.parse(message.Body) : {};
 
@@ -270,9 +303,11 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
+			if (await this.deleteStaleMessages(message, context, payload?.jiraHost)) return;
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
+
 				// We have found out that the rate limit quota has been used and exceed the configured threshold.
 				// Next step is to postpone the processing.
 				// For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.

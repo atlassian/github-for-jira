@@ -245,7 +245,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 	// The idea is to always process the main task (the first one from the list) and handle its errors while do the
 	// best effort for the other tasks (tail) that are picked randomly to use rate-limiting quota efficiently.
 	const nextTasks = await getNextTasks(subscription, data.targetTasks || [], logger);
-	if (nextTasks.length === 0) {
+	if (!nextTasks.mainTask) {
 		await markSyncAsCompleteAndStop(data, subscription, logger);
 		return;
 	}
@@ -294,7 +294,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		}
 	};
 
-	const executors = nextTasks.map((nextTask, index) => taskExecutor(nextTask,
+	const executors = [nextTasks.mainTask!, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
 		isMainTask(index)
 			// Only the first task is responsible for error handling, the other tasks are best-effort and not
 			// supposed to schedule anything
@@ -309,7 +309,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		// Because scheduler deterministically returns the first task only, we treat it as the "main" one (that contributes
 		// to retries etc). The others are treated as "best effort" and errors are ignored: in the worst case they will be
 		// retried again
-		const mainTask = nextTasks[0];
+		const mainTask = nextTasks.mainTask;
 		const errLogger = logger.child({
 			err: mainTaskResult.reason,
 			task: mainTask,
@@ -337,8 +337,14 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
 	const failedCode = getFailedCode(err);
 
+	const isDeployment = mainNextTask.task === "deployment";
+	const newStatus = isDeployment ? "complete" : "failed";
+	if (isDeployment) {
+		log.warn("Mapping failed status to complete until we fix deployment backfilling in ARC-2119");
+	}
+
 	// marking the current task as failed
-	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: "failed", failedCode });
+	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: newStatus, failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {

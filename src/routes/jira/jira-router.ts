@@ -10,11 +10,12 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 
 export const JiraRouter = Router();
 
 // TODO: The params `installationId` needs to be replaced by `subscriptionId`
-JiraRouter.delete("/subscription/:installationId", jiraSymmetricJwtMiddleware, JiraDelete);
+JiraRouter.delete("/subscription/:installationId", jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraDelete);
 
 JiraRouter.get("/atlassian-connect.json", JiraAtlassianConnectGet);
 
@@ -28,7 +29,7 @@ JiraRouter.post("/sync",
 
 JiraRouter.use("/events", JiraEventsRouter);
 
-JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, JiraGet);
+JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`
