@@ -24,10 +24,10 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 		]);
 
 		res.send({
-			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch).map(branch => {
-				branch.name = DOMPurify.sanitize(branch.name);
-				return branch;
-			}),
+			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch).map(branch => ({
+				...branch,
+				name: DOMPurify.sanitize(branch.name)
+			})),
 			defaultBranch: DOMPurify.sanitize(repository.data.default_branch)
 		});
 	} catch (err) {
