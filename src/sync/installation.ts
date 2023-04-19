@@ -49,10 +49,12 @@ export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
 
 export class TaskError extends Error {
 	task: Task;
+	duration: number;
 	cause: Error;
-	constructor(task: Task, cause: Error) {
+	constructor(task: Task, duration: number, cause: Error) {
 		super(cause.message);
 		this.task = cloneDeep(task);
+		this.duration = duration;
 		this.cause = cause;
 	}
 }
@@ -74,6 +76,7 @@ export const updateTaskStatusAndContinue = async (
 	data: BackfillMessagePayload,
 	taskResultPayload: TaskResultPayload,
 	task: Task,
+	duration: number,
 	logger: Logger,
 	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>
 ): Promise<void> => {
@@ -94,8 +97,6 @@ export const updateTaskStatusAndContinue = async (
 	logger.info({ status }, "Updating job status");
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
-
-	const duration = task.startTime ? Date.now() - task.startTime : NaN;
 
 	if (isComplete) {
 		//Skip branches as it sync all history
@@ -254,6 +255,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 
 	await subscription.update({ syncStatus: "ACTIVE" });
 
+	const startTime = Date.now();
 	const taskExecutor = async (nextTask: Task, sendBackfillMessage: (message: BackfillMessagePayload, delay: number, parentLogger: Logger) => Promise<unknown>, parentLogger: Logger) => {
 		try {
 			const logger = parentLogger.child({
@@ -261,7 +263,6 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			});
 
 			logger.info("Starting task");
-			nextTask.startTime = Date.now();
 
 			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
 
@@ -288,6 +289,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				data,
 				taskPayload,
 				nextTask,
+				Date.now() - startTime,
 				logger,
 				sendBackfillMessage
 			);
@@ -319,7 +321,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			taskIndex: 0
 		});
 		errLogger.info({ taskIndex: 0 }, "rethrowing as a task error");
-		throw new TaskError(mainTask, mainTaskResult.reason);
+		throw new TaskError(mainTask, Date.now() - startTime, mainTaskResult.reason);
 	}
 };
 
@@ -330,7 +332,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 		data.gitHubAppConfig?.gitHubAppId
 	);
 
-export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, mainNextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
+export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, mainNextTask: Task, duration: number, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
 
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
@@ -357,7 +359,6 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : NaN;
 	statsd.histogram(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	if (mainNextTask.task === "repository") {

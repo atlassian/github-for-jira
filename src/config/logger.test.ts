@@ -188,7 +188,7 @@ describe("logger behaviour", () => {
 					},
 					repositoryId: 54321,
 					task: "pull"
-				}, new Error("boom")) }, "surprise!");
+				}, 0, new Error("boom")) }, "surprise!");
 
 			expect(JSON.parse(ringBuffer.records[0]).err.task).toEqual(
 				{

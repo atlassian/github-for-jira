@@ -12,7 +12,7 @@ import {
 	GithubClientInvalidPermissionsError, GithubClientNotFoundError, GithubClientRateLimitingError
 } from "~/src/github/client/github-client-errors";
 
-const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
+const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, duration: number, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
 	const log = rootLogger.child({
 		task,
@@ -23,7 +23,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
-		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, duration, true, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false
 		};
@@ -48,7 +48,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof GithubClientNotFoundError) {
 		log.info("Repo was deleted, marking the task as completed");
-		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
+		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task, duration,  log, sendSQSBackfillMessage);
 		return {
 			isFailure: false
 		};
@@ -57,7 +57,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
 		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
-		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
+		await markCurrentTaskAsFailedAndContinue(context.payload, task, duration, false, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false
 		};
@@ -73,7 +73,7 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 			log.info("Handling error");
 
 			if (err instanceof TaskError) {
-				return await handleTaskError(sendSQSBackfillMessage, err.task, err.cause, context, log);
+				return await handleTaskError(sendSQSBackfillMessage, err.task, err.duration, err.cause, context, log);
 			}
 
 			return handleUnknownError(err, context);

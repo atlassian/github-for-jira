@@ -151,7 +151,7 @@ describe("backfillErrorHandler", () => {
 			sequelizeConnectionError = err;
 		}
 
-		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, sequelizeConnectionError), createContext(2, false));
+		const result = await backfillErrorHandler(jest.fn())(new TaskError(task, 0, sequelizeConnectionError), createContext(2, false));
 		expect(result).toEqual({
 			isFailure: true,
 			retryDelaySec: 540,
@@ -161,7 +161,7 @@ describe("backfillErrorHandler", () => {
 
 	it("retries 500s from GitHub with exponential timeout", async () => {
 		const result = await backfillErrorHandler(jest.fn())(
-			new TaskError(task, (await create500FromGitHub())!),
+			new TaskError(task, 0, (await create500FromGitHub())!),
 			createContext(2, false)
 		);
 		expect(result).toEqual({
@@ -173,7 +173,7 @@ describe("backfillErrorHandler", () => {
 
 	it("retries 500s from Jira with exponential timeout", async () => {
 		const result = await backfillErrorHandler(jest.fn())(
-			new TaskError(task, (await create500FromJira())!),
+			new TaskError(task, 0, (await create500FromJira())!),
 			createContext(2, false)
 		);
 		expect(result).toEqual({
@@ -185,7 +185,7 @@ describe("backfillErrorHandler", () => {
 
 	it("marks task as failed and reschedules message on last attempt", async () => {
 		const result = await backfillErrorHandler(sendMessageMock)(
-			new TaskError(task, new Error("boom")),
+			new TaskError(task, 0, new Error("boom")),
 			createContext(5, true)
 		);
 
@@ -201,7 +201,7 @@ describe("backfillErrorHandler", () => {
 
 	it("marks task as failed and reschedules message on permission error", async () => {
 		const result = await backfillErrorHandler(sendMessageMock)(
-			new TaskError(task, new GithubClientInvalidPermissionsError({ } as unknown as AxiosError)),
+			new TaskError(task, 0, new GithubClientInvalidPermissionsError({ } as unknown as AxiosError)),
 			createContext(5, true)
 		);
 
@@ -222,7 +222,7 @@ describe("backfillErrorHandler", () => {
 		const context = createContext(3, false);
 		const result =  await backfillErrorHandler(sendMessageMock)(
 			new TaskError(
-				task,
+				task, 0,
 				(await createRateLimitingError(RATE_LIMIT_RESET_TIMESTAMP_SECS))!
 			),
 			context
@@ -238,7 +238,7 @@ describe("backfillErrorHandler", () => {
 		const context = createContext(3, false);
 		const result =  await backfillErrorHandler(sendMessageMock)(
 			new TaskError(
-				task,
+				task, 0,
 				(await createRateLimitingError(RATE_LIMIT_RESET_TIMESTAMP_SECS))!
 			),
 			context
@@ -250,7 +250,7 @@ describe("backfillErrorHandler", () => {
 
 	it("not found error marks the task as done and continues", async () => {
 		const result = await backfillErrorHandler(sendMessageMock)(
-			new TaskError(task, new GithubClientNotFoundError({ } as unknown as AxiosError)),
+			new TaskError(task, 0, new GithubClientNotFoundError({ } as unknown as AxiosError)),
 			createContext(3, false)
 		);
 

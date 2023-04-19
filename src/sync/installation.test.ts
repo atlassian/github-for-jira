@@ -343,7 +343,7 @@ describe("sync/installation", () => {
 			await markCurrentTaskAsFailedAndContinue({
 				...MESSAGE_PAYLOAD,
 				installationId: MESSAGE_PAYLOAD.installationId + 1
-			}, TASK, false, sendMessageMock, getLogger("test"), mockError);
+			}, TASK, 0, false, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
@@ -353,7 +353,7 @@ describe("sync/installation", () => {
 		});
 
 		it("updates status in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, 0, false, jest.fn(), getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
@@ -368,7 +368,7 @@ describe("sync/installation", () => {
 			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, {
 				...TASK,
 				task: "deployment"
-			}, false, jest.fn(), getLogger("test"), mockError);
+			}, 0, false, jest.fn(), getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
@@ -488,7 +488,7 @@ describe("sync/installation", () => {
 		});
 
 		it("does not update cursor in RepoSyncState table", async () => {
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, jest.fn(), getLogger("test"), mockError);
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, 0, false, jest.fn(), getLogger("test"), mockError);
 
 			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
 			expect(refreshedRepoSyncState?.branchCursor).toEqual(repoSyncState.branchCursor);
@@ -496,14 +496,14 @@ describe("sync/installation", () => {
 
 		it("schedules next message", async () => {
 			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, false, sendMessageMock, getLogger("test"), mockError);
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, 0, false, sendMessageMock, getLogger("test"), mockError);
 
 			expect(sendMessageMock).toBeCalledTimes(1);
 		});
 
 		it("sets up sync warning on permission error", async () => {
 			const sendMessageMock = jest.fn();
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, true, sendMessageMock, getLogger("test"), mockError);
+			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, TASK, 0, true, sendMessageMock, getLogger("test"), mockError);
 
 			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
 			expect(refreshedSubscription?.syncWarning).toEqual("Invalid permissions for branch task");
@@ -546,7 +546,7 @@ describe("sync/installation", () => {
 				repositoryId: REPO_ID,
 				repository: TEST_REPO
 			};
-			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 			await repoSync.reload();
 			expect(repoSync.branchFrom).toBeNull();
 		});
@@ -557,7 +557,7 @@ describe("sync/installation", () => {
 				repositoryId: 0,
 				repository: TEST_REPO
 			};
-			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+			await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 			await repoSync.reload();
 			expect(repoSync.branchFrom).toBeNull();
 			expect(repoSync.commitFrom).toBeNull();
@@ -574,14 +574,14 @@ describe("sync/installation", () => {
 				repository: TEST_REPO
 			};
 			it(`${taskType}: should update backfill from date upon success complete and existing backfill date is empty`, async () => {
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
 			});
 			it(`${taskType}: should update backfill from date upon success complete and new backfill date is earlier`, async () => {
 				repoSync.pullFrom = new Date(commitsFromDate.getTime() + 100000);
 				await repoSync.save();
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(commitsFromDate.toISOString());
 			});
@@ -589,12 +589,12 @@ describe("sync/installation", () => {
 				const oldDate = new Date(commitsFromDate.getTime() - 100000);
 				repoSync[colTaskFrom]= oldDate;
 				await repoSync.save();
-				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync[colTaskFrom]!.toISOString()).toEqual(oldDate.toISOString());
 			});
 			it(`${taskType}: should not update backfill from date is job is not complete`, async () => {
-				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, task, getLogger("test"), jest.fn());
+				await updateTaskStatusAndContinue(data, { edges: [ { cursor: "abcd" } ], jiraPayload: undefined }, task, 0, getLogger("test"), jest.fn());
 				await repoSync.reload();
 				expect(repoSync.pullFrom).toBeNull();
 			});
