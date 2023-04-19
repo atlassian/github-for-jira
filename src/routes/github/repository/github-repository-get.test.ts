@@ -73,7 +73,7 @@ describe("GitHub Repository Search", () => {
 				});
 		});
 
-		it("should return repos that the installation has access too", async () => {
+		it("should return repos that the installation has access to", async () => {
 			const gitHubInstallationId = 15;
 			const orgName = "orgName";
 
