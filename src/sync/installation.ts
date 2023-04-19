@@ -95,8 +95,6 @@ export const updateTaskStatusAndContinue = async (
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
-	const duration = task.startTime ? Date.now() - task.startTime : NaN;
-
 	if (isComplete) {
 		//Skip branches as it sync all history
 		if (allTasksExceptBranch.includes(task.task) && data.commitsFromDate) {
@@ -110,10 +108,18 @@ export const updateTaskStatusAndContinue = async (
 			}
 		}
 
-		statsd.histogram(metricTaskStatus.complete, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		if (task.startTime) {
+			statsd.histogram(metricTaskStatus.complete, Date.now() - task.startTime, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		} else {
+			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
+		}
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
-		statsd.histogram(metricTaskStatus.pending, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		if (task.startTime) {
+			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		} else {
+			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
+		}
 	}
 
 	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
@@ -357,8 +363,11 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : NaN;
-	statsd.histogram(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	if (mainNextTask.startTime) {
+		statsd.histogram(metricTaskStatus.failed, Date.now() - mainNextTask.startTime, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	} else {
+		log.warn({ mainNextTask }, "Fail to find startime in mainNextTask for metrics purpose");
+	}
 
 	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
