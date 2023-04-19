@@ -95,7 +95,7 @@ export const updateTaskStatusAndContinue = async (
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
-	const duration = task.startTime ? Date.now() - task.startTime : undefined;
+	const duration = task.startTime ? Date.now() - task.startTime : NaN;
 
 	if (isComplete) {
 		//Skip branches as it sync all history
@@ -110,10 +110,10 @@ export const updateTaskStatusAndContinue = async (
 			}
 		}
 
-		statsd.increment(metricTaskStatus.complete, duration || NaN, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.increment(metricTaskStatus.complete, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
-		statsd.increment(metricTaskStatus.pending, duration || NaN, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.increment(metricTaskStatus.pending, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	}
 
 	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
@@ -357,8 +357,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : undefined;
-	statsd.increment(metricTaskStatus.failed, duration || NaN, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : NaN;
+	statsd.increment(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
