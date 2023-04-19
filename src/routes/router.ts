@@ -64,7 +64,7 @@ RootRouter.use("/microscope/dlq", MicroscopeDlqRouter);
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
 
-RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", cookieSessionMiddleware, maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 // Session redirect
 RootRouter.get(["/session", "/session/*"], SessionGet);
