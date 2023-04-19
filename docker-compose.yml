@@ -71,3 +71,17 @@ services:
       SQS_TEST_QUEUE_URL: http://localstack:4566/000000000000/test-sqs-client
       REDISX_CACHE_HOST: redis
       NODE_ENV: $NODE_ENV
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/healthcheck" ]
+      interval: 5s
+      retries: 100
+
+  installation:
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./etc/app-install:/app
+    build:
+      context: .
+      dockerfile: etc/app-install/Dockerfile

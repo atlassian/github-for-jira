@@ -5,6 +5,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
+import { envVars } from "config/env";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -37,10 +38,9 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	// TODO move to middleware or shared for create-branch-options-get
 	// Redirecting when the users are not configured (have no subscriptions)
 	if (!subscriptions) {
-		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {

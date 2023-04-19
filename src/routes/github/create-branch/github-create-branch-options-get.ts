@@ -4,6 +4,7 @@ import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { envVars } from "config/env";
 
 // TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -29,10 +30,9 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const servers = await getGitHubServers(jiraHost);
 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
-		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {

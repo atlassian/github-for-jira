@@ -1,15 +1,13 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
-import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
+import { isNodeProd } from "utils/is-node-env";
 
-const instance = envVars.INSTANCE_NAME;
+const instance = envVars.APP_KEY.split(".").pop();
 
-const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-export const APP_NAME = `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
-export const APP_KEY = `com.github.integration${instance ? `.${instance}` : ""}`;
+export const APP_NAME = `GitHub for Jira${isNodeProd() ? "" : (instance ? (` (${instance})`) : "")}`;
 
 const adminCondition = [
 	{
@@ -28,7 +26,7 @@ const modules = {
 		],
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${APP_KEY}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			}
 		},
 		key: "github-development-tool",
@@ -177,7 +175,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		},
 		name: APP_NAME,
 		description: "Connect your code and your project with ease.",
-		key: APP_KEY,
+		key: envVars.APP_KEY,
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",
