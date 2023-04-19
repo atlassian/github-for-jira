@@ -7,6 +7,7 @@ import { metricCreateBranch } from "~/src/config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "~/src/util/get-cloud-or-server";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
+import { Errors } from "config/errors";
 
 const getErrorMessages = (statusCode: number): string => {
 	switch (statusCode) {
@@ -49,8 +50,8 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 
 		if (!subscription) {
-			logger.error("No Subscription found.");
-			throw Error("No Subscription found.");
+			logger.error(Errors.MISSING_SUBSCRIPTION);
+			throw Error(Errors.MISSING_SUBSCRIPTION);
 		}
 
 		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);

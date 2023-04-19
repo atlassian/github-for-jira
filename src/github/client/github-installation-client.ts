@@ -20,7 +20,8 @@ import {
 	SearchedRepositoriesResponse
 } from "./github-queries";
 import {
-	ActionsListRepoWorkflowRunsResponseEnhanced, CreateReferenceBody,
+	ActionsListRepoWorkflowRunsResponseEnhanced,
+	CreateReferenceBody,
 	GetPullRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse

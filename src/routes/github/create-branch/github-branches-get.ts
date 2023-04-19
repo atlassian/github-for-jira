@@ -3,6 +3,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
 import sanitizeHtml from "sanitize-html";
+import { Errors } from "config/errors";
 
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, gitHubAppConfig } = res.locals;
@@ -17,7 +18,7 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 
 	const { owner, repo } = req.params;
 	if (!owner || !repo) {
-		logger.warn("Missing required data.");
+		logger.error("Missing required data.");
 		res.status(400).json({ err: "Missing required data." });
 		return;
 	}
@@ -25,8 +26,8 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 	try {
 		const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 		if (!subscription) {
-			logger.error("No Subscription found!");
-			throw Error("No Subscription found!");
+			logger.error(Errors.MISSING_SUBSCRIPTION);
+			throw Error(Errors.MISSING_SUBSCRIPTION);
 		}
 
 		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);

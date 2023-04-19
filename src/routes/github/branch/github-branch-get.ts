@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
+import { Errors } from "config/errors";
 
 export const GithubBranchGet = async (req: Request, res: Response): Promise<void> => {
 	const {
@@ -15,14 +16,15 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	});
 
 	if (!gitHubAppConfig) {
-		logger.warn("No gitHubAppConfig found.");
+		logger.warn();
+		logger.error(Errors.MISSING_GITHUB_APP_CONFIG);
 		res.sendStatus(401);
 		return;
 	}
 
 	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 	if (!subscription) {
-		logger.warn("No Subscription found.");
+		logger.error(Errors.MISSING_SUBSCRIPTION);
 		res.sendStatus(400);
 		return;
 	}
