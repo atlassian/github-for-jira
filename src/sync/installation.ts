@@ -95,6 +95,8 @@ export const updateTaskStatusAndContinue = async (
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
+	const duration = task.startTime ? Date.now() - task.startTime : NaN;
+
 	if (isComplete) {
 		//Skip branches as it sync all history
 		if (allTasksExceptBranch.includes(task.task) && data.commitsFromDate) {
@@ -108,10 +110,10 @@ export const updateTaskStatusAndContinue = async (
 			}
 		}
 
-		statsd.increment(metricTaskStatus.complete, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.histogram(metricTaskStatus.complete, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
-		statsd.increment(metricTaskStatus.pending, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.histogram(metricTaskStatus.pending, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	}
 
 	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
@@ -259,6 +261,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			});
 
 			logger.info("Starting task");
+			nextTask.startTime = Date.now();
 
 			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
 
@@ -328,6 +331,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 	);
 
 export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, mainNextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
+
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -353,7 +357,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	statsd.increment(metricTaskStatus.failed, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : NaN;
+	statsd.histogram(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
