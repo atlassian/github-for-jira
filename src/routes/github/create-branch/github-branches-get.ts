@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { Subscription } from "models/subscription";
 import { getLogger } from "config/logger";
+import sanitizeHtml from "sanitize-html";
 
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, gitHubAppConfig } = res.locals;
@@ -35,8 +36,11 @@ export const GithubBranchesGet = async (req: Request, res: Response): Promise<vo
 		]);
 
 		res.send({
-			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch),
-			defaultBranch: repository.data.default_branch
+			branches: branches.data.filter(branch => branch.name !== repository.data.default_branch).map(branch => ({
+				...branch,
+				name: sanitizeHtml(branch.name)
+			})),
+			defaultBranch: sanitizeHtml(repository.data.default_branch)
 		});
 	} catch (err) {
 		logger.error({ err }, "Error while fetching branches");
