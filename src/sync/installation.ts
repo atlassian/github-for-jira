@@ -110,10 +110,10 @@ export const updateTaskStatusAndContinue = async (
 			}
 		}
 
-		statsd.increment(metricTaskStatus.complete, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.histogram(metricTaskStatus.complete, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
-		statsd.increment(metricTaskStatus.pending, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		statsd.histogram(metricTaskStatus.pending, duration, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
 	}
 
 	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
@@ -358,7 +358,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 
 	const duration = mainNextTask.startTime ? Date.now() - mainNextTask.startTime : NaN;
-	statsd.increment(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	statsd.histogram(metricTaskStatus.failed, duration, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
 
 	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
