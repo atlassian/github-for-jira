@@ -97,7 +97,7 @@ describe("POST /jira/connect/enterprise", () => {
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: true });
+		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: true });
 	});
 
 	it("POST Jira Connect Enterprise - valid new URL to GHE", async () => {
@@ -105,7 +105,7 @@ describe("POST /jira/connect/enterprise", () => {
 		gheNock.get("/").reply(200, { }, { "X-GitHub-Request-id": "blah" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
+		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
 	});
 
 	it("POST Jira Connect Enterprise - valid new URL to not GHE", async () => {
@@ -170,7 +170,7 @@ describe("POST /jira/connect/enterprise", () => {
 		gheNock.get("/").reply(401, { }, { "X-GitHub-Request-id": "blah" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
+		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
 	});
 
 	it("POST Jira Connect Enterprise - invalid status code with GHE server headers", async () => {
@@ -179,7 +179,7 @@ describe("POST /jira/connect/enterprise", () => {
 		gheNock.get("/").reply(401, { }, { "server": "GitHub.com" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true, appExists: false });
+		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
 	});
 
 	it("POST Jira Connect Enterprise - network error code will fail", async () => {
