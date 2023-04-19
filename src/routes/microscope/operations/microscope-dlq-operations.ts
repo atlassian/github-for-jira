@@ -36,11 +36,12 @@ export const microscopeDlqHealthcheck = async (_: Request, res: Response): Promi
 };
 
 export const queryQueues = async (_: Request, res: Response): Promise<void> => {
-	res.send(await dlqServiceClient.getQueues());
+	log.info("reaching my service :)");
+	res.send(await dlqServiceClient.getQueues().toJSON());
 };
 
 export const queryQueueAttributes = async (_: Request, res: Response): Promise<void> => {
-	res.send(await dlqServiceClient.getQueuesAttributes());
+	res.send(await dlqServiceClient.getQueuesAttributes().toJSON());
 };
 
 export const queryQueueMessages = async (req: Request, res: Response): Promise<void> => {
@@ -49,7 +50,7 @@ export const queryQueueMessages = async (req: Request, res: Response): Promise<v
 	res.send(await dlqServiceClient.getMessages({
 		queueName: req.params.queueName,
 		limit: limit ? Number(limit) : undefined
-	}));
+	}).toJSON());
 };
 
 export const requeueMessage = async (req: Request, res: Response): Promise<void> => {
