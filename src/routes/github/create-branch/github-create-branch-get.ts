@@ -29,6 +29,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 
 	if (!issueKey) {
 		logger.error(Errors.MISSING_ISSUE_KEY);
+		res.status(400).send(Errors.MISSING_ISSUE_KEY);
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppConfig.gitHubAppId || null);

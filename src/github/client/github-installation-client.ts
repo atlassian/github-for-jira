@@ -195,12 +195,27 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
+		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {},{
+			owner,
+			repo,
+			per_page
+		});
+	}
+
 	public async createReference(owner: string, repo: string, body: CreateReferenceBody): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
 		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
 			{
 				owner,
 				repo
 			});
+	}
+
+	public async getRepositoryByOwnerRepo(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
+		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {}, {
+			owner,
+			repo
+		});
 	}
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
@@ -306,22 +321,6 @@ export class GitHubInstallationClient extends GitHubClient {
 				return Promise.reject(err);
 			});
 		return response?.data?.data;
-	}
-
-	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
-		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {},{
-			owner,
-			repo,
-			per_page
-		});
-	}
-
-
-	public async getRepositoryByOwnerRepo(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
-		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {}, {
-			owner,
-			repo
-		});
 	}
 
 	public async updateIssueComment({ owner, repo, comment_id, body }: Octokit.IssuesUpdateCommentParams): Promise<AxiosResponse<Octokit.IssuesUpdateCommentResponse>> {

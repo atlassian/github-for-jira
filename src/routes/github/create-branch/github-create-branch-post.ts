@@ -44,17 +44,17 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.status(400).json({ error: getErrorMessages(400) });
 		return;
 	}
-	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
-	if (!subscription) {
-		logger.error("No Subscription found.");
-		throw Error("No Subscription found.");
-	}
-
-	const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
 
 	try {
-		const baseBranchSha = (await gitHubInstallationClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
+		const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 
+		if (!subscription) {
+			logger.error("No Subscription found.");
+			throw Error("No Subscription found.");
+		}
+
+		const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-branches-get" }, req.log, gitHubAppConfig.gitHubAppId);
+		const baseBranchSha = (await gitHubInstallationClient.getReference(owner, repo, sourceBranchName)).data.object.sha;
 		await gitHubInstallationClient.createReference(owner, repo, {
 			owner,
 			repo,

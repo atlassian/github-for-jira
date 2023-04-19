@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { Subscription } from "models/subscription";
+import { getLogger } from "config/logger";
 
 export const GithubBranchGet = async (req: Request, res: Response): Promise<void> => {
 	const {
@@ -9,15 +10,20 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	} = res.locals;
 	const { owner, repo, ref } = req.params;
 
+	const logger = getLogger("github-branch-get", {
+		fields: req.log?.fields
+	});
+
 	if (!gitHubAppConfig) {
-		req.log.warn("No gitHubAppConfig found.");
+		logger.warn("No gitHubAppConfig found.");
 		res.sendStatus(401);
 		return;
 	}
 
 	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
 	if (!subscription) {
-		req.log.warn("No Subscription found.");
+		logger.warn("No Subscription found.");
+		res.sendStatus(400);
 		return;
 	}
 
@@ -27,11 +33,11 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		res.sendStatus(200);
 	} catch (err) {
 		if (err.status === 404) {
-			req.log.error("Branch not found.");
+			logger.error("Branch not found.");
 			res.sendStatus(404);
 			return;
 		}
-		req.log.error("Error retrieving branch.");
+		logger.error("Error retrieving branch.");
 		res.status(500).json(err);
 	}
 
