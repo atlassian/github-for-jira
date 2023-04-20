@@ -31,6 +31,15 @@ const modules = {
 		actions: {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${APP_KEY}`
+			},
+			searchConnectedWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/workspaces/fetch`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/fetch`
+			},
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/search`
 			}
 		},
 		key: "github-development-tool",
@@ -63,25 +72,6 @@ const modules = {
 		},
 		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
-	},
-	jiraTempThingy: {
-		key: "github-containers",
-		name: {
-			value: "GitHub"
-		},
-		logoUrl: LOGO_URL,
-		homeUrl: "https://github.com",
-		actions: {
-			searchConnectedWorkspaces: {
-				templateUrl: `${envVars.APP_URL}/workspaces/fetch`
-			},
-			searchContainers: {
-				templateUrl: `${envVars.APP_URL}/containers/fetch`
-			},
-			fetchContainers: {
-				templateUrl: `${envVars.APP_URL}/containers/search`
-			}
-		}
 	},
 	postInstallPage: {
 		key: "github-post-install-page",
