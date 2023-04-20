@@ -16,7 +16,7 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
+	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";
 	AP.context.getToken(function(token) {
 		const child = openChildWindow("/session/github/configuration" + queryParameter);
 		child.window.jwt = token;
@@ -325,7 +325,7 @@ $(document).ready(function () {
 	if (isIncrementalBackfillEnabled) {
 		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
-		
+
 		$(".jiraConfiguration__info__backfillDate-label").each(function () {
 			if ($(this).attr("data-backfill-since")) {
 				const backfillDate = new Date($(this).attr("data-backfill-since"));
