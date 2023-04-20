@@ -241,20 +241,22 @@ export class GitHubInstallationClient extends GitHubClient {
 		};
 		const config = await this.installationAuthenticationHeaders();
 		this.logger.info("Fetching branch graphql query with changedFiles");
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
-			.catch((err) => {
-				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
-					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
-					(err instanceof GithubClientError && err.status === 502)
-				) {
-					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
-					const branchPages = this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
-					this.logger.info("retrying branch graphql query without changedFiles -- success");
-					return branchPages;
-				}
-				return Promise.reject(err);
-			});
-		return response?.data?.data;
+
+		try {
+			const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables);
+			return response?.data?.data;
+		} catch (err) {
+			if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
+				// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
+				(err instanceof GithubClientError && err.status === 502)
+			) {
+				this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
+				const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+				this.logger.info("retrying branch graphql query without changedFiles -- success");
+				return response?.data?.data;
+			}
+			throw err;
+		}
 	}
 
 	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
