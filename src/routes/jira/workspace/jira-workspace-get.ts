@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 
-export const JiraWorkspaceGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
 
 
