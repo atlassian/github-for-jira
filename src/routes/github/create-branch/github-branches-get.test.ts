@@ -105,6 +105,7 @@ const response = {
 
 describe("Getting GitHub Branches securely avoiding XSS attacks", () => {
 	let req, res;
+	const gitHubInstallationId = 15;
 	beforeEach(async () => {
 
 		req = {
@@ -126,16 +127,33 @@ describe("Getting GitHub Branches securely avoiding XSS attacks", () => {
 				gitHubAppConfig: {}
 			}
 		};
+
+		await Subscription.create({
+			gitHubInstallationId,
+			owner: "ARC",
+			repo: "repo-1",
+			jiraHost
+		});
 	});
 	it("Should fetch branches securely", async () => {
-		setupNockForXSSBranches();
+		setupNockForXSSBranches(gitHubInstallationId);
+		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
 		await GithubBranchesGet(req, res);
 		expect(res.send).toBeCalledWith(responseForXSSBranches);
 	});
 });
 
 const defaultBranchForXSS = "DEFAULTTESTXSS\"><script>alert('🔫🔫🔫🔫🔫🔫')</script>";
-const setupNockForXSSBranches = () => {
+const setupNockForXSSBranches = (gitHubInstallationId) => {
+
+	githubNock
+		.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+		.reply(200);
+
+	githubNock
+		.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+		.reply(200);
+
 	githubNock
 		.get("/repos/Hacker/xss-test/branches?per_page=100")
 		.reply(200, XSSBranches);
