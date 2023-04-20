@@ -240,6 +240,7 @@ export class GitHubInstallationClient extends GitHubClient {
 			cursor
 		};
 		const config = await this.installationAuthenticationHeaders();
+		this.logger.info("Fetching branch graphql query with changedFiles");
 		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
 			.catch((err) => {
 				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
@@ -247,7 +248,9 @@ export class GitHubInstallationClient extends GitHubClient {
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
-					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+					const branchPages = this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+					this.logger.info("retrying branch graphql query without changedFiles -- success");
+					return branchPages;
 				}
 				return Promise.reject(err);
 			});
