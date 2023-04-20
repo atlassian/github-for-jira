@@ -53,7 +53,7 @@ export class GitHubUserClient extends GitHubClient {
 			const response = await this.graphql<GetRepositoriesResponse>(GetRepositoriesQuery, {}, {
 				per_page,
 				cursor
-			});
+			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
 		} catch (err) {
 			this.logger.error({ err }, "Could not fetch repositories");
@@ -65,7 +65,7 @@ export class GitHubUserClient extends GitHubClient {
 		try {
 			const response = await this.graphql<UserOrganizationsResponse>(UserOrganizationsQuery, {}, {
 				first
-			});
+			}, { graphQuery: "UserOrganizationsQuery" });
 			return response.data.data;
 		} catch (err) {
 			this.logger.error({ err }, "Could not fetch organizations");
