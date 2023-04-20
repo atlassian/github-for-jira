@@ -54,7 +54,8 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, response
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
 		status: status,
-		...extraTags
+		...extraTags,
+		...response?.config?.metrics
 	};
 
 	statsd.histogram(metricName, requestDurationMs, tags);
