@@ -33,6 +33,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not verify symmetric JWT");
 			return res.status(401).send("Unauthorised");
 		}
+
+		req.log.info("JIRA HOST", installation);
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
@@ -61,7 +63,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has not jiraHost");
+	req.log.warn("No token found and session cookie has no jiraHost");
 	return res.status(401).send("Unauthorised");
 
 };

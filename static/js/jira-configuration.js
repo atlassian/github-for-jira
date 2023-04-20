@@ -2,6 +2,23 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
+$(".my-test-button").click((event) => {
+	event.preventDefault();
+
+	const url = "/jira/workspace"
+
+	$.ajax({
+		type: "GET",
+		url,
+		success: (response) => {
+			console.log("success", response)
+		},
+		error: (error) => {
+			console.log("error", error)
+		}
+	});
+});
+
 function openChildWindow(url) {
 	const child = window.open(url);
 	const interval = setInterval(function () {
@@ -325,7 +342,7 @@ $(document).ready(function () {
 	if (isIncrementalBackfillEnabled) {
 		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
-		
+
 		$(".jiraConfiguration__info__backfillDate-label").each(function () {
 			if ($(this).attr("data-backfill-since")) {
 				const backfillDate = new Date($(this).attr("data-backfill-since"));

@@ -32,7 +32,7 @@ JiraRouter.use("/events", JiraEventsRouter);
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
-JiraRouter.get("/workspace", JiraWorkspaceRouter);
+JiraRouter.use("/workspace", JiraWorkspaceRouter);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`

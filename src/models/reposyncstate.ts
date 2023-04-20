@@ -3,6 +3,7 @@ import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
+import { getLogger } from "config/logger";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -168,6 +169,25 @@ export class RepoSyncState extends Model {
 				repoId
 			}
 		}));
+	}
+
+	static async findByOrgNameAndSubscriptionId(orgName: string, subscriptions: Subscription[] | null, options: FindOptions = {}):  Promise<RepoSyncState | null> {
+		const subscription = {
+			id: 12
+		};
+
+		const logger = getLogger("test");
+		logger.info(subscriptions);
+
+		// return subscriptions.filter(subscription => {
+		return RepoSyncState.findOne(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				repoOwner: orgName
+			},
+			order: [["repoUpdatedAt", "DESC"]]
+		} as FindOptions));
+		// });
 	}
 
 	// Nullify statuses and cursors to start anew
