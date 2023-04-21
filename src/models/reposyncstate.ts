@@ -4,7 +4,7 @@ import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
 
-export type RepoSync = {
+export interface RepoSyncState {
 	id: number;
 	subscriptionId: number;
 	repoId: number;

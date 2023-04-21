@@ -46,14 +46,16 @@ describe("InstallationTokenCache & AppTokenHolder", () => {
 			host: "http://github.com",
 			installationId: 1234,
 			hashedClientKey: "client-key",
-			gitHubAppId: undefined
+			gitHubAppId: undefined,
+			avatarUrl: "avatarurl"
 		});
 
 		await Subscription.install({
 			host: "http://github.com",
 			installationId: 4711,
 			hashedClientKey: "client-key",
-			gitHubAppId: undefined
+			gitHubAppId: undefined,
+			avatarUrl: "avatarurl"
 		});
 
 		const appTokenHolder = new AppTokenHolder();

@@ -67,12 +67,15 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			return;
 		}
 
+		const { data: org } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+		const { avatar_url: avatarUrl } = org.account;
+
 		const subscription: Subscription = await Subscription.install({
 			hashedClientKey: installation.clientKey,
 			installationId: gitHubInstallationId,
 			host: installation.jiraHost,
 			gitHubAppId,
-			avatarUrl: ""
+			avatarUrl
 		});
 
 		req.log.info({ subscriptionId: subscription.id }, "Subscription was created");

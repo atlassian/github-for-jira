@@ -32,7 +32,8 @@ describe("sync", () => {
 			installationId: installationIdForCloud,
 			host: jiraHost,
 			hashedClientKey: installation.clientKey,
-			gitHubAppId: undefined
+			gitHubAppId: undefined,
+			avatarUrl: "avatarurl"
 		});
 		gitHubServerApp = await GitHubServerApp.install({
 			uuid: newUUID(),
@@ -49,7 +50,8 @@ describe("sync", () => {
 			installationId: installationIdForServer,
 			host: jiraHost,
 			hashedClientKey: installation.clientKey,
-			gitHubAppId: gitHubServerApp.id
+			gitHubAppId: gitHubServerApp.id,
+			avatarUrl: "avatarurl"
 		});
 		app = express();
 		app.use((req: Request, res: Response, next: NextFunction) => {

@@ -252,7 +252,7 @@ export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 	gitHubAppId: number | undefined;
-	avatarUrl: string | undefined;
+	avatarUrl?: string;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

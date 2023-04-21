@@ -62,14 +62,16 @@ describe("Models", () => {
 				host: installation.jiraHost,
 				installationId: 1234,
 				hashedClientKey: getHashedKey(installation.plainClientKey),
-				gitHubAppId: undefined
+				gitHubAppId: undefined,
+				avatarUrl: "avatarurl"
 			});
 
 			await Subscription.install({
 				host: installation.jiraHost,
 				installationId: 2345,
 				hashedClientKey: getHashedKey(installation.plainClientKey),
-				gitHubAppId: undefined
+				gitHubAppId: undefined,
+				avatarUrl: "avatarurl"
 			});
 		});
 

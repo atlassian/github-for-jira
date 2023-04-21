@@ -33,7 +33,7 @@ const modules = {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${APP_KEY}`
 			}
 			// searchConnectedWorkspaces: {
-			// 	templateUrl: `${envVars.APP_URL}/workspaces/fetch`
+			// 	templateUrl: `${envVars.APP_URL}/jira/workspace`
 			// },
 			// searchContainers: {
 			// 	templateUrl: `${envVars.APP_URL}/containers/fetch`

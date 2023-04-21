@@ -18,7 +18,8 @@ describe("Cleanup RepoSyncState", () => {
 			hashedClientKey: "some-key",
 			host: jiraHost,
 			gitHubAppId: undefined,
-			installationId: 123
+			installationId: 123,
+			avatarUrl: "avatarurl"
 		});
 		await createdRepoSyncState("first", sub.id);
 		expect([...await RepoSyncState.findAll()].length).toBe(1);
