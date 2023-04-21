@@ -71,7 +71,8 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			hashedClientKey: installation.clientKey,
 			installationId: gitHubInstallationId,
 			host: installation.jiraHost,
-			gitHubAppId
+			gitHubAppId,
+			avatarUrl: ""
 		});
 
 		req.log.info({ subscriptionId: subscription.id }, "Subscription was created");

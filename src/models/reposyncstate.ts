@@ -3,7 +3,44 @@ import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
-import { getLogger } from "config/logger";
+
+export type RepoSync = {
+	id: number;
+	subscriptionId: number;
+	repoId: number;
+	repoName: string;
+	repoOwner: string;
+	repoFullName: string;
+	repoUrl: string;
+	priority?: number;
+	branchStatus?: TaskStatus;
+	commitStatus?: TaskStatus;
+	issueStatus?: TaskStatus;
+	pullStatus?: TaskStatus;
+	buildStatus?: TaskStatus;
+	deploymentStatus?: TaskStatus;
+	branchCursor?: string;
+	commitCursor?: string;
+	issueCursor?: string;
+	pullCursor?: string;
+	buildCursor?: string;
+	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
+	forked?: boolean;
+	repoPushedAt: Date;
+	repoUpdatedAt: Date;
+	repoCreatedAt: Date;
+	syncUpdatedAt?: Date;
+	syncCompletedAt?: Date;
+	config?: Config;
+	updatedAt: Date;
+	createdAt: Date;
+	failedCode?: string;
+}
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -171,23 +208,13 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
-	static async findByOrgNameAndSubscriptionId(orgName: string, subscriptions: Subscription[] | null, options: FindOptions = {}):  Promise<RepoSyncState | null> {
-		const subscription = {
-			id: 12
-		};
-
-		const logger = getLogger("test");
-		logger.info(subscriptions);
-
-		// return subscriptions.filter(subscription => {
-		return RepoSyncState.findOne(merge(options, {
+	static async findByOrgNameAndSubscriptionId(orgName: string, subscription: Subscription | null, options: FindOptions = {}):  Promise<RepoSyncState | null> {
+		return await RepoSyncState.findOne(merge(options, {
 			where: {
-				subscriptionId: subscription.id,
+				subscriptionId: subscription?.id,
 				repoOwner: orgName
-			},
-			order: [["repoUpdatedAt", "DESC"]]
+			}
 		} as FindOptions));
-		// });
 	}
 
 	// Nullify statuses and cursors to start anew
