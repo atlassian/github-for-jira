@@ -11,6 +11,7 @@ import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
+import { JiraWorkspaceRouter } from "routes/jira/workspace/jira-workspace-router";
 
 export const JiraRouter = Router();
 
@@ -30,6 +31,8 @@ JiraRouter.post("/sync",
 JiraRouter.use("/events", JiraEventsRouter);
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
+
+JiraRouter.use("/workspace", JiraWorkspaceRouter);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`
