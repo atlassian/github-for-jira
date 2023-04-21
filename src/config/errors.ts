@@ -4,6 +4,6 @@ export enum Errors {
 	MISSING_ISSUE_KEY = "Issue key is missing",
 	IP_ALLOWLIST_MISCONFIGURED = "IP Allowlist Misconfigured",
 	MISSING_GITHUB_APP_NAME = "Github App name is missing",
-	MISSING_GITHUB_SUBSCRIPTION = "GitHub Subscription not found"
+	MISSING_GITHUB_SUBSCRIPTION = "GitHub subscription is missing"
 }
 
