@@ -150,6 +150,18 @@ export class Subscription extends Model {
 		});
 	}
 
+	static getOneForSubscriptionIdAndHost(
+		jiraHost: string,
+		id: number
+	): Promise<Subscription | null> {
+		return this.findOne({
+			where: {
+				jiraHost,
+				id
+			}
+		});
+	}
+
 	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
