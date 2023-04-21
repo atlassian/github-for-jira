@@ -7,6 +7,8 @@ import { Installation } from "models/installation";
 import { v4 as v4uuid } from "uuid";
 import { envVars } from "config/env";
 import { getSignedCookieHeader } from "test/utils/cookies";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
 
 jest.mock("./configuration/github-configuration-get");
 jest.mock("config/feature-flags");
@@ -15,7 +17,8 @@ const VALID_TOKEN = "valid-token";
 const GITHUB_SERVER_APP_UUID: string = v4uuid();
 const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
 const GITHUB_SERVER_CLIENT_ID = "client-id";
-
+const DEFAULT_SCOPES = "user,repo";
+const TESTING_SCOPES = "scope1,scope2";
 const setupAppAndRouter = () => {
 	return getFrontendApp();
 };
@@ -72,7 +75,10 @@ describe("GitHub router", () => {
 					encryptedSharedSecret: "ghi345"
 				});
 			});
-			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
+			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is off", async () => {
+				when(stringFlag)
+					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+					.mockResolvedValue(DEFAULT_SCOPES);
 				await supertest(app)
 					.get(`/github/configuration`)
 					.set(
@@ -88,6 +94,28 @@ describe("GitHub router", () => {
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
 						const redirectUrl = `${envVars.APP_URL}/github/callback`;
 						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
+					});
+			});
+			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is on", async () => {
+				when(stringFlag)
+					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+					.mockResolvedValue(TESTING_SCOPES);
+				await supertest(app)
+					.get(`/github/configuration`)
+					.set(
+						"Cookie",
+						getSignedCookieHeader({
+							jiraHost,
+							githubToken: VALID_TOKEN
+						})
+					)
+					.expect(302)
+					.then((response) => {
+						const resultUrl = response.headers.location;
+						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
+						const redirectUrl = `${envVars.APP_URL}/github/callback`;
+						const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=scope1%20scope2&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});
 			});
@@ -141,7 +169,10 @@ describe("GitHub router", () => {
 				gitHubAppId = gitHubApp.id;
 				mockConfigurationGetProceed();
 			});
-			it("testing the redirect URL in GithubOAuthLoginGet middleware", async () => {
+			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is off", async () => {
+				when(stringFlag)
+					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+					.mockResolvedValue(DEFAULT_SCOPES);
 				await supertest(app)
 					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
 					.set(
@@ -157,6 +188,28 @@ describe("GitHub router", () => {
 						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
 						const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
 						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
+					});
+			});
+			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is on", async () => {
+				when(stringFlag)
+					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+					.mockResolvedValue(TESTING_SCOPES);
+				await supertest(app)
+					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
+					.set(
+						"Cookie",
+						getSignedCookieHeader({
+							jiraHost,
+							githubToken: VALID_TOKEN
+						})
+					)
+					.expect(302)
+					.then((response) => {
+						const resultUrl = response.headers.location;
+						const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
+						const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
+						const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=scope1%20scope2&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 						expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 					});
 			});

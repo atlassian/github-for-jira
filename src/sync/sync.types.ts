@@ -31,4 +31,5 @@ export interface Task {
 	repositoryId: number;
 	repository: Repository;
 	cursor?: string;
+	startTime?: number;
 }

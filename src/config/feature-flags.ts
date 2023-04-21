@@ -23,6 +23,7 @@ export enum BooleanFlags {
 }
 
 export enum StringFlags {
+	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
 	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",

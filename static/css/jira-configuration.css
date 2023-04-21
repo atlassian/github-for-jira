@@ -1,400 +1,391 @@
 .jiraConfiguration {
-  box-sizing: border-box;
-  height: 100vh;
-  overflow-y: hidden;
-  padding: 3.5em 4.5em;
+    box-sizing: border-box;
+    height: 100vh;
+    padding: 3.5em 4.5em;
 }
 
 .jiraConfiguration__header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2em;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2em;
 }
 
 .jiraConfiguration__header__title {
-  font-weight: 500;
+    font-weight: 500;
 }
 
 .jiraConfiguration__header__title__cta {
-  font-size: 1rem;
-  font-weight: normal;
-  padding: 0 1em;
+    font-size: 1rem;
+    font-weight: normal;
+    padding: 0 1em;
 }
 
 .jiraConfiguration__content__list {
-  margin: 0.5em auto;
-  padding-left: 2em;
+    margin: 0.5em auto;
+    padding-left: 2em;
 }
 
 .jiraConfiguration_content {
-  margin-top: 2em;
+    line-height: 1.8rem;
+}
+
+.jiraConfiguration_content p {
+    margin-bottom: 1em;
 }
 
 .jiraConfiguration__syncRetryModal__headerContainer {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.2em;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.2em;
 }
 
 .jiraConfiguration__syncRetryModal__header {
-  font-size: 20px;
+    font-size: 20px;
 }
 
 .jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
-  cursor: pointer;
-  font-size: 20px;
+    cursor: pointer;
+    font-size: 20px;
 }
 
 .jiraConfiguration__syncRetryModal__table {
-  border-collapse: separate;
-  border-spacing: 0 15px;
+    border-collapse: separate;
+    border-spacing: 0 15px;
 }
 
 .jiraConfiguration__syncRetryModal__tableBody {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .jiraConfiguration__syncRetryModal__tableRow {
-  margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .jiraConfiguration__syncRetryModal__syncStatus__type {
-  display: flex;
-  text-transform: uppercase;
-  width: 9em;
+    display: flex;
+    text-transform: uppercase;
+    width: 9em;
 }
 
 .jiraConfiguration__syncRetryModal__syncStatus__details {
-  font-size: 1rem;
-  line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.6;
 }
 
-
-.jiraConfiguration__syncRetryModal__headerContainer {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.2em;
-}
-
-.jiraConfiguration__syncRetryModal__header {
-  font-size: 20px;
-}
-
-.jiraConfiguration__syncErrorSummaryModal__closeBtn,
-.jiraConfiguration__syncRetryModal__closeBtn {
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.jiraConfiguration__syncRetryModal__table {
-  border-collapse: separate;
-  border-spacing: 0 15px;
-}
-
-.jiraConfiguration__syncRetryModal__tableBody {
-  border-bottom: none;
-}
-
-.jiraConfiguration__syncRetryModal__tableRow {
-  margin-bottom: 1em;
-}
-
-.jiraConfiguration__syncRetryModal__syncStatus__type {
-  display: flex;
-  text-transform: uppercase;
-  width: 9em;
-}
-
-.jiraConfiguration__syncRetryModal__syncStatus__details {
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
+.jiraConfiguration__errorSummaryModal__header__container,
 .jiraConfiguration__restartBackfillModal__header__container {
-  margin-bottom: 1.3em;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.2em;
 }
 
+.jiraConfiguration__errorSummaryModal__header__content,
 .jiraConfiguration__restartBackfillModal__header__content {
-  color: #344563;
-  font-size: 1.01rem;
-  margin-bottom: 1.2em;
+    color: #344563;
+    font-size: 1.01rem;
+    margin-bottom: 1.2em;
+}
+
+.error-summary-errors-header {
+    padding-top: 1em;
+}
+
+.error-summary-border-top {
+    border-top: 1px solid #dfe1e6;
+    margin: 0.5rem 0;
 }
 
 .jiraConfiguration__restartBackfillModal__date {
-  padding: 0.2em;
-  min-height: 40px;
-  width: 100%;
+    padding: 0.2em;
+    min-height: 40px;
+    width: 100%;
 }
 
 .jiraConfiguration__restartBackfillModal__required {
-  color: #bf2600;
+    color: #bf2600;
 }
 
+.jiraConfiguration__errorSummaryModal__actions,
 .jiraConfiguration__restartBackfillModal__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 1em;
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1em;
 }
 
-.jiraConfiguration_content > .jiraConfiguration__tableContainer {
-  overflow: auto;
-  height: calc(100% - 175px);
-  margin-top: 2.5em;
+#jiraConfiguration__restartBackfillModal__form .jiraConfiguration__restartBackfillModal__fullsync__label {
+  display: inline;
+  cursor: pointer;
 }
 
-.jiraConfiguration_content > .jiraConfiguration__tableContainer > .jiraConfiguration__table {
-  color: #172b4d;
-  table-layout: fixed;
-  width: 100%;
+.jiraConfiguration__tableContainer {
+    padding: 0 0 1em;
+}
+
+.jiraConfiguration__tableContainer > .jiraConfiguration__table {
+    color: #172b4d;
+    table-layout: fixed;
+    width: 100%;
 }
 
 .jiraConfiguration__table__head {
-  color: #6b778c;
-  font-size: 0.8rem;
+    color: #6b778c;
+    font-size: 0.8rem;
 }
 
 .jiraConfiguration__table__head_row > .jiraConfiguration__table__head__title {
-  font-weight: normal;
-  padding: 0.3em 0;
+    font-weight: normal;
+    padding: 0.3em 0;
 }
 
 .jiraConfiguration__table__head__title:not(:last-child) {
-  width: 30%;
+    width: 30%;
 }
 
 .jiraConfiguration__table__head_row
-  > .jiraConfiguration__table__head__title:last-child {
-  padding-right: 1em;
-  text-align: right;
+> .jiraConfiguration__table__head__title:last-child {
+    padding-right: 1em;
+    text-align: right;
 }
 
 .jiraConfiguration__table__infoIcon {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell,
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell,
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell__settings {
-  border-bottom: none;
-  border-top: none;
-  padding: 0.8em 0;
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__settings {
+    border-bottom: none;
+    border-top: none;
+    padding: 0.8em 0;
+    vertical-align: middle;
 }
 
 .jiraConfiguration__retryContainer, .jiraConfiguration__retryContainer {
-  font-size: 1.5rem;
-  position: relative;
+    font-size: 1.5rem;
+    position: relative;
 }
 
 .jiraConfiguration__retry {
-  cursor: pointer;
-  font-weight: normal;
-  margin-left: 0.2em;
-  margin: 0.2em auto auto 0.5em;
-  font-size: 1.2rem;
-  position: absolute;
-  transform: scaleX(-1) rotate(30deg);
-  background: inherit;
-  border: none;
+    cursor: pointer;
+    font-weight: normal;
+    margin-left: 0.2em;
+    margin: 0.2em auto auto 0.5em;
+    font-size: 1.2rem;
+    transform: scaleX(-1) rotate(30deg);
+    background: inherit;
+    border: none;
 }
 
 .jiraConfiguration__retryMsg {
-  background-color: #172b4d;
-  border-radius: 3px;
-  color: #fff;
-  display: none;
-  font-size: 1rem;
-  left: -0.8em;
-  padding: 0.3em;
-  position: absolute;
-  right: em;
-  top: -2em;
+    background-color: #172b4d;
+    border-radius: 3px;
+    color: #fff;
+    display: none;
+    font-size: 1rem;
+    left: -0.8em;
+    padding: 0.3em;
+    position: absolute;
+    top: -2em;
+}
+
+.jiraConfiguration__infoContainer {
+    display: flex;
+    align-items: center;
+}
+.jiraConfiguration__infoSpinner {
+    margin-left: 8px;
 }
 
 .jiraConfiguration__retry:hover ~ .jiraConfiguration__retryMsg {
-  display: block;
+    display: block;
 }
 
 .jiraConfiguration__syncWarning {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-left: 8px;
-  position: relative;
-  cursor: pointer;
-  border-radius: 2px;
-  padding: 0.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 8px;
+    position: relative;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0.2rem;
 }
 
 /* Hit box */
 .jiraConfiguration__syncWarning:before {
-  content: '';
-  padding: 1.25em;
-  position: absolute;
+    content: '';
+    padding: 1.25em;
+    position: absolute;
 }
 
 .jiraConfiguration__syncWarning:hover {
-  background: #0914E208;
+    background: #0914E208;
 }
 
 .warning-popup {
-  display: block;
-  box-sizing: border-box;
-  z-index: 400;
-  flex: 1 1 auto;
-  background-color: var(--ds-surface-overlay,#FFFFFF);
-  border-radius: 3px;
-  box-shadow: var(--ds-shadow-overlay,0 4px 8px -2px rgba(9,30,66,0.25),0 0 1px rgba(9,30,66,0.31));
-  overflow: auto;
+    display: block;
+    box-sizing: border-box;
+    z-index: 400;
+    flex: 1 1 auto;
+    background-color: var(--ds-surface-overlay, #FFFFFF);
+    border-radius: 3px;
+    box-shadow: var(--ds-shadow-overlay, 0 4px 8px -2px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31));
+    overflow: auto;
 }
 
 .warning-popup div {
-  padding: 15px;
-  line-height: 20px;
+    padding: 15px;
+    line-height: 20px;
 }
 
 .jiraConfiguration__syncWarningMessage {
-  border-radius: 3px;
-  display: none;
-  font-size: 1rem;
-  left: -15em;
-  right: -15em;
-  padding: 0.3em;
-  position: absolute;
-  top: -7.5em;
-}
-
-/*
-The tooltip for the first two rows are hidden due to the `overflow: auto` of the parent div,
-so changing the position of the tooltips for the first two rows to bottom
- */
-.jiraConfiguration__table__row:nth-child(-n+2) .jiraConfiguration__syncWarningMessage {
-  top: 1.9em;
+    border-radius: 3px;
+    display: none;
+    font-size: 1rem;
+    left: -15em;
+    right: -15em;
+    padding: 0.3em;
+    position: absolute;
+    top: -7.5em;
 }
 
 .jiraConfiguration__syncWarning:hover > .jiraConfiguration__syncWarningMessage {
-  display: block;
+    display: block;
 }
 
 .jiraConfiguration__syncWarning__connectFailed__warningIcon {
-  color: #ff9b20;
+    color: #ff9b20;
 }
 
 .jiraConfiguration__table__body
-  > .jiraConfiguration__table__row
-  > .jiraConfiguration__table__cell__settings {
-  padding: 0;
-  text-align: right;
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__action__inline {
+    text-align: right;
+}
+
+.jiraConfiguration__table__body
+> .jiraConfiguration__table__row
+> .jiraConfiguration__table__cell__settings {
+    padding: 0;
+    text-align: right;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis {
-  background-color: #fff;
-  border: none;
-  box-shadow: none;
-  color: #7a869a;
-  font-size: 3rem;
-  height: 1em;
-  margin: 0.1em 0.4em;
-  position: relative;
-  right: 0;
-  top: 0em;
-  width: 1em;
+> .jiraConfiguration__table__cell__settings__ellipsis,
+.jiraConfiguration__appDropdown {
+    background-color: #fff;
+    border: none;
+    box-shadow: none;
+    color: #7a869a;
+    font-size: 3rem;
+    height: 1em;
+    margin: 0.1em 0.4em;
+    position: relative;
+    right: 0;
+    top: 0em;
+    width: 1em;
 }
 
-.jiraConfiguration__table__cell__settings__ellipsisSpan {
-  position: absolute;
-  right: 0.15em;
-  top: -0.5em;
+.jiraConfiguration__table__cell__settings__ellipsisSpan,
+.jiraConfiguration__appDropdownIcon {
+    position: absolute;
+    right: 0.15em;
+    top: -0.5em;
+}
+
+.jiraConfiguration__table__cell__gitHubAppItem {
+    padding: 0.1em 0.3em;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
-  padding-right: 0.2em;
+> .aui-dropdown2-trigger:not(.aui-dropdown2-trigger-arrowless) {
+    padding-right: 0.2em;
 }
 
+.jiraConfiguration__appDropdown:hover,
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis:hover,
+> .jiraConfiguration__table__cell__settings__ellipsis:hover,
 .aui-button.active:not(.aui-button-link) {
-  background-color: #091e4208;
+    background-color: #091e4208;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis.bob,
+> .jiraConfiguration__table__cell__settings__ellipsis.bob,
 .aui-button.active:not(.aui-button-link) {
-  background-color: #263858;
-  color: #fff;
+    background-color: #263858;
+    color: #fff;
 }
 
 .jiraConfiguration__table__cell__settings
-  > .jiraConfiguration__table__cell__settings__ellipsis::before {
-  content: none;
+> .jiraConfiguration__table__cell__settings__ellipsis::before {
+    content: none;
 }
 
 .jiraConfiguration__table__cell__settings__headerItem {
-  padding: 0 1.3em;
+    padding: 0 1.3em;
 }
 
 .jiraConfiguration__table__cell__settings__headerItem {
-  font-size: 0.8rem;
+    font-size: 0.8rem;
 }
 
 .aui-dropdown2 > .jiraConfiguration__table__cell__settings__header {
-  margin: 0.7em auto 0.3em;
+    margin: 0.7em auto 0.3em;
 }
 
 .aui-dropdown2 > .jiraConfiguration__table__cell__settings__dropdownItems {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem {
-  cursor: pointer;
-  padding: 0.6em 1em;
+> .jiraConfiguration__table__cell__settings__dropdownItem {
+    cursor: pointer;
+    padding: 0.6em 1em;
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:hover {
-  background-color: #e9edf0;
+> .jiraConfiguration__table__cell__settings__dropdownItem:hover {
+    background-color: #e9edf0;
 }
 
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:active,
+> .jiraConfiguration__table__cell__settings__dropdownItem:active,
 .aui-dropdown2-item-group
-  > .jiraConfiguration__table__cell__settings__dropdownItem:focus {
-  background-color: #ecedf0;
-  box-shadow: none;
-  color: #455570;
+> .jiraConfiguration__table__cell__settings__dropdownItem:focus {
+    background-color: #ecedf0;
+    box-shadow: none;
+    color: #455570;
 }
 
 .sync-connection-link.restart-backfill-button {
-  padding: 0;
+    padding: 0;
 }
 
 #restart-backfill:hover {
-  background-color: inherit;
+    background-color: inherit;
 }
 
 .jiraConfiguration__table__cell:nth-child(3) {
-  display: flex;
+    display: flex;
 }
 
 .jiraConfiguration__table__cell__avatar {
-  border-radius: 4px;
-  height: 24px;
-  vertical-align: middle;
-  width: 24px;
+    border-radius: 4px;
+    height: 24px;
+    vertical-align: middle;
+    width: 24px;
 }
 
 .jiraConfiguration__table__cell__orgName {
-  margin-left: 0.2em;
+    margin-left: 0.2em;
 }
 
 .jiraConfiguration__table__connectionLinks > :first-child {
-  padding-left: 0;
+    padding-left: 0;
 }
 
 .jiraConfiguration__table__syncStatus,
@@ -402,121 +393,293 @@ so changing the position of the tooltips for the first two rows to bottom
 .syncStatusInProgress,
 .syncStatusFinished,
 .syncStatusFailed {
-  border-radius: 5px;
-  font-size: 1rem;
-  font-weight: bold;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 0.2em 0.3em;
+}
+
+.jiraConfiguration__info__backfillDate {
+  color: #42526e;
   padding: 0.2em 0.3em;
+  display: flex;
+  white-space: nowrap;
+  align-items: center;
+}
+
+.jiraConfiguration__info__backfillDate-label, .jiraConfiguration__table__backfillInfoIcon {
+    margin-left: 5px;
+    cursor: default;
 }
 
 .jiraConfiguration__table__pending,
 .syncStatusPending {
-  background-color: #dfe1e6;
-  color: #42526e;
+    background-color: #dfe1e6;
+    color: #42526e;
 }
 
 .jiraConfiguration__table__in-progress,
 .syncStatusInProgress {
-  background-color: #deebff;
-  color: #0747a6;
+    background-color: #deebff;
+    color: #0747a6;
 }
 
 .jiraConfiguration__table__finished,
 .syncStatusFinished {
-  background-color: #e3fcef;
-  color: #006644;
+    background-color: #e3fcef;
+    color: #006644;
 }
 
 .jiraConfiguration__table__failed,
 .syncStatusFailed {
-  background-color: #ffebe6;
-  color: #bf2600;
+    background-color: #ffebe6;
+    color: #bf2600;
 }
 
 .jiraConfiguration__table__refresh {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 .jiraConfiguration__table__cell__settings__header {
-  color: #6b778c;
+    color: #6b778c;
 }
 
 /* Failed connections */
 .jiraConfiguration__failedConnections__container {
-  background-color: #ffebe6;
-  display: flex;
-  margin-top: 1.1em;
-  padding: 0.8em 1.2em 1.2em;
+    background-color: #ffebe6;
+    display: flex;
+    margin-top: 1.1em;
+    padding: 0.8em 1.2em 1.2em;
 }
 
 .jiraConfiguration__failedConnections__errorIcon__container {
-  margin: 0.5em 1em 0 0;
+    margin: 0.5em 1em 0 0;
 }
 
 .jiraConfiguration__failedConnections__errorIcon {
-  color: #bf2600;
+    color: #bf2600;
 }
 
 .jiraConfiguration__failedConnections__orgInfo {
-  line-height: 2;
+    line-height: 2;
 }
 
 .jiraConfiguration__failedConnections__header {
-  font-size: 1.15rem;
-  font-weight: 500;
+    font-size: 1.15rem;
+    font-weight: 500;
 }
 
 .jiraConfiguration__failedConnections__dismiss {
-  background: transparent;
-  border: none;
-  color: #0052cc;
-  cursor: pointer;
-  margin-top: 0.6em;
-  padding: 0;
+    background: transparent;
+    border: none;
+    color: #0052cc;
+    cursor: pointer;
+    margin-top: 0.6em;
+    padding: 0;
 }
 
 /*  Empty state - no orgs connected */
 .jiraConfiguration__empty {
-  margin: auto;
-  max-width: 570px;
-  padding: 6.5em 0;
-  text-align: center;
+    margin: auto;
+    max-width: 570px;
+    padding: 6.5em 0;
+    text-align: center;
 }
 
 .jiraConfiguration__empty__header {
-  font-size: 1.6rem;
+    font-size: 1.6rem;
 }
 
 .jiraConfiguration__empty__message {
-  font-size: 0.9rem;
-  margin: 2em auto;
+    font-size: 0.9rem;
+    margin: 2em auto;
+    width: 512px;
 }
 
 .jiraConfiguration__empty__image {
-  width: 100%;
-  max-width: 332px;
+    width: 100%;
+    max-width: 332px;
 }
 
 .jiraConfiguration__table__editContainer,
 .jiraConfiguration__syncErrorSummaryModal__closeBtn,
 .jiraConfiguration__syncRetryModal__closeBtn {
-  border-radius: 3px;
-  cursor: pointer;
-  padding: 0.45em;
-  position: relative;
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 0.45em;
+    position: relative;
 }
+
 .jiraConfiguration__table__editContainer:hover,
 .jiraConfiguration__syncErrorSummaryModal__closeBtn:hover,
 .jiraConfiguration__syncRetryModal__closeBtn:hover {
-  background: #091E4208;
+    background: #091E4208;
+}
+
+.jiraConfiguration__optionContainer {
+    display: flex;
+    margin-top: 1.5em;
+}
+
+.jiraConfiguration__option {
+    padding: 0.5em 1em;
+    height: 40px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.jiraConfiguration__optionHeader {
+    font-size: 1.25rem;
+    margin: 1.5em 0;
+}
+
+.jiraConfiguration__selected {
+    background-color: #DEEBFF;
+    color: #0052CC;
+    font-weight: 600;
+}
+
+.jiraConfiguration__optionsIcon {
+    width: 24px;
+    height: 17px;
+    margin-right: 0.25em;
+}
+
+.jiraConfiguration__cloudConnections {
+    box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+    border-radius: 12px;
+    padding: 1.5em 3em;
+}
+
+.jiraConfiguration__enterpriseServer {
+    background-color: #F4F5F7;
+    padding: 1.5em;
+    border-radius: 10px;
+    margin-bottom: 1.5em;
+}
+
+.jiraConfiguration__enterpriseConnections {
+    background-color: #fff;
+    padding: 1.5em 1.5em 0.8em;
+    box-shadow: 0 1px 1px rgba(9, 30, 66, 0.25), 0 0 1px rgba(9, 30, 66, 0.31);
+    border-radius: 3px;
+}
+
+.jiraConfiguration__enterpriseApplicationTitle {
+    font-weight: 700;
+    font-size: 0.7rem;
+    color: #6B778C;
+    margin-bottom: 1.25em;
+    padding: 0 0.5em;
+}
+
+.jiraConfiguration__enterpriseServer__header__container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.jiraConfiguration__collapsibleHeader {
+    cursor: pointer;
+    padding: 0.8em 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.jiraConfiguration__enterpriseServer__header {
+  font-size: 1.25rem;
+  margin: 0 0 1.5em;
+}
+
+.jiraConfiguration__collapsibleBody {
+    padding-left: 0.8em;
+}
+
+.jiraConfiguration__noOrgsTitle {
+    font-weight: 600;
+    color: #6B778C;
+    font-size: 12px;
+    border-bottom: 2px solid #DFE1E6;
+    padding: 0.5em 0;
+}
+
+.jiraConfiguration__noOrgsBody {
+    border-bottom: 2px solid #DFE1E6;
+    padding: 1em 0;
+}
+
+.aui-dropdown2-item-group > .jiraConfiguration__connectBtnDropdownOption {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8em 1.4em;
+}
+
+.jiraConfiguration__header > .aui-dropdown2 {
+    width: 250px;
+    padding: 0.5em 0;
+}
+
+.jiraConfiguration__connectGHCloudTooltip,
+.jiraConfiguration__connectGHETooltip {
+    display: none;
+    position: absolute;
+    background-color: #172B4D;
+    padding: 0.4em;
+    border-radius: 3px;
+    width: 454px;
+    color: #FFF;
+    right: 0;
+    font-weight: 400;
+    font-size: 0.75rem;
+}
+
+.aui-iconfont-question-filled + .jiraConfiguration__connectGHCloudTooltip {
+    top: -1.8em;
+}
+
+.aui-iconfont-question-filled + .jiraConfiguration__connectGHETooltip {
+    bottom: 3.8em;
+}
+
+.aui-iconfont-question-filled:hover + .jiraConfiguration__connectGHCloudTooltip,
+.aui-iconfont-question-filled:hover + .jiraConfiguration__connectGHETooltip {
+    display: block;
+}
+
+/* Collapsible Icon*/
+.aui-iconfont-chevron-down {
+    display: none;
+}
+
+/* This hides the default arrow, which is displayed in Safari */
+details summary::-webkit-details-marker {
+    display:none;
+}
+
+details[open] summary div .aui-iconfont-chevron-right {
+    display: none;
+}
+
+details[open] summary div .aui-iconfont-chevron-down {
+    display: inline;
+}
+
+details summary div .aui-iconfont-chevron-down {
+    display: none;
+}
+
+details summary div .aui-iconfont-chevron-right {
+    display: inline;
 }
 
 .learn-more-link {
-  display: inline-block;
-  margin-right: 4px;
+    display: inline-block;
+    margin-right: 4px;
 }
 
 .learn-more-link:hover {
-  color: inherit;
+    color: inherit;
 }
 
 /*  NOTE: We can't use standard breakpoints on GitHub config page
@@ -525,18 +688,18 @@ as the left panel navigation in Jira hijacks some of the screen */
 /* ** Media Queries ** */
 /* ******************* */
 @media (max-width: 1530px) {
-  .jiraConfiguration__table__cell__settings__ellipsis {
-    right: 0;
-  }
+    .jiraConfiguration__table__cell__settings__ellipsis {
+        right: 0;
+    }
 }
 
 @media (max-width: 800px) {
-  .jiraConfiguration {
-    padding: 2em;
-  }
+    .jiraConfiguration {
+        padding: 2em;
+    }
 
-  .jiraConfiguration__table__cell__settings
+    .jiraConfiguration__table__cell__settings
     > .jiraConfiguration__table__cell__settings__ellipsis {
-    right: 0.2em;
-  }
+        right: 0.2em;
+    }
 }
