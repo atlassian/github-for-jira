@@ -98,13 +98,16 @@ export class GitHubClient {
 		}
 	}
 
-	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>, metrics?: Record<string, string>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
 			{
 				query,
 				variables
 			},
-			config);
+			Object.assign({}, {
+				...config,
+				metrics
+			}));
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {

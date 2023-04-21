@@ -8,7 +8,8 @@ const instance = envVars.INSTANCE_NAME;
 const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-export const APP_NAME = `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
+const devSuffix = `${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
+export const APP_NAME = `GitHub for Jira${devSuffix}`;
 export const APP_KEY = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 const adminCondition = [
@@ -153,7 +154,7 @@ const modules = {
 			url: postInstallUrl,
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: `GitHub for Jira${devSuffix}`
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
@@ -161,7 +162,7 @@ const modules = {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: `GitHub for Jira${devSuffix}`
 			},
 			key: "gh-addon-admin-old",
 			location: "none"

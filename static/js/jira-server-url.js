@@ -41,7 +41,7 @@ const getGHEServerError = (error, url) => {
 		case "GHE_ERROR_GITHUB_CLOUD_HOST":
 			return {
 				title: "GitHub Cloud site",
-				message: `The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.`,
+				message: `The entered URL is a GitHub Cloud site.`,
 			};
 		case "GHE_ERROR_CANNOT_CONNECT":
 			return {
