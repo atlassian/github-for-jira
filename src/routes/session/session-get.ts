@@ -2,6 +2,14 @@ import { Request, Response } from "express";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const SessionGet = (req: Request, res: Response) => {
+	if (req.query.resetSession) {
+		const cookies = req.cookies;
+		for (const cookieName in cookies) {
+			res.clearCookie(cookieName);
+		}
+		delete req.query.resetSession;
+	}
+
 	const url = createUrlWithQueryString(req, req.params[0] || "");
 	const title = configForPage(req);
 

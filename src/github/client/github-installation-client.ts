@@ -153,7 +153,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				per_page,
 				order_by,
 				cursor
-			});
+			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
 		} catch (err) {
 			err.isRetryable = true;
@@ -259,7 +259,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders());
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders(), undefined, { graphQuery: "ViewerRepositoryCountQuery" });
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
@@ -272,14 +272,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			cursor
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithChangedFiles" })
 			.catch((err) => {
 				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
 					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
-					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithoutChangedFiles" });
 				}
 				return Promise.reject(err);
 			});
@@ -294,7 +294,8 @@ export class GitHubInstallationClient extends GitHubClient {
 				repo: repoName,
 				per_page: perPage,
 				cursor
-			});
+			},
+			{ graphQuery: "getDeploymentsQuery" });
 		return response?.data?.data;
 	}
 
@@ -310,14 +311,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			commitSince: commitSince?.toISOString()
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables, { graphQuery: "getCommitsQueryWithChangedFiles" })
 			.catch((err) => {
 				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
 					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err },"retrying commit graphql query without changedFiles");
-					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
+					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables, { graphQuery: "getCommitsQueryWithoutChangedFiles" });
 				}
 				return Promise.reject(err);
 			});
