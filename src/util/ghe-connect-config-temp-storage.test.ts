@@ -1,10 +1,7 @@
-import IORedis from "ioredis";
-import { getRedisInfo } from "config/redis-info";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 describe("ghe-config-temp-storage", () => {
-	const redis = new IORedis(getRedisInfo("deduplicator-test" + new Date().toISOString()));
-	const storage = new GheConnectConfigTempStorage(redis);
+	const storage = new GheConnectConfigTempStorage();
 
 	const TEST_GHE_CONFIG = {
 		serverUrl: "http://ghe.atlassian.com"

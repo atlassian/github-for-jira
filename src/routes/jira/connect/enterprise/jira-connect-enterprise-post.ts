@@ -11,8 +11,6 @@ import { GithubClientError } from "~/src/github/client/github-client-errors";
 import { AxiosError, AxiosResponse } from "axios";
 import { isUniquelyGitHubServerHeader } from "utils/http-headers";
 import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
-import IORedis from "ioredis";
-import { getRedisInfo } from "config/redis-info";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -50,10 +48,8 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 		response.headers["server"] === "GitHub.com";
 };
 
-const redis = new IORedis(getRedisInfo("jira-connect-enterprise-post"));
-
 const saveConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, appExists: boolean) => {
-	const connectConfigUuid = await (new GheConnectConfigTempStorage(redis)).store(gheConnectConfig);
+	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig);
 	res.status(200).send({ success: true, connectConfigUuid, appExists });
 };
 
