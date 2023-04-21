@@ -48,9 +48,13 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 		response.headers["server"] === "GitHub.com";
 };
 
-const saveConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, appExists: boolean) => {
+const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig) => {
 	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig);
-	res.status(200).send({ success: true, connectConfigUuid, appExists });
+	res.status(200).send({ success: true, connectConfigUuid, appExists: false });
+};
+
+const useExistingConfigAndRespond200 = async (res: Response, githubServerApp: GitHubServerApp) => {
+	res.status(200).send({ success: true, connectConfigUuid: githubServerApp.uuid, appExists: true });
 };
 
 export const JiraConnectEnterprisePost = async (
@@ -95,7 +99,7 @@ export const JiraConnectEnterprisePost = async (
 
 	if (gitHubServerApps?.length) {
 		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-		await saveConfigAndRespond200(res, gitHubConnectConfig, true);
+		await useExistingConfigAndRespond200(res, gitHubServerApps[0]);
 		return;
 	}
 
@@ -117,7 +121,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		await saveConfigAndRespond200(res, gitHubConnectConfig, false);
+		await saveTempConfigAndRespond200(res, gitHubConnectConfig);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
@@ -130,7 +134,7 @@ export const JiraConnectEnterprisePost = async (
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
-			await saveConfigAndRespond200(res, gitHubConnectConfig, false);
+			await saveTempConfigAndRespond200(res, gitHubConnectConfig);
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise,

@@ -48,7 +48,7 @@ export class GheConnectConfigTempStorage {
 /**
  * This first looks up the temp storage and then if not found checks the database (if there's already such
  * server with this UUID)
- * @param connectConfigUuidOrServerUuid
+ * @param tempConnectConfigUuidOrServerUuid
  */
 export const resolveIntoConnectConfig = async (tempConnectConfigUuidOrServerUuid: string, installationId: number): Promise<GheConnectConfig | undefined> => {
 	const connectConfig = await new GheConnectConfigTempStorage().get(tempConnectConfigUuidOrServerUuid);
