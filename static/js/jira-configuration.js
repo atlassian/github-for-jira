@@ -2,6 +2,22 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
+$(".my-test-button").click((event) => {
+	event.preventDefault();
+
+	const url = "/workspace/containers"
+
+	$.ajax({
+		type: "GET",
+		url,
+		success: (response) => {
+			console.log("success", response)
+		},
+		error: (error) => {
+			console.log("error", error)
+		}
+	});
+});
 function openChildWindow(url) {
 	const child = window.open(url);
 	const interval = setInterval(function () {
