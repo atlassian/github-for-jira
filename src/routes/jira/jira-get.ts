@@ -162,7 +162,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	res.render("jira-configuration-new.hbs", {
+	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
