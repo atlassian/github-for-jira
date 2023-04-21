@@ -1,5 +1,8 @@
 import LRUCache from "lru-cache";
 import { AuthToken } from "./auth-token";
+import { statsd } from "config/statsd";
+import { metricTokenCacheStatus } from "config/metric-names";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 /**
  * A cache that holds installation tokens for the most recently used installations.
@@ -41,7 +44,14 @@ export class InstallationTokenCache {
 		githubInstallationId: number,
 		gitHubAppId: number | undefined,
 		generateNewInstallationToken: () => Promise<AuthToken>): Promise<AuthToken> {
+
 		let token = this.installationTokenCache.get(this.key(githubInstallationId, gitHubAppId));
+
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+		this.sendMetrics(token, {
+			gitHubProduct,
+			itemCount: String(this.installationTokenCache.itemCount)
+		});
 
 		if (!token || token.isAboutToExpire()) {
 			token = await generateNewInstallationToken();
@@ -49,6 +59,16 @@ export class InstallationTokenCache {
 		}
 
 		return token;
+	}
+
+	private sendMetrics(token: AuthToken | undefined, tags?: Record<string, string>) {
+		if (!token) {
+			statsd.increment(metricTokenCacheStatus.miss, tags);
+		} else if (token.isAboutToExpire()) {
+			statsd.increment(metricTokenCacheStatus.expired, tags);
+		} else {
+			statsd.increment(metricTokenCacheStatus.hit, tags);
+		}
 	}
 
 	public clear(): void {
