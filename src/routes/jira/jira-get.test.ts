@@ -86,7 +86,7 @@ describe("Jira Configuration Suite", () => {
 
 		await JiraGet(mockRequest(), response, jest.fn());
 
-		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
+		expect(response.render).toHaveBeenCalledWith("jira-configuration.hbs", expect.objectContaining({
 			hasConnections: true,
 			ghCloud: {
 				failedCloudConnections: [],

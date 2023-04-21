@@ -43,6 +43,20 @@ describe("Session GET", () => {
 				})
 		);
 
+		it("Testing removing resetSession from query params", () =>
+			supertest(app)
+				.get("/session/jira/atlassian-connect.json?ghRedirect=from&foo=bar&ice=berg&resetSession=true")
+				.set("Cookie", ["session=blah", "foo=bar"])
+				.expect(200)
+				.then(response => {
+					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeTruthy();
+					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
+					expect(response.headers["set-cookie"]).not.toContain("blah");
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeFalsy();
+					expect(response.text.includes("window.location = \"https://test-github-app-instance.com/jira/atlassian-connect.json?ghRedirect=from&foo=bar&ice=berg\"")).toBeTruthy();
+				})
+		);
+
 		it("Testing loading when no query params", () =>
 			supertest(app)
 				.get("/session/jira/atlassian-connect.json")

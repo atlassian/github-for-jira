@@ -93,6 +93,10 @@ export const GithubWebhookMiddleware = (
 		const { name, payload, id: webhookId } = context;
 		const repoName = payload?.repository?.name || "none";
 		const orgName = payload?.repository?.owner?.login || "none";
+		if (!payload?.installation?.id) {
+			context.log.info("Halting further execution since no installation id found.");
+			return;
+		}
 		const gitHubInstallationId = Number(payload?.installation?.id);
 		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 

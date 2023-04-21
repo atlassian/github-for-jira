@@ -27,34 +27,53 @@
     <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
   </head>
 
-  <body class="aui-page-hybrid">
+  <body class="aui-page-hybrid" data-is-incremental-backfill-enabled="{{isIncrementalBackfillEnabled}}">
     <div class="jiraConfiguration">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
 
         {{#if hasConnections}}
           <button
-            class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary add-organization-link"
-            data-gh-cloud="true"
-          >Connect GitHub organization</button>
+              class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary aui-button aui-dropdown2-trigger"
+              aria-controls="connectBtnDropdown"
+          >Connect a GitHub organization
+          </button>
+          <aui-dropdown-menu id="connectBtnDropdown">
+            <aui-section>
+              <a class="jiraConfiguration__connectBtnDropdownOption add-organization-link"
+                 data-gh-cloud="true"
+                 target="_blank">
+                <span>Connect GitHub Cloud</span>
+                <i class="aui-icon aui-iconfont-question-filled"></i>
+                <div class="jiraConfiguration__connectGHCloudTooltip">Select this option if the URL of your GitHub
+                  organization starts with "http://github.com".
+                  This includes “Free”, “Team” and “GitHub Cloud Enterprise” accounts.
+                </div>
+              </a>
+              <a class="jiraConfiguration__connectBtnDropdownOption add-enterprise-link">
+                <span>Connect GitHub Server</span>
+                <i class="aui-icon aui-iconfont-question-filled"></i>
+                <div class="jiraConfiguration__connectGHETooltip">Select this option if you use the on-premise version of
+                  GitHub installed into your own infrastructure.
+                  The URL for your GitHub organization starts with your own unique domain.
+                </div>
+              </a>
+            </aui-section>
+          </aui-dropdown-menu>
         {{/if}}
       </header>
 
       <section class="jiraConfiguration_content">
         {{#if hasConnections}}
           <p>
-            After you connect your GitHub account or organization to Jira and
-            include issue keys in branch names, commit messages, and pull
-            request titles, you will be able to:</p>
-          <ul class="jiraConfiguration__content__list">
-            <li>Create pull requests from your Jira project.</li>
-            <li>View development information within your linked Jira issue.</li>
-            <li>View deployment pipelines over a timeline in your insights.</li>
-          </ul>
-          <p>Even if the backfill status is still in progress, you can start linking
-            issue keys in your development work immediately.</p>
+            Connecting GitHub to Jira allows you to view development activity in the context of your Jira project and
+            issues. To send development data from GitHub to Jira, your team must include issue keys in branch names,
+            commit messages, and pull request titles. <br/>
+            Even if your organization is still backfilling historical data, you can start using issue keys in your
+            development work immediately.
+        </p>
 
-         {{!-- Backfill Status Info Modal --}}
+          {{!-- Backfill Status Info Modal --}}
           <div class='jiraConfiguration__syncRetryModal'  id="sync-status-modal">
             <div class='jiraConfiguration__syncRetryModalContent'>
               <div class="jiraConfiguration__syncRetryModal__headerContainer">
@@ -114,12 +133,21 @@
                 <h3>Backfill your data</h3>
               </div>
               <div class="jiraConfiguration__restartBackfillModal__header__content">
+                {{#if isIncrementalBackfillEnabled }}
+                <p>Backfilling data can take a long time, so we’ll only backfill your data from the last 6 months. If you want to backfill more data, choose a date below. Branches will be backfilled regardless of their age.</p>
+                {{else}}
                 <p>Backfilling commits can take a long time, so we’ll only backfill your commits from the last year. If you want to backfill more commits, choose a date below. Pull requests and branches will all be backfilled regardless of their age.</p>
+                 {{/if}}
               </div>
               <form id="jiraConfiguration__restartBackfillModal__form" class="aui top-label">
                 <div class="field-group">
                   <label for="backfill-date-picker">
-                    Backfill commits from <span class="jiraConfiguration__restartBackfillModal__required">*</span>
+                    {{#if isIncrementalBackfillEnabled }}
+                    Backfill data from
+                    {{else}}
+                    Backfill commits from
+                    {{/if}}
+                  <span class="jiraConfiguration__restartBackfillModal__required">*</span>
                   </label>
                   <input class="jiraConfiguration__restartBackfillModal__date text full-width-field"
                          type="date"
@@ -128,6 +156,18 @@
                          name="backfill-date-picker"
                   />
                 </div>
+                {{#if isIncrementalBackfillEnabled }}
+                <div class="field-group">
+                  <input class="jiraConfiguration__restartBackfillModal__fullsync"
+                         type="checkbox"
+                         id="backfill-fullsync-checkbox"
+                         name="backfill-fullsync-checkbox"
+                  />
+                  <label for="backfill-fullsync-checkbox" class="jiraConfiguration__restartBackfillModal__fullsync__label">
+                    Erase history and restart backfill
+                  </label>
+                </div>
+                {{/if}}
                 <div class="jiraConfiguration__restartBackfillModal__actions">
                   <button class="aui-button aui-button-secondary" type="button" id="cancel-backfill">Cancel</button>
                   <button type="submit" id="submit-backfill-data" class="aui-button aui-button-primary">Backfill data</button>
@@ -137,216 +177,135 @@
             <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
 
-          {{#if successfulConnections}}
-          <div class="jiraConfiguration__tableContainer">
-            <table class="jiraConfiguration__table aui">
-              <thead class="jiraConfiguration__table__head">
-                <tr class="jiraConfiguration__table__head_row">
-                  <th class="jiraConfiguration__table__head__title">Connected organization</th>
-                  <th class="jiraConfiguration__table__head__title">Repository access</th>
-                  <th class="jiraConfiguration__table__head__title">Backfill status
-                    <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled" id="sync-status-modal-btn">
-                      Information
-                    </span>
-                  </th>
-                  <th class="jiraConfiguration__table__head__title">Settings</th>
-                </tr>
-              </thead>
-
-              <tbody class="jiraConfiguration__table__body">
-                {{#each successfulConnections}}
-                  <tr class="jiraConfiguration__table__row">
-                    {{! Organization }}
-                    <td class="jiraConfiguration__table__cell">
-                      <img
-                          class="jiraConfiguration__table__cell__avatar"
-                          src="{{account.avatar_url}}"
-                          height="24"
-                          width="24"
-                          data-installation-id="{{id}}"
-                      />
-                      <span
-                        class="jiraConfiguration__table__cell__orgName"
-                      >{{account.login}}</span>
-                    </td>
-
-                    {{! Repos Synced }}
-                    <td class="jiraConfiguration__table__cell">
-                      {{#if isGlobalInstall}}
-                        <span>All repos</span>
-                      {{else}}
-                        <span>Only select repos</span>
-                      {{/if}}
-
-                      {{#if totalNumberOfRepos}}
-                      <span class="jiraConfiguration__table__syncCount">
-                        {{ifAllReposSynced
-                          numberOfSyncedRepos
-                          totalNumberOfRepos
-                        }}
-                      </span>
-                      {{/if}}
-                      <a
-                        class="jiraConfiguration__table__editContainer"
-                        href="{{html_url}}"
-                        data-installation-link="{{html_url}}"
-                        target="_blank"
-                      >
-                        <span
-                          class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit"
-                        >
-                          Edit
-                        </span>
-                      </a>
-                    </td>
-
-                    {{! Backfill status }}
-                    <td class="jiraConfiguration__table__cell">
-                      <span
-                        id="{{id}}-status"
-                        class="jiraConfiguration__table__{{toLowerCase
-                            (replaceSpaceWithHyphen syncStatus)
-                          }}
-                          jiraConfiguration__table__syncStatus"
-                      >
-                        {{syncStatus}}
-                      </span>
-                      {{!-- Display any sync warnings --}}
-                      {{#if (inProgressOrPendingSync syncStatus)}}
-                        <div class="jiraConfiguration__loaderContainer">
-                          <aui-spinner size="small"></aui-spinner>
-                        </div>
-                      {{/if}}
-                      {{#if (failedSync syncStatus)}}
-                        <div class="jiraConfiguration__retryContainer">
-                          <button
-                            class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                            data-jira-host="{{ ../host }}"
-                            data-installation-id="{{ id }}"
-                            id="restart-backfill"
-                          >
-                            &#x21bb;
-                          </button>
-                          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          <div class="jiraConfiguration__retryMsg">Retry</div>
-                        </div>
-                      {{/if}}
-                    </td>
-                    {{! Settings }}
-                    <td class="jiraConfiguration__table__cell__settings">
-                      <button
-                        class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
-                        aria-controls="settings-dropdown-{{id}}"
-                      >
-                        <span
-                          class="jiraConfiguration__table__cell__settings__ellipsisSpan"
-                        >...</span>
-                      </button>
-
-                      <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="settings-dropdown-{{id}}">
-                        <h6
-                          class="jiraConfiguration__table__cell__settings__header"
-                        >
-                          <span class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
-                        </h6>
-                        <aui-section
-                          class="jiraConfiguration__table__cell__settings__dropdownItems"
-                        >
-                          <a
-                            class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                            href="{{html_url}}"
-                            data-installation-link="{{html_url}}"
-                            target="_blank"
-                          >
-                            Configure
-                          </a>
-                          <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                            <button
-                              class="sync-connection-link restart-backfill-button"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                              id="restart-backfill"
-                            >
-                              Restart backfill
-                            </button>
-                            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          </div>
-                          <button
-                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
-                            data-installation-id="{{ id }}"
-                            data-org-name="{{account.login}}"
-                          >
-                            Disconnect
-                          </button>
-                        </aui-section>
-                      </aui-dropdown-menu>
-                    </td>
-                  </tr>
-                {{/each}}
-              </tbody>
-            </table>
-          </div>
+          {{#if hasCloudAndEnterpriseServers}}
+            <div class="jiraConfiguration__optionContainer">
+              <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
+                      id="jiraConfiguration__optionAll">All
+              </button>
+              <button class="aui-button jiraConfiguration__option" id="jiraConfiguration__optionCloud">
+                <img src="/public/assets/cloud.svg" class="jiraConfiguration__optionsIcon" alt="">
+                GitHub Cloud
+              </button>
+              <button class="aui-button jiraConfiguration__option" id="jiraConfiguration__optionEnterprise">
+                <img src="/public/assets/server.svg" class="jiraConfiguration__optionsIcon" alt="">
+                GitHub Enterprise Server
+              </button>
+            </div>
           {{/if}}
 
-        {{#each failedConnections}}
-          <div class="jiraConfiguration__failedConnections__container">
-            <div class="jiraConfiguration__failedConnections__errorIcon__container">
-              <span class="jiraConfiguration__failedConnections__errorIcon aui-icon aui-icon-medium aui-iconfont-error">
-                Failed connection error
-              </span>
-            </div>
-            <div class="jiraConfiguration__failedConnections__orgInfo">
-              {{#if orgName}}
-                <p class="jiraConfiguration__failedConnections__header">
-                  There was an error for organization {{ orgName }}
-                </p>
-              {{else}}
-                <p class="jiraConfiguration__failedConnections__header">
-                  There was an error for organization with ID: {{ id }}
-                </p>
+          {{#if hasCloudServers}}
+            <div class="jiraConfiguration__cloudContainer">
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Cloud</div>
               {{/if}}
-              <p class="jiraConfiguration__failedConnections__errorMsg">
-                {{failedConnectionErrorMsg deleted}} You will need to reconnect.
-              </p>
-
-             <button class="jiraConfiguration__failedConnections__dismiss delete-connection-link" data-installation-id="{{ id }}">
-               Dismiss
-             </button>
+              <div class="jiraConfiguration__cloudConnections">
+                {{> jira-configuration-table
+                    id=id
+                    host=host
+                    isIncrementalBackfillEnabled=isIncrementalBackfillEnabled
+                    elementIdPrefix="ghCloud-"
+                    html_url=html_url
+                    csrfToken=csrfToken
+                    successfulConnections=ghCloud.successfulCloudConnections
+                    failedConnections=ghCloud.failedCloudConnections
+                }}
+              </div>
             </div>
-          </div>
-        {{/each}}
+          {{/if}}
 
+          {{#if gheServers.length}}
+            <div class="jiraConfiguration__enterpriseContainer">
+              {{#if hasCloudAndEnterpriseServers}}
+                <div class="jiraConfiguration__optionHeader">GitHub Enterprise Server</div>
+              {{/if}}
+              {{#each gheServers as |server|}}
+                <div class="jiraConfiguration__enterpriseServer">
+                  <div class="jiraConfiguration__enterpriseServer__header__container" data-server-baseUrl="{{server.gitHubBaseUrl}}">
+                    <div class="jiraConfiguration__enterpriseServer__header">{{server.gitHubBaseUrl}}</div>
+                    <button
+                        class="aui-button jiraConfiguration__enterpriseServer__disconnectButton disconnect-server-btn"
+                        data-server-baseurl="{{server.gitHubBaseUrl}}"
+                    >
+                      Disconnect server
+                    </button>
+                  </div>
+                  <div class="jiraConfiguration__enterpriseConnections">
+                    <div class="jiraConfiguration__enterpriseApplicationTitle">APPLICATIONS</div>
+                    {{#each server.applications as |app|}}
+                      <details open>
+                        <summary class="jiraConfiguration__collapsibleHeader jiraConfiguration__table__cell__settings">
+                          <div>
+                            <span class="aui-icon aui-iconfont-chevron-right"></span>
+                            <span class="aui-icon aui-iconfont-chevron-down"></span>
+                            <span class="jiraConfiguration__optionHeader">{{app.gitHubAppName}}</span>
+                          </div>
+                          <button
+                              class="aui-button aui-dropdown2-trigger aui-dropdown2-trigger-arrowless jiraConfiguration__appDropdown"
+                              aria-controls="app-settings-dropdown-{{id}}"
+                          >
+                            <span class="jiraConfiguration__appDropdownIcon">...</span>
+                          </button>
+                          <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="app-settings-dropdown-{{id}}">
+                          <h6 class="jiraConfiguration__table__cell__settings__header">
+                            <span class="jiraConfiguration__table__cell__settings__headerItem">Application</span>
+                          </h6>
+                          <aui-section class="jiraConfiguration__table__cell__settings__dropdownItems">
+                             <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
+                             <div class="jiraConfiguration__table__cell__gitHubAppItem">
+                               <button
+                                   class="jiraConfiguration__editGitHubApp"
+                                   data-app-uuid="{{app.uuid}}"
+                               >
+                                 Edit
+                               </button>
+                             </div>
+                             <div class="jiraConfiguration__table__cell__gitHubAppItem" data-app-uuid="{{app.gitHubAppName}}">
+                               <button
+                                   class="jiraConfiguration__deleteGitHubApp disconnect-app-btn"
+                                   data-app-uuid="{{app.uuid}}"
+                                   data-app-name="{{app.gitHubAppName}}"
+                               >
+                                 Disconnect
+                               </button>
+                             </div>
+                           </aui-section>
+                         </aui-dropdown-menu>
+                        </summary>
+                        <div class="jiraConfiguration__collapsibleBody">
+                          {{#if app.installations.total}}
+                            {{> jira-configuration-table
+                                id=id
+                                host=../../host
+                                isIncrementalBackfillEnabled=../../isIncrementalBackfillEnabled
+                                hideAvatar=true
+                                elementIdPrefix="gheServer-"
+                                html_url=html_url
+                                csrfToken=csrfToken
+                                gitHubAppId=app.id
+                                successfulConnections=app.successfulConnections
+                                failedConnections=app.failedConnections
+                                gitHubAppId=app.id
+                            }}
+                          {{else}}
+                            <div class="jiraConfiguration__collapsibleBody">
+                              <div class="jiraConfiguration__noOrgsTitle">Connected organizations</div>
+                              <div class="jiraConfiguration__noOrgsBody">
+                                No connected organizations.
+                                <a href="#" class="jiraConfiguration__connectNewApp" data-app-uuid="{{app.uuid}}">Connect a GitHub organization.</a>
+                              </div>
+                            </div>
+                          {{/if}}
+                        </div>
+                      </details>
+                    {{/each}}
+                  </div>
+                </div>
+
+              {{/each}}
+            </div>
+          {{/if}}
         {{else}}
-          <div class="jiraConfiguration__empty">
-            <img
-              class="jiraConfiguration__empty__image"
-              src="/public/assets/github-integration.svg"
-              alt="Connecting GitHub and Jira"
-            />
-            <h3 class="jiraConfiguration__empty__header">Connect GitHub to Jira
-              Software</h3>
-            <p class="jiraConfiguration__empty__message">Choose a GitHub
-              organization to connect and start including issue keys in
-              branches, commit messages or pull requests to see development
-              insights in Jira.</p>
-            <a
-              href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/"
-              class="ak-button ak-button__appearance-default learn-more-link"
-              target="_blank"
-            >
-              Learn more
-              <span
-                class="aui-icon aui-iconfont-shortcut"
-              >
-                Shortcut
-              </span>
-            </a>
-            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-            <button
-              class="ak-button ak-button__appearance-primary add-organization-link".
-              data-gh-cloud="true"
-            >Connect GitHub organization</button>
-          </div>
+          {{> jira-configuration-empty-connections csrfToken=csrfToken}}
         {{/if}}
 
         {{> modal }}
