@@ -21,37 +21,37 @@ const redis = new IORedis(getRedisInfo("GheConnectConfigTempStorage"));
 
 export class GheConnectConfigTempStorage {
 
-	async store(config: GheConnectConfig): Promise<string> {
+	async store(config: GheConnectConfig, installationId: number): Promise<string> {
 		const key = newUUID();
 		// We don't want to pollute redis, autoexpire after the flag is not being updated
-		await redis.set(this.toRedisKey(key), JSON.stringify(config), "px", REDIS_CLEANUP_TIMEOUT);
+		await redis.set(this.toRedisKey(key, installationId), JSON.stringify(config), "px", REDIS_CLEANUP_TIMEOUT);
 		return key;
 	}
 
-	async get(uuid: string): Promise<GheConnectConfig | null> {
-		const config = await redis.get(this.toRedisKey(uuid));
+	async get(uuid: string, installationId: number): Promise<GheConnectConfig | null> {
+		const config = await redis.get(this.toRedisKey(uuid, installationId));
 		if (!config) {
 			return null;
 		}
 		return JSON.parse(config) as GheConnectConfig;
 	}
 
-	async delete(uuid: string) {
-		await redis.unlink(this.toRedisKey(uuid));
+	async delete(uuid: string, installationId: number) {
+		await redis.unlink(this.toRedisKey(uuid, installationId));
 	}
 
-	private toRedisKey(uuid: string): string {
-		return `ghe_config_${uuid}`;
+	// installationId is additional layer of security, to make sure only no other tenants can access it by UUID
+	private toRedisKey(uuid: string, installationId: number): string {
+		return `ghe_config_${installationId}_${uuid}`;
 	}
 }
 
 /**
  * This first looks up the temp storage and then if not found checks the database (if there's already such
  * server with this UUID)
- * @param tempConnectConfigUuidOrServerUuid
  */
 export const resolveIntoConnectConfig = async (tempConnectConfigUuidOrServerUuid: string, installationId: number): Promise<GheConnectConfig | undefined> => {
-	const connectConfig = await new GheConnectConfigTempStorage().get(tempConnectConfigUuidOrServerUuid);
+	const connectConfig = await new GheConnectConfigTempStorage().get(tempConnectConfigUuidOrServerUuid, installationId);
 	if (connectConfig) {
 		return connectConfig;
 	}

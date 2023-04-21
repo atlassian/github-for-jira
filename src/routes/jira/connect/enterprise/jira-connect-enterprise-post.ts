@@ -48,8 +48,8 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 		response.headers["server"] === "GitHub.com";
 };
 
-const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig) => {
-	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig);
+const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, installationId: number) => {
+	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig, installationId);
 	res.status(200).send({ success: true, connectConfigUuid, appExists: false });
 };
 
@@ -121,7 +121,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		await saveTempConfigAndRespond200(res, gitHubConnectConfig);
+		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
@@ -134,7 +134,7 @@ export const JiraConnectEnterprisePost = async (
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
-			await saveTempConfigAndRespond200(res, gitHubConnectConfig);
+			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise,
