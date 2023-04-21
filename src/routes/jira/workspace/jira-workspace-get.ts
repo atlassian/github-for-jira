@@ -58,12 +58,12 @@ export const JiraWorkspaceGet = async (req: Request, res: Response, next: NextFu
 		return;
 	}
 
-	const { gitHubInstallationId, avatarUrl } = matchingSubscription;
+	const { id, avatarUrl } = matchingSubscription;
 	const { repoUrl, repoName } = matchedRepo[0];
 	const orgUrl = repoUrl.replace(repoName, "");
 
 	const orgData: GitHubWorkspace = {
-		id: gitHubInstallationId,
+		id,
 		name: orgName,
 		url: orgUrl,
 		avatarUrl
