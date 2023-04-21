@@ -170,6 +170,16 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async findBySubscriptionIdAndRepoName(subscriptionId: number, repoName: string, options: FindOptions = {}): Promise<RepoSyncState | null> {
+		return RepoSyncState.findOne(merge(options, {
+			where: {
+				subscriptionId,
+				repoName
+			}
+		}));
+	}
+
+
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {
 		return RepoSyncState.update({

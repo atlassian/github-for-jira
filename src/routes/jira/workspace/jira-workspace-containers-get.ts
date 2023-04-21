@@ -1,16 +1,17 @@
 import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 
 const { MISSING_JIRA_HOST, MISSING_GITHUB_SUBSCRIPTION } = Errors;
 
-interface GitHubRepo {
+export interface GitHubRepo {
 	id: number,
 	name: string,
 	providerName: string,
 	url: string,
 	avatarUrl: null,
-	lastUpdatedDate: string
+	lastUpdatedDate?: Date
 }
 
 export const JiraWorkspaceContainersGet = async (req: Request, res: Response): Promise<void> => {
@@ -46,13 +47,24 @@ export const JiraWorkspaceContainersGet = async (req: Request, res: Response): P
 		return;
 	}
 
+	const repo = await RepoSyncState.findBySubscriptionIdAndRepoName(subscription.id, repoName);
+
+	if (!repo) {
+		const errMessage = "Repository not found";
+		req.log.warn(errMessage);
+		res.status(400).send(errMessage);
+		return;
+	}
+
+	const { id, repoName: name, repoUrl, updatedAt } = repo;
+
 	const repoData: GitHubRepo = {
-		id: 1,
-		name: "name",
+		id,
+		name,
 		providerName: "GitHub for Jira",
-		url: "url",
+		url: repoUrl,
 		avatarUrl: null,
-		lastUpdatedDate: "lastUpdatedDate"
+		lastUpdatedDate: updatedAt
 	};
 
 	res.status(200).json({ success: true, repoData });
