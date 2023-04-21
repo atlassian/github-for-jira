@@ -3,6 +3,9 @@ import { AuthToken } from "./auth-token";
 import { statsd } from "config/statsd";
 import { metricTokenCacheStatus } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { numberFlag, NumberFlags, onFlagChange } from "config/feature-flags";
+import { getLogger } from "config/logger";
+import Logger from "bunyan";
 
 /**
  * A cache that holds installation tokens for the most recently used installations.
@@ -14,6 +17,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 export class InstallationTokenCache {
 	private static instance: InstallationTokenCache;
 	private readonly installationTokenCache: LRUCache<string, AuthToken>;
+	private logger: Logger;
 
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
@@ -23,6 +27,27 @@ export class InstallationTokenCache {
 	 */
 	constructor() {
 		this.installationTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
+		this.logger = getLogger("installation-token-cache");
+		this.setupCacheSizeListener();
+	}
+
+	private async updateCacheMaxSizeFromFlags() {
+		this.logger.info("Max size of installation token cache changed, now querying new value.");
+		try {
+			const newMax = await numberFlag(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, 1000);
+			this.logger.info({ newMax, oldMax: this.installationTokenCache.max }, "Found new max cache size, now updating cache options.");
+			this.installationTokenCache.max = newMax;
+			this.logger.info({ max: this.installationTokenCache.max }, "InstallationTokenCache max udpated");
+		} catch (e) {
+			this.logger.error("Error updating InstallationTokenCache max");
+		}
+	}
+
+	private setupCacheSizeListener() {
+		this.logger.info("Setting up cache max size listener");
+		onFlagChange(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, async () => { await this.updateCacheMaxSizeFromFlags(); });
+		this.updateCacheMaxSizeFromFlags().catch(e => this.logger.error({ err: e }, "Error setting max cache size on first setup"));
+		this.logger.info("Set up cache max size listener done");
 	}
 
 	public static getInstance(): InstallationTokenCache {
@@ -47,11 +72,7 @@ export class InstallationTokenCache {
 
 		let token = this.installationTokenCache.get(this.key(githubInstallationId, gitHubAppId));
 
-		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
-		this.sendMetrics(token, {
-			gitHubProduct,
-			itemCount: String(this.installationTokenCache.itemCount)
-		});
+		this.sendMetrics(token, gitHubAppId);
 
 		if (!token || token.isAboutToExpire()) {
 			token = await generateNewInstallationToken();
@@ -61,7 +82,13 @@ export class InstallationTokenCache {
 		return token;
 	}
 
-	private sendMetrics(token: AuthToken | undefined, tags?: Record<string, string>) {
+	private sendMetrics(token: AuthToken | undefined, gitHubAppId: number | undefined) {
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+		const tags = {
+			gitHubProduct,
+			maxItemCount: String(this.installationTokenCache.max),
+			itemCountInHundreds: String(Math.floor(this.installationTokenCache.itemCount / 100))
+		};
 		if (!token) {
 			statsd.increment(metricTokenCacheStatus.miss, tags);
 		} else if (token.isAboutToExpire()) {
