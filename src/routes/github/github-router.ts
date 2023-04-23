@@ -17,7 +17,6 @@ import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-
 import { Errors } from "config/errors";
 import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
-import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
 
 //  DO NOT USE THIS MIDDLEWARE ELSE WHERE EXCEPT FOR CREATE BRANCH FLOW AS THIS HAS SECURITY HOLE
 // TODO - Once JWT is passed from Jira for create branch this middleware is obsolete.
@@ -54,7 +53,7 @@ subRouter.post("/webhooks",
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 // Todo able to move under the jirasymmetric middleware once flag completed
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, cookieSessionMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
