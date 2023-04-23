@@ -9,7 +9,7 @@ import { getLogger } from "config/logger";
 // TODO - this entire route could be abstracted out into a generic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { issueKey, tenantUrl } = req.query;
+	const { issueKey, tenantUrl, jwt } = req.query;
 	const jiraHostQuery = req.query.jiraHost as string;
 	const logger = getLogger("github-create-branch-options-get", {
 		fields: req.log?.fields
@@ -51,12 +51,12 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}&jwt=${jwt}`);
 		return;
 	}
 	// Only single GitHub Enterprise connected
 	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}&jwt=${jwt}`);
 		return;
 	}
 
