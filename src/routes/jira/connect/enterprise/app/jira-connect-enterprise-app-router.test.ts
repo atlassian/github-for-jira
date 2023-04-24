@@ -8,7 +8,7 @@ import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
 import { JiraConnectEnterpriseAppCreateOrEditGet } from "./jira-connect-enterprise-app-create-or-edit-get";
 
-jest.mock("./jira-connect-enterprise-app-create-or-edit");
+jest.mock("./jira-connect-enterprise-app-create-or-edit-get");
 
 describe("JiraConnectEnterpriseAppRouter", () => {
 	const GHE_APP_UUID = uuid();
