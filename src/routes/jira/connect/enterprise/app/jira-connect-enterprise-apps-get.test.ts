@@ -105,6 +105,7 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 					jwt
 				});
 			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="https://ghe.com">`);
+			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${testUuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);
 		});
@@ -154,6 +155,7 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 					new: "true"
 				});
 			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="${gheApp.gitHubBaseUrl}">`);
+			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${gheApp.uuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);
 		});

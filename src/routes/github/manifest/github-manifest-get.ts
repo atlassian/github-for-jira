@@ -9,7 +9,7 @@ export const GithubManifestGet = async (req: Request, res: Response) => {
 
 	const connectConfig = await resolveIntoConnectConfig(connectConfigUuid, res.locals.installation.id);
 	if (!connectConfig) {
-		req.log.warn( { connectConfigUuid }, "Cannot find connect config");
+		req.log.warn({ connectConfigUuid }, "Cannot find connect config");
 		res.sendStatus(404);
 		return;
 	}
