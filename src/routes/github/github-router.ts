@@ -22,7 +22,9 @@ import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission
 // TODO - Once JWT is passed from Jira for create branch this middleware is obsolete.
 const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const jiraHost = req.query?.jiraHost as string;
-	if (!jiraHost) {
+	const { jwt } = req.query;
+
+	if (!jiraHost && !jwt) {
 		req.log.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
@@ -40,7 +42,6 @@ const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: Next
 	return next();
 };
 
-
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
@@ -53,7 +54,7 @@ subRouter.post("/webhooks",
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 // Todo able to move under the jirasymmetric middleware once flag completed
-subRouter.use("/create-branch", maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
