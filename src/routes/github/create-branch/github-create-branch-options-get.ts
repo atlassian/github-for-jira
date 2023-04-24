@@ -63,6 +63,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		jiraHost,
+		jwt,
 		servers
 	});
 
