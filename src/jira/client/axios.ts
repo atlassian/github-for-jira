@@ -154,7 +154,19 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			logger.info("Ok, looks like still works.");
 		}
 		instrumentRequest(error?.response);
+
 		if (error.response?.status === 503 || error.response?.status === 405) {
+			/**
+			 * EDGE CASE:
+			 * When sending a POST request to `https://OLD.atlassian.net/rest/deployments/0.1/bulk`, it sends a 302 response,
+			 * and redirects to a GET request `https://NEW.atlassian.net/rest/deployments/0.1/bulk`
+			 * This GET request is now failing with a 405 response and
+			 */
+			if (error.request.method === "GET" && error.request.path === "/rest/devinfo/0.10/bulk") {
+				logger.info({ error } , "Redirected to GET /rest/deployments/0.1/bulk");
+				return Promise.resolve({ message: "Redirected to GET /rest/deployments/0.1/bulk" });
+			}
+
 			try {
 				await axios.get("/status", { baseURL });
 			} catch (e) {
