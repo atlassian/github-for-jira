@@ -4,7 +4,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
 
-export const JiraConnectEnterpriseServerAppGet = async (
+export const JiraConnectEnterpriseAppsGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -19,7 +19,9 @@ export const JiraConnectEnterpriseServerAppGet = async (
 		const connectConfig = await resolveIntoConnectConfig(tempConnectConfigUuidOrServerUuid, installationId);
 
 		if (!connectConfig) {
-			throw new Error("No server config found!");
+			req.log.warn({ tempConnectConfigUuidOrServerUuid }, "No server config found!");
+			res.sendStatus(404);
+			return;
 		}
 
 		const baseUrl = connectConfig.serverUrl;

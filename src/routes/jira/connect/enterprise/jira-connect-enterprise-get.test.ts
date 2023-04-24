@@ -38,9 +38,9 @@ describe("GET /jira/connect/enterprise", () => {
 				pathname: "/jira/connect/enterprise",
 				query
 			}, false),
-			iss: installation.plainClientKey,
+			iss: installation.plainClientKey
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
-	}
+	};
 
 	describe("returns unauthorised", () => {
 		beforeEach(async () => {

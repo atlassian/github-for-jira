@@ -15,7 +15,7 @@ export interface GheConnectConfig {
 	// encryptedApiKeyValue: string | undefined;
 }
 
-const REDIS_CLEANUP_TIMEOUT = 24 * 3600 * 1000;
+const REDIS_CLEANUP_TIMEOUT = 7 * 24 * 3600 * 1000;
 
 const redis = new IORedis(getRedisInfo("GheConnectConfigTempStorage"));
 
