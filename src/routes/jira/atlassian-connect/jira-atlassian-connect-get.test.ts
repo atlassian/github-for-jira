@@ -3,8 +3,6 @@ import express, { Express } from "express";
 import { getFrontendApp } from "~/src/app";
 import { getLogger } from "config/logger";
 
-jest.mock("config/feature-flags");
-
 describe("Atlassian Connect", () => {
 	let app: Express;
 
