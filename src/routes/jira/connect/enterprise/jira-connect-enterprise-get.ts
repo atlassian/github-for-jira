@@ -17,16 +17,17 @@ export const JiraConnectEnterpriseGet = async (
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);
 
 		if (!isNew && gheServers?.length) {
-			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((_, key) => ({
+			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((servers, key) => ({
 				identifier: key,
-				uuid: key
+				uuid: servers[0].uuid
 			})).value();
 
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerListScreenEventName });
 			res.render("jira-select-server.hbs", {
 				list: servers,
 				// Passing these query parameters for the route when clicking `Connect a new server`
-				queryStringForPath: JSON.stringify({ new: 1 })
+				pathNameForAddNew: "github-server-url-page",
+				queryStringForPathNew: JSON.stringify({ new: 1 })
 			});
 		} else {
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
