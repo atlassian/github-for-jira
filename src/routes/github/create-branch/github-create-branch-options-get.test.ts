@@ -16,7 +16,7 @@ describe("GitHub Create Branch Options Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl , jwt: "jwt" };
+			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -53,7 +53,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net&jwt=jwt");
+				expect(res.text).toBe("Found. Redirecting to /github/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net&jwt=undefined");
 			});
 	});
 
@@ -85,7 +85,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net&jwt=jwt`);
+				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net&jwt=undefined`);
 			});
 	});
 
