@@ -104,7 +104,9 @@ const modules = {
 			name: {
 				value: "GitHub App Creation"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -113,7 +115,9 @@ const modules = {
 			name: {
 				value: "GitHub Server Apps"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
 			location: "none",
 			conditions: adminCondition
 		},
