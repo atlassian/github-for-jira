@@ -4,8 +4,7 @@ import { JiraConnectEnterprisePost } from "routes/jira/connect/enterprise/jira-c
 import { Installation } from "models/installation";
 import { v4 as newUUID } from "uuid";
 import { getLogger } from "config/logger";
-
-jest.mock("config/feature-flags");
+import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 const testSharedSecret = "test-secret";
 
@@ -81,7 +80,7 @@ describe("POST /jira/connect/enterprise", () => {
 	});
 
 	it("POST Jira Connect Enterprise - valid existing URL", async () => {
-		await GitHubServerApp.install({
+		const gitHubServerApp = await GitHubServerApp.install({
 			uuid: newUUID(),
 			appId: 1,
 			gitHubBaseUrl: gheUrl,
@@ -97,7 +96,7 @@ describe("POST /jira/connect/enterprise", () => {
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
-		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: true });
+		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: gitHubServerApp.uuid, appExists: true });
 	});
 
 	it("POST Jira Connect Enterprise - valid new URL to GHE", async () => {
@@ -106,6 +105,9 @@ describe("POST /jira/connect/enterprise", () => {
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
+
+		expect(await new GheConnectConfigTempStorage().get((response.send as jest.Mock).mock.calls[0][0].connectConfigUuid, installation.id))
+			.toBeDefined();
 	});
 
 	it("POST Jira Connect Enterprise - valid new URL to not GHE", async () => {
