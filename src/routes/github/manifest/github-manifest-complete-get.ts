@@ -5,6 +5,7 @@ import { Errors } from "config/errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
@@ -12,13 +13,28 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 	if (!jiraHost) {
 		throw new Error("Jira Host not found");
 	}
-	const gheHost = req.params.gheHost;
-	if (!gheHost) {
-		throw new Error("GitHub Enterprise Host not found");
-	}
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
 		throw new Error(`No Installation found for ${jiraHost}`);
+	}
+
+	const connectConfig = await new GheConnectConfigTempStorage().get(uuid, installation.id);
+	if (!connectConfig) {
+		req.log.warn("No connect config found");
+		res.sendStatus(404);
+		return;
+	}
+
+	if (await GitHubServerApp.findForUuid(uuid)) {
+		req.log.error({ connectConfigUuid: uuid }, "There's already GitHubServerApp with such UUID, halting");
+		res.sendStatus(400);
+		return;
+	}
+
+	const gheHost = connectConfig.serverUrl;
+
+	if (!gheHost) {
+		throw new Error("GitHub Enterprise Host not found");
 	}
 	if (!req.query.code) {
 		throw new Error("No code was provided");
