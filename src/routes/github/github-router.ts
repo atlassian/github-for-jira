@@ -53,7 +53,7 @@ subRouter.post("/webhooks",
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 // Todo able to move under the jirasymmetric middleware once flag completed
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
+subRouter.use("/create-branch", maybeJiraSymmetricJwtMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubCreateBranchRouter);
 
 subRouter.use("/repository", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, csrfMiddleware, GithubRepositoryRouter);
 
