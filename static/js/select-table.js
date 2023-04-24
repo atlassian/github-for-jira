@@ -4,6 +4,6 @@ $(".selectTable__addNew").click(function (event) {
 
   AP.navigator.go("addonmodule", {
     moduleKey: $(event.target).data("path"),
-    customData: queryString  ? JSON.parse(JSON.stringify(queryString)) : null
+    customData: queryString  ? JSON.parse(queryString) : null
   });
 });
