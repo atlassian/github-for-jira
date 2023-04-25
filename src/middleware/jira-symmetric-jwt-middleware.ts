@@ -34,7 +34,6 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			return res.status(401).send("Unauthorised");
 		}
 
-		req.log.info("JIRA HOST", installation);
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;

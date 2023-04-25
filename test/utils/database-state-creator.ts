@@ -4,6 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { GitHubServerApp } from "models/github-server-app";
 import fs from "fs";
 import path from "path";
+import { getHashedKey } from "models/sequelize";
 
 interface CreatorResult {
 	installation: Installation;
@@ -87,7 +88,8 @@ export class DatabaseStateCreator {
 		const installation  = await Installation.create({
 			jiraHost,
 			encryptedSharedSecret: "secret",
-			clientKey: "client-key"
+			clientKey: getHashedKey("client-key"),
+			plainClientKey: "client-key"
 		});
 
 		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({

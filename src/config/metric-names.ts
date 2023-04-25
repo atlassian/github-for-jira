@@ -43,6 +43,12 @@ export const metricTaskStatus = {
 	failed: `${server}.task-status.failed`
 };
 
+export const metricTokenCacheStatus = {
+	hit: `${server}.token-cache.hit`,
+	expired: `${server}.token-cache.expired`,
+	miss: `${server}.token-cache.miss`
+};
+
 export const metricWebhooks = {
 	webhookEvent: `${server}.webhooks.webhook-events`,
 	webhookProcessingTimes: `${server}.webhooks.processing-time.duration-ms`,
