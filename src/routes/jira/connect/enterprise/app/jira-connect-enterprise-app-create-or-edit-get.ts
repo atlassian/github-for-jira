@@ -5,7 +5,7 @@ import { envVars } from "config/env";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 
-export const JiraConnectEnterpriseAppCreateOrEdit = async (
+export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
