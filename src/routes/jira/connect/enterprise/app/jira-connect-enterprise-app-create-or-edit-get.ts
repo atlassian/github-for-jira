@@ -15,7 +15,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 		req.log.debug("Received Jira create or edit app page request");
 		let config;
 		const uuidOfServerAppForEdit = req.params.uuid;
-		const isNew = !!uuidOfServerAppForEdit;
+		const isNew = !uuidOfServerAppForEdit;
 
 		const { jiraHost } = res.locals;
 
