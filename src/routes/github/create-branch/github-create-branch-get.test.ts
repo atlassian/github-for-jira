@@ -28,11 +28,32 @@ describe("GitHub Create Branch Get", () => {
 			});
 		});
 
+		it("should redirect to Github login if unauthorized", async () => {
+			await supertest(app)
+				.get("/github/create-branch").set(
+					"Cookie",
+					getSignedCookieHeader({
+						jiraHost
+					}))
+				.expect(res => {
+					expect(res.status).toBe(302);
+					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
+				});
+		});
+
 		it("should hit the create branch on GET if authorized", async () => {
+			githubNock
+				.get("/")
+				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
+				.reply(200);
 
 			githubNock
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
+
+			githubNock
+				.get("/user")
+				.reply(200, { login: "test-account" });
 
 			githubNock
 				.post("/graphql", { query: GetRepositoriesQuery, variables: { per_page: 20, order_by: "UPDATED_AT" } })
