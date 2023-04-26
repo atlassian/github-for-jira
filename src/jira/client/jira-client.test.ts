@@ -168,7 +168,7 @@ describe("Test getting a jira client", () => {
 			]
 		});
 
-		expect(response).toMatchObject([{ message: "Redirected to GET /rest/deployments/0.1/bulk" }]);
+		expect(response).toMatchObject([{ result: "SKIP_REDIRECTED" }]);
 	});
 
 	describe("Reading encryptedSharedSecret", () => {
