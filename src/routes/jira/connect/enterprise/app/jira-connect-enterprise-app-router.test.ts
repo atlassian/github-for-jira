@@ -6,9 +6,9 @@ import { getSignedCookieHeader } from "test/utils/cookies";
 import { buildQueryTypeJWTToken } from "test/utils/jwt";
 import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
-import { JiraConnectEnterpriseAppCreateOrEdit } from "./jira-connect-enterprise-app-create-or-edit";
+import { JiraConnectEnterpriseAppCreateOrEditGet } from "./jira-connect-enterprise-app-create-or-edit-get";
 
-jest.mock("./jira-connect-enterprise-app-create-or-edit");
+jest.mock("./jira-connect-enterprise-app-create-or-edit-get");
 
 describe("JiraConnectEnterpriseAppRouter", () => {
 	const GHE_APP_UUID = uuid();
@@ -38,7 +38,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 		it("should take valid uuid from path and convert to ghe app config", async () => {
 			const pathname = `/jira/connect/enterprise/app/${GHE_APP_UUID}`;
 			let capturedGHEAppConfig: any;
-			jest.mocked(JiraConnectEnterpriseAppCreateOrEdit).mockImplementationOnce(async (_req, res)=>{
+			jest.mocked(JiraConnectEnterpriseAppCreateOrEditGet).mockImplementationOnce(async (_req, res)=>{
 				capturedGHEAppConfig = res.locals.gitHubAppConfig;
 				res.status(200).send("ok");
 			});
