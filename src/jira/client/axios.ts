@@ -62,7 +62,7 @@ const getErrorMiddleware = (logger: Logger) =>
 		 * This GET request is now failing with a 405 response, which is not an error on the app side
 		 * So treating this as a non-error case
 		 */
-		if (error.request.method === "GET" && error.request.path === "/rest/devinfo/0.10/bulk") {
+		if (error?.request?.method === "GET" && error?.request?.path === "/rest/devinfo/0.10/bulk") {
 			logger.warn({ error } , "Ignoring the error when redirected to GET /rest/deployments/0.1/bulk");
 			return Promise.resolve({ result: "SKIP_REDIRECTED" });
 		}

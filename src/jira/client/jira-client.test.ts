@@ -143,6 +143,7 @@ describe("Test getting a jira client", () => {
 	});
 
 	it("Should return success response for the bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
 		jiraNock.get("/rest/devinfo/0.10/bulk").reply(405);
 		jiraNock.post("/rest/devinfo/0.10/bulk").reply(302, undefined, {
 			"Location": jiraHost + "/rest/devinfo/0.10/bulk"
