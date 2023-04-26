@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { Installation } from "~/src/models/installation";
 import { Errors } from "config/errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
@@ -9,16 +8,8 @@ import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-stora
 
 export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
-	const jiraHost = res.locals.jiraHost;
-	if (!jiraHost) {
-		throw new Error("Jira Host not found");
-	}
-	const installation = await Installation.getForHost(jiraHost);
-	if (!installation) {
-		throw new Error(`No Installation found for ${jiraHost}`);
-	}
 
-	const connectConfig = await new GheConnectConfigTempStorage().get(uuid, installation.id);
+	const connectConfig = await new GheConnectConfigTempStorage().get(uuid, res.locals.installation.id);
 	if (!connectConfig) {
 		req.log.warn("No connect config found");
 		res.sendStatus(404);
@@ -33,18 +24,17 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 
 	const gheHost = connectConfig.serverUrl;
 
-	if (!gheHost) {
-		throw new Error("GitHub Enterprise Host not found");
-	}
 	if (!req.query.code) {
-		throw new Error("No code was provided");
+		req.log.warn("No code was provided");
+		res.sendStatus(400);
+		return;
 	}
 
 	try {
 		const metrics = {
 			trigger: "manifest"
 		};
-		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, metrics, req.log);
+		const gitHubClient = await createAnonymousClient(gheHost, res.locals.jiraHost, metrics, req.log);
 		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
@@ -55,8 +45,8 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			gitHubClientSecret: gitHubAppConfig.client_secret,
 			webhookSecret: gitHubAppConfig.webhook_secret,
 			privateKey:  gitHubAppConfig.pem,
-			installationId: installation.id
-		}, jiraHost);
+			installationId: res.locals.installation.id
+		}, res.locals.jiraHost);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,

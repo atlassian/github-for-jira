@@ -14,7 +14,8 @@ export const GithubManifestGet = async (req: Request, res: Response) => {
 		return;
 	}
 
-	// We don't want to reuse existing UUIDs
+	// We don't want to reuse existing UUIDs. On the other hand, we cannot re-generate it in "complete" step
+	// because the links in manifest must contain the final UUID
 	const uuid = await GitHubServerApp.findForUuid(connectConfigUuid)
 		? await new GheConnectConfigTempStorage().store(connectConfig, res.locals.installation.id)
 		: connectConfigUuid;
