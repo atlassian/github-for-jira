@@ -4,6 +4,7 @@ import { v4 as newUUID } from "uuid";
 import { envVars } from "config/env";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
 
 export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	req: Request,
@@ -13,13 +14,14 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	try {
 		req.log.debug("Received Jira create or edit app page request");
 		let config;
-		const uuid = req.params.uuid;
+		const uuidOfServerAppForEdit = req.params.uuid;
+		const isNew = !!uuidOfServerAppForEdit;
 
 		const { jiraHost } = res.locals;
 
-		if (uuid) {
+		if (!isNew) {
 			// TODO: add tests!!!
-			const app = await GitHubServerApp.getForUuidAndInstallationId(uuid, res.locals.installation.id);
+			const app = await GitHubServerApp.getForUuidAndInstallationId(uuidOfServerAppForEdit, res.locals.installation.id);
 			if (!app) {
 				req.log.warn("Cannot find the app");
 				res.status(404).send({
@@ -33,21 +35,35 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(jiraHost),
 				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
-				uuid,
+				uuid: uuidOfServerAppForEdit,
 				csrfToken: req.csrfToken()
 			};
 		} else {
+
+			const newServerAppConnectConfig = await resolveIntoConnectConfig(req.params.tempConnectConfigUuidOrServerUuid, res.locals.installation.id);
+			if (!newServerAppConnectConfig) {
+				req.log.warn({ connectConfigUuid: req.params.tempConnectConfigUuidOrServerUuid }, "No connect config was found");
+				res.sendStatus(404);
+				return;
+			}
+
+			// We don't want to re-use existing UUID to avoid grief
+			const newUuid = (await GitHubServerApp.findForUuid(req.params.tempConnectConfigUuidOrServerUuid))
+				? newUUID()
+				: req.params.tempConnectConfigUuidOrServerUuid;
+
 			config = {
-				serverUrl: req.params.serverUrl,
+				serverUrl: newServerAppConnectConfig.serverUrl,
+				// TODO: copy other values from the newServerAppConnectConfig
 				appUrl: envVars.APP_URL,
-				uuid: newUUID(),
+				uuid: newUuid,
 				csrfToken: req.csrfToken()
 			};
 		}
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.CreateOrEditGitHubServerAppScreenEventName,
-			isNew: !!uuid
+			isNew
 		});
 
 		res.render("jira-manual-app-creation.hbs", config);

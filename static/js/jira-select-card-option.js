@@ -60,7 +60,8 @@ $(document).ready(function() {
 				{
 					moduleKey: "github-manual-app-page",
 					customData: {
-						serverUrl: $("#baseUrl").val()
+						connectConfigUuid: $("#connectConfigUuid").val(),
+						serverUrl: $("#connectConfigUuid").val() // TODO: remove when the descriptor changes are propagated everywhere, in 1 month maybe?
 					}
 				}
 			);
