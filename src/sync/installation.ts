@@ -98,7 +98,7 @@ export const updateTaskStatusAndContinue = async (
 	if (isComplete) {
 		//Skip branches as it sync all history
 		if (allTasksExceptBranch.includes(task.task) && data.commitsFromDate) {
-			const repoSync = await RepoSyncState.findByRepoId(subscription, task.repositoryId);
+			const repoSync = await RepoSyncState.findBySubscriptionAndRepoId(subscription, task.repositoryId);
 			if (repoSync) {
 				const newFromDate =  new Date(data.commitsFromDate);
 				const existingFromDate = repoSync[getFromDateKey(task.task)];
