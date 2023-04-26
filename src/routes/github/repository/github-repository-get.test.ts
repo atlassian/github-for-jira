@@ -39,19 +39,6 @@ describe("GitHub Repository Search", () => {
 
 	describe("Testing the Repository Search route", () => {
 
-		it("should redirect to Github login if unauthorized", async () => {
-			await supertest(app)
-				.get("/github/repository").set(
-					"Cookie",
-					getSignedCookieHeader({
-						jiraHost
-					}))
-				.expect(res => {
-					expect(res.status).toBe(302);
-					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
-				});
-		});
-
 		it("should hit the create branch on GET if authorized", async () => {
 			const gitHubInstallationId = 15;
 			const orgName = "orgName";
@@ -62,11 +49,6 @@ describe("GitHub Repository Search", () => {
 			});
 
 			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
-
-			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
 				.reply(200, { account: { login: orgName } });
 
@@ -74,16 +56,8 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 2 }, { full_name: "second", id: 1 }]
-			});
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 2 }]
 			});
 
 			await supertest(app)
@@ -99,7 +73,7 @@ describe("GitHub Repository Search", () => {
 				});
 		});
 
-		it("should only return repos that user and installation have access too", async () => {
+		it("should return repos that the installation has access to", async () => {
 			const gitHubInstallationId = 15;
 			const orgName = "orgName";
 
@@ -109,11 +83,6 @@ describe("GitHub Repository Search", () => {
 			});
 
 			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
-
-			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
 				.reply(200, { account: { login: orgName } });
 
@@ -121,16 +90,8 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
-			});
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
 			});
 
 			await supertest(app)
@@ -142,7 +103,7 @@ describe("GitHub Repository Search", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body?.repositories).toHaveLength(1);
+					expect(res.body?.repositories).toHaveLength(3);
 					expect(res.body?.repositories[0].id).toEqual(1);
 				});
 		});
@@ -162,11 +123,6 @@ describe("GitHub Repository Search", () => {
 			});
 
 			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
-
-			githubNock
 				.get(`/app/installations/${gitHubInstallationId}`)
 				.reply(200, { account: { login: orgName } });
 
@@ -182,22 +138,11 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${gitHubInstallationId + 1}/access_tokens`)
 				.reply(200);
 
-			githubNock
-				.get("/user")
-				.times(2)
-				.reply(200, { login: "test-account" });
-
 			nockSearchRepos200(`${randomString} org:${orgName} in:name`, {
 				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
 			});
 
 			nockSearchRepos422(`${randomString} org:${orgName + "1"} in:name`);
-
-			nockSearchRepos200(`${randomString} org:${orgName} org:test-account in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 9000 }]
-			});
-
-			nockSearchRepos422(`${randomString} org:${orgName + "1"} org:test-account in:name`);
 
 			await supertest(app)
 				.get("/github/repository").set(
@@ -208,7 +153,7 @@ describe("GitHub Repository Search", () => {
 					}))
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body?.repositories).toHaveLength(1);
+					expect(res.body?.repositories).toHaveLength(3);
 					expect(res.body?.repositories[0].id).toEqual(1);
 				});
 		});
