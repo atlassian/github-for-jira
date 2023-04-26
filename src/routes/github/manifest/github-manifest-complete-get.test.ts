@@ -1,6 +1,6 @@
 import { Installation } from "~/src/models/installation";
 import { getLogger } from "config/logger";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { encodeSymmetric } from "atlassian-jwt";
 import supertest from "supertest";
@@ -29,13 +29,6 @@ describe("github-manifest-complete-get", () => {
 		registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 		registerHandlebarsHelpers();
 		app.use(RootRouter);
-
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			next();
-		});
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",

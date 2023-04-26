@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { Installation } from "models/installation";
 import path from "path";
 import { registerHandlebarsPartials }  from "utils/handlebars/handlebar-partials";
@@ -13,7 +13,6 @@ import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-stora
 describe("github-manifest-get", () => {
 	let app: Express;
 	let installation: Installation;
-	let jwt: string;
 
 	beforeEach(() => {
 		app = express();
@@ -25,14 +24,8 @@ describe("github-manifest-get", () => {
 		app.use(RootRouter);
 	});
 
-	const setupAppInstallationAndInitJwt = async () => {
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			next();
-		});
-		jwt = encodeSymmetric({
+	const generateJwt = async () => {
+		return encodeSymmetric({
 			qsh: "context-qsh",
 			iss: installation.plainClientKey
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
@@ -43,16 +36,24 @@ describe("github-manifest-get", () => {
 		beforeEach(async () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
-
-			jwt = "boo";
 		});
 
 		it("returns 401 when JWT is invalid", async () => {
 			const response = await supertest(app)
 				.get("/github/manifest/123")
 				.query({
-					jwt
+					jwt: "boo"
 				});
+			expect(response.status).toStrictEqual(401);
+		});
+
+		it("returns 401 when JWT is not provided", async () => {
+			const response = await supertest(app)
+				.get("/github/manifest/123")
+				.query({
+					jiraHost: installation.jiraHost
+				})
+				.set("Cookie", [`jiraHost=${installation.jiraHost}`]);
 			expect(response.status).toStrictEqual(401);
 		});
 	});
@@ -67,15 +68,13 @@ describe("github-manifest-get", () => {
 			uuid = await new GheConnectConfigTempStorage().store({
 				serverUrl: "http://ghe.com"
 			}, installation.id);
-
-			await setupAppInstallationAndInitJwt();
 		});
 
 		it("uses the provided UUID in URLs", async () => {
 			const response = await supertest(app)
 				.get(`/github/manifest/${uuid}`)
 				.query({
-					jwt
+					jwt: await generateJwt()
 				});
 			expect(response.text).toContain(`"redirect_url": "https://test-github-app-instance.com/github/manifest/complete/${uuid}"`);
 			expect(response.text).toContain(`"https://test-github-app-instance.com/github/${uuid}/webhooks"`);
@@ -93,17 +92,14 @@ describe("github-manifest-get", () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
 			gheUrl = result.gitHubServerApp!.gitHubBaseUrl;
-
 			uuid = result.gitHubServerApp!.uuid;
-
-			await setupAppInstallationAndInitJwt();
 		});
 
 		it("uses new UUID in URLs and copies config to temp storage", async () => {
 			const response = await supertest(app)
 				.get(`/github/manifest/${uuid}`)
 				.query({
-					jwt
+					jwt: await generateJwt()
 				});
 			const newUuid = response.text.split("test-github-app-instance.com/github/manifest/complete/")[1].split("\"")[0];
 			expect(response.text).not.toContain(uuid);
