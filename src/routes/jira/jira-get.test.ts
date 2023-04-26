@@ -86,7 +86,7 @@ describe("Jira Configuration Suite", () => {
 
 		await JiraGet(mockRequest(), response, jest.fn());
 
-		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
+		expect(response.render).toHaveBeenCalledWith("jira-configuration.hbs", expect.objectContaining({
 			hasConnections: true,
 			ghCloud: {
 				failedCloudConnections: [],
@@ -284,18 +284,16 @@ describe.each([
 	}
 ])("Jira Route", (testData) => {
 	const { url, testSharedSecret, testQsh } = testData;
-	let frontendApp, installation;
+	let frontendApp;
 
 	beforeEach(async () => {
-		installation = await Installation.install({
+		await Installation.install({
 			host: jiraHost,
 			sharedSecret: testSharedSecret,
 			clientKey: "jira-client-key"
 		});
 		frontendApp = express();
-		frontendApp.use((request, res, next) => {
-			res.locals = { jiraHost, installation };
-			request.log = getLogger("test");
+		frontendApp.use((request, _, next) => {
 			request.query = {
 				xdm_e: jiraHost,
 				jwt: encodeSymmetric({
@@ -303,9 +301,6 @@ describe.each([
 					iss: "jira-client-key"
 				}, testSharedSecret)
 			};
-			request.addLogFields = jest.fn();
-			request.csrfToken = jest.fn();
-
 			next();
 		});
 		frontendApp.use(getFrontendApp());

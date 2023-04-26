@@ -28,7 +28,7 @@ Object {
         "key": "gh-addon-admin",
         "location": "admin_plugins_menu/gh-addon-admin-section",
         "name": Object {
-          "value": "GitHub for Jira",
+          "value": "GitHub for Jira (test-atlassian-instance)",
         },
         "url": "/jira",
       },
@@ -41,7 +41,7 @@ Object {
         "key": "gh-addon-admin-old",
         "location": "none",
         "name": Object {
-          "value": "GitHub for Jira",
+          "value": "GitHub for Jira (test-atlassian-instance)",
         },
         "url": "/jira/configuration",
       },
@@ -97,7 +97,7 @@ Object {
         "name": Object {
           "value": "GitHub App Creation",
         },
-        "url": "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
       },
       Object {
         "conditions": Array [
@@ -110,7 +110,7 @@ Object {
         "name": Object {
           "value": "GitHub Server Apps",
         },
-        "url": "/jira/connect/enterprise/{ac.serverUrl}/app",
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
       },
       Object {
         "conditions": Array [

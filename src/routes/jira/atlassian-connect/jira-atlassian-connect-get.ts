@@ -7,7 +7,8 @@ const instance = envVars.APP_KEY.split(".").pop();
 
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-export const APP_NAME = `GitHub for Jira${isNodeProd() ? "" : (instance ? (` (${instance})`) : "")}`;
+const devSuffix = `${isNodeProd() ? "" : (instance ? (` (${instance})`) : "")}`;
+export const APP_NAME = `GitHub for Jira${devSuffix}`;
 
 const adminCondition = [
 	{
@@ -101,7 +102,9 @@ const modules = {
 			name: {
 				value: "GitHub App Creation"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -110,7 +113,9 @@ const modules = {
 			name: {
 				value: "GitHub Server Apps"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -147,7 +152,7 @@ const modules = {
 			url: postInstallUrl,
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: APP_NAME
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
@@ -155,7 +160,7 @@ const modules = {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: APP_NAME
 			},
 			key: "gh-addon-admin-old",
 			location: "none"
