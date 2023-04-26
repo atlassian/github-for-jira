@@ -11,6 +11,7 @@ import singleInstallation from "fixtures/jira-configuration/single-installation.
 
 describe("Github Setup", () => {
 	let frontendApp: Application;
+	const jiraDomain = envVars.ATLASSIAN_URL.replace(/https?:\/\//, "").replace("atlassian.net", "");
 
 	beforeEach(async () => {
 		frontendApp = express();
@@ -116,7 +117,7 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.ATLASSIAN_URL
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
@@ -144,7 +145,7 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.ATLASSIAN_URL
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
