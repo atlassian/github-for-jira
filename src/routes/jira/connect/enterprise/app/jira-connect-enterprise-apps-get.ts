@@ -45,7 +45,10 @@ export const JiraConnectEnterpriseAppsGet = async (
 			});
 		} else {
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
-			res.render("jira-select-app-creation.hbs", { baseUrl });
+			res.render("jira-select-app-creation.hbs", {
+				baseUrl,
+				connectConfigUuid: tempConnectConfigUuidOrServerUuid
+			});
 		}
 
 		req.log.debug("Jira Connect Enterprise App page rendered successfully.");

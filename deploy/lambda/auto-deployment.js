@@ -5,6 +5,8 @@ const autoDeployUsername = process.env.AUTO_DEPLOY_USERNAME;
 const autoDeployToken = process.env.AUTO_DEPLOY_TOKEN;
 
 exports.handler = async function (event, context) {
+    // TODO: remove this after testing
+    console.log('Checking the Auto Deploying Keys', process.env.AUTO_DEPLOY_TEST_KEY);
 
     if (!process.env.AUTO_DEPLOY_ENABLED) {
         console.log('Auto Deploying disabled');
