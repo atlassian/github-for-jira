@@ -95,9 +95,19 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Get publicly available information for user with given username.
 	 */
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
+		const response = await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
 		});
+		if (response.status === 200 && response.data) {
+			if (!response.data.email) {
+				this.logger.info("Empty e-mail");
+			} else if (response.data.email.includes("noreply.github.com")) {
+				this.logger.info("Fake e-mail");
+			} else {
+				this.logger.info("OK e-mail");
+			}
+		}
+		return response;
 	};
 
 	/**

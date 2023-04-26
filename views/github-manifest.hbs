@@ -27,11 +27,10 @@
 ></script>
 <script nonce="{{nonce}}">
   $(function() {
-    if (window.gheHost) {
       const appManifest = {
         "name": "Jira",
         "url": "https://github.com/marketplace/jira-software-github",
-        "redirect_url": "{{appHost}}/github/manifest/{{uuid}}/" + encodeURIComponent(window.gheHost),
+        "redirect_url": "{{appHost}}/github/manifest/complete/{{uuid}}",
         "hook_attributes": {
           "url": "{{appHost}}/github/{{uuid}}/webhooks"
         },
@@ -64,7 +63,7 @@
         ]
       };
        const newForm = jQuery("<form>", {
-          "action": window.gheHost + "/settings/apps/new",
+          "action": "{{gheHost}}/settings/apps/new",
           "method": "post",
           "target": "_self"
         }).append(jQuery("<input>", {
@@ -75,7 +74,6 @@
         }));
         $(document.body).append(newForm);
         newForm.submit();
-    }
   });
 </script>
 </body>

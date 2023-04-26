@@ -1,5 +1,5 @@
 import { Installation } from "models/installation";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { RootRouter } from "routes/router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
@@ -20,13 +20,6 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		});
 
 		app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			req.params = { uuid };
-			next();
-		});
 		app.use(RootRouter);
 
 		jwt = encodeSymmetric({
