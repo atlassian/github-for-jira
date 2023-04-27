@@ -20,7 +20,6 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 		const { jiraHost } = res.locals;
 
 		if (!isNew) {
-			// TODO: add tests!!!
 			const app = await GitHubServerApp.getForUuidAndInstallationId(uuidOfServerAppToEdit, res.locals.installation.id);
 			if (!app) {
 				req.log.warn("Cannot find the app");
