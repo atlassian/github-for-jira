@@ -2,11 +2,13 @@
 if [[ -z "$JIRA_ADMIN_EMAIL" ]] || [[ -z "$JIRA_ADMIN_API_TOKEN" ]] || [[ -z "$ATLASSIAN_URL" ]]
 then
   echo "Missing environment variables from .env - Please fill in 'JIRA_ADMIN_EMAIL', 'JIRA_ADMIN_API_TOKEN' and 'ATLASSIAN_URL' to be able to have the app install automatically."
-  exit 0
+  exit 1
 fi
 
+curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://app:8080/healthcheck
+
 # Fetching the new ngrok URL, not fetching the one from the .env because its not updated
-BASE_URL=$(curl -s http://tunnel:4040/api/tunnels | jq -r '.tunnels[] | select(.proto == "https") | .public_url')
+BASE_URL=$(curl -s http://ngrok:4040/api/tunnels | jq -r '.tunnels[] | select(.proto == "https") | .public_url')
 
 # Uninstalling the app first
 curl -s -X DELETE -u "$JIRA_ADMIN_EMAIL:$JIRA_ADMIN_API_TOKEN" -H "Content-Type: application/vnd.atl.plugins.install.uri+json" "${ATLASSIAN_URL}/rest/plugins/1.0/${APP_KEY}-key"
