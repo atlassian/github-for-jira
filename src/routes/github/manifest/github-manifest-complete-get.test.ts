@@ -1,15 +1,12 @@
 import { Installation } from "~/src/models/installation";
 import { getLogger } from "config/logger";
-import express, { Express } from "express";
+import { Express } from "express";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { encodeSymmetric } from "atlassian-jwt";
 import supertest from "supertest";
-import path from "path";
-import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
-import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
-import { RootRouter } from "routes/router";
 import { GitHubServerApp } from "models/github-server-app";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
+import { getFrontendApp } from "~/src/app";
 
 describe("github-manifest-complete-get", () => {
 	let app: Express;
@@ -22,13 +19,7 @@ describe("github-manifest-complete-get", () => {
 		installation = result.installation;
 		gheServerApp = result.gitHubServerApp!;
 
-		app = express();
-		app.set("view engine", "hbs");
-		const viewPath = path.resolve(process.cwd(), "views");
-		app.set("views", viewPath);
-		registerHandlebarsPartials(path.resolve(viewPath, "partials"));
-		registerHandlebarsHelpers();
-		app.use(RootRouter);
+		app = getFrontendApp();
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
