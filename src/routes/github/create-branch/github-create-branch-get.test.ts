@@ -1,6 +1,5 @@
 import express, { Application } from "express";
 import supertest from "supertest";
-import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
@@ -13,9 +12,7 @@ describe("GitHub Create Branch Get", () => {
 	beforeEach(() => {
 		app = express();
 		app.use((req, _, next) => {
-			req.log = getLogger("test");
 			req.query = { issueKey: "1", issueSummary: "random-string", jiraHost };
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());

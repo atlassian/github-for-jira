@@ -123,7 +123,7 @@ Object {
         "name": Object {
           "value": "GitHub Manual App",
         },
-        "url": "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
       },
       Object {
         "conditions": Array [

@@ -14,14 +14,14 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	try {
 		req.log.debug("Received Jira create or edit app page request");
 		let config;
-		const uuidOfServerAppForEdit = req.params.uuid;
-		const isNew = !uuidOfServerAppForEdit;
+		const uuidOfServerAppToEdit = req.params.uuid;
+		const isNew = !uuidOfServerAppToEdit;
 
 		const { jiraHost } = res.locals;
 
 		if (!isNew) {
 			// TODO: add tests!!!
-			const app = await GitHubServerApp.getForUuidAndInstallationId(uuidOfServerAppForEdit, res.locals.installation.id);
+			const app = await GitHubServerApp.getForUuidAndInstallationId(uuidOfServerAppToEdit, res.locals.installation.id);
 			if (!app) {
 				req.log.warn("Cannot find the app");
 				res.status(404).send({
@@ -35,7 +35,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(jiraHost),
 				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
-				uuid: uuidOfServerAppForEdit,
+				uuid: uuidOfServerAppToEdit,
 				csrfToken: req.csrfToken()
 			};
 		} else {

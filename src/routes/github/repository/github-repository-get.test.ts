@@ -1,6 +1,5 @@
 import express, { Application } from "express";
 import supertest from "supertest";
-import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { Subscription } from "~/src/models/subscription";
@@ -11,9 +10,7 @@ describe("GitHub Repository Search", () => {
 	beforeEach(() => {
 		app = express();
 		app.use((req, _, next) => {
-			req.log = getLogger("test");
 			req.query = { repoName: randomString, jiraHost };
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
