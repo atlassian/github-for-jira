@@ -2,7 +2,7 @@
 if [[ -z "$JIRA_ADMIN_EMAIL" ]] || [[ -z "$JIRA_ADMIN_API_TOKEN" ]] || [[ -z "$ATLASSIAN_URL" ]]
 then
   echo "Missing environment variables from .env - Please fill in 'JIRA_ADMIN_EMAIL', 'JIRA_ADMIN_API_TOKEN' and 'ATLASSIAN_URL' to be able to have the app install automatically."
-  exit 1
+  exit 0
 fi
 
 # Fetching the new ngrok URL, not fetching the one from the .env because its not updated
