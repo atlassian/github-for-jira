@@ -11,9 +11,10 @@ import singleInstallation from "fixtures/jira-configuration/single-installation.
 
 describe("Github Setup", () => {
 	let frontendApp: Application;
-	const jiraDomain = envVars.ATLASSIAN_URL.replace(/https?:\/\//, "").replace("atlassian.net", "");
+	let jiraDomain: string;
 
 	beforeEach(async () => {
+		jiraDomain = jiraHost.replace(/https?:\/\//, "").replace(/\.atlassian\.(net|com)/, "");
 		frontendApp = express();
 		frontendApp.use((request, _, next) => {
 			request.log = getLogger("test");
