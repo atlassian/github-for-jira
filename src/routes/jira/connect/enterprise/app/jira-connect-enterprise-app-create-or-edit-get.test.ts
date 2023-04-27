@@ -102,12 +102,20 @@ describe("jira-connect-enterprise-app-create-or-edit-get", () => {
 					});
 				expect(response.status).toStrictEqual(404);
 			});
+
+			it("returns 404 when UUID from a different installation", async () => {
+				const anotherOne = await new DatabaseStateCreator().forServer().create();
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${anotherOne.gitHubServerApp!.uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(anotherOne.gitHubServerApp!.uuid)
+					});
+				expect(response.status).toStrictEqual(404);
+			});
 		});
 	});
 
 	describe("edit form", () => {
-
-		// /jira/connect/enterprise/app/{ac.uuid}
 
 		describe("unauthorized", () => {
 			describe("unauthorized", () => {
@@ -171,6 +179,16 @@ describe("jira-connect-enterprise-app-create-or-edit-get", () => {
 					.get(`/jira/connect/enterprise/app/${TEST_UUID}`)
 					.query({
 						jwt: await generateJwt(TEST_UUID)
+					});
+				expect(response.status).toStrictEqual(404);
+			});
+
+			it("returns 404 when UUID from a different installation", async () => {
+				const anotherOne = await new DatabaseStateCreator().forServer().create();
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/app/${anotherOne.gitHubServerApp!.uuid}`)
+					.query({
+						jwt: await generateJwt(anotherOne.gitHubServerApp!.uuid)
 					});
 				expect(response.status).toStrictEqual(404);
 			});
