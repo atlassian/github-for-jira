@@ -51,12 +51,12 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}&jwt=${jwt}`);
+		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
 	}
 	// Only single GitHub Enterprise connected
 	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}&jwt=${jwt}`);
+		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
 	}
 
