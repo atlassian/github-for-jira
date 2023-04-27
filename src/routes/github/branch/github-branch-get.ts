@@ -16,7 +16,6 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	});
 
 	if (!gitHubAppConfig) {
-		logger.warn();
 		logger.error(Errors.MISSING_GITHUB_APP_CONFIG);
 		res.sendStatus(401);
 		return;
