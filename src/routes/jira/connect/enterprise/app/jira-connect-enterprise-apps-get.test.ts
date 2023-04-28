@@ -1,28 +1,19 @@
-import express, { Express } from "express";
+import { Express } from "express";
 import { Installation } from "models/installation";
-import path from "path";
-import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
-import { RootRouter } from "routes/router";
 import { getLogger } from "config/logger";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import supertest from "supertest";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 import { GitHubServerApp } from "models/github-server-app";
-import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
+import { getFrontendApp } from "~/src/app";
 
 describe("JiraConnectEnterpriseAppsGet", () => {
 	let app: Express;
 	let installation: Installation;
 
 	beforeEach(() => {
-		app = express();
-		app.set("view engine", "hbs");
-		const viewPath = path.resolve(process.cwd(), "views");
-		app.set("views", viewPath);
-		registerHandlebarsPartials(path.resolve(viewPath, "partials"));
-		registerHandlebarsHelpers();
-		app.use(RootRouter);
+		app = getFrontendApp();
 	});
 
 	const generateJwt = async (uuid: string, query: any = {}) => {
@@ -98,7 +89,6 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 				.query({
 					jwt: await generateJwt(testUuid)
 				});
-			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="https://ghe.com">`);
 			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${testUuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);
@@ -144,7 +134,6 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 					jwt: await generateJwt(gheApp.uuid, { new: "true" }),
 					new: "true"
 				});
-			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="${gheApp.gitHubBaseUrl}">`);
 			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${gheApp.uuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);

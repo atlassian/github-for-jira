@@ -4,16 +4,20 @@ import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 
-// TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
+// TODO - this entire route could be abstracted out into a generic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { issueKey, tenantUrl } = req.query;
+	const { issueKey, tenantUrl, jwt } = req.query;
 	const jiraHostQuery = req.query.jiraHost as string;
+	const logger = getLogger("github-create-branch-options-get", {
+		fields: req.log?.fields
+	});
 
 	if (!tenantUrl && !jiraHostQuery && !res.locals.jiraHost) {
-		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
+		logger.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
 	}
@@ -46,7 +50,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
-
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
 		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
 		return;
@@ -60,6 +63,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	res.render("github-create-branch-options.hbs", {
 		nonce: res.locals.nonce,
 		jiraHost,
+		jwt,
 		servers
 	});
 

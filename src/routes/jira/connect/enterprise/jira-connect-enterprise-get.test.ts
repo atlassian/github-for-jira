@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-import express, { Express } from "express";
+import { Express } from "express";
 import { getLogger } from "config/logger";
-import { RootRouter } from "routes/router";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Installation } from "models/installation";
 import supertest from "supertest";
-import path from "path";
-import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
 import { GitHubServerApp } from "models/github-server-app";
+import { getFrontendApp } from "~/src/app";
 
 describe("GET /jira/connect/enterprise", () => {
 
@@ -16,12 +14,7 @@ describe("GET /jira/connect/enterprise", () => {
 	let installation: Installation;
 
 	beforeEach(() => {
-		app = express();
-		app.set("view engine", "hbs");
-		const viewPath = path.resolve(process.cwd(), "views");
-		app.set("views", viewPath);
-		registerHandlebarsPartials(path.resolve(viewPath, "partials"));
-		app.use(RootRouter);
+		app = getFrontendApp();
 	});
 
 	const generateJwt = async (query: any = {}) => {

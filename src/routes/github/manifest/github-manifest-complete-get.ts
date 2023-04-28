@@ -41,6 +41,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 			appId: gitHubAppConfig.id,
 			gitHubAppName: gitHubAppConfig.name,
 			gitHubBaseUrl: gheHost,
+			// TODO: copy other values from the connectConfig
 			gitHubClientId: gitHubAppConfig.client_id,
 			gitHubClientSecret: gitHubAppConfig.client_secret,
 			webhookSecret: gitHubAppConfig.webhook_secret,

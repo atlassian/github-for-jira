@@ -6,7 +6,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import express, { Application } from "express";
+import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
@@ -15,7 +15,6 @@ jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
 
 describe("Jira Configuration Suite", () => {
-	let frontendApp: Application;
 	let subscription: Subscription;
 	let installation: Installation;
 
@@ -48,17 +47,10 @@ describe("Jira Configuration Suite", () => {
 			//secrets: "def234",
 			encryptedSharedSecret: "ghi345"
 		});
-
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
 	});
 
 	const mockRequest = (): any => ({
-		query: { xdm_e: jiraHost },
+		query: { },
 		csrfToken: jest.fn().mockReturnValue({}),
 		log: {
 			info: jest.fn(),
@@ -295,7 +287,6 @@ describe.each([
 		frontendApp = express();
 		frontendApp.use((request, _, next) => {
 			request.query = {
-				xdm_e: jiraHost,
 				jwt: encodeSymmetric({
 					qsh: testQsh,
 					iss: "jira-client-key"

@@ -1,4 +1,3 @@
-import express from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest, { Test } from "supertest";
 import { runDbMigration, DBMigrationType, validateScriptLocally } from "./db-migration-utils";
@@ -21,8 +20,7 @@ const MIGRATION_SCRIPT_LAST = "20220101000001-second-script.js";
 describe("DB migration down", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
-		frontendApp = express();
-		frontendApp.use(getFrontendApp());
+		frontendApp = getFrontendApp();
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{

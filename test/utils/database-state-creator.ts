@@ -5,6 +5,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import fs from "fs";
 import path from "path";
 import { getHashedKey } from "models/sequelize";
+import { v4 } from "uuid";
 
 interface CreatorResult {
 	installation: Installation;
@@ -93,10 +94,10 @@ export class DatabaseStateCreator {
 		});
 
 		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({
-			uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
+			uuid: v4(),
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
-			gitHubClientId: "client-id",
+			gitHubClientId: "client-id" + Math.random(),
 			gitHubClientSecret: "client-secret",
 			webhookSecret: "webhook-secret",
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
