@@ -19,9 +19,6 @@ const GITHUB_SERVER_APP_ID = Math.floor(Math.random() * 10000);
 const GITHUB_SERVER_CLIENT_ID = "client-id";
 const DEFAULT_SCOPES = "user,repo";
 const TESTING_SCOPES = "scope1,scope2";
-const setupAppAndRouter = () => {
-	return getFrontendApp();
-};
 
 const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 	const existed = await GitHubServerApp.findForUuid(GITHUB_SERVER_APP_UUID);
@@ -67,7 +64,7 @@ describe("GitHub router", () => {
 		describe("Cloud scenario", () => {
 			let app: Application;
 			beforeEach(async() => {
-				app = setupAppAndRouter();
+				app = getFrontendApp();
 				mockConfigurationGetProceed();
 				await Installation.create({
 					jiraHost,
@@ -162,7 +159,7 @@ describe("GitHub router", () => {
 			let jiraInstallaionId: number;
 			let gitHubAppId: number;
 			beforeEach(async () => {
-				app = setupAppAndRouter();
+				app = getFrontendApp();
 				const installation = await prepareNewInstallationInDB();
 				jiraInstallaionId = installation.id;
 				const gitHubApp = await prepareGitHubServerAppInDB(jiraInstallaionId);
