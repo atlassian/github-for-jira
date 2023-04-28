@@ -31,14 +31,14 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
-			return res.status(401).send("Unauthorised");
+			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
+			return res.status(401).send(errorMessage);
 		}
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
-
-		// Check whether logged in user has Jira Admin permissions and save it to the session
+		// Check whether logged-in user has Jira Admin permissions and save it to the session
 		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {

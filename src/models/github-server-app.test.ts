@@ -93,7 +93,7 @@ describe("GitHubServerApp", () => {
 		describe("cryptor encryption", () => {
 
 			describe("GitHubServerApp creation", ()=>{
-				const GITHUHB_INSTALLATION_ID = 100001;
+				const INSTALLATION_ID_PK = 100001;
 				const UUID1 = newUUID();
 				const UUID2 = newUUID();
 				const GHES_URL = "http://private-ghes-server.com";
@@ -107,7 +107,7 @@ describe("GitHubServerApp", () => {
 					webhookSecret: "webhook_secret_1",
 					privateKey: "private_key_1",
 					gitHubAppName: "ghes_app_1",
-					installationId: GITHUHB_INSTALLATION_ID
+					installationId: INSTALLATION_ID_PK
 				};
 				it("should install new record Successfully", async ()=>{
 					const newApp = await GitHubServerApp.install({
@@ -123,22 +123,23 @@ describe("GitHubServerApp", () => {
 						webhookSecret: "encrypted:webhook_secret_1",
 						privateKey: "encrypted:private_key_1",
 						gitHubAppName: "ghes_app_1",
-						installationId: GITHUHB_INSTALLATION_ID
+						installationId: INSTALLATION_ID_PK
 					}));
 				});
 				it("should return existing but NOT override existing record if found", async ()=>{
 					const existing = await GitHubServerApp.install({
 						...DEFAULT_INSTALL_PAYLOAD,
 						uuid: UUID1,
-						installationId: GITHUHB_INSTALLATION_ID
+						installationId: INSTALLATION_ID_PK
 					}, jiraHost);
 					const found = await GitHubServerApp.install({
 						...DEFAULT_INSTALL_PAYLOAD,
 						uuid: UUID2, //this indicate even if it is a new uuid, it will override existing
-						installationId: GITHUHB_INSTALLATION_ID + 1
+						installationId: INSTALLATION_ID_PK
 					}, jiraHost);
 					expect(found.id).toBe(existing.id);
-					expect(found.installationId).toBe(GITHUHB_INSTALLATION_ID);
+					expect(found.uuid).toBe(UUID1);
+					expect(found.installationId).toBe(INSTALLATION_ID_PK);
 				});
 				it("should NOT match existing record if url not match", async ()=>{
 					const existing = await GitHubServerApp.install({

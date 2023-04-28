@@ -1,46 +1,58 @@
 import { Request, Response } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
-import { Installation } from "~/src/models/installation";
 import { Errors } from "config/errors";
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 export const GithubManifestCompleteGet = async (req: Request, res: Response) => {
 	const uuid = req.params.uuid;
-	const jiraHost = res.locals.jiraHost;
-	if (!jiraHost) {
-		throw new Error("Jira Host not found");
+
+	const tempStorage = new GheConnectConfigTempStorage();
+	const connectConfig = await tempStorage.get(uuid, res.locals.installation.id);
+	if (!connectConfig) {
+		req.log.warn("No connect config found");
+		res.sendStatus(404);
+		return;
 	}
-	const gheHost = req.params.gheHost;
-	if (!gheHost) {
-		throw new Error("GitHub Enterprise Host not found");
+
+	// Should never happen because temp storage uses random UUIDs, the chances of collision is super low. Keeping
+	// just in case, though
+	if (await GitHubServerApp.findForUuid(uuid)) {
+		req.log.error({ connectConfigUuid: uuid }, "There's already GitHubServerApp with such UUID, halting");
+		res.sendStatus(400);
+		return;
 	}
-	const installation = await Installation.getForHost(jiraHost);
-	if (!installation) {
-		throw new Error(`No Installation found for ${jiraHost}`);
-	}
+
+	const gheHost = connectConfig.serverUrl;
+
 	if (!req.query.code) {
-		throw new Error("No code was provided");
+		req.log.warn("No code was provided");
+		res.sendStatus(400);
+		return;
 	}
 
 	try {
 		const metrics = {
 			trigger: "manifest"
 		};
-		const gitHubClient = await createAnonymousClient(gheHost, jiraHost, metrics, req.log);
+		const gitHubClient = await createAnonymousClient(gheHost, res.locals.jiraHost, metrics, req.log);
 		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,
 			gitHubAppName: gitHubAppConfig.name,
 			gitHubBaseUrl: gheHost,
+			// TODO: copy other values from the connectConfig
 			gitHubClientId: gitHubAppConfig.client_id,
 			gitHubClientSecret: gitHubAppConfig.client_secret,
 			webhookSecret: gitHubAppConfig.webhook_secret,
 			privateKey:  gitHubAppConfig.pem,
-			installationId: installation.id
-		}, jiraHost);
+			installationId: res.locals.installation.id
+		}, res.locals.jiraHost);
+
+		await tempStorage.delete(uuid, res.locals.installation.id);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
