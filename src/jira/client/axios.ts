@@ -166,13 +166,15 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			// TODO: pretty sure this whole function is some dead code that we can delete, because in getErrorMiddleware
 			// TODO: the error is mapped to JiraClientError. If that's the case, the log line below should never be logged
 			// TODO: and we are safe to kill the thing.
-			logger.info("Ok, looks like still works.");
+			logger.info({ error }, "Ok, looks like still works.");
 		}
 		instrumentRequest(error?.response);
 
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
-				await axios.get("/status", { baseURL });
+				logger.info({ jiraHost: baseURL }, "Try fetching status for 503 and 405 failure request");
+				const statusResponse = await axios.get("/status", { baseURL });
+				logger.info({ jiraHost: baseURL, status: statusResponse.status }, "Status fetched successfully");
 			} catch (e) {
 				if (e.response.status === 503) {
 					logger.info({ jiraHost: baseURL }, "503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
@@ -183,6 +185,8 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 				}
 			}
 		}
+
+		logger.info({ jiraHost: baseURL, error }, "Rejecting final error");
 		return Promise.reject(error);
 	};
 };
