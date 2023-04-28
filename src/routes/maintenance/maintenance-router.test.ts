@@ -1,10 +1,9 @@
 import supertest from "supertest";
-import express, { Express } from "express";
+import { Express } from "express";
 import { HealthcheckRouter } from "../healthcheck/healthcheck-router";
 import { getFrontendApp } from "../../app";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
-import { getLogger } from "config/logger";
 
 jest.mock("config/feature-flags");
 
@@ -20,11 +19,7 @@ describe("Maintenance", () => {
 	beforeEach(() => {
 		// Defaults maintenance mode to true
 		whenMaintenanceMode(true);
-		app = express();
-		app.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
+		app = getFrontendApp();
 	});
 
 	describe("Healthcheck", () => {
@@ -43,9 +38,6 @@ describe("Maintenance", () => {
 	});
 
 	describe("Frontend", () => {
-		beforeEach(() => {
-			app.use(getFrontendApp());
-		});
 
 		describe("Atlassian Connect", () => {
 			it("should return Atlassian Connect JSON in maintenance mode", () =>

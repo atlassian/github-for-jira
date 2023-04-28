@@ -1,7 +1,5 @@
 import supertest from "supertest";
 import { getSignedCookieHeader } from "test/utils/cookies";
-import express from "express";
-import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { stringFlag, StringFlags } from "config/feature-flags";
@@ -10,12 +8,7 @@ import { Installation } from "~/src/models/installation";
 jest.mock("config/feature-flags");
 
 describe("Github Encrypt Header post endpoint", () => {
-	const frontendApp = express();
-	frontendApp.use((request, _, next) => {
-		request.log = getLogger("test");
-		next();
-	});
-	frontendApp.use(getFrontendApp());
+	const frontendApp = getFrontendApp();
 
 	beforeEach(async() => {
 		await Installation.create({
