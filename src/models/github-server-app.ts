@@ -153,7 +153,8 @@ export class GitHubServerApp extends Model {
 		const [gitHubServerApp] = await this.findOrCreate({
 			where: {
 				gitHubClientId,
-				gitHubBaseUrl
+				gitHubBaseUrl,
+				installationId
 			},
 			defaults: {
 				uuid,
