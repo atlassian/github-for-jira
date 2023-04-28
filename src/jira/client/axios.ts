@@ -162,6 +162,7 @@ const instrumentRequest = (response) => {
  */
 const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 	return async (error: AxiosError) => {
+		logger = logger.child({ jiraHost: baseURL, errorStatus: error.response?.status });
 		if (error.response) {
 			// TODO: pretty sure this whole function is some dead code that we can delete, because in getErrorMiddleware
 			// TODO: the error is mapped to JiraClientError. If that's the case, the log line below should never be logged
@@ -172,17 +173,22 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
-				await axios.get("/status", { baseURL });
+				logger.info("Try fetching status for 503 and 405 failure request");
+				const statusResponse = await axios.get("/status", { baseURL });
+				logger.info({ statusApiStatus: statusResponse.status }, "Status fetched successfully");
 			} catch (e) {
+				logger.info({ statusApiStatus: e.response.status }, "Status fetched with error");
 				if (e.response.status === 503) {
-					logger.info({ jiraHost: baseURL }, "503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
+					logger.info("503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
 					error.response.status = 404;
 				} else if (e.response.status === 302) {
-					logger.info({ jiraHost: baseURL },"405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
+					logger.info("405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
 					error.response.status = 404;
 				}
 			}
 		}
+
+		logger.info({ errorStatus: error.response?.status }, "Rejecting final error");
 		return Promise.reject(error);
 	};
 };
