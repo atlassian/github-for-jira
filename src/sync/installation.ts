@@ -346,6 +346,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 
 	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
 	const failedCode = getFailedCode(err);
+	log.warn({ failedCode, task: mainNextTask.task }, "Current task failed.");
 
 	const isDeployment = mainNextTask.task === "deployment";
 	const newStatus = isDeployment ? "complete" : "failed";
@@ -375,7 +376,6 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 	await sendBackfillMessage(data, 0, log, err);
 };
-
 
 const getFailedCode = (err): string => {
 	const { status, message, code } = err;
