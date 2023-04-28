@@ -4,6 +4,22 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Subscription } from "models/subscription";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { serializeSubscription } from "routes/api/api-utils";
+import { Installation } from "models/installation";
+
+const getIdsForExistingInstallations = async(installationIds, logger): Promise<number[]> => {
+	const installations = installationIds.map(async(id: number): Promise<number | null> => {
+		const installation: Installation | null = await Installation.getForId(id);
+
+		if (installation?.id) {
+			return installation?.id;
+		} else {
+			logger.warn({ installationId: id }, "No installation found");
+			return null;
+		}
+	});
+	const existingInstallations = await Promise.all(installations);
+	return existingInstallations.filter(installation => installation !== null);
+};
 
 export const ApiResyncPost = async (req: Request, res: Response): Promise<void> => {
 	// Partial by default, can be made full
@@ -24,7 +40,14 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	const targetTasks = req.body.targetTasks as TaskType[];
 
 	if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
-		res.status(400).send("please provide at least one of the filter parameters!");
+		res.status(400).send("Please provide at least one of the filter parameters!");
+		return;
+	}
+
+	const existingInstallationIds = await getIdsForExistingInstallations(installationIds, req.log);
+
+	if (!existingInstallationIds.length) {
+		res.status(400).json("No installations exist for provided IDs");
 		return;
 	}
 
@@ -35,6 +58,7 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 
 	const { uuid } = req.params;
 	let gitHubServerApp;
+
 	if (uuid) {
 		gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
