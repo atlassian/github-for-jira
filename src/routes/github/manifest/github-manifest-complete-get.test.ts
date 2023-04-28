@@ -8,6 +8,18 @@ import { GitHubServerApp } from "models/github-server-app";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 import { getFrontendApp } from "~/src/app";
 
+const nockGheResponse = () =>
+	gheApiNock
+		.post("/app-manifests/123/conversions")
+		.reply(200, {
+			id: "100",
+			name: "github-for-jira",
+			client_id: "client_id_test",
+			client_secret: "client_secret_test",
+			webhook_secret: "webhook_secret_test",
+			pem: "private_key_test"
+		});
+
 describe("github-manifest-complete-get", () => {
 	let app: Express;
 	let installation: Installation;
@@ -75,16 +87,7 @@ describe("github-manifest-complete-get", () => {
 	});
 
 	it("should complete app manifest flow", async () => {
-		gheApiNock
-			.post("/app-manifests/123/conversions")
-			.reply(200, {
-				id: "100",
-				name: "github-for-jira",
-				client_id: "client_id_test",
-				client_secret: "client_secret_test",
-				webhook_secret: "webhook_secret_test",
-				pem: "private_key_test"
-			});
+		nockGheResponse();
 
 		const uuid = await new GheConnectConfigTempStorage().store({
 			serverUrl: gheServerApp.gitHubBaseUrl
@@ -113,5 +116,22 @@ describe("github-manifest-complete-get", () => {
 		const privateKey = await githubServerApp?.getDecryptedPrivateKey(jiraHost);
 		expect(privateKey).toEqual("private_key_test");
 	});
+
+	it("should delete config from temp storage", async () => {
+		nockGheResponse();
+
+		const uuid = await new GheConnectConfigTempStorage().store({
+			serverUrl: gheServerApp.gitHubBaseUrl
+		}, installation.id);
+
+		await supertest(app)
+			.get(`/github/manifest/complete/${uuid}?code=123`)
+			.query({
+				jwt
+			});
+
+		expect(await new GheConnectConfigTempStorage().get(uuid, installation.id)).toBeNull();
+	});
+
 
 });
