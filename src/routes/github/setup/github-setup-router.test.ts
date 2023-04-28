@@ -2,8 +2,7 @@
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
-import { getLogger } from "config/logger";
-import express, { Application } from "express";
+import { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
 
@@ -13,12 +12,7 @@ describe("Github Setup", () => {
 	let frontendApp: Application;
 
 	beforeEach(async () => {
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
+		frontendApp = getFrontendApp();
 	});
 
 	describe("#GET", () => {

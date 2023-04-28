@@ -9,10 +9,6 @@ jest.mock("config/feature-flags");
 jest.mock("./api-installation-get");
 jest.mock("./api-installation-syncstate-get");
 
-const setupAppAndRouter = () => {
-	return getFrontendApp();
-};
-
 const mockApiGetReturn200OK = () => {
 	when(jest.mocked(ApiInstallationGet))
 		.mockImplementation(async (_req, res)=>{
@@ -28,7 +24,7 @@ describe("Api Installation Routes", () => {
 	describe("Supporting GHES", () => {
 		let app: Application;
 		beforeEach(() => {
-			app = setupAppAndRouter();
+			app = getFrontendApp();
 		});
 		describe("Backward compatible with cloud", () => {
 			const CLOUD_GITHUB_INSTALLATION_ID = 1234;

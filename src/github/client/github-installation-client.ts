@@ -21,6 +21,7 @@ import {
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
+	CreateReferenceBody,
 	GetPullRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
@@ -94,9 +95,19 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Get publicly available information for user with given username.
 	 */
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
+		const response = await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
 		});
+		if (response.status === 200 && response.data) {
+			if (!response.data.email) {
+				this.logger.info("Empty e-mail");
+			} else if (response.data.email.includes("noreply.github.com")) {
+				this.logger.info("Fake e-mail");
+			} else {
+				this.logger.info("OK e-mail");
+			}
+		}
+		return response;
 	};
 
 	/**
@@ -186,6 +197,37 @@ export class GitHubInstallationClient extends GitHubClient {
 			hasNextPage
 		};
 	};
+
+	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
+		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/refs/heads/{branch}`, {}, {
+			owner,
+			repo,
+			branch
+		});
+	}
+
+	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
+		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {},{
+			owner,
+			repo,
+			per_page
+		});
+	}
+
+	public async createReference(owner: string, repo: string, body: CreateReferenceBody): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
+			{
+				owner,
+				repo
+			});
+	}
+
+	public async getRepositoryByOwnerRepo(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
+		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {}, {
+			owner,
+			repo
+		});
+	}
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
 		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
@@ -381,6 +423,14 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
 		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
+	private async post<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.post<T>(url, body, {
 			...await this.installationAuthenticationHeaders(),
 			params,
 			urlParams

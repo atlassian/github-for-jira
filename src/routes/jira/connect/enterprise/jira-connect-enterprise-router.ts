@@ -18,7 +18,7 @@ JiraConnectEnterpriseRouter.route("/")
 
 JiraConnectEnterpriseRouter.use("/app", JiraConnectEnterpriseAppRouter);
 
-JiraConnectEnterpriseRouter.get("/:serverUrl/app/new", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseAppCreateOrEditGet);
+JiraConnectEnterpriseRouter.get("/:tempConnectConfigUuidOrServerUuid/app/new", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseAppCreateOrEditGet);
 
 JiraConnectEnterpriseRouter.get("/:tempConnectConfigUuidOrServerUuid/app", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectEnterpriseAppsGet);
 

@@ -3,8 +3,7 @@ import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getFrontendApp } from "~/src/app";
-import { getLogger } from "config/logger";
-import express, { Application } from "express";
+import { Application } from "express";
 import { getSignedCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
@@ -40,12 +39,7 @@ describe("Github Configuration", () => {
 			encryptedSharedSecret: "ghi345"
 		});
 
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
+		frontendApp = getFrontendApp();
 	});
 
 	describe("Github Token Validation", () => {

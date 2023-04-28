@@ -1,24 +1,15 @@
 import supertest from "supertest";
-import express, { Express } from "express";
+import { Express } from "express";
 import { getFrontendApp } from "../../app";
-import { getLogger } from "config/logger";
 
 describe("Session GET", () => {
 	let app: Express;
 
 	beforeEach(() => {
-		app = express();
-		app.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
+		app = getFrontendApp();
 	});
 
 	describe("Frontend", () => {
-		beforeEach(() => {
-			app.use(getFrontendApp());
-		});
-
 		it("Testing loading when redirecting to GitHub", () =>
 			supertest(app)
 				.get("/session/jira/atlassian-connect.json?ghRedirect=to&foo=bar&ice=berg")

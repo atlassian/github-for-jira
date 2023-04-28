@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 export const JiraConnectEnterpriseAppPost = async (
 	req: Request,
@@ -24,6 +25,13 @@ export const JiraConnectEnterpriseAppPost = async (
 			privateKey
 		} = req.body;
 
+		const existing = await GitHubServerApp.findForUuid(uuid);
+		if (existing && existing.installationId != installation.id) {
+			req.log.warn({ gheServerAppUuid: uuid }, "Collision with some other customer, shouldn't happen");
+			res.sendStatus(400);
+			return;
+		}
+
 		await GitHubServerApp.install({
 			uuid,
 			appId,
@@ -35,6 +43,8 @@ export const JiraConnectEnterpriseAppPost = async (
 			privateKey,
 			installationId: installation.id
 		}, jiraHost);
+
+		await new GheConnectConfigTempStorage().delete(uuid, installation.id);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,

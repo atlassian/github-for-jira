@@ -12,7 +12,6 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("API Router", () => {
 	let app: Application;
-	let locals;
 	const invalidId = 99999999;
 	const gitHubInstallationId = 1234;
 	let installation: Installation;
@@ -21,10 +20,8 @@ describe("API Router", () => {
 
 	const createApp = () => {
 		const app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = locals || {};
+		app.use((req: Request, _: Response, next: NextFunction) => {
 			req.log = getLogger("test");
-			req.session = { jiraHost };
 			next();
 		});
 		app.use("/api", ApiRouter);
