@@ -70,6 +70,22 @@ describe("API Resync POST", () => {
 			});
 	});
 
+	it("should return a 400 when wrong data type is passed as installationIds", async () => {
+		app = createApp();
+
+		await supertest(app)
+			.post(`/api/${gitHubServerApp.uuid}/resync`)
+			.send({
+				statusTypes: ["PENDING", "COMPLETE"],
+				installationIds: installation.id
+			})
+			.set("X-Slauth-Mechanism", "asap")
+			.then((res) => {
+				expect(res.status).toBe(400);
+				expect(res.text).toContain("Installation IDs missing or invalid format");
+			});
+	});
+
 	it("should return 400 if no installations exist for provided IDs", async () => {
 		app = createApp();
 

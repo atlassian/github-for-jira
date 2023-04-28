@@ -44,6 +44,11 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 		return;
 	}
 
+	if (!installationIds.length) {
+		res.status(400).send("Installation IDs missing or invalid format");
+		return;
+	}
+
 	const existingInstallationIds = await getIdsForExistingInstallations(installationIds, req.log);
 
 	if (!existingInstallationIds.length) {
