@@ -1,14 +1,13 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { compact, map } from "lodash";
-import { isNodeProd } from "utils/is-node-env";
 
 const instance = envVars.APP_KEY.split(".").pop();
+const isProd = instance === "production";
 
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-const devSuffix = `${isNodeProd() ? "" : (instance ? (` (${instance})`) : "")}`;
-export const APP_NAME = `GitHub for Jira${devSuffix}`;
+export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
 
 const adminCondition = [
 	{
@@ -145,7 +144,7 @@ const modules = {
 			key: "gh-addon-admin-section",
 			location: "admin_plugins_menu",
 			name: {
-				value: "GitHub"
+				value: APP_NAME
 			}
 		}
 	],
@@ -154,7 +153,7 @@ const modules = {
 			url: postInstallUrl,
 			conditions: adminCondition,
 			name: {
-				value: APP_NAME
+				value: "Configure"
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
@@ -162,7 +161,7 @@ const modules = {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
-				value: APP_NAME
+				value: "Configure"
 			},
 			key: "gh-addon-admin-old",
 			location: "none"
