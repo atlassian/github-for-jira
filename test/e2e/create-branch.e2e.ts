@@ -24,11 +24,15 @@ test.describe("Create branch", () => {
 
 		test("When there are no GitHub connections", async () => {
 			await page.goto(data.urls.testProjectIssue);
-			await (page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']")).click();
-			const poppedUpPage = await page.waitForEvent("popup");
-			await poppedUpPage.waitForLoadState();
-			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
-			await poppedUpPage.close();
+			const [popup] = await Promise.all([
+				// It is important to call waitForEvent first.
+				page.waitForEvent("popup"),
+				// Opens the popup.
+				page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']").click()
+			]);
+			await popup.waitForLoadState();
+			expect(popup.getByText("Almost there!")).toBeTruthy();
+			await popup.close();
 		});
 	});
 
