@@ -36,6 +36,8 @@ For general support inquiries and bug reports, [please contact the Atlassian Sup
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
   - [Enterprise Features](#enterprise-features)
     - [IP Allow List](#ip-allow-list)
+    - [Known issues](#known-issues)
+      - [Connecting GitHub organizations with SSO](#connecting-github-organizations-with-sso) 
   - [Need help?](#need-help)
   - [Contribute](#contribute)
   - [License](#license)
@@ -232,8 +234,8 @@ when the user token (which GitHub for Jira app's UI is using) [does not have per
 because it was issued and saved to the app's session when the user didn't have an active SAML session in GitHub
 in the browser.
 
-The workaround this problem, the following steps need to be done:
-- create an active SAML session by going to https://github.com/organizations/<YOUR-ORG-NAME>/settings
+To workaround the problem, perform the following:
+- create an active SAML session by going to `https://github.com/organizations/<YOUR-ORG-NAME>/settings`
     - that should initiate an auth process with your SSO identity provider
 - in the same browser window, go to GitHub for Jira app and find the disabled "Connect" button for `<YOUR-ORG-NAME>` GitHub org
     - it must be located either on one of these pages
@@ -244,7 +246,7 @@ The workaround this problem, the following steps need to be done:
     - `https://github.atlassian.com/github/<UUID>/configuration?ghRedirect=to&resetGithubToken=true` for GitHub server enterprise
 
 After doing that, the token will be re-issued by GitHub with all necessary permissions and saved in the app's session, 
-and connect button should become enabled.
+and "Connect" button should become enabled.
 
 ## Need help?
 Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).
