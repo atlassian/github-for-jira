@@ -10,8 +10,10 @@ import singleInstallation from "fixtures/jira-configuration/single-installation.
 
 describe("Github Setup", () => {
 	let frontendApp: Application;
+	let jiraDomain: string;
 
 	beforeEach(async () => {
+		jiraDomain = jiraHost.replace(/https?:\/\//, "").replace(/\.atlassian\.(net|com)/, "");
 		frontendApp = getFrontendApp();
 	});
 
@@ -110,7 +112,7 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
@@ -138,11 +140,11 @@ describe("Github Setup", () => {
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`);
+					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page`);
 				});
 		});
 
