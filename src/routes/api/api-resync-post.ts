@@ -4,21 +4,20 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Subscription } from "models/subscription";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { serializeSubscription } from "routes/api/api-utils";
-import { Installation } from "models/installation";
 
-const getIdsForExistingInstallations = async(installationIds, logger): Promise<number[]> => {
-	const installations = installationIds.map(async(id: number): Promise<number | null> => {
-		const installation: Installation | null = await Installation.getForId(id);
+const getIdsForExistingSubscriptions = async(gitHubInstallationIds, logger): Promise<number[]> => {
+	const subscriptions = gitHubInstallationIds.map(async(id: number): Promise<number | null> => {
+		const subscription: Subscription | null = await Subscription.findOneForGitHubInstallationId(id, undefined);
 
-		if (installation?.id) {
-			return installation?.id;
+		if (subscription) {
+			return subscription.gitHubInstallationId;
 		} else {
-			logger.warn({ installationId: id }, "No installation found");
+			logger.warn({ gitHubInstallationIds: id }, "No subscription found");
 			return null;
 		}
 	});
-	const existingInstallations = await Promise.all(installations);
-	return existingInstallations.filter(installation => installation !== null);
+	const existingSubscriptions = await Promise.all(subscriptions);
+	return existingSubscriptions.filter(subscription => subscription !== null);
 };
 
 export const ApiResyncPost = async (req: Request, res: Response): Promise<void> => {
@@ -27,7 +26,7 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	// Defaults to anything not completed
 	const statusTypes = req.body.statusTypes as string[];
 	// Defaults to any installation
-	const installationIds = req.body.installationIds as number[];
+	const gitHubInstallationIds = req.body.installationIds as number[];
 	// Can be limited to a certain amount if needed to not overload system
 	const limit = Number(req.body.limit) || undefined;
 	// Needed for 'pagination'
@@ -39,20 +38,20 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	// restrict sync to a subset of tasks
 	const targetTasks = req.body.targetTasks as TaskType[];
 
-	if (!statusTypes && !installationIds && !limit && !inactiveForSeconds) {
+	if (!statusTypes && !gitHubInstallationIds && !limit && !inactiveForSeconds) {
 		res.status(400).send("Please provide at least one of the filter parameters!");
 		return;
 	}
 
-	if (!installationIds.length) {
-		res.status(400).send("Installation IDs missing or invalid format");
+	if (!gitHubInstallationIds.length) {
+		res.status(400).send("GitHub installation IDs missing or invalid format");
 		return;
 	}
 
-	const existingInstallationIds = await getIdsForExistingInstallations(installationIds, req.log);
+	const existingInstallationIds = await getIdsForExistingSubscriptions(gitHubInstallationIds, req.log);
 
 	if (!existingInstallationIds.length) {
-		res.status(400).json("No installations exist for provided IDs");
+		res.status(400).json("No subscriptions exist for provided gitHubInstallation IDs");
 		return;
 	}
 
@@ -73,7 +72,7 @@ export const ApiResyncPost = async (req: Request, res: Response): Promise<void> 
 	}
 
 	const gitHubAppId = gitHubServerApp?.id;
-	const subscriptions = await Subscription.getAllFiltered(gitHubAppId, installationIds, statusTypes, offset, limit, inactiveForSeconds);
+	const subscriptions = await Subscription.getAllFiltered(gitHubAppId, gitHubInstallationIds, statusTypes, offset, limit, inactiveForSeconds);
 
 	await Promise.all(subscriptions.map((subscription) =>
 		findOrStartSync(subscription, req.log, syncType, commitsFromDate, targetTasks, { source: "api-resync" })

@@ -63,16 +63,6 @@ export class Installation extends EncryptedModel {
 		});
 	}
 
-	static async getForId(id: number): Promise<Installation | null> {
-		if (!id) {
-			return null;
-		}
-
-		return await this.findOne({
-			where: { id }
-		});
-	}
-
 	/**
 	 * Create a new Installation object from a Jira Webhook
 	 *

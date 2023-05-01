@@ -9,7 +9,7 @@ import { ApiRouter } from "routes/api/api-router";
 
 describe("API Resync POST", () => {
 	const gitHubInstallationId = 1234;
-	let installation: Installation;
+	let subscription: Subscription;
 	let gitHubServerApp: GitHubServerApp;
 	let app: Application;
 
@@ -24,14 +24,14 @@ describe("API Resync POST", () => {
 	};
 
 	beforeEach(async () => {
-		installation = await Installation.create({
+		await Installation.create({
 			gitHubInstallationId,
 			jiraHost,
 			encryptedSharedSecret: "secret",
 			clientKey: "client-key"
 		});
 
-		await Subscription.create({
+		subscription = await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
@@ -41,7 +41,7 @@ describe("API Resync POST", () => {
 		gitHubServerApp = await GitHubServerApp.install({
 			uuid: uuid(),
 			appId: 123,
-			installationId: installation.id,
+			installationId: subscription.id,
 			gitHubAppName: "test-github-server-app",
 			gitHubBaseUrl: gheUrl,
 			gitHubClientId: "client-id",
@@ -49,13 +49,6 @@ describe("API Resync POST", () => {
 			privateKey: "private-key",
 			webhookSecret: "webhook-secret"
 		}, jiraHost);
-
-		await Subscription.create({
-			gitHubInstallationId,
-			jiraHost,
-			jiraClientKey: "client-key",
-			gitHubAppId: gitHubServerApp.id
-		});
 	});
 
 	it("should return 400 if no parameters are provided", async () => {
@@ -77,28 +70,28 @@ describe("API Resync POST", () => {
 			.post(`/api/${gitHubServerApp.uuid}/resync`)
 			.send({
 				statusTypes: ["PENDING", "COMPLETE"],
-				installationIds: installation.id
+				installationIds: subscription.id
 			})
 			.set("X-Slauth-Mechanism", "asap")
 			.then((res) => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Installation IDs missing or invalid format");
+				expect(res.text).toContain("GitHub installation IDs missing or invalid format");
 			});
 	});
 
-	it("should return 400 if no installations exist for provided IDs", async () => {
+	it("should return 400 if no subscriptions exist for provided IDs", async () => {
 		app = createApp();
 
 		await supertest(app)
 			.post(`/api/${gitHubServerApp.uuid}/resync`)
 			.send({
 				statusTypes: ["PENDING", "COMPLETE"],
-				installationIds: [installation.id + 1, installation.id + 2]
+				installationIds: [subscription.gitHubInstallationId + 1, subscription.gitHubInstallationId + 2]
 			})
 			.set("X-Slauth-Mechanism", "asap")
 			.then((res) => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("No installations exist for provided IDs");
+				expect(res.text).toContain("No subscriptions exist for provided gitHubInstallation IDs");
 			});
 	});
 
@@ -110,7 +103,7 @@ describe("API Resync POST", () => {
 			.post(`/api/${gitHubServerApp.uuid}/resync`)
 			.send({
 				statusTypes: ["PENDING", "COMPLETE"],
-				installationIds: [installation.id],
+				installationIds: [subscription.gitHubInstallationId],
 				commitsFromDate: timeOneSecondFromNow()
 			})
 			.set("X-Slauth-Mechanism", "asap")
@@ -127,7 +120,7 @@ describe("API Resync POST", () => {
 			.post(`/api/${gitHubServerApp.uuid}/resync`)
 			.send({
 				statusTypes: ["PENDING", "COMPLETE"],
-				installationIds: [installation.id]
+				installationIds: [subscription.gitHubInstallationId]
 			})
 			.set("X-Slauth-Mechanism", "asap")
 			.then((res) => {
