@@ -3,7 +3,7 @@ import supertest from "supertest";
 import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
 import { Application } from "express";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
@@ -36,7 +36,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -52,7 +52,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -69,7 +69,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -87,7 +87,7 @@ describe("Github Setup", () => {
 				.query({ installation_id })
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -105,7 +105,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -133,7 +133,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -151,7 +151,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -163,7 +163,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
