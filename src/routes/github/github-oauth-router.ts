@@ -11,6 +11,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
 import { stringFlag, StringFlags } from "config/feature-flags";
+import * as querystring from "querystring";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -131,18 +132,19 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	}
 };
 
+const queryToQueryString = (query) =>
+	querystring.stringify(Object.fromEntries(
+		Object.entries(query).map(([key, value]) => [key, String(value)])
+	));
+
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
-		if (req.query["resetGithubToken"]) {
-			req.session.githubToken = undefined;
-			req.session.githubRefreshToken = undefined;
-			const value = req.query["resetGithubToken"];
-			const newUrl = req.originalUrl
-				.replace(`resetGithubToken=${value}`, "");
+		const { query, originalUrl } = req;
+		if (query && query["resetGithubToken"]) {
+			delete query["resetGithubToken"];
 
-			// redirect the user to the new URL
-			res.redirect(newUrl);
-			return next();
+			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
+			return res.redirect(newUrl);
 		}
 
 		const { githubToken, gitHubUuid } = req.session;
