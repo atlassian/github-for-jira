@@ -5,7 +5,14 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
+import {
+	JiraAssociation, JiraBuildBulkSubmitData,
+	JiraCommit,
+	JiraDeploymentBulkSubmitData,
+	JiraIssue,
+	JiraRemoteLink,
+	JiraSubmitOptions
+} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
@@ -250,8 +257,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data, options?: JiraSubmitOptions) => {
-
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -264,7 +270,8 @@ export const getJiraClient = async (
 				const payload = {
 					builds: data.builds,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					providerMetadata: {
 						product: data.product
@@ -275,10 +282,17 @@ export const getJiraClient = async (
 
 				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
+			},
+			delete: async (repositoryId: string) => {
+				return await instance.delete("/rest/builds/0.1/bulkByProperties", {
+					params: {
+						repositoryId
+					}
+				});
 			}
 		},
 		deployment: {
-			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
@@ -292,7 +306,8 @@ export const getJiraClient = async (
 				const	payload = {
 					deployments: data.deployments,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					preventTransitions: options?.preventTransitions || false,
 					operationType: options?.operationType || "NORMAL"
@@ -304,6 +319,13 @@ export const getJiraClient = async (
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
 				};
+			},
+			delete: async (repositoryId: string) => {
+				return await instance.delete("/rest/deployments/0.1/bulkByProperties", {
+					params: {
+						repositoryId
+					}
+				});
 			}
 		},
 		remoteLink: {

@@ -195,7 +195,8 @@ describe("Deployment Webhook", () => {
 					],
 				properties:
 					{
-						gitHubInstallationId: 1234
+						gitHubInstallationId: 1234,
+						repoId: 1234
 					},
 				preventTransitions: false,
 				operationType: "NORMAL"

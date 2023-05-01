@@ -26,7 +26,8 @@ describe("sync/builds", () => {
 	const makeExpectedJiraResponse = (builds) => ({
 		builds,
 		properties: {
-			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			repoId: 1234
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL",

@@ -59,7 +59,9 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		);
 
 		// Only attempt to delete if we have the ID
-		if (context?.payload?.repository?.id) {
+		if (context.payload.repository?.id) {
+			await jiraClient.deployment.delete(context.payload.repository.id);
+			await jiraClient.workflow.delete(context.payload.repository.id);
 			await RepoSyncState.deleteRepoForSubscription(subscription, context.payload.repository.id);
 			await updateRepoCount(subscription);
 		}
