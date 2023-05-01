@@ -46,7 +46,7 @@ export const envVars: EnvVars = new Proxy<object>({}, {
 envCheck(
 	"APP_ID",
 	"APP_URL",
-	"INSTANCE_NAME",
+	"APP_KEY",
 	"WEBHOOK_SECRET",
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
@@ -82,11 +82,11 @@ export interface EnvVars {
 
 	APP_ID: string;
 	APP_URL: string;
+	APP_KEY: string;
 	WEBHOOK_SECRET: string;
 	OLD_WEBHOOK_SECRET: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
-	INSTANCE_NAME: string;
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
 	PRIVATE_KEY_PATH: string;
