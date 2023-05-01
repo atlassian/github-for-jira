@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequest } from "./transform-pull-request";
+import { fetchPullUserData, transformPullRequest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
@@ -296,6 +296,9 @@ describe("pull_request transform", () => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		fixture.user = null;
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.head.user = null;
 
 		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
@@ -348,4 +351,36 @@ describe("pull_request transform", () => {
 			updateSequenceId: 12345678
 		});
 	});
+
+	it("returns an array with one user when given two identical users", async () => {
+		const mockedUser = { id: 123, name: "userA" };
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/userA`)
+			.reply(200, mockedUser);
+
+		const users = await fetchPullUserData(client, "userA", "userA");
+		expect(Array.isArray(users)).toBe(true);
+		expect(users.length).toBe(1);
+		expect(users[0]).toEqual(mockedUser);
+	});
+
+	it("returns an array with one user when given two identical userhs", async () => {
+		const mockedUserA = { id: 123, name: "userA" };
+		const mockedUserB = { id: 123, name: "userA" };
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/userA`)
+			.reply(200, mockedUserA);
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/userB`)
+			.reply(200, mockedUserB);
+
+		const users = await fetchPullUserData(client, "userA", "userB");
+		expect(Array.isArray(users)).toBe(true);
+		expect(users.length).toBe(2);
+		expect(users[0]).toEqual(mockedUserA);
+		expect(users[1]).toEqual(mockedUserB);
+	});
+
 });

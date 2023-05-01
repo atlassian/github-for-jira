@@ -75,6 +75,21 @@ export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseIte
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
 
+export const fetchPullUserData = async (gitHubInstallationClient: GitHubInstallationClient, userA: string, userB: string) => {
+
+	if (userA === userB) {
+		const user = await getGithubUser(gitHubInstallationClient, userA);
+		return [user];
+	}
+
+	const [user1, user2] = await Promise.all([
+		getGithubUser(gitHubInstallationClient, userA),
+		getGithubUser(gitHubInstallationClient, userB)
+	]);
+
+	return [user1, user2];
+};
+
 // TODO: define arguments and return
 export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
 	const { head } = pullRequest;
@@ -90,13 +105,19 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 		return undefined;
 	}
 
+	const [branchCreationUser, lastCommitUser] = await fetchPullUserData(
+		gitHubInstallationClient,
+		pullRequest.user?.login,
+		pullRequest.head?.user?.login
+	);
+
 	return {
 		...transformRepositoryDevInfoBulk(pullRequest.base.repo, gitHubInstallationClient.baseUrl),
-		branches: await getBranches(gitHubInstallationClient, pullRequest, issueKeys),
+		branches: await getBranches(pullRequest, issueKeys, lastCommitUser || branchCreationUser),
 		pullRequests: [
 			{
 				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-				author: getJiraAuthor(pullRequest.user, await getGithubUser(gitHubInstallationClient, pullRequest.user?.login)),
+				author: getJiraAuthor(pullRequest.user, branchCreationUser),
 				commentCount: pullRequest.comments || 0,
 				destinationBranch: pullRequest.base.ref || "",
 				destinationBranchUrl: `${pullRequest.base.repo.html_url}/tree/${pullRequest.base.ref}`,
@@ -119,7 +140,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
+const getBranches = async (pullRequest: Octokit.PullsGetResponse, issueKeys: string[], author: Octokit.UsersGetByUsernameResponse | undefined) => {
 	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
@@ -128,7 +149,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 			createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
 			lastCommit: {
 				// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login)),
+				author: getJiraAuthor(pullRequest.head?.user, author),
 				authorTimestamp: pullRequest.updated_at,
 				displayId: pullRequest?.head?.sha?.substring(0, 6),
 				fileCount: 0,
