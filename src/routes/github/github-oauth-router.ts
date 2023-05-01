@@ -133,6 +133,18 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
+		if (req.query["resetGithubToken"]) {
+			req.session.githubToken = undefined;
+			req.session.githubRefreshToken = undefined;
+			const value = req.query["resetGithubToken"];
+			const newUrl = req.originalUrl
+				.replace(`resetGithubToken=${value}`, "");
+
+			// redirect the user to the new URL
+			res.redirect(newUrl);
+			return next();
+		}
+
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
 
