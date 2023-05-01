@@ -75,7 +75,7 @@ export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseIte
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
 
-export const fetchPullUserData = async (gitHubInstallationClient: GitHubInstallationClient, userA: string, userB: string) => {
+export const fetchPullUserData = async (gitHubInstallationClient: GitHubInstallationClient, userA: string, userB: string): Promise<Array<Octokit.UsersGetByUsernameResponse | undefined>> => {
 
 	if (userA === userB) {
 		const user = await getGithubUser(gitHubInstallationClient, userA);
