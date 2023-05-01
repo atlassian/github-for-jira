@@ -129,13 +129,11 @@ describe("Test getting a jira client", () => {
 		}).reply(202);
 
 		jiraNock.delete("/rest/builds/0.1/bulkByProperties").query({
-			gitHubInstallationId: "12345",
-			repoId: 1234
+			gitHubInstallationId: "12345"
 		}).reply(202);
 
 		jiraNock.delete("/rest/deployments/0.1/bulkByProperties").query({
-			gitHubInstallationId: "12345",
-			repoId: 1234
+			gitHubInstallationId: "12345"
 		}).reply(202);
 
 		const resp = await client.devinfo.installation.delete(12345);
