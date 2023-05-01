@@ -32,9 +32,17 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(request.rawBody, webhookSecret);
+		const isVerified = [
+			webhookSecret,
+			/**
+			 * We are also validating against the old webhook secret
+			 * as a failsafe for the existing customers.
+			 * These old webhook secrets are currently stored in Vault.
+			 */
+			envVars.OLD_WEBHOOK_SECRET
+		].filter(Boolean).some(secret => createHash(request.rawBody, secret) === signatureSHA256);
 
-		if (verification != signatureSHA256) {
+		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
 			response.status(400).send("signature does not match event payload and secret");
 			return;

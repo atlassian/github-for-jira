@@ -83,6 +83,7 @@ export interface EnvVars {
 	APP_ID: string;
 	APP_URL: string;
 	WEBHOOK_SECRET: string;
+	OLD_WEBHOOK_SECRET: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
 	INSTANCE_NAME: string;
