@@ -267,6 +267,7 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
+
 				const payload = {
 					builds: data.builds,
 					properties: {
