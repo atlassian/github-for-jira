@@ -43,7 +43,7 @@ describe("GitHub Branches Get", () => {
 
 	it("Should fetch branches", async () => {
 		setupNock();
-		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
+		mocked(Subscription.findForRepoOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
 		await GithubBranchesGet(req, res);
 		expect(res.send).toBeCalledWith(response);
 	});
@@ -137,7 +137,7 @@ describe("Getting GitHub Branches securely avoiding XSS attacks", () => {
 	});
 	it("Should fetch branches securely", async () => {
 		setupNockForXSSBranches(gitHubInstallationId);
-		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
+		mocked(Subscription.findForRepoOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
 		await GithubBranchesGet(req, res);
 		expect(res.send).toBeCalledWith(responseForXSSBranches);
 	});
