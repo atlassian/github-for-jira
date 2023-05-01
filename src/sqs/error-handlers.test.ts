@@ -10,7 +10,7 @@ import { ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
 
 describe("error-handlers", () => {
 
-	let statsdIncrementSpy = jest.spyOn(statsd, "histogram");
+	let statsdIncrementSpy: any;
 
 	beforeEach(() => {
 		// Lock Time

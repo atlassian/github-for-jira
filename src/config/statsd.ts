@@ -1,4 +1,4 @@
-import { StatsCb, StatsD, Tags } from "hot-shots";
+import { StatsD, Tags } from "hot-shots";
 import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
 import { isNodeProd, isNodeTest } from "utils/is-node-env";
@@ -15,7 +15,7 @@ export const globalTags = {
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
 const logger = getLogger("config.statsd");
 
-export const statsd = new StatsD({
+const innerStatsd = new StatsD({
 	prefix: "github-for-jira.",
 	host: envVars.MICROS_PLATFORM_STATSD_HOST,
 	port: Number(envVars.MICROS_PLATFORM_STATSD_PORT),
@@ -28,6 +28,29 @@ export const statsd = new StatsD({
 
 	mock: !isNodeProd()
 });
+
+const increment = (stat: string | string[], tags?: Tags): void => {
+	innerStatsd.increment(stat, 1, tags);
+};
+
+const incrementWithValue = (stat: string | string[], value: number, tags?: Tags): void => {
+	innerStatsd.increment(stat, value, tags);
+};
+
+const histogram = (stat: string | string[], value: number, tags?: Tags): void => {
+	innerStatsd.histogram(stat, value, tags);
+};
+
+const timing = (stat: string | string[], value: number | Date, sampleRate?: number, tags?: Tags) => {
+	innerStatsd.timing(stat, value, sampleRate, tags);
+};
+
+export const statsd = {
+	increment,
+	incrementWithValue,
+	histogram,
+	timing
+};
 
 /**
  * High-resolution timer
@@ -71,10 +94,10 @@ export const elapsedTimeMetrics = (
 		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric
-		statsd.histogram(metricHttpRequest.duration, elapsedTime, tags);
+		innerStatsd.histogram(metricHttpRequest.duration, elapsedTime, tags);
 
 		//Publish bucketed histogram metric for the call duration
-		statsd.histogram(metricHttpRequest.duration, elapsedTime,
+		innerStatsd.histogram(metricHttpRequest.duration, elapsedTime,
 			{
 				...tags,
 				gsd_histogram: RESPONSE_TIME_HISTOGRAM_BUCKETS
@@ -82,29 +105,9 @@ export const elapsedTimeMetrics = (
 		);
 
 		//Count requests count
-		statsd.increment(metricHttpRequest.executed, tags);
+		innerStatsd.increment(metricHttpRequest.executed, tags);
 	});
 
 	next();
 };
 
-/**
- * Async Function Timer using Distributions
- */
-export const asyncDistTimer = (
-	func: (...args: never[]) => Promise<unknown>,
-	stat: string | string[],
-	sampleRate?: number,
-	tags?: Tags,
-	callback?: StatsCb
-) => {
-	return (...args: never[]): Promise<unknown> => {
-		const end = hrtimer();
-		const p = func(...args);
-		const recordStat = () =>
-			statsd.distribution(stat, end(), sampleRate, tags, callback);
-		p.then(recordStat, recordStat);
-		return p;
-	};
-
-};

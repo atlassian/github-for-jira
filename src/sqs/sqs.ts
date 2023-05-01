@@ -145,7 +145,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			return;
 		}
 
-		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
+		statsd.incrementWithValue(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
 
 		listenerContext.log.trace("Processing messages batch");
 		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));

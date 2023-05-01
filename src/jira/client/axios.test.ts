@@ -1,27 +1,33 @@
 import { getAxiosInstance } from "./axios";
 import { getLogger } from "config/logger";
+import { statsd } from "config/statsd";
 
 describe("Jira axios instance", () => {
 
 	describe("request metrics", () => {
 
 		describe("when request successful", () => {
+
+			let histogramSpy;
+			beforeEach(() => {
+				histogramSpy = jest.spyOn(statsd, "histogram");
+			});
+
 			it("sends timing metric", async () => {
 				jiraNock.get("/foo/bar").reply(200);
 
 				await expect(getAxiosInstance(jiraHost, "secret", getLogger("test")).get("/foo/bar")).toResolve();
 				expect(jiraNock).toBeDone();
-				// TODO- fix me
-				/*expect(undefined).toHaveSentMetrics({
-				  name: "jira-integration.jira_request",
-				  type: "h",
-				  tags: {
-					path: "/foo/bar",
-					method: "GET",
-					status: "200",
-					env: "test"
-				  }
-				});*/
+				expect(histogramSpy).toHaveBeenCalledWith(
+					"app.server.http.request.jira",
+					expect.anything(), //execution time, ignore expect
+					{
+						gsd_histogram: "100_1000_2000_3000_5000_10000_30000_60000",
+						path: "/foo/bar",
+						method: "GET",
+						status: 200
+					}
+				);
 			});
 
 			it("removes URL query params from path", async () => {
@@ -29,12 +35,16 @@ describe("Jira axios instance", () => {
 
 				await expect(getAxiosInstance(jiraHost, "secret", getLogger("test")).get("/foo/bar?baz=true")).toResolve();
 				expect(jiraNock).toBeDone();
-				// TODO- fix me
-				// .toHaveSentMetrics({
-				//   name: 'jira-integration.jira_request',
-				//   type: 'h',
-				//   tags: { path: '/foo/bar' },
-				// });
+				expect(histogramSpy).toHaveBeenCalledWith(
+					"app.server.http.request.jira",
+					expect.anything(), //execution time, ignore expect
+					{
+						gsd_histogram: "100_1000_2000_3000_5000_10000_30000_60000",
+						path: "/foo/bar",
+						method: "GET",
+						status: 200
+					}
+				);
 			});
 		});
 
