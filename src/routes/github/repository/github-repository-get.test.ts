@@ -1,7 +1,7 @@
 import express, { Application } from "express";
 import supertest from "supertest";
 import { getFrontendApp } from "~/src/app";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "~/src/models/subscription";
 
 const randomString = "random-string";
@@ -60,7 +60,7 @@ describe("GitHub Repository Search", () => {
 			await supertest(app)
 				.get("/github/repository").set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "random-token"
 					}))
@@ -94,7 +94,7 @@ describe("GitHub Repository Search", () => {
 			await supertest(app)
 				.get("/github/repository").set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "random-token"
 					}))
@@ -144,7 +144,7 @@ describe("GitHub Repository Search", () => {
 			await supertest(app)
 				.get("/github/repository").set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "random-token"
 					}))

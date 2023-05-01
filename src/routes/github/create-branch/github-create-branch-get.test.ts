@@ -1,7 +1,7 @@
 import express, { Application } from "express";
 import supertest from "supertest";
 import { getFrontendApp } from "~/src/app";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 import { generateBranchName } from "routes/github/create-branch/github-create-branch-get";
@@ -38,7 +38,7 @@ describe("GitHub Create Branch Get", () => {
 			await supertest(app)
 				.get("/github/create-branch").set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "random-token"
 					}))
