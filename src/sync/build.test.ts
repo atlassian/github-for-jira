@@ -27,7 +27,7 @@ describe("sync/builds", () => {
 		builds,
 		properties: {
 			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-			repositoryId: 1234
+			repositoryId: 1
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL",

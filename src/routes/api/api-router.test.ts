@@ -297,12 +297,12 @@ describe("API Router", () => {
 
 				jiraNock
 					.delete("/rest/builds/0.1/bulkByProperties")
-					.query({ gitHubInstallationId, repositoryId: 1234 })
+					.query({ gitHubInstallationId })
 					.reply(200);
 
 				jiraNock
 					.delete("/rest/deployments/0.1/bulkByProperties")
-					.query({ gitHubInstallationId, repositoryId: 1234 })
+					.query({ gitHubInstallationId })
 					.reply(200);
 			});
 
