@@ -3,15 +3,17 @@ import supertest from "supertest";
 import { Installation } from "models/installation";
 import { getFrontendApp } from "~/src/app";
 import { Application } from "express";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { envVars }  from "config/env";
 
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 
 describe("Github Setup", () => {
 	let frontendApp: Application;
+	let jiraDomain: string;
 
 	beforeEach(async () => {
+		jiraDomain = jiraHost.replace(/https?:\/\//, "").replace(/\.atlassian\.(net|com)/, "");
 		frontendApp = getFrontendApp();
 	});
 
@@ -36,7 +38,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -52,7 +54,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -69,7 +71,7 @@ describe("Github Setup", () => {
 				.get("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -87,7 +89,7 @@ describe("Github Setup", () => {
 				.query({ installation_id })
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -105,12 +107,12 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
@@ -133,16 +135,16 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
 				.send({
-					jiraDomain: envVars.INSTANCE_NAME
+					jiraDomain
 				})
 				.expect(res => {
 					expect(res.status).toBe(200);
-					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page`);
+					expect(res.body.redirect).toBe(`${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page`);
 				});
 		});
 
@@ -151,7 +153,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -163,7 +165,7 @@ describe("Github Setup", () => {
 				.post("/github/setup")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)

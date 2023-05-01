@@ -1,5 +1,5 @@
 import supertest from "supertest";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { stringFlag, StringFlags } from "config/feature-flags";
@@ -27,7 +27,7 @@ describe("Github Encrypt Header post endpoint", () => {
 			.post("/github/encrypt/header")
 			.set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost
 				})
 			)
@@ -49,7 +49,7 @@ describe("Github Encrypt Header post endpoint", () => {
 			.post("/github/encrypt/header")
 			.set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost
 				})
 			)
