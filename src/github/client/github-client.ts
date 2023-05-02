@@ -52,6 +52,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		jiraHost: string,
 		metrics: Metrics,
 		logger: Logger
 	) {
@@ -77,10 +78,10 @@ export class GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl, {
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
 				...this.metrics
 			}),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, {
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
 				...this.metrics
 			})
 		);
@@ -98,13 +99,16 @@ export class GitHubClient {
 		}
 	}
 
-	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>, metrics?: Record<string, string>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
 			{
 				query,
 				variables
 			},
-			config);
+			Object.assign({}, {
+				...config,
+				metrics
+			}));
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {

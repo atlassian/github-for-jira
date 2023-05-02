@@ -108,10 +108,18 @@ export const updateTaskStatusAndContinue = async (
 			}
 		}
 
-		statsd.increment(metricTaskStatus.complete, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		if (task.startTime) {
+			statsd.histogram(metricTaskStatus.complete, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
+		} else {
+			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
+		}
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
-		statsd.increment(metricTaskStatus.pending, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`]);
+		if (task.startTime) {
+			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
+		} else {
+			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
+		}
 	}
 
 	await updateRepo(subscription, task.repositoryId, updateRepoSyncFields);
@@ -169,7 +177,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			...data.metricTags,
 			gitHubProduct,
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
-		});
+		}, { jiraHost: subscription.jiraHost });
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			...data.metricTags,
 			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
@@ -259,6 +267,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 			});
 
 			logger.info("Starting task");
+			nextTask.startTime = Date.now();
 
 			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);
 
@@ -328,6 +337,7 @@ const findSubscriptionForMessage = (data: BackfillMessagePayload) =>
 	);
 
 export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePayload, mainNextTask: Task, isPermissionError: boolean, sendBackfillMessage: (message, delaySecs, logger, err: Error) => Promise<unknown>, log: Logger, err: Error): Promise<void> => {
+
 	const subscription = await findSubscriptionForMessage(data);
 	if (!subscription) {
 		log.warn("No subscription found, nothing to do");
@@ -336,6 +346,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 
 	// marking the current task as failed, this value will override any preexisting failedCodes and only keep the last known failed issue.
 	const failedCode = getFailedCode(err);
+	log.warn({ failedCode }, "Backfill task failed.");
 
 	const isDeployment = mainNextTask.task === "deployment";
 	const newStatus = isDeployment ? "complete" : "failed";
@@ -353,7 +364,11 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 
-	statsd.increment(metricTaskStatus.failed, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`]);
+	if (mainNextTask.startTime) {
+		statsd.histogram(metricTaskStatus.failed, Date.now() - mainNextTask.startTime, { type: mainNextTask.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
+	} else {
+		log.warn({ mainNextTask }, "Fail to find startime in mainNextTask for metrics purpose");
+	}
 
 	if (mainNextTask.task === "repository") {
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
@@ -361,7 +376,6 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 	await sendBackfillMessage(data, 0, log, err);
 };
-
 
 const getFailedCode = (err): string => {
 	const { status, message, code } = err;

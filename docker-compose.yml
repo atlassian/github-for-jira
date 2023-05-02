@@ -70,4 +70,15 @@ services:
       SQS_BRANCH_QUEUE_URL: http://localstack:4566/000000000000/branch
       SQS_TEST_QUEUE_URL: http://localstack:4566/000000000000/test-sqs-client
       REDISX_CACHE_HOST: redis
-      NODE_ENV: $NODE_ENV
+      NODE_ENV: ${NODE_ENV:-development} # defaults to development if NODE_ENV not set
+
+  installation:
+    depends_on:
+      - app
+    volumes:
+      - ./etc/app-install:/app
+    build:
+      context: .
+      dockerfile: etc/app-install/Dockerfile
+    env_file:
+      - .env

@@ -91,6 +91,7 @@
 		"primer": "^10.6.0",
 		"rate-limit-redis": "^1.7.0",
 		"safe-json-stringify": "^1.2.0",
+		"sanitize-html": "^2.10.0",
 		"sequelize": "^6.19.1",
 		"sequelize-cli": "^6.2.0",
 		"sequelize-encrypted": "^1.0.0",

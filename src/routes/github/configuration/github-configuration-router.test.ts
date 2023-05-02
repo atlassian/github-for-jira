@@ -3,9 +3,8 @@ import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { getFrontendApp } from "~/src/app";
-import { getLogger } from "config/logger";
-import express, { Application } from "express";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { Application } from "express";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
 import { when } from "jest-when";
@@ -40,12 +39,7 @@ describe("Github Configuration", () => {
 			encryptedSharedSecret: "ghi345"
 		});
 
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
+		frontendApp = getFrontendApp();
 	});
 
 	describe("Github Token Validation", () => {
@@ -58,7 +52,7 @@ describe("Github Configuration", () => {
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -81,7 +75,7 @@ describe("Github Configuration", () => {
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -97,7 +91,7 @@ describe("Github Configuration", () => {
 				.post("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -113,7 +107,7 @@ describe("Github Configuration", () => {
 				.post("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -185,7 +179,7 @@ describe("Github Configuration", () => {
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -240,7 +234,7 @@ describe("Github Configuration", () => {
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token2"
 					})
@@ -256,7 +250,7 @@ describe("Github Configuration", () => {
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({ jiraHost })
+					generateSignedSessionCookieHeader({ jiraHost })
 				)
 				.expect(401);
 		});
@@ -268,7 +262,7 @@ describe("Github Configuration", () => {
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token"
 					})
 				)
@@ -299,7 +293,7 @@ describe("Github Configuration", () => {
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -335,7 +329,7 @@ describe("Github Configuration", () => {
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -354,7 +348,7 @@ describe("Github Configuration", () => {
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -394,7 +388,7 @@ describe("Github Configuration", () => {
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})

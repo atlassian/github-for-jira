@@ -1,7 +1,6 @@
 /* globals $, AP */
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
-const gitHubServerBaseUrl = $("#baseUrl").val();
 
 function openChildWindow(url) {
 	const child = window.open(url);
@@ -39,7 +38,7 @@ $(document).ready(function() {
 
 		if (selectedVersion === "cloud") {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/session/github/configuration");
+				const child = openChildWindow("/session/github/configuration?resetSession=true");
 				child.window.jwt = token;
 			});
 		} else if(selectedVersion === "server"){
@@ -60,15 +59,16 @@ $(document).ready(function() {
 				'addonmodule',
 				{
 					moduleKey: "github-manual-app-page",
-					customData: { serverUrl: gitHubServerBaseUrl }
+					customData: {
+						connectConfigUuid: $("#connectConfigUuid").val(),
+						serverUrl: $("#connectConfigUuid").val() // TODO: remove when the descriptor changes are propagated everywhere, in 1 month maybe?
+					}
 				}
 			);
 		} else {
 			AP.context.getToken(function(token) {
-				const child = openChildWindow("/github-manifest");
-				child.window.jiraHost = jiraHost;
+				const child = openChildWindow("/session/github/manifest/" + $("#connectConfigUuid").val());
 				child.window.jwt = token;
-				child.window.gheHost = gitHubServerBaseUrl;
 			});
 		}
 	});

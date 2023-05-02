@@ -7,7 +7,7 @@ describe("GitHub Utils", () => {
 	describe("isUserAdminOfOrganization", () => {
 		let githubUserClient: GitHubUserClient;
 		beforeEach(() => {
-			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig, { trigger: "test" }, getLogger("test"));
+			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		});
 
 		it("should return true if user is admin of a given organization", async () => {

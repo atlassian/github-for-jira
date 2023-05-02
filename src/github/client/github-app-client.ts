@@ -17,12 +17,13 @@ export class GitHubAppClient extends GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		jiraHost: string,
 		metrics: Metrics,
 		logger: Logger,
 		appId: string,
 		privateKey: string
 	) {
-		super(gitHubConfig, metrics, logger);
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
