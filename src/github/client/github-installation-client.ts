@@ -303,15 +303,11 @@ export class GitHubInstallationClient extends GitHubClient {
 									{ graphQuery: "getBranchesQueryWithoutCommits" }
 								).then(response => {
 									this.logger.info("retrying without commits fixed the issue!");
-									if (response.data?.data) {
-										response.data.data.repository.refs.edges.forEach(edge => {
-											if (!edge.node.target.history) {
-												edge.node.target.history = {
-													nodes: []
-												};
-											}
-										});
-									}
+									response.data.data.repository.refs.edges.forEach(edge => {
+										edge.node.target.history = {
+											nodes: []
+										};
+									});
 									return response;
 								});
 							}
