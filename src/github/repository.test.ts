@@ -45,6 +45,8 @@ describe("deleteRepositoryWebhookHandler", () => {
 		const gitHubServerApp = builderResult.gitHubServerApp!;
 
 		const jiraClientDevinfoRepositoryDeleteMock = jest.fn();
+		const jiraClientDeploymentDeleteMock = jest.fn();
+		const jiraClientWorkflowDeleteMock = jest.fn();
 		await deleteRepositoryWebhookHandler(new WebhookContext({
 			id: "my-id",
 			name: pullRequestRemoveKeys.name,
@@ -64,9 +66,18 @@ describe("deleteRepositoryWebhookHandler", () => {
 				repository: {
 					delete: jiraClientDevinfoRepositoryDeleteMock
 				}
+			},
+			deployment: {
+				delete: jiraClientDeploymentDeleteMock
+			},
+			workflow: {
+				delete: jiraClientWorkflowDeleteMock
 			}
 		}, DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 		subscription);
+
+		expect(jiraClientDeploymentDeleteMock.mock.calls[0][0]).toEqual(123);
+		expect(jiraClientWorkflowDeleteMock.mock.calls[0][0]).toEqual(123);
 		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-123");
 	});
 });
