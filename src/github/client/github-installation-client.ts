@@ -301,9 +301,18 @@ export class GitHubInstallationClient extends GitHubClient {
 									config,
 									variablesNoCommitSince,
 									{ graphQuery: "getBranchesQueryWithoutCommits" }
-								).then(result => {
+								).then(response => {
 									this.logger.info("retrying without commits fixed the issue!");
-									return result;
+									if (response.data?.data) {
+										response.data.data.repository.refs.edges.forEach(edge => {
+											if (!edge.node.target.history) {
+												edge.node.target.history = {
+													nodes: []
+												};
+											}
+										});
+									}
+									return response;
 								});
 							}
 							return Promise.reject(err);
@@ -311,15 +320,6 @@ export class GitHubInstallationClient extends GitHubClient {
 				}
 				return Promise.reject(err);
 			});
-		if (response?.data?.data) {
-			response.data.data.repository.refs.edges.forEach(edge => {
-				if (!edge.node.target.history) {
-					edge.node.target.history = {
-						nodes: []
-					};
-				}
-			});
-		}
 		return response?.data?.data;
 	}
 
