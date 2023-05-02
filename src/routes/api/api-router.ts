@@ -77,7 +77,6 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 
 ApiRouter.use("/configuration", ApiConfigurationRouter);
 
-
 ApiRouter.post(
 	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
