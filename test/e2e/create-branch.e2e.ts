@@ -1,29 +1,32 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
-	let page: Page;
-	const data = testData.jira;
-
-	test.beforeEach(async ({ page: newPage }) => {
-		page = newPage;
-		await jiraLogin(page, "admin");
-		await jiraAddProject(page);
-	});
+	let projectId: string;
 
 	test.use({
 		storageState: testData.jira.roles.admin.state
 	});
 
+	test.beforeAll(async ({ page }) => {
+		await jiraLogin(page, "admin");
+		projectId = await jiraAddProject(page);
+	});
+
+	// Clean up projects to avoid conflicts in future
+	test.afterAll(async ({ page }) => {
+		await jiraRemoveProject(page, projectId);
+	});
+
 	test.describe("cloud", () => {
 		// Create a fresh issue per test
-		test.beforeEach(async() => {
-			await jiraCreateIssue(page);
+		test.beforeEach(async ({ page }) => {
+			await jiraCreateIssue(page, projectId);
 		});
 
-		test("When there are no GitHub connections", async () => {
-			await page.goto(data.urls.testProjectIssue);
+		test("When there are no GitHub connections", async ({ page }) => {
+			await page.goto(testData.jira.urls.testProjectIssue);
 			const [popup] = await Promise.all([
 				// It is important to call waitForEvent first.
 				page.waitForEvent("popup"),
@@ -35,11 +38,5 @@ test.describe("Create branch", () => {
 			await popup.close();
 		});
 	});
-
-	// Clean up projects to avoid conflicts in future
-	test.afterEach(async() => {
-		await jiraRemoveProject(page);
-	});
-
 });
 

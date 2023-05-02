@@ -1,6 +1,7 @@
 import { Page } from "@playwright/test";
-import { JiraTestDataRoles, TEST_PROJECT_KEY, TEST_PROJECT_NAME, testData } from "test/e2e/constants";
+import { JiraTestDataRoles, testData } from "test/e2e/constants";
 import { envVars } from "config/env";
+import { v4 as uuid } from "uuid";
 
 const data = testData.jira;
 
@@ -60,35 +61,33 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	return page;
 };
 
-export const jiraAddProject = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.projects);
+export const jiraAddProject = async (page: Page): Promise<string> => {
+	await page.goto(data.urls.);
 	await (page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']")).click();
 	await (page.locator("button[aria-label='Scrum']")).click();
 	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']")).click();
 	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']")).click();
-	await page.fill("input[id='project-create.create-form.name-field.input']", TEST_PROJECT_NAME);
-	await page.fill("input[id='project-create.create-form.advanced-dropdown.key-field.input']", TEST_PROJECT_KEY);
+	const projectId = `X${uuid().substring(0, 5)}`;
+	await page.fill("input[id='project-create.create-form.name-field.input']", projectId);
+	await page.fill("input[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
 	await (page.locator("div[data-test-id='project-create.create-form.create-screen.submit-button']")).click();
-	await page.waitForNavigation();
-	return page;
+	await page.goto(data.urls.browse + projectId);
+	return projectId;
 };
 
-export const jiraCreateIssue = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.testProjectBrowse);
+export const jiraCreateIssue = async (page: Page, projectId: string): Promise<string> => {
+	await page.goto(data.urls.browse(projectId));
 	await (page.locator("a[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']")).click();
 	const taskInput = page.locator("textarea[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now());
 	await taskInput.press("Enter");
-
-	return page;
+	const url = await page.locator("[data-testid='platform.ui.flags.common.ui.common-flag-v2-auto-dismiss-actions'] > a").getAttribute("href");
+	return url?.split("/").pop() || "";
 };
 
-export const jiraRemoveProject = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.projects);
+export const jiraRemoveProject = async (page: Page, id:string): Promise<Page> => {
+	await page.goto(data.urls.projectDetails(id));
 
-	await (page.locator("input[data-test-id='searchfield']")).fill(TEST_PROJECT_NAME);
-	// We need to wait while the filter loads new results
-	await page.waitForTimeout(1000);
 	const projectBtn = await page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button");
 	await projectBtn.nth(0).click();
 	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
