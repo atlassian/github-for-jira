@@ -102,7 +102,6 @@ describe("webhook-receiver-post", () => {
 
 	it("should throw an error if signature doesn't match for GitHub cloud", async () => {
 		req = createReqWithInvalidSignature("push", undefined);
-
 		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(res.status).toBeCalledWith(400);
 		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
@@ -138,7 +137,6 @@ describe("webhook-receiver-post", () => {
 			req = createCloudReqForEventWithRandomWebhookSecret("push");
 			const spy = jest.fn();
 			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-			await WebhookReceiverPost(injectRawBodyToReq(req), res);
 			await WebhookReceiverPost(injectRawBodyToReq(req), res);
 			expect(res.status).toBeCalledWith(400);
 			expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
