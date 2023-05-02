@@ -18,7 +18,6 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
-
 /**
  * This is the array of the old webhooks
  * as a failsafe for the existing customers.
