@@ -2,11 +2,10 @@ import { getLogger 	} from "config/logger";
 import { omit } from "lodash";
 import { isNodeProd } from "utils/is-node-env";
 import { optionalRequire } from "optional-require";
+import { envVars } from "config/env";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
-const instance = process.env.INSTANCE_NAME;
-const appKey = `com.github.integration${instance ? `.${instance}` : ""}`;
 
 let analyticsNodeClient;
 
@@ -38,7 +37,7 @@ export const sendAnalytics: {
 		tenantId: "NONE"
 	};
 
-	attributes.appKey = appKey;
+	attributes.appKey = envVars.APP_KEY;
 
 	logger.debug({ eventType }, "Sending analytics");
 

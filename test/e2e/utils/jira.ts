@@ -1,6 +1,6 @@
 import { Page } from "@playwright/test";
 import { JiraTestDataRoles, TEST_PROJECT_KEY, TEST_PROJECT_NAME, testData } from "test/e2e/constants";
-import { APP_KEY } from "routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import { envVars } from "config/env";
 
 const data = testData.jira;
 
@@ -99,7 +99,7 @@ export const jiraRemoveProject = async (page: Page): Promise<Page> => {
 
 const removeApp = async (page: Page): Promise<boolean> => {
 	await page.waitForSelector("#upm-manage-plugins-user-installed");
-	const pluginRow = page.locator(`.upm-plugin[data-key="${APP_KEY}"]`);
+	const pluginRow = page.locator(`.upm-plugin[data-key="${envVars.APP_KEY}"]`);
 	if (await pluginRow.isVisible()) {
 		await pluginRow.click();
 		const uninstallButton = await pluginRow.locator(`a[data-action="UNINSTALL"]`);

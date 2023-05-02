@@ -52,8 +52,8 @@ const isFromIgnoredRepo = (payload) =>
 	// Repository: https://admin.github.com/stafftools/repositories/seequent/lf_github_testing
 	payload.installation?.id === 491520 && payload.repository?.id === 205972230;
 
-const isStateChangeOrDeploymentAction = (action) =>
-	["opened", "closed", "reopened", "deployment", "deployment_status"].includes(
+const isStateChangeBranchCreateOrDeploymentAction = (action) =>
+	["opened", "closed", "reopened", "deployment", "deployment_status", "create"].includes(
 		action
 	);
 
@@ -131,8 +131,8 @@ export const GithubWebhookMiddleware = (
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
 		if (
 			context.payload?.sender?.type === "Bot" &&
-			!isStateChangeOrDeploymentAction(context.payload.action) &&
-			!isStateChangeOrDeploymentAction(context.name)
+			!isStateChangeBranchCreateOrDeploymentAction(context.payload.action) &&
+			!isStateChangeBranchCreateOrDeploymentAction(context.name)
 		) {
 			context.log.info(
 				{

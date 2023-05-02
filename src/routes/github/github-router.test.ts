@@ -6,9 +6,10 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { v4 as v4uuid } from "uuid";
 import { envVars } from "config/env";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { when } from "jest-when";
 import { stringFlag, StringFlags } from "config/feature-flags";
+import * as cookie from "cookie";
 
 jest.mock("./configuration/github-configuration-get");
 jest.mock("config/feature-flags");
@@ -36,9 +37,9 @@ const prepareGitHubServerAppInDB = async (jiraInstallaionId: number) => {
 	}, jiraHost);
 };
 
-const setupGitHubCloudPingNock = () => {
+const setupGitHubCloudPingNock = () =>
 	githubNock.get("/").reply(200);
-};
+
 
 const setupGHEPingNock = () => {
 	gheApiNock.get("").reply(200);
@@ -60,6 +61,12 @@ const mockConfigurationGetProceed = ()=>{
 };
 
 describe("GitHub router", () => {
+	beforeEach(() => {
+		when(stringFlag)
+			.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+			.mockResolvedValue(DEFAULT_SCOPES);
+	});
+
 	describe("Common route utilities", () => {
 		describe("Cloud scenario", () => {
 			let app: Application;
@@ -73,16 +80,12 @@ describe("GitHub router", () => {
 				});
 			});
 			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is off", async () => {
-				when(stringFlag)
-					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
-					.mockResolvedValue(DEFAULT_SCOPES);
 				await supertest(app)
 					.get(`/github/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
+						generateSignedSessionCookieHeader({
+							jiraHost
 						})
 					)
 					.expect(302)
@@ -102,9 +105,8 @@ describe("GitHub router", () => {
 					.get(`/github/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
+						generateSignedSessionCookieHeader({
+							jiraHost
 						})
 					)
 					.expect(302)
@@ -122,7 +124,7 @@ describe("GitHub router", () => {
 					.get(`/github/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
+						generateSignedSessionCookieHeader({
 							jiraHost,
 							githubToken: VALID_TOKEN
 						})
@@ -153,6 +155,43 @@ describe("GitHub router", () => {
 						})
 					}));
 			});
+			it("should reset token when resetGithubToken was provided", async () => {
+				const resp1 = await supertest(app)
+					.get(`/github/configuration?resetGithubToken=true`)
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.set(
+						"Cookie",
+						generateSignedSessionCookieHeader({
+							jiraHost,
+							githubToken: VALID_TOKEN
+						})
+					)
+					.expect(302);
+
+				expect(resp1.headers.location).toEqual("/github/configuration?");
+
+				const cookies = resp1.headers["set-cookie"].reduce((acc, setCookieString) => {
+					const parsed = cookie.parse(setCookieString);
+					return Object.assign(acc, parsed);
+				}, {});
+
+				// We want to rediect not because GHE responds with a error, but because there is no token in session
+				githubNock.get("/").times(0);
+
+				const resp2 = await supertest(app)
+					.get("/github/configuration")
+					.set(
+						"Cookie",
+						`session=${cookies.session}; session.sig=${cookies["session.sig"]}`
+					)
+					.expect(302);
+
+				const resultUrl = resp2.headers.location;
+				const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
+				const redirectUrl = `${envVars.APP_URL}/github/callback`;
+				const expectedUrlWithoutState = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}`;
+				expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
+			});
 		});
 		describe("GitHubServer", () => {
 			let app: Application;
@@ -167,16 +206,12 @@ describe("GitHub router", () => {
 				mockConfigurationGetProceed();
 			});
 			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is off", async () => {
-				when(stringFlag)
-					.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
-					.mockResolvedValue(DEFAULT_SCOPES);
 				await supertest(app)
 					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
+						generateSignedSessionCookieHeader({
+							jiraHost
 						})
 					)
 					.expect(302)
@@ -196,9 +231,8 @@ describe("GitHub router", () => {
 					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
-							jiraHost,
-							githubToken: VALID_TOKEN
+						generateSignedSessionCookieHeader({
+							jiraHost
 						})
 					)
 					.expect(302)
@@ -216,7 +250,7 @@ describe("GitHub router", () => {
 					.get(`/github/${GITHUB_SERVER_APP_UUID}/configuration`)
 					.set(
 						"Cookie",
-						getSignedCookieHeader({
+						generateSignedSessionCookieHeader({
 							jiraHost,
 							githubToken: VALID_TOKEN,
 							gitHubUuid: GITHUB_SERVER_APP_UUID
