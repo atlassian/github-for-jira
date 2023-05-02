@@ -39,10 +39,10 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 
 		await updateRepoCount(subscription);
 		await findOrStartSync(subscription, context.log, "partial", subscription.backfillSince,undefined, { source: "create-repo-webhook" });
-		webhookProcessComplete(context, 200);
+		webhookProcessComplete(context, 200, subscription.jiraHost);
 	} catch (err) {
 		context.log.error({ err }, "Error processing create repository webhook");
-		webhookProcessComplete(context, 500);
+		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
 };
 
@@ -63,18 +63,19 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 			await RepoSyncState.deleteRepoForSubscription(subscription, context.payload.repository.id);
 			await updateRepoCount(subscription);
 		}
-		webhookProcessComplete(context, jiraResponse?.status);
+		webhookProcessComplete(context, jiraResponse?.status, subscription.jiraHost);
 	} catch (err) {
 		context.log.error({ err }, "Error processing delete repository webhook");
-		webhookProcessComplete(context, 500);
+		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
 };
 
-const webhookProcessComplete = (context: WebhookContext, status: number) => {
+const webhookProcessComplete = (context: WebhookContext, status: number, jiraHost: string) => {
 	const { webhookReceived, name, log } = context;
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraHost,
 		log,
 		status,
 		context.gitHubAppConfig?.gitHubAppId

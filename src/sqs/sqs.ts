@@ -4,7 +4,6 @@ import { defaultLogLevel, getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
-import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
@@ -44,7 +43,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
 	readonly log: Logger;
-	readonly metricsTags: Tags;
+	readonly metricsTags: Record<string, string>;
 
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
@@ -84,7 +83,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
 		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
-		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
+		statsd.increment(sqsQueueMetrics.sent, this.metricsTags, { jiraHost: payload.jiraHost });
 		return sendMessageResult;
 	}
 
@@ -145,7 +144,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			return;
 		}
 
-		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
+		statsd.incrementWithValue(sqsQueueMetrics.received, data.Messages.length, this.metricsTags, {});
 
 		listenerContext.log.trace("Processing messages batch");
 		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));
@@ -236,7 +235,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise();
-			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags);
+			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload?.jiraHost });
 			context.log.debug("Successfully deleted message from queue");
 		} catch (err) {
 			context.log.warn({ err }, "Error deleting message from the queue");
@@ -329,7 +328,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			await Promise.race([this.messageHandler(context), timeoutPromise]);
 
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
-			this.sendProcessedMetrics(messageProcessingDuration);
+			this.sendProcessedMetrics(messageProcessingDuration, payload?.jiraHost);
 			await this.deleteMessage(context);
 		} catch (err) {
 			await this.handleSqsMessageExecutionError(err, context);
@@ -344,7 +343,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 			if (errorHandlingResult.isFailure) {
 				context.log.error({ err }, "Error while executing SQS message");
-				statsd.increment(sqsQueueMetrics.failed, this.metricsTags);
+				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload?.jiraHost });
 			} else {
 				context.log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
 			}
@@ -408,14 +407,14 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
-	private sendProcessedMetrics(messageProcessingDuration: number) {
-		statsd.increment(sqsQueueMetrics.completed, this.metricsTags);
+	private sendProcessedMetrics(messageProcessingDuration: number, jiraHost: string | undefined) {
+		statsd.increment(sqsQueueMetrics.completed, this.metricsTags, { jiraHost });
 		//Sending histogram metric twice hence it will produce different metrics, first call produces mean, min, max and precentiles metrics
-		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, this.metricsTags);
+		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, this.metricsTags, { jiraHost });
 		//the second call produces only histogram buckets metrics
 		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, {
 			...this.metricsTags,
 			gsd_histogram: PROCESSING_DURATION_HISTOGRAM_BUCKETS
-		});
+		}, { jiraHost });
 	}
 }

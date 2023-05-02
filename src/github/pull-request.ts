@@ -84,6 +84,7 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

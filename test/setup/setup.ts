@@ -2,7 +2,6 @@ import nock, { cleanAll  as nockCleanAll } from "nock";
 import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
-import "./matchers/to-have-sent-metrics";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
 import IORedis from "ioredis";

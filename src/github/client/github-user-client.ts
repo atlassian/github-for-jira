@@ -17,8 +17,8 @@ import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, gitHubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
-		super(gitHubConfig, metrics, logger);
+	constructor(userToken: string, gitHubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {

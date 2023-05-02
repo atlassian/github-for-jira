@@ -90,11 +90,11 @@ export class InstallationTokenCache {
 			itemCountInHundreds: String(Math.floor(this.installationTokenCache.itemCount / 100))
 		};
 		if (!token) {
-			statsd.increment(metricTokenCacheStatus.miss, tags);
+			statsd.increment(metricTokenCacheStatus.miss, tags, {});
 		} else if (token.isAboutToExpire()) {
-			statsd.increment(metricTokenCacheStatus.expired, tags);
+			statsd.increment(metricTokenCacheStatus.expired, tags, {});
 		} else {
-			statsd.increment(metricTokenCacheStatus.hit, tags);
+			statsd.increment(metricTokenCacheStatus.hit, tags, {});
 		}
 	}
 

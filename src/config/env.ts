@@ -122,4 +122,6 @@ export interface EnvVars {
 
 	MICROS_PLATFORM_STATSD_HOST: string;
 	MICROS_PLATFORM_STATSD_PORT: string;
+
+	JIRA_TEST_SITES: string;
 }
