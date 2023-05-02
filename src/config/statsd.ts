@@ -47,19 +47,16 @@ const increment = (stat: string | string[], tags: ObjectTags, extraInfo: ExtraIn
 };
 
 const incrementWithValue = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
-	if (isPollinatorSite(extraInfo.jiraHost)) return;
-	innerStatsd.increment(stat, value, tags);
+	innerStatsd.increment(stat, value, wrapPollinatorTags(tags, extraInfo));
 };
 
 const histogram = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
-	if (isPollinatorSite(extraInfo.jiraHost)) return;
-	innerStatsd.histogram(stat, value, tags);
+	innerStatsd.histogram(stat, value, wrapPollinatorTags(tags, extraInfo));
 };
 
 //TODO: might remove this one, seem same as histgram
 const timing = (stat: string | string[], value: number | Date, sampleRate: number, tags: ObjectTags, extraInfo: ExtraInfo) => {
-	if (isPollinatorSite(extraInfo.jiraHost)) return;
-	innerStatsd.timing(stat, value, sampleRate, tags);
+	innerStatsd.timing(stat, value, sampleRate, wrapPollinatorTags(tags, extraInfo));
 };
 
 export const statsd = {
