@@ -18,13 +18,6 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
-/**
- * This is the array of the old webhooks
- * as a failsafe for the existing customers.
- * These old webhook secrets are currently stored in Vault as a comma separated values
- */
-export const ALLOWED_WEBHOOKS = envVars.OLD_WEBHOOK_SECRETS.split(",").filter(Boolean);
-
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
@@ -38,8 +31,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const isVerified = [ ...ALLOWED_WEBHOOKS, webhookSecret ].filter(Boolean).some(secret => createHash(request.rawBody, secret) === signatureSHA256);
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
+		const isVerified = webhookSecrets.some(secret => createHash(request.rawBody, secret) === signatureSHA256);
 
 		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
@@ -134,7 +127,7 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
+const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
@@ -145,10 +138,19 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
 		}
 		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret(installation.jiraHost);
-		return { webhookSecret, gitHubServerApp };
+		/**
+		 * If we ever need to rotate the webhook secrets for Enterprise Customers,
+		 * we can add it in the array: ` [ webhookSecret ]`
+		 */
+		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
 	}
-	if (!envVars.WEBHOOK_SECRET) {
-		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
+	if (!envVars.WEBHOOK_SECRETS) {
+		throw new Error("Environment variable 'WEBHOOK_SECRETS' not defined");
 	}
-	return { webhookSecret: envVars.WEBHOOK_SECRET };
+	try {
+		const parsedWebhookSecrets = JSON.parse(envVars.WEBHOOK_SECRETS);
+		return { webhookSecrets: parsedWebhookSecrets };
+	} catch (e) {
+		throw new Error("Couldn't parse 'WEBHOOK_SECRETS', it is not properly defined!");
+	}
 };
