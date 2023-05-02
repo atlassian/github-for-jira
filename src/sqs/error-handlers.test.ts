@@ -6,7 +6,7 @@ import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
 import { AxiosError, AxiosResponse, AxiosResponseHeaders } from "axios";
-import { ErrorHandlingResult, SQSMessageContext } from "~/src/sqs/sqs.types";
+import { ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "~/src/sqs/sqs.types";
 
 describe("error-handlers", () => {
 
@@ -38,7 +38,7 @@ describe("error-handlers", () => {
 		webhookId: "string"
 	};
 
-	const createContext = (receiveCount: number, lastAttempt: boolean): SQSMessageContext<unknown> =>
+	const createContext = (receiveCount: number, lastAttempt: boolean): SQSMessageContext<BaseMessagePayload> =>
 		({
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: mockPayload
 		});

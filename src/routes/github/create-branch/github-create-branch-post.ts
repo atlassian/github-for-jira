@@ -70,14 +70,14 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 			name: newBranchName,
 			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
 		};
-		statsd.increment(metricCreateBranch.created, tags);
+		statsd.increment(metricCreateBranch.created, tags, { jiraHost });
 	} catch (err) {
 		logger.error({ err }, getErrorMessages(err.status));
 		res.status(err.status).json({ error: getErrorMessages(err.status) });
 		sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
 		statsd.increment(metricCreateBranch.failed, {
 			name: newBranchName
-		});
+		}, { jiraHost });
 	}
 };
 

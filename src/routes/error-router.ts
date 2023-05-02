@@ -79,7 +79,7 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
 	const tags = [`status:${errorStatusCode}`, `gitHubProduct:${gitHubProduct}`];
 
-	statsd.increment(metricError.githubErrorRendered, tags);
+	statsd.increment(metricError.githubErrorRendered, tags, {});
 
 	return res.status(errorStatusCode).render("error.hbs", {
 		title: "GitHub + Jira integration",

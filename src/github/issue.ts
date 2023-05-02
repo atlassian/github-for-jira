@@ -55,6 +55,7 @@ export const issueWebhookHandler = async (context: WebhookContext<WebhookPayload
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.jiraHost,
 		log,
 		githubResponse?.status,
 		gitHubAppId

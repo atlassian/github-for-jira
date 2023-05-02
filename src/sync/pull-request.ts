@@ -113,7 +113,9 @@ const doGetPullRequestTask = async (
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
+		[`status:${status}`, `gitHubProduct:${gitHubProduct}`],
+		{ jiraHost }
+	);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);

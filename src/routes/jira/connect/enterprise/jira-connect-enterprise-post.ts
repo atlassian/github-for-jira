@@ -29,7 +29,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
 	}
-	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj);
+	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,

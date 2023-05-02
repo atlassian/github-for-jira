@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { isNodeProd, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 import { envVars } from "./env";
+import { isPollinatorSite } from "./pollinator";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
@@ -29,19 +30,28 @@ const innerStatsd = new StatsD({
 	mock: !isNodeProd()
 });
 
-const increment = (stat: string | string[], tags?: Tags): void => {
+type ExtraInfo = {
+	jiraHost?: string
+}
+
+const increment = (stat: string | string[], tags: Tags, extraInfo: ExtraInfo): void => {
+	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.increment(stat, 1, tags);
 };
 
-const incrementWithValue = (stat: string | string[], value: number, tags?: Tags): void => {
+const incrementWithValue = (stat: string | string[], value: number, tags: Tags, extraInfo: ExtraInfo): void => {
+	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.increment(stat, value, tags);
 };
 
-const histogram = (stat: string | string[], value: number, tags?: Tags): void => {
+const histogram = (stat: string | string[], value: number, tags: Tags, extraInfo: ExtraInfo): void => {
+	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.histogram(stat, value, tags);
 };
 
-const timing = (stat: string | string[], value: number | Date, sampleRate?: number, tags?: Tags) => {
+//TODO: might remove this one, seem same as histgram
+const timing = (stat: string | string[], value: number | Date, sampleRate: number, tags: Tags, extraInfo: ExtraInfo) => {
+	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.timing(stat, value, sampleRate, tags);
 };
 
