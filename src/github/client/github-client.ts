@@ -52,6 +52,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		jiraHost: string,
 		metrics: Metrics,
 		logger: Logger
 	) {
@@ -77,10 +78,10 @@ export class GitHubClient {
 			handleFailedRequest(this.logger)
 		);
 		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl, {
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
 				...this.metrics
 			}),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, {
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
 				...this.metrics
 			})
 		);
