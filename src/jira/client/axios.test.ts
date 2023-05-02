@@ -26,7 +26,8 @@ describe("Jira axios instance", () => {
 						path: "/foo/bar",
 						method: "GET",
 						status: 200
-					}
+					},
+					{ jiraHost }
 				);
 			});
 
@@ -43,7 +44,8 @@ describe("Jira axios instance", () => {
 						path: "/foo/bar",
 						method: "GET",
 						status: 200
-					}
+					},
+					{ jiraHost }
 				);
 			});
 		});

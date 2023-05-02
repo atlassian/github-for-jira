@@ -45,7 +45,8 @@ describe("Webhooks suite", () => {
 					name: "workflow_run",
 					status: "202",
 					gitHubProduct: "cloud"
-				}
+				},
+				{ jiraHost }
 			);
 
 			expect(addStatsdSpy).toHaveBeenCalledWith(
@@ -56,7 +57,8 @@ describe("Webhooks suite", () => {
 					name: "workflow_run",
 					status: "202",
 					gitHubProduct: "cloud"
-				}
+				},
+				{ jiraHost }
 			);
 		});
 
