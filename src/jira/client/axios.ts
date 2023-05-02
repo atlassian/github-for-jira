@@ -137,24 +137,26 @@ const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_600
  * @param {import("axios").AxiosResponse} response - The successful axios response object.
  * @returns {import("axios").AxiosResponse} The response object.
  */
-const instrumentRequest = (response) => {
-	if (!response) {
-		return;
-	}
-	const requestDurationMs = Number(
-		Date.now() - (response.config?.requestStartTime || 0)
-	);
-	const tags = {
-		method: response.config?.method?.toUpperCase(),
-		path: extractPath(response.config?.originalUrl),
-		status: response.status
+const instrumentRequest = (baseURL: string) => {
+	return (response) => {
+		if (!response) {
+			return;
+		}
+		const requestDurationMs = Number(
+			Date.now() - (response.config?.requestStartTime || 0)
+		);
+		const tags = {
+			method: response.config?.method?.toUpperCase(),
+			path: extractPath(response.config?.originalUrl),
+			status: response.status
+		};
+
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+		tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+
+		return response;
 	};
-
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-
-	return response;
 };
 
 /**
@@ -169,7 +171,7 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			// TODO: and we are safe to kill the thing.
 			logger.info("Ok, looks like still works.");
 		}
-		instrumentRequest(error?.response);
+		instrumentRequest(baseURL)(error?.response);
 
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
@@ -226,7 +228,7 @@ export const getAxiosInstance = (
 	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
-		instrumentRequest,
+		instrumentRequest(baseURL),
 		instrumentFailedRequest(baseURL, logger)
 	);
 

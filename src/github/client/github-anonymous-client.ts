@@ -16,8 +16,8 @@ export interface CreatedGitHubAppResponse {
  * A GitHub client without any authentication
  */
 export class GitHubAnonymousClient extends GitHubClient {
-	constructor(githubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
-		super(githubConfig, metrics, logger);
+	constructor(githubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
+		super(githubConfig, jiraHost, metrics, logger);
 	}
 
 	public getMainPage(timeoutMs: number): Promise<AxiosResponse> {

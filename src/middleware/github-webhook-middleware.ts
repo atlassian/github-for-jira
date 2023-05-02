@@ -35,7 +35,7 @@ const withSentry = function(callback) {
 			await callback(context);
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
-			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context));
+			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context), undefined);
 			context.sentry?.captureException(err);
 			throw err;
 		}
@@ -65,6 +65,15 @@ const extractWebhookEventNameFromContext = (context: WebhookContext): string => 
 	return webhookEvent;
 };
 
+const moreWebhookSpecificTags = (webhookContext: WebhookContext): Record<string, string | undefined> => {
+	if (webhookContext.name === "deployment_status") {
+		return {
+			deploymentStatusState: webhookContext.payload?.deployment_status?.state
+		};
+	}
+	return {};
+};
+
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
 	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
@@ -73,7 +82,7 @@ export const GithubWebhookMiddleware = (
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 
 		// Metrics for webhook payload size
-		emitWebhookPayloadMetrics(webhookEvent,
+		emitWebhookPayloadMetrics(webhookEvent, undefined,
 			Buffer.byteLength(JSON.stringify(context.payload), "utf-8"));
 
 		const webhookReceived = getCurrentTime();
@@ -120,12 +129,13 @@ export const GithubWebhookMiddleware = (
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
-		statsd.increment(metricWebhooks.webhookEvent, [
-			"name:webhooks",
-			`event:${name}`,
-			`action:${payload.action}`,
-			`gitHubProduct:${gitHubProduct}`
-		]);
+		statsd.increment(metricWebhooks.webhookEvent, {
+			name: "webhooks",
+			event: name,
+			action: payload.action,
+			gitHubProduct,
+			...moreWebhookSpecificTags(context)
+		}, { jiraHost });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
 		// State change actions are allowed because they're one-time actions, therefore they won’t cause a loop.
@@ -233,7 +243,7 @@ export const GithubWebhookMiddleware = (
 						{ err, jiraHost },
 						`Error processing the event`
 					);
-					emitWebhookFailedMetrics(webhookEvent);
+					emitWebhookFailedMetrics(webhookEvent, jiraHost);
 					context.sentry?.captureException(err);
 				} else {
 					context.log.warn(
