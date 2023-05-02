@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
+import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveIssue, jiraRemoveProject } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
@@ -20,18 +20,23 @@ test.describe("Create branch", () => {
 	});
 
 	test.describe("cloud", () => {
+		let issueId:string;
 		// Create a fresh issue per test
 		test.beforeEach(async ({ page }) => {
-			await jiraCreateIssue(page, projectId);
+			issueId = await jiraCreateIssue(page, projectId);
+		});
+
+		test.afterEach(async ({ page }) => {
+			await jiraRemoveIssue(page, issueId);
 		});
 
 		test("When there are no GitHub connections", async ({ page }) => {
-			await page.goto(testData.jira.urls.testProjectIssue);
+			await page.goto(testData.jira.urls.browse(issueId));
 			const [popup] = await Promise.all([
 				// It is important to call waitForEvent first.
 				page.waitForEvent("popup"),
 				// Opens the popup.
-				page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']").click()
+				page.locator("[data-testid='development-summary-common.ui.summary-item.link-formatted-button']").click()
 			]);
 			await popup.waitForLoadState();
 			expect(popup.getByText("Almost there!")).toBeTruthy();

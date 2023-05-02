@@ -18,6 +18,7 @@ export const testData: TestData = {
 			manageApps: `${e2eEnvVars.ATLASSIAN_URL}/plugins/servlet/upm`,
 			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`,
 			projects: `${e2eEnvVars.APP_URL}/jira/projects`,
+			project: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/projects/${id}`,
 			projectDetails: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/jira/software/projects/${id}/settings/details`,
 			browse: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/browse/${id}`
 		},
@@ -73,6 +74,7 @@ export interface JiraTestDataURLs extends TestDataURLs {
 	manageApps: string;
 	connectJson: string;
 	projects: string;
+	project: (id: string) => string;
 	projectDetails: (id: string) => string;
 	browse: (id: string) => string;
 }

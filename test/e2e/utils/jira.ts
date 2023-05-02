@@ -62,38 +62,51 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 };
 
 export const jiraAddProject = async (page: Page): Promise<string> => {
-	await page.goto(data.urls.);
-	await (page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']")).click();
-	await (page.locator("button[aria-label='Scrum']")).click();
-	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']")).click();
-	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']")).click();
+	await page.goto(data.urls.projects);
+	await page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']").click();
+	await page.locator("button[aria-label='Scrum']").click();
+	await page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']").click();
+	await page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']").click();
 	const projectId = `X${uuid().substring(0, 5)}`;
 	await page.fill("input[id='project-create.create-form.name-field.input']", projectId);
 	await page.fill("input[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
-	await (page.locator("div[data-test-id='project-create.create-form.create-screen.submit-button']")).click();
+	await page.locator("div[data-test-id='project-create.create-form.create-screen.submit-button']").click();
 	await page.goto(data.urls.browse + projectId);
 	return projectId;
 };
 
 export const jiraCreateIssue = async (page: Page, projectId: string): Promise<string> => {
 	await page.goto(data.urls.browse(projectId));
-	await (page.locator("a[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']")).click();
-	const taskInput = page.locator("textarea[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
+	await page.locator("[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']").click();
+	const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now());
 	await taskInput.press("Enter");
 	const url = await page.locator("[data-testid='platform.ui.flags.common.ui.common-flag-v2-auto-dismiss-actions'] > a").getAttribute("href");
 	return url?.split("/").pop() || "";
 };
 
-export const jiraRemoveProject = async (page: Page, id:string): Promise<Page> => {
-	await page.goto(data.urls.projectDetails(id));
 
-	const projectBtn = await page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button");
-	await projectBtn.nth(0).click();
-	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
-	await (page.locator("button[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']")).click();
+export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<boolean> => {
+	const status = (await page.goto(data.urls.browse(issueId)))?.status() || 0;
+	if (status >= 200 && status < 300) {
+		await page.locator("[data-testid='issue-meatball-menu.ui.dropdown-trigger.button']").click();
+		await page.locator("[data-testid='issue-meatball-menu.ui.dropdown-group.styled-section'] button").last().click();
+		await page.locator("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']").click();
+		return true;
+	}
+	return false;
+};
 
-	return page;
+export const jiraRemoveProject = async (page: Page, id: string): Promise<boolean> => {
+	const status = (await page.goto(data.urls.project(id)))?.status() || 0;
+	if (status >= 200 && status < 300) {
+		await page.goto(data.urls.projectDetails(id));
+		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--trigger']").click();
+		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--content'] button").click();
+		await page.locator("[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']").click();
+		return true;
+	}
+	return false;
 };
 
 const removeApp = async (page: Page): Promise<boolean> => {
