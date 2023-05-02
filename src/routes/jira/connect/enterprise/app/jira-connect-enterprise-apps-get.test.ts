@@ -1,39 +1,23 @@
-import express, { Express, NextFunction, Request, Response } from "express";
+import { Express } from "express";
 import { Installation } from "models/installation";
-import path from "path";
-import { registerHandlebarsPartials } from "utils/handlebars/handlebar-partials";
-import { RootRouter } from "routes/router";
 import { getLogger } from "config/logger";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import supertest from "supertest";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 import { GitHubServerApp } from "models/github-server-app";
-import { registerHandlebarsHelpers } from "utils/handlebars/handlebar-helpers";
+import { getFrontendApp } from "~/src/app";
 
 describe("JiraConnectEnterpriseAppsGet", () => {
 	let app: Express;
 	let installation: Installation;
-	let jwt: string;
 
 	beforeEach(() => {
-		app = express();
-		app.set("view engine", "hbs");
-		const viewPath = path.resolve(process.cwd(), "views");
-		app.set("views", viewPath);
-		registerHandlebarsPartials(path.resolve(viewPath, "partials"));
-		registerHandlebarsHelpers();
-		app.use(RootRouter);
+		app = getFrontendApp();
 	});
 
-	const setupAppInstallationAndInitJwt = async (uuid: string, query: any = {}) => {
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			next();
-		});
-		jwt = encodeSymmetric({
+	const generateJwt = async (uuid: string, query: any = {}) => {
+		return encodeSymmetric({
 			qsh: createQueryStringHash({
 				method: "GET",
 				pathname: `/jira/connect/enterprise/${uuid}/app`,
@@ -44,22 +28,27 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 	};
 
 	describe("unauthorized", () => {
-
 		beforeEach(async () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
-
-			await setupAppInstallationAndInitJwt("123",{
-				foo: "bar"
-			});
 		});
 
 		it("returns 401 when JWT is invalid", async () => {
 			const response = await supertest(app)
 				.get("/jira/connect/enterprise/123/app")
 				.query({
-					jwt
+					jwt: "bar"
 				});
+			expect(response.status).toStrictEqual(401);
+		});
+
+		it("returns 401 JWT is missing", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise/123/app")
+				.query({
+					jiraHost: installation.jiraHost
+				})
+				.set("Cookie", [`jiraHost=${installation.jiraHost}`]);
 			expect(response.status).toStrictEqual(401);
 		});
 	});
@@ -70,15 +59,13 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 		beforeEach(async () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
-
-			await setupAppInstallationAndInitJwt(TEST_UUID);
 		});
 
 		it("response with 404", async () => {
 			const response = await supertest(app)
 				.get(`/jira/connect/enterprise/${TEST_UUID}/app`)
 				.query({
-					jwt
+					jwt: await generateJwt(TEST_UUID)
 				});
 			expect(response.status).toStrictEqual(404);
 		});
@@ -94,17 +81,15 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 			testUuid = await new GheConnectConfigTempStorage().store({
 				serverUrl: "https://ghe.com"
 			}, installation.id);
-
-			await setupAppInstallationAndInitJwt(testUuid);
 		});
 
 		it("should render create app selection form", async () => {
 			const response = await supertest(app)
 				.get(`/jira/connect/enterprise/${testUuid}/app`)
 				.query({
-					jwt
+					jwt: await generateJwt(testUuid)
 				});
-			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="https://ghe.com">`);
+			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${testUuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);
 		});
@@ -117,15 +102,13 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
 			gheApp = result.gitHubServerApp!;
-
-			await setupAppInstallationAndInitJwt(gheApp.uuid);
 		});
 
 		it("should render app selection form with ADD_NEW_APP button", async () => {
 			const response = await supertest(app)
 				.get(`/jira/connect/enterprise/${gheApp.uuid}/app`)
 				.query({
-					jwt
+					jwt: await generateJwt(gheApp.uuid)
 				});
 			expect(response.text).toMatch(
 				new RegExp(`data-qs-for-path=.*${gheApp.uuid}.*data-path="github-app-creation-page"`, "i")
@@ -142,18 +125,16 @@ describe("JiraConnectEnterpriseAppsGet", () => {
 			const result = await (new DatabaseStateCreator()).forServer().create();
 			installation = result.installation;
 			gheApp = result.gitHubServerApp!;
-
-			await setupAppInstallationAndInitJwt(gheApp.uuid, { new: "true" });
 		});
 
 		it("should render app selection form with ADD_NEW_APP button", async () => {
 			const response = await supertest(app)
 				.get(`/jira/connect/enterprise/${gheApp.uuid}/app`)
 				.query({
-					jwt,
+					jwt: await generateJwt(gheApp.uuid, { new: "true" }),
 					new: "true"
 				});
-			expect(response.text).toContain(`<input type="hidden" id="baseUrl" value="${gheApp.gitHubBaseUrl}">`);
+			expect(response.text).toContain(`<input type="hidden" id="connectConfigUuid" value="${gheApp.uuid}">`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard automatic selected"`);
 			expect(response.text).toContain(`class="jiraSelectAppCreation__options__card optionsCard manual "`);
 		});

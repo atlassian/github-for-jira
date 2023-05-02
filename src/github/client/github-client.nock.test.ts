@@ -10,7 +10,7 @@ import {
 
 class TestGitHubClient extends GitHubClient {
 	constructor(config: GitHubConfig) {
-		super(config, { trigger: "test" }, getLogger("test"));
+		super(config, jiraHost, { trigger: "test" }, getLogger("test"));
 	}
 	public doTestHttpCall() {
 		return this.axios.get("/", {});

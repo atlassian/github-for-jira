@@ -74,6 +74,7 @@ export const issueCommentWebhookHandler = async (
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		status,
 		gitHubAppId

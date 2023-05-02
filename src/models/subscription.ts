@@ -166,6 +166,21 @@ export class Subscription extends Model {
 		return results[0] as Subscription;
 	}
 
+	static async findForRepoOwner(repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoOwner\" = :repoOwner",
+			{
+				replacements: { jiraHost, repoOwner },
+				type: QueryTypes.SELECT
+			}
+		);
+		return results[0] as Subscription;
+	}
+
 	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await this.findOrCreate({

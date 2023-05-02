@@ -29,6 +29,7 @@ describe("Webhooks suite", () => {
 				emitWebhookProcessedMetrics(
 					webhookReceived,
 					webhookName,
+					jiraHost,
 					mockContextLogger,
 					status
 				)
@@ -44,7 +45,8 @@ describe("Webhooks suite", () => {
 					name: "workflow_run",
 					status: "202",
 					gitHubProduct: "cloud"
-				}
+				},
+				{ jiraHost }
 			);
 
 			expect(addStatsdSpy).toHaveBeenCalledWith(
@@ -55,7 +57,8 @@ describe("Webhooks suite", () => {
 					name: "workflow_run",
 					status: "202",
 					gitHubProduct: "cloud"
-				}
+				},
+				{ jiraHost }
 			);
 		});
 
@@ -69,6 +72,7 @@ describe("Webhooks suite", () => {
 					emitWebhookProcessedMetrics(
 						webhookReceived,
 						webhookName,
+						jiraHost,
 						mockContextLogger,
 						status
 					)
@@ -104,7 +108,7 @@ describe("Webhooks suite", () => {
 			const statsdSpy = jest.spyOn(statsd, "histogram");
 			const webhookName = "workflow_run";
 			const payloadSize = 0;
-			emitWebhookPayloadMetrics(webhookName, payloadSize);
+			emitWebhookPayloadMetrics(webhookName, jiraHost, payloadSize);
 			expect(statsdSpy).toHaveBeenCalledTimes(2);
 		});
 	});

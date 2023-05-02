@@ -57,8 +57,6 @@ When an organization contains a small amount of data, the backfilling process is
 
 - **Atlassian IP address ranges need whitelisting** - [Please see our IP allowlist documentation](https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md)
 
-- **GitHub Enterprise Server Edition does not currently support application access via SAML SSO** - Only Github Enterprise Cloud offers this ability. [Learn more about authentication with SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso).
-
 - **Reverse proxy support** - GitHub for Jira does not support reverse proxies.
 
 - **Self-signed certificate** - There is a problem with your SSL certificate.
