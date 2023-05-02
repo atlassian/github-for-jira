@@ -32,7 +32,18 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
-		const isVerified = webhookSecrets.some(secret => createHash(request.rawBody, secret) === signatureSHA256);
+		const isVerified = webhookSecrets.some((secret, index) => {
+			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
+			/**
+			 * The latest updated webhook secret will be at index 0,
+			 * Once we stop receiving logs with index other than 0,
+			 * can then completely remove the old webhook secrets.
+			 */
+			if (matchesSignature) {
+				logger.info("Matched with the webhook of index: ", index);
+			}
+			return matchesSignature;
+		});
 
 		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
@@ -148,6 +159,10 @@ const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array
 		throw new Error("Environment variable 'WEBHOOK_SECRETS' not defined");
 	}
 	try {
+		/**
+		 * The environment WEBHOOK_SECRETS should be a JSON array string in the format: ["key1", "key1"]
+		 * Basically an array of the new as well as any old webhook secrets
+		 */
 		const parsedWebhookSecrets = JSON.parse(envVars.WEBHOOK_SECRETS);
 		return { webhookSecrets: parsedWebhookSecrets };
 	} catch (e) {
