@@ -1,4 +1,4 @@
-import { createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
+import { ALLOWED_WEBHOOKS, createHash, WebhookReceiverPost } from "~/src/routes/github/webhook/webhook-receiver-post";
 import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { issueWebhookHandler } from "~/src/github/issue";
@@ -325,7 +325,7 @@ const createCloudReqForEvent = (event: string, action?: string) => {
 
 const createCloudReqForEventWithOldWebhookSecret = (event: string, action?: string) => {
 	return createReqForEvent({
-		event, action, webhookSecret: envVars.OLD_WEBHOOK_SECRET
+		event, action, webhookSecret: ALLOWED_WEBHOOKS[0]
 	});
 };
 const createCloudReqForEventWithRandomWebhookSecret = (event: string, action?: string) => {

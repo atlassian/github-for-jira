@@ -84,7 +84,7 @@ export interface EnvVars {
 	APP_URL: string;
 	APP_KEY: string;
 	WEBHOOK_SECRET: string;
-	OLD_WEBHOOK_SECRET: string;
+	OLD_WEBHOOK_SECRETS: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
 	DATABASE_URL: string;

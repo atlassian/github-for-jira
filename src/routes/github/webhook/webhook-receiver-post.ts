@@ -18,6 +18,14 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
+
+/**
+ * This is the array of the old webhooks
+ * as a failsafe for the existing customers.
+ * These old webhook secrets are currently stored in Vault as a comma separated values
+ */
+export const ALLOWED_WEBHOOKS = envVars.OLD_WEBHOOK_SECRETS.split(",").filter(Boolean);
+
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
 	const signatureSHA256 = request.headers["x-hub-signature-256"] as string;
@@ -32,15 +40,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	logger.info("Webhook received");
 	try {
 		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const isVerified = [
-			webhookSecret,
-			/**
-			 * We are also validating against the old webhook secret
-			 * as a failsafe for the existing customers.
-			 * These old webhook secrets are currently stored in Vault.
-			 */
-			envVars.OLD_WEBHOOK_SECRET
-		].filter(Boolean).some(secret => createHash(request.rawBody, secret) === signatureSHA256);
+		const isVerified = [ ...ALLOWED_WEBHOOKS, webhookSecret ].filter(Boolean).some(secret => createHash(request.rawBody, secret) === signatureSHA256);
 
 		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
