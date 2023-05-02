@@ -80,6 +80,7 @@ export const processDeployment = async (
 	!rateLimited && emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
 		"deployment_status",
+		jiraHost,
 		logger,
 		result?.status,
 		gitHubAppId

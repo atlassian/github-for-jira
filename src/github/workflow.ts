@@ -35,6 +35,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

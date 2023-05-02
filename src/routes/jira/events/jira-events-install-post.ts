@@ -19,7 +19,7 @@ export const JiraEventsInstallPost = async (req: Request, res: Response): Promis
 
 	req.log.info({ jiraHost: host, clientKey },  "Installed installation");
 
-	statsd.increment(metricHttpRequest.install);
+	statsd.increment(metricHttpRequest.install, {}, { jiraHost: host });
 
 	res.sendStatus(204);
 };

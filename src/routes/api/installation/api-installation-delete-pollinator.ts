@@ -2,9 +2,7 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { RepoSyncState } from "~/src/models/reposyncstate";
-
-export const STAGE_POLLINATOR_JIRA_HOST = "https://fusion-arc-pollinator-staging-app.atlassian.net";
-export const PROD_POLLINATOR_JIRA_HOST = "https://fusion-pollinator.atlassian.net";
+import { isTestJiraHost } from "config/jira-test-site-check";
 
 export const ApiInstallationDeleteForPollinator = async (req: Request, res: Response): Promise<void> => {
 	const gitHubInstallationId = req.params.installationId;
@@ -18,7 +16,7 @@ export const ApiInstallationDeleteForPollinator = async (req: Request, res: Resp
 		return;
 	}
 
-	if (jiraHost !== STAGE_POLLINATOR_JIRA_HOST && jiraHost !== PROD_POLLINATOR_JIRA_HOST) {
+	if (!isTestJiraHost(jiraHost)) {
 		const msg = "Jira Host not a pollinator jira site";
 		req.log.warn({ req, res }, msg);
 		res.status(400).send(msg);
