@@ -330,6 +330,37 @@ export const getBranchesQueryWithoutChangedFiles = `query ($owner: String!, $rep
     }
   }`;
 
+export const getBranchesQueryWithoutCommits = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+    repository(owner: $owner, name: $repo) {
+      refs(first: $per_page, refPrefix: "refs/heads/", after: $cursor) {
+        edges {
+          cursor
+          node {
+            associatedPullRequests(first:1) {
+              nodes {
+                title
+              }
+            }
+            name
+            target {
+              ... on Commit {
+                author {
+                  avatarUrl
+                  email
+                  name
+                }
+                authoredDate
+                oid
+                message
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  }`;
+
 export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
