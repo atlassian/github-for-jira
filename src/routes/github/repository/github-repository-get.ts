@@ -16,7 +16,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	const log = req.log.child({ jiraHost });
 
 	if (!jiraHost) {
-		log.error(Errors.MISSING_JIRA_HOST);
+		log.warn(Errors.MISSING_JIRA_HOST);
 		sendError(res, 400, Errors.MISSING_JIRA_HOST);
 		return;
 	}
