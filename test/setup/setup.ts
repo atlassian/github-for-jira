@@ -130,8 +130,9 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
-	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
+	const instance = envVars.APP_KEY.split(".").pop();
+	global.jiraHost = process.env.ATLASSIAN_URL || `https://${instance}.atlassian.net`;
+	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${instance}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");

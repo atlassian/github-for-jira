@@ -4,10 +4,7 @@ FROM node:14.21-alpine3.16 as build
 RUN apk add g++ make python3
 
 # adding to solve vuln
-RUN apk add --update --upgrade busybox
-RUN apk add --update --upgrade libretls
-RUN apk add --update --upgrade openssl
-RUN apk add --update --upgrade zlib
+RUN apk add --update --upgrade busybox libretls openssl zlib
 
 COPY . /app
 WORKDIR /app

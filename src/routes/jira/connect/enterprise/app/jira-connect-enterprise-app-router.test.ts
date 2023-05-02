@@ -2,7 +2,7 @@ import { Express } from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { v4 as uuid } from "uuid";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { buildQueryTypeJWTToken } from "test/utils/jwt";
 import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
@@ -44,7 +44,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			});
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
@@ -59,7 +59,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${uuid()}`;
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
@@ -89,7 +89,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
