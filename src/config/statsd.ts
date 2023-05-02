@@ -30,27 +30,34 @@ const innerStatsd = new StatsD({
 	mock: !isNodeProd()
 });
 
+type ObjectTags = { [key: string]: string };
 type ExtraInfo = {
 	jiraHost?: string
 }
 
-const increment = (stat: string | string[], tags: Tags, extraInfo: ExtraInfo): void => {
-	if (isPollinatorSite(extraInfo.jiraHost)) return;
-	innerStatsd.increment(stat, 1, tags);
+const wrapPollinatorTags = (tags: ObjectTags, extraInfo: ExtraInfo): Tags => {
+	return {
+		...tags,
+		isPollinator: String(isPollinatorSite(extraInfo.jiraHost))
+	};
 };
 
-const incrementWithValue = (stat: string | string[], value: number, tags: Tags, extraInfo: ExtraInfo): void => {
+const increment = (stat: string | string[], tags: ObjectTags, extraInfo: ExtraInfo): void => {
+	innerStatsd.increment(stat, 1, wrapPollinatorTags(tags, extraInfo));
+};
+
+const incrementWithValue = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
 	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.increment(stat, value, tags);
 };
 
-const histogram = (stat: string | string[], value: number, tags: Tags, extraInfo: ExtraInfo): void => {
+const histogram = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
 	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.histogram(stat, value, tags);
 };
 
 //TODO: might remove this one, seem same as histgram
-const timing = (stat: string | string[], value: number | Date, sampleRate: number, tags: Tags, extraInfo: ExtraInfo) => {
+const timing = (stat: string | string[], value: number | Date, sampleRate: number, tags: ObjectTags, extraInfo: ExtraInfo) => {
 	if (isPollinatorSite(extraInfo.jiraHost)) return;
 	innerStatsd.timing(stat, value, sampleRate, tags);
 };

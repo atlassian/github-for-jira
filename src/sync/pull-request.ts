@@ -113,7 +113,7 @@ const doGetPullRequestTask = async (
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		[`status:${status}`, `gitHubProduct:${gitHubProduct}`],
+		{ status: String(status), gitHubProduct },
 		{ jiraHost }
 	);
 

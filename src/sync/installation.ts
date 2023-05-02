@@ -109,14 +109,14 @@ export const updateTaskStatusAndContinue = async (
 		}
 
 		if (task.startTime) {
-			statsd.histogram(metricTaskStatus.complete, Date.now() - task.startTime, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`], { jiraHost: subscription.jiraHost });
+			statsd.histogram(metricTaskStatus.complete, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
 	} else {
 		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
 		if (task.startTime) {
-			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, [`type:${task.task}`, `gitHubProduct:${gitHubProduct}`], { jiraHost: subscription.jiraHost });
+			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
@@ -365,7 +365,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 
 	if (mainNextTask.startTime) {
-		statsd.histogram(metricTaskStatus.failed, Date.now() - mainNextTask.startTime, [`type:${mainNextTask.task}`, `gitHubProduct:${gitHubProduct}`], { jiraHost: subscription.jiraHost });
+		statsd.histogram(metricTaskStatus.failed, Date.now() - mainNextTask.startTime, { type: mainNextTask.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 	} else {
 		log.warn({ mainNextTask }, "Fail to find startime in mainNextTask for metrics purpose");
 	}

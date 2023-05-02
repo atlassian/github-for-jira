@@ -4,7 +4,6 @@ import { defaultLogLevel, getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
-import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
@@ -44,7 +43,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
 	readonly log: Logger;
-	readonly metricsTags: Tags;
+	readonly metricsTags: Record<string, string>;
 
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped

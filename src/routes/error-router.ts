@@ -77,7 +77,7 @@ ErrorRouter.use((err: Error, req: Request, res: Response, next: NextFunction) =>
 	const errorStatusCode = errorCodes[err.message] || 500;
 	const message = messages[err.message];
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
-	const tags = [`status:${errorStatusCode}`, `gitHubProduct:${gitHubProduct}`];
+	const tags = { status: String(errorStatusCode), gitHubProduct };
 
 	statsd.increment(metricError.githubErrorRendered, tags, {});
 
