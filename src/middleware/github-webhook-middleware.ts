@@ -65,6 +65,15 @@ const extractWebhookEventNameFromContext = (context: WebhookContext): string => 
 	return webhookEvent;
 };
 
+const moreWebhookSpecificTags = (webhookContext: WebhookContext): Record<string, string | undefined> => {
+	if (webhookContext.name === "deployment_status") {
+		return {
+			deploymentStatusState: webhookContext.payload?.deployment_status?.state
+		};
+	}
+	return {};
+};
+
 // TODO: fix typings
 export const GithubWebhookMiddleware = (
 	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
@@ -124,7 +133,8 @@ export const GithubWebhookMiddleware = (
 			name: "webhooks",
 			event: name,
 			action: payload.action,
-			gitHubProduct
+			gitHubProduct,
+			...moreWebhookSpecificTags(context)
 		}, { jiraHost });
 
 		// Edit actions are not allowed because they trigger this Jira integration to write data in GitHub and can trigger events, causing an infinite loop.
