@@ -50,7 +50,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		logger: Logger,
 		gshaId?: number
 	) {
-		super(gitHubConfig, metrics, logger);
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.jiraHost = jiraHost;
 
 		this.installationTokenCache = InstallationTokenCache.getInstance();
