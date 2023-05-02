@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from "express";
 import { isNodeProd, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 import { envVars } from "./env";
-import { isPollinatorSite } from "./pollinator";
+import { isTestJiraHost } from "./jira-test-site-check";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
@@ -35,28 +35,28 @@ type ExtraInfo = {
 	jiraHost?: string
 }
 
-const wrapPollinatorTags = (tags: ObjectTags, extraInfo: ExtraInfo): Tags => {
+const wrapTestSiteTags = (tags: ObjectTags, extraInfo: ExtraInfo): Tags => {
 	return {
 		...tags,
-		isPollinator: String(isPollinatorSite(extraInfo.jiraHost))
+		isTestJiraHost: String(isTestJiraHost(extraInfo.jiraHost))
 	};
 };
 
 const increment = (stat: string | string[], tags: ObjectTags, extraInfo: ExtraInfo): void => {
-	innerStatsd.increment(stat, 1, wrapPollinatorTags(tags, extraInfo));
+	innerStatsd.increment(stat, 1, wrapTestSiteTags(tags, extraInfo));
 };
 
 const incrementWithValue = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
-	innerStatsd.increment(stat, value, wrapPollinatorTags(tags, extraInfo));
+	innerStatsd.increment(stat, value, wrapTestSiteTags(tags, extraInfo));
 };
 
 const histogram = (stat: string | string[], value: number, tags: ObjectTags, extraInfo: ExtraInfo): void => {
-	innerStatsd.histogram(stat, value, wrapPollinatorTags(tags, extraInfo));
+	innerStatsd.histogram(stat, value, wrapTestSiteTags(tags, extraInfo));
 };
 
 //TODO: might remove this one, seem same as histgram
 const timing = (stat: string | string[], value: number | Date, sampleRate: number, tags: ObjectTags, extraInfo: ExtraInfo) => {
-	innerStatsd.timing(stat, value, sampleRate, wrapPollinatorTags(tags, extraInfo));
+	innerStatsd.timing(stat, value, sampleRate, wrapTestSiteTags(tags, extraInfo));
 };
 
 export const statsd = {
