@@ -41,7 +41,7 @@ jobs:
           echo "NODE_ENV=test" >> .env
           echo "APP_NAME=jira" >> .env
           echo "APP_ID=${{ secrets.E2E_GITHUB_APP_ID }}" >> .env
-          echo "WEBHOOK_SECRETS=${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}" >> .env
+          echo "WEBHOOK_SECRETS=${{ secrets.WEBHOOK_SECRETS }}" >> .env
           echo "GITHUB_CLIENT_ID=${{ secrets.E2E_GITHUB_CLIENT_ID }}" >> .env
           echo "GITHUB_CLIENT_SECRET=${{ secrets.E2E_GITHUB_CLIENT_SECRET }}" >> .env
           echo "PRIVATE_KEY_PATH=jira-test.pem" >> .env
@@ -93,7 +93,7 @@ jobs:
           echo "NODE_ENV=e2e" >> .env
           echo "APP_NAME=jira-e2e" >> .env
           echo "APP_ID=${{ secrets.E2E_GITHUB_APP_ID }}" >> .env
-          echo "WEBHOOK_SECRETS=${{ secrets.E2E_GITHUB_WEBHOOK_SECRET }}" >> .env
+          echo "WEBHOOK_SECRETS=${{ secrets.WEBHOOK_SECRETS }}" >> .env
           echo "GITHUB_CLIENT_ID=${{ secrets.E2E_GITHUB_CLIENT_ID }}" >> .env
           echo "GITHUB_CLIENT_SECRET=${{ secrets.E2E_GITHUB_CLIENT_SECRET }}" >> .env
           echo "PRIVATE_KEY_PATH=jira-e2e-test.pem" >> .env
