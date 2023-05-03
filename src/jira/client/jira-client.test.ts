@@ -193,4 +193,20 @@ describe("Test getting a jira client", () => {
 			);
 		});
 	});
+
+	it("Should delete builds and deployments by repository ID when a repo is deleted", async () => {
+		jiraNock.delete("/rest/builds/0.1/bulkByProperties").query({
+			repositoryId: 123
+		}).reply(202);
+
+		jiraNock.delete("/rest/deployments/0.1/bulkByProperties").query({
+			repositoryId: 123
+		}).reply(202);
+
+		const workflowRes = await client.workflow.delete(123);
+		expect(workflowRes.status).toEqual(202);
+
+		const deploymentRes = await client.deployment.delete(123);
+		expect(deploymentRes.status).toEqual(202);
+	});
 });
