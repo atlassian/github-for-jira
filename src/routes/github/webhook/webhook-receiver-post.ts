@@ -40,7 +40,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			 * can then completely remove the old webhook secrets.
 			 */
 			if (matchesSignature) {
-				logger.info("Matched with the webhook of index: ", index);
+				logger.info({ index }, "Matched webhook index");
 			}
 			return matchesSignature;
 		});
