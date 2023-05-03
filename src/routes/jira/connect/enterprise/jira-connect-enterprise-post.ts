@@ -66,7 +66,7 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const { gheServerURL } = req.body;
+	const { gheServerURL, apiKeyHeader, apiKeyValue } = req.body;
 	const { id: installationId } = res.locals.installation;
 
 	const jiraHost = res.locals.jiraHost;
@@ -107,7 +107,9 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
-		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+		const response = await client.getMainPage(TIMEOUT_PERIOD_MS, {
+			[apiKeyHeader]: apiKeyValue
+		});
 
 		if (!isResponseFromGhe(req.log, response)) {
 			req.log.warn("Received OK response, but not GHE server");

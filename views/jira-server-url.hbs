@@ -54,40 +54,72 @@
             </a>
         </div>
 
-        <div>
-          <h3 class="jiraServerUrl__options__subTitle">
-            GitHub Enterprise Server URL
-          </h3>
-          <div class="jiraServerUrl__prompt">
-            Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
-          </div>
-          <form id="jiraServerUrl__form" class="aui top-label">
-            <div class="field-group">
-              <label for="gheServerURL">Server URL</label>
-              <input class="text full-width-field" type="text"
-                     data-aui-validation-field
-                     data-aui-validation-ghe-url
-                     data-aui-validation-when="keyup"
-                     placeholder="https://example.com"
-                     id="gheServerURL" name="gheServerURL" />
+        <form id="jiraServerUrl__form" class="aui top-label">
+            <div class="jiraServerUrl__section">
+              <h3 class="jiraServerUrl__options__subTitle">
+                GitHub Enterprise Server URL
+              </h3>
+              <div class="jiraServerUrl__prompt">
+                Enter the URL for the server of the GitHub Enterprise organization that you want to connect. This is unique to your server.
+              </div>
+              <form id="jiraServerUrl__form" class="aui top-label">
+                <div class="field-group">
+                  <label for="gheServerURL">Server URL</label>
+                  <input class="text full-width-field" type="text"
+                         data-aui-validation-field
+                         data-aui-validation-ghe-url
+                         data-aui-validation-when="keyup"
+                         placeholder="https://example.com"
+                         id="gheServerURL" name="gheServerURL" />
+                </div>
+
+                <div class="jiraServerUrl__validationError">
+                    {{> server-error-message-box }}
+                </div>
+                <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+
             </div>
 
-            <div class="jiraServerUrl__validationError">
-                {{> server-error-message-box }}
+            <div class="jiraServerUrl__section">
+              <h3 class="jiraServerUrl__options__subTitle">
+                API key <small>(Optional)</small>
+              </h3>
+              <div class="jiraServerUrl__prompt">
+                An additional layer of security by creating or using an API key. Remember the key for future use.
+                <a href='#'>Learn more about API keys</a>
+              </div>
+                <div class="field-group">
+                  <label for="gheApiKeyHeader">HTTP request header name</label>
+                  <input class="text full-width-field" type="text"
+                         data-aui-validation-field
+                         data-aui-validation-api-key-header
+                         data-aui-validation-when="keyup"
+                         placeholder="X-Accept-Me"
+                         id="gheApiKeyHeader" name="gheApiKeyHeader" />
+                </div>
+
+                <div class="field-group">
+                  <label for="gheApiKeyValue">Value</label>
+                  <input class="text full-width-field" type="password"
+                         data-aui-validation-field
+                         data-aui-validation-api-key-header-value
+                         data-aui-validation-when="keyup"
+                         id="gheApiKeyValue" name="gheApiKeyValue" />
+                </div>
+
+                <button
+                    type="submit"
+                    id="gheServerBtn"
+                    disabled
+                    class="aui-button aui-button-primary jiraServerUrl__actionBtn"
+                    data-installation-id={{installationId}}
+                >
+                  <span id="gheServerBtnText">Next</span>
+                  <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
+                </button>
             </div>
-            <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
-            <button
-                type="submit"
-                id="gheServerBtn"
-                disabled
-                class="aui-button aui-button-primary jiraServerUrl__actionBtn"
-                data-installation-id={{installationId}}
-            >
-              <span id="gheServerBtnText">Next</span>
-              <aui-spinner id="gheServerBtnSpinner" size="small"></aui-spinner>
-            </button>
-          </form>
-        </div>
+        </form>
+
       </section>
 
     </div>
