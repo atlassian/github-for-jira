@@ -10,6 +10,7 @@ import { createAnonymousClient } from "utils/get-github-client-config";
 import { GithubClientError } from "~/src/github/client/github-client-errors";
 import { AxiosError, AxiosResponse } from "axios";
 import { isUniquelyGitHubServerHeader } from "utils/http-headers";
+import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -28,7 +29,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
 	}
-	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj);
+	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
@@ -45,6 +46,15 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 	}
 	return !!Object.keys(response.headers).find(isUniquelyGitHubServerHeader) ||
 		response.headers["server"] === "GitHub.com";
+};
+
+const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, installationId: number) => {
+	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig, installationId);
+	res.status(200).send({ success: true, connectConfigUuid, appExists: false });
+};
+
+const useExistingConfigAndRespond200 = async (res: Response, githubServerApp: GitHubServerApp) => {
+	res.status(200).send({ success: true, connectConfigUuid: githubServerApp.uuid, appExists: true });
 };
 
 export const JiraConnectEnterprisePost = async (
@@ -83,9 +93,13 @@ export const JiraConnectEnterprisePost = async (
 
 	const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
+	const gitHubConnectConfig: GheConnectConfig = {
+		serverUrl: gheServerURL
+	};
+
 	if (gitHubServerApps?.length) {
 		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-		res.status(200).send({ success: true, appExists: true });
+		await useExistingConfigAndRespond200(res, gitHubServerApps[0]);
 		return;
 	}
 
@@ -107,7 +121,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		res.status(200).send({ success: true, appExists: false });
+		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
@@ -120,7 +134,7 @@ export const JiraConnectEnterprisePost = async (
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
-			res.status(200).send({ success: true, appExists: false });
+			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise,

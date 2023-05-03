@@ -41,7 +41,7 @@ const getGHEServerError = (error, url) => {
 		case "GHE_ERROR_GITHUB_CLOUD_HOST":
 			return {
 				title: "GitHub Cloud site",
-				message: `The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.`,
+				message: `The entered URL is a GitHub Cloud site.`,
 			};
 		case "GHE_ERROR_CANNOT_CONNECT":
 			return {
@@ -76,8 +76,19 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 			},
 			function(data) {
 				if (data.success) {
-					const pagePath = data.appExists ? "github-list-server-apps-page" : "github-app-creation-page";
-					const customData = data.appExists ?  { serverUrl: gheServerURL } : { serverUrl: gheServerURL, new: 1 };
+					const pagePath = data.appExists
+						? "github-list-server-apps-page"
+						: "github-app-creation-page";
+					const customData = data.appExists
+						? {
+							connectConfigUuid: data.connectConfigUuid,
+							serverUrl: data.connectConfigUuid // TODO remove when the new descriptor is propagated everywhere (in 1 month?)
+						}
+						: {
+							connectConfigUuid: data.connectConfigUuid,
+							serverUrl: data.connectConfigUuid, // TODO remove when the new descriptor is propagated everywhere (in 1 month?)
+							new: 1
+						};
 					AP.navigator.go(
 						"addonmodule",
 						{

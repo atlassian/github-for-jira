@@ -86,7 +86,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection, { gitHubProduct });
+		statsd.increment(metricError.failedConnection, { gitHubProduct }, { jiraHost });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
@@ -162,7 +162,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	res.render("jira-configuration-new.hbs", {
+	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
@@ -196,7 +196,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
-	if (!(await booleanFlag(BooleanFlags.SHOW_RETRYABLE_ERRORS_MODAL))){
+	if (!(await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL))){
 		return undefined;
 	}
 	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];

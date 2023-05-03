@@ -44,12 +44,14 @@ Dummy.init({
 }, {
 	hooks: {
 		beforeSave: async (app, opts) => {
-			await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
+			const optsFields = opts.fields?.filter((it): it is string => !!it);
+			await app.encryptChangedSecretFields(optsFields, getLogger("test"));
 		},
 
 		beforeBulkCreate: async (apps, opts) => {
 			for (const app of apps) {
-				await app.encryptChangedSecretFields(opts.fields, getLogger("test"));
+				const optsFields = opts.fields?.filter((it): it is string => !!it);
+				await app.encryptChangedSecretFields(optsFields, getLogger("test"));
 			}
 		}
 	},
@@ -67,6 +69,7 @@ describe("Encrypted model", () => {
 		EncryptionClient.encrypt = jest.fn((_, p) => "encrypted:" + p) as any;
 		EncryptionClient.decrypt = jest.fn((c) => c.substring("encrypted".length)) as any;
 	});
+
 	it("should encrypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();
@@ -75,13 +78,14 @@ describe("Encrypted model", () => {
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(1, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "aaa1", { "name": "test" });
 		expect(EncryptionClient.encrypt).toHaveBeenNthCalledWith(2, EncryptionSecretKeyEnum.GITHUB_SERVER_APP, "bbb1", { "name": "test" });
 	});
+
 	it("should decrypt successfully", async () => {
 		await Dummy.sync();
 		const id = newId();
 		await Dummy.create({ id, name: "test", a: "aaa1", b: "bbb1" });
 		const dummy = await Dummy.findOne({ where: { name: "test" } });
-		await dummy.decrypt("a");
-		await dummy.decrypt("b");
+		await dummy?.decrypt("a", getLogger("test"));
+		await dummy?.decrypt("b", getLogger("test"));
 		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(1, "encrypted:aaa1", { "name": "test" });
 		expect(EncryptionClient.decrypt).toHaveBeenNthCalledWith(2, "encrypted:bbb1", { "name": "test" });
 	});

@@ -1,24 +1,15 @@
 import supertest from "supertest";
-import express, { Express } from "express";
+import { Express } from "express";
 import { getFrontendApp } from "../../app";
-import { getLogger } from "config/logger";
 
 describe("Session GET", () => {
 	let app: Express;
 
 	beforeEach(() => {
-		app = express();
-		app.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
+		app = getFrontendApp();
 	});
 
 	describe("Frontend", () => {
-		beforeEach(() => {
-			app.use(getFrontendApp());
-		});
-
 		it("Testing loading when redirecting to GitHub", () =>
 			supertest(app)
 				.get("/session/jira/atlassian-connect.json?ghRedirect=to&foo=bar&ice=berg")
@@ -38,6 +29,20 @@ describe("Session GET", () => {
 				.then(response => {
 					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeTruthy();
 					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
+					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeFalsy();
+					expect(response.text.includes("window.location = \"https://test-github-app-instance.com/jira/atlassian-connect.json?ghRedirect=from&foo=bar&ice=berg\"")).toBeTruthy();
+				})
+		);
+
+		it("Testing removing resetSession from query params", () =>
+			supertest(app)
+				.get("/session/jira/atlassian-connect.json?ghRedirect=from&foo=bar&ice=berg&resetSession=true")
+				.set("Cookie", ["session=blah", "foo=bar"])
+				.expect(200)
+				.then(response => {
+					expect(response.text.includes("Retrieving data from your GitHub Enterprise Server")).toBeTruthy();
+					expect(response.text.includes("Redirecting to your GitHub Enterprise Server instance")).toBeFalsy();
+					expect(response.headers["set-cookie"]).not.toContain("blah");
 					expect(response.text.includes("Redirecting to GitHub Cloud")).toBeFalsy();
 					expect(response.text.includes("window.location = \"https://test-github-app-instance.com/jira/atlassian-connect.json?ghRedirect=from&foo=bar&ice=berg\"")).toBeTruthy();
 				})

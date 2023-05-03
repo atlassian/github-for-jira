@@ -58,7 +58,7 @@
 		"@octokit/graphql-schema": "^10.73.0",
 		"@sentry/node": "^6.8.0",
 		"atlassian-jwt": "^2.0.0",
-		"aws-sdk": "^2.999.0",
+		"aws-sdk": "^2.1015.0",
 		"axios": "^0.26.0",
 		"body-parser": "^1.19.2",
 		"bottleneck": "^2.19.5",
@@ -91,7 +91,8 @@
 		"primer": "^10.6.0",
 		"rate-limit-redis": "^1.7.0",
 		"safe-json-stringify": "^1.2.0",
-		"sequelize": "^5.21.7",
+		"sanitize-html": "^2.10.0",
+		"sequelize": "^6.19.1",
 		"sequelize-cli": "^6.2.0",
 		"sequelize-encrypted": "^1.0.0",
 		"speakeasy": "^2.0.0",
@@ -103,7 +104,7 @@
 		"typescript": "~4.5.5",
 		"uuid": "^8.3.2",
 		"xml2json-light": "^1.0.6",
-		"yaml": "^2.0.1"
+		"yaml": "^2.2.2"
 	},
 	"devDependencies": {
 		"@octokit/rest": "16.43.2",

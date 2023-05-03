@@ -56,7 +56,7 @@ describe("GitHub Client", () => {
 			path,
 			status,
 			gitHubProduct: "server"
-		}));
+		}), { jiraHost });
 	};
 
 	it("works with a non-cloud installation", async () => {

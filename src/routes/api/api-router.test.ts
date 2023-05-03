@@ -12,7 +12,6 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 describe("API Router", () => {
 	let app: Application;
-	let locals;
 	const invalidId = 99999999;
 	const gitHubInstallationId = 1234;
 	let installation: Installation;
@@ -21,10 +20,8 @@ describe("API Router", () => {
 
 	const createApp = () => {
 		const app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = locals || {};
+		app.use((req: Request, _: Response, next: NextFunction) => {
 			req.log = getLogger("test");
-			req.session = { jiraHost };
 			next();
 		});
 		app.use("/api", ApiRouter);
@@ -60,7 +57,7 @@ describe("API Router", () => {
 			webhookSecret: "webhook-secret"
 		}, jiraHost);
 
-		Subscription.create({
+		await Subscription.create({
 			gitHubInstallationId,
 			jiraHost,
 			jiraClientKey: "client-key",
@@ -309,28 +306,6 @@ describe("API Router", () => {
 					.reply(200);
 			});
 
-			it("Should work with old delete installation route", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
-			it("Should work with old delete installation route with gitHubAppId", () => {
-				return supertest(app)
-					.delete(`/api/deleteInstallation/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}/github-app-id/${gitHubServerApp.id}`)
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.expect(200)
-					.then((response) => {
-						expect(response.body).toMatchSnapshot();
-					});
-			});
-
 			it("Should work with new delete installation route", () => {
 				return supertest(app)
 					.delete(`/api/${gitHubInstallationId}/${encodeURIComponent(jiraHost)}`)
@@ -366,6 +341,31 @@ describe("API Router", () => {
 					.then((response) => {
 						expect(response.body?.originalValue).toEqual("encrypt_this_yo");
 						expect(response.body?.hashedValue).toEqual("a539e6c6809cabace5719df6c7fb52071ee15e722ba89675f6ad06840edaa287");
+					});
+			});
+
+		});
+
+		describe("Recrypt data", () => {
+
+			it("Should recrypt data in different context", () => {
+				return supertest(app)
+					.post("/api/recrypt")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({
+						encryptedValue: "encrypted:blah",
+						key: "github-server-app-secrets",
+						oldContext: {
+							jiraHost: "https://blah.atlassian.com"
+						},
+						newContext: {
+							jiraHost: "https://foo.atlassian.com"
+						}
+					})
+					.expect(200)
+					.then((response) => {
+						expect(response.body!.recryptedValue).toEqual("encrypted:blah");
 					});
 			});
 
@@ -425,7 +425,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should drop failed status for passed tasks", async () => {
@@ -442,7 +442,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toBeNull();
+				expect(oneMore?.branchStatus).toBeNull();
 			});
 
 			it("Should not update status for other tasks", async () => {
@@ -459,7 +459,7 @@ describe("API Router", () => {
 					.expect(200);
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
-				expect(oneMore.branchStatus).toEqual("failed");
+				expect(oneMore?.branchStatus).toEqual("failed");
 			});
 		});
 	});

@@ -3,8 +3,7 @@ import url from "url";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { envVars }  from "config/env";
 
-const instance = envVars.INSTANCE_NAME;
-const iss = `com.github.integration${instance ? `.${instance}` : ""}`;
+const iss = envVars.APP_KEY;
 
 /**
  * Middleware to create a custom JWT for a request.

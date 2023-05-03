@@ -1,6 +1,6 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { RootRouter } from "routes/router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
@@ -52,12 +52,6 @@ describe("sync", () => {
 			gitHubAppId: gitHubServerApp.id
 		});
 		app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			next();
-		});
 		app.use(RootRouter);
 
 		jwt = encodeSymmetric({
@@ -79,8 +73,7 @@ describe("sync", () => {
 			})
 			.send({
 				installationId: installationIdForCloud,
-				jiraHost,
-				syncType: "full"
+				jiraHost
 			})
 			.expect(202)
 			.then(() => {
@@ -102,7 +95,6 @@ describe("sync", () => {
 			.send({
 				installationId: installationIdForServer,
 				jiraHost,
-				syncType: "full",
 				appId: gitHubServerApp.id
 			})
 			.expect(202)
@@ -135,7 +127,6 @@ describe("sync", () => {
 			})
 			.send({
 				installationId: installationIdForServer,
-				syncType: "partial",
 				jiraHost,
 				appId: gitHubServerApp.id,
 				commitsFromDate
@@ -148,6 +139,33 @@ describe("sync", () => {
 					jiraHost,
 					commitsFromDate: commitsFromDate.toISOString(),
 					targetTasks: ["pull", "branch", "commit", "build", "deployment"],
+					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
+				}), expect.anything(), expect.anything());
+			});
+	});
+
+	it("should run full sync if explicitly selected by user", async () => {
+		const commitsFromDate = new Date(new Date().getTime() - 2000);
+		return supertest(app)
+			.post("/jira/sync")
+			.query({
+				jwt
+			})
+			.send({
+				installationId: installationIdForServer,
+				jiraHost,
+				appId: gitHubServerApp.id,
+				commitsFromDate,
+				syncType: "full"
+			})
+			.expect(202)
+			.then(() => {
+				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(expect.objectContaining({
+					syncType: "full",
+					installationId: installationIdForServer,
+					jiraHost,
+					commitsFromDate: commitsFromDate.toISOString(),
+					targetTasks: undefined,
 					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
 				}), expect.anything(), expect.anything());
 			});

@@ -1,15 +1,18 @@
 /**
- * Mimicks APIs from https://developer.atlassian.com/platform/cryptor/integration/integrating-sidecar/#rest-api
+ * Mimics APIs from https://developer.atlassian.com/platform/cryptor/integration/integrating-sidecar/#rest-api
  */
 
 const express = require("express");
 const bodyParser = require("body-parser");
 
 const app = express();
+
 app.use(bodyParser.json());
-app.get("/healthcheck", (_, res)=>{
-	res.send({ok: true});
+
+app.get("/healthcheck", (_, res) => {
+	res.send({ ok: true });
 });
+
 app.post("/cryptor/encrypt/*", (req, res) => {
 	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) {
 		res.status(403).send("Wrong challenge");
@@ -24,9 +27,10 @@ app.post("/cryptor/encrypt/*", (req, res) => {
 		cipherText: `encrypted:${plainText}`,
 		originPlainText: plainText
 	};
-	console.log('-- cyrptor mock encrypt', {ret});
+	console.log("-- cyrptor mock encrypt", { ret });
 	res.status(200).json(ret);
 });
+
 app.post("/cryptor/decrypt", (req, res) => {
 	if (req.headers["x-cryptor-client"] !== process.env.CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE) {
 		res.status(403).send("Wrong challenge");
@@ -45,10 +49,27 @@ app.post("/cryptor/decrypt", (req, res) => {
 		plainText: cipherText.substring("encrypted:".length),
 		originCipherText: cipherText
 	};
-	console.log('-- cyrptor mock decrypt', {ret});
+	console.log("-- cyrptor mock decrypt", { ret });
 	res.status(200).json(ret);
 });
 
-app.listen(26272, () => {
+const server = app.listen(26272, () => {
 	console.log(`Cryptor mock app running on 26272`);
 });
+
+let connections = [];
+server.on('connection', connection => {
+	connections.push(connection);
+	connection.on('close', () => connections = connections.filter(curr => curr !== connection));
+});
+
+const exit = () => {
+	server.close(() => process.exit(0));
+	connections.forEach(connection => {
+		connection.end();
+		connection.destroy();
+	});
+}
+
+process.on('SIGTERM', exit);
+process.on('SIGINT', exit);

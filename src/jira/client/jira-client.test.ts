@@ -142,14 +142,44 @@ describe("Test getting a jira client", () => {
 		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
 	});
 
+	it("Should return success response for the bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/devinfo/0.10/bulk").reply(405);
+		jiraNock.post("/rest/devinfo/0.10/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/devinfo/0.10/bulk"
+		});
+
+		const response = await client.devinfo.repository.update({
+			commits: [
+				{
+					author: {
+						email: "blarg@email.com",
+						name: "foo"
+					},
+					authorTimestamp: "Tue Oct 19 2021 11:52:08 GMT+1100",
+					displayId: "oajfojwe",
+					fileCount: 3,
+					hash: "hashihashhash",
+					id: "id",
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					message: "commit message",
+					url: "some-url",
+					updateSequenceId: 1234567890
+				}
+			]
+		});
+
+		expect(response).toMatchObject([{ result: "SKIP_REDIRECTED" }]);
+	});
+
 	describe("Reading encryptedSharedSecret", () => {
 		beforeEach(async ()=>{
-			const inst: Installation = await Installation.findOne({
+			const inst: Installation | null = await Installation.findOne({
 				where: {
 					clientKey: getHashedKey("client-key")
 				}
 			});
-			await inst.update({
+			await inst?.update({
 				encryptedSharedSecret: "new-encrypted-shared-secret"
 			});
 		});

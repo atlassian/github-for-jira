@@ -14,11 +14,10 @@ describe("github-oauth-router", () => {
 
 	describe("GithubOAuthCallbackGet", () => {
 
-		let locals = {};
 		let session = {};
 
-		beforeEach(() => {
-			locals = {};
+		beforeEach(async () => {
+			await new DatabaseStateCreator().create();
 			session = {
 				jiraHost,
 				fooState: `http://myredirect.com?jiraHost=${jiraHost}`
@@ -27,8 +26,7 @@ describe("github-oauth-router", () => {
 
 		const createApp = () => {
 			const app = express();
-			app.use(async (req: Request, res: Response, next: NextFunction) => {
-				res.locals = locals;
+			app.use(async (req: Request, _: Response, next: NextFunction) => {
 				req.addLogFields = jest.fn();
 				req.log = getLogger("test");
 				req.session = session;

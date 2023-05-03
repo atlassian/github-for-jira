@@ -4,12 +4,14 @@ import { RepoSyncState } from "models/reposyncstate";
 import { GitHubServerApp } from "models/github-server-app";
 import fs from "fs";
 import path from "path";
+import { getHashedKey } from "models/sequelize";
+import { v4 } from "uuid";
 
 interface CreatorResult {
-	installation: Installation,
-	subscription: Subscription,
-	gitHubServerApp?: GitHubServerApp,
-	repoSyncState?: RepoSyncState
+	installation: Installation;
+	subscription: Subscription;
+	repoSyncState: RepoSyncState | undefined;
+	gitHubServerApp: GitHubServerApp | undefined
 }
 
 export class DatabaseStateCreator {
@@ -87,14 +89,15 @@ export class DatabaseStateCreator {
 		const installation  = await Installation.create({
 			jiraHost,
 			encryptedSharedSecret: "secret",
-			clientKey: "client-key"
+			clientKey: getHashedKey("client-key"),
+			plainClientKey: "client-key"
 		});
 
 		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({
-			uuid: "329f2718-76c0-4ef8-83c6-66d7f1767e0d",
+			uuid: v4(),
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
-			gitHubClientId: "client-id",
+			gitHubClientId: "client-id" + Math.random(),
 			gitHubClientSecret: "client-secret",
 			webhookSecret: "webhook-secret",
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
@@ -134,10 +137,10 @@ export class DatabaseStateCreator {
 		}) : undefined;
 
 		return {
-			installation: await Installation.findByPk(installation.id),
-			subscription: await Subscription.findByPk(subscription.id),
-			gitHubServerApp: gitHubServerApp ? await GitHubServerApp.findByPk(gitHubServerApp.id) : undefined,
-			repoSyncState: repoSyncState ? await RepoSyncState.findByPk(repoSyncState.id) : undefined
+			installation: (await Installation.findByPk(installation.id))!,
+			subscription: (await Subscription.findByPk(subscription.id))!,
+			gitHubServerApp: (gitHubServerApp ? await GitHubServerApp.findByPk(gitHubServerApp.id) : undefined)!,
+			repoSyncState:(repoSyncState ? await RepoSyncState.findByPk(repoSyncState.id) : undefined)!
 		};
 	}
 

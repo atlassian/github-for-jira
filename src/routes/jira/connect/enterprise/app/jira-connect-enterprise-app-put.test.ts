@@ -1,5 +1,5 @@
 import { Installation } from "models/installation";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { RootRouter } from "routes/router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
@@ -20,13 +20,6 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		});
 
 		app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			req.params = { uuid };
-			next();
-		});
 		app.use(RootRouter);
 
 		jwt = encodeSymmetric({
@@ -72,7 +65,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should use existing privateKey if new privateKey is not passed in as body", async () => {
 
-		let existingApp = await GitHubServerApp.install({
+		let existingApp: GitHubServerApp = await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -104,9 +97,9 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			.send(payload)
 			.expect(202);
 
-		existingApp = await GitHubServerApp.findByPk(existingApp.id);
+		existingApp =(await GitHubServerApp.findByPk(existingApp.id))!;
 
-		expect(await existingApp.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
+		expect(await existingApp?.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
 	});
 
 	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {

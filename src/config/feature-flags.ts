@@ -15,13 +15,15 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
-	SHOW_RETRYABLE_ERRORS_MODAL = "show-retryable-errors-modal"
+	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
+	JIRA_ADMIN_CHECK = "jira-admin-check",
+	REMOVE_STALE_MESSAGES = "remove-stale-messages"
 }
 
 export enum StringFlags {
+	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
 	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
@@ -32,11 +34,11 @@ export enum StringFlags {
 export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
-	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
-	BACKFILL_PAGE_SIZE = "backfill-page-size"
+	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

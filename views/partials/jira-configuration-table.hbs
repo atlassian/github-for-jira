@@ -78,6 +78,7 @@
                         class="jiraConfiguration__errorSummary__btn"
                         href="#"
                         data-installation-id="{{connection.id}}"
+                        data-app-id="{{ ../gitHubAppId }}"
                         id="error-summary"
                 >
                   <span class="aui-icon aui-icon-small aui-iconfont-warning">Show Sync Warnings</span>
@@ -88,7 +89,7 @@
                   <div class="jiraConfiguration__info__backfillDate">
                       {{#if connection.backfillSince}}
                         <span>Backfilled from:</span>
-                        <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}">{{ connection.backfillSince }}</span>
+                        <span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="{{ toISOString connection.backfillSince }}"></span>
                         <span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
                       {{else}}
                         All commits backfilled
@@ -106,9 +107,9 @@
                 <div class="jiraConfiguration__retryContainer">
                   <button
                       class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                      data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
                       data-app-id="{{ ../gitHubAppId }}"
+                      data-connection-backfill-since="{{ toISOString connection.backfillSince }}"
                       id="restart-backfill"
                   >
                     &#x21bb;
@@ -146,9 +147,9 @@
                 <div class="jiraConfiguration__table__cell__settings__dropdownItem">
                   <button
                       class="sync-connection-link restart-backfill-button"
-                      data-jira-host="{{ ../host }}"
                       data-installation-id="{{ id }}"
                       data-app-id="{{ ../gitHubAppId }}"
+                      data-connection-backfill-since="{{ toISOString connection.backfillSince }}"
                       id="restart-backfill"
                   >
                     {{#unless ../isIncrementalBackfillEnabled}}
