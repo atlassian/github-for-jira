@@ -85,7 +85,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 
 	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, currentDeployDate, filteredDeployments, logger);
 	if (!lastSuccessfullyDeployedCommit) {
-		logger?.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
+		logger.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
 		return undefined;
 	}
 
