@@ -172,6 +172,8 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			mockGetRepoConfig();
 
@@ -188,7 +190,28 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					{ id: 1, environment: "foo42", sha: "111", created_at: futureDate, updated_at: futureDate } //should skip this as it is in the future
 				]);
 
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/3/statuses?per_page=100`)
+				.reply(200, [ { id: 301, state: "success" } ]);
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/2/statuses?per_page=100`)
+				.reply(200, [ { id: 201, state: "success" } ]);
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [ { id: 101, state: "success" } ]);
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/333...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-333" }, sha: "333" } ] });
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/222...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-222" }, sha: "222" } ] });
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/111...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-111" }, sha: "111" } ] });
+
 			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+
+			/*
+			 * This is needed for this test to be a valid test,
+			 * otherwise we can't setup the nocks for 333/222 in order to make test failed,
+			 * which is required for a valid test
+			 */
+			nockCleanAll();
 
 			expect(jiraPayload).toEqual({
 				deployments: [expect.objectContaining({
