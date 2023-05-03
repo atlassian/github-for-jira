@@ -12,8 +12,11 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
+jest.mock("config/feature-flags");
 
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
@@ -122,6 +125,9 @@ describe("webhook-receiver-post", () => {
 			}));
 		});
 		it("should pull cloud gitHubAppConfig with undefined UUID when using old webhook secrets", async () => {
+			when(jest.mocked(booleanFlag))
+				.calledWith(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS)
+				.mockResolvedValue(true);
 			req = createCloudReqForEventWithOldWebhookSecret("push");
 			const spy = jest.fn();
 			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);

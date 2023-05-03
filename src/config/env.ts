@@ -47,6 +47,8 @@ envCheck(
 	"APP_ID",
 	"APP_URL",
 	"APP_KEY",
+	// TODO: Remove after testing
+	"WEBHOOK_SECRET",
 	"WEBHOOK_SECRETS",
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
@@ -83,6 +85,7 @@ export interface EnvVars {
 	APP_ID: string;
 	APP_URL: string;
 	APP_KEY: string;
+	WEBHOOK_SECRET: string;
 	WEBHOOK_SECRETS: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;

@@ -17,6 +17,7 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -139,6 +140,9 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 };
 
 const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
+	// TODO: Remove after testing
+	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS);
+
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
@@ -155,17 +159,25 @@ const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array
 		 */
 		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
 	}
-	if (!envVars.WEBHOOK_SECRETS) {
-		throw new Error("Environment variable 'WEBHOOK_SECRETS' not defined");
-	}
-	try {
-		/**
-		 * The environment WEBHOOK_SECRETS should be a JSON array string in the format: ["key1", "key1"]
-		 * Basically an array of the new as well as any old webhook secrets
-		 */
-		const parsedWebhookSecrets = JSON.parse(envVars.WEBHOOK_SECRETS);
-		return { webhookSecrets: parsedWebhookSecrets };
-	} catch (e) {
-		throw new Error("Couldn't parse 'WEBHOOK_SECRETS', it is not properly defined!");
+	if (allowGhCloudWebhookSecrets) {
+		if (!envVars.WEBHOOK_SECRETS) {
+			throw new Error("Environment variable 'WEBHOOK_SECRETS' not defined");
+		}
+		try {
+			/**
+			 * The environment WEBHOOK_SECRETS should be a JSON array string in the format: ["key1", "key1"]
+			 * Basically an array of the new as well as any old webhook secrets
+			 */
+			const parsedWebhookSecrets = JSON.parse(envVars.WEBHOOK_SECRETS);
+			return { webhookSecrets: parsedWebhookSecrets };
+		} catch (e) {
+			throw new Error("Couldn't parse 'WEBHOOK_SECRETS', it is not properly defined!");
+		}
+	} else {
+		// TODO: Remove after testing
+		if (!envVars.WEBHOOK_SECRET) {
+			throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
+		}
+		return { webhookSecrets: [ envVars.WEBHOOK_SECRET ] };
 	}
 };
