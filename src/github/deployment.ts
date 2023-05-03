@@ -81,7 +81,7 @@ export const processDeployment = async (
 				commitCount: deploymentData.associations.filter(a => a.associationType === "commit").map(a => a.values.length).reduce((a, b) => a + b, 0)
 			} : {};
 		} catch (e) {
-			logger.warn("Something wrong extracting debugging information for rejected deployments");
+			logger.warn("Something wrong extracting debugging information for rejected deployments.");
 		}
 
 		logger.warn({
