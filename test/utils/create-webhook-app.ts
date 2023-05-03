@@ -15,7 +15,6 @@ export type WebhookApp = Express & {
 }
 
 export const createWebhookApp = async (): Promise<WebhookApp> => {
-	const upToDateWebhookSecret = envVars.WEBHOOK_SECRET;
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const app: WebhookApp = express() as any;
 	app.use(RootRouter);
@@ -24,7 +23,7 @@ export const createWebhookApp = async (): Promise<WebhookApp> => {
 			.post("/github/webhooks")
 			.send(event.payload)
 			.set("x-github-event", event.name)
-			.set("x-hub-signature-256", createHash(JSON.stringify(event.payload), upToDateWebhookSecret))
+			.set("x-hub-signature-256", createHash(JSON.stringify(event.payload), envVars.WEBHOOK_SECRET))
 			.set("x-github-delivery", uuid())
 			.set("content-type", "application/json")
 			.expect(204);
