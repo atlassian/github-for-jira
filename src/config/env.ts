@@ -31,6 +31,13 @@ const transforms: Transforms<EnvVars> = {
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 		return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 	},
+	WEBHOOK_SECRETS: (value?: string) => {
+		try {
+			return value ? JSON.parse(value) : undefined;
+		} catch {
+			return undefined;
+		}
+	},
 	GITHUB_REPO_URL: (value?: string) => value || "https://github.com/atlassian/github-for-jira"
 };
 
@@ -86,7 +93,7 @@ export interface EnvVars {
 	APP_URL: string;
 	APP_KEY: string;
 	WEBHOOK_SECRET: string;
-	WEBHOOK_SECRETS: string;
+	WEBHOOK_SECRETS: Array<string>;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
 	DATABASE_URL: string;

@@ -21,7 +21,9 @@ jest.mock("config/feature-flags");
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
 const GHES_WEBHOOK_SECRET = "webhookSecret";
-const CLOUD_WEBHOOK_SECRETS = JSON.parse(envVars.WEBHOOK_SECRETS);
+// TODO: remove after testing
+const CLOUD_WEBHOOK_SECRET = envVars.WEBHOOK_SECRET;
+const CLOUD_WEBHOOK_SECRETS = envVars.WEBHOOK_SECRETS;
 
 const injectRawBodyToReq = (req: any) => {
 	req.rawBody = JSON.stringify(req.body);
@@ -323,7 +325,7 @@ const createReqWithInvalidSignature = (event: string, uuid?: string) => {
 
 const createCloudReqForEvent = (event: string, action?: string) => {
 	return createReqForEvent({
-		event, action, webhookSecret: CLOUD_WEBHOOK_SECRETS[0]
+		event, action, webhookSecret: CLOUD_WEBHOOK_SECRET
 	});
 };
 

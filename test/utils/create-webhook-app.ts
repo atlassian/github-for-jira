@@ -15,7 +15,7 @@ export type WebhookApp = Express & {
 }
 
 export const createWebhookApp = async (): Promise<WebhookApp> => {
-	const upToDateWebhookSecret = JSON.parse(envVars.WEBHOOK_SECRETS)[0];
+	const upToDateWebhookSecret = envVars.WEBHOOK_SECRET;
 	/* eslint-disable @typescript-eslint/no-explicit-any */
 	const app: WebhookApp = express() as any;
 	app.use(RootRouter);
