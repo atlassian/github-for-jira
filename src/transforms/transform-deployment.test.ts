@@ -9,6 +9,7 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { cleanAll  as nockCleanAll } from "nock";
 
 jest.mock("services/user-config-service");
 
@@ -165,6 +166,99 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			gitHubClient = new GitHubInstallationClient(getInstallationId(DatabaseStateCreator.GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 
 			await new DatabaseStateCreator().create();
+		});
+
+		it("should skip comparing to base commit when all deployments in the future", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			mockGetRepoConfig();
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, { ...owner, commit: { message: "testing" } });
+
+			const currentDate = new Date(deployment_status.payload.deployment_status.updated_at);
+			const futureDate = new Date(currentDate.getTime() + 1000);
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200, [
+					{ id: 3, environment: "foo42", sha: "333", created_at: futureDate, updated_at: futureDate }, //should skip this as it is in the furture
+					{ id: 2, environment: "foo42", sha: "222", created_at: futureDate, updated_at: futureDate }, //should skip this as it is in the future
+					{ id: 1, environment: "foo42", sha: "111", created_at: futureDate, updated_at: futureDate } //should skip this as it is in the future
+				]);
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload).toEqual({
+				deployments: [expect.objectContaining({
+					associations: expect.arrayContaining([{
+						associationType: "issueIdOrKeys",
+						values: [ "ABC-123" ]
+					}])
+				})]
+			});
+
+		});
+
+		it("should NOT use deployments new than the current processing one", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			mockGetRepoConfig();
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, { ...owner, commit: { message: "testing" } });
+
+			const currentDate = new Date(deployment_status.payload.deployment_status.updated_at);
+			const futureDate = new Date(currentDate.getTime() + 1000);
+			const pastDate = new Date(currentDate.getTime() - 1000);
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments?environment=foo42&per_page=10`)
+				.reply(200, [
+					{ id: 3, environment: "foo42", sha: "333", created_at: futureDate, updated_at: futureDate }, //should ignore this future one
+					{ id: 2, environment: "foo42", sha: "222", created_at: pastDate, updated_at: futureDate }, //deployment is updated at future, also ignore this
+					{ id: 1, environment: "foo42", sha: "111", created_at: pastDate, updated_at: pastDate } //only compare to the past deployment
+				]);
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/3/statuses?per_page=100`)
+				.reply(200, [ { id: 301, state: "success" } ]);
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/2/statuses?per_page=100`)
+				.reply(200, [ { id: 201, state: "success" } ]);
+			githubNock.get(`/repos/${owner.login}/${repoName}/deployments/1/statuses?per_page=100`)
+				.reply(200, [ { id: 101, state: "success" } ]);
+
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/333...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-333" }, sha: "333" } ] });
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/222...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-222" }, sha: "222" } ] });
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/111...${deployment_status.payload.deployment.sha}`)
+				.reply(200, { commits: [ { commit: { message: "ABC-111" }, sha: "111" } ] });
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+
+			/*
+			 * This is needed for this test to be a valid test,
+			 * otherwise we can't setup the nocks for 333/222 in order to make test failed,
+			 * which is required for a valid test
+			 */
+			nockCleanAll();
+
+			expect(jiraPayload).toEqual({
+				deployments: [expect.objectContaining({
+					associations: expect.arrayContaining([{
+						associationType: "issueIdOrKeys",
+						values: [
+							"ABC-123",
+							"ABC-111"
+						]
+					}])
+				})]
+			});
+
 		});
 
 		it(`uses user config to associate services`, async () => {
