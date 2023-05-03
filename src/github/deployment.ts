@@ -70,8 +70,23 @@ export const processDeployment = async (
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
 	if (result.rejectedDeployments?.length) {
+
+		let extraDebugInfo = {};
+		try {
+			const deploymentData = jiraPayload.deployments.length > 0 ? jiraPayload.deployments[0] : undefined;
+			extraDebugInfo = deploymentData ? {
+				issueKeysCount: deploymentData.associations.filter(a => a.associationType === "issueKeys").map(a => a.values.length).reduce((a, b) => a + b, 0),
+				issueIdOrKeysCount: deploymentData.associations.filter(a => a.associationType === "issueIdOrKeys").map(a => a.values.length).reduce((a, b) => a + b, 0),
+				serviceIdOrKeysCount: deploymentData.associations.filter(a => a.associationType === "serviceIdOrKeys").map(a => a.values.length).reduce((a, b) => a + b, 0),
+				commitCount: deploymentData.associations.filter(a => a.associationType === "commit").map(a => a.values.length).reduce((a, b) => a + b, 0)
+			} : {};
+		} catch (e) {
+			logger.warn("Something wrong extracting debugging information for rejected deployments");
+		}
+
 		logger.warn({
-			rejectedDeployments: result.rejectedDeployments
+			rejectedDeployments: result.rejectedDeployments,
+			...extraDebugInfo
 		}, "Jira API rejected deployment!");
 	}
 
