@@ -17,7 +17,7 @@ import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -216,15 +216,45 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				delete: (transformedRepositoryId: TransformedRepositoryId) =>
-					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
-						params: {
-							_updateSequenceId: Date.now()
-						},
-						urlParams: {
-							transformedRepositoryId
-						}
-					}),
+				delete: async (repositoryId: number, gitHubBaseUrl?: string) => {
+					logger.info("repos", gitHubBaseUrl);
+					const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
+					// logger.info("transformedRepositoryIdD", transformedRepositoryId);
+
+					return Promise.all([
+						// We are sending devinfo events with the property "transformedRepositoryId", so we delete by this property.
+						instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}",
+							{
+								params: {
+									_updateSequenceId: Date.now()
+								},
+								urlParams: {
+									transformedRepositoryId
+								}
+							}
+						),
+
+						// We are sending build events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/builds/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						),
+
+						// We are sending deployments events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/deployments/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						)
+					]);
+				},
 				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 
@@ -283,13 +313,6 @@ export const getJiraClient = async (
 
 				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
-			},
-			delete: async (repositoryId: string) => {
-				return await instance.delete("/rest/builds/0.1/bulkByProperties", {
-					params: {
-						repositoryId
-					}
-				});
 			}
 		},
 		deployment: {
@@ -320,13 +343,6 @@ export const getJiraClient = async (
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
 				};
-			},
-			delete: async (repositoryId: string) => {
-				return await instance.delete("/rest/deployments/0.1/bulkByProperties", {
-					params: {
-						repositoryId
-					}
-				});
 			}
 		},
 		remoteLink: {
