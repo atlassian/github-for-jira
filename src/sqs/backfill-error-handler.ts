@@ -11,6 +11,7 @@ import { SQS } from "aws-sdk";
 import {
 	GithubClientInvalidPermissionsError, GithubClientNotFoundError, GithubClientRateLimitingError
 } from "~/src/github/client/github-client-errors";
+import { JiraClientError } from "~/src/jira/client/axios";
 
 const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
@@ -48,6 +49,14 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof GithubClientNotFoundError) {
 		log.info("Repo was deleted, marking the task as completed");
+		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
+		return {
+			isFailure: false
+		};
+	}
+
+	if (cause instanceof JiraClientError && cause.status === 404) {
+		log.info("Jira instance not found, possibly renamed/redirected. Mark this task as complete");
 		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
 			isFailure: false

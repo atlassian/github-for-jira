@@ -263,4 +263,20 @@ describe("backfillErrorHandler", () => {
 		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
 		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
 	});
+
+	it("jira not found error marks the task as done and continues", async () => {
+		const result = await backfillErrorHandler(sendMessageMock)(
+			new TaskError(task, new JiraClientError("not found", { } as unknown as AxiosError, 404)),
+			createContext(3, false)
+		);
+
+		expect(result).toEqual({
+			isFailure: false
+		});
+		expect(sendMessageMock.mock.calls[0][0]).toEqual(
+			{ installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost }
+		);
+		expect(sendMessageMock.mock.calls[0][1]).toEqual(0);
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.commitStatus).toEqual("complete");
+	});
 });
