@@ -12,7 +12,7 @@ describe("github-client-interceptors", () => {
 		let error: Error;
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
-			await client.getMainPage(1000);
+			await client.getPage(1000);
 		} catch (err) {
 			error = err;
 		}
@@ -28,7 +28,7 @@ describe("github-client-interceptors", () => {
 		let error: Error;
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
-			await client.getMainPage(1000);
+			await client.getPage(1000);
 		} catch (err) {
 			error = err;
 		}
