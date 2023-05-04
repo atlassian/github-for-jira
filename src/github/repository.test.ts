@@ -13,8 +13,8 @@ jest.mock("~/src/sync/sync-utils");
 
 describe("deleteRepositoryWebhookHandler", () => {
 	let subscription;
-	beforeEach(async () => {
 
+	beforeEach(async () => {
 		subscription = await Subscription.create({
 			id: 123,
 			gitHubInstallationId: 123,
@@ -69,6 +69,7 @@ describe("deleteRepositoryWebhookHandler", () => {
 		subscription);
 
 		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][0]).toEqual(123);
+		expect(jiraClientDevinfoRepositoryDeleteMock.mock.calls[0][1]).toEqual("https://github.mydomain.com");
 	});
 });
 

@@ -50,8 +50,8 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		gitHubInstallationId
 	});
 
-	if (!context.payload.repository?.id && !context.gitHubAppConfig?.gitHubBaseUrl) {
-		context.log.warn("Cannot delete repository. Missing repository ID or GitHub base URL.");
+	if (!context.payload.repository?.id) {
+		context.log.warn("Cannot delete repository. Missing repository ID");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 		return;
 	}
@@ -65,10 +65,8 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 			repositoryId,  context.gitHubAppConfig?.gitHubBaseUrl
 		);
 
-		await Promise.all([
-			RepoSyncState.deleteRepoForSubscription(subscription, repositoryId),
-			updateRepoCount(subscription)
-		]);
+		await	RepoSyncState.deleteRepoForSubscription(subscription, repositoryId);
+		await	updateRepoCount(subscription);
 
 		webhookProcessComplete(context, jiraResponse?.status, subscription.jiraHost);
 	} catch (err) {
