@@ -17,6 +17,8 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import Logger from "bunyan";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -31,10 +33,23 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(request.rawBody, webhookSecret);
+		// TODO: remove this later
+		const sender = payload.sender.login;
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(logger, sender, uuid);
+		const isVerified = webhookSecrets.some((secret, index) => {
+			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
+			/**
+			 * The latest updated webhook secret will be at index 0,
+			 * Once we stop receiving logs with index other than 0,
+			 * can then completely remove the old webhook secrets.
+			 */
+			if (matchesSignature) {
+				logger.info({ index }, "Matched webhook index");
+			}
+			return matchesSignature;
+		});
 
-		if (verification != signatureSHA256) {
+		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
 			response.status(400).send("signature does not match event payload and secret");
 			return;
@@ -127,7 +142,15 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
+const getWebhookSecrets = async (logger: Logger, sender: string, uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
+	/**
+	 * We do not have jiraHost at this point,
+	 * so instead using the github user login name as a key for the FF
+	 *
+	 * TODO: Remove after testing
+	 */
+	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, sender);
+	logger.info({ allowGhCloudWebhookSecrets }, "Feature Flag for allowing multiple webhooks");
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
@@ -138,10 +161,18 @@ const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string,
 			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
 		}
 		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret(installation.jiraHost);
-		return { webhookSecret, gitHubServerApp };
+		/**
+		 * If we ever need to rotate the webhook secrets for Enterprise Customers,
+		 * we can add it in the array: ` [ webhookSecret ]`
+		 */
+		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
 	}
-	if (!envVars.WEBHOOK_SECRET) {
-		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
-	}
-	return { webhookSecret: envVars.WEBHOOK_SECRET };
+
+	return {
+		/**
+		 * The environment WEBHOOK_SECRETS is a JSON array string in the format: ["key1", "key1"]
+		 * Basically an array of the new as well as any old webhook secrets
+		 */
+		webhookSecrets: allowGhCloudWebhookSecrets ? envVars.WEBHOOK_SECRETS : [ envVars.WEBHOOK_SECRET ]
+	};
 };
