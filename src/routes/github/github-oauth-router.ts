@@ -237,7 +237,7 @@ const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, 
 	}
 	const jiraHost = url.searchParams.get("jiraHost");
 	if (!jiraHost) {
-		req.log.warn("jiraHost is missing in state redirect uri");
+		req.log.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
 	}
