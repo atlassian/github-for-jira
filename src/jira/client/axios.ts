@@ -47,6 +47,11 @@ export const getJiraErrorMessages = (status: number) => {
 /**
  * Middleware to enhance failed requests in Jira.
  */
+const API_PATHS_TO_IGNORE_ON_405 = [
+	"/rest/devinfo/0.10/bulk",
+	"/rest/builds/0.1/bulk",
+	"/rest/deployments/0.1/bulk"
+];
 const getErrorMiddleware = (logger: Logger) =>
 	/**
 	 * Potentially enrich the promise's rejection.
@@ -62,9 +67,9 @@ const getErrorMiddleware = (logger: Logger) =>
 		 * This GET request is now failing with a 405 response, which is not an error on the app side
 		 * So treating this as a non-error case
 		 */
-		if (error?.request?.method === "GET" && error?.request?.path === "/rest/devinfo/0.10/bulk") {
-			logger.warn({ error } , "Ignoring the error when redirected to GET /rest/deployments/0.1/bulk");
-			return Promise.resolve({ result: "SKIP_REDIRECTED" });
+		if (error?.request?.method === "GET" && API_PATHS_TO_IGNORE_ON_405.includes(error?.request?.path)) {
+			logger.warn({ error } , "Ignoring the error when redirected to GET api on another jira site");
+			return Promise.resolve({ status: 200, result: "SKIP_REDIRECTED" });
 		}
 
 		const status = error?.response?.status;
