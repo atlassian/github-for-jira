@@ -1,4 +1,4 @@
-import { getAxiosInstance } from "./axios";
+import { getAxiosInstance, JiraClientError } from "./axios";
 import { getLogger } from "config/logger";
 import { statsd } from "config/statsd";
 
@@ -104,10 +104,12 @@ describe("Jira axios instance", () => {
 		expect(error?.message).toEqual("Error executing Axios Request HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.");
 	});
 
-	it("should return 404 from failed request if Jira has been renamed", async () => {
+	it("should return 404 from failed request if Jira has been redirected and get 405 on GET request", async () => {
+
 		const requestPayload = "TestRequestPayload";
-		jiraNock.post("/foo/bar", requestPayload).reply(405);
-		jiraNock.get("/status").reply(302);
+
+		jiraNock.post("/foo/bar", requestPayload) .reply(302, "redirected", { "location": `/foo/bar2` });
+		jiraNock.get("/foo/bar2") .reply(405, "Method not allow");
 
 		let error;
 		try {
@@ -116,6 +118,7 @@ describe("Jira axios instance", () => {
 			error = e;
 		}
 
+		expect(error instanceof JiraClientError).toBe(true);
 		expect(error?.status).toEqual(404);
 		expect(error?.message).toEqual("Error executing Axios Request HTTP 404 - Bad REST path, or Jira instance not found, renamed or temporarily suspended.");
 	});
