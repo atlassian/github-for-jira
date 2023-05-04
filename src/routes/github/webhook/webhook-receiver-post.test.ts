@@ -12,17 +12,12 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
-jest.mock("config/feature-flags");
 
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
 const GHES_WEBHOOK_SECRET = "webhookSecret";
-// TODO: remove after testing
-const CLOUD_WEBHOOK_SECRET = envVars.WEBHOOK_SECRET;
 const CLOUD_WEBHOOK_SECRETS = envVars.WEBHOOK_SECRETS;
 
 const injectRawBodyToReq = (req: any) => {
@@ -127,9 +122,6 @@ describe("webhook-receiver-post", () => {
 			}));
 		});
 		it("should pull cloud gitHubAppConfig with undefined UUID when using old webhook secrets", async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, expect.anything())
-				.mockResolvedValue(true);
 			req = createCloudReqForEventWithOldWebhookSecret("push");
 			const spy = jest.fn();
 			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
@@ -325,7 +317,7 @@ const createReqWithInvalidSignature = (event: string, uuid?: string) => {
 
 const createCloudReqForEvent = (event: string, action?: string) => {
 	return createReqForEvent({
-		event, action, webhookSecret: CLOUD_WEBHOOK_SECRET
+		event, action, webhookSecret: CLOUD_WEBHOOK_SECRETS[0]
 	});
 };
 
@@ -350,8 +342,7 @@ const createReqForEvent = (
 	{ event, action, uuid, webhookSecret, signature }:
 	{event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string }
 ) => {
-	const sender = { login: "test-user" };
-	const body = action ? { sender, action } : { sender };
+	const body = action ? { action } : {};
 
 	const req = {
 		headers: {

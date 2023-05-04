@@ -6,8 +6,8 @@
     "APP_ID": {
       "description": "the ID of the GitHub App"
     },
-    "WEBHOOK_SECRET": {
-      "description": "the secret configured for the GitHub App"
+    "WEBHOOK_SECRETS": {
+      "description": "the secrets configured for the GitHub App"
     },
     "LOG_FORMAT": {
       "description": "https://probot.github.io/docs/logging/#log-formats",
