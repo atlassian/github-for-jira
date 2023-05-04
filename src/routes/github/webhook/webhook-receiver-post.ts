@@ -32,7 +32,9 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
+		// TODO: remove this later
+		const sender = payload.sender.login;
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(sender, uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
 			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
 			/**
@@ -139,10 +141,14 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
-	// TODO: Remove after testing
-	const allowedHashedJiraHost = "abdc4d04cf8aaae51efaed35ab8021e2b0d560bd334eb30f6533db9b86e3eaa1"; // Hashed value for https://kmaharjan4.atlassian.net
-	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, allowedHashedJiraHost);
+const getWebhookSecrets = async (sender: string, uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
+	/**
+	 * We do not have jiraHost at this point,
+	 * so instead using the github user login name as a key for the FF
+	 *
+	 * TODO: Remove after testing
+	 */
+	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, sender);
 
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
