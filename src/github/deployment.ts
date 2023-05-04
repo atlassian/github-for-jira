@@ -68,7 +68,6 @@ export const processDeployment = async (
 		logger
 	);
 
-
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
 	if (result.rejectedDeployments?.length) {
