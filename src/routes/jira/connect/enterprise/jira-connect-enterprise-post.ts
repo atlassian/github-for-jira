@@ -107,7 +107,12 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
-		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+
+		// We want to simulate a production-like call, that's why call real endpoint with
+		// some fake Auth header
+		const response = await client.getPage(TIMEOUT_PERIOD_MS, "/api/v3/rate_limit", {
+			authorization: "Bearer ghs_fake0fake1fake2w1xVgkCPL2vk8L52AeEkv"
+		});
 
 		if (!isResponseFromGhe(req.log, response)) {
 			req.log.warn("Received OK response, but not GHE server");
