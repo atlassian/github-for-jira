@@ -115,7 +115,7 @@ describe("anonymous client", () => {
 			.matchHeader("ApiKeyHeader", "super-key")
 			.reply(200);
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
-		const response = await client.getMainPage(1000);
+		const response = await client.getPage(1000);
 		expect(response).toBeDefined();
 	});
 })
