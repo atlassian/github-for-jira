@@ -17,8 +17,6 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import Logger from "bunyan";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -33,9 +31,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	});
 	logger.info("Webhook received");
 	try {
-		// TODO: remove this later
-		const sender = payload.sender.login;
-		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(logger, sender, uuid);
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
 			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
 			/**
@@ -142,15 +138,7 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecrets = async (logger: Logger, sender: string, uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
-	/**
-	 * We do not have jiraHost at this point,
-	 * so instead using the github user login name as a key for the FF
-	 *
-	 * TODO: Remove after testing
-	 */
-	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, sender);
-	logger.info({ allowGhCloudWebhookSecrets }, "Feature Flag for allowing multiple webhooks");
+const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
@@ -173,6 +161,6 @@ const getWebhookSecrets = async (logger: Logger, sender: string, uuid?: string):
 		 * The environment WEBHOOK_SECRETS is a JSON array string in the format: ["key1", "key1"]
 		 * Basically an array of the new as well as any old webhook secrets
 		 */
-		webhookSecrets: allowGhCloudWebhookSecrets ? envVars.WEBHOOK_SECRETS : [ envVars.WEBHOOK_SECRET ]
+		webhookSecrets: envVars.WEBHOOK_SECRETS
 	};
 };
