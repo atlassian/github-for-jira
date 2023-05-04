@@ -141,7 +141,8 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 
 const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
 	// TODO: Remove after testing
-	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS);
+	const allowedHashedJiraHost = "abdc4d04cf8aaae51efaed35ab8021e2b0d560bd334eb30f6533db9b86e3eaa1"; // Hashed value for https://kmaharjan4.atlassian.net
+	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, allowedHashedJiraHost);
 
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);

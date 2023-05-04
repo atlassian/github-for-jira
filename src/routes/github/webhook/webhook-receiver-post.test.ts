@@ -128,7 +128,7 @@ describe("webhook-receiver-post", () => {
 		});
 		it("should pull cloud gitHubAppConfig with undefined UUID when using old webhook secrets", async () => {
 			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS)
+				.calledWith(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, expect.anything())
 				.mockResolvedValue(true);
 			req = createCloudReqForEventWithOldWebhookSecret("push");
 			const spy = jest.fn();
