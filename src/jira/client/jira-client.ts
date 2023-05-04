@@ -218,7 +218,6 @@ export const getJiraClient = async (
 			repository: {
 				delete: async (repositoryId: number, gitHubBaseUrl?: string) => {
 					const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
-
 					return Promise.all([
 						// We are sending devinfo events with the property "transformedRepositoryId", so we delete by this property.
 						instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}",

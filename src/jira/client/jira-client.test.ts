@@ -195,15 +195,10 @@ describe("Test getting a jira client", () => {
 	});
 
 	it("Should delete devinfo, builds, and deployments for a repository", async () => {
-		jiraNock.delete("/rest/devinfo/0.10/repository/6769746875626261736575726c74657374636f6d-123").query({
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			params: {
-				_updateSequenceId: Date.now = jest.fn(() => 1487076708000)
-			},
-			urlParams: {
-				transformedRepositoryId: "6769746875626261736575726c74657374636f6d-123"
-			}
+		const currentMockDate = Date.now = jest.fn(() => 1487076708000);
+
+		jiraNock.delete("/rest/devinfo/0.10/repository/6769746875626261736574657374636f6d-123").query({
+			_updateSequenceId: currentMockDate()
 		}).reply(202);
 
 		jiraNock.delete("/rest/builds/0.1/bulkByProperties").query({

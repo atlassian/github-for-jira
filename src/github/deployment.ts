@@ -38,14 +38,13 @@ export const processDeployment = async (
 		jiraHost,
 		webhookReceived: webhookReceivedDate
 	});
-	logger.info("HERE");
+
 	if (await isBlocked(gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
 
 	logger.info("processing deployment message!");
-
 
 	const metrics = {
 		trigger: "deployment_queue"
@@ -69,7 +68,6 @@ export const processDeployment = async (
 		logger
 	);
 
-	logger.info("HERE");
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
