@@ -18,6 +18,7 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import Logger from "bunyan";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -34,7 +35,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	try {
 		// TODO: remove this later
 		const sender = payload.sender.login;
-		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(sender, uuid);
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(logger, sender, uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
 			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
 			/**
@@ -141,7 +142,7 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecrets = async (sender: string, uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
+const getWebhookSecrets = async (logger: Logger, sender: string, uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
 	/**
 	 * We do not have jiraHost at this point,
 	 * so instead using the github user login name as a key for the FF
@@ -149,7 +150,7 @@ const getWebhookSecrets = async (sender: string, uuid?: string): Promise<{ webho
 	 * TODO: Remove after testing
 	 */
 	const allowGhCloudWebhookSecrets = await booleanFlag(BooleanFlags.ALLOW_GH_CLOUD_WEBHOOKS_SECRETS, sender);
-
+	logger.info({ allowGhCloudWebhookSecrets }, "Feature Flag for allowing multiple webhooks");
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
