@@ -350,7 +350,8 @@ const createReqForEvent = (
 	{ event, action, uuid, webhookSecret, signature }:
 	{event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string }
 ) => {
-	const body = action ? { action } : {};
+	const sender = { login: "test-user" };
+	const body = action ? { sender, action } : { sender };
 
 	const req = {
 		headers: {
