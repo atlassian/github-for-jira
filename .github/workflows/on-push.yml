@@ -32,6 +32,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
+      - run: yarn run playwright install
       - name: create .env file
         run: |
           echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-test.pem

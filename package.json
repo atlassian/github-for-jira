@@ -109,7 +109,7 @@
 	"devDependencies": {
 		"@octokit/rest": "16.43.2",
 		"@octokit/webhooks": "6.3.2",
-		"@playwright/test": "^1.25.1",
+		"@playwright/test": "^1.33.0",
 		"@types/bunyan": "^1.8.6",
 		"@types/bunyan-format": "^0.2.4",
 		"@types/cache-manager": "^3.4.0",
