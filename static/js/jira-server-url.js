@@ -48,7 +48,11 @@ AJS.formValidation.register(['api-key-header'], (field) => {
 AJS.formValidation.register(['api-key-header-value'], (field) => {
 	const inputStr = field.el.value;
 	if (gheApiKeyHeaderElt.value.trim().length === 0) {
-		field.validate();
+		if (inputStr.trim().length === 0) {
+			field.validate();
+		} else {
+			field.invalidate(AJS.format('Cannot be used without HTTP header name.'));
+		}
 	} else if (inputStr.trim().length === 0) {
 		field.invalidate(AJS.format('Cannot be empty.'));
 	} else if (inputStr.trim().length > 8096) {
