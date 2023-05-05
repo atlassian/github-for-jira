@@ -95,7 +95,7 @@ describe("GET /jira/connect/enterprise", () => {
 				.query({
 					jwt: await generateJwt()
 				});
-			expect(response.text).toContain(`var knownHttpHeadersLowerCase = ["`);
+			expect(response.text).toContain(`window.knownHttpHeadersLowerCase = ["`);
 			expect(response.text).toContain(`"sec-fetch-dest"`);
 		});
 	});
