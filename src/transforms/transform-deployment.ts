@@ -318,8 +318,8 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 				url: deployment_status.target_url || deployment.url
 			},
 			environment: {
-				id: String(deployment_status.id || deployment_status.environment),
-				displayName: String(deployment_status.environment || deployment_status.id),
+				id: deployment_status.environment,
+				displayName: deployment_status.environment,
 				type: environment
 			},
 			associations
