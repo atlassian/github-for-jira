@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { chain, groupBy } from "lodash";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { getAllKnownHeaders } from "utils/http-headers";
 
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
@@ -33,7 +34,8 @@ export const JiraConnectEnterpriseGet = async (
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
-				installationId: res.locals.installation.id
+				installationId: res.locals.installation.id,
+				knownHttpHeadersLowerCase: getAllKnownHeaders()
 			});
 		}
 

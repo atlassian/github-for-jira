@@ -288,6 +288,13 @@ export const isUniquelyGitHubServerHeader = (httpHeader: string) => {
 	return sanitisedHeader.includes("x-github");
 };
 
+/**
+ * !Important: the returned headers are trimmed and in lower-case!
+ */
+export const getAllKnownHeaders = () => {
+	return [...knownSafe, ...knownGitHubSafe, ...knownSensitive];
+};
+
 export const canBeUsedAsApiKeyHeader = (httpHeader: string) => {
 	const sanitisedHeader = httpHeader.trim().toLowerCase();
 	const knownHeader = knownSafe.has(sanitisedHeader) || knownSensitive.has(sanitisedHeader) || knownGitHubSafe.has(sanitisedHeader);

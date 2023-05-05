@@ -34,6 +34,8 @@ AJS.formValidation.register(['api-key-header'], (field) => {
 	if (inputStr.trim().length) {
 		if (inputStr.trim().length > 1024) {
 			field.invalidate(AJS.format('Max length is 1,024 characters.'));
+		} else if (window.knownHttpHeadersLowerCase.indexOf(inputStr.trim().toLowerCase()) >= 0) {
+			field.invalidate(AJS.format(inputStr.trim() + ' is a reserved string and cannot be used.'));
 		} else {
 			field.validate();
 		}

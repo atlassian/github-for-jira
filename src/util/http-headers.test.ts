@@ -1,4 +1,9 @@
-import { canBeUsedAsApiKeyHeader, canLogHeader, isUniquelyGitHubServerHeader } from "./http-headers";
+import {
+	canBeUsedAsApiKeyHeader,
+	canLogHeader,
+	getAllKnownHeaders,
+	isUniquelyGitHubServerHeader
+} from "./http-headers";
 
 describe("http-headers", () => {
 
@@ -45,6 +50,20 @@ describe("http-headers", () => {
 
 		it.each(["foo_auth", "x-my-header"])("%s header can be used as an API key header", (header) =>
 			expect(canBeUsedAsApiKeyHeader(header)).toBeTruthy()
+		);
+	});
+
+	describe("getAllKnownHeaders", () => {
+		it.each([
+			"content-type", "Accept-encoding", "x-forwarded-for",
+			"X-github-delivery", "x-github-event", "x-github-hook-id",
+			"authorization", "cookie", "CooKie", "set-cookie"
+		])("%s header is known", (header) =>
+			expect(getAllKnownHeaders().indexOf(header.trim().toLowerCase()) + 1).toBeGreaterThan(0)
+		);
+
+		it.each(["foo_auth", "x-my-header"])("%s header can be used as an API key header", (header) =>
+			expect(getAllKnownHeaders().indexOf(header) + 1).toBeLessThan(1)
 		);
 	});
 
