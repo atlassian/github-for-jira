@@ -18,6 +18,32 @@ If we use the Jira issue keys (`JIRA-*`) in the commit messages as shown in the 
 
 To create deployments as a part of a GitHub Actions workflow, you can use [this deployment action](https://github.com/chrnorm/deployment-action), for example. Use the action `chrnorm/deployment-action@releases/v1` to create a deployment and don't forget to use the `chrnorm/deployment-status@releases/v1` to update the state of a deployment.
 
+Example:
+
+```yaml
+name: Deploy
+on: [push]
+jobs:
+  deploy:
+    name: Deploy my app
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+    steps:
+      - uses: actions/checkout@v1
+      - uses: chrnorm/deployment-action@v2
+        name: Create GitHub deployment
+        id: deployment
+        with:
+          token: '${{ github.token }}'
+          # This will be displayed bellow the "Pipeline" column.
+          # It will be usefull if you have different app deployed for the same Jira issue
+          task: 'deploy:${{ github.event.repository.name }}'
+          environment: production
+          # You can choose to display last commit title as "deployment description"
+          description: '${{ github.event.head_commit.message }}'
+```
+
 **The GitHub for Jira app only listens to `deployment_status` events**. Just creating a deployment via the [create deployment API](https://docs.github.com/en/rest/reference/repos#create-a-deployment) (or the `chrnorm/deployment-action@releases/v1` action) isn't enough. After creating a deployment you need to call the [create deployment status API](https://docs.github.com/en/rest/reference/repos#create-a-deployment-status) (or the `chrnorm/deployment-status@releases/v1` action) at least once to provide a status for that deployment (success, failure, pending, ...).
 
 
