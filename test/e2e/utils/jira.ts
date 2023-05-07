@@ -62,7 +62,12 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 
 export const jiraAddProject = async (page: Page): Promise<Page> => {
 	await page.goto(data.urls.projects);
-	await (page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']")).click();
+	const createProjectButtonV3 = page.locator("button[data-testid='global-pages.directories.projects-directory-v3.create-projects-button']");
+	if (await createProjectButtonV3.isVisible()) {
+		createProjectButtonV3.click()
+	} else {
+		await (page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']")).click();
+	}
 	await (page.locator("button[aria-label='Scrum']")).click();
 	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']")).click();
 	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']")).click();
