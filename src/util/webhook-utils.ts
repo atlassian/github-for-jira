@@ -9,6 +9,7 @@ export const getCurrentTime = () => Date.now();
 export const emitWebhookProcessedMetrics = (
 	webhookReceivedTime: number,
 	webhookName: string,
+	jiraHost: string,
 	logger: Logger = getLogger("webhook-metrics"),
 	status?: number,
 	gitHubAppId?: number
@@ -34,13 +35,14 @@ export const emitWebhookProcessedMetrics = (
 				gitHubProduct
 			};
 
-			statsd.increment(metricWebhooks.webhookProcessed, tags);
+			statsd.increment(metricWebhooks.webhookProcessed, tags, { jiraHost });
 
 			// send metrics without gsd_histogram tag so we still have .count, .p99, .median etc
 			statsd.histogram(
 				metricWebhooks.webhookProcessingTimes,
 				timeToProcessWebhookEvent,
-				tags
+				tags,
+				{ jiraHost }
 			);
 
 			const histogramBuckets =
@@ -52,7 +54,8 @@ export const emitWebhookProcessedMetrics = (
 			statsd.histogram(
 				metricWebhooks.webhookLatency,
 				timeToProcessWebhookEvent,
-				tags
+				tags,
+				{ jiraHost }
 			);
 
 			return timeToProcessWebhookEvent;
@@ -75,13 +78,13 @@ export const emitWebhookProcessedMetrics = (
  * Emits metric for failed webhook
  * @param webhookName
  */
-export const emitWebhookFailedMetrics = (webhookName: string) => {
+export const emitWebhookFailedMetrics = (webhookName: string, jiraHost: string | undefined) => {
 
 	const tags = {
 		name: webhookName
 	};
 
-	statsd.increment(metricWebhooks.webhookFailure, tags);
+	statsd.increment(metricWebhooks.webhookFailure, tags, { jiraHost });
 
 };
 
@@ -91,14 +94,15 @@ export const emitWebhookFailedMetrics = (webhookName: string) => {
  * @param webhookName
  * @param size
  */
-export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => {
+export const emitWebhookPayloadMetrics = (webhookName: string, jiraHost: string | undefined, size: number) => {
 	const tags = {
 		name: webhookName
 	};
 	statsd.histogram(
 		metricWebhooks.webhookPayloadSize,
 		size,
-		tags
+		tags,
+		{ jiraHost }
 	);
 
 	const histogramBuckets =
@@ -109,6 +113,7 @@ export const emitWebhookPayloadMetrics = (webhookName: string, size: number) => 
 	statsd.histogram(
 		metricWebhooks.webhookPayloadSize,
 		size,
-		tags
+		tags,
+		{ jiraHost }
 	);
 };

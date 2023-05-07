@@ -11,6 +11,7 @@ import { GithubServerAppMiddleware } from "middleware/github-server-app-middlewa
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
 import { stringFlag, StringFlags } from "config/feature-flags";
+import * as querystring from "querystring";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
@@ -131,8 +132,21 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 	}
 };
 
+const queryToQueryString = (query) =>
+	querystring.stringify(Object.fromEntries(
+		Object.entries(query).map(([key, value]) => [key, String(value)])
+	));
+
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
+		const { query, originalUrl } = req;
+		if (query && query["resetGithubToken"]) {
+			delete query["resetGithubToken"];
+
+			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
+			return res.redirect(newUrl);
+		}
+
 		const { githubToken, gitHubUuid } = req.session;
 		const { jiraHost, gitHubAppConfig } = res.locals;
 
@@ -223,7 +237,7 @@ const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, 
 	}
 	const jiraHost = url.searchParams.get("jiraHost");
 	if (!jiraHost) {
-		req.log.warn("jiraHost is missing in state redirect uri");
+		req.log.warn(Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
 	}

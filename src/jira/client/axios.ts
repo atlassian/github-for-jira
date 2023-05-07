@@ -47,6 +47,11 @@ export const getJiraErrorMessages = (status: number) => {
 /**
  * Middleware to enhance failed requests in Jira.
  */
+const API_PATHS_TO_IGNORE_ON_405 = [
+	"/rest/devinfo/0.10/bulk",
+	"/rest/builds/0.1/bulk",
+	"/rest/deployments/0.1/bulk"
+];
 const getErrorMiddleware = (logger: Logger) =>
 	/**
 	 * Potentially enrich the promise's rejection.
@@ -62,9 +67,9 @@ const getErrorMiddleware = (logger: Logger) =>
 		 * This GET request is now failing with a 405 response, which is not an error on the app side
 		 * So treating this as a non-error case
 		 */
-		if (error?.request?.method === "GET" && error?.request?.path === "/rest/devinfo/0.10/bulk") {
-			logger.warn({ error } , "Ignoring the error when redirected to GET /rest/deployments/0.1/bulk");
-			return Promise.resolve({ result: "SKIP_REDIRECTED" });
+		if (error?.request?.method === "GET" && API_PATHS_TO_IGNORE_ON_405.includes(error?.request?.path)) {
+			logger.warn({ error } , "Ignoring the error when redirected to GET api on another jira site");
+			return Promise.resolve({ status: 200, result: "SKIP_REDIRECTED" });
 		}
 
 		const status = error?.response?.status;
@@ -137,24 +142,26 @@ const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_600
  * @param {import("axios").AxiosResponse} response - The successful axios response object.
  * @returns {import("axios").AxiosResponse} The response object.
  */
-const instrumentRequest = (response) => {
-	if (!response) {
-		return;
-	}
-	const requestDurationMs = Number(
-		Date.now() - (response.config?.requestStartTime || 0)
-	);
-	const tags = {
-		method: response.config?.method?.toUpperCase(),
-		path: extractPath(response.config?.originalUrl),
-		status: response.status
+const instrumentRequest = (baseURL: string) => {
+	return (response) => {
+		if (!response) {
+			return;
+		}
+		const requestDurationMs = Number(
+			Date.now() - (response.config?.requestStartTime || 0)
+		);
+		const tags = {
+			method: response.config?.method?.toUpperCase(),
+			path: extractPath(response.config?.originalUrl),
+			status: response.status
+		};
+
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+		tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+
+		return response;
 	};
-
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-
-	return response;
 };
 
 /**
@@ -169,7 +176,7 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			// TODO: and we are safe to kill the thing.
 			logger.info("Ok, looks like still works.");
 		}
-		instrumentRequest(error?.response);
+		instrumentRequest(baseURL)(error?.response);
 
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
@@ -226,7 +233,7 @@ export const getAxiosInstance = (
 	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
-		instrumentRequest,
+		instrumentRequest(baseURL),
 		instrumentFailedRequest(baseURL, logger)
 	);
 

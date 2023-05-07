@@ -36,6 +36,8 @@ For general support inquiries and bug reports, [please contact the Atlassian Sup
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
   - [Enterprise Features](#enterprise-features)
     - [IP Allow List](#ip-allow-list)
+    - [Known issues](#known-issues)
+      - [Connecting GitHub organizations with SSO](#connecting-github-organizations-with-sso) 
   - [Need help?](#need-help)
   - [Contribute](#contribute)
   - [License](#license)
@@ -162,6 +164,7 @@ To navigate to your Jira subscriptions
 
 > :information_source: This only gives you permission to delete the connection to Jira instances. To view development information in that Jira instance, you’ll need to be granted access in Jira.
 
+
 ## Send data and use the integration
 ### See GitHub development information in Jira
 To start seeing your development information from GitHub in Jira, simply add a Jira issue key to your commit message, branch name, or PR title.
@@ -220,6 +223,30 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 
 GitHub has the ability to limit who can communicate with your organization's GitHub API which we now fully support.
 To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](./docs/ip-allowlist.md).
+
+### Known issues
+
+#### Connecting GitHub organizations with SSO
+
+If a GitHub organization is [protected with SAML](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-saml-single-sign-on-for-your-organization/about-identity-and-access-management-with-saml-single-sign-on),
+you might find its "Connect" button disabled. This may happen in a scenario
+when the user token (which GitHub for Jira app's UI is using) [does not have permissions to access the protected org](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso),
+because it was issued and saved to the app's session when the user didn't have an active SAML session in GitHub
+in the browser.
+
+To workaround the problem, perform the following:
+- create an active SAML session by going to `https://github.com/organizations/<YOUR-ORG-NAME>/settings`
+    - that should initiate an auth process with your SSO identity provider
+- in the same browser window, go to GitHub for Jira app and find the disabled "Connect" button for `<YOUR-ORG-NAME>` GitHub org
+    - it must be located either on one of these pages
+        - `https://github.atlassian.com/github/configuration` for GitHub cloud, or
+        - `https://github.atlassian.com/github/<UUID>/configuration` for GitHub server enterprise
+ - insert `resetGithubToken=true` query parameter to the URL of the page in the browser and reload it
+    - `https://github.atlassian.com/github/configuration?resetGithubToken=true` for GitHub cloud, or
+    - `https://github.atlassian.com/github/<UUID>/configuration?ghRedirect=to&resetGithubToken=true` for GitHub server enterprise
+
+After doing that, the token will be re-issued by GitHub with all necessary permissions and saved in the app's session, 
+and "Connect" button should become enabled.
 
 ## Need help?
 Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).

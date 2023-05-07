@@ -101,7 +101,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 	it("POST Jira Connect Enterprise - valid new URL to GHE", async () => {
 		const response = mockResponse();
-		gheNock.get("/").reply(200, { }, { "X-GitHub-Request-id": "blah" });
+		gheNock.get("/api/v3/rate_limit").reply(200, { }, { "X-GitHub-Request-id": "blah" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
@@ -112,7 +112,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 	it("POST Jira Connect Enterprise - valid new URL to not GHE", async () => {
 		const response = mockResponse();
-		gheNock.get("/").reply(200, { });
+		gheNock.get("/api/v3/rate_limit").reply(200, { });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({
@@ -126,7 +126,7 @@ describe("POST /jira/connect/enterprise", () => {
 	it("POST Jira Connect Enterprise - URL timed out", async () => {
 		process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC = "100";
 		const response = mockResponse();
-		gheNock.get("/").delayConnection(2000).reply(200);
+		gheNock.get("/api/v3/rate_limit").delayConnection(2000).reply(200);
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({
@@ -139,7 +139,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 	it("POST Jira Connect Enterprise - DNS resolution failure", async () => {
 		const response = mockResponse();
-		gheNock.get("/").replyWithError({ code: "ENOTFOUND" });
+		gheNock.get("/api/v3/rate_limit").replyWithError({ code: "ENOTFOUND" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({
@@ -153,7 +153,7 @@ describe("POST /jira/connect/enterprise", () => {
 	it("POST Jira Connect Enterprise - invalid status code without GHE headers", async () => {
 
 		const response = mockResponse();
-		gheNock.get("/").reply(500);
+		gheNock.get("/api/v3/rate_limit").reply(500);
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({
@@ -169,7 +169,11 @@ describe("POST /jira/connect/enterprise", () => {
 	it("POST Jira Connect Enterprise - invalid status code with GHE headers", async () => {
 
 		const response = mockResponse();
-		gheNock.get("/").reply(401, { }, { "X-GitHub-Request-id": "blah" });
+
+		gheNock.get("/api/v3/rate_limit").matchHeader("authorization", (value) => {
+			return !!value && value.startsWith("Bearer");
+		}).reply(401, { }, { "X-GitHub-Request-id": "blah" });
+
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });
@@ -178,7 +182,7 @@ describe("POST /jira/connect/enterprise", () => {
 	it("POST Jira Connect Enterprise - invalid status code with GHE server headers", async () => {
 
 		const response = mockResponse();
-		gheNock.get("/").reply(401, { }, { "server": "GitHub.com" });
+		gheNock.get("/api/v3/rate_limit").reply(401, { }, { "server": "GitHub.com" });
 		await JiraConnectEnterprisePost(mockRequest(gheUrl), response);
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.send).toHaveBeenCalledWith({ success: true, connectConfigUuid: expect.any(String), appExists: false });

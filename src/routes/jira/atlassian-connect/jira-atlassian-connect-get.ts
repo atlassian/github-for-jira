@@ -1,16 +1,13 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
-import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
 
-const instance = envVars.INSTANCE_NAME;
+const instance = envVars.APP_KEY.split(".").pop();
+const isProd = instance === "production";
 
-const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-const devSuffix = `${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
-export const APP_NAME = `GitHub for Jira${devSuffix}`;
-export const APP_KEY = `com.github.integration${instance ? `.${instance}` : ""}`;
+export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
 export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
@@ -31,7 +28,7 @@ const modules = {
 		],
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${APP_KEY}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			}
 			// searchConnectedWorkspaces: {
 			// 	templateUrl: `${envVars.APP_URL}/jira/workspace`
@@ -158,7 +155,7 @@ const modules = {
 			key: "gh-addon-admin-section",
 			location: "admin_plugins_menu",
 			name: {
-				value: "GitHub"
+				value: APP_NAME
 			}
 		}
 	],
@@ -167,7 +164,7 @@ const modules = {
 			url: postInstallUrl,
 			conditions: adminCondition,
 			name: {
-				value: `GitHub for Jira${devSuffix}`
+				value: "Configure"
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
@@ -175,7 +172,7 @@ const modules = {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
-				value: `GitHub for Jira${devSuffix}`
+				value: "Configure"
 			},
 			key: "gh-addon-admin-old",
 			location: "none"
@@ -195,7 +192,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		},
 		name: APP_NAME,
 		description: "Connect your code and your project with ease.",
-		key: APP_KEY,
+		key: envVars.APP_KEY,
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",

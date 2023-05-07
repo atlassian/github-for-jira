@@ -4,6 +4,7 @@ import { Request, Response } from "express";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { Errors } from "config/errors";
 
 /**
  * Handle the when a user deletes an entry in the UI
@@ -18,8 +19,8 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	req.log.info({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
 
 	if (!jiraHost) {
-		req.log.error("Missing Jira Host");
-		res.status(401).send("Missing jiraHost");
+		req.log.warn(Errors.MISSING_JIRA_HOST);
+		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
 	}
 

@@ -213,6 +213,7 @@ config:
     DEPLOYMENT_DATE: ${DEPLOYMENT_DATE}
     PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-stg
     GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-stg
+    WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-webhook-secrets-stg
 
     CRYPTOR_URL: http://cryptor:26272
     CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "6CF9E6A52167B58CBB0DED180CC8B848" # https://developer.atlassian.com/platform/cryptor/integration/integrating-sidecar/#enabling-ssrf-protection
@@ -327,7 +328,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
         WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com
-        INSTANCE_NAME: development
+        APP_KEY: com.github.integration.development
         NODE_OPTIONS: "--no-deprecation"
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: ddev
@@ -335,6 +336,7 @@ environmentOverrides:
         GITHUB_CLIENT_ID: Iv1.600bf90a20f1ab18
         PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-ddev
         GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-ddev
+        WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-webhook-secrets-ddev
     scaling:
       instance: t2.small
       min: 1
@@ -399,7 +401,7 @@ environmentOverrides:
       environmentVariables:
         APP_URL: https://github.stg.atlassian.com
         WEBHOOK_PROXY_URL: https://github.stg.atlassian.com
-        INSTANCE_NAME: staging
+        APP_KEY: com.github.integration.staging
         LOG_LEVEL: debug
         SENTRY_ENVIRONMENT: stg-west
         APP_ID: '12645'
@@ -500,12 +502,13 @@ environmentOverrides:
       environmentVariables:
         APP_URL:  https://github.atlassian.com
         WEBHOOK_PROXY_URL:  https://github.atlassian.com
-        INSTANCE_NAME: production
+        APP_KEY: com.github.integration.production
         SENTRY_ENVIRONMENT: prod-west
         APP_ID: '14320'
         GITHUB_CLIENT_ID: Iv1.45aafbb099e1c1d7
         PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-private-key
         GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-client-secret
+        WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-webhook-secrets
         CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "D92A2D7364AC3057D2A90BA9512D8CA0"
     scaling:
       instance: c5.2xlarge
