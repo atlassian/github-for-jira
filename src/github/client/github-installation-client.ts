@@ -17,7 +17,7 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
-	SearchedRepositoriesResponse
+	SearchedRepositoriesResponse, getBranchesQueryWithoutCommits
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
@@ -29,6 +29,7 @@ import {
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
+import { cloneDeep } from "lodash";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -50,7 +51,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		logger: Logger,
 		gshaId?: number
 	) {
-		super(gitHubConfig, metrics, logger);
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.jiraHost = jiraHost;
 
 		this.installationTokenCache = InstallationTokenCache.getInstance();
@@ -289,7 +290,29 @@ export class GitHubInstallationClient extends GitHubClient {
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
-					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithoutChangedFiles" });
+					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithoutChangedFiles" })
+						.catch((err) => {
+							if (err instanceof GithubClientError && err.status === 502) {
+								this.logger.warn({ err, body: err.cause.response?.data }, "retrying branch graphql query without commits");
+								const variablesNoCommitSince = cloneDeep(variables);
+								delete variablesNoCommitSince.commitSince;
+								return this.graphql<getBranchesResponse>(
+									getBranchesQueryWithoutCommits,
+									config,
+									variablesNoCommitSince,
+									{ graphQuery: "getBranchesQueryWithoutCommits" }
+								).then(response => {
+									this.logger.info("retrying without commits fixed the issue!");
+									response.data.data.repository.refs.edges.forEach(edge => {
+										edge.node.target.history = {
+											nodes: []
+										};
+									});
+									return response;
+								});
+							}
+							return Promise.reject(err);
+						});
 				}
 				return Promise.reject(err);
 			});

@@ -23,7 +23,7 @@ export const createWebhookApp = async (): Promise<WebhookApp> => {
 			.post("/github/webhooks")
 			.send(event.payload)
 			.set("x-github-event", event.name)
-			.set("x-hub-signature-256", createHash(JSON.stringify(event.payload), envVars.WEBHOOK_SECRET))
+			.set("x-hub-signature-256", createHash(JSON.stringify(event.payload), envVars.WEBHOOK_SECRETS[0]))
 			.set("x-github-delivery", uuid())
 			.set("content-type", "application/json")
 			.expect(204);

@@ -1,12 +1,17 @@
 import { when } from "jest-when";
-import { ApiInstallationDeleteForPollinator, STAGE_POLLINATOR_JIRA_HOST, PROD_POLLINATOR_JIRA_HOST } from "./api-installation-delete-pollinator";
+import { ApiInstallationDeleteForPollinator } from "./api-installation-delete-pollinator";
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { RepoSyncState } from "~/src/models/reposyncstate";
+import { isTestJiraHost } from "config/jira-test-site-check";
 
 jest.mock("~/src/jira/client/jira-client");
 jest.mock("config/feature-flags");
+jest.mock("config/jira-test-site-check");
+
+const TEST_JIRA_SITE_1 = "https://some-test-site-1.atlassian.net";
+const TEST_JIRA_SITE_2 = "https://some-test-site-2.atlassian.net";
 
 describe("ApiInstallationDeleteForPollinator", ()=>{
 	describe("GHES support", ()=>{
@@ -55,7 +60,9 @@ describe("ApiInstallationDeleteForPollinator", ()=>{
 			expect(res.send).toBeCalledWith("Jira Host not a pollinator jira site");
 		});
 
-		it.each([STAGE_POLLINATOR_JIRA_HOST, PROD_POLLINATOR_JIRA_HOST])("should delete repoSyncStates from subcription", async (jiraSiteUrl: string)=>{
+		it.each([TEST_JIRA_SITE_1, TEST_JIRA_SITE_2])("should delete repoSyncStates from subcription", async (jiraSiteUrl: string)=>{
+
+			jest.mocked(isTestJiraHost).mockImplementationOnce(s => [TEST_JIRA_SITE_1, TEST_JIRA_SITE_2].includes(s || ""));
 
 			when(jest.mocked(getJiraClient))
 				.calledWith(jiraSiteUrl, GHES_GITHUB_INSTALLATION_ID, GHES_GITHUB_APP_ID, expect.anything())
