@@ -31,13 +31,16 @@ const modules = {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			},
 			searchConnectedWorkspaces: {
-				templateUrl: `${envVars.APP_URL}/workspaces/fetch`
+				templateUrl: `${envVars.APP_URL}/workspaces/search`
 			},
-			searchContainers: {
-				templateUrl: `${envVars.APP_URL}/containers/fetch`
+			searchRepositories: {
+				templateUrl: `${envVars.APP_URL}/repositories/search`
 			},
-			fetchContainers: {
-				templateUrl: `${envVars.APP_URL}/containers/search`
+			fetchRepositories: {
+				templateUrl: `${envVars.APP_URL}/repositories/fetch`
+			},
+			createRepository: {
+				templateUrl: `${envVars.APP_URL}/repositories/create`
 			}
 		},
 		key: "github-development-tool",
