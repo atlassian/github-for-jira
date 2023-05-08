@@ -88,6 +88,16 @@ describe("GET /jira/connect/enterprise", () => {
 				});
 			expect(response.text).toContain(`<label for="gheServerURL">Server URL</label>`);
 		});
+
+		it("populates list of known HTTP headers", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt()
+				});
+			expect(response.text).toContain(`window.knownHttpHeadersLowerCase = ["`);
+			expect(response.text).toContain(`"sec-fetch-dest"`);
+		});
 	});
 
 	describe("with new flag", () => {

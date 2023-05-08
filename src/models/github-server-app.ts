@@ -46,6 +46,8 @@ export class GitHubServerApp extends Model {
 	privateKey: string;
 	gitHubAppName: string;
 	installationId: number;
+	apiKeyHeaderName: string | null;
+	encryptedApiKeyValue: string | null;
 	updatedAt: Date;
 	createdAt: Date;
 
