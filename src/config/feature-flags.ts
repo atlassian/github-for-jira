@@ -20,8 +20,6 @@ export enum BooleanFlags {
 	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	// TODO: Remove after testing
-	ALLOW_GH_CLOUD_WEBHOOKS_SECRETS = "allow-gh-cloud-webhook-secrets",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature"
 }
 
