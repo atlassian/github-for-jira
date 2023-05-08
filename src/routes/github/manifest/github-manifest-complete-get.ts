@@ -25,8 +25,6 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		return;
 	}
 
-	const gheHost = connectConfig.serverUrl;
-
 	if (!req.query.code) {
 		req.log.warn("No code was provided");
 		res.sendStatus(400);
@@ -37,19 +35,27 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		const metrics = {
 			trigger: "manifest"
 		};
-		const gitHubClient = await createAnonymousClient(gheHost, res.locals.jiraHost, metrics, req.log);
+		const gitHubClient = await createAnonymousClient(connectConfig.serverUrl, res.locals.jiraHost, metrics, req.log,
+			connectConfig.apiKeyHeaderName
+				? {
+					headerName: connectConfig.apiKeyHeaderName,
+					apiKeyGenerator: () => GitHubServerApp.decrypt(res.locals.jiraHost, connectConfig.encryptedApiKeyValue || "")
+				}
+				: undefined
+		);
 		const gitHubAppConfig = await gitHubClient.createGitHubApp("" + req.query.code);
 		await GitHubServerApp.install({
 			uuid,
 			appId: gitHubAppConfig.id,
 			gitHubAppName: gitHubAppConfig.name,
-			gitHubBaseUrl: gheHost,
-			// TODO: copy other values from the connectConfig
+			gitHubBaseUrl: connectConfig.serverUrl,
 			gitHubClientId: gitHubAppConfig.client_id,
 			gitHubClientSecret: gitHubAppConfig.client_secret,
 			webhookSecret: gitHubAppConfig.webhook_secret,
 			privateKey:  gitHubAppConfig.pem,
-			installationId: res.locals.installation.id
+			installationId: res.locals.installation.id,
+			apiKeyHeaderName: connectConfig.apiKeyHeaderName,
+			encryptedApiKeyValue: connectConfig.encryptedApiKeyValue
 		}, res.locals.jiraHost);
 
 		await tempStorage.delete(uuid, res.locals.installation.id);
@@ -62,7 +68,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 
 		res.redirect(`/github/${uuid}/configuration`);
 	} catch (error) {
-		const errorQueryParam = error.response.status === 422 ? Errors.MISSING_GITHUB_APP_NAME : "";
+		const errorQueryParam = error?.response?.status === 422 ? Errors.MISSING_GITHUB_APP_NAME : "";
 		req.log.error({ reason: error }, "Error during GitHub App manifest flow");
 		/**
 		 * The query parameters here are used for call to action `retry`
