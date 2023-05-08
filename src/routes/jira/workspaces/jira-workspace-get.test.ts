@@ -39,7 +39,7 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get("/jira/workspace?searchQuery=Atlas")
+			.get("/jira/workspaces/search?searchQuery=Atlas")
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain(Errors.MISSING_JIRA_HOST);
@@ -62,10 +62,10 @@ describe("Workspace Get", () => {
 		});
 
 		await supertest(app)
-			.get("/jira/workspace?searchQuery=Atlas")
+			.get("/jira/workspaces/search?searchQuery=Atlas")
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("GitHub subscription is missing");
+				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
 			});
 	});
 
@@ -80,7 +80,7 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get("/jira/workspace")
+			.get("/jira/workspaces/search")
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("No org name provided in query");
@@ -98,7 +98,7 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get("/jira/workspace?searchQuery=incorrectorgname")
+			.get("/jira/workspaces/search?searchQuery=incorrectorgname")
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("Unable to find matching orgs for incorrectorgname");
@@ -131,7 +131,7 @@ describe("Workspace Get", () => {
 		};
 
 		await supertest(app)
-			.get("/jira/workspace?searchQuery=atlas")
+			.get("/jira/workspaces/search?searchQuery=atlas")
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(workspaces));
 				expect(res.status).toBe(200);
@@ -226,7 +226,7 @@ describe("Workspace Get", () => {
 		};
 
 		await supertest(app)
-			.get("/jira/workspace?searchQuery=atlas")
+			.get("/jira/workspaces/search?searchQuery=atlas")
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(workspaces));
 				expect(res.status).toBe(200);

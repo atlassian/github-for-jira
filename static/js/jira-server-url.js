@@ -2,15 +2,65 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
+const gheServerURLElt = document.getElementById("gheServerURL");
+const gheApiKeyHeaderElt = document.getElementById("gheApiKeyHeader");
+const gheApiKeyValueElt = document.getElementById("gheApiKeyValue");
+
+function syncGheServerBtn() {
+	if (
+		gheServerURLElt.getAttribute("data-aui-validation-state") === "invalid" ||
+		(gheApiKeyHeaderElt && gheApiKeyHeaderElt.getAttribute("data-aui-validation-state") === "invalid") ||
+		(gheApiKeyValueElt && gheApiKeyValueElt.getAttribute("data-aui-validation-state") === "invalid")
+	) {
+		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+	} else {
+		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
+	}
+}
+
 AJS.formValidation.register(['ghe-url'], (field) => {
 	const inputURL = field.el.value;
 	if (!inputURL.trim().length) {
 		field.invalidate(AJS.format('This is a required field.'));
-		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+		syncGheServerBtn();
 	} else {
 		field.validate();
-		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
+		syncGheServerBtn();
 	}
+});
+
+AJS.formValidation.register(['api-key-header'], (field) => {
+	const inputStr = field.el.value;
+	if (inputStr.trim().length) {
+		if (inputStr.trim().length > 1024) {
+			field.invalidate(AJS.format('Max length is 1,024 characters.'));
+		} else if (window.knownHttpHeadersLowerCase.indexOf(inputStr.trim().toLowerCase()) >= 0) {
+			field.invalidate(AJS.format(inputStr.trim() + ' is a reserved string and cannot be used.'));
+		} else {
+			field.validate();
+		}
+	} else {
+		field.validate();
+	}
+	AJS.formValidation.validate(gheApiKeyValueElt);
+});
+
+AJS.formValidation.register(['api-key-header-value'], (field) => {
+	const inputStr = field.el.value;
+	if (gheApiKeyHeaderElt.value.trim().length === 0) {
+		if (inputStr.trim().length === 0) {
+			field.validate();
+		} else {
+			field.invalidate(AJS.format('Cannot be used without HTTP header name.'));
+		}
+	} else if (inputStr.trim().length === 0) {
+		field.invalidate(AJS.format('Cannot be empty.'));
+	} else if (inputStr.trim().length > 8096) {
+		field.invalidate(AJS.format('Max length is 8,096 characters.'));
+	} else {
+		field.validate();
+	}
+	syncGheServerBtn();
 });
 
 const activeRequest = () => {
@@ -64,15 +114,16 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".errorMessageBox__message").empty().append(message);
 }
 
-const verifyGitHubServerUrl = (gheServerURL) => {
+const verifyGitHubServerUrl = (gheServerURL, apiKeyHeader, apiKeyValue) => {
 	const csrf = document.getElementById("_csrf").value
 
 	AP.context.getToken(function(token) {
 		$.post("/jira/connect/enterprise", {
 				gheServerURL,
+				apiKeyHeader,
+				apiKeyValue,
 				_csrf: csrf,
-				jwt: token,
-				jiraHost
+				jwt: token
 			},
 			function(data) {
 				if (data.success) {
@@ -113,11 +164,14 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
-	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
-	const installationId = $(event.currentTarget).data("installation-id");
+	const gheServerURL = gheServerURLElt.value.replace(/\/+$/, "");
 
 	if ($("#gheServerBtnSpinner").is(":hidden")) {
 		activeRequest();
-		verifyGitHubServerUrl(gheServerURL, installationId);
+		verifyGitHubServerUrl(
+			gheServerURL,
+			gheApiKeyHeaderElt ? gheApiKeyHeaderElt.value : '',
+			gheApiKeyValueElt ? gheApiKeyValueElt.value : ''
+		);
 	}
 });

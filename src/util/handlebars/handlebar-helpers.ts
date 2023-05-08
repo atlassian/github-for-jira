@@ -71,4 +71,8 @@ export const registerHandlebarsHelpers = () => {
 	// Greater than
 	hbs.registerHelper("gt", (a: string, b: string) => a > b);
 
+	hbs.registerHelper("json", (context) =>
+		JSON.stringify(context)
+	);
+
 };

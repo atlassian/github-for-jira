@@ -8,7 +8,7 @@ type GitHubWorkspace = {
 	name: string
 }
 
-const { MISSING_JIRA_HOST, MISSING_GITHUB_SUBSCRIPTION } = Errors;
+const { MISSING_JIRA_HOST, MISSING_SUBSCRIPTION } = Errors;
 
 const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string): Promise<GitHubWorkspace[]>  => {
 	const matchingRepos = await RepoSyncState.findByOrgNameAndSubscriptionId(subscriptions, orgName);
@@ -45,8 +45,8 @@ export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<voi
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {
-		req.log.warn({ jiraHost, req, res }, MISSING_GITHUB_SUBSCRIPTION);
-		res.status(400).send(MISSING_GITHUB_SUBSCRIPTION);
+		req.log.warn({ jiraHost, req, res }, MISSING_SUBSCRIPTION);
+		res.status(400).send(MISSING_SUBSCRIPTION);
 		return;
 	}
 
