@@ -159,7 +159,7 @@ describe("SQS", () => {
 				expect(mockErrorHandler).toHaveBeenCalledTimes(1);
 				expect(queueDeletionSpy).toBeCalledTimes(1);
 			});
-			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, expect.anything());
+			expect(statsdIncrementSpy).toBeCalledWith(sqsQueueMetrics.failed, expect.anything(), { jiraHost: undefined });
 		});
 
 		it("Message deleted from the queue when error is not a failure and failure metric not sent", async () => {

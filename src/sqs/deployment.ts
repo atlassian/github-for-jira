@@ -15,7 +15,8 @@ export const deploymentQueueMessageHandler: MessageHandler<DeploymentMessagePayl
 	context.log.info("Handling deployment message from the SQS queue");
 
 	const metrics = {
-		trigger: "deployment_queue"
+		trigger: "webhook",
+		subTrigger: "deployment_status"
 	};
 	const gitHubInstallationClient = await createInstallationClient(installationId, jiraHost, metrics, context.log, messagePayload.gitHubAppConfig?.gitHubAppId);
 

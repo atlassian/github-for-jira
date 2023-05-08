@@ -2,7 +2,7 @@ import express, { Application } from "express";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
 import { getFrontendApp } from "~/src/app";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
@@ -27,7 +27,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost,
 					githubToken: "random-token"
 				}))
@@ -47,7 +47,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost,
 					githubToken: "random-token"
 				}))
@@ -79,7 +79,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost,
 					githubToken: "random-token"
 				}))
@@ -130,7 +130,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost,
 					githubToken: "random-token"
 				}))
@@ -168,7 +168,7 @@ describe("GitHub Create Branch Options Get", () => {
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
-				getSignedCookieHeader({
+				generateSignedSessionCookieHeader({
 					jiraHost,
 					githubToken: "random-token"
 				}))

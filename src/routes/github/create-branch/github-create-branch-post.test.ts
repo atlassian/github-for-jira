@@ -47,7 +47,7 @@ describe("github-create-branch", () => {
 			}
 		};
 
-		mocked(Subscription.findForRepoNameAndOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
+		mocked(Subscription.findForRepoOwner).mockResolvedValue({ gitHubInstallationId, id: 1 } as Subscription);
 	});
 
 	it("Should successfully run through the create branch flow", async () => {
