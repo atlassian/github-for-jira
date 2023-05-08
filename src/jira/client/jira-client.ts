@@ -7,8 +7,8 @@ import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
 
 import {
-	JiraAssociation, 
-  JiraBuildBulkSubmitData,
+	JiraAssociation,
+	JiraBuildBulkSubmitData,
 	JiraCommit,
 	JiraDeploymentBulkSubmitData,
 	JiraIssue,
