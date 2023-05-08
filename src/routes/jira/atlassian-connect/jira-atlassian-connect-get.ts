@@ -29,16 +29,16 @@ const modules = {
 		actions: {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
+			},
+			searchConnectedWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/workspace`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/fetch`
+			},
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/containers/search`
 			}
-			// searchConnectedWorkspaces: {
-			// 	templateUrl: `${envVars.APP_URL}/jira/workspace`
-			// },
-			// searchContainers: {
-			// 	templateUrl: `${envVars.APP_URL}/containers/fetch`
-			// },
-			// fetchContainers: {
-			// 	templateUrl: `${envVars.APP_URL}/containers/search`
-			// }
 		},
 		key: "github-development-tool",
 		logoUrl: LOGO_URL,

@@ -3,6 +3,7 @@ import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
+import { getLogger } from "config/logger";
 
 export interface RepoSyncState {
 	id: number;
@@ -208,13 +209,20 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
-	static async findByOrgNameAndSubscriptionId(orgName: string, subscription: Subscription | null, options: FindOptions = {}):  Promise<RepoSyncState | null> {
-		return await RepoSyncState.findOne(merge(options, {
-			where: {
-				subscriptionId: subscription?.id,
-				repoOwner: orgName
-			}
-		} as FindOptions));
+	static async findByOrgNameAndSubscriptionId(subscriptions: Subscription[], orgName: string): Promise<Awaited<RepoSyncState[]>[]> {
+		const result = await Promise.all(subscriptions.map(async sub => {
+			return await RepoSyncState.findAll(merge({
+				where: {
+					subscriptionId: sub.id,
+					repoOwner: {
+						[Op.iLike]: `%${orgName}%`
+					}
+				}
+			}));
+		}));
+		const logger = getLogger("test");
+		logger.info(`There are ${result} projects with an id greater than 25`);
+		return result;
 	}
 
 	// Nullify statuses and cursors to start anew
