@@ -42,7 +42,6 @@ export class Subscription extends Model {
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
 	gitHubAppId: number | undefined;
-	avatarUrl: string | undefined;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -189,8 +188,7 @@ export class Subscription extends Model {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
 				jiraClientKey: payload.hashedClientKey,
-				gitHubAppId: payload.gitHubAppId || null,
-				avatarUrl: payload.avatarUrl || null
+				gitHubAppId: payload.gitHubAppId || null
 			},
 			defaults: {
 				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
@@ -256,10 +254,6 @@ Subscription.init({
 	gitHubAppId: {
 		type: DataTypes.INTEGER,
 		allowNull: true
-	},
-	avatarUrl: {
-		type: DataTypes.STRING,
-		allowNull: true
 	}
 }, { sequelize });
 
@@ -267,7 +261,6 @@ export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 	gitHubAppId: number | undefined;
-	avatarUrl?: string;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {

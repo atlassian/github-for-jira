@@ -532,8 +532,7 @@ describe("sync/installation", () => {
 				host: jiraHost,
 				installationId: GITHUB_INSTALLATION_ID,
 				gitHubAppId: undefined,
-				hashedClientKey: "client-key",
-				avatarUrl: "avatarurl"
+				hashedClientKey: "client-key"
 			});
 			repoSync = await RepoSyncState.create({
 				subscriptionId: sub.id, repoId: REPO_ID, repoName: "name", repoUrl: "url", repoOwner: "owner", repoFullName: "full name",

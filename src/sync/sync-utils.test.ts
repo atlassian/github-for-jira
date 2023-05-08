@@ -61,8 +61,7 @@ describe("sync utils", () => {
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
 					hashedClientKey: JIRA_CLIENT_KEY,
-					gitHubAppId: undefined,
-					avatarUrl: "avatarurl"
+					gitHubAppId: undefined
 				});
 			});
 			it("should send a specific commit since date in the msg payload if provided", async () => {
@@ -103,8 +102,7 @@ describe("sync utils", () => {
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
 					hashedClientKey: JIRA_CLIENT_KEY,
-					gitHubAppId: undefined,
-					avatarUrl: "avatarurl"
+					gitHubAppId: undefined
 				});
 			});
 			it("should send cloud gitHubAppConfig to msg queue", async () => {
@@ -152,8 +150,7 @@ describe("sync utils", () => {
 					installationId: JIRA_INSTALLATION_ID,
 					host: jiraHost,
 					gitHubAppId: gitHubServerApp.id,
-					hashedClientKey: JIRA_CLIENT_KEY,
-					avatarUrl: "avatarurl"
+					hashedClientKey: JIRA_CLIENT_KEY
 				});
 			});
 			it("should send ghes gitHubAppConfig to msg queue", async () => {

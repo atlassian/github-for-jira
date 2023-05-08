@@ -16,8 +16,7 @@ describe("Workspace Get", () => {
 			host: jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
-			gitHubAppId: undefined,
-			avatarUrl: "avatarurl.com"
+			gitHubAppId: undefined
 		});
 
 		repo = {
@@ -153,16 +152,14 @@ describe("Workspace Get", () => {
 			host: jiraHost,
 			installationId: 2345,
 			hashedClientKey: "key-123",
-			gitHubAppId: undefined,
-			avatarUrl: "avatarurl2.com"
+			gitHubAppId: undefined
 		});
 
 		const sub3 = await Subscription.install({
 			host: jiraHost,
 			installationId: 3456,
 			hashedClientKey: "key-123",
-			gitHubAppId: undefined,
-			avatarUrl: "avatarurl3.com"
+			gitHubAppId: undefined
 		});
 
 		await RepoSyncState.create({
