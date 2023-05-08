@@ -5,8 +5,10 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
+
 import {
-	JiraAssociation, JiraBuildBulkSubmitData,
+	JiraAssociation, 
+  JiraBuildBulkSubmitData,
 	JiraCommit,
 	JiraDeploymentBulkSubmitData,
 	JiraIssue,
@@ -18,6 +20,7 @@ import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 100;
@@ -314,7 +317,6 @@ export const getJiraClient = async (
 		},
 		deployment: {
 			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
-
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -336,6 +338,15 @@ export const getJiraClient = async (
 
 				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
+
+				if (response.data?.rejectedDeployments?.length) {
+					logger.warn({
+						rejectedDeployments: response.data?.rejectedDeployments,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API rejected deployment!");
+				}
+
 				return {
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments

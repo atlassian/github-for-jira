@@ -172,6 +172,40 @@ describe("Test getting a jira client", () => {
 		expect(response).toMatchObject([{ result: "SKIP_REDIRECTED" }]);
 	});
 
+	it("Should return success response for the deployment bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/deployments/0.1/bulk").reply(405);
+		jiraNock.post("/rest/deployments/0.1/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/deployments/0.1/bulk"
+		});
+
+		const response = await client.deployment.submit({
+			deployments: [{}]
+		});
+
+		expect(response).toEqual({
+			status: 200,
+			rejectedDeployments: undefined
+		});
+	});
+
+	it("Should return success response for the build bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/builds/0.1/bulk").reply(405);
+		jiraNock.post("/rest/builds/0.1/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/builds/0.1/bulk"
+		});
+
+		const response = await client.workflow.submit({
+			builds: [{}]
+		});
+
+		expect(response).toEqual({
+			status: 200,
+			result: "SKIP_REDIRECTED"
+		});
+	});
+
 	describe("Reading encryptedSharedSecret", () => {
 		beforeEach(async ()=>{
 			const inst: Installation | null = await Installation.findOne({
