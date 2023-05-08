@@ -121,10 +121,20 @@ describe("Workspace Get", () => {
 			subscriptionId: sub.id
 		});
 
+		const workspaces = {
+			success:true,
+			workspaces: [
+				{
+					id: sub.id,
+					name: "atlassian"
+				}
+			]
+		};
+
 		await supertest(app)
 			.get("/jira/workspace?searchQuery=atlas")
 			.expect(res => {
-				expect(res.text).toContain(`{"success":true,"workspaces":[{"id":${sub.id},"name":"atlassian","url":"github.com/atlassian","avatarUrl":"avatarurl.com"}]}`);
+				expect(res.text).toContain(JSON.stringify(workspaces));
 				expect(res.status).toBe(200);
 			});
 	});
@@ -205,21 +215,15 @@ describe("Workspace Get", () => {
 			workspaces: [
 				{
 					id: sub.id,
-					name: "atlas",
-					url: "github.com/atlas",
-					avatarUrl: "avatarurl.com"
+					name: "atlas"
 				},
 				{
 					id: sub2.id,
-					name: "atlassian",
-					url: "github.com/atlassian",
-					avatarUrl: "avatarurl2.com"
+					name: "atlassian"
 				},
 				{
 					id: sub3.id,
-					name: "iworkatatlassian",
-					url: "github.com/iworkatatlassian",
-					avatarUrl: "avatarurl3.com"
+					name: "iworkatatlassian"
 				}
 			]
 		};

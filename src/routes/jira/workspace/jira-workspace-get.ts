@@ -5,24 +5,19 @@ import { Errors } from "config/errors";
 
 type GitHubWorkspace = {
 	id: number,
-	name: string,
-	url: string,
-	avatarUrl: string | undefined
+	name: string
 }
-
-type PartialGitHubWorkspace = Omit<GitHubWorkspace, "avatarUrl">;
 
 const { MISSING_JIRA_HOST, MISSING_GITHUB_SUBSCRIPTION } = Errors;
 
-const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string): Promise<PartialGitHubWorkspace[]>  => {
+const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string): Promise<GitHubWorkspace[]>  => {
 	const matchingRepos = await RepoSyncState.findByOrgNameAndSubscriptionId(subscriptions, orgName);
 	const matchedOrgs = matchingRepos.map(org => {
-		const { subscriptionId, repoOwner, repoUrl, repoName } = org;
-		const orgUrl = repoUrl.replace(`/${repoName}`, "");
+		const { subscriptionId, repoOwner } = org;
+
 		return {
 			id: subscriptionId,
-			name: repoOwner,
-			url: orgUrl
+			name: repoOwner
 		};
 	})
 		.filter((value, index, self) =>
@@ -30,19 +25,6 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 				org.id === value.id
 			))
 		);
-
-	return matchedOrgs;
-};
-
-const getMatchingSubscriptions = async (orgs: PartialGitHubWorkspace[]): Promise<Awaited<GitHubWorkspace>[]> => {
-	const matchedOrgs = await Promise.all(orgs.map(async org => {
-		const matchingSubscription = await Subscription.findByPk(org.id);
-
-		return {
-			...org,
-			avatarUrl: matchingSubscription?.avatarUrl
-		};
-	}));
 
 	return matchedOrgs;
 };
@@ -85,7 +67,5 @@ export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<voi
 		return;
 	}
 
-	const matchingSubscriptions = await getMatchingSubscriptions(matchedOrgs);
-
-	res.status(200).json({ success: true, workspaces: matchingSubscriptions });
+	res.status(200).json({ success: true, workspaces: matchedOrgs });
 };
