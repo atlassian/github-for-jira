@@ -14,21 +14,6 @@ function openChildWindow(url) {
 	return child;
 }
 
-$(".test-button").click(function(event) {
-	event.preventDefault();
-	const path = "/jira/workspace?searchQuery=Atlas"
-	$.ajax({
-		type: "GET",
-		url: path,
-		success: function() {
-			console.log("Success")
-		},
-		error: function (error) {
-			console.error("Error: ", error)
-		},
-	});
-});
-
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
 	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";

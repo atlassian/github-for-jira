@@ -36,7 +36,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 
 const getMatchingSubscriptions = async (orgs: PartialGitHubWorkspace[]): Promise<Awaited<GitHubWorkspace>[]> => {
 	const matchedOrgs = await Promise.all(orgs.map(async org => {
-		const matchingSubscription = await Subscription.findByPk(12);
+		const matchingSubscription = await Subscription.findByPk(org.id);
 
 		return {
 			...org,
@@ -51,8 +51,8 @@ export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<voi
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
 
 	// TODO - update this later
-	// const { jiraHost } = res.locals;
-	const jiraHost = "https://rachellerathbone.atlassian.net";
+	const { jiraHost } = res.locals;
+	// const jiraHost = "https://rachellerathbone.atlassian.net";
 
 	if (!jiraHost) {
 		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
@@ -87,11 +87,5 @@ export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<voi
 
 	const matchingSubscriptions = await getMatchingSubscriptions(matchedOrgs);
 
-	if (!matchingSubscriptions) {
-		req.log.warn(MISSING_GITHUB_SUBSCRIPTION);
-		res.status(400).send(MISSING_GITHUB_SUBSCRIPTION);
-		return;
-	}
-
-	res.status(200).json({ success: true, matchingSubscriptions });
+	res.status(200).json({ success: true, workspaces: matchingSubscriptions });
 };

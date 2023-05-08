@@ -17,7 +17,7 @@ describe("Workspace Get", () => {
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined,
-			avatarUrl: "avatarurl"
+			avatarUrl: "avatarurl.com"
 		});
 
 		repo = {
@@ -30,7 +30,7 @@ describe("Workspace Get", () => {
 		};
 	});
 
-	it("Should return a 400 status if no jira domain is provided", async () => {
+	it("Should return a 400 status if no Jira host is provided", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -40,10 +40,33 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get("/jira/workspace")
+			.get("/jira/workspace?searchQuery=Atlas")
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain(Errors.MISSING_JIRA_HOST);
+			});
+	});
+
+	it("Should return a 400 status if no Subscription is found for host", async () => {
+		app = express();
+		app.use((req, res, next) => {
+			req.log = getLogger("test");
+			res.locals.jiraHost = "https://hostdoesnotexist.com";
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		await RepoSyncState.create({
+			...repo,
+			subscriptionId: sub.id
+		});
+
+		await supertest(app)
+			.get("/jira/workspace?searchQuery=Atlas")
+			.expect(res => {
+				expect(res.status).toBe(400);
+				expect(res.text).toContain("GitHub subscription is missing");
 			});
 	});
 
@@ -70,33 +93,25 @@ describe("Workspace Get", () => {
 		app.use((req, res, next) => {
 			req.log = getLogger("test");
 			res.locals.jiraHost = jiraHost;
-			req.query.searchQuery = "incorrectorgname";
 			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
 
-		await RepoSyncState.create({
-			...repo,
-			subscriptionId: sub.id
-		});
-
 		await supertest(app)
-			.get("/jira/workspace")
+			.get("/jira/workspace?searchQuery=incorrectorgname")
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Unable to find matching repo for incorrectorgname");
+				expect(res.text).toContain("Unable to find matching orgs for incorrectorgname");
 			});
 	});
 
-	it("Should fetch all orgs for a subscription", async () => {
+	it("Should return a single org if only one match is found", async () => {
 		app = express();
 		app.use((req, res, next) => {
 			req.log = getLogger("test");
-			req.query.searchQuery = "test-org";
 			req.csrfToken = jest.fn();
 			res.locals.jiraHost = jiraHost;
-			req.query.searchQuery = "atlassian";
 			next();
 		});
 		app.use(getFrontendApp());
@@ -107,10 +122,113 @@ describe("Workspace Get", () => {
 		});
 
 		await supertest(app)
-			.get("/jira/workspace")
+			.get("/jira/workspace?searchQuery=atlas")
 			.expect(res => {
+				expect(res.text).toContain(`{"success":true,"workspaces":[{"id":${sub.id},"name":"atlassian","url":"github.com/atlassian","avatarUrl":"avatarurl.com"}]}`);
 				expect(res.status).toBe(200);
-				expect(res.text).toContain("{\"success\":true,\"orgData\":{\"id\":1234,\"name\":\"atlassian\",\"url\":\"github.com/atlassian/\",\"avatarUrl\":\"avatarurl\"}}");
+			});
+	});
+
+	it("Should return multiple matches but only return each org once", async () => {
+		app = express();
+		app.use((req, res, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			res.locals.jiraHost = jiraHost;
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const sub2 = await Subscription.install({
+			host: jiraHost,
+			installationId: 2345,
+			hashedClientKey: "key-123",
+			gitHubAppId: undefined,
+			avatarUrl: "avatarurl2.com"
+		});
+
+		const sub3 = await Subscription.install({
+			host: jiraHost,
+			installationId: 3456,
+			hashedClientKey: "key-123",
+			gitHubAppId: undefined,
+			avatarUrl: "avatarurl3.com"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: sub.id,
+			repoId: 1,
+			repoName: "github-for-jira",
+			repoOwner: "atlas",
+			repoFullName: "atlas/github-for-jira",
+			repoUrl: "github.com/atlas/github-for-jira"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: sub.id,
+			repoId: 2,
+			repoName: "github-for-jira",
+			repoOwner: "notamatch",
+			repoFullName: "notamatch/github-for-jira",
+			repoUrl: "github.com/notamatch/github-for-jira"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: sub2.id,
+			repoId: 3,
+			repoName: "github-for-jira",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: sub2.id,
+			repoId: 3,
+			repoName: "github-for-jira",
+			repoOwner: "anotheratlasmatch",
+			repoFullName: "anotheratlasmatch/github-for-jira",
+			repoUrl: "github.com/atlassian/github-for-jira"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: sub3.id,
+			repoId: 3,
+			repoName: "github-for-jira",
+			repoOwner: "iworkatatlassian",
+			repoFullName: "iworkatatlassian/github-for-jira",
+			repoUrl: "github.com/iworkatatlassian/github-for-jira"
+		});
+
+		const workspaces = {
+			success:true,
+			workspaces: [
+				{
+					id: sub.id,
+					name: "atlas",
+					url: "github.com/atlas",
+					avatarUrl: "avatarurl.com"
+				},
+				{
+					id: sub2.id,
+					name: "atlassian",
+					url: "github.com/atlassian",
+					avatarUrl: "avatarurl2.com"
+				},
+				{
+					id: sub3.id,
+					name: "iworkatatlassian",
+					url: "github.com/iworkatatlassian",
+					avatarUrl: "avatarurl3.com"
+				}
+			]
+		};
+
+		await supertest(app)
+			.get("/jira/workspace?searchQuery=atlas")
+			.expect(res => {
+				expect(res.text).toContain(JSON.stringify(workspaces));
+				expect(res.status).toBe(200);
 			});
 	});
 });
