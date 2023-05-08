@@ -4,6 +4,7 @@ import { chain, groupBy } from "lodash";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getAllKnownHeaders } from "utils/http-headers";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
@@ -35,6 +36,7 @@ export const JiraConnectEnterpriseGet = async (
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
 				installationId: res.locals.installation.id,
+				withApiKeyFeature: await booleanFlag(BooleanFlags.ENABLE_API_KEY_FEATURE, res.locals.installation.jiraHost),
 				knownHttpHeadersLowerCase: getAllKnownHeaders()
 			});
 		}

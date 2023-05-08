@@ -81,6 +81,8 @@
             </div>
 
             <div class="jiraServerUrl__section">
+
+            {{#if withApiKeyFeature}}
               <h3 class="jiraServerUrl__options__subTitle">
                 API key <small>(Optional)</small>
               </h3>
@@ -106,6 +108,7 @@
                          data-aui-validation-when="keyup"
                          id="gheApiKeyValue" name="gheApiKeyValue" />
                 </div>
+            {{/if}}
 
                 <button
                     type="submit"
