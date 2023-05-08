@@ -305,6 +305,7 @@ export const getJiraClient = async (
 				if (response.data?.rejectedDeployments?.length) {
 					logger.warn({
 						rejectedDeployments: response.data?.rejectedDeployments,
+						options,
 						...getDeploymentDebugInfo(data)
 					}, "Jira API rejected deployment!");
 				}
