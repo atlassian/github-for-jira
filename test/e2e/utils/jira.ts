@@ -1,5 +1,5 @@
 import { Locator, Page } from "@playwright/test";
-import { JiraTestDataRoles, SCREENSHOT_PATH, testData } from "test/e2e/constants";
+import { JiraTestDataRoles, testData } from "test/e2e/constants";
 import { envVars } from "config/env";
 
 const data = testData.jira;
