@@ -127,6 +127,16 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+	static async findRepoById(id: number): Promise<RepoSyncState[] | null> {
+		const results = await RepoSyncState.findAll({
+			where: {
+				id
+			}
+		});
+
+		return results || [];
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {

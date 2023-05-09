@@ -335,3 +335,21 @@ $(document).ready(function () {
 		});
 	}
 });
+
+$(".test-button").click(function(event) {
+	event.preventDefault();
+	const path = "/jira/repositories/fetch"
+	$.ajax({
+		type: "POST",
+		url: path,
+		data: {
+			ids: [2, 4, 7]
+		},
+		success: function() {
+			console.log("Success")
+		},
+		error: function (error) {
+			console.error("Error: ", error)
+		},
+	});
+});
