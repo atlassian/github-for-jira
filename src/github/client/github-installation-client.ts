@@ -30,6 +30,8 @@ import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 import { cloneDeep } from "lodash";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { runCurl } from "utils/curl/curl-utils";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -240,10 +242,29 @@ export class GitHubInstallationClient extends GitHubClient {
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
-		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
-			{ environment, per_page },
-			{ owner, repo }
-		);
+		try {
+			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
+				{ environment, per_page },
+				{ owner, repo }
+			);
+		} catch (e) {
+			try {
+				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+					this.logger.warn("Found error listing deployments, run curl commands to get more details");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.baseUrl}/repos/{owner}/${repo}/deployments`,
+						method: "GET",
+						authorization: Authorization
+					});
+					this.logger.warn({ status: output.isSuccess, stdout: output.stdout, stderr: output.stderr }, "Curl for list deployments output generated");
+				}
+			} catch (curlE) {
+				this.logger.error({ err: curlE }, "Error running curl for list deployments");
+			}
+			throw e;
+		}
 	};
 
 	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {

@@ -8,9 +8,9 @@ const logger = getLogger("curl");
 export const runCurl = async (opts: {
 	fullUrl: string,
 	method: "GET" | "POST",
-	token: string
+	authorization: string
 }) => {
-	const cmd = `curl -v -X ${opts.method} -H "Accept: application/json" -H "Authorization: Bearer ${opts.token}" '${opts.fullUrl}'`;
+	const cmd = `curl -v -X ${opts.method} -H "Accept: application/json" -H "Authorization: ${opts.authorization}" '${opts.fullUrl}'`;
 	const { stdout, stderr } = await exec(cmd, {
 		env: {
 			...process.env
