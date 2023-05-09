@@ -1,12 +1,23 @@
 import { e2eEnvVars } from "test/e2e/env-e2e";
+import { v4 as uuid } from "uuid";
 
 export const STATE_PATH = "./test/e2e/test-results/states";
 export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
+
+export const createProjectId = () => `P${uuid().substring(0, 5)}`.toUpperCase();
+// Project ID created for each e2e test run
+const projectId = (): string => {
+	if (!process.env.PROJECT_ID) {
+		process.env.PROJECT_ID = createProjectId();
+	}
+	return process.env.PROJECT_ID;
+};
 
 export const testData: TestData = {
 	stateDirectoryPath: STATE_PATH,
 	state: `${STATE_PATH}/default.json`,
 	appUrl: e2eEnvVars.APP_URL,
+	projectId,
 	jira: {
 		urls: {
 			base: e2eEnvVars.ATLASSIAN_URL,
@@ -17,9 +28,10 @@ export const testData: TestData = {
 			yourWork: `${e2eEnvVars.ATLASSIAN_URL}/jira/your-work`,
 			manageApps: `${e2eEnvVars.ATLASSIAN_URL}/plugins/servlet/upm`,
 			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`,
-			projects: `${e2eEnvVars.APP_URL}/jira/projects`,
-			project: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/projects/${id}`,
-			projectDetails: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/jira/software/projects/${id}/settings/details`,
+			appMainPage: `${e2eEnvVars.APP_URL}/plugins/servlet/ac/${e2eEnvVars.APP_KEY}/gh-addon-admin`,
+			projects: `${e2eEnvVars.ATLASSIAN_URL}/jira/projects`,
+			project: (id?: string) => `${e2eEnvVars.ATLASSIAN_URL}/projects/${id || projectId()}`,
+			projectDetails: (id?: string) => `${e2eEnvVars.ATLASSIAN_URL}/jira/software/projects/${id || projectId()}/settings/details`,
 			browse: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/browse/${id}`
 		},
 		roles: {
@@ -52,6 +64,7 @@ export interface TestData {
 	stateDirectoryPath: string;
 	state: string;
 	appUrl: string;
+	projectId: () => string;
 	jira: TestDataEntry<JiraTestDataURLs, JiraTestDataRoles>;
 	github: TestDataEntry<GithubTestDataURLs>;
 }
@@ -73,9 +86,10 @@ export interface JiraTestDataURLs extends TestDataURLs {
 	auth: string;
 	manageApps: string;
 	connectJson: string;
+	appMainPage: string;
 	projects: string;
-	project: (id: string) => string;
-	projectDetails: (id: string) => string;
+	project: (id?: string) => string;
+	projectDetails: (id?: string) => string;
 	browse: (id: string) => string;
 }
 
