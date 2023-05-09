@@ -10,9 +10,8 @@ import { GitHubServerApp } from "models/github-server-app";
 export interface GheConnectConfig {
 	serverUrl: string;
 
-	// TODO: API key config will come here
-	// apiKeyHeaderName: string | undefined;
-	// encryptedApiKeyValue: string | undefined;
+	apiKeyHeaderName?: string | null;
+	encryptedApiKeyValue?: string | null;
 }
 
 const REDIS_CLEANUP_TIMEOUT = 7 * 24 * 3600 * 1000;
@@ -58,8 +57,9 @@ export const resolveIntoConnectConfig = async (tempConnectConfigUuidOrServerUuid
 	const existingServer = await GitHubServerApp.findForUuid(tempConnectConfigUuidOrServerUuid);
 	if (existingServer && existingServer.installationId === installationId) {
 		return {
-			serverUrl: existingServer.gitHubBaseUrl
-			// TODO: add API key data
+			serverUrl: existingServer.gitHubBaseUrl,
+			apiKeyHeaderName: existingServer.apiKeyHeaderName,
+			encryptedApiKeyValue: existingServer.encryptedApiKeyValue
 		};
 	}
 	return undefined;
