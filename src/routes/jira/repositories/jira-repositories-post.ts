@@ -11,7 +11,7 @@ export interface GitHubRepo {
 	lastUpdatedDate?: Date
 }
 
-export const JiraWorkspaceContainersPost = async (req: Request, res: Response): Promise<void> => {
+export const JiraRepositoriesPost = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch repos");
 	const { jiraHost } = res.locals;
 
