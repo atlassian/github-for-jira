@@ -12,7 +12,7 @@ export interface GitHubRepo {
 	lastUpdatedDate?: Date
 }
 
-const findMatchingRepositories = async (repoIds: number[]): Promise<(RepoSyncState | null)[]> => {
+const findMatchingRepositories = async (repoIds: number[]): Promise<(RepoSyncState[] | null)[]> => {
 	return await Promise.all(
 		repoIds.map(async id => {
 			const repo = await RepoSyncState.findRepoById(id);
