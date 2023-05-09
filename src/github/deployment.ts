@@ -70,12 +70,6 @@ export const processDeployment = async (
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
-	if (result.rejectedDeployments?.length) {
-		logger.warn({
-			rejectedDeployments: result.rejectedDeployments
-		}, "Jira API rejected deployment!");
-	}
-
 	// TODO - remove the rate limited test once valid metrics have been decided
 	!rateLimited && emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
