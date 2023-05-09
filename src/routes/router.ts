@@ -17,6 +17,8 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
+import { ConfigurationGet } from "~/src/routes/configuration";
+import { SaveSatePost } from "~/src/routes/save-state";
 
 export const RootRouter = Router();
 
@@ -69,6 +71,9 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 RootRouter.use(cookieSessionMiddleware);
 
 RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
+
+RootRouter.get("/configuration", ConfigurationGet);
+RootRouter.post("/saveState", SaveSatePost);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

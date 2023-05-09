@@ -202,6 +202,45 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules
+		modules : {
+			"dialogs": [
+				{
+					"url": "/configuration",
+					"options": {
+						"height": "150px",
+						"width": "400px"
+					},
+					"key": "dialog-module-key"
+				}
+			],
+			"webItems": [
+				{
+					"location": "system.top.navigation.bar",
+					"weight": 200,
+					"styleClasses": [
+						"webitem",
+						"system-present-webitem"
+					],
+					"context": "addon",
+					"url": "/configuration",
+					"target": {
+						"type": "dialog",
+						"options": {
+							"key": "dialog-module-key",
+							"url": "/configuration"
+
+						}
+					},
+					"tooltip": {
+						"value": "Example tooltip"
+					},
+					"name": {
+						"value": "My Web Item"
+					},
+					"key": "web-item-example"
+				}
+			]
+		},
+		...modules
 	});
 };
