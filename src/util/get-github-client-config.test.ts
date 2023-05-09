@@ -85,7 +85,7 @@ describe("get-github-client-config", () => {
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 
-	it("includes API key config when provided", async () => {
+	it("includes API key config from FF", async () => {
 		when(stringFlag)
 			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
 			.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
@@ -95,9 +95,38 @@ describe("get-github-client-config", () => {
 		expect(await config.apiKeyConfig!.apiKeyGenerator()).toEqual("super-key");
 	});
 
+	it("includes API key config from Db", async () => {
+		gitHubServerApp.apiKeyHeaderName = "ApiKeyHeaderFromDb";
+		gitHubServerApp.encryptedApiKeyValue = "encrypted:super-db-key";
+		await gitHubServerApp.save();
+
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
+		expect(config.apiKeyConfig!.headerName).toEqual("ApiKeyHeaderFromDb");
+		expect(await config.apiKeyConfig!.apiKeyGenerator()).toEqual("super-db-key");
+	});
+
 	it("does not include API key config when not provided", async () => {
 		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, getLogger("test"), jiraHost);
 		expect(config.apiKeyConfig).toBeUndefined();
+	});
+
+	describe("anonymous client", () => {
+		it("works fine without apiKeyConfig", async () => {
+			gheNock.get("/").reply(200);
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
+			const response = await client.getPage(1000);
+			expect(response.status).toStrictEqual(200);
+		});
+
+		it("uses provided API key config", async () => {
+			gheNock.get("/").matchHeader("foo", "bar").reply(200);
+			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"), {
+				headerName: "foo",
+				apiKeyGenerator: () => Promise.resolve("bar")
+			});
+			const response = await client.getPage(1000);
+			expect(response.status).toStrictEqual(200);
+		});
 	});
 });
 
