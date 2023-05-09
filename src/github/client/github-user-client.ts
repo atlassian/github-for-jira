@@ -17,8 +17,8 @@ import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
 
-	constructor(userToken: string, gitHubConfig: GitHubConfig, metrics: Metrics, logger: Logger) {
-		super(gitHubConfig, metrics, logger);
+	constructor(userToken: string, gitHubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.userToken = userToken;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
@@ -101,25 +101,6 @@ export class GitHubUserClient extends GitHubClient {
 				owner,
 				repo
 			});
-	}
-
-	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
-		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {
-			urlParams: {
-				owner,
-				repo,
-				per_page
-			}
-		});
-	}
-
-	public async getRepository(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
-		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {
-			urlParams: {
-				owner,
-				repo
-			}
-		});
 	}
 
 	public async searchRepositories(queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> {

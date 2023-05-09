@@ -142,6 +142,70 @@ describe("Test getting a jira client", () => {
 		// no assertion necessary; nock will complain if one of the mocked endpoints is not called
 	});
 
+	it("Should return success response for the bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/devinfo/0.10/bulk").reply(405);
+		jiraNock.post("/rest/devinfo/0.10/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/devinfo/0.10/bulk"
+		});
+
+		const response = await client.devinfo.repository.update({
+			commits: [
+				{
+					author: {
+						email: "blarg@email.com",
+						name: "foo"
+					},
+					authorTimestamp: "Tue Oct 19 2021 11:52:08 GMT+1100",
+					displayId: "oajfojwe",
+					fileCount: 3,
+					hash: "hashihashhash",
+					id: "id",
+					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					message: "commit message",
+					url: "some-url",
+					updateSequenceId: 1234567890
+				}
+			]
+		});
+
+		expect(response).toMatchObject([{ result: "SKIP_REDIRECTED" }]);
+	});
+
+	it("Should return success response for the deployment bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/deployments/0.1/bulk").reply(405);
+		jiraNock.post("/rest/deployments/0.1/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/deployments/0.1/bulk"
+		});
+
+		const response = await client.deployment.submit({
+			deployments: [{}]
+		});
+
+		expect(response).toEqual({
+			status: 200,
+			rejectedDeployments: undefined
+		});
+	});
+
+	it("Should return success response for the build bulk API redirects", async () => {
+		jiraNock.get("/status").reply(200);
+		jiraNock.get("/rest/builds/0.1/bulk").reply(405);
+		jiraNock.post("/rest/builds/0.1/bulk").reply(302, undefined, {
+			"Location": jiraHost + "/rest/builds/0.1/bulk"
+		});
+
+		const response = await client.workflow.submit({
+			builds: [{}]
+		});
+
+		expect(response).toEqual({
+			status: 200,
+			result: "SKIP_REDIRECTED"
+		});
+	});
+
 	describe("Reading encryptedSharedSecret", () => {
 		beforeEach(async ()=>{
 			const inst: Installation | null = await Installation.findOne({

@@ -485,7 +485,7 @@ describe("logger behaviour", () => {
 
 			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 
-			const response = await client.getMainPage(1000);
+			const response = await client.getPage(1000);
 
 			logger.error({
 				err: new GithubClientGraphQLError(
@@ -561,7 +561,7 @@ describe("logger behaviour", () => {
 
 			const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, logger);
 
-			await client.getMainPage(1000).catch(noop);
+			await client.getPage(1000).catch(noop);
 
 			const record = JSON.parse(ringBuffer.records[ringBuffer.records.length - 1]);
 

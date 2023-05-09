@@ -23,6 +23,7 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 	webhookReceived && emitWebhookProcessedMetrics(
 		new Date(webhookReceived).getTime(),
 		"code_scanning_alert",
+		jiraClient.baseURL,
 		context.log,
 		result?.status,
 		gitHubAppId

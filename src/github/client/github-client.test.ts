@@ -9,7 +9,7 @@ jest.mock("axios");
 
 class TestGitHubClient extends GitHubClient {
 	constructor(config: GitHubConfig) {
-		super(config, { trigger: "test" }, getLogger("test"));
+		super(config, jiraHost, { trigger: "test" }, getLogger("test"));
 	}
 	public doTestGraphqlCall() {
 		return this.graphql("foo", {});

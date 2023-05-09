@@ -63,6 +63,7 @@ export const processBranch = async (
 	emitWebhookProcessedMetrics(
 		webhookReceivedDate.getTime(),
 		"create",
+		jiraHost,
 		logger,
 		jiraResponse?.status,
 		gitHubAppId
@@ -90,6 +91,7 @@ export const deleteBranchWebhookHandler = async (context: WebhookContext, jiraCl
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

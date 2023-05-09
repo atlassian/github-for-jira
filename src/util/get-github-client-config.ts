@@ -143,7 +143,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  */
 export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, metrics: Metrics): Promise<GitHubAppClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAppClient(gitHubClientConfig, metrics, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
+	return new GitHubAppClient(gitHubClientConfig, jiraHost, metrics, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 };
 
 /**
@@ -160,14 +160,14 @@ export const createInstallationClient = async (gitHubInstallationId: number, jir
  */
 export const createUserClient = async (githubToken: string, jiraHost: string, metrics: Metrics, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> => {
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubUserClient(githubToken, gitHubClientConfig, metrics, logger);
+	return new GitHubUserClient(githubToken, gitHubClientConfig, jiraHost, metrics, logger);
 };
 
 export const createAnonymousClient = async (gitHubBaseUrl: string, jiraHost: string, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
-	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger), metrics, logger);
+	return new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger), jiraHost, metrics, logger);
 };
 
 export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
 	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
-	return new GitHubAnonymousClient(config, metrics, logger);
+	return new GitHubAnonymousClient(config, jiraHost, metrics, logger);
 };

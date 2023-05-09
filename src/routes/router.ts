@@ -14,7 +14,6 @@ import { ErrorRouter } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
@@ -68,9 +67,6 @@ RootRouter.use(MaintenanceRouter);
 RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
-
-// App Manifest flow route
-RootRouter.get("/github-manifest", GithubManifestGet);
 
 RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 

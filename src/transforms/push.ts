@@ -200,6 +200,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",
+					jiraHost,
 					log,
 					jiraResponse?.status,
 					gitHubAppId
