@@ -287,7 +287,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data: JiraBuildBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions) => {
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
