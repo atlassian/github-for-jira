@@ -93,7 +93,6 @@ export const jiraRemoveProject = async (page: Page, projectId: string): Promise<
 	const status = (await page.goto(data.urls.project(projectId)))?.status() || 0;
 	if (status == 200) {
 		await page.goto(data.urls.projectDetails(projectId));
-		await page.screenshot({ path: `${SCREENSHOT_PATH}/teardown.jpg` });
 		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--trigger']").click();
 		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--content'] button").click();
 		await page.locator("[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']").click();

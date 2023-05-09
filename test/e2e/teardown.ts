@@ -6,8 +6,6 @@ import { testData } from "test/e2e/constants";
 export default async function teardown() {
 	const browser = await chromium.launch();
 	const page = await browser.newPage({ storageState: testData.jira.roles.admin.state });
-	// eslint-disable-next-line no-console
-	console.log(testData.projectId());
 	await jiraRemoveProject(page, testData.projectId());
 	// Uninstall the app
 	await jiraAppUninstall(page);

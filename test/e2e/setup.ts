@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
-import { jiraAppInstall, /*jiraAppInstall,*/ jiraCreateProject, /*jiraAppInstall, jiraCreateProject,*/ jiraLogin } from "test/e2e/utils/jira";
-import { /*clearState,*/ stateExists } from "test/e2e/e2e-utils";
+import { jiraAppInstall, jiraCreateProject, jiraLogin } from "test/e2e/utils/jira";
+import { stateExists } from "test/e2e/e2e-utils";
 import { testData } from "test/e2e/constants";
 import { ngrokBypass } from "test/e2e/utils/ngrok";
 
@@ -17,8 +17,6 @@ export default async function setup() {
 
 	// Create global project
 	await jiraAppInstall(page);
-	// eslint-disable-next-line no-console
-	console.log(testData.projectId());
 	await jiraCreateProject(page, testData.projectId());
 
 	// Close the browser
