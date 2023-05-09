@@ -170,13 +170,15 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
-	static async findBySubscriptionIdAndRepoName(subscriptionId: number, repoName: string, options: FindOptions = {}): Promise<RepoSyncState | null> {
-		return RepoSyncState.findOne(merge(options, {
+	static async findRepositoriesBySubscriptionIdAndRepoName(subscriptionId: number, repoName: string): Promise<RepoSyncState[] | null> {
+		return RepoSyncState.findAll({
 			where: {
 				subscriptionId,
-				repoName
+				repoName: {
+					[Op.iLike]: `%${repoName}%`
+				}
 			}
-		}));
+		});
 	}
 
 

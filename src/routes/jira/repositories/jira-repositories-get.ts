@@ -3,7 +3,7 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 
-const { MISSING_JIRA_HOST, MISSING_GITHUB_SUBSCRIPTION } = Errors;
+const { MISSING_JIRA_HOST, MISSING_SUBSCRIPTION } = Errors;
 
 export interface GitHubRepo {
 	id: number,
@@ -14,8 +14,8 @@ export interface GitHubRepo {
 	lastUpdatedDate?: Date
 }
 
-export const JiraWorkspaceContainersGet = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
+export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to get repositories");
 
 	// TODO - update this later
 	const { jiraHost } = res.locals;
@@ -42,30 +42,28 @@ export const JiraWorkspaceContainersGet = async (req: Request, res: Response): P
 	const subscription = await Subscription.getOneForSubscriptionIdAndHost(jiraHost, connectedOrgId);
 
 	if (!subscription) {
-		req.log.warn(MISSING_GITHUB_SUBSCRIPTION);
-		res.status(400).send(MISSING_GITHUB_SUBSCRIPTION);
+		req.log.warn(MISSING_SUBSCRIPTION);
+		res.status(400).send(MISSING_SUBSCRIPTION);
 		return;
 	}
 
-	const repo = await RepoSyncState.findBySubscriptionIdAndRepoName(subscription.id, repoName);
+	const repos = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(subscription.id, repoName);
 
-	if (!repo) {
+	if (!repos?.length) {
 		const errMessage = "Repository not found";
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
 	}
 
-	const { id, repoName: name, repoUrl, updatedAt } = repo;
+	const repositories = repos.map(repo => {
+		const { id, repoName: name } = repo;
 
-	const repoData: GitHubRepo = {
-		id,
-		name,
-		providerName: "GitHub for Jira",
-		url: repoUrl,
-		avatarUrl: null,
-		lastUpdatedDate: updatedAt
-	};
+		return {
+			id,
+			name
+		};
+	});
 
-	res.status(200).json({ success: true, repoData });
+	res.status(200).json({ success: true, repositories });
 };
