@@ -5,8 +5,9 @@ import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { Errors } from "config/errors";
 import { RepoSyncState } from "models/reposyncstate";
+import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 
-describe("Workspace Get", () => {
+describe("Workspaces Get", () => {
 	let app: Application;
 	let sub: Subscription;
 	let repo;
@@ -36,6 +37,7 @@ describe("Workspace Get", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
+		app.use(jiraSymmetricJwtMiddleware);
 		app.use(getFrontendApp());
 
 		await supertest(app)

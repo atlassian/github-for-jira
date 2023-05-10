@@ -29,7 +29,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 	return matchedOrgs;
 };
 
-export const JiraWorkspaceGet = async (req: Request, res: Response): Promise<void> => {
+export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
 
 	// TODO - update this later
