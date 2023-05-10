@@ -60,7 +60,7 @@
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.1015.0",
 		"axios": "^0.26.0",
-		"body-parser": "^1.20.2",
+		"body-parser": "^1.19.2",
 		"bottleneck": "^2.19.5",
 		"bunyan": "^1.8.15",
 		"bunyan-format": "^0.2.1",

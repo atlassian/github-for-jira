@@ -393,7 +393,7 @@ const batchedBulkUpdate = async (
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 	const commitChunks: JiraCommit[][] = [];
 	do {
-		commitChunks.push(dedupedCommits?.splice(0, 400));
+		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
 
 	const batchedUpdates = commitChunks.map((commitChunk) => {
