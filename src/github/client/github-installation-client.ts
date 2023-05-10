@@ -243,7 +243,6 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		try {
-			if (Date.now() > 0) throw new Error("blah");
 			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 				{ environment, per_page },
 				{ owner, repo }
