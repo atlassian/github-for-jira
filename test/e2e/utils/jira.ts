@@ -72,8 +72,8 @@ export const jiraCreateProject = async (page: Page, projectId: string): Promise<
 	await page.locator("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']").click();
 	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']").click();
 	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']").click();
-	await page.fill("[id='project-create.create-form.name-field.input']", projectId);
-	await page.fill("[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
+	await page.fill("[data-test-id='project-create.create-form.name-field.input'] input", projectId);
+	await page.fill("[data-test-id='project-create.create-form.advanced-dropdown.key-field.input-wrapper'] input", projectId);
 	await page.locator("[data-test-id='project-create.create-form.create-screen.submit-button']").click();
 
 	// V3 flow for future - apparently our e2e instance is still on v2
