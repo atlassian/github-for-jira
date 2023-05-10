@@ -22,8 +22,8 @@ test.describe("Create branch", () => {
 		await page.goto(testData.jira.urls.browse(issueId));
 		// It is important to call waitForEvent first.
 		const pagePromise = context.waitForEvent("page");
-		// await page.locator("[data-testid='development-summary-branch.ui.create-branch-dropdown.link-item']").click();
-		await page.locator("[data-testid='development-summary-branch.ui.summary-item'] [data-testid='development-summary-common.ui.summary-item.link-formatted-button']").click();
+		// await page.click("[data-testid='development-summary-branch.ui.create-branch-dropdown.link-item']");
+		await page.click("[data-testid='development-summary-branch.ui.summary-item'] [data-testid='development-summary-common.ui.summary-item.link-formatted-button']");
 		const newTab = await pagePromise;
 		expect(await newTab.locator("[id='noConfiguration__ConnectToGH']").isVisible()).toBeTruthy();
 		await newTab.close();

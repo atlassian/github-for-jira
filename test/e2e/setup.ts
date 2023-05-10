@@ -1,15 +1,15 @@
 import { chromium } from "@playwright/test";
 import { jiraAppInstall, jiraCreateProject, jiraLogin } from "test/e2e/utils/jira";
-import { stateExists } from "test/e2e/e2e-utils";
+import { clearState, stateExists } from "test/e2e/e2e-utils";
 import { testData } from "test/e2e/constants";
 import { ngrokBypass } from "test/e2e/utils/ngrok";
 
 export default async function setup() {
+	// Remove old state before starting
+	clearState();
+
 	const browser = await chromium.launch();
 	const page = await browser.newPage();
-
-	// Remove old state before starting
-	// clearState();
 
 	// login and save state before tests
 	await ngrokBypass(page);

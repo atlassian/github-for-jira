@@ -68,24 +68,24 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 
 export const jiraCreateProject = async (page: Page, projectId: string): Promise<void> => {
 	await page.goto(data.urls.projects);
-	await page.locator("[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']").click();
+	await page.click("[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
 	await page.fill("[data-test-id='project-create.create-form.name-field.input'] input", projectId);
 	await page.fill("[data-test-id='project-create.create-form.advanced-dropdown.key-field.input-wrapper'] input", projectId);
-	await page.locator("[data-test-id='project-create.create-form.create-screen.submit-button']").click();
+	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
 
 	// V3 flow for future - apparently our e2e instance is still on v2
-	/*await page.locator("[data-testid='global-pages.directories.projects-directory-v3.create-projects-button']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']").click();
-	await page.locator("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']").click();
+	/*await page.click("[data-testid='global-pages.directories.projects-directory-v3.create-projects-button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
 	await page.fill("[id='project-create.create-form.name-field.input']", projectId);
-	await page.locator("[data-testid='project-access.field.button-trigger']").click();
+	await page.click("[data-testid='project-access.field.button-trigger']");
 	await page.locator("[data-testid='project-access.field.dropdown-menu--content'] [data-testid='project-access.field.option']").nth(2).click();
 	await page.fill("[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
-	await page.locator("[data-test-id='project-create.create-form.create-screen.submit-button'] button").click();*/
+	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button'] button");*/
 	await page.waitForSelector(":has-text('Jira project successfully created')");
 };
 
@@ -93,9 +93,9 @@ export const jiraRemoveProject = async (page: Page, projectId: string): Promise<
 	const status = (await page.goto(data.urls.project(projectId)))?.status() || 0;
 	if (status == 200) {
 		await page.goto(data.urls.projectDetails(projectId));
-		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--trigger']").click();
-		await page.locator("[data-testid='project-details.header.menu.dropdown-menu--content'] button").click();
-		await page.locator("[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']").click();
+		await page.click("[data-testid='project-details.header.menu.dropdown-menu--trigger']");
+		await page.click("[data-testid='project-details.header.menu.dropdown-menu--content'] button");
+		await page.click("[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']");
 		return true;
 	}
 	return false;
@@ -104,11 +104,11 @@ export const jiraRemoveProject = async (page: Page, projectId: string): Promise<
 export const jiraCreateIssue = async (page: Page, projectId: string = testData.projectId()): Promise<string> => {
 	await page.goto(data.urls.project(projectId));
 
-	await page.locator("[data-testid='platform-inline-card-create.ui.trigger.visible.button']").click();
+	await page.click("[data-testid='platform-inline-card-create.ui.trigger.visible.button']");
 	const taskInput = page.locator("textarea[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 
 	// V3 implementation
-	// await page.locator("[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']").click();
+	// await page.click("[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']");
 	// const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now());
 	await taskInput.press("Enter");
@@ -120,9 +120,10 @@ export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<bool
 	const status = (await page.goto(data.urls.browse(issueId)))?.status() || 0;
 	if (status == 200) {
 		await page.keyboard.press(".");
-		await page.locator("section[role='dialog'] input").fill("delete");
-		await page.locator("section[role='dialog'] input").press("Enter");
-		await page.locator("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']").click();
+		const input = page.locator("section[role='dialog'] input");
+		await input.fill("delete");
+		await input.press("Enter");
+		await page.click("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']");
 		return true;
 	}
 	return false;

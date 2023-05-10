@@ -18,7 +18,7 @@ test.describe("App Installation", () => {
 		});
 	});
 
-	// eslint-disable-next-line jest/expect-expect
+	// Skipping because github isn't ready yet
 	test.describe.skip("github", () => {
 		test("githubAppInstall", async ({ page }) => {
 			expect(await githubAppInstall(page)).toBeTruthy();

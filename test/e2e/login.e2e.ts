@@ -17,6 +17,7 @@ test.describe("Login", () => {
 				});
 			});
 
+			// Skipping because github isn't ready yet
 			test.describe.skip("Github", () => {
 				if (useState) {
 					test.use({
