@@ -5,12 +5,21 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions, JiraDeploymentBulkSubmitData } from "interfaces/jira";
+
+import {
+	JiraAssociation,
+	JiraBuildBulkSubmitData,
+	JiraCommit,
+	JiraDeploymentBulkSubmitData,
+	JiraIssue,
+	JiraRemoteLink,
+	JiraSubmitOptions
+} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 
 // Max number of issue keys we can pass to the Jira API
@@ -210,15 +219,42 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				delete: (transformedRepositoryId: TransformedRepositoryId) =>
-					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
-						params: {
-							_updateSequenceId: Date.now()
-						},
-						urlParams: {
-							transformedRepositoryId
-						}
-					}),
+				delete: async (repositoryId: number, gitHubBaseUrl?: string) => {
+					const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
+					return Promise.all([
+						// We are sending devinfo events with the property "transformedRepositoryId", so we delete by this property.
+						instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}",
+							{
+								params: {
+									_updateSequenceId: Date.now()
+								},
+								urlParams: {
+									transformedRepositoryId
+								}
+							}
+						),
+
+						// We are sending build events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/builds/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						),
+
+						// We are sending deployments events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/deployments/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						)
+					]);
+				},
 				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
 					if (
@@ -250,8 +286,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data, options?: JiraSubmitOptions) => {
-
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -261,10 +296,12 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
+
 				const payload = {
 					builds: data.builds,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					providerMetadata: {
 						product: data.product
@@ -278,8 +315,7 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data: JiraDeploymentBulkSubmitData, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
-
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -292,7 +328,8 @@ export const getJiraClient = async (
 				const	payload = {
 					deployments: data.deployments,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					preventTransitions: options?.preventTransitions || false,
 					operationType: options?.operationType || "NORMAL"

@@ -86,13 +86,7 @@ describe("github-manifest-complete-get", () => {
 		expect(response.status).toStrictEqual(400);
 	});
 
-	it("should complete app manifest flow", async () => {
-		nockGheResponse();
-
-		const uuid = await new GheConnectConfigTempStorage().store({
-			serverUrl: gheServerApp.gitHubBaseUrl
-		}, installation.id);
-
+	const testCommonSunnyPath = async (uuid: string) => {
 		const response = await supertest(app)
 			.get(`/github/manifest/complete/${uuid}?code=123`)
 			.query({
@@ -115,6 +109,36 @@ describe("github-manifest-complete-get", () => {
 		expect(clientSecret).toEqual("client_secret_test");
 		const privateKey = await githubServerApp?.getDecryptedPrivateKey(jiraHost);
 		expect(privateKey).toEqual("private_key_test");
+	};
+
+	it("should complete app manifest flow without API key", async () => {
+		nockGheResponse();
+
+		const uuid = await new GheConnectConfigTempStorage().store({
+			serverUrl: gheServerApp.gitHubBaseUrl
+		}, installation.id);
+
+		await testCommonSunnyPath(uuid);
+
+		const githubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(await githubServerApp!.apiKeyHeaderName).toBeNull();
+		expect(await githubServerApp!.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("");
+	});
+
+	it("should complete app manifest flow with API key", async () => {
+		nockGheResponse().matchHeader("foo", "bar");
+
+		const uuid = await new GheConnectConfigTempStorage().store({
+			serverUrl: gheServerApp.gitHubBaseUrl,
+			apiKeyHeaderName: "foo",
+			encryptedApiKeyValue: "encrypted:bar"
+		}, installation.id);
+
+		await testCommonSunnyPath(uuid);
+
+		const githubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(await githubServerApp!.apiKeyHeaderName).toStrictEqual("foo");
+		expect(await githubServerApp!.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("bar");
 	});
 
 	it("should delete config from temp storage", async () => {

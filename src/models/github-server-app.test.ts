@@ -12,7 +12,9 @@ describe("GitHubServerApp", () => {
 		gitHubClientSecret: "myghsecret",
 		webhookSecret: "mywebhooksecret",
 		privateKey: "myprivatekey",
-		installationId: 10
+		installationId: 10,
+		apiKeyHeaderName: "FOO",
+		encryptedApiKeyValue: "encrypted:api_key"
 	};
 
 	it("should create a new entry in the GitHubServerApps table", async () => {
@@ -197,7 +199,9 @@ describe("GitHubServerApp", () => {
 						gitHubClientSecret: "secret",
 						webhookSecret: newWebhookSecret,
 						privateKey: newPrivateKey,
-						installationId
+						installationId,
+						apiKeyHeaderName: "newApiKey",
+						encryptedApiKeyValue: "encrypted:newApiKeyValue"
 					}, jiraHost);
 
 					const updatedApp = await GitHubServerApp.findForUuid(uuid);
@@ -205,6 +209,31 @@ describe("GitHubServerApp", () => {
 					expect(updatedApp?.gitHubClientId).toEqual(newClientId);
 					expect(await updatedApp?.getDecryptedWebhookSecret(jiraHost)).toEqual(newWebhookSecret);
 					expect(await updatedApp?.getDecryptedPrivateKey(jiraHost)).toEqual(newPrivateKey);
+					expect(await updatedApp?.apiKeyHeaderName).toStrictEqual("newApiKey");
+					expect(await updatedApp?.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("newApiKeyValue");
+				});
+
+				it("on update should drop apiKey and apiKeyValue when not provided", async () => {
+					const originalApp = await GitHubServerApp.findForUuid(uuid);
+					expect(originalApp?.gitHubClientId).toEqual(originalClientId);
+					expect(await originalApp?.getDecryptedWebhookSecret(jiraHost)).toEqual(originalWebhookSecret);
+					expect(await originalApp?.getDecryptedPrivateKey(jiraHost)).toEqual(originalPrivateKey);
+
+					await GitHubServerApp.updateGitHubAppByUUID({
+						uuid,
+						appId: 1,
+						gitHubAppName: "my awesome app",
+						gitHubBaseUrl,
+						gitHubClientId: newClientId,
+						gitHubClientSecret: "secret",
+						webhookSecret: newWebhookSecret,
+						privateKey: newPrivateKey,
+						installationId
+					}, jiraHost);
+
+					const updatedApp = await GitHubServerApp.findForUuid(uuid);
+					expect(await updatedApp?.apiKeyHeaderName).toStrictEqual(null);
+					expect(await updatedApp?.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("");
 				});
 
 				it("should not update GitHub app when uuid is not found", async () => {
@@ -266,5 +295,33 @@ describe("GitHubServerApp", () => {
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		expect(savedGitHubServerApp!.webhookSecret).toEqual("encrypted:mywebhooksecret");
 		expect(await savedGitHubServerApp!.getDecryptedWebhookSecret(jiraHost)).toEqual("mywebhooksecret");
+	});
+
+	it("getDecryptedApiKeyValue should return decrypted value", async () => {
+		await GitHubServerApp.install(payload, jiraHost);
+		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(savedGitHubServerApp!.encryptedApiKeyValue).toEqual("encrypted:api_key");
+		expect(await savedGitHubServerApp!.getDecryptedApiKeyValue(jiraHost)).toEqual("api_key");
+	});
+
+	it("getDecryptedApiKeyValue should not explode when no apiKeyValue was provided", async () => {
+		await GitHubServerApp.install({
+			...payload,
+			encryptedApiKeyValue: null
+		}, jiraHost);
+		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(await savedGitHubServerApp!.getDecryptedApiKeyValue(jiraHost)).toEqual("");
+	});
+
+	describe("encrypt", () => {
+		it("should encrypt", async () => {
+			expect(await GitHubServerApp.encrypt(jiraHost, "foo")).toStrictEqual("encrypted:foo");
+		});
+	});
+
+	describe("decrypt", () => {
+		it("should decrypt", async () => {
+			expect(await GitHubServerApp.decrypt(jiraHost, "encrypted:foo")).toStrictEqual("foo");
+		});
 	});
 });
