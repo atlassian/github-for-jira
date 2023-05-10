@@ -343,7 +343,7 @@ $(".test-button").click(function(event) {
 		type: "POST",
 		url: path,
 		data: {
-			ids: [2, 4, 7]
+			ids: [3, 5, 6, 7]
 		},
 		success: function() {
 			console.log("Success")

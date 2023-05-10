@@ -1,4 +1,19 @@
-import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions, JSON } from "sequelize";
+import {
+	BOOLEAN,
+	CountOptions,
+	CreateOptions,
+	DataTypes,
+	DATE,
+	DestroyOptions,
+	FindOptions,
+	INTEGER,
+	Model,
+	Op,
+	STRING,
+	UpdateOptions,
+	JSON,
+	QueryTypes
+} from "sequelize";
 import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
@@ -127,14 +142,20 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async findRepoById(id: number): Promise<RepoSyncState[] | null> {
-		const results = await RepoSyncState.findAll({
-			where: {
-				id
+	static async findRepoById(id: number, jiraHost: string): Promise<RepoSyncState | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"id\" = :id ",
+			{
+				replacements: { jiraHost, id },
+				type: QueryTypes.SELECT
 			}
-		});
+		);
 
-		return results || [];
+		return results[0] as RepoSyncState;
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
