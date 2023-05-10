@@ -243,6 +243,24 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		try {
+
+			try {
+
+				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+					this.logger.warn("===== gary =====");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.baseUrl}/repos/{owner}/${repo}/deployments`,
+						method: "GET",
+						authorization: Authorization
+					});
+					this.logger.warn({ body: output.body, meta: output.meta }, "=== gary === Curl for list deployments output generated");
+				}
+			} catch (curlE) {
+				this.logger.error({ err: curlE }, "=== gary === Error running curl for list deployments");
+			}
+
 			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 				{ environment, per_page },
 				{ owner, repo }
