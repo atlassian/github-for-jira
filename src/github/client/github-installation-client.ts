@@ -243,6 +243,7 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
 		try {
+			if (Date.now() > 0) throw new Error("blah");
 			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
 				{ environment, per_page },
 				{ owner, repo }
@@ -258,7 +259,7 @@ export class GitHubInstallationClient extends GitHubClient {
 						method: "GET",
 						authorization: Authorization
 					});
-					this.logger.warn({ status: output.isSuccess, stdout: output.stdout, stderr: output.stderr }, "Curl for list deployments output generated");
+					this.logger.warn({ body: output.body, meta: output.meta }, "Curl for list deployments output generated");
 				}
 			} catch (curlE) {
 				this.logger.error({ err: curlE }, "Error running curl for list deployments");
