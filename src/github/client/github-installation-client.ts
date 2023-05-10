@@ -258,7 +258,7 @@ export class GitHubInstallationClient extends GitHubClient {
 					this.logger.warn({ body: output.body, meta: output.meta }, "=== gary === Curl for list deployments output generated");
 				}
 			} catch (curlE) {
-				this.logger.error({ err: curlE }, "=== gary === Error running curl for list deployments");
+				this.logger.error({ err: curlE?.stderr }, "=== gary === Error running curl for list deployments");
 			}
 
 			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
