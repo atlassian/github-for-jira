@@ -121,9 +121,9 @@ export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<bool
 	if (status == 200) {
 		await page.waitForLoadState();
 		await page.getByTestId("issue.views.issue-details.issue-layout.issue-layout").press(".");
-		const input = page.locator("section[role='dialog'] input");
-		await input.fill("delete");
-		await input.press("Enter");
+		await page.fill("section[role='dialog'] input", "delete");
+		await page.locator("section[role='dialog']").getByText("delete");
+		await page.press("section[role='dialog'] input", "Enter");
 		await page.click("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']");
 		return true;
 	}
