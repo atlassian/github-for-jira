@@ -316,7 +316,7 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: string, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
