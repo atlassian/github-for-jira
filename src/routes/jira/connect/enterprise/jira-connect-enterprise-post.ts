@@ -11,7 +11,6 @@ import { GithubClientError } from "~/src/github/client/github-client-errors";
 import { AxiosError, AxiosResponse } from "axios";
 import { canBeUsedAsApiKeyHeader, isUniquelyGitHubServerHeader } from "utils/http-headers";
 import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
-import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -128,7 +127,7 @@ export const JiraConnectEnterprisePost = async (
 		serverUrl: gheServerURL,
 		apiKeyHeaderName: apiKeyHeader || null,
 		encryptedApiKeyValue: apiKeyValue
-			? await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, apiKeyValue, { jiraHost })
+			? await GitHubServerApp.encrypt(jiraHost, apiKeyValue)
 			: null
 	};
 
@@ -141,17 +140,19 @@ export const JiraConnectEnterprisePost = async (
 	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
 	try {
-		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
+		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
+			apiKeyHeader
+				? {
+					headerName: apiKeyHeader,
+					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
+				}
+				: undefined
+		);
 
 		// We want to simulate a production-like call, that's why call real endpoint with
 		// some fake Auth header
 		const response = await client.getPage(TIMEOUT_PERIOD_MS, "/api/v3/rate_limit", {
-			authorization: "Bearer ghs_fake0fake1fake2w1xVgkCPL2vk8L52AeEkv",
-			... (
-				apiKeyHeader
-					? { [apiKeyHeader]: apiKeyValue }
-					: { }
-			)
+			authorization: "Bearer ghs_fake0fake1fake2w1xVgkCPL2vk8L52AeEkv"
 		});
 
 		if (!isResponseFromGhe(req.log, response)) {

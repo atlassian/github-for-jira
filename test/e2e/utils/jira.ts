@@ -1,5 +1,5 @@
-import { Page } from "@playwright/test";
-import { JiraTestDataRoles, TEST_PROJECT_KEY, TEST_PROJECT_NAME, testData } from "test/e2e/constants";
+import { Locator, Page } from "@playwright/test";
+import { JiraTestDataRoles, testData } from "test/e2e/constants";
 import { envVars } from "config/env";
 
 const data = testData.jira;
@@ -26,18 +26,24 @@ export const jiraLogin = async (page: Page, roleName: keyof JiraTestDataRoles, s
 		await passinput.fill(role.password);
 		await passinput.press("Enter");
 		await page.waitForURL(data.urls.yourWork);
+	}
 
-		if (saveState && role.state) {
-			await page.context().storageState({ path: role.state });
-		}
+	if (saveState && role.state) {
+		await page.context().storageState({ path: role.state });
+	}
+
+	return page;
+};
+
+export const jiraEnsureAppInstalled = async (page: Page): Promise<Page> => {
+	if (!await appIsInstalled(page)) {
+		await jiraAppInstall(page);
 	}
 
 	return page;
 };
 
 export const jiraAppInstall = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.manageApps);
-
 	// If app is already installed, uninstall it first
 	if (await removeApp(page)) {
 		// Need to do this to guarantee that we can install the app right after in marketplace (this is a marketplace bug)
@@ -48,7 +54,7 @@ export const jiraAppInstall = async (page: Page): Promise<Page> => {
 	await page.click("#upm-upload");
 	await page.fill("#upm-upload-url", data.urls.connectJson);
 	await page.click("#upm-upload-dialog .aui-button-primary");
-	await page.click(`#upm-plugin-status-dialog .confirm`);
+	await page.click(`#upm-plugin-status-dialog .confirm`, { timeout: 60000 });
 	const iframe = await page.frameLocator("#ak-main-content iframe");
 	await (await iframe.locator(".jiraConfiguration")).waitFor();
 	return page;
@@ -60,49 +66,86 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 	return page;
 };
 
-export const jiraAddProject = async (page: Page): Promise<Page> => {
+export const jiraCreateProject = async (page: Page, projectId: string): Promise<void> => {
 	await page.goto(data.urls.projects);
-	await (page.locator("button[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']")).click();
-	await (page.locator("button[aria-label='Scrum']")).click();
-	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']")).click();
-	await (page.locator("button[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']")).click();
-	await page.fill("input[id='project-create.create-form.name-field.input']", TEST_PROJECT_NAME);
-	await page.fill("input[id='project-create.create-form.advanced-dropdown.key-field.input']", TEST_PROJECT_KEY);
-	await (page.locator("div[data-test-id='project-create.create-form.create-screen.submit-button']")).click();
-	await page.waitForNavigation();
-	return page;
+	await page.click("[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
+	await page.fill("[data-test-id='project-create.create-form.name-field.input'] input", projectId);
+	await page.fill("[data-test-id='project-create.create-form.advanced-dropdown.key-field.input-wrapper'] input", projectId);
+	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
+
+	// V3 flow for future - apparently our e2e instance is still on v2
+	/*await page.click("[data-testid='global-pages.directories.projects-directory-v3.create-projects-button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
+	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
+	await page.fill("[id='project-create.create-form.name-field.input']", projectId);
+	await page.click("[data-testid='project-access.field.button-trigger']");
+	await page.locator("[data-testid='project-access.field.dropdown-menu--content'] [data-testid='project-access.field.option']").nth(2).click();
+	await page.fill("[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
+	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button'] button");*/
+	await page.waitForSelector(":has-text('Jira project successfully created')");
 };
 
-export const jiraCreateIssue = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.testProjectBrowse);
-	await (page.locator("a[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']")).click();
+export const jiraRemoveProject = async (page: Page, projectId: string): Promise<boolean> => {
+	const status = (await page.goto(data.urls.project(projectId)))?.status() || 0;
+	if (status == 200) {
+		await page.goto(data.urls.projectDetails(projectId));
+		await page.click("[data-testid='project-details.header.menu.dropdown-menu--trigger']");
+		await page.click("[data-testid='project-details.header.menu.dropdown-menu--content'] button");
+		await page.click("[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']");
+		return true;
+	}
+	return false;
+};
+
+export const jiraCreateIssue = async (page: Page, projectId: string = testData.projectId()): Promise<string> => {
+	await page.goto(data.urls.project(projectId));
+
+	await page.click("[data-testid='platform-inline-card-create.ui.trigger.visible.button']");
 	const taskInput = page.locator("textarea[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
+
+	// V3 implementation
+	// await page.click("[data-testid='navigation-apps-sidebar-next-gen.ui.menu.software-backlog-link']");
+	// const taskInput = page.locator("[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 	await taskInput.fill("Task " + Date.now());
 	await taskInput.press("Enter");
-
-	return page;
+	const url = await page.locator("[data-test-id='platform-board-kit.ui.column.draggable-column.styled-wrapper']:first-child [data-test-id='platform-board-kit.ui.card.card'][draggable]").last().getAttribute("id");
+	return url?.replace("card-", "") || "";
 };
 
-export const jiraRemoveProject = async (page: Page): Promise<Page> => {
-	await page.goto(data.urls.projects);
-
-	await (page.locator("input[data-test-id='searchfield']")).fill(TEST_PROJECT_NAME);
-	// We need to wait while the filter loads new results
-	await page.waitForTimeout(1000);
-	const projectBtn = await page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-container'] button");
-	await projectBtn.nth(0).click();
-	await (page.locator("div[data-test-id='projects-main.content.cells.actions.dropdown-menu-trash'] button")).click();
-	await (page.locator("button[data-testid='project-soft-delete-modal.ui.move-to-trash-button-wrapper']")).click();
-
-	return page;
+export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<boolean> => {
+	const status = (await page.goto(data.urls.browse(issueId)))?.status() || 0;
+	if (status == 200) {
+		await page.keyboard.press(".");
+		const input = page.locator("section[role='dialog'] input");
+		await input.fill("delete");
+		await input.press("Enter");
+		await page.click("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']");
+		return true;
+	}
+	return false;
 };
 
-const removeApp = async (page: Page): Promise<boolean> => {
+const appIsInstalled = async (page: Page): Promise<Locator | undefined> => {
+	if (!page.url().startsWith(data.urls.manageApps)) {
+		await page.goto(data.urls.manageApps);
+	}
 	await page.waitForSelector("#upm-manage-plugins-user-installed");
 	const pluginRow = page.locator(`.upm-plugin[data-key="${envVars.APP_KEY}"]`);
 	if (await pluginRow.isVisible()) {
+		return pluginRow;
+	}
+	return undefined;
+};
+
+const removeApp = async (page: Page): Promise<boolean> => {
+	const pluginRow = await appIsInstalled(page);
+	if (pluginRow) {
 		await pluginRow.click();
-		const uninstallButton = await pluginRow.locator(`a[data-action="UNINSTALL"]`);
+		const uninstallButton = pluginRow.locator(`a[data-action="UNINSTALL"]`);
 		await uninstallButton.click();
 		await page.click("#upm-confirm-dialog .confirm");
 		await uninstallButton.isDisabled();

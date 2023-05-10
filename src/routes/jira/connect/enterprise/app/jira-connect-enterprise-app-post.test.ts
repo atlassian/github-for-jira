@@ -108,6 +108,9 @@ describe("jira-connect-enterprise-app-post", () => {
 				gitHubClientSecret: "encrypted:" + TEST_GHE_APP_PARTIAL.gitHubClientSecret,
 				webhookSecret: "encrypted:" + TEST_GHE_APP_PARTIAL.webhookSecret,
 
+				apiKeyHeaderName: null,
+				encryptedApiKeyValue: null,
+
 				createdAt: expect.any(Date),
 				updatedAt: expect.any(Date)
 			});

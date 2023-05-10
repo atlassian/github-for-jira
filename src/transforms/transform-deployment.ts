@@ -175,7 +175,7 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	// we fall back to hardcoded mapping
 
 	const environmentMapping = {
-		development: ["development", "dev", "trunk"],
+		development: ["development", "dev", "trunk", "develop"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
