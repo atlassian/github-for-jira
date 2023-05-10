@@ -26,7 +26,8 @@ describe("sync/deployments", () => {
 	const makeExpectedJiraResponse = (deployments) => ({
 		deployments,
 		properties: {
-			"gitHubInstallationId": installationId
+			gitHubInstallationId: installationId,
+			repositoryId: 1
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL"
