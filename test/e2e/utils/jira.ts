@@ -119,7 +119,8 @@ export const jiraCreateIssue = async (page: Page, projectId: string = testData.p
 export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<boolean> => {
 	const status = (await page.goto(data.urls.browse(issueId)))?.status() || 0;
 	if (status == 200) {
-		await page.keyboard.press(".");
+		await page.waitForLoadState();
+		await page.getByTestId("issue.views.issue-details.issue-layout.issue-layout").press(".");
 		const input = page.locator("section[role='dialog'] input");
 		await input.fill("delete");
 		await input.press("Enter");
