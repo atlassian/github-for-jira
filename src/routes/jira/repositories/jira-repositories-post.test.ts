@@ -6,7 +6,7 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 
-describe("Workspace Containers Post", () => {
+describe("Repositories Fetch", () => {
 	let app: Application;
 	let sub: Subscription;
 
