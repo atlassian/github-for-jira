@@ -57,7 +57,6 @@ export interface RepoSyncState {
 	failedCode?: string;
 }
 
-
 export class RepoSyncState extends Model {
 	id: number;
 	subscriptionId: number;
@@ -165,7 +164,7 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
-	static async findBySubscriptionAndRepoId(subscription: Subscription, repoId: number): Promise<RepoSyncState | null> {
+	static async findByRepoId(subscription: Subscription, repoId: number): Promise<RepoSyncState | null> {
 		return RepoSyncState.findOneFromSubscription(subscription, {
 			where: {
 				repoId
@@ -173,15 +172,7 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async findByRepoIds(repoId: number): Promise<RepoSyncState | null> {
-		return RepoSyncState.findOne({
-			where: {
-				repoId
-			}
-		});
-	}
-
-	static async findRepoById(id: number, jiraHost: string): Promise<RepoSyncState | null> {
+	static async findRepoByIdAndJiraHost(id: number, jiraHost: string): Promise<RepoSyncState | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +

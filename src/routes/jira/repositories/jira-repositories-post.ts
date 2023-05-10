@@ -7,7 +7,7 @@ const { MISSING_JIRA_HOST } = Errors;
 
 const findMatchingRepositories = async (repoIds: number[], jiraHost: string): Promise<(RepoSyncState | null)[]> => {
 	const repos = await Promise.all(
-		repoIds.map(async id => await RepoSyncState.findRepoById(id, jiraHost))
+		repoIds.map(async id => await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost))
 	);
 
 	return repos.filter(repo => repo != null);

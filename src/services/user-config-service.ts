@@ -35,7 +35,7 @@ export const updateRepoConfig = async (
 
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
-			const repoSyncState = await RepoSyncState.findBySubscriptionAndRepoId(subscription, repositoryId);
+			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 
 			if (!repoSyncState) {
 				logger.error({
@@ -69,7 +69,7 @@ export const getRepoConfig = async (
 ): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
-	const repoSyncState = await RepoSyncState.findBySubscriptionAndRepoId(subscription, repositoryId);
+	const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 
 	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
 	// config directly from the config file in the GitHub repo.
