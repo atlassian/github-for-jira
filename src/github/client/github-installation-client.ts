@@ -251,7 +251,7 @@ export class GitHubInstallationClient extends GitHubClient {
 					const { headers } = await this.installationAuthenticationHeaders();
 					const { Authorization } = headers as { Authorization: string };
 					const output = await runCurl({
-						fullUrl: `${this.baseUrl}/repos/{owner}/${repo}/deployments`,
+						fullUrl: `${this.baseUrl}/repos/${owner}/${repo}/deployments`,
 						method: "GET",
 						authorization: Authorization
 					});
@@ -272,7 +272,7 @@ export class GitHubInstallationClient extends GitHubClient {
 					const { headers } = await this.installationAuthenticationHeaders();
 					const { Authorization } = headers as { Authorization: string };
 					const output = await runCurl({
-						fullUrl: `${this.baseUrl}/repos/{owner}/${repo}/deployments`,
+						fullUrl: `${this.baseUrl}/repos/${owner}/${repo}/deployments`,
 						method: "GET",
 						authorization: Authorization
 					});
