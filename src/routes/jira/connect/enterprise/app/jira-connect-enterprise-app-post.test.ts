@@ -79,7 +79,7 @@ describe("jira-connect-enterprise-app-post", () => {
 			expect(response.status).toStrictEqual(400);
 		});
 
-		it("successfully creates an item", async () => {
+		it("successfully creates an item without API key", async () => {
 			const uuid = v4();
 
 			const response = await supertest(app)
@@ -114,6 +114,28 @@ describe("jira-connect-enterprise-app-post", () => {
 				createdAt: expect.any(Date),
 				updatedAt: expect.any(Date)
 			});
+		});
+
+		it("successfully creates an item with API key", async () => {
+			const uuid = v4();
+
+			const response = await supertest(app)
+				.post("/jira/connect/enterprise/app")
+				.send({
+					... TEST_GHE_APP_PARTIAL,
+					uuid,
+					apiKeyHeaderName: "myHeader",
+					apiKeyValue: "myKey"
+				})
+				.query({
+					jwt: await generateJwt()
+				});
+
+			expect(response.status).toStrictEqual(202);
+			expect((await GitHubServerApp.findForUuid(uuid))!.dataValues).toEqual(expect.objectContaining(({
+				apiKeyHeaderName: "myHeader",
+				encryptedApiKeyValue: "encrypted:myKey"
+			})));
 		});
 
 		it("removes temp config", async () => {
