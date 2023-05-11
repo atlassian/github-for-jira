@@ -9,8 +9,9 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } f
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { GithubClientError } from "~/src/github/client/github-client-errors";
 import { AxiosError, AxiosResponse } from "axios";
-import { canBeUsedAsApiKeyHeader, isUniquelyGitHubServerHeader } from "utils/http-headers";
+import { isUniquelyGitHubServerHeader } from "utils/http-headers";
 import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
+import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -57,26 +58,6 @@ const useExistingConfigAndRespond200 = async (res: Response, githubServerApp: Gi
 	res.status(200).send({ success: true, connectConfigUuid: githubServerApp.uuid, appExists: true });
 };
 
-const validateApiKeyInputsAndReturnErrorIfAny = (apiKeyHeader: string | undefined, apiKeyValue: string | undefined) => {
-	if (apiKeyHeader) {
-		let error = "";
-		if (!apiKeyValue) {
-			error = "apiKeyHeader was provided but apiKeyValue was empty";
-		}
-		if (!canBeUsedAsApiKeyHeader(apiKeyHeader)) {
-			error = "Provided apiKeyHeader cannot be used as API key header";
-		}
-		if (apiKeyHeader.length > 1024) {
-			error = "apiKeyHeader max length is 1024";
-		}
-		if (apiKeyValue && apiKeyValue.length > 8096) {
-			error = "apiKeyValue max length is 8096";
-		}
-		return error;
-	}
-	return undefined;
-};
-
 export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
@@ -87,7 +68,7 @@ export const JiraConnectEnterprisePost = async (
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
 	const gheServerURL = req.body.gheServerURL?.trim();
-	const apiKeyHeader = req.body.apiKeyHeaderName?.trim();
+	const apiKeyHeaderName = req.body.apiKeyHeaderName?.trim();
 	const apiKeyValue = req.body.apiKeyValue?.trim();
 
 	const { id: installationId } = res.locals.installation;
@@ -107,9 +88,9 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
-	const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(apiKeyHeader, apiKeyValue);
+	const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(apiKeyHeaderName, apiKeyValue);
 	if (maybeApiKeyInputsError) {
-		req.log.warn({ apiKeyHeader, apiKeyValue }, maybeApiKeyInputsError);
+		req.log.warn({ apiKeyHeaderName, apiKeyValue }, maybeApiKeyInputsError);
 		res.sendStatus(400); // Let's not bother too much: the same validation happened in frontend
 		return;
 	}
@@ -125,7 +106,7 @@ export const JiraConnectEnterprisePost = async (
 
 	const gitHubConnectConfig: GheConnectConfig = {
 		serverUrl: gheServerURL,
-		apiKeyHeaderName: apiKeyHeader || null,
+		apiKeyHeaderName: apiKeyHeaderName || null,
 		encryptedApiKeyValue: apiKeyValue
 			? await GitHubServerApp.encrypt(jiraHost, apiKeyValue)
 			: null
@@ -141,9 +122,9 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
-			apiKeyHeader
+			apiKeyHeaderName
 				? {
-					headerName: apiKeyHeader,
+					headerName: apiKeyHeaderName,
 					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
 				}
 				: undefined
