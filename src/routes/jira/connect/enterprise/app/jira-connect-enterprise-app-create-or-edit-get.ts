@@ -6,6 +6,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
 import { getAllKnownHeaders } from "utils/http-headers";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	req: Request,
@@ -36,7 +37,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 				apiKeyHeaderName: app.apiKeyHeaderName,
 				apiKeyValue: app.encryptedApiKeyValue
 					? await app.getDecryptedApiKeyValue(jiraHost)
-					: '',
+					: "",
 				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
 				uuid: uuidOfServerAppToEdit,
@@ -61,7 +62,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 				apiKeyHeaderName: newServerAppConnectConfig.apiKeyHeaderName,
 				apiKeyValue: newServerAppConnectConfig.encryptedApiKeyValue
 					? await GitHubServerApp.decrypt(res.locals.installation.jiraHost, newServerAppConnectConfig.encryptedApiKeyValue)
-					: '',
+					: "",
 				appUrl: envVars.APP_URL,
 				uuid: newUuid,
 				csrfToken: req.csrfToken()
@@ -75,7 +76,8 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 
 		res.render("jira-manual-app-creation.hbs", {
 			... config,
-			knownHttpHeadersLowerCase: getAllKnownHeaders()
+			knownHttpHeadersLowerCase: getAllKnownHeaders(),
+			withApiKeyFeature: await booleanFlag(BooleanFlags.ENABLE_API_KEY_FEATURE, res.locals.installation.jiraHost)
 		});
 		req.log.debug("Jira create or edit app page rendered successfully.");
 	} catch (error) {
