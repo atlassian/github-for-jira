@@ -68,7 +68,7 @@ export const processDeployment = async (
 		logger
 	);
 
-	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload);
+	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
 	// TODO - remove the rate limited test once valid metrics have been decided
 	!rateLimited && emitWebhookProcessedMetrics(
