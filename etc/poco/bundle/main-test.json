@@ -87,6 +87,14 @@
 			"mechanism": "asap",
 			"principals": ["micros/manager-service"],
 			"allowed": true
+		},
+		{
+			"name": "Allow support team to call API endpoints",
+			"path": "/api/hars",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
 		}
 	]
 }

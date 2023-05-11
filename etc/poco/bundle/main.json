@@ -59,7 +59,7 @@
       }
     },
 		{
-			"description": "Allow service team to call hash endpoint",
+			"description": "Allow support team to call hash endpoint",
 			"paths": [
 				"/api/hash"
 			],
