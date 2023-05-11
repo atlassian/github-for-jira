@@ -22,7 +22,12 @@ export const JiraConnectEnterpriseAppPut = async (
 			updatedAppPayload.privateKey = undefined;
 		}
 
-		await GitHubServerApp.updateGitHubAppByUUID(req.body, jiraHost);
+		await GitHubServerApp.updateGitHubAppByUUID({
+			... req.body,
+			encryptedApiKeyValue: req.body.apiKeyValue
+				? await GitHubServerApp.encrypt(res.locals.installation.jiraHost, req.body.apiKeyValue)
+				: null
+		}, jiraHost);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,

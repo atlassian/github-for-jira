@@ -36,7 +36,7 @@ export const JiraConnectEnterpriseGet = async (
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
 				installationId: res.locals.installation.id,
-				withApiKeyFeature: await booleanFlag(BooleanFlags.ENABLE_API_KEY_FEATURE, res.locals.installation.jiraHost),
+				withApiKeyFeature: true || await booleanFlag(BooleanFlags.ENABLE_API_KEY_FEATURE, res.locals.installation.jiraHost),
 				knownHttpHeadersLowerCase: getAllKnownHeaders()
 			});
 		}

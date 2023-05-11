@@ -22,7 +22,9 @@ export const JiraConnectEnterpriseAppPost = async (
 			gitHubClientId,
 			gitHubClientSecret,
 			webhookSecret,
-			privateKey
+			privateKey,
+			apiKeyHeaderName,
+			apiKeyValue
 		} = req.body;
 
 		const existing = await GitHubServerApp.findForUuid(uuid);
@@ -41,7 +43,9 @@ export const JiraConnectEnterpriseAppPost = async (
 			gitHubClientSecret,
 			webhookSecret,
 			privateKey,
-			installationId: installation.id
+			installationId: installation.id,
+			apiKeyHeaderName,
+			encryptedApiKeyValue: apiKeyValue ? await GitHubServerApp.encrypt(installation.jiraHost, apiKeyValue) : null
 		}, jiraHost);
 
 		await new GheConnectConfigTempStorage().delete(uuid, installation.id);
