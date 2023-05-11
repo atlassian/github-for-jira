@@ -41,7 +41,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 		server = app.listen(port);
 
 		const options = {
-			// headless: false, slowMo: 100  // uncomment for debugging
+			headless: false, slowMo: 100  // uncomment for debugging
 		};
 		browser = await chromium.launch(options);
 		page = await browser.newPage();
@@ -76,14 +76,14 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 	};
 
 	const enterApiKeyHeaderName = async (name) => {
-		await page.focus("#gheApiKeyHeader");
-		await page.fill("#gheApiKeyHeader", name);
+		await page.focus("#apiKeyHeaderName");
+		await page.fill("#apiKeyHeaderName", name);
 		await page.keyboard.up("Enter");
 	};
 
 	const enterApiKeyHeaderValue = async (value) => {
-		await page.focus("#gheApiKeyValue");
-		await page.fill("#gheApiKeyValue", value);
+		await page.focus("#apiKeyValue");
+		await page.fill("#apiKeyValue", value);
 		await page.keyboard.up("Enter");
 	};
 
