@@ -1,5 +1,4 @@
 import { chromium } from "@playwright/test";
-import { clearState } from "test/e2e/e2e-utils";
 import { jiraAppUninstall, jiraRemoveProject } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
@@ -11,6 +10,4 @@ export default async function teardown() {
 	await jiraAppUninstall(page);
 	// Close the browser
 	await browser.close();
-	// Remove old state before starting
-	clearState();
 }
