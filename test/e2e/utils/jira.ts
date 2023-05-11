@@ -104,7 +104,7 @@ export const jiraRemoveProject = async (page: Page, projectId: string): Promise<
 export const jiraCreateIssue = async (page: Page, projectId: string = testData.projectId()): Promise<string> => {
 	await page.goto(data.urls.project(projectId));
 
-	await page.click("[data-testid='platform-inline-card-create.ui.trigger.visible.button']");
+	await page.getByTestId("platform-inline-card-create.ui.trigger.visible.button").click();
 	const taskInput = page.locator("textarea[data-test-id='platform-inline-card-create.ui.form.summary.styled-text-area']");
 
 	// V3 implementation
@@ -119,11 +119,10 @@ export const jiraCreateIssue = async (page: Page, projectId: string = testData.p
 export const jiraRemoveIssue = async (page: Page, issueId: string): Promise<boolean> => {
 	const status = (await page.goto(data.urls.browse(issueId)))?.status() || 0;
 	if (status == 200) {
-		await page.keyboard.press(".");
-		const input = page.locator("section[role='dialog'] input");
-		await input.fill("delete");
-		await input.press("Enter");
-		await page.click("[data-testid='issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button']");
+		await page.waitForLoadState();
+		await page.getByTestId("issue-meatball-menu.ui.dropdown-trigger.button").click();
+		await page.getByTestId("issue-meatball-menu.ui.dropdown-group.styled-section").getByText("delete").click();
+		await page.getByTestId("issue.views.issue-base.foundation.issue-actions.delete-issue.confirm-button").click();
 		return true;
 	}
 	return false;

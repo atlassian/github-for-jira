@@ -16,6 +16,7 @@ module.exports = {
 	forbidOnly: !!process.env.CI,
 	// Opt out of parallel tests - this is because of the app installation test
 	workers: 1,
+	retries: process.env.CI ? 2 : 0,
 	projects: [
 		{
 			name: "chromium",
