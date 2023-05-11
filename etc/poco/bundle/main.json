@@ -59,6 +59,22 @@
       }
     },
 		{
+			"description": "Allow service team to call hash endpoint",
+			"paths": [
+				"/api/hash"
+			],
+			"methods": [
+				"GET"
+			],
+			"principals": {
+				"staff": {
+					"groups": [
+						"enterprise-cloud-support-all"
+					]
+				}
+			}
+		},
+		{
 			"description": "Microscope Panel Routes",
 			"paths": [
 				"/microscope/**"
