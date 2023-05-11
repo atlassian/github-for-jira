@@ -1,10 +1,10 @@
 import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 describe("api-key-validator", () => {
-	it("does nothing if apiKeyHeaderName is empty", () => {
+	it("does nothing if both header name and value are empty", () => {
 		expect(validateApiKeyInputsAndReturnErrorIfAny(
 			undefined,
-			Array.from({ length: 9000 }, () => "x").join("")
+			undefined
 		)).toBeUndefined();
 	});
 
@@ -41,5 +41,12 @@ describe("api-key-validator", () => {
 			"bar",
 			undefined
 		)).toStrictEqual("apiKeyHeaderName was provided but apiKeyValue was empty");
+	});
+
+	it("checks apiKeyName is not empty", () => {
+		expect(validateApiKeyInputsAndReturnErrorIfAny(
+			undefined,
+			"bar"
+		)).toStrictEqual("cannot use apiKeyValue without apiKeyHeaderName");
 	});
 });

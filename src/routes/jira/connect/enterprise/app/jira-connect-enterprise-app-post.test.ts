@@ -79,6 +79,24 @@ describe("jira-connect-enterprise-app-post", () => {
 			expect(response.status).toStrictEqual(400);
 		});
 
+		it.each(["set-cookie: blah", "foo:", ":foo"])("validates API key fields %s", async (apiKeyNameValue) => {
+			const uuid = v4();
+
+			const response = await supertest(app)
+				.post("/jira/connect/enterprise/app")
+				.send({
+					... TEST_GHE_APP_PARTIAL,
+					uuid,
+					apiKeyHeaderName: apiKeyNameValue.split(":")[0].trim(),
+					apiKeyValue: apiKeyNameValue.split(":")[1].trim()
+				})
+				.query({
+					jwt: await generateJwt()
+				});
+
+			expect(response.status).toStrictEqual(400);
+		});
+
 		it("successfully creates an item without API key", async () => {
 			const uuid = v4();
 

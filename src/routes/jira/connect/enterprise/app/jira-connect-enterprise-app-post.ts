@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
+import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 export const JiraConnectEnterpriseAppPost = async (
 	req: Request,
@@ -31,6 +32,13 @@ export const JiraConnectEnterpriseAppPost = async (
 		if (existing && existing.installationId != installation.id) {
 			req.log.warn({ gheServerAppUuid: uuid }, "Collision with some other customer, shouldn't happen");
 			res.sendStatus(400);
+			return;
+		}
+
+		const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(req.body.apiKeyHeaderName, req.body.apiKeyValue);
+		if (maybeApiKeyInputsError) {
+			req.log.warn({ apiKeyHeaderName, apiKeyValue }, maybeApiKeyInputsError);
+			res.sendStatus(400); // Let's not bother too much: the same validation happened in frontend
 			return;
 		}
 

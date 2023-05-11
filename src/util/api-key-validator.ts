@@ -17,5 +17,8 @@ export const validateApiKeyInputsAndReturnErrorIfAny = (apiKeyHeaderName: string
 		}
 		return error;
 	}
+	if (apiKeyValue && !apiKeyHeaderName) {
+		return "cannot use apiKeyValue without apiKeyHeaderName";
+	}
 	return undefined;
 };

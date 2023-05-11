@@ -144,6 +144,39 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		expect(await restoredApp.getDecryptedApiKeyValue(jiraHost)).toEqual("myApiKey");
 	});
 
+	it.each(["set-cookie: blah", "foo:", ":foo"])("validates API key fields %s", async (apiKeyNameValue) => {
+		await GitHubServerApp.install({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id
+		}, jiraHost);
+
+		const payload ={
+			gitHubAppName: "newName",
+			webhookSecret: "newSecret",
+			gitHubClientId: "Iv1.msdnf2893rwhdbf",
+			gitHubClientSecret: "secret",
+			apiKeyHeaderName: apiKeyNameValue.split(":")[0].trim(),
+			apiKeyValue: apiKeyNameValue.split(":")[1].trim(),
+			uuid,
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(400);
+	});
+
 	it("should drop API key values when not provided", async () => {
 		await GitHubServerApp.install({
 			uuid,
