@@ -64,7 +64,7 @@
 				"/api/hash"
 			],
 			"methods": [
-				"GET"
+				"POST"
 			],
 			"principals": {
 				"staff": {
