@@ -188,8 +188,8 @@ export class GitHubServerApp extends Model {
 				privateKey: await GitHubServerApp.encrypt(jiraHost, privateKey),
 				gitHubAppName,
 				installationId,
-				apiKeyHeaderName,
-				encryptedApiKeyValue
+				apiKeyHeaderName: apiKeyHeaderName || null,
+				encryptedApiKeyValue: encryptedApiKeyValue || null
 			}
 		});
 
