@@ -251,7 +251,7 @@ export class GitHubInstallationClient extends GitHubClient {
 					const { headers } = await this.installationAuthenticationHeaders();
 					const { Authorization } = headers as { Authorization: string };
 					const output = await runCurl({
-						fullUrl: `${this.baseUrl}/repos/${owner}/${repo}/deployments`,
+						fullUrl: `${this.restApiUrl}/repos/${owner}/${repo}/deployments`,
 						method: "GET",
 						authorization: Authorization
 					});
@@ -272,14 +272,14 @@ export class GitHubInstallationClient extends GitHubClient {
 					const { headers } = await this.installationAuthenticationHeaders();
 					const { Authorization } = headers as { Authorization: string };
 					const output = await runCurl({
-						fullUrl: `${this.baseUrl}/repos/${owner}/${repo}/deployments`,
+						fullUrl: `${this.restApiUrl}/repos/${owner}/${repo}/deployments`,
 						method: "GET",
 						authorization: Authorization
 					});
 					this.logger.warn({ body: output.body, meta: output.meta }, "Curl for list deployments output generated");
 				}
 			} catch (curlE) {
-				this.logger.error({ err: curlE }, "Error running curl for list deployments");
+				this.logger.error({ err: curlE?.stderr }, "Error running curl for list deployments");
 			}
 			throw e;
 		}
