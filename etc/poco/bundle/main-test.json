@@ -87,6 +87,22 @@
 			"mechanism": "asap",
 			"principals": ["micros/manager-service"],
 			"allowed": true
+		},
+		{
+			"name": "Allow support team to call API endpoints",
+			"path": "/api/hash",
+			"method": "POST",
+			"mechanism": "group",
+			"principals": ["enterprise-cloud-support-all"],
+			"allowed": true
+		},
+		{
+			"name": "Allow support team to call API endpoints",
+			"path": "/api/hash",
+			"method": "POST",
+			"mechanism": "group",
+			"principals": ["random-group"],
+			"allowed": false
 		}
 	]
 }

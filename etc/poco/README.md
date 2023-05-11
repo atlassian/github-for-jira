@@ -37,18 +37,20 @@ Refer to [Testing](https://developer.atlassian.com/platform/poco/policies/workfl
 Poco bundles can be manually published to dev and staging environments using atlas-cli. Note that this will apply
 to the deployment stack already in service without needing to redeploy.
 
+### Publish into dev
 ```shell
-# Publish into dev
 atlas poco bundle publish -s github-for-jira -e dev \
   -b etc/poco/bundle/main.json \
   -t etc/poco/bundle/main-test.json 
+```
 
-# Publish into staging
+### Publish into staging
+```shell
 atlas poco bundle publish -s github-for-jira -e staging \
-  -b etc/poco/bundle/main.json \
-  -b etc/poco/bundle/extras-stg.json \
-  -t etc/poco/bundle/main-test.json \
-  -t etc/poco/bundle/extras-stg-test.json
+-b etc/poco/bundle/main.json \
+-b etc/poco/bundle/extras-stg.json \
+-t etc/poco/bundle/main-test.json \
+-t etc/poco/bundle/extras-stg-test.json
 ```
 
 # Deployment to production
