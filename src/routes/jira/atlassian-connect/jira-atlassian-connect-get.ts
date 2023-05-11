@@ -34,13 +34,13 @@ const modules = {
 				templateUrl: `${envVars.APP_URL}/workspaces/search`
 			},
 			searchRepositories: {
-				templateUrl: `${envVars.APP_URL}/repositories/search`
+				templateUrl: `${envVars.APP_URL}/workspaces/repositories/search`
 			},
 			fetchRepositories: {
-				templateUrl: `${envVars.APP_URL}/repositories/fetch`
+				templateUrl: `${envVars.APP_URL}/workspaces/repositories/fetch`
 			},
 			createRepository: {
-				templateUrl: `${envVars.APP_URL}/repositories/create`
+				templateUrl: `${envVars.APP_URL}/workspaces/repositories/create`
 			}
 		},
 		key: "github-development-tool",

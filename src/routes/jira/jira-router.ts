@@ -11,7 +11,6 @@ import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
-import { JiraRepositoriesRouter } from "routes/jira/repositories/jira-repositories-router";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
 
 export const JiraRouter = Router();
