@@ -21,9 +21,19 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
-export const ISSUE_KEY_API_LIMIT = 500;
+const getIssueKeyLimit = async () => {
+	let ISSUE_KEY_API_LIMIT = 100;
+	if (await booleanFlag(BooleanFlags.ISSUE_KEY_API_LIMIT_IS_500)) {
+		ISSUE_KEY_API_LIMIT = 500;
+	}
+
+	return Promise.resolve(ISSUE_KEY_API_LIMIT);
+};
+
+
 const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export interface DeploymentsResult {
@@ -264,9 +274,9 @@ export const getJiraClient = async (
 						!withinIssueKeyLimit(data.pullRequests)
 					) {
 						logger.warn({
-							truncatedCommitsCount: getTruncatedIssuekeys(data.commits).length,
-							truncatedBranchesCount: getTruncatedIssuekeys(data.branches).length,
-							truncatedPRsCount: getTruncatedIssuekeys(data.pullRequests).length
+							truncatedCommitsCount: (await getTruncatedIssuekeys(data.commits)).length,
+							truncatedBranchesCount: (await getTruncatedIssuekeys(data.branches)).length,
+							truncatedPRsCount: (await getTruncatedIssuekeys(data.pullRequests)).length
 						}, issueKeyLimitWarning);
 						truncateIssueKeys(data);
 						const subscription = await Subscription.getSingleInstallation(
@@ -424,10 +434,10 @@ const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | un
  * Returns if the max length of the issue
  * key field is within the limit
  */
-const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
+const withinIssueKeyLimit = async (resources: IssueKeyObject[]): Promise<boolean> => {
 	if (!resources) return true;
 	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values?.length || 0);
-	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+	return Math.max(...issueKeyCounts) <= await getIssueKeyLimit();
 };
 
 /**
@@ -435,13 +445,13 @@ const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
  * Assumption is that the transformed resource only has one association which is for
  * "issueIdOrKeys" association.
  */
-const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean => {
+const withinIssueKeyAssociationsLimit = async (resources: JiraRemoteLink[]): Promise<boolean> => {
 	if (!resources) {
 		return true;
 	}
 
 	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
-	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
+	return Math.max(...issueKeyCounts) <= await getIssueKeyLimit();
 };
 
 /**
@@ -473,8 +483,9 @@ interface IssueKeyObject {
 }
 
 // TODO: add unit tests
-export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
-	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
+export const getTruncatedIssuekeys = async (data: IssueKeyObject[] = []): Promise<IssueKeyObject[]> => {
+	const ISSUE_KEY_API_LIMIT = await getIssueKeyLimit();
+	return data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
 		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			acc.push({
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
@@ -489,6 +500,7 @@ export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObje
 		}
 		return acc;
 	}, []);
+};
 
 /**
  * Runs a mutating function on all branches, commits and PRs
@@ -545,6 +557,6 @@ const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatin
 };
 
 /**
- * Truncates to 100 elements in an array
+ * Truncates to 500 elements in an array
  */
-const truncate = (array) => array.slice(0, ISSUE_KEY_API_LIMIT);
+const truncate = (array) => array.slice(0, getIssueKeyLimit());
