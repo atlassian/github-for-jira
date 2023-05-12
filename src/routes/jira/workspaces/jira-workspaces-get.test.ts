@@ -5,7 +5,7 @@ import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { Errors } from "config/errors";
 import { RepoSyncState } from "models/reposyncstate";
-import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
+// import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 
 describe("Workspaces Get", () => {
 	let app: Application;
@@ -37,7 +37,6 @@ describe("Workspaces Get", () => {
 			req.csrfToken = jest.fn();
 			next();
 		});
-		app.use(jiraSymmetricJwtMiddleware);
 		app.use(getFrontendApp());
 
 		await supertest(app)
@@ -126,7 +125,7 @@ describe("Workspaces Get", () => {
 			success:true,
 			workspaces: [
 				{
-					id: sub.id,
+					id: sub.id.toString(),
 					name: "atlassian"
 				}
 			]
@@ -213,15 +212,15 @@ describe("Workspaces Get", () => {
 			success:true,
 			workspaces: [
 				{
-					id: sub.id,
+					id: sub.id.toString(),
 					name: "atlas"
 				},
 				{
-					id: sub2.id,
+					id: sub2.id.toString(),
 					name: "atlassian"
 				},
 				{
-					id: sub3.id,
+					id: sub3.id.toString(),
 					name: "iworkatatlassian"
 				}
 			]

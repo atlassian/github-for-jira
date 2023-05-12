@@ -4,7 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Errors } from "config/errors";
 
 type GitHubWorkspace = {
-	id: number,
+	id: string,
 	name: string
 }
 
@@ -16,7 +16,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 		const { subscriptionId, repoOwner } = org;
 
 		return {
-			id: subscriptionId,
+			id: subscriptionId.toString(),
 			name: repoOwner
 		};
 	})
@@ -33,8 +33,8 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
 
 	// TODO - update this later
-	const { jiraHost } = res.locals;
-	// const jiraHost = "https://rachellerathbone.atlassian.net";
+	// const { jiraHost } = res.locals;
+	const jiraHost = "https://rachellerathbone.atlassian.net";
 
 	if (!jiraHost) {
 		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
