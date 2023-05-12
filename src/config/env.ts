@@ -65,6 +65,8 @@ envCheck(
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
+	"DYNAMO_REGION",
+	"DYNAMO_TABLE_DEPLOYMENT",
 	"MICROS_AWS_REGION",
 	"GLOBAL_HASH_SECRET",
 	"CRYPTOR_URL",
@@ -113,6 +115,10 @@ export interface EnvVars {
 	GITHUB_REPO_URL: string;
 	DEPLOYMENT_DATE: string;
 	GLOBAL_HASH_SECRET: string;
+
+	//DyamoDB for deployment status history
+	DYNAMO_REGION: string;
+	DYNAMO_TABLE_DEPLOYMENT: string;
 
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
