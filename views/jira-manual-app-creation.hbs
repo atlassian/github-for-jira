@@ -112,6 +112,7 @@
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
                  value="{{decryptedWebhookSecret}}"
+                 id="webhookSecret"
                  name="webhookSecret"  />
         </div>
 
@@ -125,6 +126,7 @@
           <input class="text full-width-field" type="number"
                  data-aui-validation-field required
                  value="{{app.appId}}"
+                 id="appId"
                  name="appId" />
         </div>
 
@@ -133,6 +135,7 @@
           <input class="text full-width-field" type="text"
                  data-aui-validation-field required
                  value="{{app.gitHubClientId}}"
+                 id="gitHubClientId"
                  name="gitHubClientId" />
         </div>
 
@@ -141,6 +144,7 @@
           <input class="text full-width-field" type="password"
                  data-aui-validation-field required
                  value="{{decryptedGheSecret}}"
+                 id="gitHubClientSecret"
                  name="gitHubClientSecret" />
         </div>
 
@@ -175,6 +179,35 @@
           <div class="jiraManualAppCreation__formFileErrorBorder"></div>
         </div>
 
+{{#if withApiKeyFeature}}
+        <div class="jiraManualAppCreation__formTitle">API key <small>(Optional)</small></div>
+        <div class="jiraManualAppCreation__formSubTitle">
+          Add an additional layer of security by creating or using an API key. Remember the key for future use.
+          <a href="#">Learn more about API keys</a>
+        </div>
+
+        <div class="field-group ">
+          <label for="apiKeyHeaderName">HTTP request header name  </label>
+          <input class="text full-width-field" type="text"
+                data-aui-validation-field
+                data-aui-validation-api-key-header-name
+                placeholder="X-Accept-Me"
+                name="apiKeyHeaderName" value="{{apiKeyHeaderName}}"
+                id="apiKeyHeaderName"
+                name="apiKeyHeaderName" />
+        </div>
+
+        <div class="field-group">
+          <label for="apiKeyValue">Value</label>
+          <input class="text full-width-field" type="password"
+                data-aui-validation-field
+                data-aui-validation-api-key-header-value
+                name="apiKeyValue" value="{{apiKeyValue}}"
+                id="apiKeyValue"
+                 />
+        </div>
+{{/if}}
+
         <input type="hidden" id="_csrf" value="{{csrfToken}}">
         <input type="hidden" name="uuid" value="{{uuid}}">
         <input type="hidden" id="gitHubBaseUrl" name="gitHubBaseUrl" value="{{serverUrl}}">
@@ -206,6 +239,22 @@
       nonce="{{nonce}}"
     ></script>
   <script src="/public/js/jira-manual-app-creation.js" nonce="{{nonce}}"></script>
+{{#if withApiKeyFeature}}
+  <script src="/public/js/jira-api-key-validation.js" nonce="{{nonce}}"></script>
+      <script>
+          initApiKeyValidation(
+              {
+                  auiTag: "api-key-header-name",
+                  elt: document.getElementById("apiKeyHeaderName")
+              },
+              {
+                  auiTag: "api-key-header-value",
+                  elt: document.getElementById("apiKeyValue")
+              },
+              {{{json knownHttpHeadersLowerCase}}}
+          );
+      </script>
+{{/if}}
   <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>

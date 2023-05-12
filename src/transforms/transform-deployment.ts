@@ -24,30 +24,19 @@ const getLastSuccessfulDeployCommitSha = async (
 	owner: string,
 	repoName: string,
 	githubInstallationClient: GitHubInstallationClient,
-	currentDeployDate: string,
 	deployments: Octokit.ReposListDeploymentsResponseItem[],
 	logger?: Logger
-): Promise<string | undefined> => {
+): Promise<string> => {
 
 	try {
-
-		const currentDate = new Date(currentDeployDate);
-
-		let filteredDeployments = deployments;
-		if (currentDate) {
-			filteredDeployments = deployments.filter((deployment) => !deployment.updated_at || new Date(deployment.updated_at).getTime() < currentDate.getTime());
-			if (filteredDeployments.length === 0) {
-				return undefined;
-			}
-		}
-
-		for (const deployment of filteredDeployments) {
+		for (const deployment of deployments) {
 			// Get each deployment status for this environment so we can have their statuses' ids
 			const listDeploymentStatusResponse: AxiosResponse<Octokit.ReposListDeploymentStatusesResponse> =
 				await githubInstallationClient.listDeploymentStatuses(owner, repoName, deployment.id, 100);
 			// Find the first successful one
 			const lastSuccessful = listDeploymentStatusResponse.data.find(deployment => deployment.state === "success");
 			if (lastSuccessful) {
+
 				return deployment.sha;
 			}
 		}
@@ -65,7 +54,6 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
-	currentDeployDate: string,
 	githubInstallationClient: GitHubInstallationClient,
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
@@ -83,11 +71,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 		return undefined;
 	}
 
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, currentDeployDate, filteredDeployments, logger);
-	if (!lastSuccessfullyDeployedCommit) {
-		logger.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
-		return undefined;
-	}
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 
 	const compareCommitsPayload = {
 		owner: owner,
@@ -256,7 +240,6 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 		deployment.sha,
 		deployment.id,
 		deployment_status.environment,
-		deployment_status.updated_at,
 		githubInstallationClient,
 		logger
 	);
