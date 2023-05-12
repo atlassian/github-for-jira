@@ -6,14 +6,16 @@ import {
 import {
 	JiraWorkspacesRepositoriesCreate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-create";
+import { csrfMiddleware } from "middleware/csrf-middleware";
+import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
 
 export const JiraWorkspacesRepositoriesRouter = Router();
 
 JiraWorkspacesRepositoriesRouter.route("/search")
-	.get(JiraWorkspacesGet);
+	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraWorkspacesGet);
 
 JiraWorkspacesRepositoriesRouter.route("/fetch")
-	.post(JiraWorkspacesRepositoriesFetchAll);
+	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesFetchAll);
 
 JiraWorkspacesRepositoriesRouter.route("/create")
-	.post(JiraWorkspacesRepositoriesCreate);
+	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesCreate);
