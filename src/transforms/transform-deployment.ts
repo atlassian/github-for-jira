@@ -76,6 +76,7 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 };
 
 const getCommitsSinceLastSuccessfulDeployment = async (
+	jiraHost: string,
 	type: "backfill" | "webhook",
 	owner: string,
 	repoId: number,
@@ -282,6 +283,7 @@ export const transformDeployment = async (
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
 	const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
+		jiraHost,
 		type,
 		payload.repository.owner.login,
 		payload.repository.id,
