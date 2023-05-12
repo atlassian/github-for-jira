@@ -1,7 +1,4 @@
 function initApiKeyValidation(apiKeyHeaderName, apiKeyHeaderValue, knownHttpHeadersLowerCase, onValidationFinished) {
-	console.log("aaaaa");
-	console.log(apiKeyHeaderName, apiKeyHeaderValue);
-	console.log("bbbbb");
 
 	AJS.formValidation.register([apiKeyHeaderName.auiTag], (field) => {
 		const inputStr = field.el.value;
