@@ -4,10 +4,11 @@ import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { saveDeploymentInfo } from "models/deployment-service";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -45,6 +46,22 @@ export const processDeployment = async (
 	}
 
 	logger.info("processing deployment message!");
+
+	if (webhookPayload.deployment_status.state === "success") {
+		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+			await saveDeploymentInfo({
+				gitHubBaseUrl: newGitHubClient.baseUrl,
+				gitHubInstallationId: gitHubInstallationId,
+				repositoryId: webhookPayload.repository.id,
+				commitSha: webhookPayload.deployment.sha,
+				description: webhookPayload.deployment.description || "",
+				env: webhookPayload.deployment_status.environment,
+				status: webhookPayload.deployment_status.state,
+				createdAt: new Date(webhookPayload.deployment_status.created_at)
+			}, logger);
+			logger.info("Saved deployment information to dynamodb");
+		}
+	}
 
 	const metrics = {
 		trigger: "deployment_queue"
