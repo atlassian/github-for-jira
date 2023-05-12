@@ -75,23 +75,20 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 		expect(disabledValue || null).toBeNull();
 	};
 
-	const enterApiKeyHeaderName = async (name) => {
-		await page.focus("#gheApiKeyHeader");
-		await page.fill("#gheApiKeyHeader", name);
+	const focusAndEnterInputValue = async (eltId: string, value: string) => {
+		await page.focus(`#${eltId}`);
+		await page.fill(`#${eltId}`, value);
 		await page.keyboard.up("Enter");
 	};
 
-	const enterApiKeyHeaderValue = async (value) => {
-		await page.focus("#gheApiKeyValue");
-		await page.fill("#gheApiKeyValue", value);
-		await page.keyboard.up("Enter");
-	};
+	const enterApiKeyHeaderName = (name) =>
+		focusAndEnterInputValue("apiKeyHeaderName", name);
 
-	const enterServerUrl = async (url) => {
-		await page.focus("#gheServerURL");
-		await page.fill("#gheServerURL", url);
-		await page.keyboard.up("Enter");
-	};
+	const enterApiKeyHeaderValue = (value) =>
+		focusAndEnterInputValue("apiKeyValue", value);
+
+	const enterServerUrl = (url) =>
+		focusAndEnterInputValue("gheServerURL", url);
 
 	const submitForm = async () =>
 		page.click("#gheServerBtnText");
