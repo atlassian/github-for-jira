@@ -1,6 +1,9 @@
 import Logger from "bunyan";
 import AWS from "aws-sdk";
 import { envVars } from "config/env";
+import { getLogger } from "config/logger";
+
+const defaultLogger = getLogger("DeploymentDynamoLogger");
 
 const ddb = new AWS.DynamoDB({
 	apiVersion: "2012-11-05",
@@ -52,9 +55,10 @@ type FindLastSuccessDeploymentQueryResult = {
 	commitSha: string,
 	createdAt: Date
 };
+
 export const findLastSuccessDeployment = async(
 	params: FindLastSuccessDeploymentQueryParam,
-	logger: Logger
+	logger: Logger = defaultLogger
 ): Promise<FindLastSuccessDeploymentQueryResult | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({

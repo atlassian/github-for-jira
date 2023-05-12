@@ -20,7 +20,8 @@ export enum BooleanFlags {
 	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	ENABLE_API_KEY_FEATURE = "enable-api-key-feature"
+	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
+	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook"
 }
 
 export enum StringFlags {

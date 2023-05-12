@@ -16,6 +16,8 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { findLastSuccessDeployment } from "models/deployment-service";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -61,6 +63,7 @@ const getLastSuccessfulDeployCommitSha = async (
 
 const getCommitsSinceLastSuccessfulDeployment = async (
 	owner: string,
+	repoId: number,
 	repoName: string,
 	currentDeploySha: string,
 	currentDeployId: number,
@@ -83,7 +86,22 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 		return undefined;
 	}
 
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, currentDeployDate, filteredDeployments, logger);
+	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
+	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+		const lastSuccessful = await findLastSuccessDeployment({
+			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
+			gitHubAppId: githubInstallationClient.githubInstallationId.appId,
+			env: currentDeployEnv,
+			repositoryId: repoId,
+			currentDate: new Date(currentDeployDate)
+		}, logger);
+
+		if (!lastSuccessful) return undefined;
+
+		lastSuccessfullyDeployedCommit = lastSuccessful.commitSha;
+	}
+
+	lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, currentDeployDate, filteredDeployments, logger);
 	if (!lastSuccessfullyDeployedCommit) {
 		logger.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
 		return undefined;
@@ -252,6 +270,7 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 
 	const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
 		payload.repository.owner.login,
+		payload.repository.id,
 		payload.repository.name,
 		deployment.sha,
 		deployment.id,
