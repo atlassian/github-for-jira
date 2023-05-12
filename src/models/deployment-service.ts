@@ -13,7 +13,6 @@ const ddb = new AWS.DynamoDB({
 
 type DeploymentInfo = {
 	gitHubInstallationId: number;
-	gitHubAppId: number | undefined;
 	repositoryId: number;
 	commitSha: string;
 	description: string;
@@ -30,7 +29,6 @@ export const saveDeploymentInfo = async (deploymentInfo :DeploymentInfo, logger:
 			Id: { "S": getKey(deploymentInfo) },
 			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) },
 			GitHubInstallationId: { "N": String(deploymentInfo.gitHubInstallationId) },
-			GitHubAppId: { "N": String(deploymentInfo.gitHubAppId) },
 			RepositoryId: { "N": String(deploymentInfo.repositoryId) },
 			CommitSha: { "S": deploymentInfo.commitSha },
 			Description: { "S": deploymentInfo.description },
@@ -45,7 +43,6 @@ export const saveDeploymentInfo = async (deploymentInfo :DeploymentInfo, logger:
 
 type FindLastSuccessDeploymentQueryParam = {
 	gitHubInstallationId: number;
-	gitHubAppId: number | undefined;
 	repositoryId: number;
 	env: string;
 	currentDate: Date
@@ -91,9 +88,8 @@ export const findLastSuccessDeployment = async(
 
 export const getKey = (opts: {
 	gitHubInstallationId: number,
-	gitHubAppId: number | undefined,
 	repositoryId: number,
 	env: string
 }) => {
-	return `ghid_${opts.gitHubInstallationId}_ghappid_${opts.gitHubAppId}_repo_${opts.repositoryId}_env_${opts.env}`;
+	return `ghid_${opts.gitHubInstallationId}_repo_${opts.repositoryId}_env_${opts.env}`;
 };

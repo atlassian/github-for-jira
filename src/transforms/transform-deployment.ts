@@ -62,6 +62,37 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 
+	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+		logger.info("Using new dynamodb for get last success deployment");
+		const lastSuccessful = await findLastSuccessDeployment({
+			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
+			env: currentDeployEnv,
+			repositoryId: repoId,
+			currentDate: new Date(currentDeployDate)
+		}, logger);
+
+		if (!lastSuccessful) {
+			logger.info("Couldn't find last success deployment from dynamodb");
+			return undefined;
+		}
+		logger.info("Found last success deployment info");
+
+		const lastSuccessfullyDeployedCommit = lastSuccessful.commitSha;
+
+		const compareCommitsPayload = {
+			owner: owner,
+			repo: repoName,
+			base: lastSuccessfullyDeployedCommit,
+			head: currentDeploySha
+		};
+
+		return await getAllCommitsBetweenReferences(
+			compareCommitsPayload,
+			githubInstallationClient,
+			logger
+		);
+	}
+
 	// Grab the last 10 deployments for this repo
 	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
 		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
@@ -75,22 +106,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 		return undefined;
 	}
 
-	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
-	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-		const lastSuccessful = await findLastSuccessDeployment({
-			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
-			gitHubAppId: githubInstallationClient.githubInstallationId.appId,
-			env: currentDeployEnv,
-			repositoryId: repoId,
-			currentDate: new Date(currentDeployDate)
-		}, logger);
-
-		if (!lastSuccessful) return undefined;
-
-		lastSuccessfullyDeployedCommit = lastSuccessful.commitSha;
-	}
-
-	lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
+	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 	if (!lastSuccessfullyDeployedCommit) {
 		logger.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
 		return undefined;

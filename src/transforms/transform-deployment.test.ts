@@ -9,8 +9,11 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { saveDeploymentInfo } from "models/deployment-service";
 
 jest.mock("services/user-config-service");
+jest.mock("config/feature-flags");
 
 const mockConfig = {
 	deployments: {
@@ -326,6 +329,77 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
 
 			expect(jiraPayload).toMatchObject(buildJiraPayload("Q4ua5dPnvDaW8CQgbnC7IiOQ8emND4bTv6ibK2Vh5LsGukmAF7VFE7MWZBwiPWON2fbqWL9q1jyjilgOMmt79WgMgDbT2opGlh6at5WfTYlYQVV77FXiLtPIOs8szN02ldD4slvScLRRynPQpzShisQpVfYU4PL5vCl2OzIYBIJ3zJJIY9g3EMSxtwe0rGaDBuINFBBgWYS2WOh8UAZxSR0w2wetYgq1Adv11Qy85rffGG3GkRHpFNvQ22n6Jqp",  [
+				{
+					associationType: "issueIdOrKeys",
+					values: ["ABC-1", "ABC-2"]
+				},
+				{
+					associationType: "commit",
+					values: [
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
+							repositoryId: "65"
+						},
+						{
+							commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
+							repositoryId: "65"
+						}
+					]
+				}
+			]));
+		});
+
+		it(`supports branch and merge workflows, sending related commits in deploymentfor Cloud -- with dynamodb and ff`, async () => {
+
+			when(booleanFlag)
+				.calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, expect.anything())
+				.mockResolvedValue(true);
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			await saveDeploymentInfo({
+				gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				repositoryId: deployment_status.payload.repository.id,
+				commitSha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc",
+				description: "",
+				env: "Production",
+				status: "success",
+				createdAt: new Date(new Date(deployment_status.payload.deployment_status.created_at).getTime() - 1000)
+			}, getLogger("deploymentLogger"));
+
+			// Mocking all GitHub API Calls
+			// Get commit
+			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					...owner,
+					commit: {
+						message: "testing"
+					}
+				});
+
+			// Compare commits
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+				.reply(200, {
+					commits: [
+						{
+							commit: {
+								message: "ABC-1"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1"
+						},
+						{
+							commit: {
+								message: "ABC-2"
+							},
+							sha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2"
+						}
+					]
+				});
+
+			const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, { trigger: "test" }, getLogger("deploymentLogger"), undefined);
+
+			expect(jiraPayload).toMatchObject(buildJiraPayload("testing",  [
 				{
 					associationType: "issueIdOrKeys",
 					values: ["ABC-1", "ABC-2"]
