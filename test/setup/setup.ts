@@ -67,7 +67,7 @@ declare global {
 
 const clearState = async () => Promise.all([
 	sequelize.truncate({ truncate: true, cascade: true }),
-	purgeItemsInTable(envVars.DYNAMO_TABLE_DEPLOYMENT)
+	purgeItemsInTable(envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME)
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>

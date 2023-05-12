@@ -28,7 +28,8 @@ services:
     container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
-      - DYNAMO_TABLE_DEPLOYMENT=deployment_status_history
+      - DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME=deployment-history
+      - DYNAMO_DEPLOYMENT_HISTORY_TABLE_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version

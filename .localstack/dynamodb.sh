@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-echo "===== creating dynamo table for deployment status ====="
+echo "===== creating dynamo table ${DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME} ====="
 
 awslocal dynamodb create-table \
-    --table-name $DYNAMO_TABLE_DEPLOYMENT \
+    --table-name $DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME \
     --key-schema \
       AttributeName=Id,KeyType=HASH \
       AttributeName=StatusCreatedAt,KeyType=RANGE \
@@ -14,9 +14,9 @@ awslocal dynamodb create-table \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 
-echo "===== table ${DYNAMO_TABLE_DEPLOYMENT} created ====="
+echo "===== table ${DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME} created ====="
 echo "===== checking now ====="
 
-awslocal dynamodb list-tables --region $DEFAULT_REGION
+awslocal dynamodb list-tables --region $DYNAMO_DEPLOYMENT_HISTORY_TABLE_REGION
 
 echo "===== check finished ====="

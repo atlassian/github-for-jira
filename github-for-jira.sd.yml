@@ -149,6 +149,16 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
+  - name: deployment-history
+    type: dynamo-db
+    attributes: &table-attributes
+      HashKeyName: Id
+      HashKeyType: "S"
+      RangeKeyName: StatusCreatedAt
+      RangeKeyType: "N"
+      ReadWriteCapacityMode: ON_DEMAND
+      TTLAttributeName: ExpiredAfter
+
 scaling:
   instance: t2.small
   min: 1
@@ -385,6 +395,12 @@ environmentOverrides:
               - github-for-jira
             decryptingServices:
               - github-for-jira
+
+      - name: deployment-history
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
     alarms:
       overrides:
         LatencyHigh: null
@@ -483,6 +499,11 @@ environmentOverrides:
             # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
 
+      - name: deployment-history
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
       - type: globaledge
         name: proxy
         attributes:
@@ -574,6 +595,11 @@ environmentOverrides:
             ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
+
+      - name: deployment-history
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
 
       - type: globaledge
         name: proxy

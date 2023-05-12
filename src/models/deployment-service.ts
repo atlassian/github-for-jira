@@ -5,6 +5,8 @@ import { dynamodb as ddb } from "models/dynamodb";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
+const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
+
 export const saveDeploymentInfo = async (deploymentInfo : {
 	gitHubBaseUrl: string
 	gitHubInstallationId: number;
@@ -17,7 +19,7 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 }, logger: Logger) => {
 	logger.debug("Saving deploymentInfo to db");
 	const result = await ddb.putItem({
-		TableName: envVars.DYNAMO_TABLE_DEPLOYMENT,
+		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 		Item: {
 			Id: { "S": getKey(deploymentInfo) },
 			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) },
@@ -26,7 +28,8 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 			CommitSha: { "S": deploymentInfo.commitSha },
 			Description: { "S": deploymentInfo.description },
 			Env: { "S": deploymentInfo.env },
-			Status: { "S": deploymentInfo.status }
+			Status: { "S": deploymentInfo.status },
+			ExpiredAfter: { "N": String(Math.floor((deploymentInfo.createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
 		}
 	}).promise();
 	if (result.$response.error) {
@@ -50,7 +53,7 @@ export const findLastSuccessDeployment = async(
 	} | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
-		TableName: envVars.DYNAMO_TABLE_DEPLOYMENT,
+		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 		KeyConditionExpression: "Id = :id and StatusCreatedAt < :createdAt",
 		ExpressionAttributeValues: {
 			":id": { "S": getKey(params) },
