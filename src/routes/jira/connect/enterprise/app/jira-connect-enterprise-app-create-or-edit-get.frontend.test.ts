@@ -43,7 +43,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 		server = app.listen(port);
 
 		const options = {
-			headless: false, slowMo: 100  // uncomment for debugging
+			// headless: false, slowMo: 100  // uncomment for debugging
 		};
 		browser = await chromium.launch(options);
 		page = await browser.newPage();
