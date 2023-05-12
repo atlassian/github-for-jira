@@ -2,11 +2,6 @@ import Logger from "bunyan";
 import { JiraClient } from "models/jira-client";
 import { Installation } from "models/installation";
 
-export const getAppKey = (): string => {
-	const instance = process.env.INSTANCE_NAME;
-	return `com.github.integration${instance ? `.${instance}` : ""}`;
-};
-
 export const saveConfiguredAppProperties = async (jiraHost: string, logger: Logger, isConfiguredState: boolean) => {
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {

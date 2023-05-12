@@ -73,7 +73,7 @@
 			"html_url": "test-repo-url"
 		},
 		"repository": {
-			"id": "test-repo-id",
+			"id": 123,
 			"name": "test-repo-name",
 			"full_name": "test-repo-owner/test-repo-name",
 			"html_url": "test-repo-url",

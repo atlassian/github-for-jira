@@ -94,6 +94,7 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("development")).toBe("development");
 		expect(mapEnvironment("dev")).toBe("development");
 		expect(mapEnvironment("trunk")).toBe("development");
+		expect(mapEnvironment("develop")).toBe("development");
 
 		// Testing
 		expect(mapEnvironment("testing")).toBe("testing");

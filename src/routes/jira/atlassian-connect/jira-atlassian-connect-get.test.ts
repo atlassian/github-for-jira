@@ -1,26 +1,15 @@
 import supertest from "supertest";
-import express, { Express } from "express";
+import { Express } from "express";
 import { getFrontendApp } from "~/src/app";
-import { getLogger } from "config/logger";
-
-jest.mock("config/feature-flags");
 
 describe("Atlassian Connect", () => {
 	let app: Express;
 
 	beforeEach(() => {
-
-		app = express();
-		app.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
+		app = getFrontendApp();
 	});
 
 	describe("Frontend", () => {
-		beforeEach(() => {
-			app.use(getFrontendApp());
-		});
 
 		describe("Atlassian Connect", () => {
 

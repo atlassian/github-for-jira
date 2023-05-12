@@ -11,7 +11,7 @@ import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 
-export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
+export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -23,9 +23,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	} = context.payload;
 
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
-	const baseUrl = jiraClient.baseUrl || "none";
 	context.log = context.log.child({
-		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId,
 		orgName: owner,
 		pullRequestNumber,
@@ -78,7 +76,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		return;
 	}
 
-	context.log.info({ jiraHost : baseUrl }, `Sending pull request update to Jira`);
+	context.log.info(`Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
@@ -86,6 +84,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

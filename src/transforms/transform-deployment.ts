@@ -159,7 +159,7 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	// we fall back to hardcoded mapping
 
 	const environmentMapping = {
-		development: ["development", "dev", "trunk"],
+		development: ["development", "dev", "trunk", "develop"],
 		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
 		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
 		production: ["production", "prod", "prd", "live"]
@@ -290,9 +290,9 @@ export const transformDeployment = async (githubInstallationClient: GitHubInstal
 			schemaVersion: "1.0",
 			deploymentSequenceNumber: deployment.id,
 			updateSequenceNumber: deployment_status.id,
-			displayName: message.substring(0, 255),
+			displayName: (message || String(payload.deployment.id) || "").substring(0, 255),
 			url: deployment_status.target_url || deployment.url,
-			description: deployment.description || deployment_status.description || deployment.task,
+			description: (deployment.description || deployment_status.description || deployment.task || "").substring(0, 255),
 			lastUpdated: new Date(deployment_status.updated_at),
 			state: mapState(deployment_status.state),
 			pipeline: {

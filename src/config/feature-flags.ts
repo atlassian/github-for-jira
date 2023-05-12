@@ -18,10 +18,14 @@ export enum BooleanFlags {
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
 	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
-	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill"
+	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
+	JIRA_ADMIN_CHECK = "jira-admin-check",
+	REMOVE_STALE_MESSAGES = "remove-stale-messages",
+	ENABLE_API_KEY_FEATURE = "enable-api-key-feature"
 }
 
 export enum StringFlags {
+	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
 	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
@@ -35,7 +39,8 @@ export enum NumberFlags {
 	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
-	BACKFILL_PAGE_SIZE = "backfill-page-size"
+	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {

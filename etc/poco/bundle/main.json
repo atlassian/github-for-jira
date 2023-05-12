@@ -59,6 +59,22 @@
       }
     },
 		{
+			"description": "Allow support team to call hash endpoint",
+			"paths": [
+				"/api/hash"
+			],
+			"methods": [
+				"POST"
+			],
+			"principals": {
+				"staff": {
+					"groups": [
+						"enterprise-cloud-support-all"
+					]
+				}
+			}
+		},
+		{
 			"description": "Microscope Panel Routes",
 			"paths": [
 				"/microscope/**"
@@ -70,6 +86,11 @@
 				"asap": {
 					"issuers": [
 						"micros/manager-service"
+					]
+				},
+				"staff": {
+					"groups": [
+						"micros-sv--github-for-jira-dl-admins"
 					]
 				}
 			}

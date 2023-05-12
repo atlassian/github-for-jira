@@ -18,7 +18,7 @@ jest.mock("~/src/middleware/github-webhook-middleware");
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
 const GHES_WEBHOOK_SECRET = "webhookSecret";
-const CLOUD_WEBHOOK_SECRET = envVars.WEBHOOK_SECRET;
+const CLOUD_WEBHOOK_SECRETS = envVars.WEBHOOK_SECRETS;
 
 const injectRawBodyToReq = (req: any) => {
 	req.rawBody = JSON.stringify(req.body);
@@ -102,7 +102,6 @@ describe("webhook-receiver-post", () => {
 
 	it("should throw an error if signature doesn't match for GitHub cloud", async () => {
 		req = createReqWithInvalidSignature("push", undefined);
-
 		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(res.status).toBeCalledWith(400);
 		expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
@@ -121,6 +120,26 @@ describe("webhook-receiver-post", () => {
 				name: "push",
 				gitHubAppConfig: gitHubAppConfigForCloud()
 			}));
+		});
+		it("should pull cloud gitHubAppConfig with undefined UUID when using old webhook secrets", async () => {
+			req = createCloudReqForEventWithOldWebhookSecret("push");
+			const spy = jest.fn();
+			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+			await WebhookReceiverPost(injectRawBodyToReq(req), res);
+			expect(GithubWebhookMiddleware).toBeCalledWith(pushWebhookHandler);
+			expect(spy).toBeCalledWith(expect.objectContaining({
+				id: "100",
+				name: "push",
+				gitHubAppConfig: gitHubAppConfigForCloud()
+			}));
+		});
+		it("should not pull cloud gitHubAppConfig with undefined UUID when using random webhook secrets", async () => {
+			req = createCloudReqForEventWithRandomWebhookSecret("push");
+			const spy = jest.fn();
+			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+			await WebhookReceiverPost(injectRawBodyToReq(req), res);
+			expect(res.status).toBeCalledWith(400);
+			expect(res.status().send).toBeCalledWith("signature does not match event payload and secret");
 		});
 		it("should pull GHES gitHubAppConfig with valid GHES UUID", async () => {
 			req = createGHESReqForEvent("push", "", EXIST_GHES_UUID);
@@ -298,7 +317,18 @@ const createReqWithInvalidSignature = (event: string, uuid?: string) => {
 
 const createCloudReqForEvent = (event: string, action?: string) => {
 	return createReqForEvent({
-		event, action, webhookSecret: CLOUD_WEBHOOK_SECRET
+		event, action, webhookSecret: CLOUD_WEBHOOK_SECRETS[0]
+	});
+};
+
+const createCloudReqForEventWithOldWebhookSecret = (event: string, action?: string) => {
+	return createReqForEvent({
+		event, action, webhookSecret: CLOUD_WEBHOOK_SECRETS[1]
+	});
+};
+const createCloudReqForEventWithRandomWebhookSecret = (event: string, action?: string) => {
+	return createReqForEvent({
+		event, action, webhookSecret: "XX-random-string-XX"
 	});
 };
 

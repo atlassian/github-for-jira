@@ -12,6 +12,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Errors } from "config/errors";
 
 interface FailedConnection {
 	id: number;
@@ -86,7 +87,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection, { gitHubProduct });
+		statsd.increment(metricError.failedConnection, { gitHubProduct }, { jiraHost });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
@@ -162,7 +163,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	res.render("jira-configuration-new.hbs", {
+	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
@@ -218,8 +219,8 @@ export const JiraGet = async (
 	try {
 		const { jiraHost } = res.locals;
 		if (!jiraHost) {
-			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
-			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			req.log.warn({ jiraHost, req, res }, Errors.MISSING_JIRA_HOST);
+			res.status(400).send(Errors.MISSING_JIRA_HOST);
 			return;
 		}
 

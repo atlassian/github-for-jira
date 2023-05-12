@@ -23,6 +23,7 @@ import { DataCleanupRouter } from "./data-cleanup/data-cleanup-router";
 import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed-tasks";
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
+import { ApiRecryptPost } from "./api-recrypt-post";
 
 export const ApiRouter = Router();
 
@@ -76,7 +77,6 @@ ApiRouter.get("/", (_: Request, res: Response): void => {
 
 ApiRouter.use("/configuration", ApiConfigurationRouter);
 
-
 ApiRouter.post(
 	`/:uuid(${UUID_REGEX})?/resync`,
 	body("commitsFromDate").optional().isISO8601(),
@@ -92,6 +92,9 @@ ApiRouter.post(
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
+
+// Endpoint to recrypt encrypted value in a different encryption context
+ApiRouter.post("/recrypt", ApiRecryptPost);
 
 ApiRouter.post("/ping", ApiPingPost);
 
