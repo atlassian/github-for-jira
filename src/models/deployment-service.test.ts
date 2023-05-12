@@ -4,11 +4,17 @@ import { envVars } from "config/env";
 import { saveDeploymentInfo } from "./deployment-service";
 
 const logger = getLogger("test");
-const ddb = new AWS.DynamoDB({ apiVersion: "2012-08-10" });
+const ddb = new AWS.DynamoDB({
+	apiVersion: "2012-11-05",
+	region: envVars.DYNAMO_REGION,
+	endpoint: "http://localhost:4566"
+});
 
 describe("Deployment status service", () => {
 	describe("saveDeploymentInfo", () => {
 		it("should successfully save deployment info to dynamo db", async () => {
+
+			const createdAt = new Date();
 
 			await saveDeploymentInfo({
 				gitHubInstallationId: 1,
@@ -18,18 +24,37 @@ describe("Deployment status service", () => {
 				description: "some-random description",
 				originEnv: "production",
 				mappedEnv: "production",
-				status: "success"
+				status: "success",
+				createdAt
 			}, logger);
 
 			const result = await ddb.getItem({
 				TableName: envVars.DYNAMO_TABLE_DEPLOYMENT,
 				Key: {
-					"Id": { "S": "1" }
+					"Id": { "S": `ghid_1_ghappid_2_repo_3_env_production` },
+					"StatusCreatedAt": { "N": String(createdAt.getTime()) }
 				},
-				AttributesToGet: ["Id", "StatusCreatedAt", "OriginEnv", "MappedEnv", "CommitSha"]
+				AttributesToGet: [
+					"Id", "StatusCreatedAt",
+					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
+					"CommitSha", "Description",
+					"OriginEnv", "MappedEnv", "Status"
+				]
 			}).promise();
 
-			expect(result.$response.error).toBeUndefined();
+			expect(result.$response.error).toBeNull();
+			expect(result.Item).toEqual({
+				Id: { "S": "ghid_1_ghappid_2_repo_3_env_production" },
+				StatusCreatedAt: { "N": String(createdAt.getTime()) },
+				GitHubInstallationId: { "N": "1" },
+				GitHubAppId: { "N": "2" },
+				RepositoryId: { "N": "3" },
+				CommitSha: { "S": "abc-abc-abc" },
+				Description: { "S": "some-random description" },
+				OriginEnv: { "S": "production" },
+				MappedEnv: { "S": "production" },
+				Status: { "S": "success" }
+			});
 		});
 	});
 });
