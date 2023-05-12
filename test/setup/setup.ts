@@ -4,6 +4,7 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
+import { purgeItemsInTable } from "models/dynamodb";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
@@ -65,7 +66,8 @@ declare global {
 }
 
 const clearState = async () => Promise.all([
-	sequelize.truncate({ truncate: true, cascade: true })
+	sequelize.truncate({ truncate: true, cascade: true }),
+	purgeItemsInTable(envVars.DYNAMO_TABLE_DEPLOYMENT)
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>

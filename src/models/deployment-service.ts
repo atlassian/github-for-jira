@@ -1,17 +1,12 @@
 import Logger from "bunyan";
-import AWS from "aws-sdk";
 import { envVars } from "config/env";
 import { getLogger } from "config/logger";
+import { dynamodb as ddb } from "models/dynamodb";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
-const ddb = new AWS.DynamoDB({
-	apiVersion: "2012-11-05",
-	region: envVars.DYNAMO_REGION,
-	endpoint: "http://localhost:4566"
-});
-
-type DeploymentInfo = {
+export const saveDeploymentInfo = async (deploymentInfo : {
+	gitHubBaseUrl: string
 	gitHubInstallationId: number;
 	repositoryId: number;
 	commitSha: string;
@@ -19,9 +14,7 @@ type DeploymentInfo = {
 	env: string;
 	status: "pending" | "success" | "failure" | "error";
 	createdAt: Date;
-}
-
-export const saveDeploymentInfo = async (deploymentInfo :DeploymentInfo, logger: Logger) => {
+}, logger: Logger) => {
 	logger.debug("Saving deploymentInfo to db");
 	const result = await ddb.putItem({
 		TableName: envVars.DYNAMO_TABLE_DEPLOYMENT,
@@ -41,22 +34,20 @@ export const saveDeploymentInfo = async (deploymentInfo :DeploymentInfo, logger:
 	}
 };
 
-type FindLastSuccessDeploymentQueryParam = {
-	gitHubInstallationId: number;
-	repositoryId: number;
-	env: string;
-	currentDate: Date
-};
-type FindLastSuccessDeploymentQueryResult = {
-	repositoryId: number,
-	commitSha: string,
-	createdAt: Date
-};
-
 export const findLastSuccessDeployment = async(
-	params: FindLastSuccessDeploymentQueryParam,
+	params: {
+		gitHubBaseUrl: string;
+		gitHubInstallationId: number;
+		repositoryId: number;
+		env: string;
+		currentDate: Date;
+	},
 	logger: Logger = defaultLogger
-): Promise<FindLastSuccessDeploymentQueryResult | undefined> => {
+): Promise<{
+		repositoryId: number,
+		commitSha: string,
+		createdAt: Date
+	} | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
 		TableName: envVars.DYNAMO_TABLE_DEPLOYMENT,
@@ -87,9 +78,10 @@ export const findLastSuccessDeployment = async(
 };
 
 export const getKey = (opts: {
-	gitHubInstallationId: number,
-	repositoryId: number,
-	env: string
+	gitHubBaseUrl: string;
+	gitHubInstallationId: number;
+	repositoryId: number;
+	env: string;
 }) => {
-	return `ghid_${opts.gitHubInstallationId}_repo_${opts.repositoryId}_env_${opts.env}`;
+	return `ghurl_${opts.gitHubBaseUrl}_ghid_${opts.gitHubInstallationId}_repo_${opts.repositoryId}_env_${opts.env}`;
 };

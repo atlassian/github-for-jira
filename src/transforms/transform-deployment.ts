@@ -65,6 +65,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
 		logger.info("Using new dynamodb for get last success deployment");
 		const lastSuccessful = await findLastSuccessDeployment({
+			gitHubBaseUrl: githubInstallationClient.baseUrl,
 			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
 			env: currentDeployEnv,
 			repositoryId: repoId,

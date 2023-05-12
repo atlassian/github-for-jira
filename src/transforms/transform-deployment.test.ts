@@ -359,6 +359,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 			await saveDeploymentInfo({
+				gitHubBaseUrl: gitHubClient.baseUrl,
 				gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				repositoryId: deployment_status.payload.repository.id,
 				commitSha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc",
