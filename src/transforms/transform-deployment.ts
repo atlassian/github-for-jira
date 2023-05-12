@@ -51,6 +51,7 @@ const getLastSuccessfulDeployCommitSha = async (
 };
 
 const getCommitsSinceLastSuccessfulDeployment = async (
+	type: "backfill" | "webhook",
 	owner: string,
 	repoId: number,
 	repoName: string,
@@ -62,7 +63,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 
-	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
 		logger.info("Using new dynamodb for get last success deployment");
 		const lastSuccessful = await findLastSuccessDeployment({
 			gitHubBaseUrl: githubInstallationClient.baseUrl,
@@ -269,12 +270,20 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 	return associations;
 };
 
-export const transformDeployment = async (githubInstallationClient: GitHubInstallationClient, payload: WebhookPayloadDeploymentStatus, jiraHost: string, metrics: {trigger: string, subTrigger?: string}, logger: Logger, gitHubAppId: number | undefined): Promise<JiraDeploymentBulkSubmitData | undefined> => {
+export const transformDeployment = async (
+	githubInstallationClient: GitHubInstallationClient,
+	payload: WebhookPayloadDeploymentStatus,
+	jiraHost: string,
+	type: "backfill" | "webhook",
+	metrics: {trigger: string, subTrigger?: string},
+	logger: Logger, gitHubAppId: number | undefined
+): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
 	const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
+		type,
 		payload.repository.owner.login,
 		payload.repository.id,
 		payload.repository.name,

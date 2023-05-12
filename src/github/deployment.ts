@@ -49,7 +49,7 @@ export const processDeployment = async (
 	const metrics = {
 		trigger: "deployment_queue"
 	};
-	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, metrics, logger, gitHubAppId);
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, "webhook", metrics, logger, gitHubAppId);
 
 	logger.info("deployment message transformed");
 
