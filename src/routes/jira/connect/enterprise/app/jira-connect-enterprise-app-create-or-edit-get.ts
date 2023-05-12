@@ -5,6 +5,8 @@ import { envVars } from "config/env";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
+import { getAllKnownHeaders } from "utils/http-headers";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 	req: Request,
@@ -32,6 +34,10 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 				app,
 				decryptedWebhookSecret: await app.getDecryptedWebhookSecret(jiraHost),
 				decryptedGheSecret: await app.getDecryptedGitHubClientSecret(jiraHost),
+				apiKeyHeaderName: app.apiKeyHeaderName,
+				apiKeyValue: app.encryptedApiKeyValue
+					? await app.getDecryptedApiKeyValue(jiraHost)
+					: "",
 				serverUrl: app.gitHubBaseUrl,
 				appUrl: envVars.APP_URL,
 				uuid: uuidOfServerAppToEdit,
@@ -53,7 +59,10 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 
 			config = {
 				serverUrl: newServerAppConnectConfig.serverUrl,
-				// TODO: copy other values from the newServerAppConnectConfig
+				apiKeyHeaderName: newServerAppConnectConfig.apiKeyHeaderName,
+				apiKeyValue: newServerAppConnectConfig.encryptedApiKeyValue
+					? await GitHubServerApp.decrypt(res.locals.installation.jiraHost, newServerAppConnectConfig.encryptedApiKeyValue)
+					: "",
 				appUrl: envVars.APP_URL,
 				uuid: newUuid,
 				csrfToken: req.csrfToken()
@@ -65,7 +74,11 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 			isNew
 		});
 
-		res.render("jira-manual-app-creation.hbs", config);
+		res.render("jira-manual-app-creation.hbs", {
+			... config,
+			knownHttpHeadersLowerCase: getAllKnownHeaders(),
+			withApiKeyFeature: await booleanFlag(BooleanFlags.ENABLE_API_KEY_FEATURE, res.locals.installation.jiraHost)
+		});
 		req.log.debug("Jira create or edit app page rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira create or edit app page: ${error}`));

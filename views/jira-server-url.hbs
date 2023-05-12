@@ -91,22 +91,24 @@
                 <a href='#'>Learn more about API keys</a>
               </div>
                 <div class="field-group">
-                  <label for="gheApiKeyHeader">HTTP request header name</label>
+                  <label for="apiKeyHeaderName">HTTP request header name</label>
                   <input class="text full-width-field" type="text"
                          data-aui-validation-field
-                         data-aui-validation-api-key-header
+                         data-aui-validation-api-key-header-name
                          data-aui-validation-when="keyup"
                          placeholder="X-Accept-Me"
-                         id="gheApiKeyHeader" name="gheApiKeyHeader" />
+                         id="apiKeyHeaderName"
+                         name="apiKeyHeaderName" />
                 </div>
 
                 <div class="field-group">
-                  <label for="gheApiKeyValue">Value</label>
+                  <label for="apiKeyValue">Value</label>
                   <input class="text full-width-field" type="password"
                          data-aui-validation-field
                          data-aui-validation-api-key-header-value
                          data-aui-validation-when="keyup"
-                         id="gheApiKeyValue" name="gheApiKeyValue" />
+                         id="apiKeyValue"
+                         name="apiKeyValue" />
                 </div>
             {{/if}}
 
@@ -140,10 +142,25 @@
       referrerpolicy="no-referrer"
       nonce="{{nonce}}"
     ></script>
-    <script>
-      window.knownHttpHeadersLowerCase = {{{json knownHttpHeadersLowerCase}}};
-    </script>
     <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
+
+{{#if withApiKeyFeature}}
+    <script src="/public/js/jira-api-key-validation.js" nonce="{{nonce}}"></script>
+    <script>
+        initApiKeyValidation(
+            {
+                auiTag: "api-key-header-name",
+                elt: document.getElementById("apiKeyHeaderName")
+            },
+            {
+                auiTag: "api-key-header-value",
+                elt: document.getElementById("apiKeyValue")
+            },
+            {{{json knownHttpHeadersLowerCase}}},
+            syncGheServerBtn
+        );
+    </script>
+{{/if}}
     <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>
