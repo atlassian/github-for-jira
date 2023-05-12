@@ -33,7 +33,6 @@ const getIssueKeyLimit = async () => {
 	return Promise.resolve(ISSUE_KEY_API_LIMIT);
 };
 
-
 const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export interface DeploymentsResult {
