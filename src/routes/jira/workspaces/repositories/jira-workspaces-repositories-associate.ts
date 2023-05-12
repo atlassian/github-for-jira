@@ -5,12 +5,13 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 const { MISSING_JIRA_HOST } = Errors;
 
-const findMatchingRepositories = async (repoIds: number[], jiraHost: string): Promise<(RepoSyncState | null)[]> => {
-	const repos = await Promise.all(
-		repoIds.map(async id => await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost))
-	);
-
-	return repos.filter(repo => repo != null);
+const findMatchingRepository = async (id: number, jiraHost: string): Promise<(RepoSyncState | null)> => {
+	// const repos = await Promise.all(
+	// 	repoIds.map(async id => await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost))
+	// );
+	//
+	// return repos.filter(repo => repo != null);
+	return await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost);
 };
 
 const transformedRepo = (repo: RepoSyncState): BulkSubmitRepositoryInfo => {
@@ -23,7 +24,7 @@ const transformedRepo = (repo: RepoSyncState): BulkSubmitRepositoryInfo => {
 	};
 };
 
-export const JiraRepositoriesPost = async (req: Request, res: Response): Promise<void> => {
+export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch repos");
 
 	// const { jiraHost } = res.locals;
@@ -34,25 +35,25 @@ export const JiraRepositoriesPost = async (req: Request, res: Response): Promise
 		return;
 	}
 
-	const { ids: reposIds } = req.body;
+	const { id: repoId } = req.body;
 
-	if (!reposIds) {
+	if (!repoId) {
 		const errMessage = "No repo IDs provided";
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
 	}
 
-	const repos = await findMatchingRepositories(reposIds, jiraHost);
+	const repo = await findMatchingRepository(repoId, jiraHost);
 
-	if (!repos.length) {
+	if (!repo) {
 		const errMessage = "No matches found";
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
 	}
 
-	const transformedRepos = repos.map(repo => repo && transformedRepo(repo));
+	const transformedRepos = transformedRepo(repo);
 
 	const payload = {
 		preventTransitions: false,
