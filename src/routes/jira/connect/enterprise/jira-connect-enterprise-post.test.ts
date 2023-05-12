@@ -246,7 +246,7 @@ describe("POST /jira/connect/enterprise", () => {
 		it("throws 400 when a header is a known one", async () => {
 			const response = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "Set-Cookie",
+				apiKeyHeaderName: "Set-Cookie",
 				apiKeyValue: "jwt=bad-stuff"
 			});
 
@@ -256,7 +256,7 @@ describe("POST /jira/connect/enterprise", () => {
 		it("throws 400 when a header name is longer than 1024", async () => {
 			const response = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: Array.from({ length: 1025 }, () => "x").join(""),
+				apiKeyHeaderName: Array.from({ length: 1025 }, () => "x").join(""),
 				apiKeyValue: "jwt=bad-stuff"
 			});
 
@@ -266,13 +266,13 @@ describe("POST /jira/connect/enterprise", () => {
 		it("throws 400 when a header name is provided but the value is not", async () => {
 			const response1 = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "OK-HEADER"
+				apiKeyHeaderName: "OK-HEADER"
 			});
 			expect(response1.status).toStrictEqual(400);
 
 			const response2 = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "OK-HEADER",
+				apiKeyHeaderName: "OK-HEADER",
 				apiKeyValue: "  "
 			});
 			expect(response2.status).toStrictEqual(400);
@@ -281,7 +281,7 @@ describe("POST /jira/connect/enterprise", () => {
 		it("throws 400 when the value is longer than 8096 characters", async () => {
 			const response = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "OK-HEADER",
+				apiKeyHeaderName: "OK-HEADER",
 				apiKeyValue: Array.from({ length: 9000 }, () => "x").join("")
 			});
 
@@ -295,7 +295,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 			const response = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "OK-HEADER",
+				apiKeyHeaderName: "OK-HEADER",
 				apiKeyValue: "foo"
 			});
 
@@ -309,7 +309,7 @@ describe("POST /jira/connect/enterprise", () => {
 
 			const response = await callEnterprisePostEndpoint({
 				gheServerURL: gitHubServerApp.gitHubBaseUrl,
-				apiKeyHeader: "OK-HEADER ",
+				apiKeyHeaderName: "OK-HEADER ",
 				apiKeyValue: "foo "
 			});
 
