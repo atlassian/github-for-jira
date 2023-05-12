@@ -3,6 +3,8 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "./jira-client";
 import { getHashedKey } from "models/sequelize";
 import * as Axios from "./axios";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -22,6 +24,10 @@ describe("Test getting a jira client", () => {
 			gitHubInstallationId
 		});
 		client = await getJiraClient(jiraHost, gitHubInstallationId, undefined, undefined);
+
+		when(booleanFlag).calledWith(
+			BooleanFlags.ISSUE_KEY_API_LIMIT_IS_500
+		).mockResolvedValue(true);
 	});
 
 	it("Installation exists", async () => {
