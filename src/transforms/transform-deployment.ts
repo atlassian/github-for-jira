@@ -58,7 +58,6 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
-	currentDeployDate: string,
 	githubInstallationClient: GitHubInstallationClient,
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
@@ -109,10 +108,6 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	}
 
 	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
-	if (!lastSuccessfullyDeployedCommit) {
-		logger.info(`Skipped comparing commit base for deployment_status event as there's no past deployments`);
-		return undefined;
-	}
 
 	const compareCommitsPayload = {
 		owner: owner,
@@ -290,7 +285,10 @@ export const transformDeployment = async (
 		deployment.sha,
 		deployment.id,
 		deployment_status.environment,
+<<<<<<< HEAD
 		deployment_status.created_at,
+=======
+>>>>>>> parent of fa726a7f (ARC-2144 try to compare to future deployments only (#2098))
 		githubInstallationClient,
 		logger
 	);
