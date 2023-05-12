@@ -50,6 +50,31 @@ const getLastSuccessfulDeployCommitSha = async (
 	return deployments[deployments.length - 1].sha;
 };
 
+const getLastSuccessDeploymentShaFromDyanmoDB = async (
+	repoId: number,
+	currentDeployEnv: string,
+	currentDeployDate: string,
+	githubInstallationClient: GitHubInstallationClient,
+	logger: Logger
+) => {
+
+	logger.info("Using dynamodb for get last success deployment");
+	const lastSuccessful = await findLastSuccessDeployment({
+		gitHubBaseUrl: githubInstallationClient.baseUrl,
+		gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
+		env: currentDeployEnv,
+		repositoryId: repoId,
+		currentDate: new Date(currentDeployDate)
+	}, logger);
+
+	if (!lastSuccessful) {
+		logger.info("Couldn't find last success deployment from dynamodb");
+		return undefined;
+	}
+	logger.info("Found last success deployment info");
+	return lastSuccessful;
+};
+
 const getCommitsSinceLastSuccessfulDeployment = async (
 	type: "backfill" | "webhook",
 	owner: string,
@@ -58,56 +83,35 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	currentDeploySha: string,
 	currentDeployId: number,
 	currentDeployEnv: string,
+	currentDeployDate: string,
 	githubInstallationClient: GitHubInstallationClient,
 	logger: Logger
 ): Promise<CommitSummary[] | undefined> => {
 
-	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-		logger.info("Using new dynamodb for get last success deployment");
-		const lastSuccessful = await findLastSuccessDeployment({
-			gitHubBaseUrl: githubInstallationClient.baseUrl,
-			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
-			env: currentDeployEnv,
-			repositoryId: repoId,
-			currentDate: new Date(currentDeployDate)
-		}, logger);
+	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
 
-		if (!lastSuccessful) {
-			logger.info("Couldn't find last success deployment from dynamodb");
+	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+		const lastSuccessfulFromDynamo = await getLastSuccessDeploymentShaFromDyanmoDB(repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
+		if (lastSuccessfulFromDynamo && lastSuccessfulFromDynamo.commitSha) lastSuccessfullyDeployedCommit = lastSuccessfulFromDynamo.commitSha;
+
+	}
+
+	if (!lastSuccessfullyDeployedCommit) {
+		// Grab the last 10 deployments for this repo
+		const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
+			await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
+
+		// Filter per current environment and exclude itself
+		const filteredDeployments = deployments.data
+			.filter(deployment => deployment.id !== currentDeployId);
+
+		// If this is the very first successful deployment ever, return nothing because we won't have any commit sha to compare with the current one.
+		if (!filteredDeployments.length) {
 			return undefined;
 		}
-		logger.info("Found last success deployment info");
 
-		const lastSuccessfullyDeployedCommit = lastSuccessful.commitSha;
-
-		const compareCommitsPayload = {
-			owner: owner,
-			repo: repoName,
-			base: lastSuccessfullyDeployedCommit,
-			head: currentDeploySha
-		};
-
-		return await getAllCommitsBetweenReferences(
-			compareCommitsPayload,
-			githubInstallationClient,
-			logger
-		);
+		lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 	}
-
-	// Grab the last 10 deployments for this repo
-	const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
-		await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
-
-	// Filter per current environment and exclude itself
-	const filteredDeployments = deployments.data
-		.filter(deployment => deployment.id !== currentDeployId);
-
-	// If this is the very first successful deployment ever, return nothing because we won't have any commit sha to compare with the current one.
-	if (!filteredDeployments.length) {
-		return undefined;
-	}
-
-	const lastSuccessfullyDeployedCommit = await getLastSuccessfulDeployCommitSha(owner, repoName, githubInstallationClient, filteredDeployments, logger);
 
 	const compareCommitsPayload = {
 		owner: owner,
@@ -285,10 +289,7 @@ export const transformDeployment = async (
 		deployment.sha,
 		deployment.id,
 		deployment_status.environment,
-<<<<<<< HEAD
 		deployment_status.created_at,
-=======
->>>>>>> parent of fa726a7f (ARC-2144 try to compare to future deployments only (#2098))
 		githubInstallationClient,
 		logger
 	);
