@@ -47,7 +47,7 @@ describe("Test getting a jira client", () => {
 					fileCount: 3,
 					hash: "hashihashhash",
 					id: "id",
-					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(525)).map((_, i) => `TEST-${i}`),
 					message: "commit message",
 					url: "some-url",
 					updateSequenceId: 1234567890
@@ -81,7 +81,7 @@ describe("Test getting a jira client", () => {
 						updateSequenceId: 1234567890
 					},
 					id: "jiraId",
-					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(525)).map((_, i) => `TEST-${i}`),
 					name: "ref",
 					url: "branch-url",
 					updateSequenceId: 1234567890
@@ -107,7 +107,7 @@ describe("Test getting a jira client", () => {
 					destinationBranchUrl: "dest-branch-url",
 					displayId: "#5",
 					id: 6,
-					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(525)).map((_, i) => `TEST-${i}`),
 					reviewers: [],
 					sourceBranch: "source-branch",
 					sourceBranchUrl: "source-branch-url",
@@ -161,7 +161,7 @@ describe("Test getting a jira client", () => {
 					fileCount: 3,
 					hash: "hashihashhash",
 					id: "id",
-					issueKeys: Array.from(new Array(125)).map((_, i) => `TEST-${i}`),
+					issueKeys: Array.from(new Array(525)).map((_, i) => `TEST-${i}`),
 					message: "commit message",
 					url: "some-url",
 					updateSequenceId: 1234567890
