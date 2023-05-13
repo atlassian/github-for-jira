@@ -7,6 +7,10 @@ import { Installation } from "models/installation";
 import supertest from "supertest";
 import { GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
 import { GitHubServerApp } from "models/github-server-app";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("jira-connect-enterprise-app-create-or-edit-get", () => {
 
@@ -73,7 +77,73 @@ describe("jira-connect-enterprise-app-create-or-edit-get", () => {
 				expect(response.text).toContain(`<input type="hidden" id="gitHubBaseUrl" name="gitHubBaseUrl" value="http://foobar.com">`);
 			});
 
-			it("renders creation form and puts connect config onto page from existing ghe", async () => {
+			it("when FF ON, renders form and puts API key config onto page from temp storage", async () => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.ENABLE_API_KEY_FEATURE,
+					jiraHost
+				).mockResolvedValue(true);
+
+				const uuid = await new GheConnectConfigTempStorage().store({
+					serverUrl: "http://foobar.com",
+					apiKeyHeaderName: "myApiKeyName",
+					encryptedApiKeyValue: "encrypted:myApiKeyValue"
+				}, installation.id);
+
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(uuid)
+					});
+				expect(response.status).toStrictEqual(200);
+				expect(response.text).toContain(`name="apiKeyHeaderName" value="myApiKeyName"`);
+				expect(response.text).toContain(`name="apiKeyValue" value="myApiKeyValue"`);
+			});
+
+			it("when FF ON, renders form and puts API key empty config onto page when temp storage doesn't contain it", async () => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.ENABLE_API_KEY_FEATURE,
+					jiraHost
+				).mockResolvedValue(true);
+
+				const uuid = await new GheConnectConfigTempStorage().store({
+					serverUrl: "http://foobar.com",
+					apiKeyHeaderName: null,
+					encryptedApiKeyValue: null
+				}, installation.id);
+
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(uuid)
+					});
+				expect(response.status).toStrictEqual(200);
+				expect(response.text).toContain(`name="apiKeyHeaderName" value=""`);
+				expect(response.text).toContain(`name="apiKeyValue" value=""`);
+			});
+
+			it("when FF OFF, renders form and doesn't put API key inputs", async () => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.ENABLE_API_KEY_FEATURE,
+					jiraHost
+				).mockResolvedValue(false);
+
+				const uuid = await new GheConnectConfigTempStorage().store({
+					serverUrl: "http://foobar.com",
+					apiKeyHeaderName: "foo",
+					encryptedApiKeyValue: null
+				}, installation.id);
+
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(uuid)
+					});
+				expect(response.status).toStrictEqual(200);
+				expect(response.text).not.toContain(`name="apiKeyHeaderName"`);
+				expect(response.text).not.toContain(`name="apiKeyValue"`);
+			});
+
+			it("renders creation form and puts GHE URL from connect config onto page from existing ghe", async () => {
 				const response = await supertest(app)
 					.get(`/jira/connect/enterprise/${gheServerApp.uuid}/app/new`)
 					.query({
@@ -81,6 +151,42 @@ describe("jira-connect-enterprise-app-create-or-edit-get", () => {
 					});
 				expect(response.status).toStrictEqual(200);
 				expect(response.text).toContain(`<input type="hidden" id="gitHubBaseUrl" name="gitHubBaseUrl" value="${gheServerApp.gitHubBaseUrl}">`);
+			});
+
+			it("renders empty API KEY config on page from existing ghe", async () => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.ENABLE_API_KEY_FEATURE,
+					jiraHost
+				).mockResolvedValue(true);
+
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${gheServerApp.uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(gheServerApp.uuid)
+					});
+				expect(response.status).toStrictEqual(200);
+				expect(response.text).toContain(`name="apiKeyHeaderName" value=""`);
+				expect(response.text).toContain(`name="apiKeyValue" value=""`);
+			});
+
+			it("renders non-empty API KEY config on page from existing ghe", async () => {
+				when(booleanFlag).calledWith(
+					BooleanFlags.ENABLE_API_KEY_FEATURE,
+					jiraHost
+				).mockResolvedValue(true);
+
+				gheServerApp.apiKeyHeaderName = "myApiKeyName";
+				gheServerApp.encryptedApiKeyValue = "encrypted:myApiKeyValue";
+				await gheServerApp.save();
+
+				const response = await supertest(app)
+					.get(`/jira/connect/enterprise/${gheServerApp.uuid}/app/new`)
+					.query({
+						jwt: await generateJwt(gheServerApp.uuid)
+					});
+				expect(response.status).toStrictEqual(200);
+				expect(response.text).toContain(`name="apiKeyHeaderName" value="myApiKeyName"`);
+				expect(response.text).toContain(`name="apiKeyValue" value="myApiKeyValue"`);
 			});
 
 			it("does not reuse GHE uuid", async () => {

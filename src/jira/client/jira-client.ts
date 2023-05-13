@@ -23,7 +23,7 @@ import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 
 // Max number of issue keys we can pass to the Jira API
-export const ISSUE_KEY_API_LIMIT = 100;
+export const ISSUE_KEY_API_LIMIT = 500;
 const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export interface DeploymentsResult {

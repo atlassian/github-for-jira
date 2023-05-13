@@ -1,19 +1,21 @@
 import { Router } from "express";
-import { JiraWorkspacesRepositoriesGet } from "routes/jira/workspaces/jira-workspaces-get";
 import {
 	JiraWorkspacesRepositoriesAssociate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-associate";
 import {
 	JiraWorkspacesRepositoriesCreate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-create";
+import { csrfMiddleware } from "middleware/csrf-middleware";
+import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
+import { JiraWorkspacesRepositoriesGet } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
 
 export const JiraWorkspacesRepositoriesRouter = Router();
 
 JiraWorkspacesRepositoriesRouter.route("/search")
-	.get(JiraWorkspacesRepositoriesGet);
+	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesGet);
 
 JiraWorkspacesRepositoriesRouter.route("/associate")
-	.post(JiraWorkspacesRepositoriesAssociate);
+	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesAssociate);
 
 JiraWorkspacesRepositoriesRouter.route("/create")
-	.post(JiraWorkspacesRepositoriesCreate);
+	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesCreate);
