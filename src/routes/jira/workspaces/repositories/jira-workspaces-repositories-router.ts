@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { JiraWorkspacesGet } from "routes/jira/workspaces/jira-workspaces-get";
+import { JiraWorkspacesRepositoriesGet } from "routes/jira/workspaces/jira-workspaces-get";
 import {
 	JiraWorkspacesRepositoriesAssociate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-associate";
@@ -10,7 +10,7 @@ import {
 export const JiraWorkspacesRepositoriesRouter = Router();
 
 JiraWorkspacesRepositoriesRouter.route("/search")
-	.get(JiraWorkspacesGet);
+	.get(JiraWorkspacesRepositoriesGet);
 
 JiraWorkspacesRepositoriesRouter.route("/associate")
 	.post(JiraWorkspacesRepositoriesAssociate);
