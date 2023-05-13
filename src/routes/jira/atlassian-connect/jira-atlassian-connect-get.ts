@@ -36,7 +36,7 @@ const modules = {
 			searchRepositories: {
 				templateUrl: `${envVars.APP_URL}/workspaces/repositories/search`
 			},
-			fetchRepositories: {
+			associatehRepositories: {
 				templateUrl: `${envVars.APP_URL}/workspaces/repositories/associate`
 			},
 			createRepository: {
