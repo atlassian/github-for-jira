@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { JiraWorkspacesGet } from "routes/jira/workspaces/jira-workspaces-get";
 import {
-	JiraWorkspacesRepositoriesFetchAll
-} from "routes/jira/workspaces/repositories/jira-workspaces-repositories-fetch-all";
+	JiraWorkspacesRepositoriesAssociate
+} from "routes/jira/workspaces/repositories/jira-workspaces-repositories-associate";
 import {
 	JiraWorkspacesRepositoriesCreate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-create";
@@ -15,7 +15,7 @@ JiraWorkspacesRepositoriesRouter.route("/search")
 	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraWorkspacesGet);
 
 JiraWorkspacesRepositoriesRouter.route("/fetch")
-	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesFetchAll);
+	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesAssociate);
 
 JiraWorkspacesRepositoriesRouter.route("/create")
 	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesCreate);
