@@ -14,7 +14,7 @@ export const JiraWorkspacesRepositoriesRouter = Router();
 JiraWorkspacesRepositoriesRouter.route("/search")
 	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraWorkspacesGet);
 
-JiraWorkspacesRepositoriesRouter.route("/fetch")
+JiraWorkspacesRepositoriesRouter.route("/associate")
 	.post(jiraSymmetricJwtMiddleware, JiraWorkspacesRepositoriesAssociate);
 
 JiraWorkspacesRepositoriesRouter.route("/create")
