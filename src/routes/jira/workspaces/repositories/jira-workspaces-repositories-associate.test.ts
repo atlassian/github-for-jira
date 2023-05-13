@@ -7,7 +7,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 
-describe("Repositories Fetch", () => {
+describe("Workspaces Associate Repository", () => {
 	let app: Application;
 	let installation: Installation;
 	let sub: Subscription;
