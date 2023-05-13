@@ -229,15 +229,15 @@ describe("Workspace Get", () => {
 			success: true,
 			repositories: [
 				{
-					id: repoOne.id.toString(),
+					id: repoOne.repoId.toString(),
 					name: "new-repo"
 				},
 				{
-					id: repoTwo.id.toString(),
+					id: repoTwo.repoId.toString(),
 					name: "another-new-repo"
 				},
 				{
-					id: repoFour.id.toString(),
+					id: repoFour.repoId.toString(),
 					name: "imNew"
 				}
 			]

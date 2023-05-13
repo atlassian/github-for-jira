@@ -53,10 +53,10 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	}
 
 	const repositories = repos.map(repo => {
-		const { id, repoName: name } = repo;
+		const { repoId, repoName: name } = repo;
 
 		return {
-			id: id.toString(),
+			id: repoId.toString(),
 			name
 		};
 	});
