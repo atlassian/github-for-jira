@@ -5,14 +5,23 @@ import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { Errors } from "config/errors";
 import { RepoSyncState } from "models/reposyncstate";
-// import { jiraSymmetricJwtMiddleware } from "middleware/jira-symmetric-jwt-middleware";
+import { Installation } from "models/installation";
+import { encodeSymmetric } from "atlassian-jwt";
 
 describe("Workspaces Get", () => {
 	let app: Application;
 	let sub: Subscription;
+	let installation: Installation;
 	let repo;
+	let jwt: string;
 
 	beforeEach(async () => {
+		installation = await Installation.install({
+			host: jiraHost,
+			sharedSecret: "shared-secret",
+			clientKey: "jira-client-key"
+		});
+
 		sub = await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
@@ -28,23 +37,11 @@ describe("Workspaces Get", () => {
 			repoFullName: "atlassian/github-for-jira",
 			repoUrl: "github.com/atlassian/github-for-jira"
 		};
-	});
 
-	it("Should return a 400 status if no Jira host is provided", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
-			next();
-		});
-		app.use(getFrontendApp());
-
-		await supertest(app)
-			.get("/jira/workspaces/search?searchQuery=Atlas")
-			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_JIRA_HOST);
-			});
+		jwt = encodeSymmetric({
+			qsh: "context-qsh",
+			iss: "jira-client-key"
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("Should return a 400 status if no Subscription is found for host", async () => {
@@ -57,13 +54,17 @@ describe("Workspaces Get", () => {
 		});
 		app.use(getFrontendApp());
 
-		await RepoSyncState.create({
-			...repo,
-			subscriptionId: sub.id
+		await Subscription.uninstall({
+			installationId: 1234,
+			host: jiraHost,
+			gitHubAppId: undefined
 		});
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=Atlas")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
@@ -82,6 +83,9 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("No org name provided in query");
@@ -100,6 +104,9 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=incorrectorgname")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("Unable to find matching orgs for incorrectorgname");
@@ -133,6 +140,9 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=atlas")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(workspaces));
 				expect(res.status).toBe(200);
@@ -228,6 +238,9 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=atlas")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(workspaces));
 				expect(res.status).toBe(200);

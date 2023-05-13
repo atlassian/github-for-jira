@@ -33,9 +33,8 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
 
 	// TODO - update this later
-	// const { jiraHost } = res.locals;
-	const jiraHost = "https://rachellerathbone.atlassian.net";
-
+	const { jiraHost } = res.locals;
+	// const jiraHost = "https://rachellerathbone.atlassian.net";
 	if (!jiraHost) {
 		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
 		res.status(400).send(MISSING_JIRA_HOST);
