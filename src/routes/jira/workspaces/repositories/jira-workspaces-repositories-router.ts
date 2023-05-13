@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { JiraWorkspacesGet } from "routes/jira/workspaces/jira-workspaces-get";
 import {
 	JiraWorkspacesRepositoriesAssociate
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-associate";
