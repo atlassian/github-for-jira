@@ -219,7 +219,7 @@ export class RepoSyncState extends Model {
 				}
 			});
 		}));
-		return result.flat(2);
+		return result.flat(1);
 	}
 
 	// Nullify statuses and cursors to start anew

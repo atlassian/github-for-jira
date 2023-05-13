@@ -46,9 +46,8 @@ describe("Workspaces Get", () => {
 
 	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			res.locals.jiraHost = "https://hostdoesnotexist.com";
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -73,10 +72,9 @@ describe("Workspaces Get", () => {
 
 	it("Should return a 400 status if no org name is provided in query params", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
@@ -94,9 +92,8 @@ describe("Workspaces Get", () => {
 
 	it("Should return a 400 status if no matching repo is found for orgName + subscription id", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			res.locals.jiraHost = jiraHost;
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -115,10 +112,9 @@ describe("Workspaces Get", () => {
 
 	it("Should return a single org if only one match is found", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
@@ -151,10 +147,9 @@ describe("Workspaces Get", () => {
 
 	it("Should return multiple matches but only return each org once", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
