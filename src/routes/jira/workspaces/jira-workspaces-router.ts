@@ -8,9 +8,7 @@ import {
 
 export const JiraWorkspacesRouter = Router();
 
-JiraWorkspacesRouter.use(csrfMiddleware, jiraSymmetricJwtMiddleware);
-
 JiraWorkspacesRouter.route("/search")
-	.get(JiraWorkspacesGet);
+	.get(csrfMiddleware, jiraSymmetricJwtMiddleware, JiraWorkspacesGet);
 
 JiraWorkspacesRouter.use("/repositories", JiraWorkspacesRepositoriesRouter);
