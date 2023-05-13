@@ -3,6 +3,7 @@ import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
+import { getLogger } from "config/logger";
 
 export class RepoSyncState extends Model {
 	id: number;
@@ -171,6 +172,9 @@ export class RepoSyncState extends Model {
 	}
 
 	static async findRepositoriesBySubscriptionIdAndRepoName(subscriptionId: number, repoName: string): Promise<RepoSyncState[] | null> {
+		const logger = getLogger("test");
+		logger.info("HERE", subscriptionId);
+		console.log("HERE", subscriptionId);
 		return RepoSyncState.findAll({
 			where: {
 				subscriptionId,

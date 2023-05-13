@@ -335,3 +335,18 @@ $(document).ready(function () {
 		});
 	}
 });
+
+$(".test-button").click(function(event) {
+	event.preventDefault();
+	const path = "/jira/workspaces/repositories/search?workspaceId=4&searchQuery=anoth"
+	$.ajax({
+		type: "GET",
+		url: path,
+		success: function() {
+			console.log("Success")
+		},
+		error: function (error) {
+			console.error("Error: ", error)
+		},
+	});
+});

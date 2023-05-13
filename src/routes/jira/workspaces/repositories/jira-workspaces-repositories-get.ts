@@ -1,6 +1,3 @@
-export const JiraWorkspacesRepositoriesGet = () => {
-	// Content included in ARC-2116-search-connected-repos
-};
 import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
@@ -20,9 +17,7 @@ export interface GitHubRepo {
 export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to get repositories");
 
-	// TODO - update this later
 	const { jiraHost } = res.locals;
-	// const jiraHost = "https://rachellerathbone.atlassian.net";
 
 	if (!jiraHost) {
 		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
@@ -33,7 +28,6 @@ export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<
 	// TODO - update this later
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
-	// const repoName = "sandbox";
 
 	if (!connectedOrgId || !repoName) {
 		const errMessage = "Missing org ID or repo name";
@@ -51,7 +45,7 @@ export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<
 	}
 
 	const repos = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(subscription.id, repoName);
-
+	req.log.info("REPOS: ", repos)
 	if (!repos?.length) {
 		const errMessage = "Repository not found";
 		req.log.warn(errMessage);
