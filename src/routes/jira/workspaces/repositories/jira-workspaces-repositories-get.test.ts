@@ -8,7 +8,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 
-describe("Workspace Get", () => {
+describe("Workspaces Repositories Get", () => {
 	let app: Application;
 	let sub: Subscription;
 	let installation: Installation;
@@ -37,10 +37,9 @@ describe("Workspace Get", () => {
 
 	it("Should return a 400 status if no org id is provided in query params", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
@@ -58,10 +57,9 @@ describe("Workspace Get", () => {
 
 	it("Should return a 400 status if no repo name is provided in query params", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
@@ -105,9 +103,8 @@ describe("Workspace Get", () => {
 
 	it("Should return a 400 status if no matching repo is found for orgName + subscription id", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			res.locals.jiraHost = jiraHost;
 			req.csrfToken = jest.fn();
 			next();
 		});
@@ -140,10 +137,9 @@ describe("Workspace Get", () => {
 
 	it("Should return all repos for matching Subscription ID and repo name", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
