@@ -338,12 +338,12 @@ $(document).ready(function () {
 
 $(".test-button").click(function(event) {
 	event.preventDefault();
-	const path = "/jira/associate"
+	const path = "/jira/workspaces/repositories/associate"
 	$.ajax({
 		type: "POST",
 		url: path,
 		data: {
-			id: 6
+			id: "19"
 		},
 		success: function() {
 			console.log("Success")

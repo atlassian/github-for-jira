@@ -3,14 +3,12 @@ import { Errors } from "config/errors";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
+import { Subscription } from "models/subscription";
 const { MISSING_JIRA_HOST } = Errors;
 
-const findMatchingRepository = async (id: number, jiraHost: string): Promise<(RepoSyncState | null)> => {
-	// const repos = await Promise.all(
-	// 	repoIds.map(async id => await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost))
-	// );
-	//
-	// return repos.filter(repo => repo != null);
+type RepoAndSubscription = RepoSyncState & Subscription;
+
+const findMatchingRepository = async (id: number, jiraHost: string): Promise<(RepoAndSubscription | null)> => {
 	return await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost);
 };
 
@@ -25,10 +23,10 @@ const transformedRepo = (repo: RepoSyncState): BulkSubmitRepositoryInfo => {
 };
 
 export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch repos");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for associate repository");
 
-	// const { jiraHost } = res.locals;
-	const jiraHost = "https://rachellerathbone.atlassian.net";
+	const { jiraHost } = res.locals;
+
 	if (!jiraHost) {
 		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
 		res.status(400).send(MISSING_JIRA_HOST);
@@ -44,7 +42,7 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 		return;
 	}
 
-	const repo = await findMatchingRepository(repoId, jiraHost);
+	const repo = await findMatchingRepository(Number(repoId), jiraHost);
 
 	if (!repo) {
 		const errMessage = "No matches found";
@@ -53,14 +51,14 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 		return;
 	}
 
-	const transformedRepos = transformedRepo(repo);
+	const transformedRepository = transformedRepo(repo);
 
 	const payload = {
 		preventTransitions: false,
 		operationType: "NORMAL",
-		repositories: transformedRepos,
+		repository: transformedRepository,
 		properties: {
-			installationId: 37093592 // TODO update this and check if there could be multiple... eek
+			installationId: repo.gitHubInstallationId
 		}
 	};
 

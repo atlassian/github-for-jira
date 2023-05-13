@@ -172,7 +172,7 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async findRepoByIdAndJiraHost(id: number, jiraHost: string): Promise<RepoSyncState | null> {
+	static async findRepoByIdAndJiraHost(id: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
@@ -185,7 +185,7 @@ export class RepoSyncState extends Model {
 			}
 		);
 
-		return results[0] as RepoSyncState;
+		return results[0] as RepoSyncState & Subscription;
 	}
 
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
