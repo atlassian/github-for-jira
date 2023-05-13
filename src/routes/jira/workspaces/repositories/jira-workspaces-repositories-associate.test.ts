@@ -2,24 +2,38 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
-import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
+import { Installation } from "models/installation";
+import { encodeSymmetric } from "atlassian-jwt";
 
 describe("Repositories Fetch", () => {
 	let app: Application;
+	let installation: Installation;
 	let sub: Subscription;
+	let jwt: string;
 
 	beforeEach(async () => {
+		installation = await Installation.install({
+			host: jiraHost,
+			sharedSecret: "shared-secret",
+			clientKey: "jira-client-key"
+		});
+
 		sub = await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
+
+		jwt = encodeSymmetric({
+			qsh: "context-qsh",
+			iss: "jira-client-key"
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
-	it("Should return a 400 status if no Jira host is provided", async () => {
+	it("Should return a 400 status if no repoId is provided", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -29,40 +43,60 @@ describe("Repositories Fetch", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.post("/jira/repositories/fetch")
-			.send({
-				ids: ["1", "2", "3"]
+			.post("/jira/workspaces/repositories/associate")
+			.query({
+				jwt
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_JIRA_HOST);
-			});
-	});
-
-	it("Should return a 400 status if no repo ids provided", async () => {
-		app = express();
-		app.use((req, res, next) => {
-			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
-			next();
-		});
-		app.use(getFrontendApp());
-
-		await supertest(app)
-			.post("/jira/repositories/fetch")
-			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain("No repo IDs provided");
+				expect(res.text).toContain("Missing repository ID");
 			});
 	});
 
 	it("Should return a 400 if provided IDs don't match Jira host", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const wrongSub = await Subscription.install({
+			host: "https://adifferentjirahost",
+			installationId: 2345,
+			hashedClientKey: "key-123",
+			gitHubAppId: undefined
+		});
+
+		const repo1 = await RepoSyncState.create({
+			subscriptionId: wrongSub.id,
+			repoId: 1,
+			repoName: "my-repo",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/my-repo",
+			repoUrl: "github.com/atlassian/my-repo"
+		});
+
+		await supertest(app)
+			.post("/jira/workspaces/repositories/associate")
+			.query({
+				jwt
+			})
+			.send({
+				id: repo1.repoId
+			})
+			.expect(res => {
+				expect(res.status).toBe(400);
+				expect(res.text).toContain("No matches found");
+			});
+	});
+
+	it("Should return repo update payload when repoId and Jira host match", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -76,32 +110,36 @@ describe("Repositories Fetch", () => {
 			repoUrl: "github.com/atlassian/my-repo"
 		});
 
-		const repo2 = await RepoSyncState.create({
-			subscriptionId: sub.id,
-			repoId: 2,
-			repoName: "another-repo",
-			repoOwner: "myorg",
-			repoFullName: "myorg/another-repo",
-			repoUrl: "github.com/myorg/another-repo"
-		});
+		Date.now = jest.fn(() => 1487076708000);
 
-		const repo3 = await RepoSyncState.create({
-			subscriptionId: sub.id,
-			repoId: 3,
-			repoName: "sandbox",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/sandbox",
-			repoUrl: "github.com/atlassian/sandbox"
-		});
+		const associateRepoRes = {
+			success: true,
+			associatedRepository: {
+				preventTransitions: false,
+				operationType: "NORMAL",
+				repository: {
+					id: repo1.id.toString(),
+					name: repo1.repoFullName,
+					url: repo1.repoUrl,
+					updateSequenceId: 1487076708000
+				},
+				properties: {
+					installationId: 1234
+				}
+			}
+		};
 
 		await supertest(app)
-			.post("/jira/repositories/fetch")
+			.post("/jira/workspaces/repositories/associate")
+			.query({
+				jwt
+			})
 			.send({
-				ids: [repo1.id + 10, repo2.id + 10, repo3.id + 10]
+				id: repo1.repoId
 			})
 			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain("No matches found");
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(associateRepoRes));
 			});
 	});
 });

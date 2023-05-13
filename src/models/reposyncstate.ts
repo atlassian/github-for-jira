@@ -172,15 +172,15 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async findRepoByIdAndJiraHost(id: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
+	static async findRepoByRepoIdAndJiraHost(repoId: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
-			"AND rss.\"id\" = :id ",
+			"AND rss.\"repoId\" = :repoId ",
 			{
-				replacements: { jiraHost, id },
+				replacements: { jiraHost, repoId },
 				type: QueryTypes.SELECT
 			}
 		);

@@ -9,7 +9,7 @@ const { MISSING_JIRA_HOST } = Errors;
 type RepoAndSubscription = RepoSyncState & Subscription;
 
 const findMatchingRepository = async (id: number, jiraHost: string): Promise<(RepoAndSubscription | null)> => {
-	return await RepoSyncState.findRepoByIdAndJiraHost(id, jiraHost);
+	return await RepoSyncState.findRepoByRepoIdAndJiraHost(id, jiraHost);
 };
 
 const transformedRepo = (repo: RepoSyncState): BulkSubmitRepositoryInfo => {
@@ -36,7 +36,7 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 	const { id: repoId } = req.body;
 
 	if (!repoId) {
-		const errMessage = "No repo IDs provided";
+		const errMessage = "Missing repository ID";
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
@@ -62,5 +62,5 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 		}
 	};
 
-	res.status(200).json({ success: true, payload });
+	res.status(200).json({ success: true, associatedRepository: payload });
 };
