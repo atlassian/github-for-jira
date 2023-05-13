@@ -338,7 +338,7 @@ $(document).ready(function () {
 
 $(".test-button").click(function(event) {
 	event.preventDefault();
-	const path = "/jira/workspaces/repositories/search?workspaceId=4&searchQuery=anoth"
+	const path = "/jira/workspaces/repositories/search?workspaceId=1&searchQuery=anoth"
 	$.ajax({
 		type: "GET",
 		url: path,

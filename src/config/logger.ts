@@ -307,6 +307,6 @@ console.debug = consoleLogger.debug.bind(consoleLogger);
 // eslint-disable-next-line no-console
 console.error = consoleLogger.error.bind(consoleLogger);
 // eslint-disable-next-line no-console
-// console.log = consoleLogger.info.bind(consoleLogger);
+console.log = consoleLogger.info.bind(consoleLogger);
 // eslint-disable-next-line no-console
 console.warn = consoleLogger.warn.bind(consoleLogger);

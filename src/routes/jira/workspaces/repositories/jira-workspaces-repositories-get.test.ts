@@ -5,36 +5,34 @@ import supertest from "supertest";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
+import { Installation } from "models/installation";
+import { encodeSymmetric } from "atlassian-jwt";
 
 describe("Workspace Get", () => {
 	let app: Application;
 	let sub: Subscription;
+	let installation: Installation;
+	let jwt: string;
 	let repo;
 
 	beforeEach(async () => {
+		installation = await Installation.install({
+			host: jiraHost,
+			sharedSecret: "shared-secret",
+			clientKey: "jira-client-key"
+		});
+
 		sub = await Subscription.install({
 			host: jiraHost,
 			installationId: 1234,
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
-	});
 
-	it("Should return a 400 status if no Jira host is provided", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
-			next();
-		});
-		app.use(getFrontendApp());
-
-		await supertest(app)
-			.get(`/jira/repositories/search?workspaceId=${sub.id}&searchQuery=repo-name`)
-			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_JIRA_HOST);
-			});
+		jwt = encodeSymmetric({
+			qsh: "context-qsh",
+			iss: "jira-client-key"
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("Should return a 400 status if no org id is provided in query params", async () => {
@@ -48,7 +46,10 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get("/jira/repositories/search?searchQuery=repo-name")
+			.get("/jira/workspaces/repositories/search?searchQuery=repo-name")
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("Missing org ID or repo name");
@@ -66,25 +67,36 @@ describe("Workspace Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get(`/jira/repositories/search?workspaceId=${sub.id}`)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}`)
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("Missing org ID or repo name");
 			});
 	});
 
-	it("Should return a 400 status if no subscription is found for jiraHost and provided org id", async () => {
+	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
-		app.use((req, res, next) => {
+		app.use((req, _, next) => {
 			req.log = getLogger("test");
 			req.csrfToken = jest.fn();
-			res.locals.jiraHost = jiraHost;
 			next();
 		});
 		app.use(getFrontendApp());
 
+		await Subscription.uninstall({
+			installationId: 1234,
+			host: jiraHost,
+			gitHubAppId: undefined
+		});
+
 		await supertest(app)
-			.get(`/jira/repositories/search?workspaceId=${sub.id + 1}&searchQuery=repo-name`)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=new`)
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
@@ -116,14 +128,17 @@ describe("Workspace Get", () => {
 		});
 
 		await supertest(app)
-			.get(`/jira/repositories/search?workspaceId=${sub.id}&searchQuery=test-repo`)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=test-repo`)
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(400);
 				expect(res.text).toContain("Repository not found");
 			});
 	});
 
-	it("Should fetch all repos for matching Subscription ID and repo name", async () => {
+	it("Should return all repos for matching Subscription ID and repo name", async () => {
 		app = express();
 		app.use((req, res, next) => {
 			req.log = getLogger("test");
@@ -132,6 +147,13 @@ describe("Workspace Get", () => {
 			next();
 		});
 		app.use(getFrontendApp());
+
+		const sub2 = await Subscription.install({
+			host: jiraHost,
+			installationId: 2345,
+			hashedClientKey: "key-123",
+			gitHubAppId: undefined
+		});
 
 		const repo1 = {
 			subscriptionId: sub.id,
@@ -169,6 +191,15 @@ describe("Workspace Get", () => {
 			repoUrl: "github.com/atlassian/imnew"
 		};
 
+		const sub2repo = {
+			subscriptionId: sub2.id,
+			repoId: 4,
+			repoName: "newbutshouldntmatch",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/newbutshouldntmatch",
+			repoUrl: "github.com/atlassian/newbutshouldntmatch"
+		};
+
 		const repoOne = await RepoSyncState.create({
 			...repo1,
 			subscriptionId: sub.id
@@ -189,33 +220,34 @@ describe("Workspace Get", () => {
 			subscriptionId: sub.id
 		});
 
-		// const thing = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(sub.id, "github-for-jira");
-		//
-		// const repoData = {
-		// 	id: thing!.id,
-		// 	name: "github-for-jira"
-		// };
+		await RepoSyncState.create({
+			...sub2repo,
+			subscriptionId: sub2.id
+		});
 
 		const response = {
 			success: true,
 			repositories: [
 				{
-					id: repoOne.id,
+					id: repoOne.id.toString(),
 					name: "new-repo"
 				},
 				{
-					id: repoTwo.id,
+					id: repoTwo.id.toString(),
 					name: "another-new-repo"
 				},
 				{
-					id: repoFour.id,
+					id: repoFour.id.toString(),
 					name: "imNew"
 				}
 			]
 		};
 
 		await supertest(app)
-			.get(`/jira/repositories/search?workspaceId=${sub.id}&searchQuery=new`)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=new`)
+			.query({
+				jwt
+			})
 			.expect(res => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain(JSON.stringify(response));

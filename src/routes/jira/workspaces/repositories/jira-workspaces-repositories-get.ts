@@ -14,7 +14,7 @@ export interface GitHubRepo {
 	lastUpdatedDate?: Date
 }
 
-export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
+export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to get repositories");
 
 	const { jiraHost } = res.locals;
@@ -25,7 +25,6 @@ export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<
 		return;
 	}
 
-	// TODO - update this later
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
 
@@ -45,7 +44,7 @@ export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<
 	}
 
 	const repos = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(subscription.id, repoName);
-	req.log.info("REPOS: ", repos)
+
 	if (!repos?.length) {
 		const errMessage = "Repository not found";
 		req.log.warn(errMessage);
@@ -57,7 +56,7 @@ export const JiraRepositoriesGet = async (req: Request, res: Response): Promise<
 		const { id, repoName: name } = repo;
 
 		return {
-			id,
+			id: id.toString(),
 			name
 		};
 	});
