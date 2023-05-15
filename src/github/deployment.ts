@@ -14,6 +14,20 @@ import { metricDeploymentPersistent } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+
+	if (context.payload.deployment_status.state === "success") {
+		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+			await persistentSuccessDeploymentStatusToDynamoDB(
+				jiraHost,
+				context.gitHubAppConfig.gitHubBaseUrl,
+				gitHubInstallationId,
+				context.gitHubAppConfig.gitHubAppId,
+				context.payload,
+				context.log
+			);
+		}
+	}
+
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: gitHubInstallationId,
@@ -49,12 +63,6 @@ export const processDeployment = async (
 	}
 
 	logger.info("processing deployment message!");
-
-	if (webhookPayload.deployment_status.state === "success") {
-		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-			await persistentSuccessDeploymentStatusToDynamoDB(jiraHost, newGitHubClient, gitHubAppId, webhookPayload, logger);
-		}
-	}
 
 	const metrics = {
 		trigger: "deployment_queue"
@@ -93,7 +101,8 @@ export const processDeployment = async (
 
 const persistentSuccessDeploymentStatusToDynamoDB = async (
 	jiraHost: string,
-	gitHubInstallationClient: GitHubInstallationClient,
+	gitHubBaseUrl: string,
+	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	logger: Logger
@@ -106,8 +115,8 @@ const persistentSuccessDeploymentStatusToDynamoDB = async (
 	try {
 		statsd.increment(metricDeploymentPersistent.toCreate, tags, info);
 		await saveDeploymentInfo({
-			gitHubBaseUrl: gitHubInstallationClient.baseUrl,
-			gitHubInstallationId: gitHubInstallationClient.githubInstallationId.installationId,
+			gitHubBaseUrl,
+			gitHubInstallationId,
 			repositoryId: webhookPayload.repository.id,
 			commitSha: webhookPayload.deployment.sha,
 			description: webhookPayload.deployment.description || "",
@@ -120,6 +129,5 @@ const persistentSuccessDeploymentStatusToDynamoDB = async (
 	} catch (e) {
 		statsd.increment(metricDeploymentPersistent.failed, { failType: "persist", ...tags }, info);
 		logger.error({ err: e }, "Error saving deployment information to dynamodb");
-		throw e;
 	}
 };
