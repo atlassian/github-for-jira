@@ -55,6 +55,7 @@ const getLastSuccessfulDeployCommitSha = async (
 
 const getLastSuccessDeploymentShaFromDyanmoDB = async (
 	type: "webhook" | "backfill",
+	jiraHost: string,
 	repoId: number,
 	currentDeployEnv: string,
 	currentDeployDate: string,
@@ -117,7 +118,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
 
 	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromDyanmoDB(type, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
+		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromDyanmoDB(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
 	if (!lastSuccessfullyDeployedCommit) {
