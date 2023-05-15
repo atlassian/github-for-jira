@@ -82,6 +82,14 @@ export const findLastSuccessDeployment = async(
 	};
 };
 
+/*
+ * The partition key (return of this function) + range key (creation time of the deployment status) will be the unique identifier of the each entry
+ * Some assumption here is the gitHubInstallationId and repositoryId, each of them is unique per github base url (cloud and ghes) per repo per env.
+ * So if multiple jiraHost connect to the same app (like same cloud org but multiple subscription), the data will be shared.
+ * Sharing that deployment data is okay, because they base on the github deployment result, not our subscription.
+ * -- future, I guess we can even share data across installation, coz deployment status data is per repo, regardless of which app installation it comes from.
+ * But this only benefit multi app within GHES, so can relax for now.
+ */
 const getKey = (opts: {
 	gitHubBaseUrl: string;
 	gitHubInstallationId: number;
