@@ -230,9 +230,9 @@ For more information, check out [Using the integration](https://github.com/atlas
 
 <h3>Q: I've added a .jira/config file to map my deployments but some of my deployment environments are showing up under 'Others' in my Jira issues. What's going on?</h3>
 
-**A:** There's a couple of things you need to check here:
+**A:** There's a few things you need to check here:
   1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When the app checks for a .jira/config file, it only checks the default branch. This means any mapping changes on feature branches won't be detected.
-  2. Double check your mapping. Let's saying I have the following in my deployment workflow:
+  2. Double check your mapping spelling and syntax. For example, you may have something like the following in your deployment workflow:
 
   ```
   deploy-to-production:
@@ -247,16 +247,16 @@ For more information, check out [Using the integration](https://github.com/atlas
           target_url: http://my-cool-app.com
   ```
   
-  Then in my .jira/config file I add the following:
+  Then in your .jira/config file you have the following:
   
 ```
   production:
       - ".*-stable"
 ```
   
-While it may look like this should work this mapping would expect `23.04-stable` defined in my deployment to be `23.04.-stable`
+While it may look like this should work, this mapping would expect `23.04-stable` defined in your deployment workflow to be `23.04.-stable`
   
-  One other thing to be aware of, the GitHub for Jira app has it's own environment mapping for deployments:
+ 3. One other thing to be aware of, the GitHub for Jira app has its own environment mapping for deployments:
 
 ```
   const environmentMapping = {
@@ -285,7 +285,7 @@ While it may look like this should work this mapping would expect `23.04-stable`
       - "*-stable"
 ```
   
-  You can see here that staging preceeds testing. This means that internal would first be mapped to `staging` after reading our environment mapping, and then would override that mapping to `testing`. Think top-down if you ever need to override the mapping in GitHub for Jira.
+  You can see here that `staging` preceeds `testing`. This means that internal would first be mapped to `staging` after reading the app's environment mapping, and then would override that mapping to the `testing` environment. Think top-down if you ever need to override the mapping defined in GitHub for Jira.
 
  <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as **Unmapped** on the Deployments page. What is the issue here?</h3>
   
