@@ -10,7 +10,7 @@ awslocal dynamodb create-table \
     --attribute-definitions \
       AttributeName=Id,AttributeType=S \
       AttributeName=StatusCreatedAt,AttributeType=N \
-    --region $DEFAULT_REGION \
+    --region $DYNAMO_DEPLOYMENT_HISTORY_TABLE_REGION \
     --provisioned-throughput \
         ReadCapacityUnits=10,WriteCapacityUnits=5
 
