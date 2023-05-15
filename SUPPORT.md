@@ -287,16 +287,18 @@ While it may look like this should work, this mapping would expect `23.04-stable
   
   You can see here that `staging` preceeds `testing`. This means that internal would first be mapped to `staging` after reading the app's environment mapping, and then would override that mapping to the `testing` environment. Think top-down if you ever need to override the mapping defined in GitHub for Jira.
 
- <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as **Unmapped** on the Deployments page. What is the issue here?</h3>
+ <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as Unmapped on the Deployments page. What is the issue here?</h3>
   
-  **A:** Let's say I added 2 new environments to my deployment workflow but hadn't yet added them to a .jira/config file. I then link some code changes to an issue in a project and see the following:
+  **A:** Let's say you've added 2 new environments to your deployment workflow but haven't yet added them to a .jira/config file. When you link some code changes to an issue in a project you would see the following:
   
   ![Unmapped deployment environments](./docs/images/unmapped-deployment-environments.png)
   
-  Next, I add both `random` and `develop` (NOTE: this has recently been added to the app's deployment mapping) to my development environment mapping, and moved `new` from development to staging. However, despite checking the steps in the answer above, when I visit the Deployments page, I still see the same thing.
+  Next, you add both `random` and `develop` (NOTE: this has recently been added to the app's deployment mapping) to upir development environment mapping, and move `new` from development to staging. However, despite checking the steps in the answer above, when you visit the Deployments page, you still see the same thing.
   
-  This is because the Deployments page is set to a default of 'Quarter'. This means that once you associate an deployment to an environment, or to none, it will remain that way for a duration of 3 months (until the initial connection falls outside this window). You can refine your deployment timeline by changing the default to only reflect the time period where your most recent .jira/config files were merged to main. 
+  This is because the Deployments page is set to a default time range of 'Quarter'. This means that once you associate a deployment to an environment, or to none, it will remain that way for a duration of 3 months (until the initial connection falls outside this window). You can refine your deployment timeline by changing the value in the drop-down to only reflect the time period where your most recent .jira/config files were merged to main. 
+	
+![Correctly mapped deployment environments](./docs/images/correctly-mapped-deployment-environments.png)
   
-  In the example above, we refined the timeline to a period of 1 day (the day after the updates to the config went to main) and could see the environments were now mapped as expected.
+  Continuing with the above scenario, if you were to visit the Deployments page the day after your most recent changes went to main, and refined the timeline to a period of 1 day, you would see the environments were mapped as expected.
   
- ![Correctly mapped deployment environments](./docs/images/correctly-mapped-deployment-environments.png)
+
