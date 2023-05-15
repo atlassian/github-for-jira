@@ -55,9 +55,9 @@ export const processDeployment = async (
 				repositoryId: webhookPayload.repository.id,
 				commitSha: webhookPayload.deployment.sha,
 				description: webhookPayload.deployment.description || "",
-				env: webhookPayload.deployment_status.environment,
+				env: webhookPayload.deployment.environment,
 				status: webhookPayload.deployment_status.state,
-				createdAt: new Date(webhookPayload.deployment_status.created_at)
+				createdAt: new Date(webhookPayload.deployment.created_at)
 			}, logger);
 			logger.info("Saved deployment information to dynamodb");
 		}
