@@ -228,7 +228,7 @@ For more information, check out [Using the integration](https://github.com/atlas
   
 ## Deployment Mapping
 
-<h3>Q: I've added a .jira/config file to map my deployments but some of them are showing up under 'Others' in my Jira issues. What's going on?</h3>
+<h3>Q: I've added a .jira/config file to map my deployments but some of my deployment environments are showing up under 'Others' in my Jira issues. What's going on?</h3>
 
 **A:** There's a couple of things you need to check here:
   1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When we check for a .jira/config file we only check the default branch. This means any mapping changes on feature branches won't be detected.
@@ -287,7 +287,7 @@ While it may look like this should work this mapping would expect `23.04-stable`
   
   You can see here that staging preceeds testing. This means that internal would first be mapped to `staging` after reading our environment mapping, and then would override that mapping to `testing`. Think top-down if you ever need to override the mapping in GitHub for Jira.
 
- <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as **Unmaped** on the Deployments page. What is the issue here?</h3>
+ <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as **Unmapped** on the Deployments page. What is the issue here?</h3>
   
   **A:** Let's say I added 2 new environments to my deployment workflow but hadn't yet added them to a .jira/config file. I then link some code changes to an issue in a project and see the following:
   
