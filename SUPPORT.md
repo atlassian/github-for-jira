@@ -16,6 +16,7 @@ If you're still having troubles after reading through this file, look up your pr
   - [Backfill status definitions](#backfill-status-definitions)
   - [Exceeded issue key reference limit](#referencing-too-many-issues)
   - [No data showing up in Jira](#no-data-showing-up-in-Jira)
+- [Deployment Mapping]
 
 ## General
 <h3>Q: Does the GitHub for Jira app support GitLab?</h3>
@@ -224,3 +225,78 @@ First [check that your sync status has reached `COMPLETE`](#sync-status-not-reac
 Next check that you're adding your Jira issue keys in your commits, branches, or pull request titles. These are the only places on GitHub where you can put your Jira issue keys that will cause updates to be sent to the Jira issue.
 
 For more information, check out [Using the integration](https://github.com/atlassian/github-for-jira#using-the-integration).
+  
+## Deployment Mapping
+
+<h3>Q: I've added a .jira/config file to map my deployments but some of them are showing up under 'Others' in my Jira issues. What's going on?</h3>
+
+**A:** There's a couple of things you need to check here:
+  1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When we check for a .jira/config file we only check the default branch. This means any mapping changes on feature branches won't be detected.
+  2. Double check your mapping. Let's saying I have the following in my deployment workflow:
+
+  ```
+  deploy-to-production:
+    runs-on: ubuntu-latest
+    environment: "23.04-stable"
+    steps:
+      - uses: actions/checkout@v3
+        name: Create testing env
+        id: deploy-to-production
+        with:
+          token: "${{ github.token }}"
+          target_url: http://my-cool-app.com
+  ```
+  
+  Then in my .jira/config file I add the following:
+  
+```
+  production:
+      - ".*-stable"
+```
+  
+While it may look like this should work this mapping would expect `23.04-stable` defined in my deployment to be `23.04.-stable`
+  
+  One other thing to be aware of, the GitHub for Jira app has it's own environment mapping for deployments:
+
+```
+  const environmentMapping = {
+		development: ["development", "dev", "trunk", "develop"],
+		testing: ["testing", "test", "tests", "tst", "integration", "integ", "intg", "int", "acceptance", "accept", "acpt", "qa", "qc", "control", "quality", "uat", "sit"],
+		staging: ["staging", "stage", "stg", "preprod", "model", "internal"],
+		production: ["production", "prod", "prd", "live"]
+	};
+```
+  
+  This may cause an issue if, for instance, you wanted to map `internal` to your testing environment. In this scenario, to make sure the environment is mapped how you want to define it, you need to make sure that the `testing` mapping follows the `staging` mapping in your config:
+  
+  ```
+  deployments:
+  environmentMapping:
+    development:
+      - "develop"
+      - "random"
+      - "*-unstable"
+    staging:
+      - "new"
+    testing:
+      - "*-testing"
+      - "internal"
+    production:
+      - "*-stable"
+```
+  
+  You can see here that staging preceeds testing. This means that internal would first be mapped to `staging` after reading our environment mapping, and then would override that mapping to `testing`. Think top-down if you ever need to override the mapping in GitHub for Jira.
+
+ <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as **Unmaped** on the Deployments page. What is the issue here?</h3>
+  
+  **A:** Let's say I added 2 new environments to my deployment workflow but hadn't yet added them to a .jira/config file. I then link some code changes to an issue in a project and see the following:
+  
+  ![Unmapped deployment environments](./docs/images/unmapped-deployment-environments.png)
+  
+  Next, I add both `random` and `develop` (NOTE: this has recently been added to the app's deployment mapping) to my development environment mapping, and moved `new` from development to staging. However, despite checking the steps in the answer above, when I visit the Deployments page, I still see the same thing.
+  
+  This is because the Deployments page is set to a default of 'Quarter'. This means that once you associate an deployment to an environment, or to none, it will remain that way for a duration of 3 months (until the initial connection falls outside this window). You can refine your deployment timeline by changing the default to only reflect the time period where your most recent .jira/config files were merged to main. 
+  
+  In the example above, we refined the timeline to a period of 1 day (the day after the updates to the config went to main) and could see the environments were now mapped as expected.
+  
+ ![Correctly mapped deployment environments](./docs/images/correctly-mapped-deployment-environments.png)
