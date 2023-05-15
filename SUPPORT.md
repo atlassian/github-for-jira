@@ -231,7 +231,7 @@ For more information, check out [Using the integration](https://github.com/atlas
 <h3>Q: I've added a .jira/config file to map my deployments but some of my deployment environments are showing up under 'Others' in my Jira issues. What's going on?</h3>
 
 **A:** There's a couple of things you need to check here:
-  1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When we check for a .jira/config file we only check the default branch. This means any mapping changes on feature branches won't be detected.
+  1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When the app checks for a .jira/config file, it only checks the default branch. This means any mapping changes on feature branches won't be detected.
   2. Double check your mapping. Let's saying I have the following in my deployment workflow:
 
   ```
