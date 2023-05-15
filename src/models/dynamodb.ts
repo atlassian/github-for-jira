@@ -10,6 +10,8 @@ export const dynamodb = new AWS.DynamoDB({
 
 export const purgeItemsInTable = async (tableName: string) => {
 
+	if (isNodeProd()) throw new Error("No purging items in prod!");
+
 	const rows = await dynamodb.scan({
 		TableName: tableName,
 		AttributesToGet: [ "Id", "StatusCreatedAt" ]
