@@ -4,6 +4,7 @@ import { saveDeploymentInfo, findLastSuccessDeployment } from "./deployment-serv
 import { dynamodb as ddb } from "models/dynamodb";
 
 const logger = getLogger("test");
+const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
 
 describe("Deployment status service", () => {
 
@@ -33,7 +34,7 @@ describe("Deployment status service", () => {
 					"Id", "StatusCreatedAt",
 					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
 					"CommitSha", "Description",
-					"Env", "Status"
+					"Env", "Status", "ExpiredAfter"
 				]
 			}).promise();
 
@@ -46,7 +47,8 @@ describe("Deployment status service", () => {
 				CommitSha: { "S": "abc-abc-abc" },
 				Description: { "S": "some-random description" },
 				Env: { "S": "production" },
-				Status: { "S": "success" }
+				Status: { "S": "success" },
+				ExpiredAfter: { "N": String(Math.floor((createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
 			});
 		});
 	});
@@ -89,6 +91,14 @@ describe("Deployment status service", () => {
 				commitSha: "create-1",
 				createdAt: createdAt1
 			});
+		});
+		it("should return undefined if no past success deployment", async () => {
+			const result = await findLastSuccessDeployment({
+				gitHubBaseUrl: "https://github.com",
+				gitHubInstallationId: 1, repositoryId: 3,
+				env: "production", currentDate: createdAt1
+			}, logger);
+			expect(result).toBeUndefined();
 		});
 	});
 });
