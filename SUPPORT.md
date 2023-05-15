@@ -299,6 +299,6 @@ While it may look like this should work, this mapping would expect `23.04-stable
 	
 ![Correctly mapped deployment environments](./docs/images/correctly-mapped-deployment-environments.png)
   
-  Continuing with the above scenario, if you were to visit the Deployments page the day after your most recent changes went to main, and refined the timeline to a period of 1 day, you would see the environments were mapped as expected.
+  Continuing with the above scenario, if you were to visit the Deployments page the day after your most recent changes went to main, and refined the timeline to the current day, you would see the environments were mapped as expected.
   
 
