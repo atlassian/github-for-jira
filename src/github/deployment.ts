@@ -9,6 +9,9 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { saveDeploymentInfo } from "models/deployment-service";
+import { statsd } from "config/statsd";
+import { metricDeploymentPersistent } from "config/metric-names";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	await sqsQueues.deployment.sendMessage({
@@ -49,17 +52,7 @@ export const processDeployment = async (
 
 	if (webhookPayload.deployment_status.state === "success") {
 		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-			await saveDeploymentInfo({
-				gitHubBaseUrl: newGitHubClient.baseUrl,
-				gitHubInstallationId: gitHubInstallationId,
-				repositoryId: webhookPayload.repository.id,
-				commitSha: webhookPayload.deployment.sha,
-				description: webhookPayload.deployment.description || "",
-				env: webhookPayload.deployment_status.environment,
-				status: webhookPayload.deployment_status.state,
-				createdAt: new Date(webhookPayload.deployment_status.created_at)
-			}, logger);
-			logger.info("Saved deployment information to dynamodb");
+			await persistentSuccessDeploymentStatusToDynamoDB(jiraHost, newGitHubClient, gitHubAppId, webhookPayload, logger);
 		}
 	}
 
@@ -96,4 +89,37 @@ export const processDeployment = async (
 		result?.status,
 		gitHubAppId
 	);
+};
+
+const persistentSuccessDeploymentStatusToDynamoDB = async (
+	jiraHost: string,
+	gitHubInstallationClient: GitHubInstallationClient,
+	gitHubAppId: number | undefined,
+	webhookPayload: WebhookPayloadDeploymentStatus,
+	logger: Logger
+) => {
+
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const tags = { gitHubProduct };
+	const info = { jiraHost };
+
+	try {
+		statsd.increment(metricDeploymentPersistent.toCreate, tags, info);
+		await saveDeploymentInfo({
+			gitHubBaseUrl: gitHubInstallationClient.baseUrl,
+			gitHubInstallationId: gitHubInstallationClient.githubInstallationId.installationId,
+			repositoryId: webhookPayload.repository.id,
+			commitSha: webhookPayload.deployment.sha,
+			description: webhookPayload.deployment.description || "",
+			env: webhookPayload.deployment_status.environment,
+			status: webhookPayload.deployment_status.state,
+			createdAt: new Date(webhookPayload.deployment_status.created_at)
+		}, logger);
+		statsd.increment(metricDeploymentPersistent.created, tags, info);
+		logger.info("Saved deployment information to dynamodb");
+	} catch (e) {
+		statsd.increment(metricDeploymentPersistent.failed, { failType: "persist", ...tags }, info);
+		logger.error({ err: e }, "Error saving deployment information to dynamodb");
+		throw e;
+	}
 };

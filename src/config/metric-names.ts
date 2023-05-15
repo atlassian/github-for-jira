@@ -62,3 +62,13 @@ export const metricCreateBranch = {
 	created: `${server}.create-branch.created`,
 	failed: `${server}.create-branch.failed`
 };
+
+export const metricDeploymentPersistent = {
+	toCreate: `${server}.persistent.entry.to-create`,
+	created: `${server}.persistent.entry.created`,
+	failed: `${server}.persistent.entry.failed`,
+	lookup: `${server}.persistent.entry.lookup`,
+	hit: `${server}.persistent.entry.hit`,
+	miss: `${server}.persistent.entry.miss`
+};
+

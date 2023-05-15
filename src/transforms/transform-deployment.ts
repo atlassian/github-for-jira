@@ -18,6 +18,9 @@ import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { findLastSuccessDeployment } from "models/deployment-service";
+import { statsd } from "config/statsd";
+import { metricDeploymentPersistent } from "config/metric-names";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
 
@@ -51,28 +54,50 @@ const getLastSuccessfulDeployCommitSha = async (
 };
 
 const getLastSuccessDeploymentShaFromDyanmoDB = async (
+	type: "webhook" | "backfill",
 	repoId: number,
 	currentDeployEnv: string,
 	currentDeployDate: string,
 	githubInstallationClient: GitHubInstallationClient,
 	logger: Logger
-) => {
+): Promise<string | undefined> => {
 
 	logger.info("Using dynamodb for get last success deployment");
-	const lastSuccessful = await findLastSuccessDeployment({
-		gitHubBaseUrl: githubInstallationClient.baseUrl,
-		gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
-		env: currentDeployEnv,
-		repositoryId: repoId,
-		currentDate: new Date(currentDeployDate)
-	}, logger);
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(githubInstallationClient.gitHubServerAppId);
+	const tags = { gitHubProduct, type };
+	const info = { jiraHost };
 
-	if (!lastSuccessful) {
-		logger.info("Couldn't find last success deployment from dynamodb");
-		return undefined;
+	try {
+
+		statsd.increment(metricDeploymentPersistent.lookup, tags, info);
+
+		const lastSuccessful = await findLastSuccessDeployment({
+			gitHubBaseUrl: githubInstallationClient.baseUrl,
+			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
+			env: currentDeployEnv,
+			repositoryId: repoId,
+			currentDate: new Date(currentDeployDate)
+		}, logger);
+
+		if (!lastSuccessful) {
+			logger.info("Couldn't find last success deployment from dynamodb");
+			statsd.increment(metricDeploymentPersistent.miss, { missedType: "not-found", ...tags }, info);
+			return undefined;
+		} else if (!lastSuccessful.commitSha) {
+			logger.warn("Missing commit sha from deployment");
+			statsd.increment(metricDeploymentPersistent.miss, { missedType: "sha-empty", ...tags }, info);
+			return undefined;
+		} else {
+			logger.info("Found last success deployment info");
+			statsd.increment(metricDeploymentPersistent.hit, tags, info);
+			return lastSuccessful.commitSha;
+		}
+
+	} catch (e) {
+		statsd.increment(metricDeploymentPersistent.failed, { failType: "lookup", ...tags }, info);
+		logger.error({ err: e }, "Error look up deployment information from dynamodb");
+		throw e;
 	}
-	logger.info("Found last success deployment info");
-	return lastSuccessful;
 };
 
 const getCommitsSinceLastSuccessfulDeployment = async (
@@ -92,9 +117,7 @@ const getCommitsSinceLastSuccessfulDeployment = async (
 	let lastSuccessfullyDeployedCommit: string | undefined = undefined;
 
 	if (type === "webhook" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
-		const lastSuccessfulFromDynamo = await getLastSuccessDeploymentShaFromDyanmoDB(repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
-		if (lastSuccessfulFromDynamo && lastSuccessfulFromDynamo.commitSha) lastSuccessfullyDeployedCommit = lastSuccessfulFromDynamo.commitSha;
-
+		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromDyanmoDB(type, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
 	if (!lastSuccessfullyDeployedCommit) {

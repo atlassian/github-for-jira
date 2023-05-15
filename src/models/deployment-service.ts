@@ -14,7 +14,7 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 	commitSha: string;
 	description: string;
 	env: string;
-	status: "pending" | "success" | "failure" | "error";
+	status: string;
 	createdAt: Date;
 }, logger: Logger) => {
 	logger.debug("Saving deploymentInfo to db");
@@ -37,6 +37,12 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 	}
 };
 
+export type LastSuccessfulDeployment = {
+	repositoryId: number;
+	commitSha: string;
+	createdAt: Date;
+}
+
 export const findLastSuccessDeployment = async(
 	params: {
 		gitHubBaseUrl: string;
@@ -46,11 +52,7 @@ export const findLastSuccessDeployment = async(
 		currentDate: Date;
 	},
 	logger: Logger = defaultLogger
-): Promise<{
-		repositoryId: number,
-		commitSha: string,
-		createdAt: Date
-	} | undefined> => {
+): Promise<LastSuccessfulDeployment | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
