@@ -16,7 +16,7 @@ If you're still having troubles after reading through this file, look up your pr
   - [Backfill status definitions](#backfill-status-definitions)
   - [Exceeded issue key reference limit](#referencing-too-many-issues)
   - [No data showing up in Jira](#no-data-showing-up-in-Jira)
-- [Deployment Mapping]
+- [Deployment Mapping](#deployment-mapping)
 
 ## General
 <h3>Q: Does the GitHub for Jira app support GitLab?</h3>
