@@ -54,27 +54,29 @@ describe("Deployment status service", () => {
 	});
 
 	describe("fetching back last success deployment", () => {
+		const gitHubInstallationId = 111;
+		const repositoryId = 222;
 		const createdAt1 = new Date("2000-01-01");
 		const createdAt2 = new Date("2000-02-02");
 		const createdAt3 = new Date("2000-03-03");
 		beforeEach(async () => {
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1, repositoryId: 3,
+				gitHubInstallationId, repositoryId,
 				commitSha: "create-1", description: "",
 				env: "production", status: "success",
 				createdAt: createdAt1
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1, repositoryId: 3,
+				gitHubInstallationId, repositoryId,
 				commitSha: "create-2", description: "",
 				env: "production", status: "success",
 				createdAt: createdAt2
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1, repositoryId: 3,
+				gitHubInstallationId, repositoryId,
 				commitSha: "create-3", description: "",
 				env: "production", status: "success",
 				createdAt: createdAt3
@@ -83,19 +85,31 @@ describe("Deployment status service", () => {
 		it("should fetch last success deployment", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1, repositoryId: 3,
+				gitHubInstallationId, repositoryId,
 				env: "production", currentDate: createdAt2
 			}, logger);
 			expect(result).toEqual({
-				repositoryId: 3,
+				repositoryId,
 				commitSha: "create-1",
 				createdAt: createdAt1
+			});
+		});
+		it("should fetch THE last success deployment when more than one previous success deployments", async () => {
+			const result = await findLastSuccessDeployment({
+				gitHubBaseUrl: "https://github.com",
+				gitHubInstallationId, repositoryId,
+				env: "production", currentDate: createdAt3
+			}, logger);
+			expect(result).toEqual({
+				repositoryId,
+				commitSha: "create-2",
+				createdAt: createdAt2
 			});
 		});
 		it("should return undefined if no past success deployment", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1, repositoryId: 3,
+				gitHubInstallationId, repositoryId,
 				env: "production", currentDate: createdAt1
 			}, logger);
 			expect(result).toBeUndefined();

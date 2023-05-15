@@ -70,26 +70,11 @@ describe("DeploymentWebhookHandler", () => {
 			beforeEach(async () => {
 				gitHubInstallationId = deployment_status.payload.installation.id;
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, expect.anything()).mockResolvedValue(true);
-				gitHubInstallationClient = await createInstallationClient(
-					gitHubInstallationId,
-					jiraHost,
-					{ trigger: "test", subTrigger: "test" },
-					logger,
-					undefined
-				);
+				gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "test", subTrigger: "test" }, logger, undefined);
 				payload = JSON.parse(JSON.stringify(deployment_status.payload)) as WebhookPayloadDeploymentStatus;
 			});
 			it("should call to persist deployment info for success deployment status", async () => {
-				await processDeployment(
-					gitHubInstallationClient,
-					"webhook-id",
-					payload,
-					new Date(),
-					jiraHost,
-					gitHubInstallationId,
-					logger,
-					undefined
-				);
+				await processDeployment(gitHubInstallationClient, "webhook-id", payload, new Date(), jiraHost, gitHubInstallationId, logger, undefined);
 				expect(jest.mocked(saveDeploymentInfo)).toBeCalledWith({
 					gitHubBaseUrl: "https://github.com",
 					gitHubInstallationId: deployment_status.payload.installation.id,
@@ -103,16 +88,7 @@ describe("DeploymentWebhookHandler", () => {
 			});
 			it("should NOT call to persist deployment info for non-success deployment status", async () => {
 				payload.deployment_status.state = "failure";
-				await processDeployment(
-					gitHubInstallationClient,
-					"webhook-id",
-					payload,
-					new Date(),
-					jiraHost,
-					gitHubInstallationId,
-					logger,
-					undefined
-				);
+				await processDeployment(gitHubInstallationClient, "webhook-id", payload, new Date(), jiraHost, gitHubInstallationId, logger, undefined);
 				expect(jest.mocked(saveDeploymentInfo)).not.toBeCalled();
 			});
 		});
