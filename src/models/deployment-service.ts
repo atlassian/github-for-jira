@@ -82,7 +82,7 @@ export const findLastSuccessDeployment = async(
 	};
 };
 
-export const getKey = (opts: {
+const getKey = (opts: {
 	gitHubBaseUrl: string;
 	gitHubInstallationId: number;
 	repositoryId: number;
