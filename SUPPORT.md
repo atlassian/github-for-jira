@@ -230,9 +230,9 @@ For more information, check out [Using the integration](https://github.com/atlas
 
 <h3>Q: I've added a .jira/config file to map my deployments but some of my deployment environments are showing up under 'Others' in my Jira issues. What's going on?</h3>
 
-**A:** There's a few things you need to check here:
-  1. Make sure any recent changes to your config file have been merged to your default branch in GitHub. When the app checks for a .jira/config file, it only checks the default branch. This means any mapping changes on feature branches won't be detected.
-  2. Double check your mapping spelling and syntax. For example, you may have something like the following in your deployment workflow:
+**A:** There are a few things you can check:
+    - Make sure any recent changes to your config file have been merged to your default branch in GitHub. The app only checks the default branch for a .jira/config file, so any changes on feature branches will not be detected.
+    - Double check your mapping spelling and syntax. For example, you may have something like the following in your deployment workflow:
 
   ```
   deploy-to-production:
@@ -256,7 +256,7 @@ For more information, check out [Using the integration](https://github.com/atlas
   
 While it may look like this should work, this mapping would expect `23.04-stable` defined in your deployment workflow to be `23.04.-stable`
   
- 3. One other thing to be aware of, the GitHub for Jira app has its own environment mapping for deployments:
+    - Also, be aware that the GitHub for Jira app has its own environment mapping for deployments:
 
 ```
   const environmentMapping = {
@@ -284,8 +284,8 @@ While it may look like this should work, this mapping would expect `23.04-stable
     production:
       - "*-stable"
 ```
-  
-  You can see here that `staging` preceeds `testing`. This means that internal would first be mapped to `staging` after reading the app's environment mapping, and then would override that mapping to the `testing` environment. Think top-down if you ever need to override the mapping defined in GitHub for Jira.
+
+As you can see, `staging` preceeds `testing`. This means that internal would first be mapped to `staging` after reading the app's environment mapping, and then would override that mapping to the `testing` environment. Think top-down if you ever need to override the mapping defined in GitHub for Jira.
 
  <h3>Q: I updated my .jira/config and everything looks correct in my Jira issues but environments are still showing up as Unmapped on the Deployments page. What is the issue here?</h3>
   
@@ -293,7 +293,7 @@ While it may look like this should work, this mapping would expect `23.04-stable
   
   ![Unmapped deployment environments](./docs/images/unmapped-deployment-environments.png)
   
-  Next, you add both `random` and `develop` (NOTE: this has recently been added to the app's deployment mapping) to upir development environment mapping, and move `new` from development to staging. However, despite checking the steps in the answer above, when you visit the Deployments page, you still see the same thing.
+  Next, you add both `random` and `develop` (NOTE: this has recently been added to the app's deployment mapping) to your development environment mapping, and move `new` from development to staging. However, despite checking the steps in the answer above, when you visit the Deployments page, you still see the same thing.
   
   This is because the Deployments page is set to a default time range of 'Quarter'. This means that once you associate a deployment to an environment, or to none, it will remain that way for a duration of 3 months (until the initial connection falls outside this window). You can refine your deployment timeline by changing the value in the drop-down to only reflect the time period where your most recent .jira/config files were merged to main. 
 	
