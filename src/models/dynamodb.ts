@@ -1,7 +1,6 @@
 import AWS from "aws-sdk";
 import { envVars } from "config/env";
 import { isNodeProd } from "utils/is-node-env";
-import { getLogger } from "config/logger";
 
 export const dynamodb = new AWS.DynamoDB({
 	apiVersion: "2012-11-05",
@@ -33,7 +32,7 @@ export const purgeItemsInTable = async (tableName: string) => {
 		await Promise.all(deleteRequests);
 
 	} catch (e) {
-		getLogger("purgeItemsInTable").warn({ err: e }, "failed to purgeItemsInTable");
+		//do nothing as this method is for local test only
 	}
 
 };

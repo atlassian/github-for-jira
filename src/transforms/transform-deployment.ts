@@ -74,7 +74,6 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 
 		const lastSuccessful = await findLastSuccessDeployment({
 			gitHubBaseUrl: githubInstallationClient.baseUrl,
-			gitHubInstallationId: githubInstallationClient.githubInstallationId.installationId,
 			env: currentDeployEnv,
 			repositoryId: repoId,
 			currentDate: new Date(currentDeployDate)

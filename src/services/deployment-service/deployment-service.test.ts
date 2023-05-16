@@ -2,6 +2,7 @@ import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { saveDeploymentInfo, findLastSuccessDeployment } from "./deployment-service";
 import { dynamodb as ddb } from "models/dynamodb";
+import { hash } from "utils/hash-utils";
 
 const logger = getLogger("test");
 const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
@@ -26,11 +27,11 @@ describe("Deployment status service", () => {
 			const result = await ddb.getItem({
 				TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 				Key: {
-					"Id": { "S": `ghurl_https://github.com_ghid_1_repo_3_env_production` },
+					"GitHubRepoEnvKey": { "S": hash(`ghurl_https://github.com_repo_3_env_production`) },
 					"StatusCreatedAt": { "N": String(createdAt.getTime()) }
 				},
 				AttributesToGet: [
-					"Id", "StatusCreatedAt",
+					"GitHubRepoEnvKey", "StatusCreatedAt",
 					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
 					"CommitSha",
 					"Env", "Status", "ExpiredAfter"
@@ -39,7 +40,7 @@ describe("Deployment status service", () => {
 
 			expect(result.$response.error).toBeNull();
 			expect(result.Item).toEqual({
-				Id: { "S": "ghurl_https://github.com_ghid_1_repo_3_env_production" },
+				GitHubRepoEnvKey: { "S": hash("ghurl_https://github.com_repo_3_env_production") },
 				StatusCreatedAt: { "N": String(createdAt.getTime()) },
 				GitHubInstallationId: { "N": "1" },
 				RepositoryId: { "N": "3" },
@@ -84,7 +85,7 @@ describe("Deployment status service", () => {
 		it("should fetch last success deployment", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				env: "production", currentDate: createdAt2
 			}, logger);
 			expect(result).toEqual({
@@ -96,7 +97,7 @@ describe("Deployment status service", () => {
 		it("should fetch THE last success deployment when more than one previous success deployments", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				env: "production", currentDate: createdAt3
 			}, logger);
 			expect(result).toEqual({
@@ -108,7 +109,7 @@ describe("Deployment status service", () => {
 		it("should fetch last success deployment for a date in between the dates in db", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				env: "production", currentDate: createdAt_between_2_and_3
 			}, logger);
 			expect(result).toEqual({
@@ -120,7 +121,7 @@ describe("Deployment status service", () => {
 		it("should return undefined if no past success deployment", async () => {
 			const result = await findLastSuccessDeployment({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				env: "production", currentDate: createdAt1
 			}, logger);
 			expect(result).toBeUndefined();
