@@ -157,7 +157,6 @@ resources:
       RangeKeyName: StatusCreatedAt
       RangeKeyType: "N"
       ReadWriteCapacityMode: ON_DEMAND
-      TTLAttributeName: ExpiredAfter
 
 scaling:
   instance: t2.small
