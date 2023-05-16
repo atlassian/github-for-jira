@@ -17,7 +17,7 @@ import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { findLastSuccessDeployment } from "models/deployment-service";
+import { findLastSuccessDeployment } from "services/deployment-service/deployment-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentPersistent } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";

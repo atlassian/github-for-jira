@@ -8,7 +8,7 @@ import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { saveDeploymentInfo } from "models/deployment-service";
+import { saveDeploymentInfo } from "services/deployment-service/deployment-service";
 import { Subscription } from "models/subscription";
 import { statsd } from "config/statsd";
 import { metricDeploymentPersistent } from "config/metric-names";
