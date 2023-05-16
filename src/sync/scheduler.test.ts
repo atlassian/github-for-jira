@@ -94,7 +94,7 @@ describe("scheduler", () => {
 		expect(tasks.otherTasks.length).toEqual(100);
 	});
 
-	it("should only return mask task", async () => {
+	it("should only return mask task when number of subtasks is set to 0 in FF", async () => {
 		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(0);
 
 		configureRateLimit(100000, 100000);
