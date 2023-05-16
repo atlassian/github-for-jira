@@ -364,7 +364,6 @@ const batchedBulkUpdate = async (
 			}
 		};
 
-
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});
 	return Promise.all(batchedUpdates);

@@ -19,7 +19,8 @@ export enum BooleanFlags {
 	REPO_CREATED_EVENT = "repo-created-event",
 	USE_SUBTASKS_FOR_BACKFILL = "use-subtasks-for-backfill",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
-	REMOVE_STALE_MESSAGES = "remove-stale-messages"
+	REMOVE_STALE_MESSAGES = "remove-stale-messages",
+	USE_NEW_PULL_ALGO = "use-new-pull-algo"
 }
 
 export enum StringFlags {

@@ -17,7 +17,7 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
-	SearchedRepositoriesResponse, getBranchesQueryWithoutCommits
+	SearchedRepositoriesResponse, getBranchesQueryWithoutCommits, getPullRequests, pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
@@ -79,6 +79,20 @@ export class GitHubInstallationClient extends GitHubClient {
 			repo,
 			pullNumber
 		});
+	}
+
+	/**
+	 * Get a single pull request for the given repository.
+	 */
+	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse | undefined> {
+		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
+			owner,
+			repo,
+			per_page,
+			commitSince: commitSince?.toISOString(),
+			cursor
+		}, { graphQuery: "getPullRequests" });
+		return response.data.data;
 	}
 
 	/**

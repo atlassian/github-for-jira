@@ -68,38 +68,191 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $order_by: Reposito
   }
 }`;
 
+export type pullRequestNode = {
+	number: number;
+	id: string;
+	state: string;
+	mergedAt?: string;
+	updatedAt: string;
+	title: string;
+	body: string;
+	url: string;
+	baseRef: {
+		name: string;
+		repository: {
+			url: string;
+			name: string;
+			owner: {
+				login: string;
+			};
+		};
+	};
+	headRef: {
+		id: string;
+		name: string;
+		repository: {
+			url: string;
+			name: string;
+			owner: {
+				login: string;
+			};
+		};
+		target: {
+			oid: string;
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		};
+	};
+	comments: {
+		totalCount: number;
+	};
+	author: {
+		login: string;
+		avatarUrl: string;
+		url: string;
+		name?: string;
+		email?: string;
+	};
+	commits: {
+		nodes: {
+			commit: {
+				author: {
+					user: {
+						login: string;
+						email: string;
+						avatarUrl: string;
+						name?: string;
+						url: string;
+					};
+				};
+			};
+		}[];
+	};
+	reviews: {
+		nodes: {
+			submittedAt: string;
+			state: string;
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		}[];
+	};
+};
+
+export type pullRequestQueryResponse = {
+	repository: {
+		pullRequests: {
+			edges: {
+			cursor: string,
+			node: pullRequestNode;
+			}[]
+		};
+	};
+};
+
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-    repository(owner: $owner, name: $repo){
-      pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
-        edges {
-          cursor
-          node {
-            author {
-              avatarUrl
-              login
-              url
-            }
-            databaseId
-            repository {
-              url
-            }
-            baseRef {
-              name
-            }
-            headRef {
-              name
-            }
-            number
-            state
-            title
-            body
-            updatedAt
-            url
-          }
-        }
-      }
+  repository(owner: $owner, name: $repo) {
+		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
+      edges {
+      	cursor
+				node {
+					number
+					id
+					state
+					mergedAt
+					updatedAt
+					title
+					body
+					url
+					baseRef {
+						name
+						repository {
+							name
+							owner {
+								login
+							}
+						}
+					}
+					headRef {
+						id
+						name
+						repository {
+							name
+							owner {
+								login
+							}
+						}
+						target {
+							oid
+							... on Commit {
+                author {
+                  user {
+                    login
+                    email
+                    avatarUrl
+                    name
+                    url
+                  }
+                }
+              }
+						}
+					}
+					comments {
+						totalCount
+					}
+					author {
+						login
+						avatarUrl
+						url
+						... on User {
+							name
+							email
+						}
+					}
+					commits(last: 1) {
+						nodes {
+							commit {
+								author {
+									user {
+										login
+										email
+										avatarUrl
+										name
+										url
+									}
+								}
+							}
+						}
+					}
+					reviews(first: 100) {
+						nodes {
+              submittedAt
+              state
+							author {
+								login
+								avatarUrl
+								url
+								... on User {
+									name
+									email
+								}
+							}
+						}
+					}
+				}
+			}
     }
-  }`;
+  }
+}`;
 
 export type CommitQueryNode = {
 	cursor: string,

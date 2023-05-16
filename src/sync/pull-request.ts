@@ -1,6 +1,10 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
+import {
+	extractIssueKeysFromPrOld,
+	// transformPullRequestNew,
+	transformPullRequest
+} from "../transforms/transform-pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -56,7 +60,9 @@ export const getPullRequestTask = async (
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+	// if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
+	// 		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string);
+		return doGetPullRequestTaskOld(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
 		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
@@ -73,15 +79,71 @@ const doGetPullRequestTaskInParallel = (
 ) => fetchNextPagesInParallel(
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
-	(pageCursor) =>
-		doGetPullRequestTask(
+	async (pageCursor) => {
+		// if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost))
+		// {
+		// 	return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload);
+		// }
+		return doGetPullRequestTaskOld(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
 			messagePayload
-		)
+		);
+	}
 );
+//
+// const emitStats = (startTime) => {
+// 	statsd.timing(
+// 		metricHttpRequest.syncPullRequest,
+// 		Date.now() - startTime,
+// 		1,
+// 		{ status: String(status), gitHubProduct },
+// 		{ jiraHost }
+// 	);
+//
+// }
 
-const doGetPullRequestTask = async (
+// const doGetPullRequestTask = async (
+// 	logger: Logger,
+// 	gitHubInstallationClient: GitHubInstallationClient,
+// 	jiraHost: string,
+// 	repository: Repository,
+// 	messagePayload: BackfillMessagePayload,
+// 	cursor?: string
+// ) => {
+// 	logger.info("Syncing PRs: started");
+// 	// const startTime = Date.now();
+//
+// 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+//
+// 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince,100, cursor);
+// 	// TODO FIX STATS
+//
+// 	if (!response) {
+// 		return {};
+// 	}
+//
+// 	const pullRequests = response.repository?.pullRequests?.edges
+// 		?.map((edge) => transformPullRequestNew(jiraHost, edge.node, edge.node.reviews, logger))
+// 		?.filter((pr) => pr !== undefined) || [];
+//
+// 	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+//
+// 	const jiraPayload = {
+// 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+// 		pullRequests
+// 	};
+//
+// 	// emitStats(jiraHost, startTime);
+//
+// 	return {
+// 		edges: response.repository?.pullRequests?.edges || [],
+// 		jiraPayload
+// 	};
+//
+// };
+
+const doGetPullRequestTaskOld = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
@@ -138,18 +200,16 @@ const doGetPullRequestTask = async (
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
 	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPageCursorStr }));
 
-	// TODO: change this to reduce
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPr(pull))) {
+				if (isEmpty(extractIssueKeysFromPrOld(pull))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");
 					return undefined;
 				}
-
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 

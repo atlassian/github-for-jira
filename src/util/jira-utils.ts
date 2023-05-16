@@ -35,7 +35,7 @@ export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor =>
 		avatar: author.avatar_url || author.avatarUrl || (author.login ? `https://github.com/users/${author.login}.png` : undefined),
 		name: author.name || author.user?.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
-		url: author.html_url || author.url || author.user?.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
+		url: author.html_url || author.html_url || author.user?.url  || author.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
 	}) as JiraAuthor : {
 		avatar: "https://github.com/ghost.png",
 		name: "Deleted User",

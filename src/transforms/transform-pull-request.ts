@@ -8,6 +8,7 @@ import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { pullRequestNode } from "~/src/github/client/github-queries";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status === "merged") return "MERGED";
@@ -25,7 +26,7 @@ const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsOld = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
 
@@ -70,16 +71,21 @@ const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHub
 	}));
 };
 
-export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseItem) => {
+export const extractIssueKeysFromPrOld = (pullRequest: Octokit.PullsListResponseItem) => {
 	const { title: prTitle, head, body } = pullRequest;
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
+};
+
+export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
+	const { title, headRef, body } = pullRequest;
+	return jiraIssueKeyParser(`${title}\n${headRef?.name}\n${body}`);
 };
 
 // TODO: define arguments and return
 export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
 	const { head } = pullRequest;
 
-	const issueKeys = extractIssueKeysFromPr(pullRequest);
+	const issueKeys = extractIssueKeysFromPrOld(pullRequest);
 
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {
@@ -104,7 +110,7 @@ export const transformPullRequest = async (gitHubInstallationClient: GitHubInsta
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: await mapReviews(reviews, gitHubInstallationClient),
+				reviewers: await mapReviewsOld(reviews, gitHubInstallationClient),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),
@@ -146,4 +152,86 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 			updateSequenceId: Date.now()
 		}
 	];
+};
+
+// TODO: TYPES N THINGS - reviews type and return type?
+// this will default the current webhook oh no
+export const transformPullRequestNew = (_jiraHost: string, pullRequest: pullRequestNode, reviews?: any, log?: Logger) => {
+	const issueKeys = extractIssueKeysFromPr(pullRequest);
+
+	if (isEmpty(issueKeys) || !pullRequest.headRef.repository) {
+		log?.info({
+			pullRequestNumber: pullRequest.number,
+			pullRequestId: pullRequest.id
+		}, "Ignoring pullrequest since it has no issue keys or repo");
+		return undefined;
+	}
+
+	return {
+		author: getJiraAuthor(pullRequest.author),
+		commentCount: pullRequest.comments.totalCount || 0,
+		destinationBranch: pullRequest.baseRef?.name || "",
+		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+		displayId: `#${pullRequest.number}`,
+		id: pullRequest.number,
+		issueKeys,
+		lastUpdate: pullRequest.updatedAt,
+		reviewers: mapReviews(reviews.nodes),
+		sourceBranch: pullRequest.headRef?.name || "",
+		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+		status: pullRequest.state, // test closed and declined behaviou// mapStatus(pullRequest.state, pullRequest.merged_at), mapStatus(pullRequest.state, pullRequest.mergedAt),
+		timestamp: pullRequest.updatedAt,
+		title: pullRequest.title,
+		url: pullRequest.url,
+		updateSequenceId: Date.now()
+	};
+
+};
+
+// TODO: define arguments and return
+// todo types
+const mapReviews = (reviews: any = []): any[] => {
+	const sortedReviews = orderBy(reviews, "submittedAt", "desc");
+	const usernames: Record<string, any> = {};
+
+	// The reduce function goes through all the reviews and creates an array of unique users
+	// (so users' avatars won't be duplicated on the dev panel in Jira)
+	// and it considers 'APPROVED' as the main approval status for that user.
+	const reviewsReduced: any[] = sortedReviews.reduce((acc: any[], review) => {
+
+		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
+		const reviewer = review?.author;
+		const reviewerUsername = reviewer?.login;
+
+		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
+
+		if (!haveWeSeenThisReviewerAlready) {
+			usernames[reviewerUsername] = {
+				...getJiraAuthor(reviewer),
+				login: reviewerUsername,
+				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+			};
+
+			acc.push(usernames[reviewerUsername]);
+
+		} else if (usernames[reviewerUsername].approvalStatus !== STATE_APPROVED && review.state === STATE_APPROVED) {
+			usernames[reviewerUsername].approvalStatus = STATE_APPROVED;
+		}
+
+		// Returns the reviews' array with unique users
+		return acc;
+	}, []);
+
+	// Get GitHub user email, so it can be matched to an AAID
+	return reviewsReduced.map(reviewer => {
+		const mappedReviewer = {
+			...omit(reviewer, "login")
+		};
+		const isDeletedUser = !reviewer.login;
+		if (!isDeletedUser) {
+			const gitHubUser = getJiraAuthor(reviewer.author);
+			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
+		}
+		return mappedReviewer;
+	});
 };
