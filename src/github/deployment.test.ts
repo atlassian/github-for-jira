@@ -4,14 +4,14 @@ import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { sqsQueues } from "../sqs/queues";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
-import { saveDeploymentInfo } from "models/deployment-service";
+import { Subscription } from "models/subscription";
 import deployment_status from "fixtures/deployment_status-basic.json";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import { dynamodb as ddb } from "models/dynamodb";
 
 jest.mock("../sqs/queues");
-jest.mock("models/deployment-service");
 jest.mock("config/feature-flags");
 jest.mock("../transforms/transform-deployment");
 
@@ -22,16 +22,25 @@ const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";
 const GHES_GITHUB_APP_APP_ID = 1;
 const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 
+const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
+
 describe("DeploymentWebhookHandler", () => {
 	let jiraClient: any;
 	let util: any;
-	beforeEach(() => {
+	let subscription: Subscription;
+	beforeEach(async () => {
 		jiraClient = { baseURL: jiraHost };
 		util = null;
+		subscription = await Subscription.install({
+			host: jiraHost,
+			hashedClientKey: "1234",
+			gitHubAppId: undefined,
+			installationId: GITHUB_INSTALLATION_ID
+		});
 	});
 	describe("GitHub Cloud", () => {
 		it("should be called with cloud GitHubAppConfig", async () => {
-			await deploymentWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			await deploymentWebhookHandler(getWebhookContext({ cloud: true }), jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
 			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
 				gitHubAppConfig: {
 					uuid: undefined,
@@ -46,7 +55,7 @@ describe("DeploymentWebhookHandler", () => {
 	});
 	describe("GitHub Enterprise Server", () => {
 		it("should be called with GHES GitHubAppConfig", async () => {
-			await deploymentWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GITHUB_INSTALLATION_ID);
+			await deploymentWebhookHandler(getWebhookContext({ cloud: false }), jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
 			expect(sqsQueues.deployment.sendMessage).toBeCalledWith(expect.objectContaining({
 				gitHubAppConfig: {
 					uuid: GHES_GITHUB_UUID,
@@ -67,25 +76,71 @@ describe("DeploymentWebhookHandler", () => {
 				payload = JSON.parse(JSON.stringify(deployment_status.payload)) as WebhookPayloadDeploymentStatus;
 			});
 			it("should call to persist deployment info for success deployment status", async () => {
-				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID);
-				expect(jest.mocked(saveDeploymentInfo)).toBeCalledWith({
-					gitHubBaseUrl: "https://github.com",
-					gitHubInstallationId: deployment_status.payload.installation.id,
-					repositoryId: deployment_status.payload.repository.id,
-					commitSha: "f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-					description: "",
-					env: "Production",
-					status: "success",
-					createdAt: new Date(deployment_status.payload.deployment_status.created_at)
-				}, expect.anything());
+				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
+				expect(await expectAndVerifyResult(
+					"https://github.com",
+					deployment_status.payload.installation.id,
+					deployment_status.payload.repository.id,
+					"f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
+					"",
+					"Production",
+					new Date(deployment_status.payload.deployment_status.created_at),
+					new Date(new Date(deployment_status.payload.deployment_status.created_at).getTime() + ONE_YEAR_IN_MILLISECONDS)
+				)).toBe(true);
 			});
 			it("should NOT call to persist deployment info for non-success deployment status", async () => {
 				payload.deployment_status.state = "failure";
-				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID);
-				expect(jest.mocked(saveDeploymentInfo)).not.toBeCalled();
+				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
+				const result = await ddb.scan({
+					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME
+				}).promise();
+				expect(result.$response.error).toBeNull();
+				expect(result.Items).toEqual([]);
 			});
 		});
 	});
+
+	const expectAndVerifyResult = async (
+		gitHubBaseUrl: string,
+		gitHubInstallationId: number,
+		repoId: number,
+		commitSha: string,
+		description: string,
+		env: string,
+		createdAt: Date,
+		expiredAfter: Date
+	) => {
+		const key = `ghurl_${gitHubBaseUrl}_ghid_${gitHubInstallationId}_repo_${repoId}_env_${env}`;
+		const result = await ddb.getItem({
+			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
+			Key: {
+				"Id": { "S": key },
+				"StatusCreatedAt": { "N": String(createdAt.getTime()) }
+			},
+			AttributesToGet: [
+				"Id", "StatusCreatedAt",
+				"GitHubInstallationId", "GitHubAppId", "RepositoryId",
+				"CommitSha", "Description",
+				"Env", "Status", "ExpiredAfter"
+			]
+		}).promise();
+
+		expect(result.$response.error).toBeNull();
+		expect(result.Item).toEqual({
+			Id: { "S": key },
+			StatusCreatedAt: { "N": String(createdAt.getTime()) },
+			GitHubInstallationId: { "N": `${gitHubInstallationId}` },
+			RepositoryId: { "N": `${repoId}` },
+			CommitSha: { "S": commitSha },
+			Description: { "S": description },
+			Env: { "S": env },
+			Status: { "S": "success" },
+			ExpiredAfter: { "N": String(Math.floor(expiredAfter.getTime() / 1000)) }
+		});
+
+		return true;
+	};
+
 	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
 		return new WebhookContext({
 			id: "1",

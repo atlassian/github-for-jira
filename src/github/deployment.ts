@@ -9,16 +9,17 @@ import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { saveDeploymentInfo } from "models/deployment-service";
+import { Subscription } from "models/subscription";
 import { statsd } from "config/statsd";
 import { metricDeploymentPersistent } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 
 	if (context.payload.deployment_status.state === "success") {
-		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
 			await persistentSuccessDeploymentStatusToDynamoDB(
-				jiraHost,
+				subscription.jiraHost,
 				context.gitHubAppConfig.gitHubBaseUrl,
 				gitHubInstallationId,
 				context.gitHubAppConfig.gitHubAppId,
