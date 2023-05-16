@@ -4,7 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { getTargetTasks } from "~/src/sync/installation";
 import { createInstallationClient } from "utils/get-github-client-config";
 import Logger from "bunyan";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { Op } from "sequelize";
 
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
@@ -12,12 +12,17 @@ const getStatusKey = (type: TaskType) => `${type}Status`;
 
 // These numbers were obtained experimentally by syncing a large customer with 60K quota from GitHub
 const RATE_LIMIT_QUOTA_PER_TASK_RESERVE = 500;
-const MAX_NUMBER_OF_SUBTASKS = 100;
 // Coefficient to determine pool size of the selection for the subtasks
 const SUBTASKS_POOL_COEF = 10;
 
 const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logger) => {
 	try {
+		const maxNumberOfSubtasks = await numberFlag(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, subscription.jiraHost);
+		if (!maxNumberOfSubtasks) {
+			logger.info({ nSubTasks: 0 }, `Using subtasks: 0`);
+			return 0;
+		}
+
 		const metrics = {
 			trigger: "ratelimit_check_backfill"
 		};
@@ -29,7 +34,7 @@ const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logg
 		const availQuotaForSubtasks = Math.max(0, availQuota - RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 		const allowedSubtasks = Math.floor(availQuotaForSubtasks / RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 
-		const nSubTasks = Math.min(allowedSubtasks, MAX_NUMBER_OF_SUBTASKS);
+		const nSubTasks = Math.min(allowedSubtasks, maxNumberOfSubtasks);
 
 		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 		return nSubTasks;
@@ -166,43 +171,23 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 
 	const tasks = getTargetTasks(targetTasks);
 
-	const withSideTasks = await booleanFlag(BooleanFlags.USE_SUBTASKS_FOR_BACKFILL, subscription.jiraHost);
+	const nSubTasks = await estimateNumberOfSubtasks(subscription, logger);
+	if (nSubTasks > 0) {
+		const repoSyncStates = await fetchPendingRepoSyncStates(subscription, tasks, (nSubTasks + 1) * SUBTASKS_POOL_COEF);
+		return calculateNextTasksWithSubtasks(repoSyncStates, tasks, nSubTasks);
+	}
 
-	if (withSideTasks) {
-		const nSubTasks = await estimateNumberOfSubtasks(subscription, logger);
-		if (nSubTasks > 0) {
-			const repoSyncStates = await fetchPendingRepoSyncStates(subscription, tasks, (nSubTasks + 1) * SUBTASKS_POOL_COEF);
-			return calculateNextTasksWithSubtasks(repoSyncStates, tasks, nSubTasks);
-		}
-
-		const pendingRepoSyncState = await fetchPendingRepoSyncStates(subscription, tasks, 1);
-		if (pendingRepoSyncState.length === 0) {
-			return {
-				mainTask: undefined,
-				otherTasks: []
-			};
-		}
+	const pendingRepoSyncState = await fetchPendingRepoSyncStates(subscription, tasks, 1);
+	if (pendingRepoSyncState.length === 0) {
 		return {
-			// Both SQL and mapSyncStateToTasks are deterministic => mainTask is deterministic
-			mainTask: mapSyncStateToTasks(tasks, pendingRepoSyncState[0])[0],
+			mainTask: undefined,
 			otherTasks: []
 		};
-
-	} else {
-		const pendingRepoSyncState = await fetchPendingRepoSyncStates(subscription, tasks, 1);
-
-		if (pendingRepoSyncState.length === 0) {
-			return {
-				mainTask: undefined,
-				otherTasks: []
-			};
-
-		} else {
-			return {
-				mainTask: mapSyncStateToTasks(tasks, pendingRepoSyncState[0])[0],
-				otherTasks: []
-			};
-		}
 	}
+	return {
+		// Both SQL and mapSyncStateToTasks are deterministic => mainTask is deterministic
+		mainTask: mapSyncStateToTasks(tasks, pendingRepoSyncState[0])[0],
+		otherTasks: []
+	};
 
 };
