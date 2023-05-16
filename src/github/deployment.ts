@@ -21,7 +21,6 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 			await persistentSuccessDeploymentStatusToDynamoDB(
 				subscription.jiraHost,
 				context.gitHubAppConfig.gitHubBaseUrl,
-				gitHubInstallationId,
 				context.gitHubAppConfig.gitHubAppId,
 				context.payload,
 				context.log
@@ -103,7 +102,6 @@ export const processDeployment = async (
 const persistentSuccessDeploymentStatusToDynamoDB = async (
 	jiraHost: string,
 	gitHubBaseUrl: string,
-	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	webhookPayload: WebhookPayloadDeploymentStatus,
 	logger: Logger
@@ -117,11 +115,9 @@ const persistentSuccessDeploymentStatusToDynamoDB = async (
 		statsd.increment(metricDeploymentPersistent.toCreate, tags, info);
 		await saveDeploymentInfo({
 			gitHubBaseUrl,
-			gitHubInstallationId,
 			repositoryId: webhookPayload.repository.id,
 			commitSha: webhookPayload.deployment.sha,
 			env: webhookPayload.deployment_status.environment,
-			status: webhookPayload.deployment_status.state,
 			createdAt: new Date(webhookPayload.deployment_status.created_at)
 		}, logger);
 		statsd.increment(metricDeploymentPersistent.created, tags, info);

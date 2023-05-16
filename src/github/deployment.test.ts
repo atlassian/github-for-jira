@@ -10,6 +10,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { dynamodb as ddb } from "models/dynamodb";
+import { hash } from "utils/hash-utils";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -79,7 +80,6 @@ describe("DeploymentWebhookHandler", () => {
 				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
 				expect(await expectAndVerifyResult(
 					"https://github.com",
-					deployment_status.payload.installation.id,
 					deployment_status.payload.repository.id,
 					"f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
 					"Production",
@@ -101,14 +101,13 @@ describe("DeploymentWebhookHandler", () => {
 
 	const expectAndVerifyResult = async (
 		gitHubBaseUrl: string,
-		gitHubInstallationId: number,
 		repoId: number,
 		commitSha: string,
 		env: string,
 		createdAt: Date,
 		expiredAfter: Date
 	) => {
-		const key = `ghurl_${gitHubBaseUrl}_ghid_${gitHubInstallationId}_repo_${repoId}_env_${env}`;
+		const key = hash(`ghurl_${gitHubBaseUrl}_repo_${repoId}_env_${env}`);
 		const result = await ddb.getItem({
 			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 			Key: {
@@ -127,11 +126,7 @@ describe("DeploymentWebhookHandler", () => {
 		expect(result.Item).toEqual({
 			Id: { "S": key },
 			StatusCreatedAt: { "N": String(createdAt.getTime()) },
-			GitHubInstallationId: { "N": `${gitHubInstallationId}` },
-			RepositoryId: { "N": `${repoId}` },
 			CommitSha: { "S": commitSha },
-			Env: { "S": env },
-			Status: { "S": "success" },
 			ExpiredAfter: { "N": String(Math.floor(expiredAfter.getTime() / 1000)) }
 		});
 

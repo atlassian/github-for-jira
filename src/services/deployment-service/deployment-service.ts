@@ -10,25 +10,19 @@ const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
 
 export const saveDeploymentInfo = async (deploymentInfo : {
 	gitHubBaseUrl: string
-	gitHubInstallationId: number;
 	repositoryId: number;
 	commitSha: string;
 	env: string;
-	status: string;
 	createdAt: Date;
 }, logger: Logger) => {
 	logger.debug("Saving deploymentInfo to db");
 	const result = await ddb.putItem({
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 		Item: {
-			GitHubRepoEnvKey: { "S": getKey(deploymentInfo) },
-			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) },
-			GitHubInstallationId: { "N": String(deploymentInfo.gitHubInstallationId) },
-			RepositoryId: { "N": String(deploymentInfo.repositoryId) },
-			CommitSha: { "S": deploymentInfo.commitSha },
-			Env: { "S": deploymentInfo.env },
-			Status: { "S": deploymentInfo.status },
-			ExpiredAfter: { "N": String(Math.floor((deploymentInfo.createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
+			Id: { "S": getKey(deploymentInfo) }, //partition key
+			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) }, //sort key
+			CommitSha: { "S": deploymentInfo.commitSha }, //real data we need
+			ExpiredAfter: { "N": String(Math.floor((deploymentInfo.createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) } //ttl
 		}
 	}).promise();
 	if (result.$response.error) {
@@ -37,7 +31,6 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 };
 
 export type LastSuccessfulDeployment = {
-	repositoryId: number;
 	commitSha: string;
 	createdAt: Date;
 }
@@ -54,9 +47,9 @@ export const findLastSuccessDeployment = async(
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
-		KeyConditionExpression: "GitHubRepoEnvKey = :gitHubRepoEnvKey and StatusCreatedAt < :createdAt",
+		KeyConditionExpression: "Id = :id and StatusCreatedAt < :createdAt",
 		ExpressionAttributeValues: {
-			":gitHubRepoEnvKey": { "S": getKey(params) },
+			":id": { "S": getKey(params) },
 			":createdAt": { "N": String(params.currentDate.getTime()) }
 		},
 		ScanIndexForward: false,
@@ -74,7 +67,6 @@ export const findLastSuccessDeployment = async(
 	const item = result.Items[0];
 
 	return {
-		repositoryId: Number(item.RepositoryId.N),
 		commitSha: item.CommitSha.S || "",
 		createdAt: new Date(Number(item.StatusCreatedAt.N))
 	};
@@ -82,11 +74,9 @@ export const findLastSuccessDeployment = async(
 
 /*
  * The partition key (return of this function) + range key (creation time of the deployment status) will be the unique identifier of the each entry
- * Some assumption here is the gitHubInstallationId and repositoryId, each of them is unique per github base url (cloud and ghes) per repo per env.
+ * Some assumption here is repositoryId is unique per github base url (cloud and ghes) per env.
  * So if multiple jiraHost connect to the same app (like same cloud org but multiple subscription), the data will be shared.
  * Sharing that deployment data is okay, because they base on the github deployment result, not our subscription.
- * -- future, I guess we can even share data across installation, coz deployment status data is per repo, regardless of which app installation it comes from.
- * But this only benefit multi app within GHES, so can relax for now.
  */
 const getKey = (opts: {
 	gitHubBaseUrl: string;

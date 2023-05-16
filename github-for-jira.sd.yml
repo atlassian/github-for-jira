@@ -152,7 +152,7 @@ resources:
   - name: deployment-history
     type: dynamo-db
     attributes: &table-attributes
-      HashKeyName: GitHubRepoEnvKey
+      HashKeyName: Id
       HashKeyType: "S"
       RangeKeyName: StatusCreatedAt
       RangeKeyType: "N"

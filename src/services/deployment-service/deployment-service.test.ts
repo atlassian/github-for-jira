@@ -16,22 +16,20 @@ describe("Deployment status service", () => {
 
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId: 1,
 				repositoryId: 3,
 				commitSha: "abc-abc-abc",
 				env: "production",
-				status: "success",
 				createdAt
 			}, logger);
 
 			const result = await ddb.getItem({
 				TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
 				Key: {
-					"GitHubRepoEnvKey": { "S": hash(`ghurl_https://github.com_repo_3_env_production`) },
+					"Id": { "S": hash(`ghurl_https://github.com_repo_3_env_production`) },
 					"StatusCreatedAt": { "N": String(createdAt.getTime()) }
 				},
 				AttributesToGet: [
-					"GitHubRepoEnvKey", "StatusCreatedAt",
+					"Id", "StatusCreatedAt",
 					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
 					"CommitSha",
 					"Env", "Status", "ExpiredAfter"
@@ -40,20 +38,15 @@ describe("Deployment status service", () => {
 
 			expect(result.$response.error).toBeNull();
 			expect(result.Item).toEqual({
-				GitHubRepoEnvKey: { "S": hash("ghurl_https://github.com_repo_3_env_production") },
+				Id: { "S": hash("ghurl_https://github.com_repo_3_env_production") },
 				StatusCreatedAt: { "N": String(createdAt.getTime()) },
-				GitHubInstallationId: { "N": "1" },
-				RepositoryId: { "N": "3" },
 				CommitSha: { "S": "abc-abc-abc" },
-				Env: { "S": "production" },
-				Status: { "S": "success" },
 				ExpiredAfter: { "N": String(Math.floor((createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
 			});
 		});
 	});
 
 	describe("fetching back last success deployment", () => {
-		const gitHubInstallationId = 111;
 		const repositoryId = 222;
 		const createdAt1 = new Date("2000-01-01");
 		const createdAt2 = new Date("2000-02-02");
@@ -62,23 +55,23 @@ describe("Deployment status service", () => {
 		beforeEach(async () => {
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				commitSha: "create-1",
-				env: "production", status: "success",
+				env: "production",
 				createdAt: createdAt1
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				commitSha: "create-2",
-				env: "production", status: "success",
+				env: "production",
 				createdAt: createdAt2
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
-				gitHubInstallationId, repositoryId,
+				repositoryId,
 				commitSha: "create-3",
-				env: "production", status: "success",
+				env: "production",
 				createdAt: createdAt3
 			}, logger);
 		});
@@ -89,7 +82,6 @@ describe("Deployment status service", () => {
 				env: "production", currentDate: createdAt2
 			}, logger);
 			expect(result).toEqual({
-				repositoryId,
 				commitSha: "create-1",
 				createdAt: createdAt1
 			});
@@ -101,7 +93,6 @@ describe("Deployment status service", () => {
 				env: "production", currentDate: createdAt3
 			}, logger);
 			expect(result).toEqual({
-				repositoryId,
 				commitSha: "create-2",
 				createdAt: createdAt2
 			});
@@ -113,7 +104,6 @@ describe("Deployment status service", () => {
 				env: "production", currentDate: createdAt_between_2_and_3
 			}, logger);
 			expect(result).toEqual({
-				repositoryId,
 				commitSha: "create-2",
 				createdAt: createdAt2
 			});

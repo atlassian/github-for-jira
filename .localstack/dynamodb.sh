@@ -5,10 +5,10 @@ echo "===== creating dynamo table ${DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME} ====="
 awslocal dynamodb create-table \
     --table-name $DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME \
     --key-schema \
-      AttributeName=GitHubRepoEnvKey,KeyType=HASH \
+      AttributeName=Id,KeyType=HASH \
       AttributeName=StatusCreatedAt,KeyType=RANGE \
     --attribute-definitions \
-      AttributeName=GitHubRepoEnvKey,AttributeType=S \
+      AttributeName=Id,AttributeType=S \
       AttributeName=StatusCreatedAt,AttributeType=N \
     --region $DYNAMO_DEPLOYMENT_HISTORY_TABLE_REGION \
     --provisioned-throughput \
