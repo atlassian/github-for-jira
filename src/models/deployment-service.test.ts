@@ -56,6 +56,7 @@ describe("Deployment status service", () => {
 		const repositoryId = 222;
 		const createdAt1 = new Date("2000-01-01");
 		const createdAt2 = new Date("2000-02-02");
+		const createdAt_between_2_and_3 = new Date("2000-02-15");
 		const createdAt3 = new Date("2000-03-03");
 		beforeEach(async () => {
 			await saveDeploymentInfo({
@@ -97,6 +98,18 @@ describe("Deployment status service", () => {
 				gitHubBaseUrl: "https://github.com",
 				gitHubInstallationId, repositoryId,
 				env: "production", currentDate: createdAt3
+			}, logger);
+			expect(result).toEqual({
+				repositoryId,
+				commitSha: "create-2",
+				createdAt: createdAt2
+			});
+		});
+		it("should fetch last success deployment for a date in between the dates in db", async () => {
+			const result = await findLastSuccessDeployment({
+				gitHubBaseUrl: "https://github.com",
+				gitHubInstallationId, repositoryId,
+				env: "production", currentDate: createdAt_between_2_and_3
 			}, logger);
 			expect(result).toEqual({
 				repositoryId,
