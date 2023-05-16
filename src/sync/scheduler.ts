@@ -17,6 +17,12 @@ const SUBTASKS_POOL_COEF = 10;
 
 const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logger) => {
 	try {
+		const maxNumberOfSubtasks = await numberFlag(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, subscription.jiraHost);
+		if (!maxNumberOfSubtasks) {
+			logger.info({ nSubTasks: 0 }, `Using subtasks: 0`);
+			return 0;
+		}
+
 		const metrics = {
 			trigger: "ratelimit_check_backfill"
 		};
@@ -28,7 +34,7 @@ const estimateNumberOfSubtasks = async (subscription: Subscription, logger: Logg
 		const availQuotaForSubtasks = Math.max(0, availQuota - RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 		const allowedSubtasks = Math.floor(availQuotaForSubtasks / RATE_LIMIT_QUOTA_PER_TASK_RESERVE);
 
-		const nSubTasks = Math.min(allowedSubtasks, await numberFlag(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, subscription.jiraHost));
+		const nSubTasks = Math.min(allowedSubtasks, maxNumberOfSubtasks);
 
 		logger.info({ nSubTasks, rateLimitData }, `Using subtasks: ${nSubTasks}`);
 		return nSubTasks;

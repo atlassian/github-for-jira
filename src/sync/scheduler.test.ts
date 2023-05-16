@@ -97,9 +97,6 @@ describe("scheduler", () => {
 	it("should only return mask task when number of subtasks is set to 0 in FF", async () => {
 		when(numberFlag).calledWith(NumberFlags.BACKFILL_MAX_SUBTASKS, 0, expect.anything()).mockResolvedValue(0);
 
-		configureRateLimit(100000, 100000);
-
-		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		expect(tasks.mainTask).toBeDefined();
 		expect(tasks.otherTasks.length).toStrictEqual(0);

@@ -205,7 +205,6 @@ describe("sync/installation", () => {
 		it("should update cursor and continue sync", async () => {
 			const sendSqsMessage = jest.fn();
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql", branchesNoLastCursor())
 				.query(true)
@@ -223,7 +222,6 @@ describe("sync/installation", () => {
 
 		it("should mark task as finished and continue sync", async () => {
 			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			const fixture = cloneDeep(branchNodesFixture);
 			fixture.data.repository.refs.edges = [];
@@ -249,7 +247,6 @@ describe("sync/installation", () => {
 
 			const sendSqsMessage = jest.fn();
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			const query = branchesNoLastCursor();
 			query.variables.per_page = 90;
 			githubNock
@@ -273,7 +270,6 @@ describe("sync/installation", () => {
 
 			const sendSqsMessage = jest.fn();
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			const query = branchesNoLastCursor();
 			query.variables.per_page = 100;
 			githubNock
@@ -290,7 +286,6 @@ describe("sync/installation", () => {
 
 		it("should rethrow GitHubClient error", async () => {
 			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql")
@@ -311,7 +306,6 @@ describe("sync/installation", () => {
 
 		it("should rethrow Jira error", async () => {
 			const sendSqsMessage = jest.fn();
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
 				.post("/graphql", branchesNoLastCursor())
