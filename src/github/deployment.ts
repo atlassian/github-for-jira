@@ -120,7 +120,6 @@ const persistentSuccessDeploymentStatusToDynamoDB = async (
 			gitHubInstallationId,
 			repositoryId: webhookPayload.repository.id,
 			commitSha: webhookPayload.deployment.sha,
-			description: webhookPayload.deployment.description || "",
 			env: webhookPayload.deployment_status.environment,
 			status: webhookPayload.deployment_status.state,
 			createdAt: new Date(webhookPayload.deployment_status.created_at)

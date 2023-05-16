@@ -18,7 +18,6 @@ describe("Deployment status service", () => {
 				gitHubInstallationId: 1,
 				repositoryId: 3,
 				commitSha: "abc-abc-abc",
-				description: "some-random description",
 				env: "production",
 				status: "success",
 				createdAt
@@ -33,7 +32,7 @@ describe("Deployment status service", () => {
 				AttributesToGet: [
 					"Id", "StatusCreatedAt",
 					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
-					"CommitSha", "Description",
+					"CommitSha",
 					"Env", "Status", "ExpiredAfter"
 				]
 			}).promise();
@@ -45,7 +44,6 @@ describe("Deployment status service", () => {
 				GitHubInstallationId: { "N": "1" },
 				RepositoryId: { "N": "3" },
 				CommitSha: { "S": "abc-abc-abc" },
-				Description: { "S": "some-random description" },
 				Env: { "S": "production" },
 				Status: { "S": "success" },
 				ExpiredAfter: { "N": String(Math.floor((createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
@@ -63,21 +61,21 @@ describe("Deployment status service", () => {
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				gitHubInstallationId, repositoryId,
-				commitSha: "create-1", description: "",
+				commitSha: "create-1",
 				env: "production", status: "success",
 				createdAt: createdAt1
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				gitHubInstallationId, repositoryId,
-				commitSha: "create-2", description: "",
+				commitSha: "create-2",
 				env: "production", status: "success",
 				createdAt: createdAt2
 			}, logger);
 			await saveDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				gitHubInstallationId, repositoryId,
-				commitSha: "create-3", description: "",
+				commitSha: "create-3",
 				env: "production", status: "success",
 				createdAt: createdAt3
 			}, logger);

@@ -363,7 +363,6 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				repositoryId: deployment_status.payload.repository.id,
 				commitSha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc",
-				description: "",
 				env: "Production",
 				status: "success",
 				createdAt: new Date(new Date(deployment_status.payload.deployment_status.created_at).getTime() - 1000)

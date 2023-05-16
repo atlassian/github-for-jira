@@ -12,7 +12,6 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 	gitHubInstallationId: number;
 	repositoryId: number;
 	commitSha: string;
-	description: string;
 	env: string;
 	status: string;
 	createdAt: Date;
@@ -26,7 +25,6 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 			GitHubInstallationId: { "N": String(deploymentInfo.gitHubInstallationId) },
 			RepositoryId: { "N": String(deploymentInfo.repositoryId) },
 			CommitSha: { "S": deploymentInfo.commitSha },
-			Description: { "S": deploymentInfo.description },
 			Env: { "S": deploymentInfo.env },
 			Status: { "S": deploymentInfo.status },
 			ExpiredAfter: { "N": String(Math.floor((deploymentInfo.createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }

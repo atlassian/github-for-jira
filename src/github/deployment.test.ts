@@ -82,7 +82,6 @@ describe("DeploymentWebhookHandler", () => {
 					deployment_status.payload.installation.id,
 					deployment_status.payload.repository.id,
 					"f95f852bd8fca8fcc58a9a2d6c842781e32a215e",
-					"",
 					"Production",
 					new Date(deployment_status.payload.deployment_status.created_at),
 					new Date(new Date(deployment_status.payload.deployment_status.created_at).getTime() + ONE_YEAR_IN_MILLISECONDS)
@@ -105,7 +104,6 @@ describe("DeploymentWebhookHandler", () => {
 		gitHubInstallationId: number,
 		repoId: number,
 		commitSha: string,
-		description: string,
 		env: string,
 		createdAt: Date,
 		expiredAfter: Date
@@ -120,7 +118,7 @@ describe("DeploymentWebhookHandler", () => {
 			AttributesToGet: [
 				"Id", "StatusCreatedAt",
 				"GitHubInstallationId", "GitHubAppId", "RepositoryId",
-				"CommitSha", "Description",
+				"CommitSha",
 				"Env", "Status", "ExpiredAfter"
 			]
 		}).promise();
@@ -132,7 +130,6 @@ describe("DeploymentWebhookHandler", () => {
 			GitHubInstallationId: { "N": `${gitHubInstallationId}` },
 			RepositoryId: { "N": `${repoId}` },
 			CommitSha: { "S": commitSha },
-			Description: { "S": description },
 			Env: { "S": env },
 			Status: { "S": "success" },
 			ExpiredAfter: { "N": String(Math.floor(expiredAfter.getTime() / 1000)) }
