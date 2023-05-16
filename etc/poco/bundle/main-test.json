@@ -93,7 +93,7 @@
 			"path": "/api/hash",
 			"method": "POST",
 			"mechanism": "group",
-			"principals": ["enterprise-cloud-support-all"],
+			"principals": ["micros-sv--github-for-jira-dl-safe-logging-read"],
 			"allowed": true
 		},
 		{
