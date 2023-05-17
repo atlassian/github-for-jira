@@ -20,12 +20,12 @@ export enum BooleanFlags {
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
-	LOG_CURLV_OUTPUT = "log-curlv-output"
+	LOG_CURLV_OUTPUT = "log-curlv-output",
+	BLOCKED_BY_INSTALLATION_ID = "block-by-installation-id"
 }
 
 export enum StringFlags {
 	GITHUB_SCOPES = "github-scopes",
-	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
 	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
 	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
@@ -83,9 +83,7 @@ export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, lis
 
 export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
 	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
-		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
+		return await booleanFlag(BooleanFlags.BLOCKED_BY_INSTALLATION_ID, `${installationId}`);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
