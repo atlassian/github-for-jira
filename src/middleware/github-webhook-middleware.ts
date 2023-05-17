@@ -203,7 +203,7 @@ export const GithubWebhookMiddleware = (
 				continue;
 			}
 
-			if (await isBlocked(jiraHost, context.log)) {
+			if (await isBlocked(jiraHost, gitHubInstallationId, context.log)) {
 				context.log.info({ jiraHost, gitHubInstallationId }, `Block webhook processing`);
 				continue;
 			}

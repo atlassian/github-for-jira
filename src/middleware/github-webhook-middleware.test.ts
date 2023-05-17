@@ -99,7 +99,11 @@ describe("Probot event middleware", () => {
 
 		mocked(Installation.getForHost).mockResolvedValue(mockModels.Installation.getForHost);
 
-		when(isBlocked).calledWith(mockModels.Installation.getForHost.jiraHost, expect.anything()).mockResolvedValue(true);
+		when(isBlocked).calledWith(
+			mockModels.Installation.getForHost.jiraHost,
+			mockModels.Subscription.getAllForInstallation[0].gitHubInstallationId,
+			expect.anything()
+		).mockResolvedValue(true);
 
 		const spy = jest.fn();
 		await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
