@@ -5,10 +5,13 @@ import { GithubWebhookMiddleware } from "./github-webhook-middleware";
 import { mockModels } from "test/utils/models";
 import { createLogger } from "bunyan";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
+import { isBlocked } from "config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("models/installation");
 jest.mock("models/subscription");
 jest.mock("utils/webhook-utils");
+jest.mock("config/feature-flags");
 
 describe("Probot event middleware", () => {
 	let context;
@@ -90,5 +93,25 @@ describe("Probot event middleware", () => {
 		await GithubWebhookMiddleware(jest.fn())(context);
 		context.log.info("test");
 		expect(context.log.fields.foo).toBe(123);
+	});
+
+	it("block installation if in flag", async () => {
+
+		mocked(Installation.getForHost).mockResolvedValue(mockModels.Installation.getForHost);
+
+		when(isBlocked).calledWith(mockModels.Installation.getForHost.jiraHost, expect.anything()).mockResolvedValue(true);
+
+		const spy = jest.fn();
+		await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
+		expect(spy).not.toBeCalled();
+	});
+
+	it("DO NOT block installation if not in flag", async () => {
+
+		mocked(Installation.getForHost).mockResolvedValue(mockModels.Installation.getForHost);
+
+		const spy = jest.fn();
+		await expect(GithubWebhookMiddleware(spy)(context)).toResolve();
+		expect(spy).toBeCalled();
 	});
 });

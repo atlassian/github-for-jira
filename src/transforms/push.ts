@@ -4,7 +4,6 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { isBlocked } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -91,11 +90,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		installationId: gitHubInstallationId,
 		jiraHost
 	} = payload;
-
-	if (await isBlocked(gitHubInstallationId, rootLogger)) {
-		rootLogger.warn({ gitHubInstallationId }, "blocking processing of push message because installationId is on the blocklist");
-		return;
-	}
 
 	const webhookId = payload.webhookId || "none";
 	const webhookReceived = payload.webhookReceived || undefined;

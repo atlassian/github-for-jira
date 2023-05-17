@@ -4,7 +4,6 @@ import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
-import { isBlocked } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
@@ -38,11 +37,6 @@ export const processDeployment = async (
 		jiraHost,
 		webhookReceived: webhookReceivedDate
 	});
-
-	if (await isBlocked(gitHubInstallationId, logger)) {
-		logger.warn("blocking processing of push message because installationId is on the blocklist");
-		return;
-	}
 
 	logger.info("processing deployment message!");
 
