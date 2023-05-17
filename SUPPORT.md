@@ -254,7 +254,7 @@ For more information, check out [Using the integration](https://github.com/atlas
       - ".*-stable"
 ```
   
-While it may look like this should work, the `*` wildcard would only match on environments that follow the pattern of `.[insert-value-here]-stable`. If `23.04-stable` is going to be correctly mapped, you need to specify a pattern `[insert-value-here]-stable`. In this scenario, you'd simply need to omit the `.`: ".*-stable" -> "*-stable".
+While it may look like this should work, the `*` wildcard would only match on environments that follow the pattern of `.[insert-value-here]-stable`. If `23.04-stable` is going to be correctly mapped, you need to specify a pattern `[insert-value-here]-stable`. In this scenario, you'd simply need to omit the `.` e.g. "*-stable".
   
     - Also, be aware that the GitHub for Jira app has its own environment mapping for deployments:
 
