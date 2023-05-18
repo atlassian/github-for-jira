@@ -101,7 +101,7 @@ describe("Probot event middleware", () => {
 
 		when(isBlocked).calledWith(
 			mockModels.Installation.getForHost.jiraHost,
-			mockModels.Subscription.getAllForInstallation[0].gitHubInstallationId,
+			mockModels.Installation.install.id,
 			expect.anything()
 		).mockResolvedValue(true);
 
