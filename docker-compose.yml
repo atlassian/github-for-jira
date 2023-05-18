@@ -28,7 +28,7 @@ services:
     container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
-      - DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME=deployment-history
+      - DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME=deployment-history-cache
       - DYNAMO_DEPLOYMENT_HISTORY_TABLE_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container

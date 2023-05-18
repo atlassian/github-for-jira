@@ -149,7 +149,7 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
-  - name: deployment-history
+  - name: deployment-history-cache
     type: dynamo-db
     attributes: &table-attributes
       HashKeyName: Id
@@ -398,7 +398,7 @@ environmentOverrides:
             decryptingServices:
               - github-for-jira
 
-      - name: deployment-history
+      - name: deployment-history-cache
         type: dynamo-db
         attributes:
           <<: *table-attributes
@@ -501,7 +501,7 @@ environmentOverrides:
             # Adding read replica in staging as it's not enabled by default so we can read state
             ReadReplica: true
 
-      - name: deployment-history
+      - name: deployment-history-cache
         type: dynamo-db
         attributes:
           <<: *table-attributes
@@ -599,7 +599,7 @@ environmentOverrides:
                                  # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
-      - name: deployment-history
+      - name: deployment-history-cache
         type: dynamo-db
         attributes:
           <<: *table-attributes
