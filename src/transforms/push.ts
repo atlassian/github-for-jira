@@ -11,6 +11,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { isUseConfigFile } from "services/user-config-service";
 
 const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
@@ -69,9 +70,15 @@ export const createJobData = (payload: GitHubPushData, jiraHost: string, gitHubA
 		}
 	}
 
+	const shouldUpdateUserConfigFile = (payload.commits || []).some(commit => {
+		return (commit.added || []).map(f => f.filename).some(isUseConfigFile)
+			|| (commit.modified || []).map(f=>f.filename).some(isUseConfigFile);
+	});
+
 	return {
 		repository,
 		shas,
+		shouldUpdateUserConfigFile,
 		jiraHost,
 		installationId: payload.installation.id,
 		webhookId: payload.webhookId || "none",

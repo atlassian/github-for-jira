@@ -11,6 +11,10 @@ const logger = getLogger("services.user-config");
 const MAX_PATTERNS_PER_ENVIRONMENT = 10;
 const MAX_SERVICE_ID_COUNT = 100;
 
+export const isUseConfigFile = (file: string) => {
+	return (file || "").toLowerCase().trim() === USER_CONFIG_FILE;
+};
+
 /**
  * Checks whether a list of modified files contains the config file. If yes, reads that config file
  * from the GitHub repository, parses it, and stores the config against the given repository
