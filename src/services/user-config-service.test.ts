@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
-import { getRepoConfig, updateRepoConfig, isUseConfigFile } from "services/user-config-service";
+import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
 import { getInstallationId } from "~/src/github/client/installation-id";
-
-const USER_CONFIG_FILE = ".jira/config.yml";
 
 describe("User Config Service", () => {
 	const gitHubInstallationId = 1234;
@@ -127,16 +125,6 @@ describe("User Config Service", () => {
 		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), unknownRepoId, unknownRepoOwner, unknownRepoName, { trigger: "test" });
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
-	});
-
-	describe.each([
-		[ "blah/blah.txt", false ],
-		[ "nested/folder/" + USER_CONFIG_FILE, false ],
-		[ USER_CONFIG_FILE, true ]
-	])("matching user config file", (file, toExpect) => {
-		it(`Should determine file "${file}" as isMatch: ${toExpect}`, () => {
-			expect(isUseConfigFile(file)).toBe(toExpect);
-		});
 	});
 
 });

@@ -155,7 +155,6 @@ export type DeploymentMessagePayload = BaseMessagePayload & {
 export type PushQueueMessagePayload = BaseMessagePayload & {
 	repository: PayloadRepository,
 	shas: { id: string, issueKeys: string[] }[],
-	shouldUpdateUserConfigFile?: boolean,
 	webhookId: string,
 	webhookReceived?: number,
 }
