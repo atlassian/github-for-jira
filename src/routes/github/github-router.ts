@@ -56,6 +56,9 @@ subRouter.post("/webhooks",
 //new oauth
 subRouter.get("/oauth-url", GithubServerAppMiddleware, GitHubOAuthInitiateUrlGet);
 subRouter.post("/oauth-exchange-token", jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, GithubServerAppMiddleware, GithubOAuthTokenExchangeGet);
+subRouter.use("/setup", (_req, res) => {
+	res.render("github-setup-popup.hbs");
+});
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 // Todo able to move under the jirasymmetric middleware once flag completed
@@ -76,7 +79,7 @@ subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
 
 
 // CSRF Protection Middleware for all following routes
-subRouter.use(csrfMiddleware);
+//subRouter.use(csrfMiddleware);
 
 subRouter.use("/setup", GithubSetupRouter);
 

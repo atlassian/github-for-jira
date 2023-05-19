@@ -8,6 +8,31 @@ function App() {
 	const [installations, setInstallations] = useState([]);
 
 	useEffect(() => {
+
+		window.appInstalledCallback = async ({search}) => {
+			const params = new URL(`http://atlassian.com${search}`).searchParams;
+			const installationId = params.get("installation_id");
+			if(!installationId) return;
+			AP.context.getToken(async (token) => {
+				setJiraJwt(token);
+				const resp = await fetch(`/github/configuration`, {
+					method: "POST",
+					headers: {
+						Authorization: JSON.stringify({ jiraJwt: token, githubToken }),
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						installationId
+					})
+				});
+				if(!resp.ok) {
+					console.error(resp.statusText);
+				} else {
+					alert("Subscription created");
+				}
+			});
+		};
+
 		window.oauthCallback = async ({search}) => {
 			AP.context.getToken(async (token) => {
 				setJiraJwt(token);
@@ -28,6 +53,7 @@ function App() {
 				}
 			});
 		};
+
 	}, []);
 
   return (
@@ -83,7 +109,14 @@ function App() {
 						</div>
 					))
 				}
-			</div>
+					</div>
+					<div className="card">
+						<button onClick={async () => {
+							window.open("https://github.com/apps/garyx-atlassian-github-for-jira/installations/new");
+						}}>
+							Install to new org
+						</button>
+					</div>
     </>
   )
 }
