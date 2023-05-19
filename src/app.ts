@@ -7,6 +7,7 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
+import { proxyLocalUIIfDev } from "./dev";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -19,6 +20,8 @@ export const setupFrontendApp = (app: Express): Express => {
 	app.set("views", viewPath);
 	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
+	// local dev ui
+	proxyLocalUIIfDev(app);
 	// Add all routes
 	app.use(RootRouter);
 
