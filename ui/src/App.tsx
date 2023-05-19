@@ -131,6 +131,13 @@ function App() {
 				</button>
       </div>
 			<div className="card">
+				<button onClick={async () => {
+					window.open("https://github.com/apps/garyx-atlassian-github-for-jira/installations/new");
+				}}>
+					Install to new org
+				</button>
+			</div>
+			<div className="card">
 				{ fetching ? "fetching..." : <button onClick={fetchInstallationList}> fetch orgs and subscriptions </button> }
       </div>
 			<div className="card">
@@ -149,13 +156,6 @@ function App() {
 						</div>
 					))
 				}
-			</div>
-			<div className="card">
-				<button onClick={async () => {
-					window.open("https://github.com/apps/garyx-atlassian-github-for-jira/installations/new");
-				}}>
-					Install to new org
-				</button>
 			</div>
     </>
   )
