@@ -214,9 +214,15 @@ const TempGetJiraHostFromStateMiddleware  = async (req: Request, res: Response, 
 	const stateKey = req.query.state as string;
 	if (!stateKey) {
 		req.log.warn("State key is empty");
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return;
 	}
+
+	//let it pass if it is new api route
+	if (stateKey.endsWith("__api")) {
+		res.render("github-oauth-callback.hbs", {});
+		return;
+	}
+
 	if (!req.session[stateKey]) {
 		req.log.warn("State is empty in req.session for callback redirect");
 		res.status(400).send(Errors.MISSING_JIRA_HOST);

@@ -1,0 +1,41 @@
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="ap-local-base-url" content="{{localBaseUrl}}" />
+  <title>{{title}}</title>
+  <link
+    rel="stylesheet"
+    href="/public/aui/aui-prototyping.css"
+    integrity="DTM1Q+8lU7SzJT+FWr0JFisCSZlwfM0GiAKYy7h1s9vIKa/CIh37s9NuOCqIOgK4tmqrjLK4NuWuIPUQNsikHA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <link rel="stylesheet" href="/public/primer/build.css" media="all" />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
+</head>
+
+<body>
+
+  <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
+
+  <script>
+    window.opener.oauthCallback({search: window.location.search});
+    window.close();
+  </script>
+
+
+  <script src="https://connect-cdn.atl-paas.net/all.js" data-options="sizeToParent:true" nonce="{{nonce}}"></script>
+  <script
+    src="/public/aui/aui-prototyping.js"
+    integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+    nonce="{{nonce}}"
+  ></script>
+  <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
+  <script src="/public/js/skeleton.js" nonce="{{nonce}}"></script>
+</body>
+
+</html>

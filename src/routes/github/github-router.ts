@@ -1,5 +1,6 @@
 import { Router , NextFunction, Request, Response } from "express";
 import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
+import { GitHubOAuthInitiateUrlGet, GithubOAuthTokenExchangeGet } from "./github-oauth-api-router";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 import { GithubSetupRouter } from "routes/github/setup/github-setup-router";
@@ -51,6 +52,10 @@ subRouter.post("/webhooks",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
+
+//new oauth
+subRouter.get("/oauth-url", GithubServerAppMiddleware, GitHubOAuthInitiateUrlGet);
+subRouter.post("/oauth-exchange-token", jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, GithubServerAppMiddleware, GithubOAuthTokenExchangeGet);
 
 // Create-branch is seperated above since it currently relies on query param to extract the jirahost
 // Todo able to move under the jirasymmetric middleware once flag completed
