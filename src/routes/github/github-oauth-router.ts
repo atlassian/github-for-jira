@@ -147,7 +147,10 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 			return res.redirect(newUrl);
 		}
 
-		const { githubToken, gitHubUuid } = req.session;
+		let githubToken = res.locals.githubToken;
+		if (!githubToken) githubToken = req.session.githubToken;
+		const { gitHubUuid } = req.session;
+
 		const { jiraHost, gitHubAppConfig } = res.locals;
 
 		/**

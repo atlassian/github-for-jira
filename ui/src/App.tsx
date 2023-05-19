@@ -4,7 +4,7 @@ import './App.css'
 
 function App() {
 	const [jiraJwt, setJiraJwt] = useState("")
-	const [gitHubToken, setGitHubToken] = useState("")
+	const [githubToken, setGitHubToken] = useState("")
 	const [installations, setInstallations] = useState([]);
 
 	useEffect(() => {
@@ -14,7 +14,7 @@ function App() {
 				const resp = await fetch(`/github/oauth-exchange-token${search}`, {
 					method: "POST",
 					headers: {
-						Authorization: `Bearer ${token}`
+						Authorization: JSON.stringify({ jiraJwt: token })
 					},
 					body: JSON.stringify({
 						search
@@ -41,7 +41,7 @@ function App() {
 			<div className="card">
 				<span>Jira JWT: {(jiraJwt || "").substring(0, 10)}...</span>
 				<br></br>
-				<span>GitHub Token: {(gitHubToken || "").substring(0, 10)}...</span>
+				<span>GitHub Token: {(githubToken || "").substring(0, 10)}...</span>
       </div>
       <div className="card">
 				<button onClick={async () => {
@@ -56,7 +56,7 @@ function App() {
       </div>
       <div className="card">
 				<button onClick={async () => {
-					const resp = await fetch("/github/configuration/list", {
+					const resp = await fetch("/github/configuration?type=api", {
 						method: "GET",
 						headers: {
 							Authorization: JSON.stringify({jiraJwt, githubToken})
@@ -72,6 +72,18 @@ function App() {
 					fetch orgs and subscriptions
 				</button>
       </div>
+			<div className="card">
+				{
+					installations.map(installation => (
+						<div className="card">
+							<div>Owner: {installation.account.login}</div>
+							<div>Number of repos: {installation.numberOfRepos}</div>
+							<div>isAdmin: {""+installation.isAdmin}</div>
+							<div>syncStatus: {installation.syncStatus}</div>
+						</div>
+					))
+				}
+			</div>
     </>
   )
 }

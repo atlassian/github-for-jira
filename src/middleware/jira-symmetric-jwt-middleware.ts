@@ -9,7 +9,20 @@ import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permissio
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 
-	const token = req.headers["Authorization"] || req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
+	let token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
+	let githubToken = "";
+
+	if (req.headers["authorization"]) {
+		try {
+			const { jiraJwt, githubToken: githubTokenInHeader } = JSON.parse(req.headers["authorization"] as string);
+			token = jiraJwt;
+			githubToken = githubTokenInHeader;
+			req.log.info("=============== found tokens in auth headers =========", { token, githubToken });
+		} catch (err) {
+			req.log.warn({ err }, "Could not parse authorization in headers");
+			return res.status(401).send("Unauthorised");
+		}
+	}
 
 	if (token) {
 		let issuer;
@@ -40,6 +53,10 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		req.session.jiraHost = installation.jiraHost;
 		// Check whether logged-in user has Jira Admin permissions and save it to the session
 		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
+		if (githubToken) {
+			res.locals.githubToken = githubToken;
+			req.log.info("=============== github tokens set in locals =========", { githubToken });
+		}
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");

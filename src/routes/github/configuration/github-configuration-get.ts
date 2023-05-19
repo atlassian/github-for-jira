@@ -218,6 +218,11 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		req.log.debug(`got connected installations`);
 
+		if (req.query["type"] === "api") {
+			res.json({ installations: sortedInstallation });
+			return;
+		}
+
 		res.render("github-configuration.hbs", {
 			csrfToken: req.csrfToken(),
 			installations: sortedInstallation,

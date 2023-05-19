@@ -3,7 +3,7 @@ import Logger from "bunyan";
 
 export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, orgName: string, username: string, orgType: string, logger: Logger): Promise<boolean> => {
 	if (orgType === "User") {
-		logger.info("isUserAdminOfOrganization: orgType is a user");
+		logger.info("isUserAdminOfOrganization: orgType is a user", { orgName, username });
 		return orgName === username;
 	}
 
