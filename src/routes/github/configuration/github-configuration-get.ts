@@ -21,6 +21,7 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
+	subscriptionId?: number;
 	syncStatus?: string;
 	account: Octokit.AppsGetInstallationResponseAccount;
 }
@@ -33,11 +34,13 @@ const getConnectedStatus = (
 		// An org may have multiple subscriptions to Jira instances. Confirm a match.
 		.filter((installation) => jiraHost === installation.jiraHost)
 		.map((installation) => ({
+			subscriptionId: installation.subscriptionId,
 			syncStatus: installation.syncStatus,
 			account: installation.account
 		}));
 
 interface MergedInstallation extends InstallationWithAdmin {
+	subscriptionId?: number;
 	syncStatus?: string;
 }
 

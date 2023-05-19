@@ -34,6 +34,7 @@ interface FailedInstallationError {
 }
 
 export interface AppInstallation extends Octokit.AppsGetInstallationResponse {
+	subscriptionId?: number;
 	syncStatus?: string;
 	syncWarning?: string;
 	totalNumberOfRepos?: number;

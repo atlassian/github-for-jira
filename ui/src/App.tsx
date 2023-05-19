@@ -4,15 +4,11 @@ import './App.css'
 
 function App() {
 	const [jiraJwt, setJiraJwt] = useState("")
+	const [fetching, setFetching] = useState(false)
 	const [githubToken, setGitHubToken] = useState("")
 	const [installations, setInstallations] = useState([]);
 
-	useEffect(() => {
-
-		window.appInstalledCallback = async ({search}) => {
-			const params = new URL(`http://atlassian.com${search}`).searchParams;
-			const installationId = params.get("installation_id");
-			if(!installationId) return;
+	const connectToOrg = async (installationId: number) => {
 			AP.context.getToken(async (token) => {
 				setJiraJwt(token);
 				const resp = await fetch(`/github/configuration`, {
@@ -29,8 +25,62 @@ function App() {
 					console.error(resp.statusText);
 				} else {
 					alert("Subscription created");
+					fetchInstallationList();
 				}
 			});
+	}
+
+	const disConnectFromOrg = async (installationId: number, subscriptionId: number) => {
+			AP.context.getToken(async (token) => {
+				setJiraJwt(token);
+				const resp = await fetch(`/jira/configuration`, {
+					method: "DELETE",
+					headers: {
+						Authorization: JSON.stringify({ jiraJwt: token, githubToken }),
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						gitHubInstallationId: installationId
+					})
+				});
+				if(!resp.ok) {
+					console.error(resp.statusText);
+				} else {
+					alert("Subscription disconnected");
+					fetchInstallationList();
+				}
+			});
+	}
+
+	const fetchInstallationList = async () => {
+		try {
+			setFetching(true);
+			const resp = await fetch("/github/configuration?type=api", {
+				method: "GET",
+				headers: {
+					Authorization: JSON.stringify({jiraJwt, githubToken})
+				}
+			});
+			if(!resp.ok) {
+				console.error(resp.statusText);
+			} else {
+				const { installations } = await resp.json();
+				setInstallations(installations);
+			}
+		} catch (e) {
+		} finally {
+			setFetching(false);
+		}
+
+	}
+
+	useEffect(() => {
+
+		window.appInstalledCallback = async ({search}) => {
+			const params = new URL(`http://atlassian.com${search}`).searchParams;
+			const installationId = params.get("installation_id");
+			if(!installationId) return;
+			connectToOrg(installationId);
 		};
 
 		window.oauthCallback = async ({search}) => {
@@ -80,23 +130,8 @@ function App() {
 					get token
 				</button>
       </div>
-      <div className="card">
-				<button onClick={async () => {
-					const resp = await fetch("/github/configuration?type=api", {
-						method: "GET",
-						headers: {
-							Authorization: JSON.stringify({jiraJwt, githubToken})
-						}
-					});
-					if(!resp.ok) {
-						console.error(resp.statusText);
-					} else {
-						const { installations } = await resp.json();
-						setInstallations(installations);
-					}
-				}}>
-					fetch orgs and subscriptions
-				</button>
+			<div className="card">
+				{ fetching ? "fetching..." : <button onClick={fetchInstallationList}> fetch orgs and subscriptions </button> }
       </div>
 			<div className="card">
 				{
@@ -106,17 +141,22 @@ function App() {
 							<div>Number of repos: {installation.numberOfRepos}</div>
 							<div>isAdmin: {""+installation.isAdmin}</div>
 							<div>syncStatus: {installation.syncStatus}</div>
+							<div>gitHubInstallationId: {installation.id}</div>
+							<div>subscriptionId: {installation.subscriptionId}</div>
+							<div>conection status: { !!installation.subscriptionId ?  "✅" : "❌" }</div>
+							{ !installation.subscriptionId && ( <div><button onClick={() => {connectToOrg(installation.id)}}>connect</button></div>)}
+							{ !!installation.subscriptionId && ( <div><button onClick={() => {disConnectFromOrg(installation.id, installation.subscriptionId)}}>disconnect</button></div>)}
 						</div>
 					))
 				}
-					</div>
-					<div className="card">
-						<button onClick={async () => {
-							window.open("https://github.com/apps/garyx-atlassian-github-for-jira/installations/new");
-						}}>
-							Install to new org
-						</button>
-					</div>
+			</div>
+			<div className="card">
+				<button onClick={async () => {
+					window.open("https://github.com/apps/garyx-atlassian-github-for-jira/installations/new");
+				}}>
+					Install to new org
+				</button>
+			</div>
     </>
   )
 }
