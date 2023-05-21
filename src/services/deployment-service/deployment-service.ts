@@ -1,7 +1,7 @@
 import Logger from "bunyan";
 import { envVars } from "config/env";
 import { getLogger } from "config/logger";
-import { dynamodb as ddb } from "models/dynamodb";
+import { dynamodb as ddb } from "config/dynamodb";
 import { hash } from "utils/hash-utils";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");

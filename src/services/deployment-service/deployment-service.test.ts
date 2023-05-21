@@ -1,7 +1,7 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { saveDeploymentInfo, findLastSuccessDeployment } from "./deployment-service";
-import { dynamodb as ddb } from "models/dynamodb";
+import { dynamodb as ddb } from "config/dynamodb";
 import { hash } from "utils/hash-utils";
 
 const logger = getLogger("test");

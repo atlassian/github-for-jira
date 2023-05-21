@@ -9,7 +9,7 @@ import deployment_status from "fixtures/deployment_status-basic.json";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import { dynamodb as ddb } from "models/dynamodb";
+import { dynamodb as ddb } from "config/dynamodb";
 import { hash } from "utils/hash-utils";
 
 jest.mock("../sqs/queues");
