@@ -1,6 +1,6 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { cacheSuccessfulDeploymentInfo, findLastSuccessDeployment } from "./deployment-service";
+import { cacheSuccessfulDeploymentInfo, findLastSuccessDeploymentFromCache } from "./deployment-service";
 import { dynamodb as ddb } from "config/dynamodb";
 import { hash } from "utils/hash-utils";
 
@@ -76,7 +76,7 @@ describe("Deployment status service", () => {
 			}, logger);
 		});
 		it("should fetch last success deployment", async () => {
-			const result = await findLastSuccessDeployment({
+			const result = await findLastSuccessDeploymentFromCache({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				env: "production", currentDate: createdAt2
@@ -87,7 +87,7 @@ describe("Deployment status service", () => {
 			});
 		});
 		it("should fetch THE last success deployment when more than one previous success deployments", async () => {
-			const result = await findLastSuccessDeployment({
+			const result = await findLastSuccessDeploymentFromCache({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				env: "production", currentDate: createdAt3
@@ -98,7 +98,7 @@ describe("Deployment status service", () => {
 			});
 		});
 		it("should fetch last success deployment for a date in between the dates in db", async () => {
-			const result = await findLastSuccessDeployment({
+			const result = await findLastSuccessDeploymentFromCache({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				env: "production", currentDate: createdAt_between_2_and_3
@@ -109,7 +109,7 @@ describe("Deployment status service", () => {
 			});
 		});
 		it("should return undefined if no past success deployment", async () => {
-			const result = await findLastSuccessDeployment({
+			const result = await findLastSuccessDeploymentFromCache({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				env: "production", currentDate: createdAt1

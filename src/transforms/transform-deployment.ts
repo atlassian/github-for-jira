@@ -17,7 +17,7 @@ import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { findLastSuccessDeployment } from "services/deployment-service/deployment-service";
+import { findLastSuccessDeploymentFromCache } from "services/deployment-service/deployment-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
@@ -72,7 +72,7 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 
 		statsd.increment(metricDeploymentCache.lookup, tags, info);
 
-		const lastSuccessful = await findLastSuccessDeployment({
+		const lastSuccessful = await findLastSuccessDeploymentFromCache({
 			gitHubBaseUrl: githubInstallationClient.baseUrl,
 			env: currentDeployEnv,
 			repositoryId: repoId,
@@ -100,7 +100,7 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 	}
 };
 
-const getCommitsSinceLastSuccessfulDeployment = async (
+const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 	jiraHost: string,
 	type: "backfill" | "webhook",
 	owner: string,
@@ -305,7 +305,7 @@ export const transformDeployment = async (
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
 
-	const commitSummaries = await getCommitsSinceLastSuccessfulDeployment(
+	const commitSummaries = await getCommitsSinceLastSuccessfulDeploymentFromCache(
 		jiraHost,
 		type,
 		payload.repository.owner.login,

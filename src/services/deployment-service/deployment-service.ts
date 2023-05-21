@@ -30,12 +30,12 @@ export const cacheSuccessfulDeploymentInfo = async (deploymentInfo : {
 	}
 };
 
-export type LastSuccessfulDeployment = {
+export type LastSuccessfulDeploymentFromCache = {
 	commitSha: string;
 	createdAt: Date;
 }
 
-export const findLastSuccessDeployment = async(
+export const findLastSuccessDeploymentFromCache = async(
 	params: {
 		gitHubBaseUrl: string;
 		repositoryId: number;
@@ -43,7 +43,7 @@ export const findLastSuccessDeployment = async(
 		currentDate: Date;
 	},
 	logger: Logger = defaultLogger
-): Promise<LastSuccessfulDeployment | undefined> => {
+): Promise<LastSuccessfulDeploymentFromCache | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
