@@ -10,7 +10,7 @@ import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { saveDeploymentInfo } from "services/deployment-service/deployment-service";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-service/deployment-service";
 
 jest.mock("services/user-config-service");
 jest.mock("config/feature-flags");
@@ -358,7 +358,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
-			await saveDeploymentInfo({
+			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: gitHubClient.baseUrl,
 				repositoryId: deployment_status.payload.repository.id,
 				commitSha: "6e87a40179eb7ecf5094b9c8d690db727472d5bc",

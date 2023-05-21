@@ -19,7 +19,7 @@ import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { findLastSuccessDeployment } from "services/deployment-service/deployment-service";
 import { statsd } from "config/statsd";
-import { metricDeploymentPersistent } from "config/metric-names";
+import { metricDeploymentCache } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 const MAX_ASSOCIATIONS_PER_ENTITY = 500;
@@ -70,7 +70,7 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 
 	try {
 
-		statsd.increment(metricDeploymentPersistent.lookup, tags, info);
+		statsd.increment(metricDeploymentCache.lookup, tags, info);
 
 		const lastSuccessful = await findLastSuccessDeployment({
 			gitHubBaseUrl: githubInstallationClient.baseUrl,
@@ -81,20 +81,20 @@ const getLastSuccessDeploymentShaFromDyanmoDB = async (
 
 		if (!lastSuccessful) {
 			logger.info("Couldn't find last success deployment from dynamodb");
-			statsd.increment(metricDeploymentPersistent.miss, { missedType: "not-found", ...tags }, info);
+			statsd.increment(metricDeploymentCache.miss, { missedType: "not-found", ...tags }, info);
 			return undefined;
 		} else if (!lastSuccessful.commitSha) {
 			logger.warn("Missing commit sha from deployment");
-			statsd.increment(metricDeploymentPersistent.miss, { missedType: "sha-empty", ...tags }, info);
+			statsd.increment(metricDeploymentCache.miss, { missedType: "sha-empty", ...tags }, info);
 			return undefined;
 		} else {
 			logger.info("Found last success deployment info");
-			statsd.increment(metricDeploymentPersistent.hit, tags, info);
+			statsd.increment(metricDeploymentCache.hit, tags, info);
 			return lastSuccessful.commitSha;
 		}
 
 	} catch (e) {
-		statsd.increment(metricDeploymentPersistent.failed, { failType: "lookup", ...tags }, info);
+		statsd.increment(metricDeploymentCache.failed, { failType: "lookup", ...tags }, info);
 		logger.error({ err: e }, "Error look up deployment information from dynamodb");
 		throw e;
 	}

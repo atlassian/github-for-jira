@@ -1,6 +1,6 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { saveDeploymentInfo, findLastSuccessDeployment } from "./deployment-service";
+import { cacheSuccessfulDeploymentInfo, findLastSuccessDeployment } from "./deployment-service";
 import { dynamodb as ddb } from "config/dynamodb";
 import { hash } from "utils/hash-utils";
 
@@ -9,12 +9,12 @@ const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
 
 describe("Deployment status service", () => {
 
-	describe("saveDeploymentInfo", () => {
+	describe("cacheSuccessfulDeploymentInfo", () => {
 		it("should successfully save deployment info to dynamo db", async () => {
 
 			const createdAt = new Date();
 
-			await saveDeploymentInfo({
+			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId: 3,
 				commitSha: "abc-abc-abc",
@@ -53,21 +53,21 @@ describe("Deployment status service", () => {
 		const createdAt_between_2_and_3 = new Date("2000-02-15");
 		const createdAt3 = new Date("2000-03-03");
 		beforeEach(async () => {
-			await saveDeploymentInfo({
+			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				commitSha: "create-1",
 				env: "production",
 				createdAt: createdAt1
 			}, logger);
-			await saveDeploymentInfo({
+			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				commitSha: "create-2",
 				env: "production",
 				createdAt: createdAt2
 			}, logger);
-			await saveDeploymentInfo({
+			await cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl: "https://github.com",
 				repositoryId,
 				commitSha: "create-3",

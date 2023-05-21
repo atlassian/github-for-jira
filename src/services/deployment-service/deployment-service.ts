@@ -8,7 +8,7 @@ const defaultLogger = getLogger("DeploymentDynamoLogger");
 
 const ONE_YEAR_IN_MILLISECONDS = 365 * 24 * 60 * 60 * 1000;
 
-export const saveDeploymentInfo = async (deploymentInfo : {
+export const cacheSuccessfulDeploymentInfo = async (deploymentInfo : {
 	gitHubBaseUrl: string
 	repositoryId: number;
 	commitSha: string;

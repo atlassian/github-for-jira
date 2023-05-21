@@ -8,10 +8,10 @@ import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { saveDeploymentInfo } from "services/deployment-service/deployment-service";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-service/deployment-service";
 import { Subscription } from "models/subscription";
 import { statsd } from "config/statsd";
-import { metricDeploymentPersistent } from "config/metric-names";
+import { metricDeploymentCache } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
@@ -112,18 +112,18 @@ const persistentSuccessDeploymentStatusToDynamoDB = async (
 	const info = { jiraHost };
 
 	try {
-		statsd.increment(metricDeploymentPersistent.toCreate, tags, info);
-		await saveDeploymentInfo({
+		statsd.increment(metricDeploymentCache.toCreate, tags, info);
+		await cacheSuccessfulDeploymentInfo({
 			gitHubBaseUrl,
 			repositoryId: webhookPayload.repository.id,
 			commitSha: webhookPayload.deployment.sha,
 			env: webhookPayload.deployment_status.environment,
 			createdAt: new Date(webhookPayload.deployment_status.created_at)
 		}, logger);
-		statsd.increment(metricDeploymentPersistent.created, tags, info);
+		statsd.increment(metricDeploymentCache.created, tags, info);
 		logger.info("Saved deployment information to dynamodb");
 	} catch (e) {
-		statsd.increment(metricDeploymentPersistent.failed, { failType: "persist", ...tags }, info);
+		statsd.increment(metricDeploymentCache.failed, { failType: "persist", ...tags }, info);
 		logger.error({ err: e }, "Error saving deployment information to dynamodb");
 	}
 };
