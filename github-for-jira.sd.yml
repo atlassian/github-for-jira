@@ -154,7 +154,7 @@ resources:
     attributes: &table-attributes
       HashKeyName: Id
       HashKeyType: "S"
-      RangeKeyName: StatusCreatedAt
+      RangeKeyName: CreatedAt
       RangeKeyType: "N"
       ReadWriteCapacityMode: ON_DEMAND
       TTLAttributeName: ExpiredAfter

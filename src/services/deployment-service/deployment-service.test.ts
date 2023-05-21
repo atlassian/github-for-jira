@@ -26,10 +26,10 @@ describe("Deployment status service", () => {
 				TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 				Key: {
 					"Id": { "S": hash(`ghurl_https://github.com_repo_3_env_production`) },
-					"StatusCreatedAt": { "N": String(createdAt.getTime()) }
+					"CreatedAt": { "N": String(createdAt.getTime()) }
 				},
 				AttributesToGet: [
-					"Id", "StatusCreatedAt",
+					"Id", "CreatedAt",
 					"GitHubInstallationId", "GitHubAppId", "RepositoryId",
 					"CommitSha",
 					"Env", "Status", "ExpiredAfter"
@@ -39,7 +39,7 @@ describe("Deployment status service", () => {
 			expect(result.$response.error).toBeNull();
 			expect(result.Item).toEqual({
 				Id: { "S": hash("ghurl_https://github.com_repo_3_env_production") },
-				StatusCreatedAt: { "N": String(createdAt.getTime()) },
+				CreatedAt: { "N": String(createdAt.getTime()) },
 				CommitSha: { "S": "abc-abc-abc" },
 				ExpiredAfter: { "N": String(Math.floor((createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) }
 			});

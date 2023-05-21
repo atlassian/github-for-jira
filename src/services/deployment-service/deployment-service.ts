@@ -20,7 +20,7 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 		Item: {
 			Id: { "S": getKey(deploymentInfo) }, //partition key
-			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) }, //sort key
+			CreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) }, //sort key
 			CommitSha: { "S": deploymentInfo.commitSha }, //real data we need
 			ExpiredAfter: { "N": String(Math.floor((deploymentInfo.createdAt.getTime() + ONE_YEAR_IN_MILLISECONDS) / 1000)) } //ttl
 		}
@@ -47,7 +47,7 @@ export const findLastSuccessDeployment = async(
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
 		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
-		KeyConditionExpression: "Id = :id and StatusCreatedAt < :createdAt",
+		KeyConditionExpression: "Id = :id and CreatedAt < :createdAt",
 		ExpressionAttributeValues: {
 			":id": { "S": getKey(params) },
 			":createdAt": { "N": String(params.currentDate.getTime()) }
@@ -68,7 +68,7 @@ export const findLastSuccessDeployment = async(
 
 	return {
 		commitSha: item.CommitSha.S || "",
-		createdAt: new Date(Number(item.StatusCreatedAt.N))
+		createdAt: new Date(Number(item.CreatedAt.N))
 	};
 };
 

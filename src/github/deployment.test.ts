@@ -112,10 +112,10 @@ describe("DeploymentWebhookHandler", () => {
 			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 			Key: {
 				"Id": { "S": key },
-				"StatusCreatedAt": { "N": String(createdAt.getTime()) }
+				"CreatedAt": { "N": String(createdAt.getTime()) }
 			},
 			AttributesToGet: [
-				"Id", "StatusCreatedAt",
+				"Id", "CreatedAt",
 				"GitHubInstallationId", "GitHubAppId", "RepositoryId",
 				"CommitSha",
 				"Env", "Status", "ExpiredAfter"
@@ -125,7 +125,7 @@ describe("DeploymentWebhookHandler", () => {
 		expect(result.$response.error).toBeNull();
 		expect(result.Item).toEqual({
 			Id: { "S": key },
-			StatusCreatedAt: { "N": String(createdAt.getTime()) },
+			CreatedAt: { "N": String(createdAt.getTime()) },
 			CommitSha: { "S": commitSha },
 			ExpiredAfter: { "N": String(Math.floor(expiredAfter.getTime() / 1000)) }
 		});

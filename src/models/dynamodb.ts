@@ -16,7 +16,7 @@ export const purgeItemsInTable = async (tableName: string) => {
 
 		const rows = await dynamodb.scan({
 			TableName: tableName,
-			AttributesToGet: [ "Id", "StatusCreatedAt" ]
+			AttributesToGet: [ "Id", "CreatedAt" ]
 		}).promise();
 
 		const deleteRequests: Promise<unknown>[] = ((rows.Items || []).map(item => {
@@ -24,7 +24,7 @@ export const purgeItemsInTable = async (tableName: string) => {
 				TableName: tableName,
 				Key: {
 					"Id": { "S": item.Id.S },
-					"StatusCreatedAt": { "N" : item.StatusCreatedAt.N }
+					"CreatedAt": { "N" : item.CreatedAt.N }
 				}
 			}).promise();
 		}));
