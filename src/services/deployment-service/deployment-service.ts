@@ -17,7 +17,7 @@ export const saveDeploymentInfo = async (deploymentInfo : {
 }, logger: Logger) => {
 	logger.debug("Saving deploymentInfo to db");
 	const result = await ddb.putItem({
-		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
+		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 		Item: {
 			Id: { "S": getKey(deploymentInfo) }, //partition key
 			StatusCreatedAt: { "N": String(deploymentInfo.createdAt.getTime()) }, //sort key
@@ -46,7 +46,7 @@ export const findLastSuccessDeployment = async(
 ): Promise<LastSuccessfulDeployment | undefined> => {
 	logger.debug("Finding last successful deploymet");
 	const result = await ddb.query({
-		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
+		TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 		KeyConditionExpression: "Id = :id and StatusCreatedAt < :createdAt",
 		ExpressionAttributeValues: {
 			":id": { "S": getKey(params) },

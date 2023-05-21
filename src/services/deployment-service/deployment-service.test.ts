@@ -23,7 +23,7 @@ describe("Deployment status service", () => {
 			}, logger);
 
 			const result = await ddb.getItem({
-				TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
+				TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 				Key: {
 					"Id": { "S": hash(`ghurl_https://github.com_repo_3_env_production`) },
 					"StatusCreatedAt": { "N": String(createdAt.getTime()) }

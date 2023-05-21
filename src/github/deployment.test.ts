@@ -91,7 +91,7 @@ describe("DeploymentWebhookHandler", () => {
 				payload.deployment_status.state = "failure";
 				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID, subscription);
 				const result = await ddb.scan({
-					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME
+					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME
 				}).promise();
 				expect(result.$response.error).toBeNull();
 				expect(result.Items).toEqual([]);
@@ -109,7 +109,7 @@ describe("DeploymentWebhookHandler", () => {
 	) => {
 		const key = hash(`ghurl_${gitHubBaseUrl}_repo_${repoId}_env_${env}`);
 		const result = await ddb.getItem({
-			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_TABLE_NAME,
+			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 			Key: {
 				"Id": { "S": key },
 				"StatusCreatedAt": { "N": String(createdAt.getTime()) }
