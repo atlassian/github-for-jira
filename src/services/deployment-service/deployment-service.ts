@@ -2,7 +2,7 @@ import Logger from "bunyan";
 import { envVars } from "config/env";
 import { getLogger } from "config/logger";
 import { dynamodb as ddb } from "config/dynamodb";
-import { hash } from "utils/hash-utils";
+import { createHashWithoutSharedSecret } from "utils/encryption";
 
 const defaultLogger = getLogger("DeploymentDynamoLogger");
 
@@ -83,5 +83,5 @@ const getKey = (opts: {
 	repositoryId: number;
 	env: string;
 }) => {
-	return hash(`ghurl_${opts.gitHubBaseUrl}_repo_${opts.repositoryId}_env_${opts.env}`);
+	return createHashWithoutSharedSecret(`ghurl_${opts.gitHubBaseUrl}_repo_${opts.repositoryId}_env_${opts.env}`);
 };

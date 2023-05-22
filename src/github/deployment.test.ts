@@ -10,7 +10,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import { dynamodb as ddb } from "config/dynamodb";
-import { hash } from "utils/hash-utils";
+import { createHashWithoutSharedSecret } from "utils/encryption";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -107,7 +107,7 @@ describe("DeploymentWebhookHandler", () => {
 		createdAt: Date,
 		expiredAfter: Date
 	) => {
-		const key = hash(`ghurl_${gitHubBaseUrl}_repo_${repoId}_env_${env}`);
+		const key = createHashWithoutSharedSecret(`ghurl_${gitHubBaseUrl}_repo_${repoId}_env_${env}`);
 		const result = await ddb.getItem({
 			TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 			Key: {
