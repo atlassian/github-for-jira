@@ -1,6 +1,6 @@
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
-import { cacheSuccessfulDeploymentInfo, findLastSuccessDeploymentFromCache } from "./deployment-service";
+import { cacheSuccessfulDeploymentInfo, findLastSuccessDeploymentFromCache } from "./deployment-cache-service";
 import { dynamodb as ddb } from "config/dynamodb";
 import { createHashWithoutSharedSecret } from "utils/encryption";
 

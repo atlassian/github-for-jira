@@ -10,7 +10,7 @@ import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { cacheSuccessfulDeploymentInfo } from "services/deployment-service/deployment-service";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 
 jest.mock("services/user-config-service");
 jest.mock("config/feature-flags");
