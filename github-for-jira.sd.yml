@@ -623,7 +623,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
-            Threshold: 100 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 300 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
             Priority: High
             Dimensions:
               - Name: QueueName
