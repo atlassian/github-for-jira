@@ -27,6 +27,9 @@ RUN apk add --update --upgrade busybox
 RUN apk add --update --upgrade openssl
 RUN apk add --update --upgrade zlib
 
+# For debugging curl command
+RUN apk add curl
+
 USER node
 COPY --chown=node:node --from=build /app /app
 WORKDIR /app
