@@ -46,7 +46,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 			trigger: "backfill",
 			subTrigger: "deployment"
 		};
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, metrics, logger, gitHubAppId);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", metrics, logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
