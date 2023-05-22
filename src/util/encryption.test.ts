@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createHashWithSharedSecret } from "./encryption";
+import { createHashWithSharedSecret, createHashWithoutSharedSecret } from "./encryption";
 
 describe("Encryption", () => {
 	describe("createHashWithSharedSecret", () => {
@@ -19,4 +19,20 @@ describe("Encryption", () => {
 			expect(createHashWithSharedSecret(undefined)).toEqual("");
 		});
 	});
+
+	describe("createHashWithoutSharedSecret", () => {
+		it("should return some hash value", () => {
+			expect(createHashWithoutSharedSecret("hello world")).toEqual("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
+		});
+		it("should return empty value if data is empty", () => {
+			expect(createHashWithoutSharedSecret(null)).toBe("");
+			expect(createHashWithoutSharedSecret(undefined)).toBe("");
+			expect(createHashWithoutSharedSecret("")).toBe("");
+		});
+		it("should not return same value for two different input", () => {
+			expect(createHashWithoutSharedSecret("aaa")).not.toEqual(createHashWithoutSharedSecret("bbb"));
+		});
+	});
+
 });
+
