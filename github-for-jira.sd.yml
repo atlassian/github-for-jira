@@ -158,6 +158,8 @@ resources:
       RangeKeyType: "N"
       ReadWriteCapacityMode: ON_DEMAND
       TTLAttributeName: ExpiredAfter
+      dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
 
 scaling:
   instance: t2.small
