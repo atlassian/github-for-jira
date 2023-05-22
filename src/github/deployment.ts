@@ -18,7 +18,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 
 	if (context.payload.deployment_status.state === "success") {
 		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
-			await persistentSuccessDeploymentStatusToDynamoDB(
+			await tryCacheSuccessfulDeploymentInfo(
 				subscription.jiraHost,
 				context.gitHubAppConfig.gitHubBaseUrl,
 				context.gitHubAppConfig.gitHubAppId,
@@ -99,7 +99,7 @@ export const processDeployment = async (
 	);
 };
 
-const persistentSuccessDeploymentStatusToDynamoDB = async (
+const tryCacheSuccessfulDeploymentInfo = async (
 	jiraHost: string,
 	gitHubBaseUrl: string,
 	gitHubAppId: number | undefined,
