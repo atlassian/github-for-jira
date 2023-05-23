@@ -66,7 +66,7 @@ export const processDeployment = async (
 	logger.info({
 		deploymentState: state,
 		deploymentEnvironment: environment
-	},"processing deployment message!");
+	}, "processing deployment message!");
 
 	const metrics = {
 		trigger: "deployment_queue"
