@@ -15,7 +15,6 @@ import { metricDeploymentCache } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
-
 	if (context.payload.deployment_status.state === "success") {
 		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
 			await tryCacheSuccessfulDeploymentInfo(
@@ -62,7 +61,12 @@ export const processDeployment = async (
 		return;
 	}
 
-	logger.info("processing deployment message!");
+	const { state, environment } = webhookPayload.deployment_status;
+
+	logger.info({
+		deploymentState: state,
+		deploymentEnvironment: environment
+	}, "processing deployment message!");
 
 	const metrics = {
 		trigger: "deployment_queue"
