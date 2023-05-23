@@ -352,6 +352,7 @@ export const transformDeployment = async (
 	}
 
 	const environment = mapEnvironment(deployment_status.environment, config);
+	const state = mapState(deployment_status.state);
 
 	if (environment === "unmapped") {
 		logger?.info({
@@ -359,6 +360,11 @@ export const transformDeployment = async (
 			description: deployment.description
 		}, "Unmapped environment detected.");
 	}
+
+	logger.info({
+		deploymentState: state,
+		deploymentEnvironment: environment
+	}, "Sending deployment data to Jira");
 
 	return {
 		deployments: [{
@@ -369,7 +375,7 @@ export const transformDeployment = async (
 			url: deployment_status.target_url || deployment.url,
 			description: (deployment.description || deployment_status.description || deployment.task || "").substring(0, 255),
 			lastUpdated: new Date(deployment_status.updated_at),
-			state: mapState(deployment_status.state),
+			state,
 			pipeline: {
 				id: deployment.task,
 				displayName: deployment.task,
