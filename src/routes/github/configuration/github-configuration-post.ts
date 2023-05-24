@@ -22,7 +22,10 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
-		logger.warn({ err }, "Error checking user access");
+		logger.warn(
+			{ err },
+			err.cause.request.headers["x-github-sso"] ? "Failed to get access for SSO user" : "Error checking user access"
+		);
 		return false;
 	}
 };

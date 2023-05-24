@@ -10,7 +10,7 @@ import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
+import { GithubClientBlockedIpError, GithubClientError } from "~/src/github/client/github-client-errors";
 import {
 	createInstallationClient,
 	createUserClient
@@ -74,7 +74,7 @@ const getInstallationsWithAdmin = async (
 	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
-		const errors: Error[] = [];
+		const errors: GithubClientError[] = [];
 		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
@@ -101,6 +101,7 @@ const getInstallationsWithAdmin = async (
 			...installation,
 			numberOfRepos,
 			isAdmin,
+			isSso: !!errors.find(err => err?.cause?.response?.headers["x-github-sso"]),
 			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError)
 		};
 	}));
@@ -245,5 +246,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
 	numberOfRepos: number;
 	isAdmin: boolean;
+	isSso: boolean;
 	isIPBlocked: boolean;
 }
