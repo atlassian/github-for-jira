@@ -4,12 +4,29 @@ import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
 import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
 import Logger from "bunyan";
-import { isBlocked } from "config/feature-flags";
+import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
+import { Subscription } from "models/subscription";
+import { statsd } from "config/statsd";
+import { metricDeploymentCache } from "config/metric-names";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
+	if (context.payload.deployment_status.state === "success") {
+		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
+			await tryCacheSuccessfulDeploymentInfo(
+				subscription.jiraHost,
+				context.gitHubAppConfig.gitHubBaseUrl,
+				context.gitHubAppConfig.gitHubAppId,
+				context.payload,
+				context.log
+			);
+		}
+	}
+
 	await sqsQueues.deployment.sendMessage({
 		jiraHost: jiraClient.baseURL,
 		installationId: gitHubInstallationId,
@@ -44,12 +61,17 @@ export const processDeployment = async (
 		return;
 	}
 
-	logger.info("processing deployment message!");
+	const { state, environment } = webhookPayload.deployment_status;
+
+	logger.info({
+		deploymentState: state,
+		deploymentEnvironment: environment
+	}, "processing deployment message!");
 
 	const metrics = {
 		trigger: "deployment_queue"
 	};
-	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, metrics, logger, gitHubAppId);
+	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, "webhook", metrics, logger, gitHubAppId);
 
 	logger.info("deployment message transformed");
 
@@ -79,4 +101,33 @@ export const processDeployment = async (
 		result?.status,
 		gitHubAppId
 	);
+};
+
+const tryCacheSuccessfulDeploymentInfo = async (
+	jiraHost: string,
+	gitHubBaseUrl: string,
+	gitHubAppId: number | undefined,
+	webhookPayload: WebhookPayloadDeploymentStatus,
+	logger: Logger
+) => {
+
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+	const tags = { gitHubProduct };
+	const info = { jiraHost };
+
+	try {
+		statsd.increment(metricDeploymentCache.toCreate, tags, info);
+		await cacheSuccessfulDeploymentInfo({
+			gitHubBaseUrl,
+			repositoryId: webhookPayload.repository.id,
+			commitSha: webhookPayload.deployment.sha,
+			env: webhookPayload.deployment_status.environment,
+			createdAt: new Date(webhookPayload.deployment_status.created_at)
+		}, logger);
+		statsd.increment(metricDeploymentCache.created, tags, info);
+		logger.info("Saved deployment information to dynamodb");
+	} catch (e) {
+		statsd.increment(metricDeploymentCache.failed, { failType: "persist", ...tags }, info);
+		logger.error({ err: e }, "Error saving deployment information to dynamodb");
+	}
 };
