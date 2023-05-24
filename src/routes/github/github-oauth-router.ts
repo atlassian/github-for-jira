@@ -141,6 +141,9 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	try {
 		const { query, originalUrl } = req;
 		if (query && query["resetGithubToken"]) {
+			req.session.githubToken = undefined;
+			req.session.githubRefreshToken = undefined;
+
 			delete query["resetGithubToken"];
 
 			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
