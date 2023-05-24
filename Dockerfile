@@ -6,6 +6,10 @@ RUN apk add g++ make python3
 # adding to solve vuln
 RUN apk add --update --upgrade busybox libretls openssl zlib
 
+# Update SSL certs
+RUN apk add --update --upgrade --no-cache ca-certificates
+RUN update-ca-certificates
+
 # For debugging curl command
 RUN apk add curl
 
