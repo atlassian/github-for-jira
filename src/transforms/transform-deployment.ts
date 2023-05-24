@@ -1,6 +1,6 @@
 import Logger from "bunyan";
 import { JiraAssociation, JiraDeploymentBulkSubmitData } from "interfaces/jira";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import { Octokit } from "@octokit/rest";
 import {
 	CommitSummary,
@@ -295,7 +295,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 
 export const transformDeployment = async (
 	githubInstallationClient: GitHubInstallationClient,
-	payload: WebhookPayloadDeploymentStatus,
+	payload: DeploymentStatusEvent,
 	jiraHost: string,
 	type: "backfill" | "webhook",
 	metrics: {trigger: string, subTrigger?: string},
