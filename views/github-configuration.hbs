@@ -97,6 +97,26 @@
               {{! Connect }}
               {{#unless isIPBlocked}}
                 <div class="gitHubConfiguration__orgContent__connect">
+                  {{#if isSso}}
+                      <div data-aui-trigger aria-controls="sso-login-message-{{account.login}}" class="gitHubConfiguration__ssoWarning">
+                          <span class="aui-icon aui-icon-small aui-iconfont-info-filled">Warning</span>
+                      </div>
+                      <aui-inline-dialog class="gitHubConfiguration__ssoWarningMessage" id="sso-login-message-{{account.login}}" alignment="bottom center">
+                          <p class="gitHubConfiguration__ssoMessage">
+                              You can not connect to this organization because you are not currently logged in through your SSO in GitHub.
+                              Please follow the following steps:
+                          </p>
+                          <ul>
+                              <li>
+                                  Please go to the <a href="{{#if ../gitHubServerApp}}{{../gitHubServerApp.gitHubBaseUrl}}/organizations/{{account.login}}/settings/profile{{else}}https://github.com/organizations/{{account.login}}/settings/profile{{/if}}"> organization settings</a> page and make sure you have admin access there.
+                              </li>
+                              <li>
+                                  And then, please click <a href="?resetGithubToken=true">this link</a> to reset your token. This will reset the token and you will be able to connect to this organization.
+                              </li>
+                          </ul>
+                      </aui-inline-dialog>
+                  {{/if}}
+
                   {{#if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
