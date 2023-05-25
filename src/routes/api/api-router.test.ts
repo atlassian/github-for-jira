@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
-import express, { Application, NextFunction, Request, Response } from "express";
+import { Application } from "express";
 import { Installation } from "models/installation";
 import { Subscription, SyncStatus } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
-import { ApiRouter } from "routes/api/api-router";
-import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("API Router", () => {
 	let app: Application;
@@ -18,18 +21,14 @@ describe("API Router", () => {
 	let subscription: Subscription;
 	let gitHubServerApp: GitHubServerApp;
 
-	const createApp = () => {
-		const app = express();
-		app.use((req: Request, _: Response, next: NextFunction) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use("/api", ApiRouter);
-		return app;
-	};
+	beforeEach(() => {
+		when(stringFlag)
+			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+			.mockResolvedValue("");
+	});
 
 	beforeEach(async () => {
-		app = createApp();
+		app = getFrontendApp();
 
 		installation = await Installation.create({
 			gitHubInstallationId,
@@ -460,6 +459,78 @@ describe("API Router", () => {
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
 				expect(oneMore?.branchStatus).toEqual("failed");
+			});
+		});
+	});
+
+	describe("api-btf-migrate", () => {
+		let gitHubServerApp: GitHubServerApp;
+		beforeEach(async () => {
+			gitHubServerApp = (await new DatabaseStateCreator().forServer().create()).gitHubServerApp!;
+		});
+
+		describe("with no API key in FF", () => {
+
+			it("does nothing for a customer without API key", async () => {
+				await supertest(app)
+					.post("/api/btf-migrate")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ })
+					.expect(200);
+
+				await gitHubServerApp.reload();
+				expect(gitHubServerApp.apiKeyHeaderName).toBeNull();
+			});
+
+			it("does nothing for a customer with API key", async () => {
+				gitHubServerApp.apiKeyHeaderName = "foo";
+				await gitHubServerApp.save();
+
+				await supertest(app)
+					.post("/api/btf-migrate")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ })
+					.expect(200);
+
+				await gitHubServerApp.reload();
+				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("foo");
+			});
+		});
+
+		describe("with API key in FF", () => {
+			beforeEach(() => {
+				when(stringFlag)
+					.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
+					.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
+			});
+
+			it("does nothing if the app is already using API key", async () => {
+				gitHubServerApp.apiKeyHeaderName = "foo";
+				await gitHubServerApp.save();
+
+				await supertest(app)
+					.post("/api/btf-migrate")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ })
+					.expect(200);
+
+				await gitHubServerApp.reload();
+				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("foo");
+			});
+
+			it("updates API key", async () => {
+				await supertest(app)
+					.post("/api/btf-migrate")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.send({ })
+					.expect(200);
+
+				await gitHubServerApp.reload();
+				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("ApiKeyHeader");
 			});
 		});
 	});
