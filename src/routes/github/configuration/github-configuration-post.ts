@@ -10,6 +10,8 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { Installation } from "models/installation";
+import { GitHubServerApp } from "models/github-server-app";
 
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
@@ -27,8 +29,12 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 	}
 };
 
+const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: number) => {
+	const maybeApp = (await GitHubServerApp.findForInstallationId(installation.id))?.find(app => app.appId === gitHubAppId);
+	return !!maybeApp?.apiKeyHeaderName;
+};
 /**
- * Handle the when a user adds a repo to this installation
+ * Handle when a user adds a repo to this installation
  */
 export const GithubConfigurationPost = async (req: Request, res: Response): Promise<void> => {
 	const { githubToken, gitHubAppId, installation } = res.locals;
@@ -89,6 +95,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost: installation.jiraHost,
+			withApiKey: await calculateWithApiKeyFlag(installation, gitHubAppId),
 			success: true,
 			gitHubProduct
 		});
@@ -100,6 +107,7 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 			name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost: installation.jiraHost,
+			withApiKey: await calculateWithApiKeyFlag(installation, gitHubAppId),
 			success: false,
 			gitHubProduct
 		});
