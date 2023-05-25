@@ -14,6 +14,8 @@ export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, 
 		return role === "admin";
 	} catch (err) {
 		logger.warn({ err, orgName, username }, `could not determine admin status of user in org`);
+		err.requiresSsoLogin = err?.cause?.response?.headers["x-github-sso"];
+
 		throw err;
 	}
 };

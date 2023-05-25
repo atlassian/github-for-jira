@@ -45,6 +45,14 @@ export class GithubClientBlockedIpError extends GithubClientError {
 	}
 }
 
+export class GithubClientSSOLoginError extends GithubClientError {
+	requiresSsoLogin: boolean;
+	constructor(cause: AxiosError) {
+		super("SSO Login required", cause);
+		this.requiresSsoLogin = false;
+	}
+}
+
 export class GithubClientInvalidPermissionsError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Resource not accessible by integration", cause);
