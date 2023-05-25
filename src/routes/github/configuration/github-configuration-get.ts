@@ -10,11 +10,7 @@ import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import {
-	GithubClientBlockedIpError,
-	GithubClientError,
-	GithubClientSSOLoginError
-} from "~/src/github/client/github-client-errors";
+import { GithubClientBlockedIpError,	GithubClientSSOLoginError } from "~/src/github/client/github-client-errors";
 import {
 	createInstallationClient,
 	createUserClient
@@ -78,7 +74,7 @@ const getInstallationsWithAdmin = async (
 	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
-		const errors: GithubClientError[] = [];
+		const errors: Error[] = [];
 		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
