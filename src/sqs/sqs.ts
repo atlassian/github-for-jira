@@ -336,9 +336,8 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	}
 
 	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
-		const unsafeLogger = getLogger("message-error-handler-unsafe", { level: "warn", unsafe: true });
 		try {
-			unsafeLogger.warn({ err, context }, "Failed message");
+			context.log.warn({ err }, "Failed message");
 			const errorHandlingResult = await this.errorHandler(err, context);
 
 			if (errorHandlingResult.isFailure) {
@@ -358,11 +357,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				context.log.warn("Deleting the message because it has reached the maximum amount of retries");
 				await this.deleteMessage(context);
 			} else {
-				unsafeLogger.error({ errorHandlingResult, err, context }, "SQS message visibility timeout changed");
+				context.log.warn({ err }, "SQS message visibility timeout changed");
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
