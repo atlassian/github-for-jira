@@ -45,9 +45,9 @@ export const ApiBtfMigratePost = async (req: Request, res: Response): Promise<vo
 	});
 
 	const apps = await GitHubServerApp.findAll();
-	await Promise.all(apps.map(async (app) =>
-		maybeMigrateApp(log, app)
-	));
+	for (let appIdx = 0; appIdx < apps.length; appIdx++) {
+		await maybeMigrateApp(log, apps[appIdx]);
+	}
 
 	res.json({
 		ok: true
