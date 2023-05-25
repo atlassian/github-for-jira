@@ -108,7 +108,7 @@
                           </p>
                           <ul>
                               <li>
-                                  Please go to the <a href="{{#if ../gitHubServerApp}}{{../gitHubServerApp.gitHubBaseUrl}}/organizations/{{account.login}}/settings/profile{{else}}https://github.com/organizations/{{account.login}}/settings/profile{{/if}}"> organization settings</a> page and make sure you have admin access there.
+                                  Please go to the <a target="_blank" href="{{#if ../gitHubServerApp}}{{../gitHubServerApp.gitHubBaseUrl}}/organizations/{{account.login}}/settings/profile{{else}}https://github.com/organizations/{{account.login}}/settings/profile{{/if}}"> organization settings</a> page and make sure you have admin access there.
                               </li>
                               <li>
                                   And then, please click <a href="?resetGithubToken=true">this link</a> to reset your token. This will reset the token and you will be able to connect to this organization.
