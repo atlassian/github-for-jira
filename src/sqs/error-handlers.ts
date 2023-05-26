@@ -3,7 +3,6 @@ import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "./sqs.types";
 import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
-import { getLogger } from "config/logger";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -33,8 +32,7 @@ export const handleUnknownError: ErrorHandler<BaseMessagePayload> = async <Messa
 export const jiraAndGitHubErrorsHandler: ErrorHandler<BaseMessagePayload> = async <MessagePayload extends BaseMessagePayload> (error: ErrorTypes,
 	context: SQSMessageContext<MessagePayload>): Promise<ErrorHandlingResult> => {
 
-	const unsafeLogger = getLogger("error-handler-unsafe", { level: "warn", unsafe: true });
-	unsafeLogger.warn({ error, context }, "Handling Jira or GitHub error");
+	context.log.warn({ err: error }, "Handling Jira or GitHub error");
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
 		|| maybeHandleRateLimitingError(error, context)
