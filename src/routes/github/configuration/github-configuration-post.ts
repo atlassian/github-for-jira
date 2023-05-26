@@ -10,8 +10,6 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
-import { GithubClientSSOLoginError } from "~/src/github/client/github-client-errors";
-
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
 		logger.info("Fetching info about user");
@@ -24,7 +22,7 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
 
-		logger.warn({ err }, err instanceof GithubClientSSOLoginError ? "Failed to get access for SSO user" : "Error checking user access");
+		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
 };
