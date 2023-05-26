@@ -2,7 +2,7 @@ import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import Logger from "bunyan";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
@@ -40,7 +40,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 export const processDeployment = async (
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
-	webhookPayload: WebhookPayloadDeploymentStatus,
+	webhookPayload: DeploymentStatusEvent,
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
@@ -107,7 +107,7 @@ const tryCacheSuccessfulDeploymentInfo = async (
 	jiraHost: string,
 	gitHubBaseUrl: string,
 	gitHubAppId: number | undefined,
-	webhookPayload: WebhookPayloadDeploymentStatus,
+	webhookPayload: DeploymentStatusEvent,
 	logger: Logger
 ) => {
 
