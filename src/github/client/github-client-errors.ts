@@ -46,10 +46,8 @@ export class GithubClientBlockedIpError extends GithubClientError {
 }
 
 export class GithubClientSSOLoginError extends GithubClientError {
-	requiresSsoLogin: boolean;
 	constructor(cause: AxiosError) {
 		super("SSO Login required", cause);
-		this.requiresSsoLogin = false;
 	}
 }
 
