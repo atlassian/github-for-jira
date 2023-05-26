@@ -10,6 +10,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+
 const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
 	try {
 		logger.info("Fetching info about user");
@@ -21,7 +22,6 @@ const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
-
 		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
