@@ -20,39 +20,6 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-/**
- * Decides whether to use the proxy URL and which one if so.
- *
- * @param jiraHost - jiraHost from context
- * @param gitHubBaseUrl - for cloud, either undefined or "github.com"'s base url
- * @param logger
- *
- * @return proxy URL or undefined (do not use)
- */
-const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | undefined, logger: Logger): Promise<string | undefined> => {
-	if (gitHubBaseUrl && gitHubBaseUrl != GITHUB_CLOUD_BASEURL) {
-		const skipList = await stringFlag(StringFlags.OUTBOUND_PROXY_SKIPLIST, "", jiraHost);
-		let skipOutboundProxy: boolean;
-		try {
-			skipOutboundProxy = skipList
-				.split(",")
-				.filter(hostname => !!hostname)
-				.map(hostname => hostname.trim())
-				.map(hostname => hostname.indexOf("://") >= 0 ? hostname : "http://" + hostname)
-				.map(hostname => new URL(hostname).hostname.toLowerCase())
-				.indexOf(new URL(gitHubBaseUrl).hostname.trim().toLowerCase()) >= 0;
-		} catch (err) {
-			logger.error({ err }, "Cannot evaluate skiplist because of a error, opting for outboundproxy for good");
-			skipOutboundProxy = false;
-		}
-		if (skipOutboundProxy) {
-			logger.debug({ gitHubBaseUrl, jiraHost }, "Skipping outbound proxy");
-			return undefined;
-		}
-	}
-	return envVars.PROXY;
-};
-
 // TODO: will go away when we remove GHE_API_KEY flag
 const calculateApiKeyConfig = async (jiraHost: string, logger: Logger, apiKeyConfig?: GitHubClientApiKeyConfig): Promise<{ apiKeyConfig: GitHubClientApiKeyConfig } | undefined> => {
 	if (apiKeyConfig) {
@@ -88,18 +55,18 @@ const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: st
 		baseUrl: githubServerBaseUrl,
 		apiUrl: `${githubServerBaseUrl}/api/v3`,
 		graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger),
+		proxyBaseUrl: envVars.PROXY,
 		... await calculateApiKeyConfig(jiraHost, logger, apiKeyConfig)
 	};
 };
 
-const buildGitHubCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubConfig> => {
+const buildGitHubCloudConfig = async (): Promise<GitHubConfig> => {
 	return {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_BASEURL,
 		apiUrl: GITHUB_CLOUD_API_BASEURL,
 		graphqlUrl: `${GITHUB_CLOUD_API_BASEURL}/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, undefined, logger)
+		proxyBaseUrl: envVars.PROXY
 	};
 };
 
@@ -123,14 +90,14 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 	}
 );
 
-const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
+const buildGitHubClientCloudConfig = async (jiraHost: string): Promise<GitHubClientConfig> => {
 	const privateKey = await keyLocator(undefined, jiraHost);
 
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
 	}
 	return {
-		...(await buildGitHubCloudConfig(jiraHost, logger)),
+		...(await buildGitHubCloudConfig()),
 		appId: parseInt(envVars.APP_ID),
 		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -144,7 +111,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
 	if (gitHubServerApp) {
 		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost, logger);
 	}
-	return buildGitHubClientCloudConfig(jiraHost, logger);
+	return buildGitHubClientCloudConfig(jiraHost);
 };
 
 /**
