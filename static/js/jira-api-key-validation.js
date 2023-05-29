@@ -1,5 +1,8 @@
 function initApiKeyValidation(apiKeyHeaderName, apiKeyHeaderValue, knownHttpHeadersLowerCase, onValidationFinished) {
 
+	AJS.$("#apiKeyHeaderNameLabel").tooltip();
+	AJS.$("#apiKeyValueLabel").tooltip();
+
 	AJS.formValidation.register([apiKeyHeaderName.auiTag], (field) => {
 		const inputStr = field.el.value;
 		if (inputStr.trim().length) {
