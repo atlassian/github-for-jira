@@ -60,7 +60,7 @@ const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: st
 	};
 };
 
-const buildGitHubCloudConfig = async (): Promise<GitHubConfig> => {
+const buildGitHubCloudConfig = (): GitHubConfig => {
 	return {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_BASEURL,
@@ -97,7 +97,7 @@ const buildGitHubClientCloudConfig = async (jiraHost: string): Promise<GitHubCli
 		throw new Error("Private key not found for github cloud");
 	}
 	return {
-		...(await buildGitHubCloudConfig()),
+		... buildGitHubCloudConfig(),
 		appId: parseInt(envVars.APP_ID),
 		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
