@@ -28,7 +28,6 @@ export enum StringFlags {
 	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist",
 	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
 	GHE_API_KEY = "ghe-encrypted-api-key"
 }
