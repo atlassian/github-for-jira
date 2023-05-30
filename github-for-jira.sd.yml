@@ -41,6 +41,8 @@ links:
   source:
     url: git@bitbucket.org:atlassian/github-jira-integration.git
 
+httpRedirect: true
+
 cleanup: false
 
 serviceProxy:
