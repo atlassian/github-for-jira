@@ -33,6 +33,12 @@ import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { runCurl } from "utils/curl/curl-utils";
 
+// Unfortunately, the type is not exposed in Octokit...
+export type PullRequestedReviewersResponse = {
+	users: Array<Octokit.PullsUpdateResponseRequestedReviewersItem>,
+	teams: Array<Octokit.PullsUpdateResponseRequestedTeamsItem>,
+}
+
 /**
  * A GitHub client that supports authentication as a GitHub app.
  * API is specific to an organization (e.g. can get all repos for an org)
@@ -88,6 +94,14 @@ export class GitHubInstallationClient extends GitHubClient {
 	 */
 	public async getPullRequestReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<Octokit.PullsListReviewsResponse>> {
 		return await this.get<Octokit.PullsListReviewsResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/reviews`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
+	}
+
+	public async getPullRequestRequestedReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<PullRequestedReviewersResponse>> {
+		return await this.get<PullRequestedReviewersResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/requested_reviewers`, {}, {
 			owner,
 			repo,
 			pullNumber

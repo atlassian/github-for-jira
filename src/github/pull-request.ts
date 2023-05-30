@@ -2,7 +2,6 @@ import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { Octokit } from "@octokit/rest";
 import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
@@ -36,9 +35,7 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 		subTrigger: "pullRequest"
 	};
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
-	let reviews: Octokit.PullsListReviewsResponse = [];
-
-	reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
+	const reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 
 	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 	context.log.info("Pullrequest mapped to Jira Payload");
