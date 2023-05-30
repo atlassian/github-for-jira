@@ -10,7 +10,7 @@ import { AppInstallation } from "config/interfaces";
 import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
-import { GithubClientBlockedIpError } from "~/src/github/client/github-client-errors";
+import { GithubClientBlockedIpError,	GithubClientSSOLoginError } from "~/src/github/client/github-client-errors";
 import {
 	createInstallationClient,
 	createUserClient
@@ -101,6 +101,7 @@ const getInstallationsWithAdmin = async (
 			...installation,
 			numberOfRepos,
 			isAdmin,
+			requiresSsoLogin: !!errors.find(err => err instanceof GithubClientSSOLoginError),
 			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError)
 		};
 	}));
@@ -245,5 +246,6 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 interface InstallationWithAdmin extends Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem {
 	numberOfRepos: number;
 	isAdmin: boolean;
+	requiresSsoLogin: boolean;
 	isIPBlocked: boolean;
 }

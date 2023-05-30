@@ -1,6 +1,6 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
 import { isArray, isString, merge, omit, mapKeys } from "lodash";
-import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
+import { SafeRawLogStream } from "utils/logger-utils";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { canLogHeader } from "utils/http-headers";
 
@@ -256,12 +256,6 @@ const loggerStreamSafe = (): Logger.Stream => ({
 	closeOnExit: false
 });
 
-const loggerStreamUnsafe = (): Logger.Stream => ({
-	type: "raw",
-	stream: new UnsafeRawLogStream(),
-	closeOnExit: false
-});
-
 interface LoggerOptions {
 	fields?: Record<string, unknown>;
 	streams?: Stream[];
@@ -270,15 +264,13 @@ interface LoggerOptions {
 	serializers?: Serializers;
 	src?: boolean;
 	filterHttpRequests?: boolean;
-	unsafe?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
 		streams: [
-			loggerStreamSafe(),
-			loggerStreamUnsafe()
+			loggerStreamSafe()
 		],
 		level: defaultLogLevel,
 		serializers: {

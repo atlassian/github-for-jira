@@ -1,5 +1,5 @@
 import { Repository } from "models/subscription";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/github-queries";
 import Logger from "bunyan";
@@ -41,12 +41,13 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				updated_at: deployment.latestStatus?.updatedAt,
 				state: deployment.latestStatus?.state
 			}
-		} as WebhookPayloadDeploymentStatus;
+		} as DeploymentStatusEvent;
+
 		const metrics = {
 			trigger: "backfill",
 			subTrigger: "deployment"
 		};
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, metrics, logger, gitHubAppId);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", metrics, logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
