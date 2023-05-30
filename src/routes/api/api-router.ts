@@ -24,8 +24,6 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
-import { ApiBtfMigratePost } from "routes/api/api-btf-migrate-post";
-
 export const ApiRouter = Router();
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
@@ -93,8 +91,6 @@ ApiRouter.post(
 
 // Hash incoming values with GLOBAL_HASH_SECRET.
 ApiRouter.post("/hash", ApiHashPost);
-
-ApiRouter.post("/btf-migrate", ApiBtfMigratePost);
 
 // Endpoint to recrypt encrypted value in a different encryption context
 ApiRouter.post("/recrypt", ApiRecryptPost);
