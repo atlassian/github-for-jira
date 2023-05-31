@@ -45,7 +45,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			await supertest(app)
 				.get(pathname)
 				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
-				.set("Authorization", `Bearer ${buildQueryTypeJWTToken(SHARED_SECRET, {
+				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
 				})}`)
@@ -60,7 +60,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			await supertest(app)
 				.get(pathname)
 				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
-				.set("Authorization", `Bearer ${buildQueryTypeJWTToken(SHARED_SECRET, {
+				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
 				})}`)
