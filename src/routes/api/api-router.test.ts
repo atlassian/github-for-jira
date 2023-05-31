@@ -8,8 +8,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { v4 as uuid } from "uuid";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { stringFlag, StringFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -20,12 +18,6 @@ describe("API Router", () => {
 	let installation: Installation;
 	let subscription: Subscription;
 	let gitHubServerApp: GitHubServerApp;
-
-	beforeEach(() => {
-		when(stringFlag)
-			.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
-			.mockResolvedValue("");
-	});
 
 	beforeEach(async () => {
 		app = getFrontendApp();
@@ -459,78 +451,6 @@ describe("API Router", () => {
 
 				const oneMore = await RepoSyncState.findByPk(repoSyncState.id);
 				expect(oneMore?.branchStatus).toEqual("failed");
-			});
-		});
-	});
-
-	describe("api-btf-migrate", () => {
-		let gitHubServerApp: GitHubServerApp;
-		beforeEach(async () => {
-			gitHubServerApp = (await new DatabaseStateCreator().forServer().create()).gitHubServerApp!;
-		});
-
-		describe("with no API key in FF", () => {
-
-			it("does nothing for a customer without API key", async () => {
-				await supertest(app)
-					.post("/api/btf-migrate")
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.send({ })
-					.expect(200);
-
-				await gitHubServerApp.reload();
-				expect(gitHubServerApp.apiKeyHeaderName).toBeNull();
-			});
-
-			it("does nothing for a customer with API key", async () => {
-				gitHubServerApp.apiKeyHeaderName = "foo";
-				await gitHubServerApp.save();
-
-				await supertest(app)
-					.post("/api/btf-migrate")
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.send({ })
-					.expect(200);
-
-				await gitHubServerApp.reload();
-				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("foo");
-			});
-		});
-
-		describe("with API key in FF", () => {
-			beforeEach(() => {
-				when(stringFlag)
-					.calledWith(StringFlags.GHE_API_KEY, expect.anything(), jiraHost)
-					.mockResolvedValue("[\"ApiKeyHeader\", \"encrypted:super-key\"]");
-			});
-
-			it("does nothing if the app is already using API key", async () => {
-				gitHubServerApp.apiKeyHeaderName = "foo";
-				await gitHubServerApp.save();
-
-				await supertest(app)
-					.post("/api/btf-migrate")
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.send({ })
-					.expect(200);
-
-				await gitHubServerApp.reload();
-				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("foo");
-			});
-
-			it("updates API key", async () => {
-				await supertest(app)
-					.post("/api/btf-migrate")
-					.set("host", "127.0.0.1")
-					.set("X-Slauth-Mechanism", "slauthtoken")
-					.send({ })
-					.expect(200);
-
-				await gitHubServerApp.reload();
-				expect(gitHubServerApp.apiKeyHeaderName).toStrictEqual("ApiKeyHeader");
 			});
 		});
 	});
