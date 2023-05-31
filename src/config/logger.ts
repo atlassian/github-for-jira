@@ -78,6 +78,32 @@ const CENSORED_SEARCH_URL = "/search/repositories?q=CENSORED&order=updated";
 
 const isSearchRepoUrl = (url: string) => url.match(SEARCH_URL_REGEX);
 
+const CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX = /^(.*)\/owners\/([^/]+)\/repos\/([^/]+)\/branches(.*)$/;
+const isCreateBranchPageBranchesUrl = (url: string) => url.match(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX);
+
+const JIRA_HOST_QUERY_PARAM_REGEX = /jiraHost=(https%3A%2F%2F[\w-]+\.atlassian\.net)/;
+
+const maybeCensorJiraHostInQueryParams = (url: string) => {
+	if (url.match(JIRA_HOST_QUERY_PARAM_REGEX)) {
+		return url.replace(JIRA_HOST_QUERY_PARAM_REGEX, (_, jiraHostEncoded) =>
+			`jiraHost=${createHashWithSharedSecret(decodeURIComponent(jiraHostEncoded))}`);
+	}
+	return url;
+};
+
+
+const removeOwnersAndReposFromUrl = (url: string) =>
+	url.replace(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX, (_, prefix, owners, repos, suffix) =>
+		[
+			prefix,
+			"owners",
+			createHashWithSharedSecret(decodeURIComponent(owners)),
+			"repos",
+			createHashWithSharedSecret(decodeURIComponent(repos)),
+			"branches"
+		].join("/") + suffix
+	);
+
 const censorUrl = (url) => {
 	if (!url) {
 		return url;
@@ -88,7 +114,11 @@ const censorUrl = (url) => {
 			return censoredUrl.substr(1);
 		}
 
-		const censoredUrl = maybeRemoveOrgAndRepo(url);
+		const censoredUrl =
+			maybeCensorJiraHostInQueryParams(
+				maybeRemoveOrgAndRepo(
+					url
+				));
 
 		if (isCompareUrl(censoredUrl)) {
 			return removeBranchesFromCompareUrl(censoredUrl);
@@ -104,6 +134,9 @@ const censorUrl = (url) => {
 
 		} else if (isSearchRepoUrl(censoredUrl)) {
 			return CENSORED_SEARCH_URL;
+
+		} else if (isCreateBranchPageBranchesUrl(censoredUrl)) {
+			return removeOwnersAndReposFromUrl(censoredUrl);
 		}
 
 		return censoredUrl;
