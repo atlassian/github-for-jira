@@ -163,4 +163,22 @@ describe("github-installation-client", () => {
 			expect(data).toStrictEqual(EXPECTED_RESPONSE);
 		});
 	});
+
+	it("getPullRequestRequestedReviews returns list of requested reviewers", async () => {
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const client = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+
+		githubNock.get("/repos/test-owner/test-repo/pulls/1/requested_reviewers")
+			.matchHeader("Authorization", "Bearer token")
+			.reply(200, {
+				users: [],
+				teams: []
+			});
+
+		const response = await client.getPullRequestRequestedReviews("test-owner", "test-repo", 1);
+		expect(response.data).toStrictEqual({
+			users: [],
+			teams: []
+		});
+	});
 });
