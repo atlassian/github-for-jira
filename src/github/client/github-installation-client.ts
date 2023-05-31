@@ -34,6 +34,7 @@ import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { runCurl } from "utils/curl/curl-utils";
 
 // Unfortunately, the type is not exposed in Octokit...
+// https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
 export type PullRequestedReviewersResponse = {
 	users: Array<Octokit.PullsUpdateResponseRequestedReviewersItem>,
 	teams: Array<Octokit.PullsUpdateResponseRequestedTeamsItem>,
