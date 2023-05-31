@@ -5,9 +5,10 @@ import { RepoSyncState } from "models/reposyncstate";
 
 const { MISSING_JIRA_HOST, MISSING_SUBSCRIPTION } = Errors;
 
-export interface GitHubRepo {
-	id: number,
-	name: string
+export interface WorkspaceRepo {
+	id: string,
+	name: string,
+	workspaceId: string
 }
 
 const findMatchingRepos = async (
@@ -42,6 +43,12 @@ const findMatchingRepos = async (
 	return repos;
 };
 
+const paginatedRepositories = (page: number, limit: number, repositories) => {
+	const startIndex = (page - 1) * limit;
+	const endIndex = page * limit;
+	return repositories.slice(startIndex, endIndex);
+};
+
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to get repositories");
 
@@ -55,6 +62,8 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
+	const page = Number(req.query?.page) || 1; // Current page (default: 1)
+	const limit = Number(req.query?.limit) || 10; // Number of items per page (default: 10)
 
 	if (!repoName) {
 		const errMessage = "Missing repo name";
@@ -78,15 +87,14 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 		return;
 	}
 
-	const repositories = repos.map(repo => {
-		const { repoId, repoName: name, subscriptionId } = repo;
+	const repositories: WorkspaceRepo[] = repos.map((repo) => ({
+		id: repo.repoId.toString(),
+		name: repo.repoName,
+		workspaceId: repo.subscriptionId
+	}));
 
-		return {
-			id: repoId.toString(),
-			name,
-			workspaceId: subscriptionId
-		};
+	res.status(200).json({
+		success: true,
+		repositories: paginatedRepositories(page, limit, repositories)
 	});
-
-	res.status(200).json({ success: true, repositories });
 };
