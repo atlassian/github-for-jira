@@ -201,17 +201,17 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: repoOne.repoId.toString(),
 					name: "new-repo",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				},
 				{
 					id: repoTwo.repoId.toString(),
 					name: "another-new-repo",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				},
 				{
 					id: repoFour.repoId.toString(),
 					name: "imNew",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				}
 			]
 		};
@@ -319,22 +319,22 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: repoOne.repoId.toString(),
 					name: "new-repo",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				},
 				{
 					id: repoTwo.repoId.toString(),
 					name: "another-new-repo",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				},
 				{
 					id: repoFour.repoId.toString(),
 					name: "imNew",
-					workspaceId: sub.id
+					workspaceId: sub.id.toString()
 				},
 				{
 					id: sub2repo.repoId.toString(),
 					name: "newbutshouldmatch",
-					workspaceId: sub2.id
+					workspaceId: sub2.id.toString()
 				}
 			]
 		};
@@ -349,4 +349,221 @@ describe("Workspaces Repositories Get", () => {
 				expect(res.text).toContain(JSON.stringify(response));
 			});
 	});
+
+	it("Should return paginated repositories based on page and limit parameters", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const repo1 = {
+			subscriptionId: sub.id,
+			repoId: 1,
+			repoName: "repo1",
+			repoOwner: "owner",
+			repoFullName: "owner/repo1",
+			repoUrl: "github.com/owner/repo1"
+		};
+
+		const repo2 = {
+			subscriptionId: sub.id,
+			repoId: 2,
+			repoName: "repo2",
+			repoOwner: "owner",
+			repoFullName: "owner/repo2",
+			repoUrl: "github.com/owner/repo2"
+		};
+
+		const repo3 = {
+			subscriptionId: sub.id,
+			repoId: 3,
+			repoName: "repo3",
+			repoOwner: "owner",
+			repoFullName: "owner/repo3",
+			repoUrl: "github.com/owner/repo3"
+		};
+
+		const repo4 = {
+			subscriptionId: sub.id,
+			repoId: 4,
+			repoName: "repo4",
+			repoOwner: "owner",
+			repoFullName: "owner/repo4",
+			repoUrl: "github.com/owner/repo4"
+		};
+
+		await RepoSyncState.create({
+			...repo1,
+			subscriptionId: sub.id
+		});
+
+		await RepoSyncState.create({
+			...repo2,
+			subscriptionId: sub.id
+		});
+
+		await RepoSyncState.create({
+			...repo3,
+			subscriptionId: sub.id
+		});
+
+		await RepoSyncState.create({
+			...repo4,
+			subscriptionId: sub.id
+		});
+
+		const responsePage1 = {
+			success: true,
+			repositories: [
+				{
+					id: "1",
+					name: "repo1",
+					workspaceId: sub.id.toString()
+				},
+				{
+					id: "2",
+					name: "repo2",
+					workspaceId: sub.id.toString()
+				}
+			]
+		};
+
+		const responsePage2 = {
+			success: true,
+			repositories: [
+				{
+					id: "3",
+					name: "repo3",
+					workspaceId: sub.id.toString()
+				},
+				{
+					id: "4",
+					name: "repo4",
+					workspaceId: sub.id.toString()
+				}
+			]
+		};
+
+		await supertest(app)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=repo&page=1&limit=2`)
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(responsePage1));
+			});
+
+		await supertest(app)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=repo&page=2&limit=2`)
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(responsePage2));
+			});
+	});
+
+	it("Should return paginated repositories when number of repositories exceeds the default limit", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const subscriptionId = sub.id.toString();
+
+		const repositories = [
+			{
+				id: "1",
+				name: "repo1",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "2",
+				name: "repo2",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "3",
+				name: "repo3",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "4",
+				name: "repo4",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "5",
+				name: "repo5",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "6",
+				name: "repo6",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "7",
+				name: "repo7",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "8",
+				name: "repo8",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "9",
+				name: "repo9",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "10",
+				name: "repo10",
+				workspaceId: subscriptionId
+			},
+			{
+				id: "11",
+				name: "repo11",
+				workspaceId: subscriptionId
+			}
+		];
+
+		const createRepositories = repositories.map(repo =>
+			RepoSyncState.create({
+				subscriptionId: sub.id,
+				repoId: repo.id,
+				repoName: repo.name,
+				repoOwner: "owner",
+				repoFullName: `owner/${repo.name}`,
+				repoUrl: `github.com/owner/${repo.name}`
+			})
+		);
+
+		await Promise.all(createRepositories);
+
+		const response = {
+			success: true,
+			repositories: repositories.slice(0, 10) // default limit
+		};
+
+		await supertest(app)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}&searchQuery=repo`)
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(response));
+			});
+	});
+
 });

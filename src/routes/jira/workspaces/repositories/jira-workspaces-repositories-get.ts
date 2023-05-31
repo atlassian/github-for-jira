@@ -90,7 +90,7 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const repositories: WorkspaceRepo[] = repos.map((repo) => ({
 		id: repo.repoId.toString(),
 		name: repo.repoName,
-		workspaceId: repo.subscriptionId
+		workspaceId: repo.subscriptionId.toString()
 	}));
 
 	res.status(200).json({
