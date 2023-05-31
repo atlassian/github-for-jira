@@ -10,7 +10,14 @@ const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContex
 		"id": "hi",
 		"name": "hi",
 		"payload": payload,
-		gitHubAppConfig: gitHubAppConfig,
+		gitHubAppConfig: gitHubAppConfig || {
+			gitHubAppId: undefined,
+			appId: 1,
+			clientId: "abc",
+			gitHubBaseUrl: "https://github.com",
+			gitHubApiUrl: "https://api.github.com",
+			uuid: undefined
+		},
 		log: getLogger("foo")
 	});
 };

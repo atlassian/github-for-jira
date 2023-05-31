@@ -86,6 +86,7 @@
 		"minimatch": "^5.0.1",
 		"moment": "^2.29.4",
 		"moo": "^0.5.0",
+		"node_extra_ca_certs_mozilla_bundle": "^1.0.5",
 		"optional-require": "^1.1.8",
 		"pg": "^8.7.3",
 		"primer": "^10.6.0",
@@ -108,7 +109,7 @@
 	},
 	"devDependencies": {
 		"@octokit/rest": "16.43.2",
-		"@octokit/webhooks": "6.3.2",
+		"@octokit/webhooks-types": "^6.11.0",
 		"@playwright/test": "^1.33.0",
 		"@types/bunyan": "^1.8.6",
 		"@types/bunyan-format": "^0.2.4",

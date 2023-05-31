@@ -163,4 +163,33 @@ describe("github-oauth-router", () => {
 			});
 		});
 	});
+
+	describe("Testing resetGithubToken", () => {
+		it("Should clear the session when resetGithubToken is set", async () => {
+			const req = {
+				log: getLogger("test"),
+				query: { resetGithubToken: true, secondParams: true },
+				originalUrl: "https://randomsite.com",
+				session: { githubToken: "github-token", githubRefreshToken: "refresh-token" }
+			};
+			const res = {
+				locals: {
+					gitHubAppConfig: {},
+					jiraHost,
+					githubToken: ""
+				},
+				redirect: jest.fn(),
+				status:() => ({ json: jest.fn() })
+			};
+			const next = jest.fn();
+
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			await GithubAuthMiddleware(req, res, next);
+
+			expect(req.session.githubToken).toBeUndefined();
+			expect(req.session.githubRefreshToken).toBeUndefined();
+			expect(res.redirect).toBeCalledWith("https://randomsite.com?secondParams=true");
+		});
+	});
 });

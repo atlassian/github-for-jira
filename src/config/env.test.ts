@@ -22,6 +22,7 @@ describe("environment variables", () => {
 	it("Should not be able to change variables in envVars", () => {
 		process.env.NODE_ENV = EnvironmentEnum.production;
 		expect(envVars.NODE_ENV).toBe(EnvironmentEnum.test);
+		process.env.NODE_ENV = EnvironmentEnum.test;
 	});
 
 	it("Should not change process.env when changing a variable in envVars", () => {
