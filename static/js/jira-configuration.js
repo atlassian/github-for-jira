@@ -150,7 +150,10 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow(`/session/github/${$(event.target).data("app-uuid")}/configuration?ghRedirect=to`);
+		child.window.jwt = token;
+	});
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
@@ -338,7 +341,7 @@ $(document).ready(function () {
 
 $(".test-button").click(function(event) {
 	event.preventDefault();
-	const path = "/jira/workspaces/repositories/search?workspaceId=1&searchQuery=anoth"
+	const path = "/jira/workspaces/repositories/search?searchQuery=re"
 	$.ajax({
 		type: "GET",
 		url: path,
@@ -350,3 +353,5 @@ $(".test-button").click(function(event) {
 		},
 	});
 });
+
+
