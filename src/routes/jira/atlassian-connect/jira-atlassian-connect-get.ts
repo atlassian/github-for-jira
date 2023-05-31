@@ -38,9 +38,6 @@ const modules = {
 			},
 			associateRepository: {
 				templateUrl: `${envVars.APP_URL}/workspaces/repositories/associate`
-			},
-			createRepository: {
-				templateUrl: `${envVars.APP_URL}/workspaces/repositories/create`
 			}
 		},
 		key: "github-development-tool",

@@ -1,5 +1,5 @@
-import { filterHttpRequests, SafeRawLogStream, UnsafeRawLogStream } from "./logger-utils";
-import { INFO, TRACE, DEBUG } from "bunyan";
+import { filterHttpRequests, SafeRawLogStream } from "./logger-utils";
+import { INFO } from "bunyan";
 
 describe("Logger Utils", () => {
 
@@ -51,44 +51,6 @@ describe("Logger Utils", () => {
 		const encoding = "utf-8";
 		const next = () => true;
 
-		describe("basic checks - unsafe stream: %s", () => {
-			let stdoutSpy;
-			let stream;
-
-			beforeEach(async() => {
-				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new SafeRawLogStream();
-			});
-
-			it("should write to stdout", async () => {
-				const testMessage = {
-					msg: "Test Message",
-					jiraHost: "host"
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(process.stdout.write).toHaveBeenCalled();
-			});
-
-			it("should write msg data", async () => {
-				const testMessage = {
-					msg: "Epic logging message 9000",
-					jiraHost: "host"
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(getLogObject(stdoutSpy.mock).msg).toBe("Epic logging message 9000");
-			});
-
-			it("should write additional params data", async () => {
-				const testMessage = {
-					msg: "Message 8",
-					jiraHost: "host",
-					breakfast: "Cake"
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(getLogObject(stdoutSpy.mock).breakfast).toBe("Cake");
-			});
-		});
-
 		describe("safe logger", () => {
 			let stdoutSpy;
 			let stream;
@@ -98,7 +60,7 @@ describe("Logger Utils", () => {
 				stream = new SafeRawLogStream();
 			});
 
-			it("should serialize sensitive data", async () => {
+			it("should hash sensitive data", async () => {
 				const testMessage = {
 					msg: "Boring message",
 					orgName: "ORG"
@@ -118,49 +80,6 @@ describe("Logger Utils", () => {
 				expect(process.stdout.write).not.toHaveBeenCalled();
 			});
 
-		});
-
-		describe("unsafe logger", () => {
-
-			let stdoutSpy;
-			let stream;
-
-			beforeEach(() => {
-				stdoutSpy = jest.spyOn(process.stdout, "write").mockImplementation(next);
-				stream = new UnsafeRawLogStream();
-			});
-
-			it("should write log when tagged unsafe", async () => {
-				const testMessage = {
-					msg: "More messaging",
-					unsafe: true,
-					orgName: "ORG",
-					level: INFO
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(process.stdout.write).toHaveBeenCalled();
-			});
-
-			it("should not serialize sensitive data", async () => {
-				const testMessage = {
-					msg: "MEOW",
-					orgName: "normy Org Name",
-					jiraHost: "test-host",
-					level: TRACE
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(getLogObject(stdoutSpy.mock).orgName).toContain("normy Org Name");
-			});
-
-			it("should tag unsafe", async () => {
-				const testMessage = {
-					msg: "Unsafe message",
-					jiraHost: "test-host",
-					level: DEBUG
-				};
-				await stream._write(testMessage, encoding, next);
-				expect(getLogObject(stdoutSpy.mock).env_suffix).toBe("unsafe");
-			});
 		});
 	});
 });

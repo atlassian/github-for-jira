@@ -1,7 +1,6 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId } from "../github/client/installation-id";
-import { stringFlag, StringFlags } from "config/feature-flags";
 import { GitHubUserClient } from "../github/client/github-user-client";
 import Logger from "bunyan";
 import { GitHubAppClient } from "../github/client/github-app-client";
@@ -9,7 +8,6 @@ import { envVars } from "~/src/config/env";
 import { keyLocator } from "~/src/github/client/key-locator";
 import { GitHubClientApiKeyConfig, GitHubConfig, Metrics } from "~/src/github/client/github-client";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
-import { EncryptionClient } from "utils/encryption-client";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL, GITHUB_CLOUD_HOSTNAME } from "~/src/github/client/github-client-constants";
 
 interface GitHubClientConfig extends GitHubConfig {
@@ -20,93 +18,31 @@ interface GitHubClientConfig extends GitHubConfig {
 	gitHubClientSecret: string;
 }
 
-/**
- * Decides whether to use the proxy URL and which one if so.
- *
- * @param jiraHost - jiraHost from context
- * @param gitHubBaseUrl - for cloud, either undefined or "github.com"'s base url
- * @param logger
- *
- * @return proxy URL or undefined (do not use)
- */
-const calculateProxyBaseUrl = async (jiraHost: string, gitHubBaseUrl: string | undefined, logger: Logger): Promise<string | undefined> => {
-	if (gitHubBaseUrl && gitHubBaseUrl != GITHUB_CLOUD_BASEURL) {
-		const skipList = await stringFlag(StringFlags.OUTBOUND_PROXY_SKIPLIST, "", jiraHost);
-		let skipOutboundProxy: boolean;
-		try {
-			skipOutboundProxy = skipList
-				.split(",")
-				.filter(hostname => !!hostname)
-				.map(hostname => hostname.trim())
-				.map(hostname => hostname.indexOf("://") >= 0 ? hostname : "http://" + hostname)
-				.map(hostname => new URL(hostname).hostname.toLowerCase())
-				.indexOf(new URL(gitHubBaseUrl).hostname.trim().toLowerCase()) >= 0;
-		} catch (err) {
-			logger.error({ err }, "Cannot evaluate skiplist because of a error, opting for outboundproxy for good");
-			skipOutboundProxy = false;
-		}
-		if (skipOutboundProxy) {
-			logger.debug({ gitHubBaseUrl, jiraHost }, "Skipping outbound proxy");
-			return undefined;
-		}
-	}
-	return envVars.PROXY;
-};
-
-// TODO: will go away when we remove GHE_API_KEY flag
-const calculateApiKeyConfig = async (jiraHost: string, logger: Logger, apiKeyConfig?: GitHubClientApiKeyConfig): Promise<{ apiKeyConfig: GitHubClientApiKeyConfig } | undefined> => {
-	if (apiKeyConfig) {
-		return Promise.resolve({
-			apiKeyConfig
-		});
-	}
-
-	try {
-		const maybeApiKey = await stringFlag(StringFlags.GHE_API_KEY, "", jiraHost);
-		if (maybeApiKey) {
-			logger.info("Encrypted API key found");
-			const [headerName, headerEncryptedValue] = JSON.parse(maybeApiKey) as Array<string>;
-			return Promise.resolve({
-				apiKeyConfig: {
-					headerName,
-					apiKeyGenerator: () =>
-						EncryptionClient.decrypt(headerEncryptedValue, {
-							jiraHost
-						})
-				}
-			});
-		}
-	} catch (err) {
-		logger.error({ err }, "Cannot calculate API key");
-	}
-	return undefined;
-};
-
-const buildGitHubServerConfig = async (githubServerBaseUrl: string, jiraHost: string, logger: Logger, apiKeyConfig?: GitHubClientApiKeyConfig): Promise<GitHubConfig> => {
+const buildGitHubServerConfig = async (githubServerBaseUrl: string, apiKeyConfig?: GitHubClientApiKeyConfig): Promise<GitHubConfig> => {
 	return {
 		hostname: githubServerBaseUrl,
 		baseUrl: githubServerBaseUrl,
 		apiUrl: `${githubServerBaseUrl}/api/v3`,
 		graphqlUrl: `${githubServerBaseUrl}/api/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, githubServerBaseUrl, logger),
-		... await calculateApiKeyConfig(jiraHost, logger, apiKeyConfig)
+		proxyBaseUrl: envVars.PROXY,
+		apiKeyConfig
 	};
 };
 
-const buildGitHubCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubConfig> => {
+const buildGitHubCloudConfig = (): GitHubConfig => {
 	return {
 		hostname: GITHUB_CLOUD_HOSTNAME,
 		baseUrl: GITHUB_CLOUD_BASEURL,
 		apiUrl: GITHUB_CLOUD_API_BASEURL,
 		graphqlUrl: `${GITHUB_CLOUD_API_BASEURL}/graphql`,
-		proxyBaseUrl: await calculateProxyBaseUrl(jiraHost, undefined, logger)
+		proxyBaseUrl: envVars.PROXY
 	};
 };
 
-const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => (
+const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, jiraHost: string): Promise<GitHubClientConfig> => (
 	{
 		...(
-			await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl, jiraHost, logger,
+			await buildGitHubServerConfig(gitHubServerApp.gitHubBaseUrl,
 				gitHubServerApp.apiKeyHeaderName
 					? {
 						headerName: gitHubServerApp.apiKeyHeaderName,
@@ -123,14 +59,14 @@ const buildGitHubClientServerConfig = async (gitHubServerApp: GitHubServerApp, j
 	}
 );
 
-const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): Promise<GitHubClientConfig> => {
+const buildGitHubClientCloudConfig = async (jiraHost: string): Promise<GitHubClientConfig> => {
 	const privateKey = await keyLocator(undefined, jiraHost);
 
 	if (!privateKey) {
 		throw new Error("Private key not found for github cloud");
 	}
 	return {
-		...(await buildGitHubCloudConfig(jiraHost, logger)),
+		... buildGitHubCloudConfig(),
 		appId: parseInt(envVars.APP_ID),
 		gitHubClientId: envVars.GITHUB_CLIENT_ID,
 		gitHubClientSecret: envVars.GITHUB_CLIENT_SECRET,
@@ -139,12 +75,12 @@ const buildGitHubClientCloudConfig = async (jiraHost: string, logger: Logger): P
 };
 
 // TODO: make private because it is only exported for testing (and must not be used in other places!)
-export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, logger: Logger, jiraHost: string): Promise<GitHubClientConfig> => {
+export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost: string): Promise<GitHubClientConfig> => {
 	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 	if (gitHubServerApp) {
-		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost, logger);
+		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost);
 	}
-	return buildGitHubClientCloudConfig(jiraHost, logger);
+	return buildGitHubClientCloudConfig(jiraHost);
 };
 
 /**
@@ -152,7 +88,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  * get all installation or get more info for the app
  */
 export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, metrics: Metrics): Promise<GitHubAppClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return new GitHubAppClient(gitHubClientConfig, jiraHost, metrics, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 };
 
@@ -161,7 +97,7 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
  * information specific to an organization.
  */
 export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, metrics: Metrics, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, jiraHost, metrics, logger, gitHubClientConfig.serverId);
 };
 
@@ -169,7 +105,7 @@ export const createInstallationClient = async (gitHubInstallationId: number, jir
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
 export const createUserClient = async (githubToken: string, jiraHost: string, metrics: Metrics, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return new GitHubUserClient(githubToken, gitHubClientConfig, jiraHost, metrics, logger);
 };
 
@@ -180,9 +116,9 @@ export const createAnonymousClient = async (
 	logger: Logger,
 	apiKeyConfig?: GitHubClientApiKeyConfig
 ): Promise<GitHubAnonymousClient> =>
-	new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, jiraHost, logger, apiKeyConfig), jiraHost, metrics, logger);
+	new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, apiKeyConfig), jiraHost, metrics, logger);
 
 export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
-	const config = await getGitHubClientConfigFromAppId(gitHubAppId, logger, jiraHost);
+	const config = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return new GitHubAnonymousClient(config, jiraHost, metrics, logger);
 };
