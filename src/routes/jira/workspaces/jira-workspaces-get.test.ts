@@ -129,7 +129,8 @@ describe("Workspaces Get", () => {
 			workspaces: [
 				{
 					id: sub.id.toString(),
-					name: "atlassian"
+					name: "atlassian",
+					canCreateContainer: false
 				}
 			]
 		};
@@ -218,15 +219,18 @@ describe("Workspaces Get", () => {
 			workspaces: [
 				{
 					id: sub.id.toString(),
-					name: "atlas"
+					name: "atlas",
+					canCreateContainer: false
 				},
 				{
 					id: sub2.id.toString(),
-					name: "atlassian"
+					name: "atlassian",
+					canCreateContainer: false
 				},
 				{
 					id: sub3.id.toString(),
-					name: "iworkatatlassian"
+					name: "iworkatatlassian",
+					canCreateContainer: false
 				}
 			]
 		};
