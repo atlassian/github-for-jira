@@ -328,6 +328,7 @@ $(document).ready(function () {
 	if (isIncrementalBackfillEnabled) {
 		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+		AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
 
 		$(".jiraConfiguration__info__backfillDate-label").each(function () {
 			if ($(this).attr("data-backfill-since")) {

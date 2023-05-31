@@ -1,0 +1,39 @@
+{
+	"data": {
+		"viewer": {
+			"repositories": {
+				"totalCount": 2,
+				"pageInfo": {
+					"endCursor": "Y3Vyc29yOnYyOpK5MjAyMS0wOS0wNVQyMDozMTo1NSswMDowMM4wrst8",
+					"hasNextPage": false
+				},
+				"edges": [
+					{
+						"node": {
+							"id": 123456789,
+							"name": "SampleRepo1",
+							"full_name": "user1/SampleRepo1",
+							"owner": {
+								"login": "user1"
+							},
+							"html_url": "https://github.com/user1/SampleRepo1",
+							"updated_at": "2022-10-10T20:31:55Z"
+						}
+					},
+					{
+						"node": {
+							"id": 987654321,
+							"name": "SampleRepo2",
+							"full_name": "user2/SampleRepo2",
+							"owner": {
+								"login": "user2"
+							},
+							"html_url": "https://github.com/user2/SampleRepo2",
+							"updated_at": "2022-10-10T19:30:45Z"
+						}
+					}
+				]
+			}
+		}
+	}
+}
