@@ -2,7 +2,6 @@ import { GitHubInstallationClient } from "~/src/github/client/github-installatio
 import { Repository } from "models/subscription";
 import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
-import _ from "lodash";
 
 export const 	getPullRequestReviews = async (
 	gitHubInstallationClient: GitHubInstallationClient,
@@ -15,19 +14,13 @@ export const 	getPullRequestReviews = async (
 	const { number: pullRequestNumber, id: pullRequestId } = pullRequest;
 
 	try {
-		const responseReviewers = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
-		const reviewers = responseReviewers.data;
-
 		const responseRequestedReviewers = await gitHubInstallationClient.getPullRequestRequestedReviews(repositoryOwner, repositoryName, pullRequestNumber);
 		const requestedReviewers = responseRequestedReviewers.data;
 
-		const result: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = _.cloneDeep(reviewers);
-		requestedReviewers.users.forEach(user => {
-			result.push({
-				user
-			});
-		});
-		return result;
+		const responseReviewers = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
+		const reviewers = responseReviewers.data;
+
+		return requestedReviewers.users.map(user => ({ user })).concat(reviewers);
 	} catch (err) {
 		logger.warn({ pullRequestNumber, pullRequestId, repositoryId },"Get Pull Reviews Failed - Check Github Permissions: Can't retrieve reviewers");
 		return [];

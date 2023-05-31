@@ -26,17 +26,29 @@ describe("getPullRequestReviews", () => {
 
 	it("should return array of reviewers with valid repo and pr", async () => {
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
+			.reply(200, {
+				users: []
+			});
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
-			.reply(200, { stuff: "things" });
+			.reply(200, [{ stuff: "things" }]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual({ stuff: "things" });
+		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([{ stuff: "things" }]);
 	});
 
-	it("should return empty array with a 404 response", async () => {
+	it("should map a error from /reviews into an empty array", async () => {
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
+			.reply(200, {
+				users: []
+			});
 		githubNock
 			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
 			.reply(404);
@@ -46,30 +58,43 @@ describe("getPullRequestReviews", () => {
 		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
-	it("should return empty array when error thrown", async () => {
+	it("should map a error from /requested_reviewers into an empty array", async () => {
 		githubUserTokenNock(GITHUB_INSTALLATION_ID);
-		const MOCK_REPOSITORY = {
-			owner: {
-				login: "batman"
-			},
-			full_name: "tt",//todo put something funny
-			html_url: "tt",//todo put something funny
-			name: "gotham-city-bus-pass",
-			updated_at: "",
-			id: 1
-		};
-		const MOCK_PR = {
-			number: 2,
-			id: 3
-		};
 		githubNock
-			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
-			.replyWithError("something awful happened");
+			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
+			.reply(500);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
+	it("should merge requested_reviewers and reviews together", async () => {
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/requested_reviewers`)
+			.reply(200, {
+				users: [{
+					...pullRequest.user,
+					login: "requestedReviewer"
+				}]
+			});
+		githubNock
+			.get(`/repos/batman/gotham-city-bus-pass/pulls/2/reviews`)
+			.reply(200, [{
+				state: "APPROVED",
+				user: pullRequest.user
+			}]);
+		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		const result = await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger);
+
+		expect(result[0].user.login).toStrictEqual("requestedReviewer");
+		expect(result[0].state).toBeUndefined();
+		expect(result[1].user.login).toStrictEqual(pullRequest.user.login);
+		expect(result[1].state).toStrictEqual("APPROVED");
+	});
 
 });
