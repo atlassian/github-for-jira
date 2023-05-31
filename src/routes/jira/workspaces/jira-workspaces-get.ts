@@ -17,7 +17,9 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 
 		return {
 			id: subscriptionId.toString(),
-			name: repoOwner
+			name: repoOwner,
+			// default to false until support is added for createContainer
+			canCreateContainer: false
 		};
 	})
 		.filter((value, index, self) =>
