@@ -24,7 +24,6 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
-
 export const ApiRouter = Router();
 
 // TODO: remove this duplication because of the horrible way to do logs through requests

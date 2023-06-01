@@ -179,7 +179,6 @@ const knownSafe = new Set([
 	"public-key-pins-report-only",
 	"push-policy",
 	"range",
-	"referer",
 	"referrer-policy",
 	"refresh",
 	"report-to",
@@ -254,6 +253,7 @@ const knownSensitive = new Set([
 	"proxy-authenticate",
 	"proxy-authorization",
 	"www-authenticate",
+	"referer", // might contain UGC
 
 	"cookie",
 	"cookie2",

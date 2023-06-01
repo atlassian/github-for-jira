@@ -2,7 +2,7 @@ import { transformDeployment } from "../transforms/transform-deployment";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { getJiraClient, DeploymentsResult } from "../jira/client/jira-client";
 import { sqsQueues } from "../sqs/queues";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import Logger from "bunyan";
 import { GitHubInstallationClient } from "./client/github-installation-client";
 import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
@@ -14,7 +14,6 @@ import { metricDeploymentCache } from "config/metric-names";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const deploymentWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
-
 	if (context.payload.deployment_status.state === "success") {
 		if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, subscription.jiraHost)) {
 			await tryCacheSuccessfulDeploymentInfo(
@@ -40,7 +39,7 @@ export const deploymentWebhookHandler = async (context: WebhookContext, jiraClie
 export const processDeployment = async (
 	newGitHubClient: GitHubInstallationClient,
 	webhookId: string,
-	webhookPayload: WebhookPayloadDeploymentStatus,
+	webhookPayload: DeploymentStatusEvent,
 	webhookReceivedDate: Date,
 	jiraHost: string,
 	gitHubInstallationId: number,
@@ -56,7 +55,17 @@ export const processDeployment = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	logger.info("processing deployment message!");
+	if (await isBlocked(gitHubInstallationId, logger)) {
+		logger.warn("blocking processing of push message because installationId is on the blocklist");
+		return;
+	}
+
+	const { state, environment } = webhookPayload.deployment_status;
+
+	logger.info({
+		deploymentState: state,
+		deploymentEnvironment: environment
+	}, "processing deployment message!");
 
 	const metrics = {
 		trigger: "deployment_queue"
@@ -97,7 +106,7 @@ const tryCacheSuccessfulDeploymentInfo = async (
 	jiraHost: string,
 	gitHubBaseUrl: string,
 	gitHubAppId: number | undefined,
-	webhookPayload: WebhookPayloadDeploymentStatus,
+	webhookPayload: DeploymentStatusEvent,
 	logger: Logger
 ) => {
 

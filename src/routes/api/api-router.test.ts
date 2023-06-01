@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import supertest from "supertest";
-import express, { Application, NextFunction, Request, Response } from "express";
+import { Application } from "express";
 import { Installation } from "models/installation";
 import { Subscription, SyncStatus } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { RepoSyncState } from "models/reposyncstate";
-import { ApiRouter } from "routes/api/api-router";
-import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { getFrontendApp } from "~/src/app";
+
+jest.mock("config/feature-flags");
 
 describe("API Router", () => {
 	let app: Application;
@@ -18,18 +19,8 @@ describe("API Router", () => {
 	let subscription: Subscription;
 	let gitHubServerApp: GitHubServerApp;
 
-	const createApp = () => {
-		const app = express();
-		app.use((req: Request, _: Response, next: NextFunction) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use("/api", ApiRouter);
-		return app;
-	};
-
 	beforeEach(async () => {
-		app = createApp();
+		app = getFrontendApp();
 
 		installation = await Installation.create({
 			gitHubInstallationId,

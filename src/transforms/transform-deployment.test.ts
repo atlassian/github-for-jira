@@ -120,6 +120,7 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("staging")).toBe("staging");
 		expect(mapEnvironment("stage")).toBe("staging");
 		expect(mapEnvironment("stg")).toBe("staging");
+		expect(mapEnvironment("sta")).toBe("staging");
 		expect(mapEnvironment("preprod")).toBe("staging");
 		expect(mapEnvironment("model")).toBe("staging");
 		expect(mapEnvironment("internal")).toBe("staging");

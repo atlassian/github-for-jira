@@ -79,15 +79,16 @@ export class GitHubClient {
 		);
 		this.axios.interceptors.response.use(
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
 				...this.metrics
 			}),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
 				...this.metrics
 			})
 		);
 
 		if (gitHubConfig.apiKeyConfig) {
-			logger.info("Use API key");
 			const apiKeyConfig = gitHubConfig.apiKeyConfig;
 			this.axios.interceptors.request.use(async (config) => {
 				if (!config.headers) {

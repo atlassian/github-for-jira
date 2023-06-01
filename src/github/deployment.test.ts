@@ -8,7 +8,7 @@ import { Subscription } from "models/subscription";
 import deployment_status from "fixtures/deployment_status-basic.json";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
+import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import { dynamodb as ddb } from "config/dynamodb";
 import { createHashWithoutSharedSecret } from "utils/encryption";
 
@@ -70,11 +70,11 @@ describe("DeploymentWebhookHandler", () => {
 		});
 	});
 	describe("Processing webhook", () => {
-		let payload: WebhookPayloadDeploymentStatus;
+		let payload: DeploymentStatusEvent;
 		describe("Persistent to dynamoDB", () => {
 			beforeEach(async () => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK, expect.anything()).mockResolvedValue(true);
-				payload = JSON.parse(JSON.stringify(deployment_status.payload)) as WebhookPayloadDeploymentStatus;
+				payload = JSON.parse(JSON.stringify(deployment_status.payload)) as DeploymentStatusEvent;
 			});
 			it("should call to persist deployment info for success deployment status", async () => {
 				await deploymentWebhookHandler({ ...getWebhookContext({ cloud: true }), payload }, jiraClient, util, GITHUB_INSTALLATION_ID, subscription);

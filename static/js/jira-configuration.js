@@ -150,7 +150,10 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow(`/session/github/${$(event.target).data("app-uuid")}/configuration?ghRedirect=to`);
+		child.window.jwt = token;
+	});
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
@@ -325,6 +328,7 @@ $(document).ready(function () {
 	if (isIncrementalBackfillEnabled) {
 		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+		AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
 
 		$(".jiraConfiguration__info__backfillDate-label").each(function () {
 			if ($(this).attr("data-backfill-since")) {

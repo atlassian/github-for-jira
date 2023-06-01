@@ -64,8 +64,8 @@ describe("BranchhWebhookHandler", () => {
 			});
 		});
 	});
-	const getWebhookContext = ({ cloud }: {cloud: boolean}) => {
-		return new WebhookContext({
+	const getWebhookContext = <T>({ cloud }: {cloud: boolean}) => {
+		return new WebhookContext<T>({
 			id: "1",
 			name: "create",
 			log: getLogger("test"),
@@ -74,7 +74,7 @@ describe("BranchhWebhookHandler", () => {
 					id: 1
 				},
 				ref: "TEST-1"
-			},
+			} as unknown as T,
 			gitHubAppConfig: cloud ? {
 				uuid: undefined,
 				gitHubAppId: undefined,
