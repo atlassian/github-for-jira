@@ -372,7 +372,7 @@ export const transformDeployment = async (
 			deploymentSequenceNumber: deployment.id,
 			updateSequenceNumber: deployment_status.id,
 			displayName: (message || String(payload.deployment.id) || "").substring(0, 255),
-			url: deployment_status.target_url || deployment.url,
+			url: deployment_status.environment_url || deployment_status.target_url || deployment.url,
 			description: (deployment.description || deployment_status.description || deployment.task || "").substring(0, 255),
 			lastUpdated: new Date(deployment_status.updated_at),
 			state,

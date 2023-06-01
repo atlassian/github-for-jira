@@ -38,6 +38,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				environment: deployment.environment,
 				id: deployment.databaseId,
 				target_url: deployment.latestStatus?.logUrl,
+				environment_url: deployment.latestStatus?.environmentUrl,
 				updated_at: deployment.latestStatus?.updatedAt,
 				state: deployment.latestStatus?.state
 			}
