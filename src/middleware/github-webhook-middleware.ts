@@ -6,7 +6,7 @@ import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraUtil } from "../jira/util/jira-client-util";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags, isBlocked } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { emitWebhookFailedMetrics, emitWebhookPayloadMetrics, getCurrentTime } from "utils/webhook-utils";
 import { statsd } from "config/statsd";
 import { metricWebhooks } from "config/metric-names";
@@ -200,11 +200,6 @@ export const GithubWebhookMiddleware = (
 					{ jiraHost, webhookEvent },
 					`Maintenance mode ENABLED - Ignoring event`
 				);
-				continue;
-			}
-
-			if (await isBlocked(jiraHost, gitHubInstallationId, context.log)) {
-				context.log.info({ jiraHost, gitHubInstallationId }, `Block webhook processing`);
 				continue;
 			}
 
