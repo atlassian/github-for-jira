@@ -4,7 +4,6 @@ import { NextFunction, Request, Response } from "express";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { TaskType, SyncType } from "~/src/sync/sync.types";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -32,7 +31,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			return;
 		}
 
-		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(res.locals.jiraHost, syncTypeFromReq, subscription);
+		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate || subscription.backfillSince, targetTasks, { source });
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
@@ -69,17 +68,13 @@ type SyncTypeAndTargetTasks = {
 	targetTasks: TaskType[] | undefined,
 };
 
-const determineSyncTypeAndTargetTasks = async (jiraHost: string, syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
+const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
 
 	if (syncTypeFromReq === "full") {
 		return { syncType: "full", targetTasks: undefined };
 	}
 
 	if (subscription.syncStatus === "FAILED") {
-		return { syncType: "full", targetTasks: undefined };
-	}
-
-	if (!await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
 		return { syncType: "full", targetTasks: undefined };
 	}
 

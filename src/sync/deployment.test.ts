@@ -11,8 +11,6 @@ import { getDeploymentsQuery } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
@@ -79,12 +77,7 @@ describe("sync/deployments", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 		};
 
-		it("should sync nothing to jira if all edges are earlier than fromDate -- when ff is on", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
+		it("should sync nothing to jira if all edges are earlier than fromDate", async () => {
 
 			githubUserTokenNock(installationId);
 			githubNock
