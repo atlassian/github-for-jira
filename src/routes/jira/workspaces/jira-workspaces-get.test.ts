@@ -7,7 +7,11 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
-const { MISSING_ORG_NAME } = Errors;
+const {
+	MISSING_SUBSCRIPTION,
+	MISSING_ORG_NAME,
+	NO_MATCHING_WORKSPACES
+} = Errors;
 
 describe("Workspaces Get", () => {
 	let app: Application;
@@ -67,7 +71,7 @@ describe("Workspaces Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
+				expect(res.text).toContain(MISSING_SUBSCRIPTION);
 			});
 	});
 
@@ -107,7 +111,7 @@ describe("Workspaces Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Unable to find matching orgs for incorrectorgname");
+				expect(res.text).toContain(NO_MATCHING_WORKSPACES);
 			});
 	});
 
