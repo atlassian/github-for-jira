@@ -339,3 +339,18 @@ $(document).ready(function () {
 		});
 	}
 });
+
+$(".test-button").click(function(event) {
+	event.preventDefault();
+	const path = "/jira/workspaces/repositories/search?workspaceId=2&searchQuery=repo&limit=2&page=1"
+	$.ajax({
+		type: "GET",
+		url: path,
+		success: function() {
+			console.log("Success")
+		},
+		error: function (error) {
+			console.error("Error: ", error)
+		},
+	});
+});
