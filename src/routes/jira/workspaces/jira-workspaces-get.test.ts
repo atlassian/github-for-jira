@@ -3,10 +3,11 @@ import express, { Application } from "express";
 import { Subscription } from "models/subscription";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
-import { Errors } from "config/errors";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
+import { Errors } from "config/errors";
+const { MISSING_ORG_NAME } = Errors;
 
 describe("Workspaces Get", () => {
 	let app: Application;
@@ -86,7 +87,7 @@ describe("Workspaces Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("No org name provided in query");
+				expect(res.text).toContain(MISSING_ORG_NAME);
 			});
 	});
 

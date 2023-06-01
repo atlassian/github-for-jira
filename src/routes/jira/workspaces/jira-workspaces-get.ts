@@ -8,7 +8,12 @@ type GitHubWorkspace = {
 	name: string
 }
 
-const { MISSING_JIRA_HOST, MISSING_SUBSCRIPTION } = Errors;
+const {
+	MISSING_JIRA_HOST,
+	MISSING_SUBSCRIPTION,
+	MISSING_ORG_NAME,
+	NO_MATCHING_WORKSPACES
+} = Errors;
 
 const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string): Promise<GitHubWorkspace[]>  => {
 	const matchingRepos = await RepoSyncState.findByOrgNameAndSubscriptionId(subscriptions, orgName);
@@ -32,7 +37,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 };
 
 export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for fetch org");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for GET wrokspaces");
 
 	const { jiraHost } = res.locals;
 
@@ -53,17 +58,15 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 	const orgName = req.query?.searchQuery as string;
 
 	if (!orgName) {
-		const errMessage = "No org name provided in query";
-		req.log.warn(errMessage);
-		res.status(400).send(errMessage);
+		req.log.warn(MISSING_ORG_NAME);
+		res.status(400).send(MISSING_ORG_NAME);
 		return;
 	}
 
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 
 	if (!matchedOrgs?.length) {
-		const errMessage = `Unable to find matching orgs for ${orgName}`;
-		res.status(400).send(errMessage);
+		res.status(400).send(NO_MATCHING_WORKSPACES);
 		return;
 	}
 
