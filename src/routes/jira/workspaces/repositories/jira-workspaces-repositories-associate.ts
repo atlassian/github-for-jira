@@ -4,7 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 import { Subscription } from "models/subscription";
-const { MISSING_JIRA_HOST } = Errors;
+const { MISSING_JIRA_HOST, MISSING_REPOSITORY_ID, NO_MATCHING_REPOSITORY } = Errors;
 
 type RepoAndSubscription = RepoSyncState & Subscription;
 
@@ -36,7 +36,7 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 	const { id: repoId } = req.body;
 
 	if (!repoId) {
-		const errMessage = "Missing repository ID";
+		const errMessage = MISSING_REPOSITORY_ID;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
@@ -45,9 +45,8 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 	const repo = await findMatchingRepository(Number(repoId), jiraHost);
 
 	if (!repo) {
-		const errMessage = "No matches found";
-		req.log.warn(errMessage);
-		res.status(400).send(errMessage);
+		req.log.warn(NO_MATCHING_REPOSITORY);
+		res.status(400).send(NO_MATCHING_REPOSITORY);
 		return;
 	}
 

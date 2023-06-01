@@ -6,6 +6,9 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
+import { Errors } from "config/errors";
+
+const { NO_MATCHING_REPOSITORY } = Errors;
 
 describe("Workspaces Associate Repository", () => {
 	let app: Application;
@@ -88,7 +91,7 @@ describe("Workspaces Associate Repository", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("No matches found");
+				expect(res.text).toContain(NO_MATCHING_REPOSITORY);
 			});
 	});
 
