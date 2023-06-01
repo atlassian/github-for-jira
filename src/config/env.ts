@@ -31,11 +31,22 @@ const transforms: Transforms<EnvVars> = {
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 		return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 	},
-	WEBHOOK_SECRETS: (value?: string) => {
+	WEBHOOK_SECRETS: (value?: string): Array<string> => {
 		try {
-			return value ? JSON.parse(value) : undefined;
+			const parsed = value ? JSON.parse(value) as Array<string> : undefined;
+			if (!parsed) {
+				return [];
+			}
+			if (parsed && !Array.isArray(parsed)) {
+				return [parsed];
+			}
+			return parsed;
 		} catch {
-			return undefined;
+			if (value) {
+				return [value];
+			} else {
+				return [];
+			}
 		}
 	},
 	GITHUB_REPO_URL: (value?: string) => value || "https://github.com/atlassian/github-for-jira"
