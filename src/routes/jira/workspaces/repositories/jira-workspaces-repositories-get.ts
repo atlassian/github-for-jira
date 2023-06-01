@@ -43,7 +43,7 @@ const findMatchingRepos = async (
 	return repos;
 };
 
-const paginatedRepositories = (page: number, limit: number, repositories) => {
+const paginatedRepositories = (page: number, limit: number, repositories: WorkspaceRepo[]) => {
 	const startIndex = (page - 1) * limit;
 	const endIndex = page * limit;
 	return repositories.slice(startIndex, endIndex);
