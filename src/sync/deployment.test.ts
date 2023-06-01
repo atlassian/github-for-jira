@@ -39,7 +39,6 @@ describe("sync/deployments", () => {
 		const DEPLOYMENT_CURSOR_EMPTY = undefined;
 		let gitHubClient: GitHubInstallationClient;
 		let repoSyncState: RepoSyncState;
-		let deployments;
 
 		//--helper funcs--
 		const repoFromRepoSyncState = (repoSyncState: RepoSyncState) => ({
@@ -57,7 +56,7 @@ describe("sync/deployments", () => {
 		});
 		//size up to 9 entities
 		const createDeploymentsEntities = (size: number) => {
-			deployments = "*".repeat(size).split("").map((_, idx)=> {
+			return "*".repeat(size).split("").map((_, idx)=> {
 				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
 				clone.cursor = `cursor:${idx + 1}`;
 				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
@@ -71,7 +70,7 @@ describe("sync/deployments", () => {
 			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
 				.query(true).reply(200, getDeploymentsPageResponse(deployments));
 		};
-		const nockDeploymentListingApi = () => {
+		const nockDeploymentListingApi = (deployments) => {
 			"*".repeat(10).split("").forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
 					.reply(200, deployments.map((item, idx) => ({
@@ -154,21 +153,27 @@ describe("sync/deployments", () => {
 		describe.only("when ff is off", () => {
 			describe("for empty demployment cursor", () => {
 				it("should fetch deployments from begining", async () => {
-					createDeploymentsEntities(4);
+
+					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-					nockDeploymentListingApi();
+					nockDeploymentListingApi(deployments);
 					nockDeploymentDetailApi([deployments[3], deployments[2]]);
+
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
 					expect(result).toEqual(expect.objectContaining({ edges: [deployments[3], deployments[2]] }));
 				});
 			});
 			describe("for existing legacy (string) deployment cursor", () => {
 				it("should fetch deployments from legacy cursor", async () => {
-					createDeploymentsEntities(4);
+
+					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
-					nockDeploymentListingApi();
+					nockDeploymentListingApi(deployments);
 					nockDeploymentDetailApi([deployments[1], deployments[0]]);
+
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
 					expect(result).toEqual(expect.objectContaining({ edges: [deployments[1], deployments[0]] }));
 				});
 			});
