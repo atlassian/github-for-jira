@@ -15,6 +15,8 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
 const logger = getLogger("test");
@@ -70,8 +72,8 @@ describe("sync/deployments", () => {
 			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
 				.query(true).reply(200, getDeploymentsPageResponse(deployments));
 		};
-		const nockDeploymentListingApi = (deployments) => {
-			"*".repeat(10).split("").forEach(() => {
+		const nockDeploymentListingApi = (deployments, repeatTimes) => {
+			"*".repeat(repeatTimes).split("").forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
 					.reply(200, deployments.map((item, idx) => ({
 						"id": item.node.databaseId,
@@ -105,8 +107,8 @@ describe("sync/deployments", () => {
 					});
 			});
 		};
-		const nockDeploymentDetailApi = (deployments) => {
-			"*".repeat(10).split("").forEach(() => {
+		const nockDeploymentDetailApi = (deployments, repeatTimes) => {
+			"*".repeat(repeatTimes).split("").forEach(() => {
 				deployments.forEach((item, idx) => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
 						.reply(200, { "id": idx, "state": "success", "description": "random", "environment": item.node.environment });
@@ -143,7 +145,21 @@ describe("sync/deployments", () => {
 		});
 
 		describe("when ff is on", () => {
+			const REPEAT_ONCE = 1;
+			beforeEach(() => {
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+			});
 			describe("for empty demployment cursor", () => {
+				it("should  fetch deployments from begining", async () => {
+					const deployments = createDeploymentsEntities(4);
+					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+					nockDeploymentListingApi(deployments, REPEAT_ONCE);
+					nockDeploymentDetailApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+					expect(result).toEqual(expect.objectContaining({ edges: [deployments[3], deployments[2]] }));
+				});
 			});
 			describe("for existing legacy (string) deployment cursor", () => {
 			});
@@ -151,13 +167,14 @@ describe("sync/deployments", () => {
 			});
 		});
 		describe.only("when ff is off", () => {
+			const REPEAT_LOTS_OF_TIME = 20;
 			describe("for empty demployment cursor", () => {
 				it("should fetch deployments from begining", async () => {
 
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-					nockDeploymentListingApi(deployments);
-					nockDeploymentDetailApi([deployments[3], deployments[2]]);
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentDetailApi([deployments[3], deployments[2]], REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
@@ -169,8 +186,8 @@ describe("sync/deployments", () => {
 
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
-					nockDeploymentListingApi(deployments);
-					nockDeploymentDetailApi([deployments[1], deployments[0]]);
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentDetailApi([deployments[1], deployments[0]], REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
