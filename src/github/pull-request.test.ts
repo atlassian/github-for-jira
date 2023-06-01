@@ -80,10 +80,7 @@ describe("Pull Request Webhook", () => {
 	});
 
 	it("should have reviewers on pull request action", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -93,6 +90,15 @@ describe("Pull Request Webhook", () => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [{
+					...reviewsPayload[0].user,
+					login: "requested"
+				}],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-reviewer-login")
 			.reply(200, {
@@ -168,6 +174,13 @@ describe("Pull Request Webhook", () => {
 							reviewers: [
 								{
 									avatar: "test-pull-request-reviewer-avatar",
+									name: "requested",
+									email: "requested@noreply.user.github.com",
+									url: "https://github.com/reviewer",
+									approvalStatus: "UNAPPROVED"
+								},
+								{
+									avatar: "test-pull-request-reviewer-avatar",
 									name: "test-pull-request-reviewer-login",
 									email: "test-pull-request-reviewer-login@email.test",
 									url: "https://github.com/reviewer",
@@ -194,11 +207,9 @@ describe("Pull Request Webhook", () => {
 		await expect(app.receive(pullRequestBasic as any)).toResolve();
 	});
 
+
 	it("no Write perms case should be tolerated", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -208,6 +219,12 @@ describe("Pull Request Webhook", () => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-reviewer-login")
 			.reply(200, {
@@ -254,7 +271,7 @@ describe("Pull Request Webhook", () => {
 
 		mockSystemTime(12345678);
 
-		const { gitHubServerApp } = await new DatabaseStateCreator()
+		const { subscription, gitHubServerApp } = await new DatabaseStateCreator()
 			.forServer()
 			.create();
 
@@ -280,7 +297,7 @@ describe("Pull Request Webhook", () => {
 					delete: jiraClientDevinfoPullRequestDeleteMock
 				}
 			}
-		}, jest.fn(), gitHubInstallationId);
+		}, jest.fn(), gitHubInstallationId, subscription);
 		expect(jiraClientDevinfoPullRequestDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-test-repo-id");
 	});
 
@@ -292,12 +309,16 @@ describe("Pull Request Webhook", () => {
 
 	it("will not delete references if a branch still has an issue key", async () => {
 
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-user-login")
 			.twice()
@@ -315,10 +336,7 @@ describe("Pull Request Webhook", () => {
 	describe("Trigged by Bot", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -329,6 +347,12 @@ describe("Pull Request Webhook", () => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
@@ -444,10 +468,7 @@ describe("Pull Request Webhook", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -458,6 +479,12 @@ describe("Pull Request Webhook", () => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
@@ -534,11 +561,7 @@ describe("Pull Request Webhook", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
@@ -554,6 +577,12 @@ describe("Pull Request Webhook", () => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
