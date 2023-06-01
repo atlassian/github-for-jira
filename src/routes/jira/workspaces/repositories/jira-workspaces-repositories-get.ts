@@ -3,7 +3,12 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 
-const { MISSING_JIRA_HOST, MISSING_SUBSCRIPTION } = Errors;
+const {
+	MISSING_JIRA_HOST,
+	MISSING_SUBSCRIPTION,
+	MISSING_REPO_NAME,
+	NO_MATCHING_REPOSITORIES
+} = Errors;
 
 export interface WorkspaceRepo {
 	id: string,
@@ -50,7 +55,7 @@ const paginatedRepositories = (page: number, limit: number, repositories: Worksp
 };
 
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to get repositories");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
 	const { jiraHost } = res.locals;
 
@@ -66,9 +71,8 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const limit = Number(req.query?.limit) || 10; // Number of items per page (default: 10)
 
 	if (!repoName) {
-		const errMessage = "Missing repo name";
-		req.log.warn(errMessage);
-		res.status(400).send(errMessage);
+		req.log.warn(MISSING_REPO_NAME);
+		res.status(400).send(MISSING_REPO_NAME);
 		return;
 	}
 
@@ -81,9 +85,8 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	}
 
 	if (!repos?.length) {
-		const errMessage = "Repository not found";
-		req.log.warn(errMessage);
-		res.status(400).send(errMessage);
+		req.log.warn(NO_MATCHING_REPOSITORIES);
+		res.status(400).send(NO_MATCHING_REPOSITORIES);
 		return;
 	}
 

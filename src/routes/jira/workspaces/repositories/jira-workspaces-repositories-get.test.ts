@@ -2,11 +2,16 @@ import { getLogger } from "config/logger";
 import express, { Application } from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
-import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
+import { Errors } from "config/errors";
+const {
+	MISSING_SUBSCRIPTION,
+	MISSING_REPO_NAME,
+	NO_MATCHING_REPOSITORIES
+} = Errors;
 
 describe("Workspaces Repositories Get", () => {
 	let app: Application;
@@ -51,7 +56,7 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Missing repo name");
+				expect(res.text).toContain(MISSING_REPO_NAME);
 			});
 	});
 
@@ -71,7 +76,7 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
+				expect(res.text).toContain(MISSING_SUBSCRIPTION);
 			});
 	});
 
@@ -105,7 +110,7 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Repository not found");
+				expect(res.text).toContain(NO_MATCHING_REPOSITORIES);
 			});
 	});
 
