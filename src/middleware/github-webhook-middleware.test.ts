@@ -9,7 +9,6 @@ import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 jest.mock("models/installation");
 jest.mock("models/subscription");
 jest.mock("utils/webhook-utils");
-jest.mock("config/feature-flags");
 
 describe("Probot event middleware", () => {
 	let context;
@@ -92,5 +91,4 @@ describe("Probot event middleware", () => {
 		context.log.info("test");
 		expect(context.log.fields.foo).toBe(123);
 	});
-
 });
