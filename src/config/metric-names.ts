@@ -77,6 +77,8 @@ export const metricPrReviewers = {
 	requestedReviewsHist: `${server}.prs.reviews.requested.histogram`,
 
 	submittedReviewsCount: `${server}.prs.reviews.submitted.count`,
-	submittedReviewsHist: `${server}.prs.reviews.submitted.histogram`
+	submittedReviewsHist: `${server}.prs.reviews.submitted.histogram`,
+
+	failedCount: `${server}.prs.failed.count`
 };
 
