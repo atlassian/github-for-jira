@@ -158,16 +158,16 @@ Object {
     "jiraDevelopmentTool": Object {
       "actions": Object {
         "associateRepository": Object {
-          "templateUrl": "https://test-github-app-instance.com/workspaces/repositories/associate",
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate",
         },
         "createBranch": Object {
           "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
         },
         "searchConnectedWorkspaces": Object {
-          "templateUrl": "https://test-github-app-instance.com/workspaces/search",
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/search",
         },
         "searchRepositories": Object {
-          "templateUrl": "https://test-github-app-instance.com/workspaces/repositories/search",
+          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search",
         },
       },
       "application": Object {
