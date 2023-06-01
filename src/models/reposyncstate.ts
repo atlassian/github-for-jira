@@ -4,6 +4,44 @@ import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
 
+export interface RepoSyncState {
+	id: number;
+	subscriptionId: number;
+	repoId: number;
+	repoName: string;
+	repoOwner: string;
+	repoFullName: string;
+	repoUrl: string;
+	priority?: number;
+	branchStatus?: TaskStatus;
+	commitStatus?: TaskStatus;
+	issueStatus?: TaskStatus;
+	pullStatus?: TaskStatus;
+	buildStatus?: TaskStatus;
+	deploymentStatus?: TaskStatus;
+	branchCursor?: string;
+	commitCursor?: string;
+	issueCursor?: string;
+	pullCursor?: string;
+	buildCursor?: string;
+	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
+	forked?: boolean;
+	repoPushedAt: Date;
+	repoUpdatedAt: Date;
+	repoCreatedAt: Date;
+	syncUpdatedAt?: Date;
+	syncCompletedAt?: Date;
+	config?: Config;
+	updatedAt: Date;
+	createdAt: Date;
+	failedCode?: string;
+}
+
 export class RepoSyncState extends Model {
 	id: number;
 	subscriptionId: number;
