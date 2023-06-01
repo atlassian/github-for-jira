@@ -67,7 +67,6 @@ export const getDeploymentTask = async (
 	logger.debug("Syncing Deployments: started");
 
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
-
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
 		return {

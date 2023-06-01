@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { removeInterceptor } from "nock";
+import { removeInterceptor, cleanAll as nockCleanAll } from "nock";
 import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
@@ -14,8 +14,10 @@ import { GitHubServerApp } from "models/github-server-app";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
 
 jest.mock("config/feature-flags");
+const logger = getLogger("test");
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -29,6 +31,138 @@ describe("sync/deployments", () => {
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL"
+	});
+	describe.only("using dynamodb as cache", () => {
+
+		//-- shared testing states --
+		const PAGE_SIZE = 2;
+		const DEPLOYMENT_CURSOR_EMPTY = undefined;
+		let gitHubClient: GitHubInstallationClient;
+		let repoSyncState: RepoSyncState;
+		let deployments;
+
+		//--helper funcs--
+		const repoFromRepoSyncState = (repoSyncState: RepoSyncState) => ({
+			id: repoSyncState.repoId,
+			name: repoSyncState.repoName,
+			full_name: repoSyncState.repoFullName,
+			owner: { login: repoSyncState.repoOwner },
+			html_url: repoSyncState.repoUrl,
+			updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+		});
+		const msgPayload = () => ({
+			jiraHost,
+			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			commitsFromDate: "2023-01-01T00:00:00Z"
+		});
+		//size up to 9 entities
+		const createDeploymentsEntities = (size: number) => {
+			deployments = "*".repeat(size).split("").map((_, idx)=> {
+				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
+				clone.cursor = `cursor:${idx + 1}`;
+				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
+				clone.node.databaseId = `dbid-${idx + 1}`;
+				clone.node.commitOid = `SHA${idx + 1}`;
+				return clone;
+			});
+		};
+		const getDeploymentsPageResponse = (items) => ({ "data": { "repository": { "deployments": { "edges": items } } } });
+		const nockFetchingDeploymentgPagesGraphQL = () => {
+			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE, cursor: undefined } })
+				.query(true).reply(200, getDeploymentsPageResponse([deployments[3], deployments[2]]));
+			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE, cursor: deployments[1].cursor } })
+				.query(true).reply(200, getDeploymentsPageResponse([deployments[1], deployments[0]]));
+			githubUserTokenNock(installationId);
+		};
+		const nockDeploymentApi = () => {
+			"*".repeat(10).split("").forEach(() => {
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
+					.reply(200, deployments.map((item, idx) => ({
+						"id": item.node.databaseId,
+						"sha": item.node.commitOid,
+						"ref": "random",
+						"task": `task for deployment ${idx + 1}`,
+						"payload": {},
+						"original_environment": item.node.environment,
+						"environment": item.node.environment,
+						"description": `description for deployment ${idx + 1}`,
+						"creator": { "login": "test-repo-owner", "id": 1, "type": "User" },
+						"created_at": item.node.createdAt,
+						"updated_at": item.node.createdAt,
+						"statuses_url": "random",
+						"repository_url": "random",
+						"transient_environment": false,
+						"production_environment": true
+					})));
+				deployments.forEach((item, idx) => {
+					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
+						.reply(200, { "id": idx, "state": "success", "description": "random", "environment": item.node.environment });
+				});
+			});
+			deployments.forEach((item, idx) => {
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
+					.reply(200, {
+						commit: {
+							author: { name: "random", email: "random", date: new Date() },
+							message: `commit message [JIRA-${idx + 1}]`
+						}, html_url: "random"
+					});
+			});
+		};
+		const nockCommitShaCompare = (sha1, sha2) => {
+			const compareMsgIssueKey = `ISSUEKEY${sha1}${sha2}-100`;
+			githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/${sha1}...${sha2}`)
+				.reply(200, { "total_commits": 1, "commits": [ { "sha": "whatever", "commit": { "message": `some message ${compareMsgIssueKey}` } } ] });
+			return { compareMsgIssueKey };
+		};
+		//--helper funcs end --
+
+		beforeEach(async () => {
+
+			gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, logger, undefined);
+
+			const dbState = await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStatePendingForDeployments().create();
+			repoSyncState = dbState.repoSyncState!;
+
+			"*".repeat(100).split("").forEach(() => githubUserTokenNock(installationId));
+
+			createDeploymentsEntities(4);
+			nockFetchingDeploymentgPagesGraphQL();
+			nockDeploymentApi();
+
+		});
+
+		afterEach(async () => {
+			nockCleanAll();
+		});
+
+		describe("when ff is on", () => {
+			describe("for empty demployment cursor", () => {
+			});
+			describe("for existing legacy (string) deployment cursor", () => {
+			});
+			describe("for new (json-object) deployment cursor", () => {
+			});
+		});
+		describe.only("when ff is off", () => {
+			describe("for empty demployment cursor", () => {
+				it("should fetch all deployments from begining", async () => {
+					const { compareMsgIssueKey } = nockCommitShaCompare(deployments[2].node.commitOid, deployments[3].node.commitOid);
+					const jiraPayload = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE, msgPayload());
+					expect(jiraPayload).toEqual(expect.objectContaining({
+						jiraPayload: {
+							deployments: [{
+								compareMsgIssueKey
+							}]
+						}
+					}));
+				});
+			});
+			describe("for existing legacy (string) deployment cursor", () => {
+			});
+			describe("for new (json-object) deployment cursor", () => {
+			});
+		});
 	});
 
 	describe("cloud", () => {
