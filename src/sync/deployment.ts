@@ -5,6 +5,7 @@ import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/gi
 import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 
@@ -67,6 +68,10 @@ export const getDeploymentTask = async (
 	logger.debug("Syncing Deployments: started");
 
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
+
+	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL)) {
+	}
+
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
 		return {
