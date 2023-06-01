@@ -8,12 +8,14 @@ const isProd = instance === "production";
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
 export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
+export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
 	{
 		condition: "user_is_admin"
 	}
 ];
+
 const modules = {
 	jiraDevelopmentTool: {
 		application: {
@@ -27,10 +29,19 @@ const modules = {
 		actions: {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
+			},
+			searchConnectedWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/search`
+			},
+			searchRepositories: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/repositories/search`
+			},
+			associateRepository: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/repositories/associate`
 			}
 		},
 		key: "github-development-tool",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub"
 		},
@@ -41,12 +52,12 @@ const modules = {
 		name: {
 			value: "GitHub Actions"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com/features/actions"
 	},
 	jiraBuildInfoProvider: {
 		key: "github-actions",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub Actions"
 		},
@@ -57,7 +68,7 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
 	},
 	postInstallPage: {
