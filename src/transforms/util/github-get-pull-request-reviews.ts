@@ -2,8 +2,11 @@ import { GitHubInstallationClient } from "~/src/github/client/github-installatio
 import { Repository } from "models/subscription";
 import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
+import { statsd } from "config/statsd";
+import { metricPrReviewers } from "config/metric-names";
 
 export const 	getPullRequestReviews = async (
+	jiraHost: string,
 	gitHubInstallationClient: GitHubInstallationClient,
 	repository: Repository,
 	pullRequest: Octokit.PullsListResponseItem,
@@ -14,13 +17,19 @@ export const 	getPullRequestReviews = async (
 	const { number: pullRequestNumber, id: pullRequestId } = pullRequest;
 
 	try {
-		const responseRequestedReviewers = await gitHubInstallationClient.getPullRequestRequestedReviews(repositoryOwner, repositoryName, pullRequestNumber);
-		const requestedReviewers = responseRequestedReviewers.data;
+		const requestedReviewsResponse = await gitHubInstallationClient.getPullRequestRequestedReviews(repositoryOwner, repositoryName, pullRequestNumber);
+		const requestedReviewsData = requestedReviewsResponse.data;
 
-		const responseReviewers = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
-		const reviewers = responseReviewers.data;
+		statsd.incrementWithValue(metricPrReviewers.requestedReviewsCount, requestedReviewsData.users.length, {}, { jiraHost });
+		statsd.histogram(metricPrReviewers.requestedReviewsHist, requestedReviewsData.users.length, {}, { jiraHost });
 
-		return requestedReviewers.users.map(user => ({ user })).concat(reviewers);
+		const submittedReviewsResponse = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
+		const submittedReviewsData = submittedReviewsResponse.data;
+
+		statsd.incrementWithValue(metricPrReviewers.submittedReviewsCount, submittedReviewsData.length, {}, { jiraHost });
+		statsd.histogram(metricPrReviewers.submittedReviewsHist, submittedReviewsData.length, {}, { jiraHost });
+
+		return requestedReviewsData.users.map(user => ({ user })).concat(submittedReviewsData);
 	} catch (err) {
 		logger.warn({ pullRequestNumber, pullRequestId, repositoryId },"Get Pull Reviews Failed - Check Github Permissions: Can't retrieve reviewers");
 		return [];

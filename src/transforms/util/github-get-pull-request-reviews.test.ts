@@ -38,7 +38,7 @@ describe("getPullRequestReviews", () => {
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([{ stuff: "things" }]);
+		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([{ stuff: "things" }]);
 	});
 
 	it("should map a error from /reviews into an empty array", async () => {
@@ -55,7 +55,7 @@ describe("getPullRequestReviews", () => {
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
+		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
 	it("should map a error from /requested_reviewers into an empty array", async () => {
@@ -66,7 +66,7 @@ describe("getPullRequestReviews", () => {
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		expect(await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
+		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
 	it("should merge requested_reviewers and reviews together", async () => {
@@ -89,7 +89,7 @@ describe("getPullRequestReviews", () => {
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
-		const result = await getPullRequestReviews(client, MOCK_REPOSITORY, MOCK_PR, logger);
+		const result = await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger);
 
 		expect(result[0].user.login).toStrictEqual("requestedReviewer");
 		expect(result[0].state).toBeUndefined();

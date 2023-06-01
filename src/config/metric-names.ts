@@ -72,3 +72,11 @@ export const metricDeploymentCache = {
 	miss: `${server}.deployment-history-cache.miss`
 };
 
+export const metricPrReviewers = {
+	requestedReviewsCount: `${server}.prs.reviews.requested.count`,
+	requestedReviewsHist: `${server}.prs.reviews.requested.histogram`,
+
+	submittedReviewsCount: `${server}.prs.reviews.submitted.count`,
+	submittedReviewsHist: `${server}.prs.reviews.submitted.histogram`
+};
+
