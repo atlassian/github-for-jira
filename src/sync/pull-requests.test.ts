@@ -150,12 +150,7 @@ describe("sync/pull-request", () => {
 				const modifiedList = _.cloneDeep(pullRequestList);
 				modifiedList[0].title = title;
 				modifiedList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 				githubNock
 					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
 					.reply(200, modifiedList)
@@ -163,6 +158,8 @@ describe("sync/pull-request", () => {
 					.reply(200, pullRequest)
 					.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 					.reply(200, reviewsPayload)
+					.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+					.reply(200, { users: [], teams: [] })
 					.get("/users/test-pull-request-reviewer-login")
 					.reply(200, {
 						login: "test-pull-request-reviewer-login",
@@ -202,15 +199,15 @@ describe("sync/pull-request", () => {
 				expect.anything()
 			).mockResolvedValue(2);
 
-			for (let i = 0; i < 12; i++) {
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			}
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 
 			githubNock
 				.get("/repos/integrations/test-repo-name/pulls/51").times(2)
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews").times(2)
 				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers").times(2)
+				.reply(200, { users: [], teams: [] })
 				.get("/users/test-pull-request-reviewer-login").times(2)
 				.reply(200, {
 					login: "test-pull-request-reviewer-login",
@@ -407,12 +404,7 @@ describe("sync/pull-request", () => {
 			const modifiedList = _.cloneDeep(pullRequestList);
 			modifiedList[0].title = "[TES-15] Evernote Test";
 			modifiedList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
@@ -421,6 +413,8 @@ describe("sync/pull-request", () => {
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+				.reply(200, { users: [], teams: [] })
 				.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
 					login: "test-pull-request-reviewer-login",
