@@ -6,6 +6,7 @@ import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.j
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
+import _ from "lodash";
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 100403908;
@@ -268,6 +269,66 @@ describe("pull_request transform", () => {
 							email: "deleted@noreply.user.github.com",
 							url: "https://github.com/ghost",
 							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("maps empty state to UNAPPROVED", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const pulLRequestFixture = pullRequestList[0];
+		pulLRequestFixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+
+		const reviewrsListNoState = _.cloneDeep(reviewersListHasUser);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		delete reviewrsListNoState[0].state;
+
+		const data = await transformPullRequest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+
+		const { updated_at, title } = pulLRequestFixture;
+
+		expect(data).toStrictEqual({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						email: "deleted@noreply.user.github.com",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							name: "octocat",
+							email: "octocat@noreply.user.github.com",
+							url: "https://github.com/octocat",
+							approvalStatus: "UNAPPROVED"
 						}
 					],
 					sourceBranch: "use-the-force",

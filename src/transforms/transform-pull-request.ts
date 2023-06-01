@@ -25,7 +25,11 @@ const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
 // TODO: define arguments and return
-const mapReviews = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviews = async (
+	reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [],
+	gitHubInstallationClient: GitHubInstallationClient
+): Promise<JiraReview[]> =>
+{
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
 
@@ -76,7 +80,13 @@ export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseIte
 };
 
 // TODO: define arguments and return
-export const transformPullRequest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, reviews?: Octokit.PullsListReviewsResponse, log?: Logger) => {
+export const transformPullRequest = async (
+	gitHubInstallationClient: GitHubInstallationClient,
+	pullRequest: Octokit.PullsGetResponse,
+	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
+	log?: Logger
+) =>
+{
 	const { head } = pullRequest;
 
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
