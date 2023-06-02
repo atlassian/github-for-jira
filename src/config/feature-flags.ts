@@ -81,9 +81,9 @@ export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, lis
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
+export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
 	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
