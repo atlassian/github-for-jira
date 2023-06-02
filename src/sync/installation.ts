@@ -423,7 +423,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 		logger.child({ gitHubInstallationId: installationId, jiraHost });
 
 		try {
-			if (await isBlocked(installationId, logger)) {
+			if (await isBlocked(jiraHost, installationId, logger)) {
 				logger.warn("blocking installation job");
 				return;
 			}

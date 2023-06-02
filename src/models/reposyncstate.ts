@@ -19,7 +19,7 @@ import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
 
-export interface RepoSyncState {
+export interface RepoSyncStateProperties {
 	id: number;
 	subscriptionId: number;
 	repoId: number;
@@ -57,7 +57,7 @@ export interface RepoSyncState {
 	failedCode?: string;
 }
 
-export class RepoSyncState extends Model {
+export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	id: number;
 	subscriptionId: number;
 	repoId: number;

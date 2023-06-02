@@ -15,13 +15,13 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_BACKFILL_ALGORITHM_INCREMENTAL = "backfill-algorithm-incremental",
 	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
-	LOG_CURLV_OUTPUT = "log-curlv-output"
+	LOG_CURLV_OUTPUT = "log-curlv-output",
+	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers"
 }
 
 export enum StringFlags {
@@ -81,9 +81,9 @@ export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, lis
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
+export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
 	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {

@@ -8,8 +8,6 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { sqsQueues } from "~/src/sqs/queues";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 
 jest.mock("~/src/sqs/queues");
 jest.mock("config/feature-flags");
@@ -59,10 +57,6 @@ describe("sync", () => {
 			iss: "jira-client-key"
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-			expect.anything()
-		).mockResolvedValue(true);
 	});
 
 	it("should return 200 on correct post for /jira/sync for Cloud app", async () => {

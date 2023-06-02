@@ -30,6 +30,8 @@ JiraRouter.post("/sync",
 
 JiraRouter.use("/events", JiraEventsRouter);
 
+JiraRouter.use("/workspaces", jiraSymmetricJwtMiddleware, JiraWorkspacesRouter);
+
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
 JiraRouter.use("/workspaces", JiraWorkspacesRouter);
