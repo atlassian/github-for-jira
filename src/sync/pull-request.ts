@@ -11,7 +11,7 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -121,17 +121,15 @@ const doGetPullRequestTask = async (
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
 	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
 
-	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
-		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
-		//Because GitHub rest api  doesn't support supply a from date in the query param,
-		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
-		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-			return {
-				edges: [],
-				jiraPayload: undefined
-			};
-		}
+	//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+	//Because GitHub rest api  doesn't support supply a from date in the query param,
+	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
 	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
@@ -153,7 +151,7 @@ const doGetPullRequestTask = async (
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
-				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
+				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
 				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 

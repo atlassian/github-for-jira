@@ -9,7 +9,9 @@ import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permissio
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers["authorization"];
-	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"] || authHeader?.substring(4);
+	const token = req.query?.["jwt"]
+		|| req.cookies?.["jwt"] || req.body?.["jwt"]
+		|| authHeader?.startsWith("JWT ") && authHeader.substring(4);
 
 	if (token) {
 		let issuer;
