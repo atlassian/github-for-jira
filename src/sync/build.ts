@@ -5,7 +5,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
@@ -39,9 +39,9 @@ export const getBuildTask = async (
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetBuildTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTask(logger, gitHubInstallationClient, repository, smartCursor, messagePayload);
 	} else {
-		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetBuildTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, repository, smartCursor, messagePayload);
 	}
 };
 
@@ -49,7 +49,6 @@ const doGetBuildTaskInParallel = (
 	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
@@ -60,7 +59,6 @@ const doGetBuildTaskInParallel = (
 		doGetBuildTask(
 			logger,
 			gitHubInstallationClient,
-			jiraHost,
 			repository,
 			pageCursor,
 			messagePayload
@@ -70,14 +68,12 @@ const doGetBuildTaskInParallel = (
 const doGetBuildTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
-	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
 
-	const useIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-	const fromDate = useIncrementalBackfill && messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
 

@@ -5,8 +5,6 @@ import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/gi
 import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
 
 const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
 
@@ -68,17 +66,14 @@ export const getDeploymentTask = async (
 ) => {
 	logger.debug("Syncing Deployments: started");
 
-	const shouldUseIncrementalBackfill = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
-	if (shouldUseIncrementalBackfill) {
-		const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-			return {
-				edges: [],
-				jiraPayload: undefined
-			};
-		}
+	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
 	}
 
 	if (!deployments?.length) {
