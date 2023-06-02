@@ -56,7 +56,7 @@ export const processDeployment = async (
 		webhookReceived: webhookReceivedDate
 	});
 
-	if (await isBlocked(gitHubInstallationId, logger)) {
+	if (await isBlocked(jiraHost, gitHubInstallationId, logger)) {
 		logger.warn("blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
