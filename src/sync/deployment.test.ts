@@ -178,7 +178,18 @@ describe("sync/deployments", () => {
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
 					await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
-					expect(result).toEqual(expect.objectContaining({ edges: [deployments[3], deployments[2]] }));
+					expect(result).toEqual({
+						edges: [
+							expect.objectContaining({ cursor: "cursor:4", node: expect.objectContaining({ commitOid: "SHA4" }) }),
+							expect.objectContaining({ cursor: "cursor:3", node: expect.objectContaining({ commitOid: "SHA3" }) })
+						],
+						jiraPayload: {
+							deployments: [
+								expect.objectContaining({ associations: [{ "associationType": "issueIdOrKeys", values: [ "JIRA-4"] }] }),
+								expect.objectContaining({ associations: [{ "associationType": "issueIdOrKeys", values: [ "JIRA-3"] }] })
+							]
+						}
+					});
 				});
 			});
 			describe("for existing legacy (string) deployment cursor", () => {
