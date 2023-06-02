@@ -37,11 +37,13 @@ describe("sync/deployments", () => {
 		preventTransitions: true,
 		operationType: "BACKFILL"
 	});
-	describe.only("using dynamodb as cache", () => {
+	describe("using dynamodb as cache", () => {
 
 		//-- shared testing states --
 		const PAGE_SIZE__TWO_ITEMS = 2;
 		const DEPLOYMENT_CURSOR_EMPTY = undefined;
+		const REPEAT_ONCE = 1;
+		const REPEAT_LOTS_OF_TIME = 20;
 		let gitHubClient: GitHubInstallationClient;
 		let repoSyncState: RepoSyncState;
 
@@ -112,16 +114,14 @@ describe("sync/deployments", () => {
 					});
 			});
 		};
-		const nockDeploymentDetailApi = (deployments, repeatTimes) => {
+		const nockDeploymentCommitGetApi = (deployments, repeatTimes) => {
 			"*".repeat(repeatTimes).split("").forEach(() => {
-				deployments.forEach((item, idx) => {
-					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
-						.reply(200, { "id": idx, "state": "success", "description": "random", "environment": item.node.environment });
+				deployments.forEach(item => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
 						.reply(200, {
 							commit: {
 								author: { name: "random", email: "random", date: new Date() },
-								message: `commit message [JIRA-${idx + 1}]`
+								message: `commit message [JIRA-${item._seq}]`
 							}, html_url: "random"
 						});
 				});
@@ -154,22 +154,13 @@ describe("sync/deployments", () => {
 				}
 			});
 		};
-		/*
-		const nockCommitShaCompare = (sha1, sha2) => {
-			const compareMsgIssueKey = `ISSUEKEY${sha1}${sha2}-100`;
-			githubNock.get(`/repos/test-repo-owner/test-repo-name/compare/${sha1}...${sha2}`)
-				.reply(200, { "total_commits": 1, "commits": [ { "sha": "whatever", "commit": { "message": `some message ${compareMsgIssueKey}` } } ] });
-			return { compareMsgIssueKey };
-		};
-		*/
-
 		//--helper funcs end --
 
 		beforeEach(async () => {
 			gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, logger, undefined);
 			const dbState = await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStatePendingForDeployments().create();
 			repoSyncState = dbState.repoSyncState!;
-			"*".repeat(20).split("").forEach(() => githubUserTokenNock(installationId));
+			"*".repeat(REPEAT_LOTS_OF_TIME).split("").forEach(() => githubUserTokenNock(installationId));
 		});
 
 		afterEach(async () => {
@@ -177,37 +168,34 @@ describe("sync/deployments", () => {
 		});
 
 		describe("when ff is on", () => {
-			const REPEAT_ONCE = 1;
 			beforeEach(() => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 			});
-			describe("for empty demployment cursor", () => {
-				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from begining", async () => {
-					const deployments = createDeploymentsEntities(4);
-					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-					nockDeploymentListingApi(deployments, REPEAT_ONCE);
-					nockDeploymentDetailApi([deployments[3], deployments[2]], REPEAT_ONCE);
+			// eslint-disable-next-line jest/expect-expect
+			it("should fetch deployments with calling rest listing api only once (for last entry)", async () => {
+				const deployments = createDeploymentsEntities(4);
+				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+				//because ff is on, it will find deploy2 for deploy3 in history cache,
+				//but still need to call listing api ONCE when processing deploy2 as it wont' find deploy1
+				nockDeploymentListingApi(deployments, REPEAT_ONCE);
 
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
-					await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
-					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
-				});
-			});
-			describe("for existing deployment cursor", () => {
+				await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
+				expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
 			});
 		});
 		describe("when ff is off", () => {
-			const REPEAT_LOTS_OF_TIME = 20;
 			describe("for empty demployment cursor", () => {
 				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from begining", async () => {
 
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
 					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-					nockDeploymentDetailApi([deployments[3], deployments[2]], REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
@@ -220,8 +208,9 @@ describe("sync/deployments", () => {
 
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
+					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
 					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-					nockDeploymentDetailApi([deployments[1], deployments[0]], REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
