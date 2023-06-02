@@ -8,17 +8,29 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 
-type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][] };
-const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
+type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] };
+const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitHubInstallationClient, repository: Repository, logger: Logger, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
 
 	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
 
 	const edges = deploymentData.repository.deployments.edges || [];
 	const deployments = edges?.map(({ node: item }) => item) || [];
 
+	let extraDeploymentResponse: getDeploymentsResponse | undefined;
+	let extraDeployments: DeploymentQueryNode["node"][] = [];
+	if (edges.length > 0 && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+		try {
+			extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, edges[edges.length - 1].cursor);
+			extraDeployments = (extraDeploymentResponse.repository.deployments.edges || [])?.map(({ node: item }) => item) || [];
+		} catch (e) {
+			logger.warn({ err: e }, "Error finding extraDeploymentData");
+		}
+	}
+
 	return {
 		edges,
-		deployments
+		deployments,
+		extraDeployments
 	};
 };
 
@@ -92,10 +104,10 @@ export const getDeploymentTask = async (
 ) => {
 	logger.debug("Syncing Deployments: started");
 
-	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
+	const { edges, deployments, extraDeployments } = await fetchDeployments(jiraHost, gitHubInstallationClient, repository, logger, cursor, perPage);
 
 	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
-		await saveDeploymentsForLaterUse(deployments, gitHubInstallationClient.baseUrl, logger);
+		await saveDeploymentsForLaterUse([...deployments, ...extraDeployments], gitHubInstallationClient.baseUrl, logger);
 	}
 
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;

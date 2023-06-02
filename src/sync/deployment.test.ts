@@ -172,13 +172,12 @@ describe("sync/deployments", () => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 			});
 			// eslint-disable-next-line jest/expect-expect
-			it("should fetch deployments with calling rest listing api only once (for last entry)", async () => {
+			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
 				const deployments = createDeploymentsEntities(4);
 				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				//nocking extra page so that we can process deployments[2] of above
+				nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
 				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
-				//because ff is on, it will find deploy2 for deploy3 in history cache,
-				//but still need to call listing api ONCE when processing deploy2 as it wont' find deploy1
-				nockDeploymentListingApi(deployments, REPEAT_ONCE);
 
 				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
