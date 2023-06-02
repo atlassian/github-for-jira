@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const {
 	MISSING_JIRA_HOST,
@@ -68,7 +69,7 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
 	const page = Number(req.query?.page) || 1; // Current page (default: 1)
-	const limit = Number(req.query?.limit) || 10; // Number of items per page (default: 10)
+	const limit = Number(req.query?.limit) || 20; // Number of items per page (default: 20)
 
 	if (!repoName) {
 		req.log.warn(MISSING_REPO_NAME);
@@ -90,11 +91,15 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 		return;
 	}
 
-	const repositories: WorkspaceRepo[] = repos.map((repo) => ({
-		id: repo.repoId.toString(),
-		name: repo.repoName,
-		workspaceId: repo.subscriptionId.toString()
-	}));
+	const repositories: WorkspaceRepo[] = repos.map((repo) => {
+		const repoId = transformRepositoryId(repo.repoId);
+		const { repoName, subscriptionId } = repo;
+		return {
+			id: repoId.toString(),
+			name: repoName,
+			workspaceId: subscriptionId.toString()
+		};
+	});
 
 	res.status(200).json({
 		success: true,

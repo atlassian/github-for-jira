@@ -7,11 +7,30 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
+import { WorkspaceRepo } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
 const {
 	MISSING_SUBSCRIPTION,
 	MISSING_REPO_NAME,
 	NO_MATCHING_REPOSITORIES
 } = Errors;
+
+const generateRepositories = (subscriptionId: string, repositoryCount: number): WorkspaceRepo[] => {
+	const repositories: Array<{
+		id: string;
+		name: string;
+		workspaceId: string;
+	}> = [];
+
+	for (let i = 1; i <= repositoryCount; i++) {
+		repositories.push({
+			id: i.toString(),
+			name: `repo${i}`,
+			workspaceId: subscriptionId
+		});
+	}
+
+	return repositories;
+};
 
 describe("Workspaces Repositories Get", () => {
 	let app: Application;
@@ -44,7 +63,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -64,7 +82,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -84,7 +101,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -118,7 +134,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -236,7 +251,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -359,7 +373,6 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -477,72 +490,14 @@ describe("Workspaces Repositories Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
 
 		const subscriptionId = sub.id.toString();
+		const repositories = generateRepositories(subscriptionId, 21);
 
-		const repositories = [
-			{
-				id: "1",
-				name: "repo1",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "2",
-				name: "repo2",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "3",
-				name: "repo3",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "4",
-				name: "repo4",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "5",
-				name: "repo5",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "6",
-				name: "repo6",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "7",
-				name: "repo7",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "8",
-				name: "repo8",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "9",
-				name: "repo9",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "10",
-				name: "repo10",
-				workspaceId: subscriptionId
-			},
-			{
-				id: "11",
-				name: "repo11",
-				workspaceId: subscriptionId
-			}
-		];
-
-		const createRepositories = repositories.map(repo =>
+		const createRepositories = repositories.map((repo) =>
 			RepoSyncState.create({
 				subscriptionId: sub.id,
 				repoId: repo.id,
@@ -557,7 +512,7 @@ describe("Workspaces Repositories Get", () => {
 
 		const response = {
 			success: true,
-			repositories: repositories.slice(0, 10) // default limit
+			repositories: repositories.slice(0, 20) // default limit changed to 20
 		};
 
 		await supertest(app)
@@ -565,10 +520,9 @@ describe("Workspaces Repositories Get", () => {
 			.query({
 				jwt
 			})
-			.expect(res => {
+			.expect((res) => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain(JSON.stringify(response));
 			});
 	});
-
 });
