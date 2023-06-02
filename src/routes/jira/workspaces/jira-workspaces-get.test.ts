@@ -53,7 +53,6 @@ describe("Workspaces Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -79,7 +78,6 @@ describe("Workspaces Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -99,7 +97,6 @@ describe("Workspaces Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -119,7 +116,6 @@ describe("Workspaces Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
@@ -155,7 +151,6 @@ describe("Workspaces Get", () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
