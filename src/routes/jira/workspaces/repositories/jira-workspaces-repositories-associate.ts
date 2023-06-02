@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { Errors } from "config/errors";
-import { RepoSyncState } from "models/reposyncstate";
+import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 import { Subscription } from "models/subscription";
@@ -12,7 +12,7 @@ const findMatchingRepository = async (id: number, jiraHost: string): Promise<(Re
 	return await RepoSyncState.findRepoByRepoIdAndJiraHost(id, jiraHost);
 };
 
-const transformedRepo = (repo: RepoSyncState): BulkSubmitRepositoryInfo => {
+const transformedRepo = (repo: RepoSyncStateProperties): BulkSubmitRepositoryInfo => {
 	const { id, repoFullName, repoUrl } = repo;
 	return {
 		id: transformRepositoryId(id, undefined),
