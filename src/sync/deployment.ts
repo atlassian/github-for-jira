@@ -6,8 +6,10 @@ import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 
-const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number) => {
+type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][] };
+const fetchDeployments = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
 
 	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
 
@@ -56,6 +58,25 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 		.flat();
 };
 
+const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
+
+	const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => d.latestStatus.state === "success");
+	logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
+
+	try {
+		await Promise.all(successDeployments.map(dep => {
+			return cacheSuccessfulDeploymentInfo({
+				gitHubBaseUrl,
+				repositoryId: dep.repository.id,
+				commitSha: dep.commitOid,
+				env: dep.latestStatus.environment,
+				createdAt: new Date(dep.latestStatus.createdAt)
+			}, logger);
+		}));
+	} catch (reject) {
+	}
+};
+
 export const getDeploymentTask = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
@@ -70,6 +91,7 @@ export const getDeploymentTask = async (
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
 	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL)) {
+		await saveDeploymentsForLaterUse(deployments, gitHubInstallationClient.baseUrl);
 	}
 
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;

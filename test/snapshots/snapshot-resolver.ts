@@ -6,7 +6,7 @@ const snapshotDirPath = path.resolve(rootPath, "test/snapshots/");
 
 module.exports = {
 	/**
-	 * @param testPath Path of the test file being test3ed
+	 * @param testPath Path of the test file being tested
 	 * @param snapshotExtension The extension for snapshots (.snap usually)
 	 */
 	resolveSnapshotPath:(testPath, snapshotExtension) =>

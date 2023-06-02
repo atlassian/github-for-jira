@@ -11,6 +11,7 @@ import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
+import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
 
 export const JiraRouter = Router();
 
@@ -28,6 +29,8 @@ JiraRouter.post("/sync",
 	JiraSyncPost);
 
 JiraRouter.use("/events", JiraEventsRouter);
+
+JiraRouter.use("/workspaces", jiraSymmetricJwtMiddleware, JiraWorkspacesRouter);
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
