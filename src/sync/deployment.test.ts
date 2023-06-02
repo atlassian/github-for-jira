@@ -63,6 +63,7 @@ describe("sync/deployments", () => {
 		const createDeploymentsEntities = (size: number) => {
 			return "*".repeat(size).split("").map((_, idx)=> {
 				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
+				clone._seq = idx + 1;
 				clone.cursor = `cursor:${idx + 1}`;
 				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
 				clone.node.databaseId = `dbid-${idx + 1}`;
@@ -141,6 +142,18 @@ describe("sync/deployments", () => {
 				expect(result.Item).toEqual({ CommitSha: { "S": deployment.node.commitOid } });
 			}
 		};
+		const expectEdgesAndPayloadMatchToDeploymentCommits = (result, deployments) => {
+			expect(result).toEqual({
+				edges: deployments.map(d =>
+					expect.objectContaining({ cursor: d.cursor, node: expect.objectContaining({ commitOid: d.node.commitOid }) })
+				),
+				jiraPayload: {
+					deployments: deployments.map(d => expect.objectContaining({
+						associations: [{ "associationType": "issueIdOrKeys", values: [ `JIRA-${d._seq}`] }] })
+					)
+				}
+			});
+		};
 		/*
 		const nockCommitShaCompare = (sha1, sha2) => {
 			const compareMsgIssueKey = `ISSUEKEY${sha1}${sha2}-100`;
@@ -169,7 +182,8 @@ describe("sync/deployments", () => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 			});
 			describe("for empty demployment cursor", () => {
-				it.only("should  fetch deployments from begining and return correct cursor", async () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from begining", async () => {
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 					nockDeploymentListingApi(deployments, REPEAT_ONCE);
@@ -178,28 +192,16 @@ describe("sync/deployments", () => {
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
 					await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
-					expect(result).toEqual({
-						edges: [
-							expect.objectContaining({ cursor: "cursor:4", node: expect.objectContaining({ commitOid: "SHA4" }) }),
-							expect.objectContaining({ cursor: "cursor:3", node: expect.objectContaining({ commitOid: "SHA3" }) })
-						],
-						jiraPayload: {
-							deployments: [
-								expect.objectContaining({ associations: [{ "associationType": "issueIdOrKeys", values: [ "JIRA-4"] }] }),
-								expect.objectContaining({ associations: [{ "associationType": "issueIdOrKeys", values: [ "JIRA-3"] }] })
-							]
-						}
-					});
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
 				});
 			});
-			describe("for existing legacy (string) deployment cursor", () => {
-			});
-			describe("for new (json-object) deployment cursor", () => {
+			describe("for existing deployment cursor", () => {
 			});
 		});
 		describe("when ff is off", () => {
 			const REPEAT_LOTS_OF_TIME = 20;
 			describe("for empty demployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from begining", async () => {
 
 					const deployments = createDeploymentsEntities(4);
@@ -209,11 +211,12 @@ describe("sync/deployments", () => {
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
-					expect(result).toEqual(expect.objectContaining({ edges: [deployments[3], deployments[2]] }));
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
 				});
 			});
-			describe("for existing legacy (string) deployment cursor", () => {
-				it("should fetch deployments from legacy cursor", async () => {
+			describe("for existing deployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from existing cursor", async () => {
 
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
@@ -222,10 +225,8 @@ describe("sync/deployments", () => {
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
-					expect(result).toEqual(expect.objectContaining({ edges: [deployments[1], deployments[0]] }));
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[1], deployments[0]]);
 				});
-			});
-			describe("for new (json-object) deployment cursor", () => {
 			});
 		});
 	});
