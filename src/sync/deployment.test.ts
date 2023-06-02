@@ -4,6 +4,9 @@ import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { dynamodb as ddb } from "config/dynamodb";
+import { createHashWithoutSharedSecret } from "utils/encryption";
+import { envVars } from "config/env";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
@@ -64,6 +67,7 @@ describe("sync/deployments", () => {
 				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
 				clone.node.databaseId = `dbid-${idx + 1}`;
 				clone.node.commitOid = `SHA${idx + 1}`;
+				clone.node.latestStatus.createdAt = clone.node.createdAt;
 				return clone;
 			});
 		};
@@ -122,6 +126,21 @@ describe("sync/deployments", () => {
 				});
 			});
 		};
+		const expectDeploymentEntryInDB = async (deployments) => {
+			for (const deployment of deployments) {
+				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.latestStatus.environment}`);
+				const result = await ddb.getItem({
+					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
+					Key: {
+						"Id": { "S": key },
+						"CreatedAt": { "N": String(new Date(deployment.node.latestStatus.createdAt).getTime()) }
+					},
+					AttributesToGet: [ "CommitSha" ]
+				}).promise();
+				expect(result.$response.error).toBeNull();
+				expect(result.Item).toEqual({ CommitSha: { "S": deployment.node.commitOid } });
+			}
+		};
 		/*
 		const nockCommitShaCompare = (sha1, sha2) => {
 			const compareMsgIssueKey = `ISSUEKEY${sha1}${sha2}-100`;
@@ -150,7 +169,7 @@ describe("sync/deployments", () => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 			});
 			describe("for empty demployment cursor", () => {
-				it("should  fetch deployments from begining", async () => {
+				it.only("should  fetch deployments from begining and return correct cursor", async () => {
 					const deployments = createDeploymentsEntities(4);
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 					nockDeploymentListingApi(deployments, REPEAT_ONCE);
@@ -158,6 +177,7 @@ describe("sync/deployments", () => {
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
+					await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
 					expect(result).toEqual(expect.objectContaining({ edges: [deployments[3], deployments[2]] }));
 				});
 			});
@@ -166,7 +186,7 @@ describe("sync/deployments", () => {
 			describe("for new (json-object) deployment cursor", () => {
 			});
 		});
-		describe.only("when ff is off", () => {
+		describe("when ff is off", () => {
 			const REPEAT_LOTS_OF_TIME = 20;
 			describe("for empty demployment cursor", () => {
 				it("should fetch deployments from begining", async () => {

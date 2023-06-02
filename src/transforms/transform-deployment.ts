@@ -120,6 +120,10 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
+	if (type === "backfill" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
+	}
+
 	if (!lastSuccessfullyDeployedCommit) {
 		// Grab the last 10 deployments for this repo
 		const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =

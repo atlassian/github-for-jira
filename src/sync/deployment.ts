@@ -39,6 +39,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				environment: deployment.environment,
 				id: deployment.databaseId,
 				target_url: deployment.latestStatus?.logUrl,
+				created_at: deployment.latestStatus?.createdAt,
 				updated_at: deployment.latestStatus?.updatedAt,
 				state: deployment.latestStatus?.state
 			}
@@ -59,12 +60,10 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 };
 
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
-
 	const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => d.latestStatus.state === "success");
 	logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
-
 	try {
-		await Promise.all(successDeployments.map(dep => {
+		const result = await Promise.allSettled(successDeployments.map(dep => {
 			return cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl,
 				repositoryId: dep.repository.id,
@@ -73,7 +72,12 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 				createdAt: new Date(dep.latestStatus.createdAt)
 			}, logger);
 		}));
-	} catch (reject) {
+		const successCount = result.filter(r => r.status === "fulfilled").length;
+		const failedCount = result.filter(r => r.status === "rejected").length;
+		const isAllSuccess = failedCount === 0;
+		logger.info({ successCount, failedCount, isAllSuccess }, "All deployments saving operation settled.");
+	} catch (error) {
+		logger.error({ err: error }, "Error saving success deployments");
 	}
 };
 
@@ -90,8 +94,8 @@ export const getDeploymentTask = async (
 
 	const { edges, deployments } = await fetchDeployments(gitHubInstallationClient, repository, cursor, perPage);
 
-	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL)) {
-		await saveDeploymentsForLaterUse(deployments, gitHubInstallationClient.baseUrl);
+	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+		await saveDeploymentsForLaterUse(deployments, gitHubInstallationClient.baseUrl, logger);
 	}
 
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
