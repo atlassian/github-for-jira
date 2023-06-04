@@ -46,21 +46,107 @@ describe("sync/deployments", () => {
 		const REPEAT_LOTS_OF_TIME = 20;
 		let gitHubClient: GitHubInstallationClient;
 		let repoSyncState: RepoSyncState;
+		let repositoryData;
+
+		beforeEach(async () => {
+
+			gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, logger, undefined);
+
+			const dbState = await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStatePendingForDeployments().create();
+
+			repoSyncState = dbState.repoSyncState!;
+			repositoryData = {
+				id: repoSyncState.repoId,
+				name: repoSyncState.repoName,
+				full_name: repoSyncState.repoFullName,
+				owner: { login: repoSyncState.repoOwner },
+				html_url: repoSyncState.repoUrl,
+				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+			};
+
+			"*".repeat(REPEAT_LOTS_OF_TIME).split("").forEach(() => githubUserTokenNock(installationId));
+		});
+
+		afterEach(async () => {
+			nockCleanAll();
+		});
+
+		describe("when ff is on", () => {
+
+			beforeEach(() => {
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+			});
+
+			// eslint-disable-next-line jest/expect-expect
+			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
+
+				const deployments = createDeploymentsEntities(4);
+
+				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
+				expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
+
+			});
+		});
+
+		describe("when ff is off", () => {
+
+			beforeEach(() => {
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(false);
+			});
+
+			describe("for empty demployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from begining", async () => {
+
+					const deployments = createDeploymentsEntities(4);
+
+					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+
+					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+
+					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
+				});
+			});
+
+			describe("for existing deployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from existing cursor", async () => {
+
+					const deployments = createDeploymentsEntities(4);
+
+					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
+
+					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
+
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+
+					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[1], deployments[0]]);
+				});
+			});
+		});
 
 		//--helper funcs--
-		const repoFromRepoSyncState = (repoSyncState: RepoSyncState) => ({
-			id: repoSyncState.repoId,
-			name: repoSyncState.repoName,
-			full_name: repoSyncState.repoFullName,
-			owner: { login: repoSyncState.repoOwner },
-			html_url: repoSyncState.repoUrl,
-			updated_at: repoSyncState.repoUpdatedAt?.toISOString()
-		});
 		const msgPayload = () => ({
 			jiraHost,
 			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 			commitsFromDate: "2023-01-01T00:00:00Z"
 		});
+
 		//size up to 9 entities
 		const createDeploymentsEntities = (size: number) => {
 			return "*".repeat(size).split("").map((_, idx)=> {
@@ -74,11 +160,12 @@ describe("sync/deployments", () => {
 				return clone;
 			});
 		};
-		const getDeploymentsPageResponse = (items) => ({ "data": { "repository": { "deployments": { "edges": items } } } });
+
 		const nockFetchingDeploymentgPagesGraphQL = (cursor, deployments) => {
 			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
-				.query(true).reply(200, getDeploymentsPageResponse(deployments));
+				.query(true).reply(200, { "data": { "repository": { "deployments": { "edges": deployments } } } });
 		};
+
 		const nockDeploymentListingApi = (deployments, repeatTimes) => {
 			"*".repeat(repeatTimes).split("").forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
@@ -104,16 +191,8 @@ describe("sync/deployments", () => {
 						.reply(200, { "id": idx, "state": "success", "description": "random", "environment": item.node.environment });
 				});
 			});
-			deployments.forEach((item, idx) => {
-				githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
-					.reply(200, {
-						commit: {
-							author: { name: "random", email: "random", date: new Date() },
-							message: `commit message [JIRA-${idx + 1}]`
-						}, html_url: "random"
-					});
-			});
 		};
+
 		const nockDeploymentCommitGetApi = (deployments, repeatTimes) => {
 			"*".repeat(repeatTimes).split("").forEach(() => {
 				deployments.forEach(item => {
@@ -127,6 +206,7 @@ describe("sync/deployments", () => {
 				});
 			});
 		};
+
 		const expectDeploymentEntryInDB = async (deployments) => {
 			for (const deployment of deployments) {
 				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.latestStatus.environment}`);
@@ -142,6 +222,7 @@ describe("sync/deployments", () => {
 				expect(result.Item).toEqual({ CommitSha: { "S": deployment.node.commitOid } });
 			}
 		};
+
 		const expectEdgesAndPayloadMatchToDeploymentCommits = (result, deployments) => {
 			expect(result).toEqual({
 				edges: deployments.map(d =>
@@ -155,68 +236,6 @@ describe("sync/deployments", () => {
 			});
 		};
 		//--helper funcs end --
-
-		beforeEach(async () => {
-			gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, logger, undefined);
-			const dbState = await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStatePendingForDeployments().create();
-			repoSyncState = dbState.repoSyncState!;
-			"*".repeat(REPEAT_LOTS_OF_TIME).split("").forEach(() => githubUserTokenNock(installationId));
-		});
-
-		afterEach(async () => {
-			nockCleanAll();
-		});
-
-		describe("when ff is on", () => {
-			beforeEach(() => {
-				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
-			});
-			// eslint-disable-next-line jest/expect-expect
-			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
-				const deployments = createDeploymentsEntities(4);
-				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-				//nocking extra page so that we can process deployments[2] of above
-				nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
-				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
-
-				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-				await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
-				expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
-			});
-		});
-		describe("when ff is off", () => {
-			describe("for empty demployment cursor", () => {
-				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from begining", async () => {
-
-					const deployments = createDeploymentsEntities(4);
-					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
-					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
-					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
-				});
-			});
-			describe("for existing deployment cursor", () => {
-				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from existing cursor", async () => {
-
-					const deployments = createDeploymentsEntities(4);
-					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
-					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
-					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
-					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
-
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repoFromRepoSyncState(repoSyncState), deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[1], deployments[0]]);
-				});
-			});
-		});
 	});
 
 	describe("cloud", () => {
