@@ -119,7 +119,6 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 	}
 
-
 	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 
 		const result = await RepoSyncState.findAll(merge(options, {
@@ -208,18 +207,15 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		}));
 	}
 
-	static async findByOrgNameAndSubscriptionId(subscriptions: Subscription[], orgName: string): Promise<FlatArray<Awaited<RepoSyncState[]>[], 2>[]> {
-		const result = await Promise.all(subscriptions.map(async sub => {
-			return await RepoSyncState.findAll({
-				where: {
-					subscriptionId: sub.id,
-					repoOwner: {
-						[Op.iLike]: `%${orgName}%`
-					}
+	static async findByOrgNameAndSubscriptionId(subscription: Subscription, orgName: string): Promise<RepoSyncState | null> {
+		return await RepoSyncState.findOne({
+			where: {
+				subscriptionId: subscription.id,
+				repoOwner: {
+					[Op.iLike]: `%${orgName}%`
 				}
-			});
-		}));
-		return result.flat(1);
+			}
+		});
 	}
 
 	// Nullify statuses and cursors to start anew

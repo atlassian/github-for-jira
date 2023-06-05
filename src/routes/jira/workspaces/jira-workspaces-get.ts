@@ -2,36 +2,41 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Errors } from "config/errors";
+import { paginatedRepositories } from "utils/paginate-response";
 
-type GitHubWorkspace = {
+export type Workspace = {
 	id: string,
-	name: string
+	name: string,
+	canCreateContainer: boolean
 }
 
-const {
-	MISSING_JIRA_HOST,
-	MISSING_SUBSCRIPTION,
-	MISSING_ORG_NAME,
-	NO_MATCHING_WORKSPACES
-} = Errors;
+const DEFAULT_PAGE_NUMBER = 1; // Current page
+export const DEFAULT_LIMIT = 20; // Number of items per page
 
-const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string): Promise<GitHubWorkspace[]>  => {
-	const matchingRepos = await RepoSyncState.findByOrgNameAndSubscriptionId(subscriptions, orgName);
-	const matchedOrgs = matchingRepos.map(org => {
-		const { subscriptionId, repoOwner } = org;
+const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]>  => {
+	let matchingRepos;
 
-		return {
-			id: subscriptionId.toString(),
-			name: repoOwner,
-			// default to false until support is added for createContainer
-			canCreateContainer: false
-		};
-	})
-		.filter((value, index, self) =>
-			index === self.findIndex((org) => (
-				org.id === value.id
-			))
-		);
+	if (orgName) {
+		matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
+			return await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName);
+		}));
+	} else {
+		matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
+			return await RepoSyncState.findOneFromSubscription(subscription);
+		}));
+	}
+
+	const matchedOrgs = matchingRepos
+		.filter(org => org !== null)
+		.map(org => {
+			const { subscriptionId, repoOwner } = org;
+
+			return {
+				id: subscriptionId.toString(),
+				name: repoOwner,
+				canCreateContainer: false
+			};
+		});
 
 	return matchedOrgs;
 };
@@ -39,36 +44,18 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName: string):
 export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for GET workspaces");
 
-	const { jiraHost } = res.locals;
-
-	if (!jiraHost) {
-		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
-		res.status(400).send(MISSING_JIRA_HOST);
-		return;
-	}
-
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {
-		req.log.warn({ jiraHost, req, res }, MISSING_SUBSCRIPTION);
-		res.status(400).send(MISSING_SUBSCRIPTION);
+		req.log.warn({ jiraHost, req, res }, Errors.MISSING_SUBSCRIPTION);
+		res.status(400).send(Errors.MISSING_SUBSCRIPTION);
 		return;
 	}
 
 	const orgName = req.query?.searchQuery as string;
-
-	if (!orgName) {
-		req.log.warn(MISSING_ORG_NAME);
-		res.status(400).send(MISSING_ORG_NAME);
-		return;
-	}
-
+	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 
-	if (!matchedOrgs?.length) {
-		res.status(400).send(NO_MATCHING_WORKSPACES);
-		return;
-	}
-
-	res.status(200).json({ success: true, workspaces: matchedOrgs });
+	res.status(200).json({ success: true, workspaces: paginatedRepositories(page, limit, matchedOrgs) });
 };
