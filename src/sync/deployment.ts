@@ -80,7 +80,7 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 				gitHubBaseUrl,
 				repositoryId: dep.repository.id,
 				commitSha: dep.commitOid,
-				env: dep.latestStatus.environment,
+				env: dep.environment,
 				createdAt: new Date(dep.latestStatus.createdAt)
 			}, logger);
 		}));

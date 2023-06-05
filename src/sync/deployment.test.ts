@@ -209,7 +209,8 @@ describe("sync/deployments", () => {
 
 		const expectDeploymentEntryInDB = async (deployments) => {
 			for (const deployment of deployments) {
-				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.latestStatus.environment}`);
+				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.environment}`);
+
 				const result = await ddb.getItem({
 					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 					Key: {

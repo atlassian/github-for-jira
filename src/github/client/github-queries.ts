@@ -380,7 +380,6 @@ export type DeploymentQueryNode = {
 			logUrl: string,
 			state: string,
 			id: string,
-			environment: string,
 			createdAt: string,
 			updatedAt: string
 		}
@@ -424,7 +423,6 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             logUrl
             state
             id
-						environment
 						createdAt
             updatedAt
           }

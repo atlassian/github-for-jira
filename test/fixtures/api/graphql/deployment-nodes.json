@@ -29,7 +29,6 @@
                 "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
-								"environment": "prod",
                 "createdAt": "2022-02-03T22:45:04Z",
                 "updatedAt": "2022-02-03T22:45:04Z"
               }
