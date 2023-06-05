@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Errors } from "config/errors";
-import { paginatedRepositories } from "utils/paginate-response";
+import { paginatedResponse } from "utils/paginate-response";
 
 export type Workspace = {
 	id: string,
@@ -44,6 +44,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string)
 export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for GET workspaces");
 
+	const { jiraHost } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {
@@ -57,5 +58,5 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 
-	res.status(200).json({ success: true, workspaces: paginatedRepositories(page, limit, matchedOrgs) });
+	res.status(200).json({ success: true, workspaces: paginatedResponse(page, limit, matchedOrgs) });
 };
