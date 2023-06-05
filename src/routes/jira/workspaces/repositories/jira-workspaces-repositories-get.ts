@@ -3,20 +3,18 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { paginatedRepositories } from "utils/paginate-response";
+import { paginatedResponse } from "utils/paginate-response";
 
-const {
-	MISSING_JIRA_HOST,
-	MISSING_SUBSCRIPTION,
-	MISSING_REPO_NAME,
-	NO_MATCHING_REPOSITORIES
-} = Errors;
+const { MISSING_SUBSCRIPTION, MISSING_REPO_NAME } = Errors;
 
 export interface WorkspaceRepo {
 	id: string,
 	name: string,
 	workspaceId: string
 }
+
+const DEFAULT_PAGE_NUMBER = 1; // Current page
+export const DEFAULT_LIMIT = 20; // Number of items per page
 
 const findMatchingRepos = async (
 	jiraHost: string,
@@ -53,18 +51,10 @@ const findMatchingRepos = async (
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
-	const { jiraHost } = res.locals;
-
-	if (!jiraHost) {
-		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
-		res.status(400).send(MISSING_JIRA_HOST);
-		return;
-	}
-
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
-	const page = Number(req.query?.page) || 1; // Current page (default: 1)
-	const limit = Number(req.query?.limit) || 20; // Number of items per page (default: 20)
+	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 
 	if (!repoName) {
 		req.log.warn(MISSING_REPO_NAME);
@@ -80,12 +70,6 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 		return;
 	}
 
-	if (!repos?.length) {
-		req.log.warn(NO_MATCHING_REPOSITORIES);
-		res.status(400).send(NO_MATCHING_REPOSITORIES);
-		return;
-	}
-
 	const repositories: WorkspaceRepo[] = repos.map((repo) => {
 		const repoId = transformRepositoryId(repo.repoId);
 		const { repoName, subscriptionId } = repo;
@@ -98,6 +82,6 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 
 	res.status(200).json({
 		success: true,
-		repositories: paginatedRepositories(page, limit, repositories)
+		repositories: paginatedResponse(page, limit, repositories)
 	});
 };

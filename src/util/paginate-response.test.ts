@@ -1,4 +1,4 @@
-import { paginatedRepositories } from "utils/paginate-response";
+import { paginatedResponse } from "utils/paginate-response";
 
 const mockWorkspaces = [
 	{
@@ -40,9 +40,9 @@ const mockWorkspaces = [
 
 describe("Paginate response data", () => {
 	it("Should return the correct data when paginated", () => {
-		expect(paginatedRepositories(1, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(0, 3)); // first 3 items in mockWorkspaces
-		expect(paginatedRepositories(2, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(3, 6)); // second 3 items in mockWorkspaces
-		expect(paginatedRepositories(3, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(6, 7)); // second 3 items in mockWorkspaces
-		expect(paginatedRepositories(4, 3, mockWorkspaces)).toEqual([]);
+		expect(paginatedResponse(1, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(0, 3)); // first 3 items in mockWorkspaces
+		expect(paginatedResponse(2, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(3, 6)); // second 3 items in mockWorkspaces
+		expect(paginatedResponse(3, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(6, 7)); // second 3 items in mockWorkspaces
+		expect(paginatedResponse(4, 3, mockWorkspaces)).toEqual([]);
 	});
 });
