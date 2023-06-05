@@ -72,7 +72,7 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 };
 
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
-	const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => d.latestStatus.state === "success");
+	const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => d.latestStatus.state === "SUCCESS");
 	logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
 	try {
 		const result = await Promise.allSettled(successDeployments.map(dep => {
