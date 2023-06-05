@@ -183,6 +183,7 @@ describe("Workspaces Get", () => {
 
 		const subscriptions = await createSubscriptions(jiraHost, 3);
 		await createRepos(subscriptions);
+
 		const response = {
 			success:true,
 			workspaces: [
