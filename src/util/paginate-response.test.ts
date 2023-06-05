@@ -42,7 +42,7 @@ describe("Paginate response data", () => {
 	it("Should return the correct data when paginated", () => {
 		expect(paginatedResponse(1, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(0, 3)); // first 3 items in mockWorkspaces
 		expect(paginatedResponse(2, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(3, 6)); // second 3 items in mockWorkspaces
-		expect(paginatedResponse(3, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(6, 7)); // second 3 items in mockWorkspaces
+		expect(paginatedResponse(3, 3, mockWorkspaces)).toEqual(mockWorkspaces.slice(6, 7)); // last item (1) in mockWorkspaces
 		expect(paginatedResponse(4, 3, mockWorkspaces)).toEqual([]);
 	});
 });
