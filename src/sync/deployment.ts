@@ -137,7 +137,9 @@ export const getDeploymentTask = async (
 		};
 	}
 
-	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus.updatedAt}`);
+	// latestStatus might always be defined, however in getTransformedDeployments() it is optional... leaving with
+	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
+	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
 
 	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");
