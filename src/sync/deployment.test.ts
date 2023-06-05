@@ -10,7 +10,7 @@ import { envVars } from "config/env";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-import { getDeploymentsQuery } from "~/src/github/client/github-queries";
+import { getDeploymentsQuery, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
@@ -82,8 +82,8 @@ describe("sync/deployments", () => {
 
 				const deployments = createDeploymentEntities(4);
 
-				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-				nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
 
 				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
 
@@ -107,7 +107,7 @@ describe("sync/deployments", () => {
 
 					const deployments = createDeploymentEntities(4);
 
-					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 
 					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
 
@@ -127,7 +127,7 @@ describe("sync/deployments", () => {
 
 					const deployments = createDeploymentEntities(4);
 
-					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
+					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, deployments[2].cursor, [deployments[1], deployments[0]]);
 
 					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
 
@@ -167,8 +167,8 @@ describe("sync/deployments", () => {
 			});
 		};
 
-		const nockFetchingDeploymentgPagesGraphQL = (cursor, deployments) => {
-			githubNock.post("/graphql", { query: getDeploymentsQuery, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
+		const nockFetchingDeploymentgPagesGraphQL = (query, cursor, deployments) => {
+			githubNock.post("/graphql", { query, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
 				.query(true).reply(200, { "data": { "repository": { "deployments": { "edges": deployments } } } });
 		};
 

@@ -375,7 +375,7 @@ export type DeploymentQueryNode = {
 		},
 		environment: string,
 		description: string,
-		statuses: {
+		statuses?: {
 			nodes: {
 				createdAt: string,
 				updatedAt: string,
@@ -402,6 +402,44 @@ export type getDeploymentsResponse = {
 };
 
 export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    deployments(first: $per_page, after: $cursor, orderBy: { direction: DESC, field: CREATED_AT }) {
+      edges {
+        cursor
+        node {
+					createdAt
+          repository {
+            id: databaseId
+            node_id: id
+            name
+            owner {
+              login
+            }
+          }
+          databaseId
+          commitOid
+          task
+          ref {
+            name
+            id
+          }
+          environment
+          description
+          latestStatus {
+            environmentUrl
+            logUrl
+            state
+            id
+						createdAt
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}`;
+
+export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){
     deployments(first: $per_page, after: $cursor, orderBy: { direction: DESC, field: CREATED_AT }) {
       edges {

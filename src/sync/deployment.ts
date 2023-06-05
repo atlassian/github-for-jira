@@ -12,7 +12,7 @@ import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service
 type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] };
 const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitHubInstallationClient, repository: Repository, logger: Logger, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
 
-	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, cursor);
+	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, cursor);
 
 	const edges = deploymentData.repository.deployments.edges || [];
 	const deployments = edges?.map(({ node: item }) => item) || [];
@@ -21,7 +21,7 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	let extraDeployments: DeploymentQueryNode["node"][] = [];
 	if (edges.length > 0 && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
 		try {
-			extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(repository.owner.login, repository.name, perPage, edges[edges.length - 1].cursor);
+			extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, edges[edges.length - 1].cursor);
 			extraDeployments = (extraDeploymentResponse.repository.deployments.edges || [])?.map(({ node: item }) => item) || [];
 		} catch (e) {
 			logger.warn({ err: e }, "Error finding extraDeploymentData");
@@ -39,7 +39,7 @@ const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"
 
 	const transformTasks = deployments.map((deployment) => {
 
-		const firstNonInactiveStatus = deployment.statuses.nodes.find(n=>n.state !== "INACTIVE");
+		const firstNonInactiveStatus = deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE");
 		if (!firstNonInactiveStatus) {
 			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
@@ -80,10 +80,10 @@ const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"
 
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
 	try {
-		const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => (d.statuses.nodes.some(n => n.state === "SUCCESS")));
+		const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => (d.statuses?.nodes.some(n => n.state === "SUCCESS")));
 		logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
 		const result = await Promise.allSettled(successDeployments.map(dep => {
-			const successStatusDate = dep.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
+			const successStatusDate = dep.statuses?.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
 			if (!successStatusDate) {
 				logger.warn("Should find a success status date, but found none");
 				throw "Save failure";
