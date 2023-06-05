@@ -64,7 +64,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has not jiraHost");
+	req.log.warn("No token found and session cookie has no jiraHost");
 	return res.status(401).send("Unauthorised");
 
 };
