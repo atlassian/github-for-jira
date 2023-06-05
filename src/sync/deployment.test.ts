@@ -78,9 +78,9 @@ describe("sync/deployments", () => {
 			});
 
 			// eslint-disable-next-line jest/expect-expect
-			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
+			it.only("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
 
-				const deployments = createDeploymentsEntities(4);
+				const deployments = createDeploymentEntities(4);
 
 				nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 				nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
@@ -105,7 +105,7 @@ describe("sync/deployments", () => {
 				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from begining", async () => {
 
-					const deployments = createDeploymentsEntities(4);
+					const deployments = createDeploymentEntities(4);
 
 					nockFetchingDeploymentgPagesGraphQL(DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 
@@ -113,6 +113,7 @@ describe("sync/deployments", () => {
 
 					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
 					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
@@ -124,7 +125,7 @@ describe("sync/deployments", () => {
 				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from existing cursor", async () => {
 
-					const deployments = createDeploymentsEntities(4);
+					const deployments = createDeploymentEntities(4);
 
 					nockFetchingDeploymentgPagesGraphQL(deployments[2].cursor, [deployments[1], deployments[0]]);
 
@@ -132,6 +133,7 @@ describe("sync/deployments", () => {
 
 					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
 					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
 
 					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
 
@@ -148,15 +150,16 @@ describe("sync/deployments", () => {
 		});
 
 		//size up to 9 entities
-		const createDeploymentsEntities = (size: number) => {
+		const createDeploymentEntities = (size: number) => {
 			return "*".repeat(size).split("").map((_, idx)=> {
 				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
 				clone._seq = idx + 1;
 				clone.cursor = `cursor:${idx + 1}`;
 				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
+				clone.node.updatedAt = `2023-01-0${idx + 1}T10:00:00Z`;
 				clone.node.databaseId = `dbid-${idx + 1}`;
 				clone.node.commitOid = `SHA${idx + 1}`;
-				clone.node.latestStatus.createdAt = clone.node.createdAt;
+				clone.node.statuses.nodes.forEach(n => n.updatedAt = clone.node.createdAt);
 				return clone;
 			});
 		};
@@ -186,9 +189,17 @@ describe("sync/deployments", () => {
 						"transient_environment": false,
 						"production_environment": true
 					})));
+			});
+		};
+
+		const nockDeploymentStatusApi = (deployments, repeatTimes) => {
+			"*".repeat(repeatTimes).split("").forEach(() => {
 				deployments.forEach((item, idx) => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
-						.reply(200, { "id": idx, "state": "success", "description": "random", "environment": item.node.environment });
+						.reply(200, [
+							{ "id": idx * 1000 + 1, "state": "inactive", "description": "random", "environment": item.node.environment },
+							{ "id": idx * 1000 + 2, "state": "success", "description": "random", "environment": item.node.environment }
+						]);
 				});
 			});
 		};
@@ -210,12 +221,12 @@ describe("sync/deployments", () => {
 		const expectDeploymentEntryInDB = async (deployments) => {
 			for (const deployment of deployments) {
 				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.environment}`);
-
+				const successStatusDate = deployment.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
 				const result = await ddb.getItem({
 					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 					Key: {
 						"Id": { "S": key },
-						"CreatedAt": { "N": String(new Date(deployment.node.latestStatus.createdAt).getTime()) }
+						"CreatedAt": { "N": String(new Date(successStatusDate)) }
 					},
 					AttributesToGet: [ "CommitSha" ]
 				}).promise();

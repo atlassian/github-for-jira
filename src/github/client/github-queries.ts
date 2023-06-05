@@ -375,6 +375,13 @@ export type DeploymentQueryNode = {
 		},
 		environment: string,
 		description: string,
+		statuses: {
+			nodes: {
+				createdAt: string,
+				updatedAt: string,
+				state: string
+			}[]
+		},
 		latestStatus: {
 			environmentUrl: string,
 			logUrl: string,
@@ -418,6 +425,13 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
           }
           environment
           description
+          statuses(last: 5) {
+            nodes {
+              createdAt
+              updatedAt
+              state
+            }
+          }
           latestStatus {
             environmentUrl
             logUrl

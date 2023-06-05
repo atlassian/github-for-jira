@@ -34,9 +34,15 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	};
 };
 
-const getTransformedDeployments = async (deployments, gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
+const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"][], gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
 
 	const transformTasks = deployments.map((deployment) => {
+
+		const firstNonInactiveStatus = deployment.statuses.nodes.find(n=>n.state !== "INACTIVE");
+		if (!firstNonInactiveStatus) {
+			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
+		}
+
 		const deploymentStatus = {
 			repository: deployment.repository,
 			deployment: {
@@ -51,11 +57,11 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 				environment: deployment.environment,
 				id: deployment.databaseId,
 				target_url: deployment.latestStatus?.logUrl,
-				created_at: deployment.latestStatus?.createdAt,
-				updated_at: deployment.latestStatus?.updatedAt,
-				state: deployment.latestStatus?.state
+				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
+				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
+				state: firstNonInactiveStatus?.state || deployment.latestStatus?.state
 			}
-		} as DeploymentStatusEvent;
+		} as any as DeploymentStatusEvent;
 
 		const metrics = {
 			trigger: "backfill",
@@ -72,16 +78,21 @@ const getTransformedDeployments = async (deployments, gitHubInstallationClient: 
 };
 
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
-	const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => d.latestStatus.state === "SUCCESS");
-	logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
 	try {
+		const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => (d.statuses.nodes.some(n => n.state === "SUCCESS")));
+		logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
 		const result = await Promise.allSettled(successDeployments.map(dep => {
+			const successStatusDate = dep.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
+			if (!successStatusDate) {
+				logger.warn("Should find a success status date, but found none");
+				throw "Save failure";
+			}
 			return cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl,
 				repositoryId: dep.repository.id,
 				commitSha: dep.commitOid,
 				env: dep.environment,
-				createdAt: new Date(dep.latestStatus.createdAt)
+				createdAt: new Date(successStatusDate)
 			}, logger);
 		}));
 		const successCount = result.filter(r => r.status === "fulfilled").length;
@@ -125,9 +136,7 @@ export const getDeploymentTask = async (
 		};
 	}
 
-	// latestStatus might always be defined, however in getTransformedDeployments() it is optional... leaving with
-	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
-	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
+	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].updatedAt}`);
 
 	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");

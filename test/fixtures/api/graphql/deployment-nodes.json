@@ -7,6 +7,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "createdAt": "2022-02-03T22:45:04Z",
+							"updatedAt": "2022-02-03T22:45:04Z",
               "repository": {
 								"id": 19,
 								"node_id": "AyMi0wMi0wM1QyMjo0NT",
@@ -31,6 +32,22 @@
                 "id": "DES_kwDOGtdD5840PkSo",
                 "createdAt": "2022-02-03T22:45:04Z",
                 "updatedAt": "2022-02-03T22:45:04Z"
+              },
+							"statuses": {
+                "nodes": [
+                  {
+										"updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "INACTIVE"
+                  },
+                  {
+										"updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "SUCCESS"
+                  },
+                  {
+										"updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "IN_PROGRESS"
+                  }
+                ]
               }
             }
           }
