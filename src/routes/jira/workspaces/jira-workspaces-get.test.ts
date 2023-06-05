@@ -8,8 +8,10 @@ import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, Workspace } from "routes/jira/workspaces/jira-workspaces-get";
+import { createSubscriptions } from "test/utils/create-subscriptions";
+import { createRepositories } from "test/utils/create-repositories";
 
-const createRepos = async(subscriptions: Subscription[]) => {
+const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 	await RepoSyncState.create({
 		subscriptionId: subscriptions[0].id,
 		repoId: 1,
@@ -56,55 +58,6 @@ const createRepos = async(subscriptions: Subscription[]) => {
 	});
 };
 
-const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
-	const subscriptions: Subscription[] = [];
-
-	for (let i = 0; i < numberOfSubs; i++) {
-		const installationId = i + 1; // Generate a unique installation ID
-		const hashedClientKey = `key-${i + 1}`; // Generate a unique hashed client key
-
-		const subscription: Subscription = await Subscription.install({
-			host: jiraHost,
-			installationId: installationId,
-			hashedClientKey: hashedClientKey,
-			gitHubAppId: undefined
-		});
-
-		subscriptions.push(subscription);
-	}
-
-	return subscriptions;
-};
-
-const generateUniqueRepoOwner = (): string => {
-	const prefix = "repo-owner";
-	const uniqueId = Math.floor(Math.random() * 1000); // Generate a random number
-
-	return `${prefix}-${uniqueId}`;
-};
-
-const createRepositories = async (subscriptions: Subscription[]): Promise<RepoSyncState[]> => {
-	const repositories: RepoSyncState[] = [];
-
-	for (const subscription of subscriptions) {
-		const repoOwner = generateUniqueRepoOwner(); // Function to generate unique repo owner
-
-		const repository: RepoSyncState = await RepoSyncState.create({
-			subscriptionId: subscription.id,
-			repoId: 3,
-			repoName: "testing-repo",
-			repoOwner: repoOwner,
-			repoFullName: `${repoOwner}/testing-repo`,
-			repoUrl: `github.com/${repoOwner}/testing-repo`
-		});
-
-		repositories.push(repository);
-	}
-
-	return repositories;
-};
-
-
 type Response = {
 	success: boolean,
 	workspaces: Workspace[]
@@ -116,7 +69,13 @@ const generateMockResponse = (subscriptions: Subscription[], repositories: RepoS
 		workspaces: [] as { id: string; name: string; canCreateContainer: boolean }[]
 	};
 
-	const limit = subscriptions.length || DEFAULT_LIMIT;
+	let limit: number;
+
+	if (subscriptions.length < DEFAULT_LIMIT) {
+		limit = subscriptions.length;
+	} else {
+		limit = DEFAULT_LIMIT;
+	}
 
 	for (let i = 0; i < limit; i++) {
 		const subscription = subscriptions[i];
@@ -159,24 +118,6 @@ describe("Workspaces Get", () => {
 		});
 		app.use(getFrontendApp());
 
-		await Subscription.uninstall({
-			installationId: 1234,
-			host: jiraHost,
-			gitHubAppId: undefined
-		});
-
-		await Subscription.uninstall({
-			installationId: 7890,
-			host: jiraHost,
-			gitHubAppId: undefined
-		});
-
-		await Subscription.uninstall({
-			installationId: 7890,
-			host: jiraHost,
-			gitHubAppId: undefined
-		});
-
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=Atlas")
 			.query({
@@ -195,6 +136,8 @@ describe("Workspaces Get", () => {
 			next();
 		});
 		app.use(getFrontendApp());
+
+		await createSubscriptions(jiraHost, 1);
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=atlas")
@@ -218,7 +161,6 @@ describe("Workspaces Get", () => {
 		const subscriptions = await createSubscriptions(jiraHost, 2);
 		const repositories = await createRepositories(subscriptions);
 		const response = generateMockResponse(subscriptions, repositories);
-
 
 		await supertest(app)
 			.get("/jira/workspaces/search")
