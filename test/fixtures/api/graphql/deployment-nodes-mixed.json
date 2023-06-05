@@ -29,6 +29,15 @@
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
                 "updatedAt": "2022-02-03T22:45:04Z"
+              },
+							"statuses": {
+                "nodes": [
+                  {
+										"createdAt": "2022-02-03T22:45:04Z",
+										"updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "SUCCESS"
+                  }
+                ]
               }
             }
           },
@@ -58,6 +67,15 @@
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
                 "updatedAt": "2022-02-03T22:45:04Z"
+              },
+							"statuses": {
+                "nodes": [
+                  {
+										"createdAt": "2022-02-03T22:45:04Z",
+										"updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "SUCCESS"
+                  }
+                ]
               }
             }
           }

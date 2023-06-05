@@ -78,7 +78,7 @@ describe("sync/deployments", () => {
 			});
 
 			// eslint-disable-next-line jest/expect-expect
-			it.only("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
+			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
 
 				const deployments = createDeploymentEntities(4);
 
