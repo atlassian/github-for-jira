@@ -3,6 +3,7 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { paginatedRepositories } from "utils/paginate-response";
 
 const {
 	MISSING_JIRA_HOST,
@@ -47,12 +48,6 @@ const findMatchingRepos = async (
 	}
 
 	return repos;
-};
-
-const paginatedRepositories = (page: number, limit: number, repositories: WorkspaceRepo[]) => {
-	const startIndex = (page - 1) * limit;
-	const endIndex = page * limit;
-	return repositories.slice(startIndex, endIndex);
 };
 
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
