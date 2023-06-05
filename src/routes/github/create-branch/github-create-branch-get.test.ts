@@ -1,13 +1,17 @@
-import express, { Application } from "express";
+import { Application } from "express";
 import supertest from "supertest";
 import { getFrontendApp } from "~/src/app";
-import { generateSignedSessionCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader, parseCookiesAndSession } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GetRepositoriesQuery } from "~/src/github/client/github-queries";
 import { generateBranchName } from "routes/github/create-branch/github-create-branch-get";
 import reposFixture from "fixtures/api/graphql/repositories.json";
 import _ from "lodash";
 import { RepoSyncState } from "models/reposyncstate";
+import { encodeSymmetric } from "atlassian-jwt";
+import { getLogger } from "config/logger";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { Installation } from "models/installation";
 
 const REPOS_FIXTURE_EXPANDED = _.cloneDeep(reposFixture);
 REPOS_FIXTURE_EXPANDED.data.viewer.repositories.edges = [];
@@ -29,30 +33,38 @@ REPOS_FIXTURE_EXPANDED.data.viewer.repositories.totalCount = REPOS_FIXTURE_EXPAN
 
 describe("GitHub Create Branch Get", () => {
 	let app: Application;
-	const gitHubInstallationId = 1234;
 	beforeEach(() => {
-		app = express();
-		app.use((req, _, next) => {
-			req.query = { issueKey: "1", issueSummary: "random-string", jiraHost };
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 	});
 	describe("Testing the GET route", () => {
 		let subscription: Subscription;
+		let installation: Installation;
 		beforeEach(async () => {
-			subscription = await Subscription.create({
-				gitHubInstallationId,
-				jiraHost
-			});
-			// eslint-disable-next-line no-console
-			console.log(subscription);
+			const result = await new DatabaseStateCreator().create();
+			installation = result.installation;
+			subscription = result.subscription;
+		});
+
+		const generateJwt = async () => {
+			return encodeSymmetric({
+				qsh: "context-qsh",
+				iss: installation.plainClientKey
+			}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+		};
+
+		it("returns 401 when no JWT was passed", async () => {
+			const response = await supertest(app)
+				.get("/github/create-branch")
+				.query({
+					jiraHost: installation.jiraHost
+				});
+			expect(response.status).toBe(401);
 		});
 
 		describe("happy path supertest", () => {
 			beforeEach(async () => {
 				githubNock
-					.post(`/app/installations/${gitHubInstallationId}/access_tokens`)
+					.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
 					.reply(200);
 
 				githubNock
@@ -60,16 +72,18 @@ describe("GitHub Create Branch Get", () => {
 					.reply(200, REPOS_FIXTURE_EXPANDED);
 			});
 
-			it("should hit the create branch on GET if authorized", async () => {
+			it("render create branch when JWT token is passed and populates jiraHost in session", async () => {
 				const response = await supertest(app)
-					.get("/github/create-branch").set(
-						"Cookie",
-						generateSignedSessionCookieHeader({
-							jiraHost,
-							githubToken: "random-token"
-						}));
+					.get("/github/create-branch")
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.query({
+						jwt: await generateJwt(),
+						issueKey: "TEST-123"
+					});
 
+				const { session } = parseCookiesAndSession(response);
 				expect(response.status).toBe(200);
+				expect(session.jiraHost).toStrictEqual(installation.jiraHost);
 				expect(response.text).toContain("<div class=\"gitHubCreateBranch__header\">Create GitHub Branch</div>");
 			});
 
@@ -85,12 +99,15 @@ describe("GitHub Create Branch Get", () => {
 					})
 				));
 				const response = await supertest(app)
-					.get("/github/create-branch").set(
+					.get("/github/create-branch")
+					.set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							githubToken: "random-token"
-						}));
+							jiraHost
+						}))
+					.query({
+						issueKey: "TEST-123"
+					});
 
 				expect(response.status).toBe(200);
 				expect(response.text.split("SampleRepo")).toHaveLength(21); // not 20 because this is how .spit() works
@@ -101,9 +118,11 @@ describe("GitHub Create Branch Get", () => {
 					.get("/github/create-branch").set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							githubToken: "random-token"
-						}));
+							jiraHost
+						}))
+					.query({
+						issueKey: "TEST-123"
+					});
 
 				expect(response.status).toBe(200);
 				expect(response.text).not.toContain("hidden default-repos");
