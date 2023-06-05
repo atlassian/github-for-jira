@@ -44,6 +44,7 @@ const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string)
 export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for GET workspaces");
 
+	const { jiraHost } = res.locals;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {

@@ -51,6 +51,7 @@ const findMatchingRepos = async (
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
+	const { jiraHost } = res.locals;
 	const connectedOrgId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
 	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
