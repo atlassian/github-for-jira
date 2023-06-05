@@ -13,21 +13,15 @@ export type Workspace = {
 const DEFAULT_PAGE_NUMBER = 1; // Current page
 export const DEFAULT_LIMIT = 20; // Number of items per page
 
-const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]>  => {
-	let matchingRepos;
-
-	if (orgName) {
-		matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
-			return await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName);
-		}));
-	} else {
-		matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
-			return await RepoSyncState.findOneFromSubscription(subscription);
-		}));
-	}
+const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]> => {
+	const matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
+		return orgName ?
+			await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName) :
+			await RepoSyncState.findOneFromSubscription(subscription);
+	}));
 
 	const matchedOrgs = matchingRepos
-		.filter(org => org !== null)
+		.filter((org): org is RepoSyncState => org !== null)
 		.map(org => {
 			const { subscriptionId, repoOwner } = org;
 

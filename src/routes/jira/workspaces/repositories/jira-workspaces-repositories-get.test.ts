@@ -7,10 +7,54 @@ import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
-import { createSubscriptions } from "test/utils/create-subscriptions";
-import { generateRepoId, generateRepoName, generateUniqueRepoOwner } from "test/utils/create-repositories";
 import { DEFAULT_LIMIT, WorkspaceRepo } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
 const { MISSING_SUBSCRIPTION, MISSING_REPO_NAME } = Errors;
+
+const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
+	const subscriptions: Subscription[] = [];
+
+	for (let i = 0; i < numberOfSubs; i++) {
+		const installationId = i + 1; // Generate a unique installation ID
+		const hashedClientKey = `key-${i + 1}`; // Generate a unique hashed client key
+
+		const subscription: Subscription = await Subscription.install({
+			host: jiraHost,
+			installationId: installationId,
+			hashedClientKey: hashedClientKey,
+			gitHubAppId: undefined
+		});
+
+		subscriptions.push(subscription);
+	}
+
+	return subscriptions;
+};
+
+
+const generateRepoId = ((): () => number => {
+	let repoIdCounter = 0;
+
+	return () => {
+		repoIdCounter++;
+		return repoIdCounter;
+	};
+})();
+
+// Function to generate a unique repository name
+const generateRepoName = (): string => {
+	// Example: Generates a name with "repo-" prefix and a random number between 0 and 999
+	const name = `repo-${Math.floor(Math.random() * 1000)}`;
+	return name;
+};
+
+// Function to generate a unique repository owner
+const generateUniqueRepoOwner = (): string => {
+	const prefix = "repo-owner";
+	const uniqueId = Math.floor(Math.random() * 1000); // Generate a random number
+
+	return `${prefix}-${uniqueId}`;
+};
+
 
 const createMultipleRepositoriesForOneSubscription = async (subscriptionId, numberOfReposToCreate) => {
 	const repositories: RepoSyncStateProperties[] = [];
