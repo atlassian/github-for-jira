@@ -541,12 +541,7 @@ describe("sync/installation", () => {
 		};
 
 		beforeEach(async ()=> {
-			sub = await Subscription.install({
-				host: jiraHost,
-				installationId: GITHUB_INSTALLATION_ID,
-				gitHubAppId: undefined,
-				hashedClientKey: "client-key"
-			});
+			sub = await Subscription.install({ host: jiraHost, installationId: GITHUB_INSTALLATION_ID, gitHubAppId: undefined, hashedClientKey: "client-key" });
 			repoSync = await RepoSyncState.create({
 				subscriptionId: sub.id, repoId: REPO_ID, repoName: "name", repoUrl: "url", repoOwner: "owner", repoFullName: "full name",
 				repoPushedAt: new Date(), repoUpdatedAt: new Date(), repoCreatedAt: new Date()

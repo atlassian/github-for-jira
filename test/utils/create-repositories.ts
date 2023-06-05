@@ -7,6 +7,7 @@ const generateUniqueRepoOwner = (): string => {
 
 	return `${prefix}-${uniqueId}`;
 };
+
 export const createRepositories = async (subscriptions: Subscription[]): Promise<RepoSyncState[]> => {
 	const repositories: RepoSyncState[] = [];
 
