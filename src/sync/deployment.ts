@@ -1,5 +1,6 @@
 import { Repository } from "models/subscription";
 import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
+import type { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/github-queries";
 import Logger from "bunyan";
@@ -59,7 +60,7 @@ const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"
 				target_url: deployment.latestStatus?.logUrl,
 				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
 				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
-				state: firstNonInactiveStatus?.state || deployment.latestStatus?.state
+				state: firstNonInactiveStatus?.state?.toLowerCase() || deployment.latestStatus?.state
 			}
 		} as any as DeploymentStatusEvent;
 
@@ -71,8 +72,8 @@ const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);
-	return transformedDeployments
-		.filter(deployment => !!deployment)
+	return (transformedDeployments
+		.filter(deployment => !!deployment) as JiraDeploymentBulkSubmitData[])
 		.map(deployment => deployment.deployments)
 		.flat();
 };
@@ -136,7 +137,7 @@ export const getDeploymentTask = async (
 		};
 	}
 
-	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].updatedAt}`);
+	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus.updatedAt}`);
 
 	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");

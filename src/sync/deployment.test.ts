@@ -159,7 +159,10 @@ describe("sync/deployments", () => {
 				clone.node.updatedAt = `2023-01-0${idx + 1}T10:00:00Z`;
 				clone.node.databaseId = `dbid-${idx + 1}`;
 				clone.node.commitOid = `SHA${idx + 1}`;
-				clone.node.statuses.nodes.forEach(n => n.updatedAt = clone.node.createdAt);
+				clone.node.statuses.nodes.forEach(n => {
+					n.createdAt = clone.node.createdAt;
+					n.updatedAt = clone.node.updatedAt;
+				});
 				return clone;
 			});
 		};
@@ -221,12 +224,12 @@ describe("sync/deployments", () => {
 		const expectDeploymentEntryInDB = async (deployments) => {
 			for (const deployment of deployments) {
 				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.environment}`);
-				const successStatusDate = deployment.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
+				const successStatusDate = deployment.node.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
 				const result = await ddb.getItem({
 					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 					Key: {
 						"Id": { "S": key },
-						"CreatedAt": { "N": String(new Date(successStatusDate)) }
+						"CreatedAt": { "N": String(new Date(successStatusDate).getTime()) }
 					},
 					AttributesToGet: [ "CommitSha" ]
 				}).promise();
