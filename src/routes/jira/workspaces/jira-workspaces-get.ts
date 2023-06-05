@@ -15,7 +15,9 @@ export const DEFAULT_LIMIT = 20; // Number of items per page
 
 const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]> => {
 	const matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
-		return orgName ? await RepoSyncState.findOneFromSubscription(subscription) : await RepoSyncState.findOneFromSubscription(subscription);
+		return orgName ?
+			await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName) :
+			await RepoSyncState.findOneFromSubscription(subscription);
 	}));
 
 	const matchedOrgs = matchingRepos
