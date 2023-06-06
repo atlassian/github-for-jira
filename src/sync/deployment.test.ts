@@ -77,6 +77,60 @@ describe("sync/deployments", () => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
 			});
 
+			it("should get the url from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						url: "deployment-url-4",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-4"
+						})
+					}),
+					expect.objectContaining({
+						url: "deployment-url-3",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-3"
+						})
+					})
+				]);
+			});
+
+			it("should get the correct state from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						state: "successful"
+					}),
+					expect.objectContaining({
+						state: "successful"
+					})
+				]);
+			});
+
 			// eslint-disable-next-line jest/expect-expect
 			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
 
@@ -165,6 +219,9 @@ describe("sync/deployments", () => {
 				clone.node.statuses.nodes.forEach(n => {
 					n.createdAt = clone.node.createdAt;
 					n.updatedAt = clone.node.updatedAt;
+					if (n.state === "SUCCESS") {
+						n.logUrl = `deployment-url-${idx + 1}`;
+					}
 				});
 				return clone;
 			});
@@ -426,14 +483,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+					"url": null
 				},
 				"environment": {
 					"id": "prod",
@@ -824,14 +881,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+					"url": null
 				},
 				"environment": {
 					"id": "prod",

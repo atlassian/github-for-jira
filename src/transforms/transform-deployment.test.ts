@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
-import { transformDeployment, mapEnvironment } from "./transform-deployment";
+import { transformDeployment, mapEnvironment, mapState } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId, InstallationId } from "../github/client/installation-id";
@@ -67,6 +67,28 @@ const buildJiraPayload = (displayName="testing", associations) => {
 		}]
 	};
 };
+
+describe.each([
+	["success", "successful"],
+	["SUCCESS", "successful"],
+	["error", "failed"],
+	["ERROR", "failed"],
+	["FAILURE", "failed"],
+	["failure", "failed"],
+	["queued", "pending"],
+	["QUEUED", "pending"],
+	["WAITING", "pending"],
+	["pending", "in_progress"],
+	["PENDING", "in_progress"],
+	["IN_PROGRESS", "in_progress"],
+	["in_progress", "in_progress"],
+	["INACTIVE", "unknown"],
+	["whatever", "unknown"]
+])("deployment state mapping", (src, dest) => {
+	it(`should map origin state ${src} to ${dest}`, () => {
+		expect(mapState(src)).toBe(dest);
+	});
+});
 
 describe("deployment environment mapping", () => {
 

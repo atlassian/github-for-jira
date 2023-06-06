@@ -35,14 +35,16 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	};
 };
 
-const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployments: DeploymentQueryNode["node"][], gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
+const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployments: DeploymentQueryNode["node"][], gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
 
 	const transformTasks = deployments.map((deployment) => {
 
-		const firstNonInactiveStatus = useDyanmoForBackfill ? deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE") : undefined;
-		if (!firstNonInactiveStatus && useDyanmoForBackfill) {
+		const firstNonInactiveStatus = useDynamoForBackfill ? deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE") : undefined;
+		if (!firstNonInactiveStatus && useDynamoForBackfill) {
 			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
+
+		const logUrl = firstNonInactiveStatus?.logUrl || deployment.latestStatus?.logUrl;
 
 		const deploymentStatus = {
 			repository: deployment.repository,
@@ -52,12 +54,12 @@ const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployme
 				ref: deployment.ref?.id,
 				description: deployment.description,
 				task: deployment.task,
-				url: deployment.latestStatus?.logUrl
+				url: logUrl
 			},
 			deployment_status: {
 				environment: deployment.environment,
 				id: deployment.databaseId,
-				target_url: deployment.latestStatus?.logUrl,
+				target_url: logUrl,
 				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
 				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
 				state: firstNonInactiveStatus?.state?.toLowerCase() || deployment.latestStatus?.state
@@ -81,7 +83,7 @@ const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployme
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
 	try {
 
-		const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => (d.statuses?.nodes.some(n => n.state === "SUCCESS")));
+		const successDeployments = deployments.filter(d => (d.statuses?.nodes.some(n => n.state === "SUCCESS")));
 		logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
 
 		const result = await Promise.allSettled(successDeployments.map(dep => {
@@ -127,8 +129,8 @@ export const getDeploymentTask = async (
 
 	const { edges, deployments, extraDeployments } = await fetchDeployments(jiraHost, gitHubInstallationClient, repository, logger, cursor, perPage);
 
-	const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
-	if (useDyanmoForBackfill) {
+	const useDynamoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
+	if (useDynamoForBackfill) {
 		await saveDeploymentsForLaterUse([...deployments, ...extraDeployments], gitHubInstallationClient.baseUrl, logger);
 	}
 
@@ -151,7 +153,7 @@ export const getDeploymentTask = async (
 	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
 	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
 
-	const transformedDeployments = await getTransformedDeployments(useDyanmoForBackfill, deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
+	const transformedDeployments = await getTransformedDeployments(useDynamoForBackfill, deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;

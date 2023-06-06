@@ -159,9 +159,10 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-const mapState = (state: string | undefined): string => {
+export const mapState = (state: string | undefined): string => {
 	switch (state?.toLowerCase()) {
 		case "queued":
+		case "waiting":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
 		// For users, it's a better UI experience if they see In progress instead of Pending, because the deployment might be running already.
