@@ -380,6 +380,7 @@ export type DeploymentQueryNode = {
 				createdAt: string,
 				updatedAt: string,
 				state: string,
+				environmentUrl: string,
 				logUrl: string
 			}[]
 		},
@@ -408,7 +409,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
       edges {
         cursor
         node {
-					createdAt
+          createdAt
           repository {
             id: databaseId
             node_id: id
@@ -431,7 +432,7 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             logUrl
             state
             id
-						createdAt
+            createdAt
             updatedAt
           }
         }
@@ -446,7 +447,7 @@ export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: S
       edges {
         cursor
         node {
-					createdAt
+          createdAt
           repository {
             id: databaseId
             node_id: id
@@ -469,7 +470,8 @@ export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: S
               createdAt
               updatedAt
               state
-							logUrl
+              logUrl
+              environmentUrl
             }
           }
           latestStatus {
@@ -477,7 +479,7 @@ export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: S
             logUrl
             state
             id
-						createdAt
+            createdAt
             updatedAt
           }
         }

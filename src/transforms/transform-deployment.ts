@@ -387,6 +387,7 @@ export const transformDeployment = async (
 			environment: {
 				id: deployment_status.environment,
 				displayName: deployment_status.environment,
+				url: deployment_status.environment_url,
 				type: environment
 			},
 			associations

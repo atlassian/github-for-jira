@@ -60,6 +60,7 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 				environment: deployment.environment,
 				id: deployment.databaseId,
 				target_url: logUrl,
+				environment_url: firstNonInactiveStatus?.environmentUrl || deployment.latestStatus?.environmentUrl,
 				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
 				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
 				state: firstNonInactiveStatus?.state?.toLowerCase() || deployment.latestStatus?.state
