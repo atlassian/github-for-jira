@@ -104,7 +104,7 @@ describe("sync/deployments", () => {
 
 			describe("for empty demployment cursor", () => {
 				// eslint-disable-next-line jest/expect-expect
-				it("should fetch deployments from begining", async () => {
+				it("should fetch deployments from beginning", async () => {
 
 					const deploymentCount = 4;
 					const deployments = createDeploymentEntities(deploymentCount);
