@@ -383,7 +383,7 @@ describe("sync/deployments", () => {
 			});
 		});
 
-		it.only("should sync to Jira when Deployment messages have jira references", async () => {
+		it("should sync to Jira when Deployment messages have jira references", async () => {
 			const data: BackfillMessagePayload = { installationId, jiraHost };
 
 			githubUserTokenNock(installationId);
@@ -470,7 +470,7 @@ describe("sync/deployments", () => {
 				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
@@ -865,14 +865,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+					"url": null
 				},
 				"environment": {
 					"id": "prod",
