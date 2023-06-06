@@ -218,7 +218,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 	}
 
-	static async findRepositoriesBySubscriptionIdAndRepoName(subscriptionId: number, repoName: string): Promise<RepoSyncState[] | null> {
+	static async findRepositoriesBySubscriptionIdAndRepoName(subscriptionId: number, repoName?: string): Promise<RepoSyncState[] | null> {
 		return RepoSyncState.findAll({
 			where: {
 				subscriptionId,

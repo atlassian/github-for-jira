@@ -5,8 +5,6 @@ import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { paginatedResponse } from "utils/paginate-response";
 
-const { MISSING_SUBSCRIPTION, MISSING_REPO_NAME } = Errors;
-
 export interface WorkspaceRepo {
 	id: string,
 	name: string,
@@ -18,7 +16,7 @@ export const DEFAULT_LIMIT = 20; // Number of items per page
 
 const findMatchingRepos = async (
 	jiraHost: string,
-	repoName: string,
+	repoName: string | undefined,
 	connectedOrgId: number | undefined
 ) => {
 	let repos;
@@ -57,17 +55,11 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 
-	if (!repoName) {
-		req.log.warn(MISSING_REPO_NAME);
-		res.status(400).send(MISSING_REPO_NAME);
-		return;
-	}
-
 	const repos = await findMatchingRepos(jiraHost, repoName, connectedOrgId);
 
 	if (repos === null) {
-		req.log.warn(MISSING_SUBSCRIPTION);
-		res.status(400).send(MISSING_SUBSCRIPTION);
+		req.log.warn(Errors.MISSING_SUBSCRIPTION);
+		res.status(400).send(Errors.MISSING_SUBSCRIPTION);
 		return;
 	}
 

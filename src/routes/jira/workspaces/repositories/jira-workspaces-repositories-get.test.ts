@@ -8,7 +8,6 @@ import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, WorkspaceRepo } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
-const { MISSING_SUBSCRIPTION, MISSING_REPO_NAME } = Errors;
 
 const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
 	const subscriptions: Subscription[] = [];
@@ -137,25 +136,6 @@ describe("Workspaces Repositories Get", () => {
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
-	it("Should return a 400 status if no repo name is provided in query params", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
-
-		await supertest(app)
-			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id}`)
-			.query({
-				jwt
-			})
-			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain(MISSING_REPO_NAME);
-			});
-	});
-
 	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
 		app.use((req, _, next) => {
@@ -171,7 +151,7 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain(MISSING_SUBSCRIPTION);
+				expect(res.text).toContain(Errors.MISSING_SUBSCRIPTION);
 			});
 	});
 
