@@ -8,7 +8,7 @@ import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
 	getBranchesQueryWithoutChangedFiles,
-  getBranchesQueryWithoutCommits,
+	getBranchesQueryWithoutCommits,
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
@@ -20,8 +20,8 @@ import {
 	getDeploymentsQuery,
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
-  getPullRequests,
-  pullRequestQueryResponse
+	getPullRequests,
+	pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,

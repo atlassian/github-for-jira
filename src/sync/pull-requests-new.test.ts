@@ -342,10 +342,6 @@ describe("sync/pull-request", () => {
 
 			let repoSyncState: RepoSyncState;
 			beforeEach(async () => {
-				when(booleanFlag).calledWith(
-					BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-					jiraHost
-				).mockResolvedValue(true);
 				const dbState = await new DatabaseStateCreator()
 					.withActiveRepoSyncState()
 					.repoSyncStatePendingForDeployments()

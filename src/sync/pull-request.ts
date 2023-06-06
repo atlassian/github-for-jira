@@ -15,7 +15,7 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
