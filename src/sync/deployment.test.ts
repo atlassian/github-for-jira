@@ -187,13 +187,13 @@ describe("sync/deployments", () => {
 						original_environment: item.node.environment,
 						environment: item.node.environment,
 						description: `description for deployment ${idx + 1}`,
-						creato: { login: "test-repo-owner", id: 1, type: "User" },
+						creator: { login: "test-repo-owner", id: 1, type: "User" },
 						created_at: item.node.createdAt,
 						updated_at: item.node.createdAt,
 						statuses_url: "random",
 						repository_url: "random",
 						transient_environment: false,
-						production_environmen: true
+						production_environment: true
 					})));
 			});
 		};
