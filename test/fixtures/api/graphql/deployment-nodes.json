@@ -33,21 +33,21 @@
                 "createdAt": "2022-02-03T22:45:04Z",
                 "updatedAt": "2022-02-03T22:45:04Z"
               },
-							"statuses": {
+              "statuses": {
                 "nodes": [
                   {
-										"createdAt": "2022-02-03T22:45:04Z",
-										"updatedAt": "2022-02-03T22:45:04Z",
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "INACTIVE"
                   },
                   {
-										"createdAt": "2022-02-03T22:45:04Z",
-										"updatedAt": "2022-02-03T22:45:04Z",
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "SUCCESS"
                   },
                   {
-										"createdAt": "2022-02-03T22:45:04Z",
-										"updatedAt": "2022-02-03T22:45:04Z",
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "IN_PROGRESS"
                   }
                 ]
