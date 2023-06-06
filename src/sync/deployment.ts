@@ -80,14 +80,19 @@ const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"
 
 const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["deployments"], gitHubBaseUrl: string, logger: Logger) => {
 	try {
+
 		const successDeployments: FetchDeploymentResponse["deployments"] = deployments.filter(d => (d.statuses?.nodes.some(n => n.state === "SUCCESS")));
 		logger.info({ deploymentsCount: deployments.length, successDeploymentsCount: successDeployments.length }, "Try to save deployments for later use");
+
 		const result = await Promise.allSettled(successDeployments.map(dep => {
+
 			const successStatusDate = dep.statuses?.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
+
 			if (!successStatusDate) {
 				logger.warn("Should find a success status date, but found none");
 				throw "Save failure";
 			}
+
 			return cacheSuccessfulDeploymentInfo({
 				gitHubBaseUrl,
 				repositoryId: dep.repository.id,
@@ -95,11 +100,15 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 				env: dep.environment,
 				createdAt: new Date(successStatusDate)
 			}, logger);
+
 		}));
+
 		const successCount = result.filter(r => r.status === "fulfilled").length;
 		const failedCount = result.filter(r => r.status === "rejected").length;
 		const isAllSuccess = failedCount === 0;
+
 		logger.info({ successCount, failedCount, isAllSuccess }, "All deployments saving operation settled.");
+
 	} catch (error) {
 		logger.error({ err: error }, "Error saving success deployments");
 	}

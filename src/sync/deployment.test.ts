@@ -80,7 +80,8 @@ describe("sync/deployments", () => {
 			// eslint-disable-next-line jest/expect-expect
 			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
 
-				const deployments = createDeploymentEntities(4);
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
 
 				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
@@ -105,7 +106,8 @@ describe("sync/deployments", () => {
 				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from begining", async () => {
 
-					const deployments = createDeploymentEntities(4);
+					const deploymentCount = 4;
+					const deployments = createDeploymentEntities(deploymentCount);
 
 					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
 
@@ -125,7 +127,8 @@ describe("sync/deployments", () => {
 				// eslint-disable-next-line jest/expect-expect
 				it("should fetch deployments from existing cursor", async () => {
 
-					const deployments = createDeploymentEntities(4);
+					const deploymentCount = 4;
+					const deployments = createDeploymentEntities(deploymentCount);
 
 					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, deployments[2].cursor, [deployments[1], deployments[0]]);
 
@@ -223,18 +226,19 @@ describe("sync/deployments", () => {
 
 		const expectDeploymentEntryInDB = async (deployments) => {
 			for (const deployment of deployments) {
-				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${deployment.node.repository.id}_env_${deployment.node.environment}`);
-				const successStatusDate = deployment.node.statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt;
+				const { repository: { id: repoId }, environment, statuses, commitOid } = deployment.node;
+				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${repoId}_env_${environment}`);
+				const successStatusDate = new Date(statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt).getTime();
 				const result = await ddb.getItem({
 					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 					Key: {
 						"Id": { "S": key },
-						"CreatedAt": { "N": String(new Date(successStatusDate).getTime()) }
+						"CreatedAt": { "N": String(successStatusDate) }
 					},
 					AttributesToGet: [ "CommitSha" ]
 				}).promise();
 				expect(result.$response.error).toBeNull();
-				expect(result.Item).toEqual({ CommitSha: { "S": deployment.node.commitOid } });
+				expect(result.Item).toEqual({ CommitSha: { "S": commitOid } });
 			}
 		};
 
