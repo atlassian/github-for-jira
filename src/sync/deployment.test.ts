@@ -154,7 +154,7 @@ describe("sync/deployments", () => {
 
 		//size up to 9 entities
 		const createDeploymentEntities = (size: number) => {
-			return "*".repeat(size).split("").map((_, idx)=> {
+			return "*".repeat(size).split("").map((_, idx) => {
 				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
 				clone._seq = idx + 1;
 				clone.cursor = `cursor:${idx + 1}`;
@@ -179,21 +179,21 @@ describe("sync/deployments", () => {
 			"*".repeat(repeatTimes).split("").forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
 					.reply(200, deployments.map((item, idx) => ({
-						"id": item.node.databaseId,
-						"sha": item.node.commitOid,
-						"ref": "random",
-						"task": `task for deployment ${idx + 1}`,
-						"payload": {},
-						"original_environment": item.node.environment,
-						"environment": item.node.environment,
-						"description": `description for deployment ${idx + 1}`,
-						"creator": { "login": "test-repo-owner", "id": 1, "type": "User" },
-						"created_at": item.node.createdAt,
-						"updated_at": item.node.createdAt,
-						"statuses_url": "random",
-						"repository_url": "random",
-						"transient_environment": false,
-						"production_environment": true
+						id: item.node.databaseId,
+						sha: item.node.commitOid,
+						ref: "random",
+						task: `task for deployment ${idx + 1}`,
+						payload: {},
+						original_environment: item.node.environment,
+						environment: item.node.environment,
+						description: `description for deployment ${idx + 1}`,
+						creato: { login: "test-repo-owner", id: 1, type: "User" },
+						created_at: item.node.createdAt,
+						updated_at: item.node.createdAt,
+						statuses_url: "random",
+						repository_url: "random",
+						transient_environment: false,
+						production_environmen: true
 					})));
 			});
 		};
