@@ -3,7 +3,6 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { paginatedResponse } from "utils/paginate-response";
 
 export interface WorkspaceRepo {
 	id: string,
@@ -14,36 +13,36 @@ export interface WorkspaceRepo {
 const DEFAULT_PAGE_NUMBER = 1; // Current page
 export const DEFAULT_LIMIT = 20; // Number of items per page
 
-const findMatchingRepos = async (
-	jiraHost: string,
-	repoName: string | undefined,
-	connectedOrgId: number | undefined
-) => {
-	let repos;
+const getReposForWorkspaceId = async (connectedOrgId: number, page: number, limit: number, repoName?: string): Promise<RepoSyncState[] | null> => {
+	const subscription = await Subscription.getOneForSubscriptionIdAndHost(jiraHost, connectedOrgId);
 
-	if (connectedOrgId) {
-		const subscription = await Subscription.getOneForSubscriptionIdAndHost(jiraHost, connectedOrgId);
-
-		if (!subscription) {
-			return null;
-		}
-
-		repos = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(subscription.id, repoName);
-	} else {
-		const subscriptions = await Subscription.getAllForHost(jiraHost);
-
-		if (!subscriptions.length) {
-			return null;
-		}
-
-		const reposArray = await Promise.all(subscriptions.map(async (subscription) => {
-			return await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(subscription.id, repoName);
-		}));
-
-		repos = reposArray.flat();
+	if (!subscription) {
+		return null;
 	}
 
-	return repos;
+	return await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(connectedOrgId, page, limit, repoName);
+};
+
+const getAllRepos = async (jiraHost: string, page: number, limit: number, repoName?: string): Promise<RepoSyncState[] | null> => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
+
+	if (!subscriptions.length) {
+		return null;
+	}
+
+	const reposArray: RepoSyncState[][] = await Promise.all(
+		subscriptions.map(async (subscription) => {
+			const subscriptionRepos = await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(
+				subscription.id,
+				page,
+				limit,
+				repoName
+			);
+			return subscriptionRepos ? subscriptionRepos : [];
+		})
+	);
+
+	return reposArray.flat().slice(0, limit); // Apply limit after flattening the array
 };
 
 export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
@@ -55,7 +54,9 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 
-	const repos = await findMatchingRepos(jiraHost, repoName, connectedOrgId);
+	const repos = connectedOrgId ?
+		await getReposForWorkspaceId(connectedOrgId, page, limit, repoName) :
+		await getAllRepos(jiraHost, page, limit, repoName);
 
 	if (repos === null) {
 		req.log.warn(Errors.MISSING_SUBSCRIPTION);
@@ -75,6 +76,6 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 
 	res.status(200).json({
 		success: true,
-		repositories: paginatedResponse(page, limit, repositories)
+		repositories
 	});
 };

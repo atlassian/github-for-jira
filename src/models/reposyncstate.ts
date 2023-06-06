@@ -218,16 +218,37 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 	}
 
-	static async findRepositoriesBySubscriptionIdAndRepoName(subscriptionId: number, repoName?: string): Promise<RepoSyncState[] | null> {
-		return RepoSyncState.findAll({
-			where: {
-				subscriptionId,
-				repoName: {
-					[Op.iLike]: `%${repoName}%`
-				}
-			}
+	static async findRepositoriesBySubscriptionIdAndRepoName(
+		subscriptionId: number,
+		page: number,
+		limit: number,
+		repoName?: string
+	): Promise<RepoSyncState[] | null> {
+
+		const whereClause: any = {
+			subscriptionId
+		};
+
+		if (repoName) {
+			whereClause.repoName = {
+				[Op.iLike]: `%${repoName}%`
+			};
+		}
+
+		const offset = (page - 1) * limit;
+
+		const repositories = await RepoSyncState.findAll({
+			where: whereClause,
+			offset,
+			limit,
+			order: [["updatedAt", "DESC"]]
 		});
+
+		return repositories;
 	}
+
+
+
 
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {

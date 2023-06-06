@@ -54,7 +54,6 @@ const generateUniqueRepoOwner = (): string => {
 	return `${prefix}-${uniqueId}`;
 };
 
-
 const createMultipleRepositoriesForOneSubscription = async (subscriptionId, numberOfReposToCreate) => {
 	const repositories: RepoSyncStateProperties[] = [];
 
@@ -90,13 +89,16 @@ type Response = {
 	repositories: WorkspaceRepo[]
 }
 
-const generateMockResponse = (repositories: RepoSyncStateProperties[]): Response => {
+const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumberOfRepos: number): Response => {
 	const response = {
 		success: true,
 		repositories: [] as { id: string; name: string; workspaceId: string }[]
 	};
 
-	for (let i = 0; i < DEFAULT_LIMIT; i++) {
+	const numberOfItemsToAdd = Math.min(totalNumberOfRepos, DEFAULT_LIMIT);
+	const startIndex = Math.max(repositories.length - numberOfItemsToAdd, 0);
+
+	for (let i = repositories.length - 1; i >= startIndex; i--) {
 		const repository = repositories[i];
 		const workspace = {
 			id: repository.repoId.toString(),
@@ -108,6 +110,250 @@ const generateMockResponse = (repositories: RepoSyncStateProperties[]): Response
 	}
 
 	return response;
+};
+
+const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription[]) => {
+	const repoOne = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 1,
+		repoName: "new-repo",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/new-repo",
+		repoUrl: "github.com/atlassian/new-repo"
+	});
+
+	const repoTwo = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 2,
+		repoName: "random",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/random",
+		repoUrl: "github.com/atlassian/random"
+	});
+
+	const repoThree = await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "blah",
+		repoOwner: "anotherorg",
+		repoFullName: "anotherorg/blah",
+		repoUrl: "github.com/anotherorg/blah"
+	});
+
+	return {
+		success: true,
+		repositories: [
+			{
+				id: repoTwo.repoId.toString(),
+				name: repoTwo.repoName,
+				workspaceId: repoTwo.subscriptionId.toString()
+			},
+			{
+				id: repoOne.repoId.toString(),
+				name: repoOne.repoName,
+				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: repoThree.repoId.toString(),
+				name: repoThree.repoName,
+				workspaceId: repoThree.subscriptionId.toString()
+			}
+		]
+	};
+};
+
+const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscription[]) => {
+	const repoOne = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 1,
+		repoName: "new-repo",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/new-repo",
+		repoUrl: "github.com/atlassian/new-repo"
+	});
+
+	const repoTwo = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 2,
+		repoName: "another-new-repo",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/another-new-repo",
+		repoUrl: "github.com/atlassian/another-new-repo"
+	});
+
+	const repoThree = await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "imNew",
+		repoOwner: "anotherorg",
+		repoFullName: "anotherorg/imnew",
+		repoUrl: "github.com/anotherorg/imnew"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 4,
+		repoName: "idontmatchthequery",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/idontmatchthequery",
+		repoUrl: "github.com/atlassian/idontmatchthequery"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "neitherdoI",
+		repoOwner: "anotherorg",
+		repoFullName: "anotherorg/neitherdoI",
+		repoUrl: "github.com/anotherorg/neitherdoI"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[2].id,
+		repoId: 3,
+		repoName: "anothermismatch",
+		repoOwner: "org3",
+		repoFullName: "org3/anothermismatch",
+		repoUrl: "github.com/org3/anothermismatch"
+	});
+
+	return {
+		success: true,
+		repositories: [
+			{
+				id: repoTwo.repoId.toString(),
+				name: repoTwo.repoName,
+				workspaceId: repoTwo.subscriptionId.toString()
+			},
+			{
+				id: repoOne.repoId.toString(),
+				name: repoOne.repoName,
+				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: repoThree.repoId.toString(),
+				name: repoThree.repoName,
+				workspaceId: repoThree.subscriptionId.toString()
+			}
+		]
+	};
+};
+
+const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions: Subscription[]) => {
+	const repoOne = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 1,
+		repoName: "new-repo",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/new-repo",
+		repoUrl: "github.com/atlassian/new-repo"
+	});
+
+	const repoTwo = await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 2,
+		repoName: "another-new-repo",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/another-new-repo",
+		repoUrl: "github.com/atlassian/another-new-repo"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 3,
+		repoName: "this-one-shouldnotmatch",
+		repoOwner: "atlassian",
+		repoFullName: "atlassian/shouldnotmatch",
+		repoUrl: "github.com/atlassian/shouldnotmatch"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "neither-should-this-one",
+		repoOwner: "another-org",
+		repoFullName: "another-org/neither-should-this-one",
+		repoUrl: "github.com/another-org/neither-should-this-one"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "nor-this-one",
+		repoOwner: "org3",
+		repoFullName: "org3/nor-this-one",
+		repoUrl: "github.com/org3/nor-this-one"
+	});
+
+	return {
+		success: true,
+		repositories: [
+			{
+				id: repoTwo.repoId.toString(),
+				name: "another-new-repo",
+				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: repoOne.repoId.toString(),
+				name: "new-repo",
+				workspaceId: repoOne.subscriptionId.toString()
+			}
+		]
+	};
+};
+
+const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subscription[]) => {
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 1,
+		repoName: "repo1",
+		repoOwner: "owner1",
+		repoFullName: "owner1/repo1",
+		repoUrl: "github.com/owner1/repo1"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[0].id,
+		repoId: 2,
+		repoName: "repo2",
+		repoOwner: "owner1",
+		repoFullName: "owner1/repo2",
+		repoUrl: "github.com/owner1/repo2"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[1].id,
+		repoId: 3,
+		repoName: "repo3",
+		repoOwner: "owner2",
+		repoFullName: "owner2/repo3",
+		repoUrl: "github.com/owner2/repo3"
+	});
+
+	await RepoSyncState.create({
+		subscriptionId: subscriptions[2].id,
+		repoId: 4,
+		repoName: "repo4",
+		repoOwner: "owner3",
+		repoFullName: "owner3/repo4",
+		repoUrl: "github.com/owner3/repo4"
+	});
+
+	return {
+		success: true,
+		repositories: [
+			{
+				id: "2",
+				name: "repo2",
+				workspaceId: subscriptions[0].id.toString()
+			},
+			{
+				id: "1",
+				name: "repo1",
+				workspaceId: subscriptions[0].id.toString()
+			}
+		]
+	};
 };
 
 describe("Workspaces Repositories Get", () => {
@@ -155,8 +401,29 @@ describe("Workspaces Repositories Get", () => {
 			});
 	});
 
-	// workspaceId is not provided as a query param
-	it("Should return all matching repos across multiple orgs", async () => {
+	it("Should return all matching repos across multiple orgs when both workspaceId and repoName are not provided", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const subscriptions = await createSubscriptions(jiraHost, 2);
+		const response = await createReposWhenNoQueryParamsArePassed(subscriptions);
+
+		await supertest(app)
+			.get(`/jira/workspaces/repositories/search`)
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(response));
+			});
+	});
+
+	it("Should return all matching repos across multiple orgs when repoName is provided but workspaceId is not", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -165,80 +432,7 @@ describe("Workspaces Repositories Get", () => {
 		app.use(getFrontendApp());
 
 		const subscriptions = await createSubscriptions(jiraHost, 3);
-		const repoOne = await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 1,
-			repoName: "new-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/new-repo",
-			repoUrl: "github.com/atlassian/new-repo"
-		});
-
-		const repoTwo = await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 2,
-			repoName: "another-new-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/another-new-repo",
-			repoUrl: "github.com/atlassian/another-new-repo"
-		});
-
-		const repoThree = await RepoSyncState.create({
-			subscriptionId: subscriptions[1].id,
-			repoId: 3,
-			repoName: "imNew",
-			repoOwner: "anotherorg",
-			repoFullName: "anotherorg/imnew",
-			repoUrl: "github.com/anotherorg/imnew"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 4,
-			repoName: "idontmatchthequery",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/idontmatchthequery",
-			repoUrl: "github.com/atlassian/idontmatchthequery"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[1].id,
-			repoId: 3,
-			repoName: "neitherdoI",
-			repoOwner: "anotherorg",
-			repoFullName: "anotherorg/neitherdoI",
-			repoUrl: "github.com/anotherorg/neitherdoI"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[2].id,
-			repoId: 3,
-			repoName: "anothermismatch",
-			repoOwner: "org3",
-			repoFullName: "org3/anothermismatch",
-			repoUrl: "github.com/org3/anothermismatch"
-		});
-
-		const response = {
-			success: true,
-			repositories: [
-				{
-					id: repoOne.repoId.toString(),
-					name: repoOne.repoName,
-					workspaceId: repoOne.subscriptionId.toString()
-				},
-				{
-					id: repoTwo.repoId.toString(),
-					name: repoTwo.repoName,
-					workspaceId: repoTwo.subscriptionId.toString()
-				},
-				{
-					id: repoThree.repoId.toString(),
-					name: repoThree.repoName,
-					workspaceId: repoThree.subscriptionId.toString()
-				}
-			]
-		};
+		const response = await createReposWhenRepoNameIsPassedAsParam(subscriptions);
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
@@ -251,8 +445,7 @@ describe("Workspaces Repositories Get", () => {
 			});
 	});
 
-	// workspaceId is provided as a query param
-	it("Should return all matching repos for one org", async () => {
+	it("Should return all matching repos for one org based on workspaceId", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -261,70 +454,10 @@ describe("Workspaces Repositories Get", () => {
 		app.use(getFrontendApp());
 
 		const subscriptions = await createSubscriptions(jiraHost, 3);
-
-		const repoOne = await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 1,
-			repoName: "new-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/new-repo",
-			repoUrl: "github.com/atlassian/new-repo"
-		});
-
-		const repoTwo = await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 2,
-			repoName: "another-new-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/another-new-repo",
-			repoUrl: "github.com/atlassian/another-new-repo"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 3,
-			repoName: "this-one-shouldnotmatch",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/shouldnotmatch",
-			repoUrl: "github.com/atlassian/shouldnotmatch"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[1].id,
-			repoId: 3,
-			repoName: "neither-should-this-one",
-			repoOwner: "another-org",
-			repoFullName: "another-org/neither-should-this-one",
-			repoUrl: "github.com/another-org/neither-should-this-one"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[1].id,
-			repoId: 3,
-			repoName: "nor-this-one",
-			repoOwner: "org3",
-			repoFullName: "org3/nor-this-one",
-			repoUrl: "github.com/org3/nor-this-one"
-		});
-
-		const response = {
-			success: true,
-			repositories: [
-				{
-					id: repoOne.repoId.toString(),
-					name: "new-repo",
-					workspaceId: repoOne.subscriptionId.toString()
-				},
-				{
-					id: repoTwo.repoId.toString(),
-					name: "another-new-repo",
-					workspaceId: repoOne.subscriptionId.toString()
-				}
-			]
-		};
+		const response = await createReposWhenRepoNameAndWorkspaceIdPassedAsParams(subscriptions);
 
 		await supertest(app)
-			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
+			.get(`/jira/workspaces/repositories/search?workspaceId=${subscriptions[0].id}&searchQuery=new`)
 			.query({
 				jwt
 			})
@@ -343,74 +476,7 @@ describe("Workspaces Repositories Get", () => {
 		app.use(getFrontendApp());
 
 		const subscriptions = await createSubscriptions(jiraHost, 3);
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 1,
-			repoName: "repo1",
-			repoOwner: "owner1",
-			repoFullName: "owner1/repo1",
-			repoUrl: "github.com/owner1/repo1"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[0].id,
-			repoId: 2,
-			repoName: "repo2",
-			repoOwner: "owner1",
-			repoFullName: "owner1/repo2",
-			repoUrl: "github.com/owner1/repo2"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[1].id,
-			repoId: 3,
-			repoName: "repo3",
-			repoOwner: "owner2",
-			repoFullName: "owner2/repo3",
-			repoUrl: "github.com/owner2/repo3"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: subscriptions[2].id,
-			repoId: 4,
-			repoName: "repo4",
-			repoOwner: "owner3",
-			repoFullName: "owner3/repo4",
-			repoUrl: "github.com/owner3/repo4"
-		});
-
-		const responsePage1 = {
-			success: true,
-			repositories: [
-				{
-					id: "1",
-					name: "repo1",
-					workspaceId: subscriptions[0].id.toString()
-				},
-				{
-					id: "2",
-					name: "repo2",
-					workspaceId: subscriptions[0].id.toString()
-				}
-			]
-		};
-
-		const responsePage2 = {
-			success: true,
-			repositories: [
-				{
-					id: "3",
-					name: "repo3",
-					workspaceId: subscriptions[1].id.toString()
-				},
-				{
-					id: "4",
-					name: "repo4",
-					workspaceId: subscriptions[2].id.toString()
-				}
-			]
-		};
+		const response = await createReposWhenPageAndLimitArePassedAsParams(subscriptions);
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=1&limit=2`)
@@ -419,17 +485,7 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(responsePage1));
-			});
-
-		await supertest(app)
-			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=2&limit=2`)
-			.query({
-				jwt
-			})
-			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(responsePage2));
+				expect(res.text).toContain(JSON.stringify(response));
 			});
 	});
 
@@ -441,9 +497,10 @@ describe("Workspaces Repositories Get", () => {
 		});
 		app.use(getFrontendApp());
 
+		const totalNumberOfRepos = 34;
 		const subscriptions = await createSubscriptions(jiraHost, 1);
-		const repositories = await createMultipleRepositoriesForOneSubscription(subscriptions[0].id, 34);
-		const response = generateMockResponse(repositories);
+		const repositories = await createMultipleRepositoriesForOneSubscription(subscriptions[0].id, totalNumberOfRepos);
+		const response = generateMockResponse(repositories, totalNumberOfRepos);
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo`)
