@@ -375,11 +375,19 @@ export type DeploymentQueryNode = {
 		},
 		environment: string,
 		description: string,
+		statuses?: {
+			nodes: {
+				createdAt: string,
+				updatedAt: string,
+				state: string
+			}[]
+		},
 		latestStatus: {
 			environmentUrl: string,
 			logUrl: string,
 			state: string,
 			id: string,
+			createdAt: string,
 			updatedAt: string
 		}
 	}
@@ -422,6 +430,52 @@ export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per
             logUrl
             state
             id
+						createdAt
+            updatedAt
+          }
+        }
+      }
+    }
+  }
+}`;
+
+export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo){
+    deployments(first: $per_page, after: $cursor, orderBy: { direction: DESC, field: CREATED_AT }) {
+      edges {
+        cursor
+        node {
+					createdAt
+          repository {
+            id: databaseId
+            node_id: id
+            name
+            owner {
+              login
+            }
+          }
+          databaseId
+          commitOid
+          task
+          ref {
+            name
+            id
+          }
+          environment
+          description
+          statuses(last: 5) {
+            nodes {
+              createdAt
+              updatedAt
+              state
+            }
+          }
+          latestStatus {
+            environmentUrl
+            logUrl
+            state
+            id
+						createdAt
             updatedAt
           }
         }

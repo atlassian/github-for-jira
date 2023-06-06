@@ -7,6 +7,7 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "createdAt": "2022-02-03T22:45:04Z",
+							"updatedAt": "2022-02-03T22:45:04Z",
               "repository": {
 								"id": 19,
 								"node_id": "AyMi0wMi0wM1QyMjo0NT",
@@ -27,9 +28,29 @@
               "latestStatus": {
                 "environmentUrl": "",
                 "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
-                "state": "success",
+                "state": "SUCCESS",
                 "id": "DES_kwDOGtdD5840PkSo",
+                "createdAt": "2022-02-03T22:45:04Z",
                 "updatedAt": "2022-02-03T22:45:04Z"
+              },
+              "statuses": {
+                "nodes": [
+                  {
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "INACTIVE"
+                  },
+                  {
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "SUCCESS"
+                  },
+                  {
+                    "createdAt": "2022-02-03T22:45:04Z",
+                    "updatedAt": "2022-02-03T22:45:04Z",
+                    "state": "IN_PROGRESS"
+                  }
+                ]
               }
             }
           }
