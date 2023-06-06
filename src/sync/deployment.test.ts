@@ -71,48 +71,64 @@ describe("sync/deployments", () => {
 			nockCleanAll();
 		});
 
-		describe("Dealing with INACTIVE deployments status", () => {
-
-			describe("When the INACTIVE status contains null as url", () => {
-
-				it("should get the url from previous NON-INACTIVE status", async () => {
-
-					when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
-
-					const deploymentCount = 4;
-					const deployments = createDeploymentEntities(deploymentCount);
-
-					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
-					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
-
-					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
-
-					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
-
-					expect(result.jiraPayload?.deployments).toEqual([
-						expect.objectContaining({
-							url: "deployment-url-4",
-							pipeline: expect.objectContaining({
-								url: "deployment-url-4"
-							})
-						}),
-						expect.objectContaining({
-							url: "deployment-url-3",
-							pipeline: expect.objectContaining({
-								url: "deployment-url-3"
-							})
-						})
-					]);
-				});
-
-			});
-
-		});
-
 		describe("when ff is on", () => {
 
 			beforeEach(() => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+			});
+
+			it("should get the url from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						url: "deployment-url-4",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-4"
+						})
+					}),
+					expect.objectContaining({
+						url: "deployment-url-3",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-3"
+						})
+					})
+				]);
+			});
+
+			it("should get the correct state from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						state: "successful"
+					}),
+					expect.objectContaining({
+						state: "successful"
+					})
+				]);
 			});
 
 			// eslint-disable-next-line jest/expect-expect
