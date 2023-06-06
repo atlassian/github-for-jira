@@ -20,6 +20,7 @@ export enum BooleanFlags {
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
+	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers"
 }

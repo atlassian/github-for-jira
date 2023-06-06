@@ -120,11 +120,14 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
 	}
 
+	if (type === "backfill" && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+		lastSuccessfullyDeployedCommit = await getLastSuccessDeploymentShaFromCache(type, jiraHost, repoId, currentDeployEnv, currentDeployDate, githubInstallationClient, logger);
+	}
+
 	if (!lastSuccessfullyDeployedCommit) {
 		// Grab the last 10 deployments for this repo
 		const deployments: Octokit.Response<Octokit.ReposListDeploymentsResponse> | AxiosResponse<Octokit.ReposListDeploymentsResponse> =
 			await githubInstallationClient.listDeployments(owner, repoName, currentDeployEnv, 10);
-
 		// Filter per current environment and exclude itself
 		const filteredDeployments = deployments.data
 			.filter(deployment => deployment.id !== currentDeployId);
@@ -156,9 +159,10 @@ const getCommitsSinceLastSuccessfulDeploymentFromCache = async (
 // Deployment state - GitHub: Can be one of error, failure, pending, in_progress, queued, or success
 // https://developer.atlassian.com/cloud/jira/software/rest/api-group-builds/#api-deployments-0-1-bulk-post
 // Deployment state - Jira: Can be one of unknown, pending, in_progress, cancelled, failed, rolled_back, successful
-const mapState = (state: string | undefined): string => {
+export const mapState = (state: string | undefined): string => {
 	switch (state?.toLowerCase()) {
 		case "queued":
+		case "waiting":
 			return "pending";
 		// We send "pending" as "in progress" because the GitHub API goes Pending -> Success (there's no in progress update).
 		// For users, it's a better UI experience if they see In progress instead of Pending, because the deployment might be running already.
@@ -304,7 +308,6 @@ export const transformDeployment = async (
 	const deployment = payload.deployment;
 	const deployment_status = payload.deployment_status;
 	const { data: { commit: { message } } } = await githubInstallationClient.getCommit(payload.repository.owner.login, payload.repository.name, deployment.sha);
-
 	const commitSummaries = await getCommitsSinceLastSuccessfulDeploymentFromCache(
 		jiraHost,
 		type,
