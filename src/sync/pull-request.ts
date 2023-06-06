@@ -82,10 +82,6 @@ const doGetPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	async (pageCursor) => {
-		// if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost))
-		// {
-		// 	return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload);
-		// }
 		return doGetPullRequestTaskOld(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
@@ -93,17 +89,16 @@ const doGetPullRequestTaskInParallel = (
 		);
 	}
 );
-//
-// const emitStats = (startTime) => {
-// 	statsd.timing(
-// 		metricHttpRequest.syncPullRequest,
-// 		Date.now() - startTime,
-// 		1,
-// 		{ status: String(status), gitHubProduct },
-// 		{ jiraHost }
-// 	);
-//
-// }
+
+const emitStats = (jiraHost: string, gitHubProduct: string, startTime: number) => {
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		{ status: String(status), gitHubProduct },
+		{ jiraHost }
+	);
+};
 
 const doGetPullRequestTask = async (
 	logger: Logger,
@@ -114,7 +109,7 @@ const doGetPullRequestTask = async (
 	cursor?: string
 ) => {
 	logger.info("Syncing PRs: started");
-	// const startTime = Date.now();
+	const startTime = Date.now();
 
 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 
@@ -131,7 +126,8 @@ const doGetPullRequestTask = async (
 		pullRequests
 	};
 
-	// emitStats(jiraHost, startTime);
+	// TODO FIGURE OUR IOF ITS GHE OR CLOUD!!!!
+	emitStats(jiraHost, "cloud", startTime);
 
 	return {
 		edges: response.repository?.pullRequests?.edges || [],
