@@ -64,7 +64,7 @@ describe("sync/deployments", () => {
 				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
 			};
 
-			"*".repeat(REPEAT_LOTS_OF_TIME).split("").forEach(() => githubUserTokenNock(installationId));
+			Array.from({ length: REPEAT_LOTS_OF_TIME }).forEach(() => githubUserTokenNock(installationId));
 		});
 
 		afterEach(async () => {
@@ -154,7 +154,7 @@ describe("sync/deployments", () => {
 
 		//size up to 9 entities
 		const createDeploymentEntities = (size: number) => {
-			return "*".repeat(size).split("").map((_, idx) => {
+			return Array.from({ length: size }).map((_, idx) => {
 				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
 				clone._seq = idx + 1;
 				clone.cursor = `cursor:${idx + 1}`;
@@ -176,7 +176,7 @@ describe("sync/deployments", () => {
 		};
 
 		const nockDeploymentListingApi = (deployments, repeatTimes) => {
-			"*".repeat(repeatTimes).split("").forEach(() => {
+			Array.from({ length: repeatTimes }).forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
 					.reply(200, deployments.map((item, idx) => ({
 						id: item.node.databaseId,
@@ -199,7 +199,7 @@ describe("sync/deployments", () => {
 		};
 
 		const nockDeploymentStatusApi = (deployments, repeatTimes) => {
-			"*".repeat(repeatTimes).split("").forEach(() => {
+			Array.from({ length: repeatTimes }).forEach(() => {
 				deployments.forEach((item, idx) => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
 						.reply(200, [
@@ -211,7 +211,7 @@ describe("sync/deployments", () => {
 		};
 
 		const nockDeploymentCommitGetApi = (deployments, repeatTimes) => {
-			"*".repeat(repeatTimes).split("").forEach(() => {
+			Array.from({ length: repeatTimes }).forEach(() => {
 				deployments.forEach(item => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
 						.reply(200, {
