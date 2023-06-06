@@ -27,8 +27,8 @@
               "description": "",
               "latestStatus": {
                 "environmentUrl": "",
-                "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
-                "state": "SUCCESS",
+                "logUrl": null,
+                "state": "INACTIVE",
                 "id": "DES_kwDOGtdD5840PkSo",
                 "createdAt": "2022-02-03T22:45:04Z",
                 "updatedAt": "2022-02-03T22:45:04Z"
@@ -38,17 +38,20 @@
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
-                    "state": "INACTIVE"
+                    "state": "INACTIVE",
+										"logUrl": null
                   },
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
-                    "state": "SUCCESS"
+                    "state": "SUCCESS",
+										"logUrl": "random-success"
                   },
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
-                    "state": "IN_PROGRESS"
+                    "state": "IN_PROGRESS",
+										"logUrl": "random-in-progress"
                   }
                 ]
               }

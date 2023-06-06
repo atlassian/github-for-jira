@@ -44,6 +44,8 @@ const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployme
 			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
 
+		const logUrl = firstNonInactiveStatus?.logUrl || deployment.latestStatus?.logUrl;
+
 		const deploymentStatus = {
 			repository: deployment.repository,
 			deployment: {
@@ -52,12 +54,12 @@ const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployme
 				ref: deployment.ref?.id,
 				description: deployment.description,
 				task: deployment.task,
-				url: deployment.latestStatus?.logUrl
+				url: logUrl
 			},
 			deployment_status: {
 				environment: deployment.environment,
 				id: deployment.databaseId,
-				target_url: deployment.latestStatus?.logUrl,
+				target_url: logUrl,
 				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
 				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
 				state: firstNonInactiveStatus?.state?.toLowerCase() || deployment.latestStatus?.state

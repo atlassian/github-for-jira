@@ -379,7 +379,8 @@ export type DeploymentQueryNode = {
 			nodes: {
 				createdAt: string,
 				updatedAt: string,
-				state: string
+				state: string,
+				logUrl: string
 			}[]
 		},
 		latestStatus: {
@@ -468,6 +469,7 @@ export const getDeploymentsQueryWithStatuses = `query ($owner: String!, $repo: S
               createdAt
               updatedAt
               state
+							logUrl
             }
           }
           latestStatus {
