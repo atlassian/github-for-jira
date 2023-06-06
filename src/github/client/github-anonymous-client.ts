@@ -20,8 +20,8 @@ export class GitHubAnonymousClient extends GitHubClient {
 		super(githubConfig, jiraHost, metrics, logger);
 	}
 
-	public getMainPage(timeoutMs: number): Promise<AxiosResponse> {
-		return this.axios.get(this.baseUrl, { timeout: timeoutMs });
+	public getPage(timeoutMs: number, path = "", extraHeaders: { [name: string]: string } = {}): Promise<AxiosResponse> {
+		return this.axios.get(this.baseUrl + path, { timeout: timeoutMs, headers: extraHeaders });
 	}
 
 	public async createGitHubApp(code: string): Promise<CreatedGitHubAppResponse> {

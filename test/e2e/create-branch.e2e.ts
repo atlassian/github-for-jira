@@ -1,41 +1,32 @@
-import { expect, Page, test } from "@playwright/test";
-import { jiraAddProject, jiraCreateIssue, jiraLogin, jiraRemoveProject } from "test/e2e/utils/jira";
+import { expect, test } from "@playwright/test";
+import { jiraCreateIssue, jiraEnsureAppInstalled, jiraRemoveIssue } from "test/e2e/utils/jira";
 import { testData } from "test/e2e/constants";
 
 test.describe("Create branch", () => {
-	let page: Page;
-	const data = testData.jira;
-
-	test.beforeEach(async ({ page: newPage }) => {
-		page = newPage;
-		await jiraLogin(page, "admin");
-		await jiraAddProject(page);
-	});
-
 	test.use({
 		storageState: testData.jira.roles.admin.state
 	});
 
-	test.describe("cloud", () => {
-		// Create a fresh issue per test
-		test.beforeEach(async() => {
-			await jiraCreateIssue(page);
-		});
-
-		test("When there are no GitHub connections", async () => {
-			await page.goto(data.urls.testProjectIssue);
-			await (page.locator("a[data-testid='development-summary-common.ui.summary-item.link-formatted-button']")).click();
-			const poppedUpPage = await page.waitForEvent("popup");
-			await poppedUpPage.waitForLoadState();
-			expect(poppedUpPage.getByText("Almost there!")).toBeTruthy();
-			await poppedUpPage.close();
-		});
+	let issueId: string;
+	// Create a fresh issue per test
+	test.beforeEach(async ({ page }) => {
+		issueId = await jiraCreateIssue(page);
 	});
 
-	// Clean up projects to avoid conflicts in future
-	test.afterEach(async() => {
-		await jiraRemoveProject(page);
+	test.afterEach(async ({ page }) => {
+		await jiraRemoveIssue(page, issueId);
 	});
 
+	test("When there are no GitHub connections", async ({ page, context }) => {
+		await jiraEnsureAppInstalled(page);
+		await page.goto(testData.jira.urls.browse(issueId));
+		// It is important to call waitForEvent first.
+		const pagePromise = context.waitForEvent("page");
+		// await page.click("[data-testid='development-summary-branch.ui.create-branch-dropdown.link-item']");
+		await page.click("[data-testid='development-summary-branch.ui.summary-item'] [data-testid='development-summary-common.ui.summary-item.link-formatted-button']");
+		const newTab = await pagePromise;
+		expect(await newTab.locator("[id='noConfiguration__ConnectToGH']").isVisible()).toBeTruthy();
+		await newTab.close();
+	});
 });
 

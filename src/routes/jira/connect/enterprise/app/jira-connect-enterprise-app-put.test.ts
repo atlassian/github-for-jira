@@ -120,6 +120,8 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "newSecret",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
 			gitHubClientSecret: "secret",
+			apiKeyHeaderName: "myNewApiKey",
+			apiKeyValue: "myApiKey",
 			uuid,
 			jiraHost
 		};
@@ -135,9 +137,78 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
 
 		expect(restoredApp.gitHubAppName).toEqual("newName");
+		expect(restoredApp.apiKeyHeaderName).toEqual("myNewApiKey");
 		expect(await restoredApp.getDecryptedWebhookSecret(jiraHost)).toEqual("newSecret");
 		expect(await restoredApp.getDecryptedPrivateKey(jiraHost)).toEqual("privatekey");
 		expect(await restoredApp.getDecryptedGitHubClientSecret(jiraHost)).toEqual("secret");
+		expect(await restoredApp.getDecryptedApiKeyValue(jiraHost)).toEqual("myApiKey");
+	});
+
+	it.each(["set-cookie: blah", "foo:", ":foo"])("validates API key fields %s", async (apiKeyNameValue) => {
+		await GitHubServerApp.install({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id
+		}, jiraHost);
+
+		const payload ={
+			gitHubAppName: "newName",
+			webhookSecret: "newSecret",
+			gitHubClientId: "Iv1.msdnf2893rwhdbf",
+			gitHubClientSecret: "secret",
+			apiKeyHeaderName: apiKeyNameValue.split(":")[0].trim(),
+			apiKeyValue: apiKeyNameValue.split(":")[1].trim(),
+			uuid,
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(400);
+	});
+
+	it("should drop API key values when not provided", async () => {
+		await GitHubServerApp.install({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id,
+			apiKeyHeaderName: "myApiKey",
+			encryptedApiKeyValue: "encrypted:myApiKeyValue"
+		}, jiraHost);
+
+		const payload ={
+			uuid,
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(202);
+
+		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
+
+		expect(restoredApp.apiKeyHeaderName).toBeNull();
+		expect(restoredApp.encryptedApiKeyValue).toBeNull();
 	});
 
 	it("should return 404 when wrong uuid param is passed", async () => {

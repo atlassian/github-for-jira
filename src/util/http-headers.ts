@@ -179,7 +179,6 @@ const knownSafe = new Set([
 	"public-key-pins-report-only",
 	"push-policy",
 	"range",
-	"referer",
 	"referrer-policy",
 	"refresh",
 	"report-to",
@@ -246,23 +245,21 @@ const knownSafe = new Set([
 	"x-xss-protection"
 ]);
 
-// Not used in the code but leaving here for complete picture
-// Also, we will need this list in the future for BTF customers (UI) when we will decide if the provided HTTP header
-// can be used
-// const knownSensitive = new Set([
-// 	"arc-authentication-results",
-// 	"authentication-results",
-// 	"authorization",
-// 	"mmhs-extended-authorisation-info",
-// 	"proxy-authenticate",
-// 	"proxy-authorization",
-// 	"www-authenticate",
-//
-// 	"cookie",
-// 	"cookie2",
-// 	"set-cookie",
-// 	"set-cookie2",
-// ]);
+const knownSensitive = new Set([
+	"arc-authentication-results",
+	"authentication-results",
+	"authorization",
+	"mmhs-extended-authorisation-info",
+	"proxy-authenticate",
+	"proxy-authorization",
+	"www-authenticate",
+	"referer", // might contain UGC
+
+	"cookie",
+	"cookie2",
+	"set-cookie",
+	"set-cookie2"
+]);
 
 export const knownGitHubSafe = new Set([
 	"x-github-enterprise-version",
@@ -289,5 +286,18 @@ export const canLogHeader = (httpHeader: string) => {
 export const isUniquelyGitHubServerHeader = (httpHeader: string) => {
 	const sanitisedHeader = httpHeader.trim().toLowerCase();
 	return sanitisedHeader.includes("x-github");
+};
+
+/**
+ * !Important: the returned headers are trimmed and in lower-case!
+ */
+export const getAllKnownHeaders = () => {
+	return [...knownSafe, ...knownGitHubSafe, ...knownSensitive];
+};
+
+export const canBeUsedAsApiKeyHeader = (httpHeader: string) => {
+	const sanitisedHeader = httpHeader.trim().toLowerCase();
+	const knownHeader = knownSafe.has(sanitisedHeader) || knownSensitive.has(sanitisedHeader) || knownGitHubSafe.has(sanitisedHeader);
+	return !knownHeader;
 };
 

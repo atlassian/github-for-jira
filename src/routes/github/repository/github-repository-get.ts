@@ -4,6 +4,7 @@ import { createAppClient, createInstallationClient } from "utils/get-github-clie
 import { RepositoryNode } from "~/src/github/client/github-queries";
 import { Subscription } from "~/src/models/subscription";
 import { sendError } from "~/src/jira/util/jwt";
+import { Errors } from "config/errors";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
@@ -15,8 +16,8 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	const log = req.log.child({ jiraHost });
 
 	if (!jiraHost) {
-		log.error("Unauthorised - No JiraHost found");
-		sendError(res, 401, "Unauthorised");
+		log.warn(Errors.MISSING_JIRA_HOST);
+		sendError(res, 400, Errors.MISSING_JIRA_HOST);
 		return;
 	}
 

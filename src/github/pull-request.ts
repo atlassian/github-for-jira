@@ -2,7 +2,6 @@ import { transformPullRequest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { Octokit } from "@octokit/rest";
 import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
@@ -10,8 +9,9 @@ import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { Subscription } from "models/subscription";
 
-export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
+export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -35,10 +35,8 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 		trigger: "webhook",
 		subTrigger: "pullRequest"
 	};
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
-	let reviews: Octokit.PullsListReviewsResponse = [];
-
-	reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, subscription.jiraHost, metrics, context.log, gitHubAppId);
+	const reviews = await getPullRequestReviews(subscription.jiraHost, gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 
 	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
 	context.log.info("Pullrequest mapped to Jira Payload");
@@ -84,7 +82,7 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
-		jiraClient.baseURL,
+		subscription.jiraHost,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

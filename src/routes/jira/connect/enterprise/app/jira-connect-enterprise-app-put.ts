@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -22,7 +23,19 @@ export const JiraConnectEnterpriseAppPut = async (
 			updatedAppPayload.privateKey = undefined;
 		}
 
-		await GitHubServerApp.updateGitHubAppByUUID(req.body, jiraHost);
+		const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(req.body.apiKeyHeaderName, req.body.apiKeyValue);
+		if (maybeApiKeyInputsError) {
+			req.log.warn({ apiKeyHeaderName: req.body.apiKeyHeaderName, apiKeyValue: req.body.apiKeyValue }, maybeApiKeyInputsError);
+			res.sendStatus(400); // Let's not bother too much: the same validation happened in frontend
+			return;
+		}
+
+		await GitHubServerApp.updateGitHubAppByUUID({
+			... req.body,
+			encryptedApiKeyValue: req.body.apiKeyValue
+				? await GitHubServerApp.encrypt(res.locals.installation.jiraHost, req.body.apiKeyValue)
+				: null
+		}, jiraHost);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,

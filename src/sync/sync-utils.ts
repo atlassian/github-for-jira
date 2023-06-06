@@ -40,7 +40,7 @@ export const findOrStartSync = async (
 	}
 
 	// reset failedCode for Partial or targetted syncs
-	await resetFailedCode(subscription, syncType, targetTasks);
+	await resetFailedCode(subscription, targetTasks);
 
 	const gitHubAppConfig = await getGitHubAppConfig(subscription, logger);
 
@@ -110,9 +110,8 @@ const resetTargetedTasks = async (subscription: Subscription, syncType?: SyncTyp
 
 };
 
-const resetFailedCode = async (subscription: Subscription, syncType?: SyncType, targetTasks?: TaskType[]) => {
-	// a full sync without target tasks has reposyncstates removed so dont update.
-	if (syncType === "full" && !targetTasks?.length) {
+const resetFailedCode = async (subscription: Subscription, targetTasks?: TaskType[]) => {
+	if (!targetTasks?.length) {
 		return;
 	}
 	await RepoSyncState.update({ failedCode: null }, {

@@ -86,6 +86,7 @@
 		"minimatch": "^5.0.1",
 		"moment": "^2.29.4",
 		"moo": "^0.5.0",
+		"node_extra_ca_certs_mozilla_bundle": "^1.0.5",
 		"optional-require": "^1.1.8",
 		"pg": "^8.7.3",
 		"primer": "^10.6.0",
@@ -104,12 +105,12 @@
 		"typescript": "~4.5.5",
 		"uuid": "^8.3.2",
 		"xml2json-light": "^1.0.6",
-		"yaml": "^2.0.1"
+		"yaml": "^2.2.2"
 	},
 	"devDependencies": {
 		"@octokit/rest": "16.43.2",
-		"@octokit/webhooks": "6.3.2",
-		"@playwright/test": "^1.25.1",
+		"@octokit/webhooks-types": "^6.11.0",
+		"@playwright/test": "^1.33.0",
 		"@types/bunyan": "^1.8.6",
 		"@types/bunyan-format": "^0.2.4",
 		"@types/cache-manager": "^3.4.0",
@@ -149,6 +150,7 @@
 		"nock": "^13.2.4",
 		"nodemon": "^2.0.18",
 		"npm-run-all": "^4.1.5",
+		"playwright": "^1.33.0",
 		"prettier": "~2.5.1",
 		"rimraf": "~3.0.2",
 		"smee-client": "^1.2.2",

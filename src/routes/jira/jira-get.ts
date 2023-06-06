@@ -11,7 +11,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Errors } from "config/errors";
 
 interface FailedConnection {
 	id: number;
@@ -125,8 +125,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const { jiraHost, nonce } = res.locals;
 
-	const isIncrementalBackfillEnabled = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
@@ -164,7 +162,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
-		isIncrementalBackfillEnabled,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
@@ -196,9 +193,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 };
 
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
-	if (!(await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL))){
-		return undefined;
-	}
 	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
 	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
 	const errorCodes = failedSyncs.map(sync => sync.failedCode);
@@ -218,8 +212,8 @@ export const JiraGet = async (
 	try {
 		const { jiraHost } = res.locals;
 		if (!jiraHost) {
-			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
-			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			req.log.warn({ jiraHost, req, res }, Errors.MISSING_JIRA_HOST);
+			res.status(400).send(Errors.MISSING_JIRA_HOST);
 			return;
 		}
 

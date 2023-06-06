@@ -4,7 +4,8 @@ import {
 	GithubClientTimeoutError,
 	GithubClientInvalidPermissionsError,
 	GithubClientRateLimitingError,
-	GithubClientNotFoundError
+	GithubClientNotFoundError,
+	GithubClientSSOLoginError
 } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
@@ -92,6 +93,8 @@ export const instrumentFailedRequest = (metricName: string, host: string, jiraHo
 			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct }, { jiraHost });
 		} else if (error instanceof GithubClientTimeoutError) {
 			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "timeout", extraTags);
+		} else if (error instanceof GithubClientSSOLoginError) {
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "ssoLogin", extraTags);
 		} else if (error instanceof GithubClientError) {
 			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, undefined, extraTags);
 		} else {
@@ -145,6 +148,12 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 					err: mappedError,
 					remote: response.data.message
 				}, "unauthorized");
+				return Promise.reject(mappedError);
+			}
+
+			if (status === 403 && response.headers?.["x-github-sso"]) {
+				const mappedError = new GithubClientSSOLoginError(err);
+				logger.warn({ err: mappedError, remote: response.data.message }, "SSO Login required");
 				return Promise.reject(mappedError);
 			}
 

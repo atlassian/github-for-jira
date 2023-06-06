@@ -7,6 +7,10 @@ import { Installation } from "models/installation";
 import supertest from "supertest";
 import { GitHubServerApp } from "models/github-server-app";
 import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("GET /jira/connect/enterprise", () => {
 
@@ -87,6 +91,20 @@ describe("GET /jira/connect/enterprise", () => {
 					jwt: await generateJwt()
 				});
 			expect(response.text).toContain(`<label for="gheServerURL">Server URL</label>`);
+		});
+
+		it("populates list of known HTTP headers", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_API_KEY_FEATURE,
+				jiraHost
+			).mockResolvedValue(true);
+
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt()
+				});
+			expect(response.text).toContain(`"sec-fetch-dest"`);
 		});
 	});
 

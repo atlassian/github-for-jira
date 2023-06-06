@@ -12,7 +12,9 @@ describe("GitHubServerApp", () => {
 		gitHubClientSecret: "myghsecret",
 		webhookSecret: "mywebhooksecret",
 		privateKey: "myprivatekey",
-		installationId: 10
+		installationId: 10,
+		apiKeyHeaderName: "FOO",
+		encryptedApiKeyValue: "encrypted:api_key"
 	};
 
 	it("should create a new entry in the GitHubServerApps table", async () => {
@@ -109,7 +111,7 @@ describe("GitHubServerApp", () => {
 					gitHubAppName: "ghes_app_1",
 					installationId: INSTALLATION_ID_PK
 				};
-				it("should install new record Successfully", async ()=>{
+				it("should install new record Successfully without ApiKey", async ()=>{
 					const newApp = await GitHubServerApp.install({
 						...DEFAULT_INSTALL_PAYLOAD
 					}, jiraHost);
@@ -123,9 +125,56 @@ describe("GitHubServerApp", () => {
 						webhookSecret: "encrypted:webhook_secret_1",
 						privateKey: "encrypted:private_key_1",
 						gitHubAppName: "ghes_app_1",
-						installationId: INSTALLATION_ID_PK
+						installationId: INSTALLATION_ID_PK,
+						apiKeyHeaderName: null,
+						encryptedApiKeyValue: null
 					}));
 				});
+
+				it.each(["", undefined, null])("on Install should map %s in ApiKey to null", async (empty)=>{
+					const newApp = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						apiKeyHeaderName: empty,
+						encryptedApiKeyValue: empty
+					}, jiraHost);
+					const found = await GitHubServerApp.findByPk(newApp.id);
+					expect(found).toEqual(expect.objectContaining({
+						uuid: UUID1,
+						appId: 123,
+						gitHubBaseUrl: GHES_URL,
+						gitHubClientId: "client_id",
+						gitHubClientSecret: "encrypted:client_secret_1",
+						webhookSecret: "encrypted:webhook_secret_1",
+						privateKey: "encrypted:private_key_1",
+						gitHubAppName: "ghes_app_1",
+						installationId: INSTALLATION_ID_PK,
+						apiKeyHeaderName: null,
+						encryptedApiKeyValue: null
+					}));
+				});
+
+				it("should install new record Successfully with ApiKey", async ()=>{
+					const newApp = await GitHubServerApp.install({
+						...DEFAULT_INSTALL_PAYLOAD,
+						apiKeyHeaderName: "myApiKeyName",
+						encryptedApiKeyValue: "encrypted:myApiKeyValue"
+					}, jiraHost);
+					const found = await GitHubServerApp.findByPk(newApp.id);
+					expect(found).toEqual(expect.objectContaining({
+						uuid: UUID1,
+						appId: 123,
+						gitHubBaseUrl: GHES_URL,
+						gitHubClientId: "client_id",
+						gitHubClientSecret: "encrypted:client_secret_1",
+						webhookSecret: "encrypted:webhook_secret_1",
+						privateKey: "encrypted:private_key_1",
+						gitHubAppName: "ghes_app_1",
+						installationId: INSTALLATION_ID_PK,
+						apiKeyHeaderName: "myApiKeyName",
+						encryptedApiKeyValue: "encrypted:myApiKeyValue"
+					}));
+				});
+
 				it("should return existing but NOT override existing record if found", async ()=>{
 					const existing = await GitHubServerApp.install({
 						...DEFAULT_INSTALL_PAYLOAD,
@@ -197,7 +246,9 @@ describe("GitHubServerApp", () => {
 						gitHubClientSecret: "secret",
 						webhookSecret: newWebhookSecret,
 						privateKey: newPrivateKey,
-						installationId
+						installationId,
+						apiKeyHeaderName: "newApiKey",
+						encryptedApiKeyValue: "encrypted:newApiKeyValue"
 					}, jiraHost);
 
 					const updatedApp = await GitHubServerApp.findForUuid(uuid);
@@ -205,6 +256,48 @@ describe("GitHubServerApp", () => {
 					expect(updatedApp?.gitHubClientId).toEqual(newClientId);
 					expect(await updatedApp?.getDecryptedWebhookSecret(jiraHost)).toEqual(newWebhookSecret);
 					expect(await updatedApp?.getDecryptedPrivateKey(jiraHost)).toEqual(newPrivateKey);
+					expect(await updatedApp?.apiKeyHeaderName).toStrictEqual("newApiKey");
+					expect(await updatedApp?.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("newApiKeyValue");
+				});
+
+				it("on update should drop apiKey and apiKeyValue when not provided", async () => {
+					await GitHubServerApp.updateGitHubAppByUUID({
+						uuid,
+						appId: 1,
+						gitHubAppName: "my awesome updated app",
+						gitHubBaseUrl,
+						gitHubClientId: newClientId,
+						gitHubClientSecret: "secret",
+						webhookSecret: newWebhookSecret,
+						privateKey: newPrivateKey,
+						installationId
+					}, jiraHost);
+
+					const updatedApp = (await GitHubServerApp.findForUuid(uuid))!;
+					expect(updatedApp.gitHubAppName).toStrictEqual("my awesome updated app");
+					expect(updatedApp.apiKeyHeaderName).toStrictEqual(null);
+					expect(await updatedApp.getDecryptedApiKeyValue(jiraHost)).toStrictEqual("");
+				});
+
+				it.each(["", undefined, null])("on update should map %s in apiKey and apiKeyValue to null", async (empty) => {
+					await GitHubServerApp.updateGitHubAppByUUID({
+						uuid,
+						appId: 1,
+						gitHubAppName: "my awesome updated app",
+						gitHubBaseUrl,
+						gitHubClientId: newClientId,
+						gitHubClientSecret: "secret",
+						webhookSecret: newWebhookSecret,
+						privateKey: newPrivateKey,
+						installationId,
+						apiKeyHeaderName: empty,
+						encryptedApiKeyValue: empty
+					}, jiraHost);
+
+					const updatedApp = (await GitHubServerApp.findForUuid(uuid))!;
+					expect(updatedApp.gitHubAppName).toStrictEqual("my awesome updated app");
+					expect(updatedApp.apiKeyHeaderName).toStrictEqual(null);
+					expect(updatedApp.encryptedApiKeyValue).toStrictEqual(null);
 				});
 
 				it("should not update GitHub app when uuid is not found", async () => {
@@ -266,5 +359,33 @@ describe("GitHubServerApp", () => {
 		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		expect(savedGitHubServerApp!.webhookSecret).toEqual("encrypted:mywebhooksecret");
 		expect(await savedGitHubServerApp!.getDecryptedWebhookSecret(jiraHost)).toEqual("mywebhooksecret");
+	});
+
+	it("getDecryptedApiKeyValue should return decrypted value", async () => {
+		await GitHubServerApp.install(payload, jiraHost);
+		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(savedGitHubServerApp!.encryptedApiKeyValue).toEqual("encrypted:api_key");
+		expect(await savedGitHubServerApp!.getDecryptedApiKeyValue(jiraHost)).toEqual("api_key");
+	});
+
+	it("getDecryptedApiKeyValue should not explode when no apiKeyValue was provided", async () => {
+		await GitHubServerApp.install({
+			...payload,
+			encryptedApiKeyValue: null
+		}, jiraHost);
+		const savedGitHubServerApp = await GitHubServerApp.findForUuid(uuid);
+		expect(await savedGitHubServerApp!.getDecryptedApiKeyValue(jiraHost)).toEqual("");
+	});
+
+	describe("encrypt", () => {
+		it("should encrypt", async () => {
+			expect(await GitHubServerApp.encrypt(jiraHost, "foo")).toStrictEqual("encrypted:foo");
+		});
+	});
+
+	describe("decrypt", () => {
+		it("should decrypt", async () => {
+			expect(await GitHubServerApp.decrypt(jiraHost, "encrypted:foo")).toStrictEqual("foo");
+		});
 	});
 });
