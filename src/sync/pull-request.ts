@@ -95,7 +95,7 @@ const emitStats = (jiraHost: string, gitHubProduct: string, startTime: number) =
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		{ status: String(status), gitHubProduct },
+		{ status: String("status"), gitHubProduct },
 		{ jiraHost }
 	);
 };
