@@ -90,7 +90,7 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 
 			if (!successStatusDate) {
 				logger.warn("Should find a success status date, but found none");
-				throw "Save failure";
+				throw new Error("Cannot find updatedAt date in the statuses with SUCCESS on state");
 			}
 
 			return cacheSuccessfulDeploymentInfo({
