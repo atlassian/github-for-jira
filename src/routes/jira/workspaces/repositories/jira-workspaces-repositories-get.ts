@@ -12,7 +12,13 @@ export interface WorkspaceRepo {
 const DEFAULT_PAGE_NUMBER = 1; // Current page
 export const DEFAULT_LIMIT = 20; // Number of items per page
 
-const getReposForWorkspaceId = async (connectedOrgId: number, page: number, limit: number, repoName?: string): Promise<RepoSyncState[] | null> => {
+const getReposForWorkspaceId = async (
+	jiraHost: string,
+	connectedOrgId: number,
+	page: number,
+	limit: number,
+	repoName?: string
+): Promise<RepoSyncState[] | null> => {
 	const subscription = await Subscription.getOneForSubscriptionIdAndHost(jiraHost, connectedOrgId);
 
 	if (!subscription) {
@@ -54,7 +60,7 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 
 	const repos = connectedOrgId ?
-		await getReposForWorkspaceId(connectedOrgId, page, limit, repoName) :
+		await getReposForWorkspaceId(jiraHost,connectedOrgId, page, limit, repoName) :
 		await getAllRepos(jiraHost, page, limit, repoName);
 
 	if (repos === null) {
