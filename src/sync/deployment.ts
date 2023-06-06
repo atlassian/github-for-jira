@@ -35,12 +35,12 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	};
 };
 
-const getTransformedDeployments = async (deployments: DeploymentQueryNode["node"][], gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
+const getTransformedDeployments = async (useDyanmoForBackfill: boolean, deployments: DeploymentQueryNode["node"][], gitHubInstallationClient: GitHubInstallationClient, jiraHost: string, logger: Logger, gitHubAppId: number | undefined) => {
 
 	const transformTasks = deployments.map((deployment) => {
 
-		const firstNonInactiveStatus = deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE");
-		if (!firstNonInactiveStatus) {
+		const firstNonInactiveStatus = useDyanmoForBackfill ? deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE") : undefined;
+		if (!firstNonInactiveStatus && useDyanmoForBackfill) {
 			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
 
@@ -127,7 +127,8 @@ export const getDeploymentTask = async (
 
 	const { edges, deployments, extraDeployments } = await fetchDeployments(jiraHost, gitHubInstallationClient, repository, logger, cursor, perPage);
 
-	if (await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
+	const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
+	if (useDyanmoForBackfill) {
 		await saveDeploymentsForLaterUse([...deployments, ...extraDeployments], gitHubInstallationClient.baseUrl, logger);
 	}
 
@@ -150,7 +151,7 @@ export const getDeploymentTask = async (
 	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
 	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
 
-	const transformedDeployments = await getTransformedDeployments(deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
+	const transformedDeployments = await getTransformedDeployments(useDyanmoForBackfill, deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 	logger.debug("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
