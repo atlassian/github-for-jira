@@ -2,7 +2,7 @@ import { PullRequestSort, PullRequestState, SortDirection } from "../github/clie
 import url from "url";
 import {
 	extractIssueKeysFromPrOld,
-	// transformPullRequestNew,
+	transformPullRequestNew,
 	transformPullRequest
 } from "../transforms/transform-pull-request";
 import { statsd }  from "config/statsd";
@@ -57,11 +57,13 @@ export const getPullRequestTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
+	if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string);
+	}
+
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-	// if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
-	// 		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string);
 		return doGetPullRequestTaskOld(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
 		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
@@ -103,45 +105,40 @@ const doGetPullRequestTaskInParallel = (
 //
 // }
 
-// const doGetPullRequestTask = async (
-// 	logger: Logger,
-// 	gitHubInstallationClient: GitHubInstallationClient,
-// 	jiraHost: string,
-// 	repository: Repository,
-// 	messagePayload: BackfillMessagePayload,
-// 	cursor?: string
-// ) => {
-// 	logger.info("Syncing PRs: started");
-// 	// const startTime = Date.now();
-//
-// 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-//
-// 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince,100, cursor);
-// 	// TODO FIX STATS
-//
-// 	if (!response) {
-// 		return {};
-// 	}
-//
-// 	const pullRequests = response.repository?.pullRequests?.edges
-// 		?.map((edge) => transformPullRequestNew(jiraHost, edge.node, edge.node.reviews, logger))
-// 		?.filter((pr) => pr !== undefined) || [];
-//
-// 	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
-//
-// 	const jiraPayload = {
-// 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
-// 		pullRequests
-// 	};
-//
-// 	// emitStats(jiraHost, startTime);
-//
-// 	return {
-// 		edges: response.repository?.pullRequests?.edges || [],
-// 		jiraPayload
-// 	};
-//
-// };
+const doGetPullRequestTask = async (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	messagePayload: BackfillMessagePayload,
+	cursor?: string
+) => {
+	logger.info("Syncing PRs: started");
+	// const startTime = Date.now();
+
+	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+
+	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince,100, cursor);
+
+	const pullRequests = response.repository?.pullRequests?.edges
+		?.map((edge) => transformPullRequestNew(jiraHost, edge.node, edge.node.reviews, logger))
+		?.filter((pr) => pr !== undefined) || [];
+
+	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+
+	const jiraPayload = {
+		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+		pullRequests
+	};
+
+	// emitStats(jiraHost, startTime);
+
+	return {
+		edges: response.repository?.pullRequests?.edges || [],
+		jiraPayload
+	};
+
+};
 
 const doGetPullRequestTaskOld = async (
 	logger: Logger,

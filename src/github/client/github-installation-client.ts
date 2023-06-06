@@ -84,7 +84,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	/**
 	 * Get a single pull request for the given repository.
 	 */
-	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse | undefined> {
+	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
 		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
 			owner,
 			repo,

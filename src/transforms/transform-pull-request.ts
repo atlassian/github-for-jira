@@ -167,25 +167,28 @@ export const transformPullRequestNew = (_jiraHost: string, pullRequest: pullRequ
 		return undefined;
 	}
 
-	return {
-		author: getJiraAuthor(pullRequest.author),
-		commentCount: pullRequest.comments.totalCount || 0,
-		destinationBranch: pullRequest.baseRef?.name || "",
-		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
-		displayId: `#${pullRequest.number}`,
-		id: pullRequest.number,
-		issueKeys,
-		lastUpdate: pullRequest.updatedAt,
-		reviewers: mapReviews(reviews.nodes),
-		sourceBranch: pullRequest.headRef?.name || "",
-		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
-		status: pullRequest.state, // test closed and declined behaviou// mapStatus(pullRequest.state, pullRequest.merged_at), mapStatus(pullRequest.state, pullRequest.mergedAt),
-		timestamp: pullRequest.updatedAt,
-		title: pullRequest.title,
-		url: pullRequest.url,
-		updateSequenceId: Date.now()
-	};
-
+	try {
+		return {
+			author: getJiraAuthor(pullRequest.author),
+			commentCount: pullRequest.comments.totalCount || 0,
+			destinationBranch: pullRequest.baseRef?.name || "",
+			destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+			displayId: `#${pullRequest.number}`,
+			id: pullRequest.number,
+			issueKeys,
+			lastUpdate: pullRequest.updatedAt,
+			reviewers: mapReviews(reviews.nodes),
+			sourceBranch: pullRequest.headRef?.name || "",
+			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+			status: pullRequest.state, // test closed and declined behaviou// mapStatus(pullRequest.state, pullRequest.merged_at), mapStatus(pullRequest.state, pullRequest.mergedAt),
+			timestamp: pullRequest.updatedAt,
+			title: pullRequest.title,
+			url: pullRequest.url,
+			updateSequenceId: Date.now()
+		};
+	} catch (err) {
+		throw new Error();
+	}
 };
 
 // TODO: define arguments and return
@@ -229,7 +232,7 @@ const mapReviews = (reviews: any = []): any[] => {
 		};
 		const isDeletedUser = !reviewer.login;
 		if (!isDeletedUser) {
-			const gitHubUser = getJiraAuthor(reviewer.author);
+			const gitHubUser = getJiraAuthor(reviewer);
 			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
 		}
 		return mappedReviewer;
