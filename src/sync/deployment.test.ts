@@ -172,7 +172,7 @@ describe("sync/deployments", () => {
 
 		const nockFetchingDeploymentgPagesGraphQL = (query, cursor, deployments) => {
 			githubNock.post("/graphql", { query, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
-				.query(true).reply(200, { "data": { "repository": { "deployments": { "edges": deployments } } } });
+				.query(true).reply(200, { data: { repository: { deployments: { edges: deployments } } } });
 		};
 
 		const nockDeploymentListingApi = (deployments, repeatTimes) => {
