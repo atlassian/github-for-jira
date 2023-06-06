@@ -495,6 +495,7 @@ describe("sync/deployments", () => {
 				"environment": {
 					"id": "prod",
 					"displayName": "prod",
+					"url": "https://test-repo-url.env-production.company.io",
 					"type": "production"
 				},
 				"associations": [
@@ -621,6 +622,7 @@ describe("sync/deployments", () => {
 					environment: {
 						id: "prod",
 						displayName: "prod",
+						url: "https://test-repo-url.env-production.company.io",
 						type: "production"
 					},
 					associations: [
@@ -660,6 +662,7 @@ describe("sync/deployments", () => {
 					environment: {
 						id: "prod",
 						displayName: "prod",
+						url: "https://test-repo-url.env-production.company.io",
 						type: "production"
 					},
 					associations: [
@@ -893,6 +896,7 @@ describe("sync/deployments", () => {
 				"environment": {
 					"id": "prod",
 					"displayName": "prod",
+					"url": "https://test-repo-url.env-production.company.io",
 					"type": "production"
 				},
 				"associations": [

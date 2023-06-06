@@ -7,8 +7,8 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
-								"id": 24,
-								"node_id": "pK0MjAyMi0wMi0wM1QyMj",
+                "id": 24,
+                "node_id": "pK0MjAyMi0wMi0wM1QyMj",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
@@ -24,7 +24,7 @@
               "environment": "prod",
               "description": "",
               "latestStatus": {
-                "environmentUrl": "",
+                "environmentUrl": "https://test-repo-url.env-production.company.io",
                 "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
@@ -35,6 +35,7 @@
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
+                    "environmentUrl": "https://test-repo-url.env-production.company.io",
                     "state": "SUCCESS"
                   }
                 ]
@@ -45,8 +46,8 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "repository": {
-								"id": 42,
-								"node_id": "pK0MjAyMi0wMi0wM1QyMj",
+                "id": 42,
+                "node_id": "pK0MjAyMi0wMi0wM1QyMj",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
@@ -62,7 +63,7 @@
               "environment": "prod",
               "description": "",
               "latestStatus": {
-                "environmentUrl": "",
+                "environmentUrl": "https://test-repo-url.env-production.company.io",
                 "logUrl": "https://github.com/test-repo-owner/test-repo-name/commit/7544f2fec0321a32d5effd421682463c2ebd5018/checks",
                 "state": "success",
                 "id": "DES_kwDOGtdD5840PkSo",
@@ -73,6 +74,7 @@
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
+                    "environmentUrl": "https://test-repo-url.env-production.company.io",
                     "state": "SUCCESS"
                   }
                 ]

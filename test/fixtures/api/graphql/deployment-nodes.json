@@ -7,10 +7,10 @@
             "cursor": "Y3Vyc29yOnYyOpK0MjAyMi0wMi0wM1QyMjo0NTowM1rOHdDZeg==",
             "node": {
               "createdAt": "2022-02-03T22:45:04Z",
-							"updatedAt": "2022-02-03T22:45:04Z",
+              "updatedAt": "2022-02-03T22:45:04Z",
               "repository": {
-								"id": 19,
-								"node_id": "AyMi0wMi0wM1QyMjo0NT",
+                "id": 19,
+                "node_id": "AyMi0wMi0wM1QyMjo0NT",
                 "name": "test-repo-name",
                 "owner": {
                   "login": "test-repo-owner"
@@ -26,7 +26,7 @@
               "environment": "prod",
               "description": "",
               "latestStatus": {
-                "environmentUrl": "",
+                "environmentUrl": "https://test-repo-url.env-production.company.io",
                 "logUrl": null,
                 "state": "INACTIVE",
                 "id": "DES_kwDOGtdD5840PkSo",
@@ -39,19 +39,22 @@
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "INACTIVE",
-										"logUrl": null
+                    "environmentUrl": "https://test-repo-url.env-production.company.io",
+                    "logUrl": null
                   },
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "SUCCESS",
-										"logUrl": "random-success"
+                    "environmentUrl": "https://test-repo-url.env-production.company.io",
+                    "logUrl": "random-success"
                   },
                   {
                     "createdAt": "2022-02-03T22:45:04Z",
                     "updatedAt": "2022-02-03T22:45:04Z",
                     "state": "IN_PROGRESS",
-										"logUrl": "random-in-progress"
+                    "environmentUrl": "",
+                    "logUrl": "random-in-progress"
                   }
                 ]
               }
