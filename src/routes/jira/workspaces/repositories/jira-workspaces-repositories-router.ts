@@ -4,7 +4,6 @@ import {
 } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-associate";
 import { JiraWorkspacesRepositoriesGet } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
 
-
 export const JiraWorkspacesRepositoriesRouter = Router();
 
 JiraWorkspacesRepositoriesRouter.route("/search")

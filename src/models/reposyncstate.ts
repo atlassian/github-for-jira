@@ -247,9 +247,6 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return repositories;
 	}
 
-
-
-
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {
 		return RepoSyncState.update({

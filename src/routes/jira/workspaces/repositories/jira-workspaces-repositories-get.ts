@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export interface WorkspaceRepo {
 	id: string,
@@ -65,8 +64,7 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	}
 
 	const repositories: WorkspaceRepo[] = repos.map((repo) => {
-		const repoId = transformRepositoryId(repo.repoId);
-		const { repoName, subscriptionId } = repo;
+		const { repoId, repoName, subscriptionId } = repo;
 		return {
 			id: repoId.toString(),
 			name: repoName,
