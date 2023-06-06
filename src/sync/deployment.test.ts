@@ -203,8 +203,8 @@ describe("sync/deployments", () => {
 				deployments.forEach((item, idx) => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
 						.reply(200, [
-							{ "id": idx * 1000 + 1, "state": "inactive", "description": "random", "environment": item.node.environment },
-							{ "id": idx * 1000 + 2, "state": "success", "description": "random", "environment": item.node.environment }
+							{ id: idx * 1000 + 1, state: "inactive", description: "random", environment: item.node.environment },
+							{ id: idx * 1000 + 2, state: "success", description: "random", environment: item.node.environment }
 						]);
 				});
 			});
@@ -232,8 +232,8 @@ describe("sync/deployments", () => {
 				const result = await ddb.getItem({
 					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
 					Key: {
-						"Id": { "S": key },
-						"CreatedAt": { "N": String(successStatusDate) }
+						Id: { "S": key },
+						CreatedAt: { "N": String(successStatusDate) }
 					},
 					AttributesToGet: [ "CommitSha" ]
 				}).promise();
@@ -249,7 +249,7 @@ describe("sync/deployments", () => {
 				),
 				jiraPayload: {
 					deployments: deployments.map(d => expect.objectContaining({
-						associations: [{ "associationType": "issueIdOrKeys", values: [ `JIRA-${d._seq}`] }] })
+						associations: [{ associationType: "issueIdOrKeys", values: [ `JIRA-${d._seq}`] }] })
 					)
 				}
 			});
