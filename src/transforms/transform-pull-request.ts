@@ -26,7 +26,7 @@ const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
 // TODO: define arguments and return
-const mapReviewsOld = async (reviews: Octokit.PullsListReviewsResponse = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsOld = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
 
