@@ -186,8 +186,8 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoId: 3,
 		repoName: "imNew",
 		repoOwner: "anotherorg",
-		repoFullName: "anotherorg/imnew",
-		repoUrl: "github.com/anotherorg/imnew"
+		repoFullName: "anotherorg/imNew",
+		repoUrl: "github.com/anotherorg/imNew"
 	});
 
 	await RepoSyncState.create({
@@ -358,7 +358,6 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 
 describe("Workspaces Repositories Get", () => {
 	let app: Application;
-	let sub: Subscription;
 	let installation: Installation;
 	let jwt: string;
 
@@ -367,13 +366,6 @@ describe("Workspaces Repositories Get", () => {
 			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "jira-client-key"
-		});
-
-		sub = await Subscription.install({
-			host: jiraHost,
-			installationId: 1234,
-			hashedClientKey: "key-123",
-			gitHubAppId: undefined
 		});
 
 		jwt = encodeSymmetric({
@@ -391,7 +383,7 @@ describe("Workspaces Repositories Get", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.get(`/jira/workspaces/repositories/search?workspaceId=${sub.id + 1}&searchQuery=new`)
+			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
 			.query({
 				jwt
 			})

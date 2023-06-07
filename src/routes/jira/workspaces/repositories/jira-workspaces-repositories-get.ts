@@ -13,27 +13,20 @@ const DEFAULT_PAGE_NUMBER = 1; // Current page
 export const DEFAULT_LIMIT = 20; // Number of items per page
 
 const getReposForWorkspaceId = async (
-	jiraHost: string,
 	connectedOrgId: number,
 	page: number,
 	limit: number,
 	repoName?: string
 ): Promise<RepoSyncState[] | null> => {
-	const subscription = await Subscription.getOneForSubscriptionIdAndHost(jiraHost, connectedOrgId);
-
-	if (!subscription) {
-		return null;
-	}
-
 	return await RepoSyncState.findRepositoriesBySubscriptionIdAndRepoName(connectedOrgId, page, limit, repoName);
 };
 
-const getAllRepos = async (jiraHost: string, page: number, limit: number, repoName?: string): Promise<RepoSyncState[] | null> => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-
-	if (!subscriptions.length) {
-		return null;
-	}
+const getAllRepos = async (
+	subscriptions: Subscription[],
+	page: number,
+	limit: number,
+	repoName?: string
+): Promise<RepoSyncState[] | null> => {
 
 	const reposArray: RepoSyncState[][] = await Promise.all(
 		subscriptions.map(async (subscription) => {
@@ -59,24 +52,26 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
 
-	const repos = connectedOrgId ?
-		await getReposForWorkspaceId(jiraHost,connectedOrgId, page, limit, repoName) :
-		await getAllRepos(jiraHost, page, limit, repoName);
+	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
-	if (repos === null) {
+	if (!subscriptions.length) {
 		req.log.warn(Errors.MISSING_SUBSCRIPTION);
 		res.status(400).send(Errors.MISSING_SUBSCRIPTION);
 		return;
 	}
 
-	const repositories: WorkspaceRepo[] = repos.map((repo) => {
+	const repos = connectedOrgId ?
+		await getReposForWorkspaceId(connectedOrgId, page, limit, repoName) :
+		await getAllRepos(subscriptions, page, limit, repoName);
+
+	const repositories: WorkspaceRepo[] = repos ? repos.map((repo) => {
 		const { repoId, repoName, subscriptionId } = repo;
 		return {
 			id: repoId.toString(),
 			name: repoName,
 			workspaceId: subscriptionId.toString()
 		};
-	});
+	}) : [];
 
 	res.status(200).json({
 		success: true,
