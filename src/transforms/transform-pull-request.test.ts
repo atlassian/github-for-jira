@@ -3,6 +3,7 @@ import { transformPullRequest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
+import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
@@ -407,6 +408,70 @@ describe("pull_request transform", () => {
 			branches: [],
 			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
+		});
+	});
+
+	it("should send the correct review state for multiple reviewers", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+
+		const data = await transformPullRequest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678,
+			branches: [],
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						email: "deleted@noreply.user.github.com",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: "2018-05-04T14:06:56Z",
+					reviewers: [
+						{
+							avatar: "https://avatars.githubusercontent.com/u/83255355?v=4",
+							name: "atlassian-test-account",
+							email: "atlassian-test-account@noreply.user.github.com",
+							url: "https://github.com/atlassian-test-account",
+							approvalStatus: "UNAPPROVED"
+						},
+						{
+							avatar: "https://avatars.githubusercontent.com/u/135780749?v=4",
+							name: "hotdogtestsgithub",
+							email: "hotdogtestsgithub@noreply.user.github.com",
+							url: "https://github.com/hotdogtestsgithub",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl: "https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: "2018-05-04T14:06:56Z",
+					title: "[TEST-1] the PR where reviewers can't make up their minds",
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			]
 		});
 	});
 });
