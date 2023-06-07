@@ -1,70 +1,20 @@
-# Getting Started with Create React App
+# Single Page Application for GitHub for Jira
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a single page application for all the frontend view of the app GitHub for Jira.
 
-## Available Scripts
+# How to develop / run locally
 
-In the project directory, you can run:
+In order to run this locally, firstly run this app using `npm run`. This will run the app at `http://localhost:3000`, which is proxied in the node app. So you can simply open the proxied route in `http://NODE_SERVER_URL:PORT/public/build`
 
-### `npm start`
+**Note:**
+A proxy server has been created in the node app in `dev.ts`, which runs this SPA into a route in node app ('/public/build').
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+_You can change the path by updating the name `public/build` in `package.json#homepage` and in `dev.ts` in the path defined in `httpProxy.createProxyServer()`_
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+[//]: # (TODO: Automate this step)
+# How to run in production
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+To run this in production, firstly run `npm run build`. This will create the build folder in the root directory of `spa`. 
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Now copy and paste this build folder and paste it to `../src/static`. This should add a new route under `static`, which can be easily accessed by `/static/build/*`.
