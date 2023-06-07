@@ -7,6 +7,7 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
+import { proxyLocalUI } from "~/src/dev";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -19,6 +20,7 @@ export const setupFrontendApp = (app: Express): Express => {
 	app.set("views", viewPath);
 	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
+	proxyLocalUI(app); // Proxy server for running SPA locally
 	// Add all routes
 	app.use(RootRouter);
 

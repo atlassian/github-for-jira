@@ -5,14 +5,18 @@ import throng from "throng";
 import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
+import { proxyLocalWS } from "~/src/dev";
 
 const start = async () => {
 	initializeSentry();
 	const app: Express = getFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
-	app.listen(port, () => {
+
+	const server = app.listen(port, () => {
 		getLogger("frontend-app").info(`started at port ${port}`);
 	});
+
+	proxyLocalWS(server);// Running Proxy for Web sockets for running SPA locally
 };
 
 if (isNodeProd()) {
