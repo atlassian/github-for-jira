@@ -129,7 +129,7 @@ export const transformPullRequest = async (
 				id: number,
 				issueKeys,
 				lastUpdate: updated_at,
-				reviewers,
+				reviewers: reviewers.reverse(),
 				sourceBranch: head.ref || "",
 				sourceBranchUrl: `${head.repo.html_url}/tree/${head.ref}`,
 				status,
