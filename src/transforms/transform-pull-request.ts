@@ -111,6 +111,7 @@ export const transformPullRequest = async (
 	}
 
 	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
+	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
 	const reviewers = await mapReviews(reviews, gitHubInstallationClient);
 	const status = mapStatus(state, merged_at);
@@ -120,7 +121,6 @@ export const transformPullRequest = async (
 		branches,
 		pullRequests: [
 			{
-				// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 				author,
 				commentCount: comments || 0,
 				destinationBranch: base.ref || "",
