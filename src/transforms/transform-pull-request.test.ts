@@ -449,18 +449,18 @@ describe("pull_request transform", () => {
 					lastUpdate: "2018-05-04T14:06:56Z",
 					reviewers: [
 						{
-							avatar: "https://avatars.githubusercontent.com/u/83255355?v=4",
-							name: "atlassian-test-account",
-							email: "atlassian-test-account@noreply.user.github.com",
-							url: "https://github.com/atlassian-test-account",
-							approvalStatus: "UNAPPROVED"
-						},
-						{
 							avatar: "https://avatars.githubusercontent.com/u/135780749?v=4",
 							name: "hotdogtestsgithub",
 							email: "hotdogtestsgithub@noreply.user.github.com",
 							url: "https://github.com/hotdogtestsgithub",
 							approvalStatus: "APPROVED"
+						},
+						{
+							avatar: "https://avatars.githubusercontent.com/u/83255355?v=4",
+							name: "atlassian-test-account",
+							email: "atlassian-test-account@noreply.user.github.com",
+							url: "https://github.com/atlassian-test-account",
+							approvalStatus: "UNAPPROVED"
 						}
 					],
 					sourceBranch: "use-the-force",
