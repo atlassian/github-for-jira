@@ -41,7 +41,7 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 
 		const firstNonInactiveStatus = useDynamoForBackfill ? deployment.statuses?.nodes.find(n=>n.state !== "INACTIVE") : undefined;
 		if (!firstNonInactiveStatus && useDynamoForBackfill) {
-			logger.warn("Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
+			logger.warn({ foundStatusStates: deployment.statuses?.nodes.map(n=>n.state) },  "Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
 
 		const logUrl = firstNonInactiveStatus?.logUrl || deployment.latestStatus?.logUrl;
