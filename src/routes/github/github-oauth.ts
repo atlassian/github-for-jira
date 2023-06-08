@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response } from "express";
-import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { Errors } from "config/errors";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
@@ -13,7 +12,6 @@ import { stringFlag, StringFlags } from "config/feature-flags";
 import * as querystring from "querystring";
 import { Installation } from "models/installation";
 
-const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
 export const OAUTH_CALLBACK_SUBPATH = "/callback";
 const callbackPathCloud = `/github${OAUTH_CALLBACK_SUBPATH}`;
@@ -59,7 +57,7 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 	};
 
 	// The flow is interrupted here, but we have stored the state to a secure storage (session),
-	// therefore we can continue from /callback where we stopped at without any concerns as long, as we use only
+	// therefore we can continue from /callback where we stopped at without any concerns, as long as we use only
 	// data from the session!
 	req.session[stateKey] = state;
 
@@ -74,7 +72,61 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 	res.redirect(redirectUrl);
 };
 
-export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+/*
+ * @return redirectUrl if succeeds
+ */
+const finishOAuthFlow = async (
+	stateKey: string,
+	secureState: OAuthState,
+	code: string,
+	log: Logger,
+	respondWithError: (status: number, msg: string) => void,
+	populateSession: (gitHubToken: string, gitHubRefreshToke: string, gitHubServerUuid?: string) => void
+) => {
+	const jiraHost = (await Installation.findByPk(secureState.installationIdPk))?.jiraHost;
+	if (!jiraHost) {
+		return respondWithError(400, "No installation found");
+	}
+
+	log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
+	log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
+
+	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(secureState.gitHubServerUuid, jiraHost);
+	if (!gitHubClientSecret) {
+		return respondWithError(400, "Missing GitHubApp client secret from uuid");
+	}
+
+	log.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
+
+	try {
+		const metrics = {
+			trigger: "oauth"
+		};
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(
+			secureState.gitHubServerUuid
+				? (await GitHubServerApp.findForUuid(secureState.gitHubServerUuid))?.id : undefined,
+			jiraHost, metrics, log
+		);
+
+		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
+			clientId: secureState.gitHubClientId, clientSecret: gitHubClientSecret, code, state: stateKey
+		});
+
+		if (!accessToken) {
+			return respondWithError(400, `didn't get access token from GitHub`);
+		}
+		populateSession(accessToken, refreshToken, secureState.gitHubServerUuid);
+
+		log.debug(`got access token from GitHub, redirecting to ${secureState.postLoginRedirectUrl}`);
+
+		log.info({ redirectUrl: secureState.postLoginRedirectUrl }, "Github OAuth code valid, redirecting to internal URL");
+		return secureState.postLoginRedirectUrl;
+	} catch (err) {
+		log.warn({ err }, `Cannot retrieve access token from Github`);
+		return respondWithError(401, "Cannot retrieve access token from Github");
+	}
+};
+export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promise<void> => {
 	const {
 		error,
 		error_description,
@@ -101,9 +153,9 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 	// Restore the state of the flow where we stopped in GitHubOAuthLoginGet and continue.
 	// DO NOT RELY ON ANY REQUEST PARAMS (other than received from GitHub that we will validate) to make sure
 	// we stay secure!
-	const state = req.session[stateKey] as OAuthState;
+	const secureState = req.session[stateKey] as OAuthState;
 
-	if (!state) {
+	if (!secureState) {
 		req.log.warn("No state found");
 		res.status(400).send("No state was found");
 		return;
@@ -118,49 +170,24 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		return;
 	}
 
-	const jiraHost = (await Installation.findByPk(state.installationIdPk))?.jiraHost;
-	if (!jiraHost) {
-		req.log.warn("No installation found");
-		res.status(400).send("No installation found");
-		return;
-	}
+	// Wrapping into a function to make sure it doesn't have direct access to raw req and passing over only "safe" state
+	const maybeRedirectUrl = await finishOAuthFlow(
+		stateKey, secureState, code, req.log,
 
-	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
-	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
+		(status: number, message: string) => {
+			req.log.warn(message);
+			res.status(status).send(message);
+		},
 
-	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(state.gitHubServerUuid, jiraHost);
-	if (!gitHubClientSecret) return next("Missing GitHubApp client secret from uuid");
-
-	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
-
-	try {
-		const metrics = {
-			trigger: "oauth"
-		};
-		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(
-			state.gitHubServerUuid
-				? (await GitHubServerApp.findForUuid(state.gitHubServerUuid))?.id : undefined,
-			jiraHost, metrics, logger
-		);
-		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
-			clientId: state.gitHubClientId, clientSecret: gitHubClientSecret, code, state: stateKey
-		});
-		req.session.githubToken = accessToken;
-		req.session.githubRefreshToken = refreshToken;
-		req.session.gitHubUuid = state.gitHubServerUuid;
-
-		if (!req.session.githubToken) {
-			req.log.debug(`didn't get access token from GitHub`);
-			return next(new Error("Missing Access Token from Github OAuth Flow."));
+		(gitHubToken: string, gitHubRefreshToken: string, gitHubServerUuid?: string) => {
+			req.session.githubToken = gitHubToken;
+			req.session.githubRefreshToken = gitHubRefreshToken;
+			req.session.gitHubUuid = gitHubServerUuid;
 		}
+	);
 
-		req.log.debug(`got access token from GitHub, redirecting to ${state.postLoginRedirectUrl}`);
-
-		req.log.info({ redirectUrl: state.postLoginRedirectUrl }, "Github OAuth code valid, redirecting to internal URL");
-		return res.redirect(state.postLoginRedirectUrl);
-	} catch (e) {
-		req.log.debug(`Cannot retrieve access token from Github`);
-		return next(new Error("Cannot retrieve access token from Github"));
+	if (maybeRedirectUrl) {
+		res.redirect(maybeRedirectUrl);
 	}
 };
 
@@ -201,7 +228,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		const metrics = {
 			trigger: "oauth"
 		};
-		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, logger);
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, req.log);
 		await gitHubAnonymousClient.checkGitHubToken(githubToken);
 
 		req.log.debug(`Github token is valid, continuing...`);
@@ -213,7 +240,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		req.log.debug(`Github token is not valid.`);
 		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
-			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, logger);
+			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, req.log);
 			if (token) {
 				req.session.githubToken = token.accessToken;
 				req.session.githubRefreshToken = token.refreshToken;
