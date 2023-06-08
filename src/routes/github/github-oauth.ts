@@ -56,7 +56,7 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 		`/github/configuration${parsedOriginalUrl.search || ""}`,
 		installationIdPk: res.locals.installation.id,
 		gitHubServerUuid: res.locals.gitHubAppConfig.uuid,
-		gitHubClientId: res.locals.gitHubAppConfig.gitHubClientId
+		gitHubClientId: res.locals.gitHubAppConfig.clientId
 	};
 
 	req.session[stateKey] = state;

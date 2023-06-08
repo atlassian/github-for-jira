@@ -156,10 +156,15 @@ describe("github-oauth", () => {
 					);
 				const session = parseCookiesAndSession(response).session!;
 				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"] === "/github/configuration?"
+					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
 				)![0];
 				expect(state.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
+				expect(session[state]).toStrictEqual({
+					installationIdPk: installation.id,
+					postLoginRedirectUrl: "/github/configuration?",
+					gitHubClientId: envVars.GITHUB_CLIENT_ID
+				});
 				expect(response.headers.location).toStrictEqual(
 					`https://github.com/login/oauth/authorize?client_id=${
 						envVars.GITHUB_CLIENT_ID
@@ -188,10 +193,16 @@ describe("github-oauth", () => {
 					);
 				const session = parseCookiesAndSession(response).session!;
 				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"] === "/github/configuration?"
+					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
 				)![0];
 				expect(state.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
+				expect(session[state]).toStrictEqual({
+					installationIdPk: installation.id,
+					postLoginRedirectUrl: "/github/configuration?",
+					gitHubClientId: gitHubServerApp.gitHubClientId,
+					gitHubServerUuid: gitHubServerApp.uuid
+				});
 				expect(response.headers.location).toStrictEqual(
 					`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=${
 						gitHubServerApp.gitHubClientId
