@@ -64,7 +64,7 @@ export const getPullRequestTask = async (
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetPullRequestTaskOld(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return doGetPullRequestTaskRest(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
 		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
@@ -82,7 +82,7 @@ const doGetPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	(pageCursor) =>
-		doGetPullRequestTaskOld(
+		doGetPullRequestTaskRest(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
 			messagePayload
@@ -134,7 +134,7 @@ const doGetPullRequestTask = async (
 
 };
 
-const doGetPullRequestTaskOld = async (
+const doGetPullRequestTaskRest = async (
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
