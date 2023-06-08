@@ -7,9 +7,9 @@ import isBase64 from "is-base64";
 /**
  * Look for a Github app's private key
  */
-export const keyLocator = async (gitHubAppId: number | undefined, jiraHost: string): Promise<string> => {
-	if (gitHubAppId) {
-		const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+export const keyLocator = async (gitHubServerAppIdPk: number | undefined, jiraHost: string): Promise<string> => {
+	if (gitHubServerAppIdPk) {
+		const gitHubServerApp = await GitHubServerApp.getByIdPk(gitHubServerAppIdPk);
 		if (gitHubServerApp) {
 			return await gitHubServerApp.getDecryptedPrivateKey(jiraHost);
 		}
@@ -35,6 +35,6 @@ export const keyLocator = async (gitHubAppId: number | undefined, jiraHost: stri
 			}
 		}
 	}
-	throw new Error(`Private key doesn not found for Github app ${gitHubAppId}`);
+	throw new Error(`Private key doesn not found for Github app ${gitHubServerAppIdPk}`);
 };
 

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import url from "url";
-import { NextFunction, Request, Response, Router } from "express";
+import { NextFunction, Request, Response } from "express";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
 import { Errors } from "config/errors";
@@ -11,14 +11,22 @@ import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
 import { stringFlag, StringFlags } from "config/feature-flags";
 import * as querystring from "querystring";
+import { Installation } from "models/installation";
 
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
-const callbackSubPath = "/callback";
-const callbackPathCloud = `/github${callbackSubPath}`;
-const callbackPathServer = `/github/<uuid>${callbackSubPath}`;
+export const OAUTH_CALLBACK_SUBPATH = "/callback";
+const callbackPathCloud = `/github${OAUTH_CALLBACK_SUBPATH}`;
+const callbackPathServer = `/github/<uuid>${OAUTH_CALLBACK_SUBPATH}`;
 
-const getRedirectUrl = async (res, state) => {
+interface OAuthState {
+	postLoginRedirectUrl: string;
+	installationIdPk: number;
+	gitHubServerUuid?: string;
+	gitHubClientId: string;
+}
+
+const getRedirectUrl = async (res: Response, state: string) => {
 	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
 	let callbackPath = callbackPathCloud;
 	if (res.locals?.gitHubAppConfig?.uuid) {
@@ -33,37 +41,45 @@ const getRedirectUrl = async (res, state) => {
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
-const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
+export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<void> => {
 	// TODO: We really should be using an Auth library for this, like @octokit/github-auth
 	// Create unique state for each oauth request
-	const state = crypto.randomBytes(8).toString("hex");
+	const stateKey = crypto.randomBytes(8).toString("hex");
 
 	req.session["timestamp_before_oauth"] = Date.now();
 
 	const parsedOriginalUrl = url.parse(req.originalUrl);
 	// Save the redirect that may have been specified earlier into session to be retrieved later
-	req.session[state] =
-		res.locals.redirect ||
-		`/github/configuration${parsedOriginalUrl.search || ""}`;
+
+	const state: OAuthState = {
+		postLoginRedirectUrl: res.locals.redirect ||
+		`/github/configuration${parsedOriginalUrl.search || ""}`,
+		installationIdPk: res.locals.installation.id,
+		gitHubServerUuid: res.locals.gitHubAppConfig.uuid,
+		gitHubClientId: res.locals.gitHubAppConfig.gitHubClientId
+	};
+
+	req.session[stateKey] = state;
+
 	// Find callback URL based on current url of this route
-	const redirectUrl = await getRedirectUrl(res, state);
+	const redirectUrl = await getRedirectUrl(res, stateKey);
 	req.log.info("redirectUrl:", redirectUrl);
 
 	req.log.info({
 		redirectUrl,
-		postLoginUrl: req.session[state]
+		postLoginUrl: req.session[stateKey].postLoginRedirectUrl
 	}, `Received request for ${req.url}, redirecting to Github OAuth flow`);
 	req.log.debug(`redirecting to ${redirectUrl}`);
 	res.redirect(redirectUrl);
 };
 
-const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
 		error,
 		error_description,
 		error_uri,
 		code,
-		state
+		state: stateKey
 	} = req.query as Record<string, string>;
 
 	const timestampBefore = req.session["timestamp_before_oauth"] as number;
@@ -74,42 +90,57 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 
 	// Show the oauth error if there is one
 	if (error) {
-		req.log.debug(`OAuth Error: ${error}`);
-		return next(`OAuth Error: ${error}
+		req.log.warn(`OAuth Error: ${error}`);
+		res.status(400).send(`OAuth Error: ${error}
       URL: ${error_uri}
       ${error_description}`);
+		return;
 	}
 
 	// Take save redirect url and delete it from session
-	const redirectUrl = req.session[state] as string;
-	delete req.session[state];
+	const state = req.session[stateKey] as OAuthState;
+	if (!state) {
+		req.log.warn("No state found");
+		res.status(400).send("No state was found");
+		return;
+	}
+	delete req.session[stateKey];
 
-	req.log.debug(`extracted redirectUrl from session: ${redirectUrl}`);
 	req.log.info({ query: req.query }, `Received request to ${req.url}`);
 
-	// Check if state is available and matches a previous request
-	if (!state || !redirectUrl) return next("Missing matching Auth state parameter");
-	if (!code) return next("Missing OAuth Code");
+	if (!code) {
+		req.log.warn("No code was found");
+		res.status(400).send("No code was found");
+		return;
+	}
 
-	const { jiraHost, gitHubAppConfig } = res.locals;
-	const { clientId, uuid } = gitHubAppConfig;
+	const jiraHost = (await Installation.findByPk(state.installationIdPk))?.jiraHost;
+	if (!jiraHost) {
+		req.log.warn("No installation found");
+		res.status(400).send("No installation found");
+		return;
+	}
+
 	req.log.info({ jiraHost }, "Jira Host attempting to auth with GitHub");
 	req.log.debug(`extracted jiraHost from redirect url: ${jiraHost}`);
 
-	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
+	const gitHubClientSecret = await getCloudOrGHESAppClientSecret(state.gitHubServerUuid, jiraHost);
 	if (!gitHubClientSecret) return next("Missing GitHubApp client secret from uuid");
 
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
-
 
 	try {
 
 		const metrics = {
 			trigger: "oauth"
 		};
-		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, logger);
+		const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(
+			state.gitHubServerUuid
+				? (await GitHubServerApp.findForUuid(state.gitHubServerUuid))?.id : undefined,
+			jiraHost, metrics, logger
+		);
 		const { accessToken, refreshToken } = await gitHubAnonymousClient.exchangeGitHubToken({
-			clientId, clientSecret: gitHubClientSecret, code, state
+			clientId: state.gitHubClientId, clientSecret: gitHubClientSecret, code, state: stateKey
 		});
 		req.session.githubToken = accessToken;
 		req.session.githubRefreshToken = refreshToken;
@@ -122,10 +153,10 @@ const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFun
 			return next(new Error("Missing Access Token from Github OAuth Flow."));
 		}
 
-		req.log.debug(`got access token from GitHub, redirecting to ${redirectUrl}`);
+		req.log.debug(`got access token from GitHub, redirecting to ${state.postLoginRedirectUrl}`);
 
-		req.log.info({ redirectUrl }, "Github OAuth code valid, redirecting to internal URL");
-		return res.redirect(redirectUrl);
+		req.log.info({ redirectUrl: state.postLoginRedirectUrl }, "Github OAuth code valid, redirecting to internal URL");
+		return res.redirect(state.postLoginRedirectUrl);
 	} catch (e) {
 		req.log.debug(`Cannot retrieve access token from Github`);
 		return next(new Error("Cannot retrieve access token from Github"));
@@ -201,13 +232,13 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 	}
 };
 
-const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) => {
+const getCloudOrGHESAppClientSecret = async (serverUuid: string | undefined, jiraHost: string) => {
 
-	if (!gitHubAppConfig.gitHubAppId) {
+	if (!serverUuid) {
 		return envVars.GITHUB_CLIENT_SECRET;
 	}
 
-	const ghesApp = await GitHubServerApp.findForUuid(gitHubAppConfig.uuid);
+	const ghesApp = await GitHubServerApp.findForUuid(serverUuid);
 	if (!ghesApp) return undefined;
 
 	return ghesApp.getDecryptedGitHubClientSecret(jiraHost);
@@ -216,7 +247,7 @@ const getCloudOrGHESAppClientSecret = async (gitHubAppConfig, jiraHost: string) 
 const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: GitHubAppConfig, jiraHost: string, logger: Logger) => {
 	logger.info("Trying to renewGitHubToken");
 	try {
-		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig, jiraHost);
+		const clientSecret = await getCloudOrGHESAppClientSecret(gitHubAppConfig.uuid, jiraHost);
 		if (clientSecret) {
 			const metrics = {
 				trigger: "auth-middleware"
@@ -231,9 +262,3 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 	logger.debug("Failed to renew Github token...");
 	return undefined;
 };
-
-// IMPORTANT: We need to keep the login/callback/middleware functions
-// in the same file as they reference each other
-export const GithubOAuthRouter = Router({ mergeParams: true });
-GithubOAuthRouter.get("/login",  GithubOAuthLoginGet);
-GithubOAuthRouter.get(callbackSubPath, GithubOAuthCallbackGet);

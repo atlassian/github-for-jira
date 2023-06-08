@@ -43,7 +43,7 @@ type SECRETE_FIELD = "gitHubClientSecret" | "webhookSecret" | "privateKey" | "en
 export class GitHubServerApp extends Model {
 	id: number;
 	uuid: string;
-	appId: number;
+	appId: number; // TODO: rename to gitHubAppId
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
 	gitHubClientSecret: string; // TODO: rename column to prefix with "encrypted"
@@ -107,16 +107,16 @@ export class GitHubServerApp extends Model {
 		return { jiraHost };
 	}
 
-	static async getForGitHubServerAppId(
-		gitHubServerAppId: number
+	static async getByIdPk(
+		idPk: number
 	): Promise<GitHubServerApp | null> {
-		if (!gitHubServerAppId) {
+		if (!idPk) {
 			return null;
 		}
 
 		return this.findOne({
 			where: {
-				id: gitHubServerAppId
+				id: idPk
 			}
 		});
 	}

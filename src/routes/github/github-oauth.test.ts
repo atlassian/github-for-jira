@@ -1,5 +1,5 @@
 import { getLogger } from "config/logger";
-import { GithubAuthMiddleware } from "routes/github/github-oauth-router";
+import { GithubAuthMiddleware } from "routes/github/github-oauth";
 import supertest from "supertest";
 import nock from "nock";
 import { envVars } from "config/env";
@@ -13,7 +13,7 @@ import { Installation } from "models/installation";
 
 jest.mock("config/feature-flags");
 
-describe("github-oauth-router", () => {
+describe("github-oauth", () => {
 	let installation: Installation;
 	beforeEach(async () => {
 		installation = (await new DatabaseStateCreator().create()).installation;
@@ -23,25 +23,26 @@ describe("github-oauth-router", () => {
 
 	describe("GithubOAuthCallbackGet", () => {
 
-		it("must return 401 if no session", async () => {
+		it("must return 400 if no session", async () => {
 			const res = await supertest(getFrontendApp())
 				.get("/github/callback?blah=true");
-			expect(res.status).toEqual(401);
+			expect(res.status).toEqual(400);
 		});
 
-		it("must return 401 if not Jira admin", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
-
+		it("must return 400 if no installation", async () => {
 			const res = await supertest(getFrontendApp())
-				.get("/github/callback?blah=true")
+				.get("/github/callback?state=fooState&code=barCode")
+				.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
 				.set(
 					"Cookie",
 					generateSignedSessionCookieHeader({
-						jiraHost,
-						isJiraAdmin: false
+						fooState: {
+							installationIdPk: installation.id - 1,
+							gitHubClientId: envVars.GITHUB_CLIENT_ID
+						}
 					})
 				);
-			expect(res.status).toEqual(403);
+			expect(res.status).toEqual(400);
 		});
 
 		describe("cloud", () => {
@@ -61,9 +62,11 @@ describe("github-oauth-router", () => {
 					.set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							fooState: "/my-redirect",
-							isJiraAdmin: true
+							fooState: {
+								postLoginRedirectUrl: "/my-redirect",
+								installationIdPk: installation.id,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
 						})
 					)
 				;
@@ -97,9 +100,12 @@ describe("github-oauth-router", () => {
 					.set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							fooState: "/my-redirect",
-							isJiraAdmin: true
+							fooState: {
+								postLoginRedirectUrl: "/my-redirect",
+								installationIdPk: installation.id,
+								gitHubClientId: gitHubServerApp.gitHubClientId,
+								gitHubServerUuid: gitHubServerApp.uuid
+							}
 						})
 					)
 				;
@@ -147,9 +153,9 @@ describe("github-oauth-router", () => {
 					);
 				const session = parseCookiesAndSession(response).session!;
 				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] === "/github/configuration?"
+					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"] === "/github/configuration?"
 				)![0];
-				expect(state).toBeDefined();
+				expect(state.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
 				expect(response.headers.location).toStrictEqual(
 					`https://github.com/login/oauth/authorize?client_id=${
@@ -179,9 +185,9 @@ describe("github-oauth-router", () => {
 					);
 				const session = parseCookiesAndSession(response).session!;
 				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] === "/github/configuration?"
+					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"] === "/github/configuration?"
 				)![0];
-				expect(state).toBeDefined();
+				expect(state.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
 				expect(response.headers.location).toStrictEqual(
 					`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=${

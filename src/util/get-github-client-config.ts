@@ -75,8 +75,8 @@ const buildGitHubClientCloudConfig = async (jiraHost: string): Promise<GitHubCli
 };
 
 // TODO: make private because it is only exported for testing (and must not be used in other places!)
-export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undefined, jiraHost: string): Promise<GitHubClientConfig> => {
-	const gitHubServerApp = gitHubAppId && await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
+export const getGitHubClientConfigFromServerAppIdPk = async (gitHubServerAppIdPk: number | undefined, jiraHost: string): Promise<GitHubClientConfig> => {
+	const gitHubServerApp = gitHubServerAppIdPk && await GitHubServerApp.getByIdPk(gitHubServerAppIdPk);
 	if (gitHubServerApp) {
 		return buildGitHubClientServerConfig(gitHubServerApp, jiraHost);
 	}
@@ -88,7 +88,7 @@ export const getGitHubClientConfigFromAppId = async (gitHubAppId: number | undef
  * get all installation or get more info for the app
  */
 export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAppId: number | undefined, metrics: Metrics): Promise<GitHubAppClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+	const gitHubClientConfig = await getGitHubClientConfigFromServerAppIdPk(gitHubAppId, jiraHost);
 	return new GitHubAppClient(gitHubClientConfig, jiraHost, metrics, logger, gitHubClientConfig.appId.toString(), gitHubClientConfig.privateKey);
 };
 
@@ -96,16 +96,16 @@ export const createAppClient = async (logger: Logger, jiraHost: string, gitHubAp
  * Factory function to create a GitHub client that authenticates as the installation of our GitHub app to get
  * information specific to an organization.
  */
-export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, metrics: Metrics, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubInstallationClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+export const createInstallationClient = async (gitHubInstallationId: number, jiraHost: string, metrics: Metrics, logger: Logger, gitHubServerAppIdPk: number | undefined): Promise<GitHubInstallationClient> => {
+	const gitHubClientConfig = await getGitHubClientConfigFromServerAppIdPk(gitHubServerAppIdPk, jiraHost);
 	return new GitHubInstallationClient(getInstallationId(gitHubInstallationId, gitHubClientConfig.baseUrl, gitHubClientConfig.appId), gitHubClientConfig, jiraHost, metrics, logger, gitHubClientConfig.serverId);
 };
 
 /**
  * Factory function to create a GitHub client that authenticates as the user (with a user access token).
  */
-export const createUserClient = async (githubToken: string, jiraHost: string, metrics: Metrics, logger: Logger, gitHubAppId: number | undefined): Promise<GitHubUserClient> => {
-	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+export const createUserClient = async (githubToken: string, jiraHost: string, metrics: Metrics, logger: Logger, gitHubServerAppIdPk: number | undefined): Promise<GitHubUserClient> => {
+	const gitHubClientConfig = await getGitHubClientConfigFromServerAppIdPk(gitHubServerAppIdPk, jiraHost);
 	return new GitHubUserClient(githubToken, gitHubClientConfig, jiraHost, metrics, logger);
 };
 
@@ -118,7 +118,7 @@ export const createAnonymousClient = async (
 ): Promise<GitHubAnonymousClient> =>
 	new GitHubAnonymousClient(await buildGitHubServerConfig(gitHubBaseUrl, apiKeyConfig), jiraHost, metrics, logger);
 
-export const createAnonymousClientByGitHubAppId = async (gitHubAppId: number | undefined, jiraHost: string, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
-	const config = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+export const createAnonymousClientByGitHubAppId = async (gitHubServerAppIdPk: number | undefined, jiraHost: string, metrics: Metrics, logger: Logger): Promise<GitHubAnonymousClient> => {
+	const config = await getGitHubClientConfigFromServerAppIdPk(gitHubServerAppIdPk, jiraHost);
 	return new GitHubAnonymousClient(config, jiraHost, metrics, logger);
 };

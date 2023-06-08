@@ -35,11 +35,11 @@ export const GithubServerAppMiddleware = async (req: Request, res: Response, nex
 
 		req.log.info("Found server app for installation. Defining GitHub app config for GitHub Enterprise Server.");
 
-		//TODO: ARC-1515 decide how to put `gitHubAppId ` inside `gitHubAppConfig`
+		//TODO: we should kill the duplicate thing
 		res.locals.gitHubAppId = gitHubServerApp.id;
 		res.locals.gitHubAppConfig = {
-			gitHubAppId: gitHubServerApp.id,
-			appId: gitHubServerApp.appId,
+			gitHubAppId: gitHubServerApp.id, // TODO: This should be renamed to gitHubServerAppIdPk
+			appId: gitHubServerApp.appId, // TODO: should be renamed to gitHubAppId
 			uuid: gitHubServerApp.uuid,
 			hostname: gitHubServerApp.gitHubBaseUrl,
 			clientId: gitHubServerApp.gitHubClientId
