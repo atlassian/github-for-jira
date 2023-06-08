@@ -146,7 +146,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		req.session.githubRefreshToken = refreshToken;
 
 		// Saving UUID for each GitHubServerApp
-		req.session.gitHubUuid = uuid;
+		req.session.gitHubUuid = state.gitHubServerUuid;
 
 		if (!req.session.githubToken) {
 			req.log.debug(`didn't get access token from GitHub`);

@@ -83,14 +83,15 @@ describe("github-oauth", () => {
 				gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			});
 
-			it("populates session with github token", async () => {
+			it("populates session with github token, refresh token and server UUID", async () => {
 				const nockUrl = `/login/oauth/access_token?client_id=${gitHubServerApp.gitHubClientId}&client_secret=${await gitHubServerApp.getDecryptedGitHubClientSecret(jiraHost)}&code=barCode&state=fooState`;
 				nock(gitHubServerApp.gitHubBaseUrl)
 					.get(nockUrl)
 					.matchHeader("accept", "application/json")
 					.matchHeader("content-type", "application/json")
 					.reply(200, {
-						access_token: "behold!"
+						access_token: "behold!",
+						refresh_token: "my-refresh-token"
 					});
 
 				const app = await getFrontendApp();
@@ -112,6 +113,8 @@ describe("github-oauth", () => {
 				const { session } = parseCookiesAndSession(response);
 				expect(response.status).toEqual(302);
 				expect(session["githubToken"]).toStrictEqual("behold!");
+				expect(session["githubRefreshToken"]).toStrictEqual("my-refresh-token");
+				expect(session["gitHubUuid"]).toStrictEqual(gitHubServerApp.uuid);
 				expect(response.headers.location).toEqual("/my-redirect");
 			});
 		});
