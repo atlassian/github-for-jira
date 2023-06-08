@@ -4,7 +4,6 @@ import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 import { Subscription } from "models/subscription";
-const { MISSING_JIRA_HOST, MISSING_REPOSITORY_ID, NO_MATCHING_REPOSITORY } = Errors;
 
 type RepoAndSubscription = RepoSyncState & Subscription;
 
@@ -14,8 +13,10 @@ const findMatchingRepository = async (id: number, jiraHost: string): Promise<(Re
 
 const transformedRepo = (repo: RepoSyncStateProperties): BulkSubmitRepositoryInfo => {
 	const { id, repoFullName, repoUrl } = repo;
+	const baseUrl = new URL(repoUrl).origin;
+
 	return {
-		id: transformRepositoryId(id, undefined),
+		id: transformRepositoryId(id, baseUrl),
 		name: repoFullName,
 		url: repoUrl,
 		updateSequenceId: Date.now()
@@ -26,38 +27,24 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for associate repository");
 
 	const { jiraHost } = res.locals;
-
-	if (!jiraHost) {
-		req.log.warn({ jiraHost, req, res }, MISSING_JIRA_HOST);
-		res.status(400).send(MISSING_JIRA_HOST);
-		return;
-	}
-
 	const { id: repoId } = req.body;
 
 	if (!repoId) {
-		const errMessage = MISSING_REPOSITORY_ID;
+		const errMessage = Errors.MISSING_REPOSITORY_ID;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
 	}
 
 	const repo = await findMatchingRepository(Number(repoId), jiraHost);
-
-	if (!repo) {
-		req.log.warn(NO_MATCHING_REPOSITORY);
-		res.status(400).send(NO_MATCHING_REPOSITORY);
-		return;
-	}
-
-	const transformedRepository = transformedRepo(repo);
+	const transformedRepository = repo ? transformedRepo(repo): {};
 
 	const payload = {
 		preventTransitions: false,
 		operationType: "NORMAL",
 		repository: transformedRepository,
 		properties: {
-			installationId: repo.gitHubInstallationId
+			installationId: repo?.gitHubInstallationId
 		}
 	};
 

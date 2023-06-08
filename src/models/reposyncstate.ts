@@ -184,6 +184,10 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			}
 		);
 
+		if (results.length === 0) {
+			return null;
+		}
+
 		return results[0] as RepoSyncState & Subscription;
 	}
 

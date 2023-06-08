@@ -8,8 +8,6 @@ import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 
-const { NO_MATCHING_REPOSITORY } = Errors;
-
 describe("Workspaces Associate Repository", () => {
 	let app: Application;
 	let installation: Installation;
@@ -52,50 +50,11 @@ describe("Workspaces Associate Repository", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain("Missing repository ID");
+				expect(res.text).toContain(Errors.MISSING_REPOSITORY_ID);
 			});
 	});
 
-	it("Should return a 400 if provided IDs don't match Jira host", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			req.csrfToken = jest.fn();
-			next();
-		});
-		app.use(getFrontendApp());
-
-		const wrongSub = await Subscription.install({
-			host: "https://adifferentjirahost",
-			installationId: 2345,
-			hashedClientKey: "key-123",
-			gitHubAppId: undefined
-		});
-
-		const repo1 = await RepoSyncState.create({
-			subscriptionId: wrongSub.id,
-			repoId: 1,
-			repoName: "my-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/my-repo",
-			repoUrl: "github.com/atlassian/my-repo"
-		});
-
-		await supertest(app)
-			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
-			})
-			.send({
-				id: repo1.repoId
-			})
-			.expect(res => {
-				expect(res.status).toBe(400);
-				expect(res.text).toContain(NO_MATCHING_REPOSITORY);
-			});
-	});
-
-	it("Should return repo update payload when repoId and Jira host match", async () => {
+	it("Should return repo payload when repoId and Jira host match", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -110,7 +69,7 @@ describe("Workspaces Associate Repository", () => {
 			repoName: "my-repo",
 			repoOwner: "atlassian",
 			repoFullName: "atlassian/my-repo",
-			repoUrl: "github.com/atlassian/my-repo"
+			repoUrl: "https://github.com/atlassian/my-repo"
 		});
 
 		Date.now = jest.fn(() => 1487076708000);

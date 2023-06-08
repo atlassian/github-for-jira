@@ -391,4 +391,29 @@ describe("RepoSyncState", () => {
 			);
 		});
 	});
+
+	describe("findRepoByRepoIdAndJiraHost", () => {
+		it("Should return null if no repository matches the repoId and jiraHost", async () => {
+			const result = await RepoSyncState.findRepoByRepoIdAndJiraHost(2, "example.com");
+
+			expect(result).toBeNull();
+		});
+
+		it("Should return the repository if a matching repoId and jiraHost are found", async () => {
+			const repo = {
+				subscriptionId: sub.id,
+				repoId: 1,
+				repoName: "github-for-jira",
+				repoOwner: "atlassian",
+				repoFullName: "atlassian/github-for-jira",
+				repoUrl: "github.com/atlassian/github-for-jira"
+			};
+
+			await RepoSyncState.create(repo);
+
+			const result = await RepoSyncState.findRepoByRepoIdAndJiraHost(repo.repoId, jiraHost);
+
+			expect(result).toMatchObject(repo);
+		});
+	});
 });
