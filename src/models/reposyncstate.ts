@@ -134,7 +134,6 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 	}
 
-
 	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 
 		const result = await RepoSyncState.findAll(merge(options, {
@@ -237,6 +236,17 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 				repoId
 			}
 		}));
+	}
+
+	static async findByOrgNameAndSubscriptionId(subscription: Subscription, orgName: string): Promise<RepoSyncState | null> {
+		return await RepoSyncState.findOne({
+			where: {
+				subscriptionId: subscription.id,
+				repoOwner: {
+					[Op.iLike]: `%${orgName}%`
+				}
+			}
+		});
 	}
 
 	// Nullify statuses and cursors to start anew

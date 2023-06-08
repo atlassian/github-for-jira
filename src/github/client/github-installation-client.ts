@@ -17,6 +17,7 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
+	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse, getBranchesQueryWithoutCommits
 } from "./github-queries";
 import {
@@ -355,8 +356,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data;
 	}
 
-	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
-		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+	public async getDeploymentsPage(jiraHost: string, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+
+		const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
+		const graphQuery = useDyanmoForBackfill ? getDeploymentsQueryWithStatuses : getDeploymentsQuery;
+
+		const response = await this.graphql<getDeploymentsResponse>(graphQuery,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,
