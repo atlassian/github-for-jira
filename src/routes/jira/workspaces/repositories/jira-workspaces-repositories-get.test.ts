@@ -377,6 +377,27 @@ describe("Workspaces Repositories Get", () => {
 			});
 	});
 
+	it("Should return 200 status and empty array if no connected workspaces are found", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		await createSubscriptions(jiraHost, 1);
+
+		await supertest(app)
+			.get("/jira/workspaces/repositories/search?searchQuery=atlas")
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.text).toContain(JSON.stringify([]));
+				expect(res.status).toBe(200);
+			});
+	});
+
 	it("Should return all matching repos across multiple orgs when both workspaceId and repoName are not provided", async () => {
 		app = express();
 		app.use((req, _, next) => {
