@@ -3,7 +3,7 @@ import url from "url";
 import {
 	extractIssueKeysFromPrOld,
 	transformPullRequest,
-	transformPullRequestOld
+	transformPullRequestRest
 } from "../transforms/transform-pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
@@ -205,7 +205,7 @@ const doGetPullRequestTaskOld = async (
 				const prDetails = prResponse?.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequestOld(gitHubInstallationClient, prDetails, reviews, logger);
+				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 
 			})

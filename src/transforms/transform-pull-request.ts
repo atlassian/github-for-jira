@@ -82,7 +82,7 @@ export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 };
 
 // TODO: define arguments and return
-export const transformPullRequestOld = async (
+export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
 	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
