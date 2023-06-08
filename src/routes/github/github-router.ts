@@ -37,10 +37,10 @@ GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 // As a mental model, consider it as a logical continuation of the GitHubOAuthGet, where the state was temporarily serialized
 // and saved to a secure storage to fetch some data from GitHub asynchronosuly.
 //
-// This could've placed the route before :UUID parameter (because we are not using it, and shouldn't be using without extra
-// validation! The mental model is that we are conginuing GitHubOAuthGet with its state, not adding anything outside),
+// This route could've been placed before :UUID parameter (because we are not using it, and shouldn't be using!
+// The mental model is that we are continuing GitHubOAuthGet from where it stopped, not adding anything outside),
 // however it is required here by historical reasons (initially we implemented it with :UUID, which means
-// we have some GitHub Enterprise apps that have this URL with UUID).
+// our customers have some GitHub Enterprise apps that have callback URLs with UUID).
 subRouter.use(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
 
 // Webhook Route

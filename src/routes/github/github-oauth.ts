@@ -20,8 +20,9 @@ const callbackPathServer = `/github/<uuid>${OAUTH_CALLBACK_SUBPATH}`;
 interface OAuthState {
 	postLoginRedirectUrl: string;
 	installationIdPk: number;
-	// Even though it is duplicated in the path, we should use it from Sesion because the callback URL is not protected by
-	// jira* and github* middlewares therefore we cannot trust anything in the request (or, alternatively, do the validation again)
+	// Even though it is duplicated in the path, we should use it from session. The OAuth callback is a continuation of the
+	// flow, therefore we should resume exactly at the place where we stopped without bringing anything extra from the
+	// requests (except of what we have received from GitHub)
 	gitHubServerUuid?: string;
 	gitHubClientId: string;
 }
@@ -58,7 +59,7 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 
 	// The flow is interrupted here, but we have stored the state to a secure storage (session),
 	// therefore we can continue from /callback where we stopped at without any concerns, as long as we use only
-	// data from the session!
+	// data from this state/session!
 	req.session[stateKey] = state;
 
 	const redirectUrl = await getRedirectUrl(res, stateKey);
@@ -152,7 +153,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promi
 
 	// Restore the state of the flow where we stopped in GitHubOAuthLoginGet and continue.
 	// DO NOT RELY ON ANY REQUEST PARAMS (other than received from GitHub that we will validate) to make sure
-	// we stay secure!
+	// we stay secure! We are just resuming the flow interrupted earlier and we can rely only to values from this state.
 	const secureState = req.session[stateKey] as OAuthState;
 
 	if (!secureState) {
@@ -170,7 +171,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promi
 		return;
 	}
 
-	// Wrapping into a function to make sure it doesn't have direct access to raw req and passing over only "safe" state
+	// Wrapping into a function to make sure it doesn't have direct access to raw "req" object, passing over only the "secure" state
 	const maybeRedirectUrl = await finishOAuthFlow(
 		stateKey, secureState, code, req.log,
 
