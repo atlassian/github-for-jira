@@ -69,7 +69,7 @@ const createMultipleRepositoriesForOneSubscription = async (subscriptionId, numb
 			repoName,
 			repoOwner,
 			repoFullName: `${repoOwner}/${repoName}`,
-			repoUrl: `github.com/${repoOwner}/${repoName}`,
+			repoUrl: `http://github.com/${repoOwner}/${repoName}`,
 			repoPushedAt: new Date(),
 			updatedAt: new Date(),
 			repoUpdatedAt: new Date(),
@@ -119,7 +119,7 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 		repoName: "new-repo",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/new-repo",
-		repoUrl: "github.com/atlassian/new-repo"
+		repoUrl: "https://github.com/atlassian/new-repo"
 	});
 
 	const repoTwo = await RepoSyncState.create({
@@ -128,7 +128,7 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 		repoName: "random",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/random",
-		repoUrl: "github.com/atlassian/random"
+		repoUrl: "https://github.com/atlassian/random"
 	});
 
 	const repoThree = await RepoSyncState.create({
@@ -137,7 +137,7 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 		repoName: "blah",
 		repoOwner: "anotherorg",
 		repoFullName: "anotherorg/blah",
-		repoUrl: "github.com/anotherorg/blah"
+		repoUrl: "https://github.com/anotherorg/blah"
 	});
 
 	return {
@@ -169,7 +169,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "new-repo",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/new-repo",
-		repoUrl: "github.com/atlassian/new-repo"
+		repoUrl: "https://github.com/atlassian/new-repo"
 	});
 
 	const repoTwo = await RepoSyncState.create({
@@ -178,7 +178,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "another-new-repo",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/another-new-repo",
-		repoUrl: "github.com/atlassian/another-new-repo"
+		repoUrl: "https://github.com/atlassian/another-new-repo"
 	});
 
 	const repoThree = await RepoSyncState.create({
@@ -187,7 +187,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "imNew",
 		repoOwner: "anotherorg",
 		repoFullName: "anotherorg/imNew",
-		repoUrl: "github.com/anotherorg/imNew"
+		repoUrl: "https://github.com/anotherorg/imNew"
 	});
 
 	await RepoSyncState.create({
@@ -196,7 +196,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "idontmatchthequery",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/idontmatchthequery",
-		repoUrl: "github.com/atlassian/idontmatchthequery"
+		repoUrl: "https://github.com/atlassian/idontmatchthequery"
 	});
 
 	await RepoSyncState.create({
@@ -205,7 +205,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "neitherdoI",
 		repoOwner: "anotherorg",
 		repoFullName: "anotherorg/neitherdoI",
-		repoUrl: "github.com/anotherorg/neitherdoI"
+		repoUrl: "https://github.com/anotherorg/neitherdoI"
 	});
 
 	await RepoSyncState.create({
@@ -214,7 +214,7 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		repoName: "anothermismatch",
 		repoOwner: "org3",
 		repoFullName: "org3/anothermismatch",
-		repoUrl: "github.com/org3/anothermismatch"
+		repoUrl: "https://github.com/org3/anothermismatch"
 	});
 
 	return {
@@ -246,7 +246,7 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoName: "new-repo",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/new-repo",
-		repoUrl: "github.com/atlassian/new-repo"
+		repoUrl: "http://github.internal.atlassian.com/atlassian/new-repo"
 	});
 
 	const repoTwo = await RepoSyncState.create({
@@ -255,7 +255,7 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoName: "another-new-repo",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/another-new-repo",
-		repoUrl: "github.com/atlassian/another-new-repo"
+		repoUrl: "http://github.internal.atlassian.com/atlassian/another-new-repo"
 	});
 
 	await RepoSyncState.create({
@@ -264,7 +264,7 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoName: "this-one-shouldnotmatch",
 		repoOwner: "atlassian",
 		repoFullName: "atlassian/shouldnotmatch",
-		repoUrl: "github.com/atlassian/shouldnotmatch"
+		repoUrl: "http://github.internal.atlassian.com/atlassian/shouldnotmatch"
 	});
 
 	await RepoSyncState.create({
@@ -273,7 +273,7 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoName: "neither-should-this-one",
 		repoOwner: "another-org",
 		repoFullName: "another-org/neither-should-this-one",
-		repoUrl: "github.com/another-org/neither-should-this-one"
+		repoUrl: "http://github.internal.atlassian.com/another-org/neither-should-this-one"
 	});
 
 	await RepoSyncState.create({
@@ -282,19 +282,19 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoName: "nor-this-one",
 		repoOwner: "org3",
 		repoFullName: "org3/nor-this-one",
-		repoUrl: "github.com/org3/nor-this-one"
+		repoUrl: "http://github.internal.atlassian.com/org3/nor-this-one"
 	});
 
 	return {
 		success: true,
 		repositories: [
 			{
-				id: repoTwo.repoId.toString(),
+				id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
 				name: "another-new-repo",
-				workspaceId: repoOne.subscriptionId.toString()
+				workspaceId: repoTwo.subscriptionId.toString()
 			},
 			{
-				id: repoOne.repoId.toString(),
+				id: "676974687562696e7465726e616c61746c61737369616e636f6d-1",
 				name: "new-repo",
 				workspaceId: repoOne.subscriptionId.toString()
 			}
@@ -309,7 +309,7 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 		repoName: "repo1",
 		repoOwner: "owner1",
 		repoFullName: "owner1/repo1",
-		repoUrl: "github.com/owner1/repo1"
+		repoUrl: "https://github.com/owner1/repo1"
 	});
 
 	await RepoSyncState.create({
@@ -318,7 +318,7 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 		repoName: "repo2",
 		repoOwner: "owner1",
 		repoFullName: "owner1/repo2",
-		repoUrl: "github.com/owner1/repo2"
+		repoUrl: "https://github.com/owner1/repo2"
 	});
 
 	await RepoSyncState.create({
@@ -327,7 +327,7 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 		repoName: "repo3",
 		repoOwner: "owner2",
 		repoFullName: "owner2/repo3",
-		repoUrl: "github.com/owner2/repo3"
+		repoUrl: "http://github.internal.atlassian.com/owner2/repo3"
 	});
 
 	await RepoSyncState.create({
@@ -336,7 +336,7 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 		repoName: "repo4",
 		repoOwner: "owner3",
 		repoFullName: "owner3/repo4",
-		repoUrl: "github.com/owner3/repo4"
+		repoUrl: "http://github.internal.atlassian.com/owner3/repo4"
 	});
 
 	return {
