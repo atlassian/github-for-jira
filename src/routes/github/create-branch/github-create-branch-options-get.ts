@@ -89,7 +89,7 @@ const getGitHubServers = async (jiraHost: string) => {
 	const gheServerInfos = new Array<{ uuid: string, baseUrl: string, appName: string }>();
 	for (const gitHubAppId of uniqueGithubAppIds) {
 		if (gitHubAppId) {
-			const gitHubServerApp = await GitHubServerApp.getByIdPk(gitHubAppId);
+			const gitHubServerApp = await GitHubServerApp.getForGitHubServerAppId(gitHubAppId);
 			if (gitHubServerApp) {
 				gheServerInfos.push({
 					"uuid": gitHubServerApp.uuid,

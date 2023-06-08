@@ -53,11 +53,11 @@ const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	log: Logger,
-	gitHubServerAppIdPk: number | undefined
+	gitHubAppId: number | undefined
 ): Promise<MergedInstallation[]> => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubServerAppIdPk);
-	const installationsWithSubscriptions = await getInstallations(subscriptions, log, gitHubServerAppIdPk);
-	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost, gitHubServerAppIdPk);
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+	const installationsWithSubscriptions = await getInstallations(subscriptions, log, gitHubAppId);
+	await removeFailedConnectionsFromDb(log, installationsWithSubscriptions, jiraHost, gitHubAppId);
 	log.debug("Removed failed installations");
 
 	const connectedStatuses = getConnectedStatus(installationsWithSubscriptions.fulfilled, jiraHost);
@@ -71,11 +71,11 @@ const getInstallationsWithAdmin = async (
 	login: string,
 	installations: Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem[] = [],
 	jiraHost: string,
-	gitHubServerAppIdPk: number | undefined
+	gitHubAppId: number | undefined
 ): Promise<InstallationWithAdmin[]> => {
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
-		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubServerAppIdPk);
+		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -141,12 +141,12 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		return next(new Error(Errors.MISSING_GITHUB_TOKEN));
 	}
 
-	const { gitHubAppId: gitHubServerAppIdPk, uuid: gitHubAppUuid } = gitHubAppConfig;
+	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
 
-	gitHubServerAppIdPk ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubServerAppIdPk} installed.`)
+	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");
 
-	const gitHubProduct = gitHubServerAppIdPk ? "server" : "cloud";
+	const gitHubProduct = gitHubAppId ? "server" : "cloud";
 
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
 
@@ -156,7 +156,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 		gitHubProduct
 	});
 
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubServerAppIdPk);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 
 	req.log.debug("found github token");
 
@@ -194,7 +194,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		req.log.debug(`got user's installations from GitHub`);
 
-		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubServerAppIdPk);
+		const installationsWithAdmin = await getInstallationsWithAdmin(gitHubUserClient, log, login, installations, jiraHost, gitHubAppId);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 			log.info(`verbose logging: installationsWithAdmin: ${JSON.stringify(installationsWithAdmin)}`);
@@ -206,7 +206,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			jiraHost,
 			installationsWithAdmin,
 			log,
-			gitHubServerAppIdPk
+			gitHubAppId
 		);
 
 		// Sort to that orgs ready to be connected are at the top
@@ -227,7 +227,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 			clientKey: installation.clientKey,
 			login,
 			repoUrl: envVars.GITHUB_REPO_URL,
-			gitHubServerApp: gitHubServerAppIdPk ? await GitHubServerApp.getByIdPk(gitHubServerAppIdPk) : null,
+			gitHubServerApp: gitHubAppId ? await GitHubServerApp.getForGitHubServerAppId(gitHubAppId) : null,
 			gitHubAppUuid
 		});
 

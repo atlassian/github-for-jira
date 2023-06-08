@@ -41,7 +41,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId: number | undefined; // TODO: rename  to gitHubServerAppIdPk, that's GitHubSubscription::id (primary key)
+	gitHubAppId: number | undefined;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({

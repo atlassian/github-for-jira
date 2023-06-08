@@ -4,7 +4,7 @@ import {
 	createAnonymousClient, createAppClient,
 	createInstallationClient,
 	createUserClient,
-	getGitHubClientConfigFromServerAppIdPk
+	getGitHubClientConfigFromAppId
 } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
@@ -37,12 +37,12 @@ describe("get-github-client-config", () => {
 	});
 
 	it("does not skip proxy for GHES", async () => {
-		const config = await getGitHubClientConfigFromServerAppIdPk(gitHubServerApp.id, jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, jiraHost);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 
 	it("does not skip proxy for GitHub cloud", async () => {
-		const config = await getGitHubClientConfigFromServerAppIdPk(undefined, jiraHost);
+		const config = await getGitHubClientConfigFromAppId(undefined, jiraHost);
 		expect(config.proxyBaseUrl).toEqual("http://proxy:8080");
 	});
 
@@ -51,13 +51,13 @@ describe("get-github-client-config", () => {
 		gitHubServerApp.encryptedApiKeyValue = "encrypted:super-db-key";
 		await gitHubServerApp.save();
 
-		const config = await getGitHubClientConfigFromServerAppIdPk(gitHubServerApp.id, jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, jiraHost);
 		expect(config.apiKeyConfig!.headerName).toEqual("ApiKeyHeaderFromDb");
 		expect(await config.apiKeyConfig!.apiKeyGenerator()).toEqual("super-db-key");
 	});
 
 	it("does not include API key config when not provided", async () => {
-		const config = await getGitHubClientConfigFromServerAppIdPk(gitHubServerApp.id, jiraHost);
+		const config = await getGitHubClientConfigFromAppId(gitHubServerApp.id, jiraHost);
 		expect(config.apiKeyConfig).toBeUndefined();
 	});
 
