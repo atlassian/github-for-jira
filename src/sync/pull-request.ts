@@ -89,12 +89,12 @@ const doGetPullRequestTaskInParallel = (
 		)
 );
 
-const emitStats = (jiraHost: string, gitHubProduct: string, startTime: number) => {
+const emitStats = (jiraHost: string, startTime: number, requestType: string) => {
 	statsd.timing(
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		{ status: String("status"), gitHubProduct },
+		{ requestType },
 		{ jiraHost }
 	);
 };
@@ -125,8 +125,7 @@ const doGetPullRequestTask = async (
 		pullRequests
 	};
 
-	// TODO FIGURE OUR IOF ITS GHE OR CLOUD!!!!
-	emitStats(jiraHost, "cloud", startTime);
+	emitStats(jiraHost, startTime, "GRAPHQL");
 
 	return {
 		edges: response.repository?.pullRequests?.edges || [],
@@ -167,7 +166,7 @@ const doGetPullRequestTaskOld = async (
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		{ status: String(status), gitHubProduct },
+		{ status: String(status), gitHubProduct, requestType: "REST" },
 		{ jiraHost }
 	);
 
