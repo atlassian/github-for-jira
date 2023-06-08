@@ -68,7 +68,7 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 
 export const jiraCreateProject = async (page: Page, projectId: string): Promise<void> => {
 	await page.goto(data.urls.projects);
-	await page.click("[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']");
+	await page.click("[data-test-id='global-pages.directories.projects-directory-v3.create-projects-button.button.button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
