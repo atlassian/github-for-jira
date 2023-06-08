@@ -15,12 +15,12 @@ export const DEFAULT_LIMIT = 20; // Number of items per page
 
 const getReposForWorkspaceId = async (
 	jiraHost: string,
-	connectedOrgId: number,
+	subscriptionId: number,
 	page: number,
 	limit: number,
 	repoName?: string
 ): Promise<RepoSyncState[] | null> => {
-	return await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, connectedOrgId, page, limit, repoName);
+	return await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, subscriptionId, page, limit, repoName);
 };
 
 const getAllRepos = async (
@@ -45,7 +45,7 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
 	const { jiraHost } = res.locals;
-	const connectedOrgId = Number(req.query?.workspaceId);
+	const subscriptionId = Number(req.query?.workspaceId);
 	const repoName = req.query?.searchQuery as string;
 	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
 	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
@@ -58,8 +58,8 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 		return;
 	}
 
-	const repos = connectedOrgId ?
-		await getReposForWorkspaceId(jiraHost, connectedOrgId, page, limit, repoName) :
+	const repos = subscriptionId ?
+		await getReposForWorkspaceId(jiraHost, subscriptionId, page, limit, repoName) :
 		await getAllRepos(jiraHost, subscriptions, page, limit, repoName);
 
 	const repositories: WorkspaceRepo[] = repos ? repos.map((repo) => {
