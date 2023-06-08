@@ -11,10 +11,10 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { pullRequestNode } from "~/src/github/client/github-queries";
 
 const mapStatus = (status: string, merged_at?: string) => {
-	if (status.toLowerCase() === "merged") return "MERGED";
-	if (status.toLowerCase() === "open") return "OPEN";
-	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
-	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
+	if (status === "merged") return "MERGED";
+	if (status === "open") return "OPEN";
+	if (status === "closed" && merged_at) return "MERGED";
+	if (status === "closed" && !merged_at) return "DECLINED";
 	return "UNKNOWN";
 };
 
@@ -183,7 +183,7 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 			reviewers: mapReviews(reviews?.nodes),
 			sourceBranch: pullRequest.headRef?.name || "",
 			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
-			status: mapStatus(pullRequest.state, pullRequest.mergedAt),
+			status: pullRequest.state,
 			timestamp: pullRequest.updatedAt,
 			title: pullRequest.title,
 			url: pullRequest.url,
