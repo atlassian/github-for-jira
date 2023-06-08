@@ -2,8 +2,8 @@ import { PullRequestSort, PullRequestState, SortDirection } from "../github/clie
 import url from "url";
 import {
 	extractIssueKeysFromPrOld,
-	transformPullRequestNew,
-	transformPullRequest
+	transformPullRequest,
+	transformPullRequestOld
 } from "../transforms/transform-pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
@@ -116,7 +116,7 @@ const doGetPullRequestTask = async (
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince,100, cursor);
 
 	const pullRequests = response.repository?.pullRequests?.edges
-		?.map((edge) => transformPullRequestNew(jiraHost, edge.node, edge.node.reviews, logger))
+		?.map((edge) => transformPullRequest(jiraHost, edge.node, edge.node.reviews, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
@@ -205,7 +205,7 @@ const doGetPullRequestTaskOld = async (
 				const prDetails = prResponse?.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
+				const data = await transformPullRequestOld(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 
 			})

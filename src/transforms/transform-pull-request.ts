@@ -82,7 +82,7 @@ export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 };
 
 // TODO: define arguments and return
-export const transformPullRequest = async (
+export const transformPullRequestOld = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
 	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
@@ -160,9 +160,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-// TODO: TYPES N THINGS - reviews type and return type?
-// this will default the current webhook oh no
-export const transformPullRequestNew = (_jiraHost: string, pullRequest: pullRequestNode, reviews?: any, log?: Logger) => {
+export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, reviews?: pullRequestNode["reviews"], log?: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	if (isEmpty(issueKeys) || !pullRequest.headRef.repository) {
@@ -183,7 +181,7 @@ export const transformPullRequestNew = (_jiraHost: string, pullRequest: pullRequ
 			id: pullRequest.number,
 			issueKeys,
 			lastUpdate: pullRequest.updatedAt,
-			reviewers: mapReviews(reviews.nodes),
+			reviewers: mapReviews(reviews?.nodes),
 			sourceBranch: pullRequest.headRef?.name || "",
 			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
 			status: pullRequest.state, // test closed and declined behaviou// mapStatus(pullRequest.state, pullRequest.merged_at), mapStatus(pullRequest.state, pullRequest.mergedAt),
@@ -197,16 +195,14 @@ export const transformPullRequestNew = (_jiraHost: string, pullRequest: pullRequ
 	}
 };
 
-// TODO: define arguments and return
-// todo types
-const mapReviews = (reviews: any = []): any[] => {
+const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = []): JiraReview[] => {
 	const sortedReviews = orderBy(reviews, "submittedAt", "desc");
 	const usernames: Record<string, any> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
 	// (so users' avatars won't be duplicated on the dev panel in Jira)
 	// and it considers 'APPROVED' as the main approval status for that user.
-	const reviewsReduced: any[] = sortedReviews.reduce((acc: any[], review) => {
+	const reviewsReduced: JiraReviewer[] = sortedReviews.reduce((acc: JiraReviewer[], review) => {
 
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
 		const reviewer = review?.author;
