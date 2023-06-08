@@ -6,7 +6,12 @@ import { envVars } from "config/env";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { getFrontendApp } from "~/src/app";
-import { generateSignedSessionCookieHeader, parseCookiesAndSession } from "test/utils/cookies";
+import {
+	findOAuthStateInSession,
+	findOAuthStateKeyInSession,
+	generateSignedSessionCookieHeader,
+	parseCookiesAndSession
+} from "test/utils/cookies";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { Installation } from "models/installation";
@@ -96,7 +101,7 @@ describe("github-oauth", () => {
 
 				const app = await getFrontendApp();
 				const response = await supertest(app)
-					.get(`/github/${gitHubServerApp.uuid}/callback?state=fooState&code=barCode`)
+					.get(`/github/callback?state=fooState&code=barCode`)
 					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
 					.set(
 						"Cookie",
@@ -155,22 +160,22 @@ describe("github-oauth", () => {
 						})
 					);
 				const session = parseCookiesAndSession(response).session!;
-				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
-				)![0];
-				expect(state.length).toBeGreaterThan(6);
+				const stateKey = findOAuthStateKeyInSession(session);
+				expect(stateKey.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
-				expect(session[state]).toStrictEqual({
+				const oauthState = findOAuthStateInSession(session) as any;
+				expect(oauthState).toStrictEqual({
 					installationIdPk: installation.id,
 					postLoginRedirectUrl: "/github/configuration?",
 					gitHubClientId: envVars.GITHUB_CLIENT_ID
 				});
-				expect(response.headers.location).toStrictEqual(
+				const redirectUrl = response.headers.location;
+				expect(redirectUrl).toStrictEqual(
 					`https://github.com/login/oauth/authorize?client_id=${
 						envVars.GITHUB_CLIENT_ID
 					}&scope=user%20repo&redirect_uri=${
 						encodeURIComponent("https://test-github-app-instance.com/github/callback")
-					}&state=${state}`);
+					}&state=${stateKey}`);
 			});
 		});
 
@@ -192,12 +197,14 @@ describe("github-oauth", () => {
 						})
 					);
 				const session = parseCookiesAndSession(response).session!;
-				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
-				)![0];
-				expect(state.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
-				expect(session[state]).toStrictEqual({
+
+				const stateKey = findOAuthStateKeyInSession(session);
+				expect(stateKey.length).toBeGreaterThan(6);
+				expect(response.status).toEqual(302);
+				const oauthState = findOAuthStateInSession(session) as any;
+
+				expect(oauthState).toStrictEqual({
 					installationIdPk: installation.id,
 					postLoginRedirectUrl: "/github/configuration?",
 					gitHubClientId: gitHubServerApp.gitHubClientId,
@@ -207,8 +214,8 @@ describe("github-oauth", () => {
 					`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=${
 						gitHubServerApp.gitHubClientId
 					}&scope=user%20repo&redirect_uri=${
-						encodeURIComponent(`https://test-github-app-instance.com/github/${gitHubServerApp.uuid}/callback`)
-					}&state=${state}`);
+						encodeURIComponent(`https://test-github-app-instance.com/github/callback`)
+					}&state=${stateKey}`);
 			});
 		});
 	});

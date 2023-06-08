@@ -16,8 +16,7 @@ import { Installation } from "models/installation";
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
 export const OAUTH_CALLBACK_SUBPATH = "/callback";
-const callbackPathCloud = `/github${OAUTH_CALLBACK_SUBPATH}`;
-const callbackPathServer = `/github/<uuid>${OAUTH_CALLBACK_SUBPATH}`;
+const fullCallbackPath = `/github${OAUTH_CALLBACK_SUBPATH}`;
 
 interface OAuthState {
 	postLoginRedirectUrl: string;
@@ -27,17 +26,11 @@ interface OAuthState {
 }
 
 const getRedirectUrl = async (res: Response, state: string) => {
-	// TODO: revert this logic and calculate redirect URL from req once create branch supports JWT and GitHubAuthMiddleware is a router-level middleware again
-	let callbackPath = callbackPathCloud;
-	if (res.locals?.gitHubAppConfig?.uuid) {
-		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
-	}
-
 	const definedScopes = await stringFlag(StringFlags.GITHUB_SCOPES, "user,repo", res.locals.jiraHost);
 	const scopes = definedScopes.split(",");
 
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = `${appUrl}${callbackPath}`;
+	const callbackURI = `${appUrl}${fullCallbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 

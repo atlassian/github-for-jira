@@ -23,13 +23,7 @@ import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
-GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
-// Webhook Route
-subRouter.post("/webhooks",
-	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
-	returnOnValidationError,
-	WebhookReceiverPost);
 
 // We want to restrict the tail of OAuth flow to the same scope as the starting point had (where GitHubOAuthMiddleware
 // fired), therefore we are not including neither jira*middlewares nor github*middlewares. GithubOAuthCallbackGet will
@@ -38,6 +32,14 @@ subRouter.post("/webhooks",
 // We don't want to artificially limit ourselves by including those middlewares, because there are scenarios when
 // OAuth flow was triggered outside of Jira admin scope (e.g. create-branch, or approve-connection).
 subRouter.use(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
+
+GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+// Webhook Route
+subRouter.post("/webhooks",
+	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
+	returnOnValidationError,
+	WebhookReceiverPost);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
