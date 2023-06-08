@@ -16,21 +16,28 @@ import { Installation } from "models/installation";
 const logger = getLogger("github-oauth");
 const appUrl = envVars.APP_URL;
 export const OAUTH_CALLBACK_SUBPATH = "/callback";
-const fullCallbackPath = `/github${OAUTH_CALLBACK_SUBPATH}`;
+const callbackPathCloud = `/github${OAUTH_CALLBACK_SUBPATH}`;
+const callbackPathServer = `/github/<uuid>${OAUTH_CALLBACK_SUBPATH}`;
 
 interface OAuthState {
 	postLoginRedirectUrl: string;
 	installationIdPk: number;
+	// Even though it is duplicated in the path, we should use it from Sesion because the callback URL is not protected by
+	// jira* and github* middlewares therefore we cannot trust anything in the request (or, alternatively, do the validation again)
 	gitHubServerUuid?: string;
 	gitHubClientId: string;
 }
 
 const getRedirectUrl = async (res: Response, state: string) => {
+	let callbackPath = callbackPathCloud;
+	if (res.locals?.gitHubAppConfig?.uuid) {
+		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
+	}
 	const definedScopes = await stringFlag(StringFlags.GITHUB_SCOPES, "user,repo", res.locals.jiraHost);
 	const scopes = definedScopes.split(",");
 
 	const { hostname, clientId } = res.locals.gitHubAppConfig;
-	const callbackURI = `${appUrl}${fullCallbackPath}`;
+	const callbackURI = `${appUrl}${callbackPath}`;
 	return `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${state}`;
 };
 
@@ -42,7 +49,6 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 	req.session["timestamp_before_oauth"] = Date.now();
 
 	const parsedOriginalUrl = url.parse(req.originalUrl);
-	// Save the redirect that may have been specified earlier into session to be retrieved later
 
 	const state: OAuthState = {
 		postLoginRedirectUrl: res.locals.redirect ||
@@ -52,9 +58,11 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 		gitHubClientId: res.locals.gitHubAppConfig.clientId
 	};
 
+	// The flow is interrupted here, but we have stored the state to a secure storage (session),
+	// therefore we can continue from /callback where we stopped at without any concerns as long, as we use only
+	// data from the session!
 	req.session[stateKey] = state;
 
-	// Find callback URL based on current url of this route
 	const redirectUrl = await getRedirectUrl(res, stateKey);
 	req.log.info("redirectUrl:", redirectUrl);
 
@@ -90,8 +98,11 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		return;
 	}
 
-	// Take save redirect url and delete it from session
+	// Restore the state of the flow where we stopped in GitHubOAuthLoginGet and continue.
+	// DO NOT RELY ON ANY REQUEST PARAMS (other than received from GitHub that we will validate) to make sure
+	// we stay secure!
 	const state = req.session[stateKey] as OAuthState;
+
 	if (!state) {
 		req.log.warn("No state found");
 		res.status(400).send("No state was found");
@@ -123,7 +134,6 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 	logger.info(`${createHashWithSharedSecret(gitHubClientSecret)} is used`);
 
 	try {
-
 		const metrics = {
 			trigger: "oauth"
 		};
@@ -137,8 +147,6 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		});
 		req.session.githubToken = accessToken;
 		req.session.githubRefreshToken = refreshToken;
-
-		// Saving UUID for each GitHubServerApp
 		req.session.gitHubUuid = state.gitHubServerUuid;
 
 		if (!req.session.githubToken) {

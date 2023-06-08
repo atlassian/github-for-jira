@@ -24,16 +24,24 @@ import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
 
+GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
 // We want to restrict the tail of OAuth flow to the same scope as the starting point had (where GitHubOAuthMiddleware
 // fired), therefore we are not including neither jira*middlewares nor github*middlewares. GithubOAuthCallbackGet will
-// get all the data needed from session to obtain the token and then redirect to the original URL with all the
-// restrictions that are in place there.
+// get all the data needed from session (which is a secure storage) to obtain the token and then redirect to the
+// original URL with all the further restrictions that are in place there.
+//
 // We don't want to artificially limit ourselves by including those middlewares, because there are scenarios when
 // OAuth flow was triggered outside of Jira admin scope (e.g. create-branch, or approve-connection).
+//
+// As a mental model, consider it as a logical continuation of the GitHubOAuthGet, where the state was temporarily serialized
+// and saved to a secure storage to fetch some data from GitHub asynchronosuly.
+//
+// This could've placed the route before :UUID parameter (because we are not using it, and shouldn't be using without extra
+// validation! The mental model is that we are conginuing GitHubOAuthGet with its state, not adding anything outside),
+// however it is required here by historical reasons (initially we implemented it with :UUID, which means
+// we have some GitHub Enterprise apps that have this URL with UUID).
 subRouter.use(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
-
-GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 
 // Webhook Route
 subRouter.post("/webhooks",

@@ -234,7 +234,7 @@ describe("GitHub router", () => {
 
 				expect(response.statusCode).toStrictEqual(302);
 				const resultUrl = response.headers.location;
-				const redirectUrl = `${envVars.APP_URL}/github/callback`;
+				const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
 				const expectedUrl = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}&state=${oauthStateKey}`;
 				expect(resultUrl).toEqual(expectedUrl);
 
@@ -259,7 +259,7 @@ describe("GitHub router", () => {
 
 				const resultUrl = response.headers.location;
 				const resultUrlWithoutState = resultUrl.split("&state")[0];// Ignoring state here cause state is different everytime
-				const redirectUrl = `${envVars.APP_URL}/github/callback`;
+				const redirectUrl = `${envVars.APP_URL}/github/${GITHUB_SERVER_APP_UUID}/callback`;
 				const expectedUrlWithoutState = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=scope1%20scope2&redirect_uri=${encodeURIComponent(redirectUrl)}`;
 				expect(resultUrlWithoutState).toEqual(expectedUrlWithoutState);
 

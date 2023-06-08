@@ -51,6 +51,28 @@ describe("github-oauth", () => {
 		});
 
 		describe("cloud", () => {
+			it("must return 400 if no session", async () => {
+				const res = await supertest(getFrontendApp())
+					.get("/github/callback?blah=true");
+				expect(res.status).toEqual(400);
+			});
+
+			it("must return 400 if no installation", async () => {
+				const res = await supertest(getFrontendApp())
+					.get("/github/callback?state=fooState&code=barCode")
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.set(
+						"Cookie",
+						generateSignedSessionCookieHeader({
+							fooState: {
+								installationIdPk: installation.id - 1,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
+						})
+					);
+				expect(res.status).toEqual(400);
+			});
+
 			it("populates session with github token", async () => {
 				nock("https://github.com")
 					.get(`/login/oauth/access_token?client_id=${envVars.GITHUB_CLIENT_ID}&client_secret=${envVars.GITHUB_CLIENT_SECRET}&code=barCode&state=fooState`)
@@ -88,6 +110,28 @@ describe("github-oauth", () => {
 				gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			});
 
+			it("must return 400 if no session", async () => {
+				const res = await supertest(getFrontendApp())
+					.get(`/github/${gitHubServerApp.uuid}/callback?blah=true`);
+				expect(res.status).toEqual(400);
+			});
+
+			it("must return 400 if no installation", async () => {
+				const res = await supertest(getFrontendApp())
+					.get(`/github/${gitHubServerApp.uuid}/callback?state=fooState&code=barCode`)
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.set(
+						"Cookie",
+						generateSignedSessionCookieHeader({
+							fooState: {
+								installationIdPk: installation.id - 1,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
+						})
+					);
+				expect(res.status).toEqual(400);
+			});
+
 			it("populates session with github token, refresh token and server UUID", async () => {
 				const nockUrl = `/login/oauth/access_token?client_id=${gitHubServerApp.gitHubClientId}&client_secret=${await gitHubServerApp.getDecryptedGitHubClientSecret(jiraHost)}&code=barCode&state=fooState`;
 				nock(gitHubServerApp.gitHubBaseUrl)
@@ -101,7 +145,7 @@ describe("github-oauth", () => {
 
 				const app = await getFrontendApp();
 				const response = await supertest(app)
-					.get(`/github/callback?state=fooState&code=barCode`)
+					.get(`/github/${gitHubServerApp.uuid}/callback?state=fooState&code=barCode`)
 					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
 					.set(
 						"Cookie",
@@ -214,7 +258,7 @@ describe("github-oauth", () => {
 					`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=${
 						gitHubServerApp.gitHubClientId
 					}&scope=user%20repo&redirect_uri=${
-						encodeURIComponent(`https://test-github-app-instance.com/github/callback`)
+						encodeURIComponent(`https://test-github-app-instance.com/github/${gitHubServerApp.uuid}/callback`)
 					}&state=${stateKey}`);
 			});
 		});
