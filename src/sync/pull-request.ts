@@ -1,7 +1,7 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import {
-	extractIssueKeysFromPrOld,
+	extractIssueKeysFromPrRest,
 	transformPullRequest,
 	transformPullRequestRest
 } from "../transforms/transform-pull-request";
@@ -81,13 +81,12 @@ const doGetPullRequestTaskInParallel = (
 ) => fetchNextPagesInParallel(
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
-	async (pageCursor) => {
-		return doGetPullRequestTaskOld(
+	(pageCursor) =>
+		doGetPullRequestTaskOld(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
 			messagePayload
-		);
-	}
+		)
 );
 
 const emitStats = (jiraHost: string, gitHubProduct: string, startTime: number) => {
@@ -195,7 +194,7 @@ const doGetPullRequestTaskOld = async (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPrOld(pull))) {
+				if (isEmpty(extractIssueKeysFromPrRest(pull))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");

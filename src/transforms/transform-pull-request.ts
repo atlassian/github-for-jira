@@ -25,7 +25,7 @@ interface JiraReviewer extends JiraReview {
 const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
-const mapReviewsOld = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 
 	const sortedReviews = orderBy(reviews, "submitted_at", "desc");
 	const usernames: Record<string, JiraReviewer> = {};
@@ -71,7 +71,7 @@ const mapReviewsOld = async (reviews: Array<{ state?: string, user: Octokit.Pull
 	}));
 };
 
-export const extractIssueKeysFromPrOld = (pullRequest: Octokit.PullsListResponseItem) => {
+export const extractIssueKeysFromPrRest = (pullRequest: Octokit.PullsListResponseItem) => {
 	const { title: prTitle, head, body } = pullRequest;
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
@@ -91,7 +91,7 @@ export const transformPullRequestRest = async (
 {
 	const { head } = pullRequest;
 
-	const issueKeys = extractIssueKeysFromPrOld(pullRequest);
+	const issueKeys = extractIssueKeysFromPrRest(pullRequest);
 
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {
@@ -116,7 +116,7 @@ export const transformPullRequestRest = async (
 				id: pullRequest.number,
 				issueKeys,
 				lastUpdate: pullRequest.updated_at,
-				reviewers: await mapReviewsOld(reviews, gitHubInstallationClient),
+				reviewers: await mapReviewsRest(reviews, gitHubInstallationClient),
 				sourceBranch: pullRequest.head.ref || "",
 				sourceBranchUrl: `${pullRequest.head.repo.html_url}/tree/${pullRequest.head.ref}`,
 				status: mapStatus(pullRequest.state, pullRequest.merged_at),
