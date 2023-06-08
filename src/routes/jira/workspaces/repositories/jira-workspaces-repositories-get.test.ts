@@ -96,9 +96,9 @@ const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumb
 	};
 
 	const numberOfItemsToAdd = Math.min(totalNumberOfRepos, DEFAULT_LIMIT);
-	const startIndex = Math.max(repositories.length - numberOfItemsToAdd, 0);
+	const endIndex = Math.min(numberOfItemsToAdd, repositories.length);
 
-	for (let i = repositories.length - 1; i >= startIndex; i--) {
+	for (let i = 0; i < endIndex; i++) {
 		const repository = repositories[i];
 		const workspace = {
 			id: repository.repoId.toString(),
@@ -144,14 +144,14 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 		success: true,
 		repositories: [
 			{
-				id: repoTwo.repoId.toString(),
-				name: repoTwo.repoName,
-				workspaceId: repoTwo.subscriptionId.toString()
-			},
-			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
 				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: repoTwo.repoId.toString(),
+				name: repoTwo.repoName,
+				workspaceId: repoTwo.subscriptionId.toString()
 			},
 			{
 				id: repoThree.repoId.toString(),
@@ -221,14 +221,14 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 		success: true,
 		repositories: [
 			{
-				id: repoTwo.repoId.toString(),
-				name: repoTwo.repoName,
-				workspaceId: repoTwo.subscriptionId.toString()
-			},
-			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
 				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: repoTwo.repoId.toString(),
+				name: repoTwo.repoName,
+				workspaceId: repoTwo.subscriptionId.toString()
 			},
 			{
 				id: repoThree.repoId.toString(),
@@ -289,14 +289,14 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		success: true,
 		repositories: [
 			{
-				id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
-				name: "another-new-repo",
-				workspaceId: repoTwo.subscriptionId.toString()
-			},
-			{
 				id: "676974687562696e7465726e616c61746c61737369616e636f6d-1",
 				name: "new-repo",
 				workspaceId: repoOne.subscriptionId.toString()
+			},
+			{
+				id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
+				name: "another-new-repo",
+				workspaceId: repoTwo.subscriptionId.toString()
 			}
 		]
 	};
@@ -338,22 +338,6 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 		repoFullName: "owner3/repo4",
 		repoUrl: "http://github.internal.atlassian.com/owner3/repo4"
 	});
-
-	return {
-		success: true,
-		repositories: [
-			{
-				id: "2",
-				name: "repo2",
-				workspaceId: subscriptions[0].id.toString()
-			},
-			{
-				id: "1",
-				name: "repo1",
-				workspaceId: subscriptions[0].id.toString()
-			}
-		]
-	};
 };
 
 describe("Workspaces Repositories Get", () => {
@@ -468,7 +452,39 @@ describe("Workspaces Repositories Get", () => {
 		app.use(getFrontendApp());
 
 		const subscriptions = await createSubscriptions(jiraHost, 3);
-		const response = await createReposWhenPageAndLimitArePassedAsParams(subscriptions);
+		await createReposWhenPageAndLimitArePassedAsParams(subscriptions);
+
+		const responsePageOne = {
+			success: true,
+			repositories: [
+				{
+					id: "1",
+					name: "repo1",
+					workspaceId: subscriptions[0].id.toString()
+				},
+				{
+					id: "2",
+					name: "repo2",
+					workspaceId: subscriptions[0].id.toString()
+				}
+			]
+		};
+
+		const responsePageTwo = {
+			success: true,
+			repositories: [
+				{
+					id: "676974687562696e7465726e616c61746c61737369616e636f6d-3",
+					name: "repo3",
+					workspaceId: subscriptions[1].id.toString()
+				},
+				{
+					id: "676974687562696e7465726e616c61746c61737369616e636f6d-4",
+					name: "repo4",
+					workspaceId: subscriptions[2].id.toString()
+				}
+			]
+		};
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=1&limit=2`)
@@ -477,7 +493,17 @@ describe("Workspaces Repositories Get", () => {
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
+				expect(res.text).toContain(JSON.stringify(responsePageOne));
+			});
+
+		await supertest(app)
+			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=2&limit=2`)
+			.query({
+				jwt
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(responsePageTwo));
 			});
 	});
 
