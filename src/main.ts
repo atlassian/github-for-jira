@@ -3,7 +3,7 @@ import "config/env"; // Important to be before other dependencies
 import { getLogger } from "config/logger";
 import throng from "throng";
 import { initializeSentry } from "config/sentry";
-import { isNodeProd } from "utils/is-node-env";
+import { isNodeDev, isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 import { proxyLocalWS } from "~/src/dev";
 
@@ -16,7 +16,13 @@ const start = async () => {
 		getLogger("frontend-app").info(`started at port ${port}`);
 	});
 
-	proxyLocalWS(server);// Running Proxy for Web sockets for running SPA locally
+	/**
+	 * Running Proxy for Web sockets for running SPA locally,
+	 * Only for Dev environments for hot reload
+	 */
+	if (isNodeDev()) {
+		proxyLocalWS(server);
+	}
 };
 
 if (isNodeProd()) {

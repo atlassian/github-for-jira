@@ -12,11 +12,10 @@ const App = () => {
 	};
 
 	return (
-		<>
 			<div className="App">
-				Github for Jira
-			</div>
-			<Page>
+				<h1>Github for Jira</h1>
+
+				<Page>
 				<Grid spacing="comfortable" columns={12}>
 					<GridColumn medium={6}>
 						What is Lorem Ipsum?
@@ -55,8 +54,9 @@ const App = () => {
 				</Grid>
 			</Page>
 
-			<Button appearance="danger"  onClick={clickEvent}>Click me {counter} times!</Button>
-		</>
+				<Button appearance="danger"  onClick={clickEvent}>Click me {counter} times!</Button>
+			</div>
+
 	);
 };
 

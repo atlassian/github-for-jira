@@ -8,6 +8,7 @@ import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
 import { proxyLocalUI } from "~/src/dev";
+import { isNodeDev } from "utils/is-node-env";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -20,7 +21,14 @@ export const setupFrontendApp = (app: Express): Express => {
 	app.set("views", viewPath);
 	registerHandlebarsPartials(path.resolve(viewPath, "partials"));
 	registerHandlebarsHelpers();
-	proxyLocalUI(app); // Proxy server for running SPA locally
+
+	/**
+	 * Proxy server for running SPA locally,
+	 * Only for Dev environments for hot reload
+	 */
+	if (isNodeDev()) {
+		proxyLocalUI(app);
+	}
 	// Add all routes
 	app.use(RootRouter);
 

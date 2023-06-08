@@ -2,6 +2,11 @@ import { Server } from "http";
 import { Express } from "express";
 import httpProxy from "http-proxy";
 
+/**
+ * This is only for Dev environment,
+ * You need to run spa separately by `yarn start`, which will be running at port `3000`,
+ * That server is being proxied within this file, which makes developing in spa quicker and easier
+ */
 const proxy = httpProxy.createProxyServer({
 	target: {
 		host: "localhost",

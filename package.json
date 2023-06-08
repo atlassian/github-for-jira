@@ -18,6 +18,7 @@
 		"start:production": "run-p start:main:production start:worker:production",
 		"start:main:production": "node -r tsconfig-paths/register src/main",
 		"start:worker:production": "node -r tsconfig-paths/register src/worker",
+		"start:spa-prod": "cd etc && ./build-spa.sh",
 		"setup": "dotenv -- ts-node -r tsconfig-paths/register prestart.ts",
 		"build": "tsc -p ./tsconfig.json",
 		"build:release": "tsc -p ./tsconfig.release.json",
