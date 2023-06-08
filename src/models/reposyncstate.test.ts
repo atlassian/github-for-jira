@@ -361,6 +361,34 @@ describe("RepoSyncState", () => {
 
 			expect(result).toHaveLength(0);
 		});
-	});
 
+		it("Should return repositories matching multiple subscription IDs", async () => {
+			const repo1 = {
+				...repo,
+				subscriptionId: sub.id,
+				repoName: "github-for-jira"
+			};
+
+			const repo2 = {
+				...repo,
+				subscriptionId: otherSub.id,
+				repoName: "atlassian-connect-express"
+			};
+
+			await RepoSyncState.create(repo1);
+			await RepoSyncState.create(repo2);
+
+			const result = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(
+				jiraHost,
+				[sub.id, otherSub.id],
+				1,
+				10
+			);
+
+			expect(result).toHaveLength(2);
+			expect(result).toEqual(
+				expect.arrayContaining([expect.objectContaining(repo1), expect.objectContaining(repo2)])
+			);
+		});
+	});
 });
