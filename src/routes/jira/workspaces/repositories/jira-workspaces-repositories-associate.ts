@@ -12,11 +12,11 @@ const findMatchingRepository = async (id: number, jiraHost: string): Promise<(Re
 };
 
 const transformedRepo = (repo: RepoSyncStateProperties): BulkSubmitRepositoryInfo => {
-	const { id, repoFullName, repoUrl } = repo;
+	const { repoId, repoFullName, repoUrl } = repo;
 	const baseUrl = new URL(repoUrl).origin;
 
 	return {
-		id: transformRepositoryId(id, baseUrl),
+		id: transformRepositoryId(repoId, baseUrl),
 		name: repoFullName,
 		url: repoUrl,
 		updateSequenceId: Date.now()

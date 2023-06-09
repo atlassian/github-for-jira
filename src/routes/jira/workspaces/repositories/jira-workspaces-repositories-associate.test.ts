@@ -80,7 +80,7 @@ describe("Workspaces Associate Repository", () => {
 				preventTransitions: false,
 				operationType: "NORMAL",
 				repository: {
-					id: repo1.id.toString(),
+					id: "1",
 					name: repo1.repoFullName,
 					url: repo1.repoUrl,
 					updateSequenceId: 1487076708000
