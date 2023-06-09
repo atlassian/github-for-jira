@@ -1,19 +1,24 @@
 import { getLogger } from "config/logger";
-import { GithubAuthMiddleware } from "routes/github/github-oauth-router";
+import { GithubAuthMiddleware } from "routes/github/github-oauth";
 import supertest from "supertest";
 import nock from "nock";
 import { envVars } from "config/env";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
 import { getFrontendApp } from "~/src/app";
-import { generateSignedSessionCookieHeader, parseCookiesAndSession } from "test/utils/cookies";
+import {
+	findOAuthStateInSession,
+	findOAuthStateKeyInSession,
+	generateSignedSessionCookieHeader,
+	parseCookiesAndSession
+} from "test/utils/cookies";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { Installation } from "models/installation";
 
 jest.mock("config/feature-flags");
 
-describe("github-oauth-router", () => {
+describe("github-oauth", () => {
 	let installation: Installation;
 	beforeEach(async () => {
 		installation = (await new DatabaseStateCreator().create()).installation;
@@ -23,28 +28,51 @@ describe("github-oauth-router", () => {
 
 	describe("GithubOAuthCallbackGet", () => {
 
-		it("must return 401 if no session", async () => {
+		it("must return 400 if no session", async () => {
 			const res = await supertest(getFrontendApp())
 				.get("/github/callback?blah=true");
-			expect(res.status).toEqual(401);
+			expect(res.status).toEqual(400);
 		});
 
-		it("must return 401 if not Jira admin", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
-
+		it("must return 400 if no installation", async () => {
 			const res = await supertest(getFrontendApp())
-				.get("/github/callback?blah=true")
+				.get("/github/callback?state=fooState&code=barCode")
+				.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
 				.set(
 					"Cookie",
 					generateSignedSessionCookieHeader({
-						jiraHost,
-						isJiraAdmin: false
+						fooState: {
+							installationIdPk: installation.id - 1,
+							gitHubClientId: envVars.GITHUB_CLIENT_ID
+						}
 					})
 				);
-			expect(res.status).toEqual(403);
+			expect(res.status).toEqual(400);
 		});
 
 		describe("cloud", () => {
+			it("must return 400 if no session", async () => {
+				const res = await supertest(getFrontendApp())
+					.get("/github/callback?blah=true");
+				expect(res.status).toEqual(400);
+			});
+
+			it("must return 400 if no installation", async () => {
+				const res = await supertest(getFrontendApp())
+					.get("/github/callback?state=fooState&code=barCode")
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.set(
+						"Cookie",
+						generateSignedSessionCookieHeader({
+							fooState: {
+								installationIdPk: installation.id - 1,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
+						})
+					);
+				expect(res.status).toEqual(400);
+			});
+
 			it("populates session with github token", async () => {
 				nock("https://github.com")
 					.get(`/login/oauth/access_token?client_id=${envVars.GITHUB_CLIENT_ID}&client_secret=${envVars.GITHUB_CLIENT_SECRET}&code=barCode&state=fooState`)
@@ -61,9 +89,11 @@ describe("github-oauth-router", () => {
 					.set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							fooState: "/my-redirect",
-							isJiraAdmin: true
+							fooState: {
+								postLoginRedirectUrl: "/my-redirect",
+								installationIdPk: installation.id,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
 						})
 					)
 				;
@@ -80,14 +110,37 @@ describe("github-oauth-router", () => {
 				gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			});
 
-			it("populates session with github token", async () => {
+			it("must return 400 if no session", async () => {
+				const res = await supertest(getFrontendApp())
+					.get(`/github/${gitHubServerApp.uuid}/callback?blah=true`);
+				expect(res.status).toEqual(400);
+			});
+
+			it("must return 400 if no installation", async () => {
+				const res = await supertest(getFrontendApp())
+					.get(`/github/${gitHubServerApp.uuid}/callback?state=fooState&code=barCode`)
+					.set("x-forwarded-proto", "https") // otherwise cookies won't be returned cause they are "secure"
+					.set(
+						"Cookie",
+						generateSignedSessionCookieHeader({
+							fooState: {
+								installationIdPk: installation.id - 1,
+								gitHubClientId: envVars.GITHUB_CLIENT_ID
+							}
+						})
+					);
+				expect(res.status).toEqual(400);
+			});
+
+			it("populates session with github token, refresh token and server UUID", async () => {
 				const nockUrl = `/login/oauth/access_token?client_id=${gitHubServerApp.gitHubClientId}&client_secret=${await gitHubServerApp.getDecryptedGitHubClientSecret(jiraHost)}&code=barCode&state=fooState`;
 				nock(gitHubServerApp.gitHubBaseUrl)
 					.get(nockUrl)
 					.matchHeader("accept", "application/json")
 					.matchHeader("content-type", "application/json")
 					.reply(200, {
-						access_token: "behold!"
+						access_token: "behold!",
+						refresh_token: "my-refresh-token"
 					});
 
 				const app = await getFrontendApp();
@@ -97,15 +150,20 @@ describe("github-oauth-router", () => {
 					.set(
 						"Cookie",
 						generateSignedSessionCookieHeader({
-							jiraHost,
-							fooState: "/my-redirect",
-							isJiraAdmin: true
+							fooState: {
+								postLoginRedirectUrl: "/my-redirect",
+								installationIdPk: installation.id,
+								gitHubClientId: gitHubServerApp.gitHubClientId,
+								gitHubServerUuid: gitHubServerApp.uuid
+							}
 						})
 					)
 				;
 				const { session } = parseCookiesAndSession(response);
 				expect(response.status).toEqual(302);
 				expect(session["githubToken"]).toStrictEqual("behold!");
+				expect(session["githubRefreshToken"]).toStrictEqual("my-refresh-token");
+				expect(session["gitHubUuid"]).toStrictEqual(gitHubServerApp.uuid);
 				expect(response.headers.location).toEqual("/my-redirect");
 			});
 		});
@@ -146,17 +204,22 @@ describe("github-oauth-router", () => {
 						})
 					);
 				const session = parseCookiesAndSession(response).session!;
-				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] === "/github/configuration?"
-				)![0];
-				expect(state).toBeDefined();
+				const stateKey = findOAuthStateKeyInSession(session);
+				expect(stateKey.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
-				expect(response.headers.location).toStrictEqual(
+				const oauthState = findOAuthStateInSession(session) as any;
+				expect(oauthState).toStrictEqual({
+					installationIdPk: installation.id,
+					postLoginRedirectUrl: "/github/configuration?",
+					gitHubClientId: envVars.GITHUB_CLIENT_ID
+				});
+				const redirectUrl = response.headers.location;
+				expect(redirectUrl).toStrictEqual(
 					`https://github.com/login/oauth/authorize?client_id=${
 						envVars.GITHUB_CLIENT_ID
 					}&scope=user%20repo&redirect_uri=${
 						encodeURIComponent("https://test-github-app-instance.com/github/callback")
-					}&state=${state}`);
+					}&state=${stateKey}`);
 			});
 		});
 
@@ -178,17 +241,25 @@ describe("github-oauth-router", () => {
 						})
 					);
 				const session = parseCookiesAndSession(response).session!;
-				const state = Object.entries(session).find((keyValue) =>
-					keyValue[1] === "/github/configuration?"
-				)![0];
-				expect(state).toBeDefined();
 				expect(response.status).toEqual(302);
+
+				const stateKey = findOAuthStateKeyInSession(session);
+				expect(stateKey.length).toBeGreaterThan(6);
+				expect(response.status).toEqual(302);
+				const oauthState = findOAuthStateInSession(session) as any;
+
+				expect(oauthState).toStrictEqual({
+					installationIdPk: installation.id,
+					postLoginRedirectUrl: "/github/configuration?",
+					gitHubClientId: gitHubServerApp.gitHubClientId,
+					gitHubServerUuid: gitHubServerApp.uuid
+				});
 				expect(response.headers.location).toStrictEqual(
 					`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=${
 						gitHubServerApp.gitHubClientId
 					}&scope=user%20repo&redirect_uri=${
 						encodeURIComponent(`https://test-github-app-instance.com/github/${gitHubServerApp.uuid}/callback`)
-					}&state=${state}`);
+					}&state=${stateKey}`);
 			});
 		});
 	});
