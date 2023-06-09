@@ -89,7 +89,7 @@ type Response = {
 	repositories: WorkspaceRepo[]
 }
 
-const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumberOfRepos: number): Response => {
+const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumberOfRepos: number, subscriptions: Subscription[]): Response => {
 	const response = {
 		success: true,
 		repositories: [] as { id: string; name: string; workspaceId: string }[]
@@ -103,7 +103,7 @@ const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumb
 		const workspace = {
 			id: repository.repoId.toString(),
 			name: repository.repoName,
-			workspaceId: repository.subscriptionId.toString()
+			workspaceId: subscriptions[0].gitHubInstallationId.toString()
 		};
 
 		response.repositories.push(workspace);
@@ -146,17 +146,17 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
-				workspaceId: repoOne.subscriptionId.toString()
+				workspaceId: subscriptions[0].gitHubInstallationId.toString()
 			},
 			{
 				id: repoTwo.repoId.toString(),
 				name: repoTwo.repoName,
-				workspaceId: repoTwo.subscriptionId.toString()
+				workspaceId: subscriptions[0].gitHubInstallationId.toString()
 			},
 			{
 				id: repoThree.repoId.toString(),
 				name: repoThree.repoName,
-				workspaceId: repoThree.subscriptionId.toString()
+				workspaceId: subscriptions[1].gitHubInstallationId.toString()
 			}
 		]
 	};
@@ -223,24 +223,24 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
-				workspaceId: repoOne.subscriptionId.toString()
+				workspaceId: subscriptions[0].gitHubInstallationId.toString()
 			},
 			{
 				id: repoTwo.repoId.toString(),
 				name: repoTwo.repoName,
-				workspaceId: repoTwo.subscriptionId.toString()
+				workspaceId: subscriptions[0].gitHubInstallationId.toString()
 			},
 			{
 				id: repoThree.repoId.toString(),
 				name: repoThree.repoName,
-				workspaceId: repoThree.subscriptionId.toString()
+				workspaceId: subscriptions[1].gitHubInstallationId.toString()
 			}
 		]
 	};
 };
 
 const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions: Subscription[]) => {
-	const repoOne = await RepoSyncState.create({
+	await RepoSyncState.create({
 		subscriptionId: subscriptions[0].id,
 		repoId: 1,
 		repoName: "new-repo",
@@ -249,7 +249,7 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 		repoUrl: "http://github.internal.atlassian.com/atlassian/new-repo"
 	});
 
-	const repoTwo = await RepoSyncState.create({
+	await RepoSyncState.create({
 		subscriptionId: subscriptions[0].id,
 		repoId: 2,
 		repoName: "another-new-repo",
@@ -291,12 +291,12 @@ const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions
 			{
 				id: "676974687562696e7465726e616c61746c61737369616e636f6d-1",
 				name: "new-repo",
-				workspaceId: repoOne.subscriptionId.toString()
+				workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-1"
 			},
 			{
 				id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
 				name: "another-new-repo",
-				workspaceId: repoTwo.subscriptionId.toString()
+				workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-1"
 			}
 		]
 	};
@@ -481,12 +481,12 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: "1",
 					name: "repo1",
-					workspaceId: subscriptions[0].id.toString()
+					workspaceId: subscriptions[0].gitHubInstallationId.toString()
 				},
 				{
 					id: "2",
 					name: "repo2",
-					workspaceId: subscriptions[0].id.toString()
+					workspaceId: subscriptions[0].gitHubInstallationId.toString()
 				}
 			]
 		};
@@ -497,12 +497,12 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: "676974687562696e7465726e616c61746c61737369616e636f6d-3",
 					name: "repo3",
-					workspaceId: subscriptions[1].id.toString()
+					workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-2"
 				},
 				{
 					id: "676974687562696e7465726e616c61746c61737369616e636f6d-4",
 					name: "repo4",
-					workspaceId: subscriptions[2].id.toString()
+					workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-3"
 				}
 			]
 		};
@@ -539,7 +539,7 @@ describe("Workspaces Repositories Get", () => {
 		const totalNumberOfRepos = 34;
 		const subscriptions = await createSubscriptions(jiraHost, 1);
 		const repositories = await createMultipleRepositoriesForOneSubscription(subscriptions[0].id, totalNumberOfRepos);
-		const response = generateMockResponse(repositories, totalNumberOfRepos);
+		const response = generateMockResponse(repositories, totalNumberOfRepos, subscriptions);
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo`)

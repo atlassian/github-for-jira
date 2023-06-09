@@ -3,6 +3,7 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getGitHubInstallationId } from "routes/jira/workspaces/jira-workspaces-get";
 
 export interface WorkspaceRepo {
 	id: string,
@@ -64,12 +65,13 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 
 	const repositories: WorkspaceRepo[] = repos ? repos.map((repo) => {
 		const { repoId, repoName, subscriptionId, repoUrl } = repo;
+		const gitHubInstallationId = getGitHubInstallationId(subscriptions, subscriptionId);
 		const baseUrl = new URL(repoUrl).origin;
 
 		return {
 			id: transformRepositoryId(repoId, baseUrl),
 			name: repoName,
-			workspaceId: subscriptionId.toString()
+			workspaceId: transformRepositoryId(gitHubInstallationId, baseUrl)
 		};
 	}) : [];
 
