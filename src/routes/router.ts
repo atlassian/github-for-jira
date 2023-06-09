@@ -33,7 +33,7 @@ const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: Next
 RootRouter.use(Sentry.Handlers.requestHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
-RootRouter.use(urlencoded({ extended: false }));
+RootRouter.use(urlencoded({ extended: true }));
 RootRouter.use(json({
 	limit: "30mb", //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
 	verify: (req: Request, _: Response, buf) => {

@@ -8,6 +8,7 @@ import { Installation } from "models/installation";
 import { encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, Workspace } from "routes/jira/workspaces/jira-workspaces-get";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
 	const subscriptions: Subscription[] = [];
@@ -48,7 +49,7 @@ const createRepositories = async (subscriptions: Subscription[]): Promise<RepoSy
 			repoName: "testing-repo",
 			repoOwner: repoOwner,
 			repoFullName: `${repoOwner}/testing-repo`,
-			repoUrl: `github.com/${repoOwner}/testing-repo`
+			repoUrl: `https://github.com/${repoOwner}/testing-repo`
 		});
 
 		repositories.push(repository);
@@ -64,7 +65,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 		repoName: "github-for-jira",
 		repoOwner: "atlas",
 		repoFullName: "atlas/github-for-jira",
-		repoUrl: "github.com/atlas/github-for-jira"
+		repoUrl: "http://my-internal-github.com/atlas/github-for-jira"
 	});
 
 	await RepoSyncState.create({
@@ -73,7 +74,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 		repoName: "another-repo",
 		repoOwner: "atlas",
 		repoFullName: "atlas/another-repo",
-		repoUrl: "github.com/atlas/another-repo"
+		repoUrl: "http://my-internal-github.com/atlas/another-repo"
 	});
 
 	await RepoSyncState.create({
@@ -82,7 +83,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 		repoName: "my-repo",
 		repoOwner: "notamatch",
 		repoFullName: "notamatch/my-repo",
-		repoUrl: "github.com/notamatch/my-repo"
+		repoUrl: "https://github.com/notamatch/my-repo"
 	});
 
 	await RepoSyncState.create({
@@ -91,7 +92,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 		repoName: "spike",
 		repoOwner: "anotheratlasmatch",
 		repoFullName: "anotheratlasmatch/spike",
-		repoUrl: "github.com/atlassian/spike"
+		repoUrl: "https://github.com/atlassian/spike"
 	});
 
 	await RepoSyncState.create({
@@ -100,7 +101,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 		repoName: "testing-repo",
 		repoOwner: "anotheratlasmatch",
 		repoFullName: "anotheratlasmatch/testing-repo",
-		repoUrl: "github.com/anotheratlasmatch/testing-repo"
+		repoUrl: "https://github.com/anotheratlasmatch/testing-repo"
 	});
 };
 
@@ -124,10 +125,12 @@ const generateMockResponse = (subscriptions: Subscription[], repositories: RepoS
 	}
 
 	for (let i = 0; i < limit; i++) {
-		const subscription = subscriptions[i];
 		const repository = repositories[i];
+		const subscription = subscriptions[i];
+		const baseUrl = new URL(repository.repoUrl).origin;
+
 		const workspace = {
-			id: subscription.id.toString(),
+			id: transformRepositoryId(subscription.gitHubInstallationId, baseUrl),
 			name: repository.repoOwner,
 			canCreateContainer: false
 		};
@@ -234,12 +237,12 @@ describe("Workspaces Get", () => {
 			success:true,
 			workspaces: [
 				{
-					id: subscriptions[0].id.toString(),
+					id: "6d79696e7465726e616c676974687562636f6d-1",
 					name: "atlas",
 					canCreateContainer: false
 				},
 				{
-					id: subscriptions[2].id.toString(),
+					id: subscriptions[2].gitHubInstallationId.toString(),
 					name: "anotheratlasmatch",
 					canCreateContainer: false
 				}
