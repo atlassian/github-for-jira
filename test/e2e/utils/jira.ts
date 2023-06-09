@@ -68,25 +68,15 @@ export const jiraAppUninstall = async (page: Page): Promise<Page> => {
 
 export const jiraCreateProject = async (page: Page, projectId: string): Promise<void> => {
 	await page.goto(data.urls.projects);
-	// await page.click("[data-test-id='global-pages.directories.projects-directory-v2.create-projects-button.button.button']");
-	// await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button'][aria-label='Kanban']");
-	// await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
-	// await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
-	// await page.fill("[data-test-id='project-create.create-form.name-field.input'] input", projectId);
-	// await page.fill("[data-test-id='project-create.create-form.advanced-dropdown.key-field.input-wrapper'] input", projectId);
-	// await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
-
 	// V3 flow for future - apparently our e2e instance is still on v2
 	await page.click("[data-testid='global-pages.directories.projects-directory-v3.create-projects-button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
 	await page.fill("[id='project-create.create-form.name-field.input']", projectId);
-	await page.click("[data-testid='project-access.field.button-trigger']");
-	await page.locator("[data-testid='project-access.field.dropdown-menu--content'] [data-testid='project-access.field.option']").nth(2).click();
-	await page.fill("[id='project-create.create-form.advanced-dropdown.key-field.input']", projectId);
-	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button'] button");
-	await page.waitForSelector(":has-text('Jira project successfully created')");
+	// Waiting for the Issue Key to be filled
+	await page.waitForTimeout(2000);
+	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
 };
 
 export const jiraRemoveProject = async (page: Page, projectId: string): Promise<boolean> => {
