@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
+import {
+	GithubAuthMiddleware,
+	GithubOAuthCallbackGet, GithubOAuthLoginGet,
+	OAUTH_CALLBACK_SUBPATH
+} from "./github-oauth";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 import { GithubSetupRouter } from "routes/github/setup/github-setup-router";
@@ -19,7 +23,25 @@ import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
+
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+// We want to restrict the tail of OAuth flow to the same scope as the starting point had (where GitHubOAuthMiddleware
+// fired), therefore we are not including neither jira*middlewares nor github*middlewares. GithubOAuthCallbackGet will
+// get all the data needed from session (which is a secure storage) to obtain the token and then redirect to the
+// original URL with all the further restrictions that are in place there.
+//
+// We don't want to artificially limit ourselves by including those middlewares, because there are scenarios when
+// OAuth flow was triggered outside of Jira admin scope (e.g. create-branch, or approve-connection).
+//
+// As a mental model, consider it as a logical continuation of the GitHubOAuthGet, where the state was temporarily serialized
+// and saved to a secure storage to fetch some data from GitHub asynchronosuly.
+//
+// This route could've been placed before :UUID parameter (because we are not using it, and shouldn't be using!
+// The mental model is that we are continuing GitHubOAuthGet from where it stopped, not adding anything outside),
+// however it is required here by historical reasons (initially we implemented it with :UUID, which means
+// our customers have some GitHub Enterprise apps that have callback URLs with UUID).
+subRouter.use(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
 
 // Webhook Route
 subRouter.post("/webhooks",
@@ -36,7 +58,7 @@ subRouter.use("/branch", csrfMiddleware, GithubBranchRouter);
 
 subRouter.use(jiraAdminPermissionsMiddleware); // This must stay after jiraSymmetricJwtMiddleware
 
-subRouter.use(GithubOAuthRouter);
+subRouter.use("/login",  GithubOAuthLoginGet);
 
 subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
 
