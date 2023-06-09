@@ -328,36 +328,3 @@ $(document).ready(function () {
 		}
 	});
 });
-
-// $(".test-button").click(function(event) {
-// 	event.preventDefault();
-// 	const path = "/jira/workspaces/repositories/associate"
-// 	$.ajax({
-// 		type: "POST",
-// 		url: path,
-// 		data: {
-// 			id: "638027962"
-// 		},
-// 		success: function() {
-// 			console.log("Success")
-// 		},
-// 		error: function (error) {
-// 			console.error("Error: ", error)
-// 		},
-// 	});
-// });
-
-$(".test-button").click(function(event) {
-	event.preventDefault();
-	const path = "/jira/workspaces/search?searchQuery=org"
-	$.ajax({
-		type: "GET",
-		url: path,
-		success: function() {
-			console.log("Success")
-		},
-		error: function (error) {
-			console.error("Error: ", error)
-		},
-	});
-});
