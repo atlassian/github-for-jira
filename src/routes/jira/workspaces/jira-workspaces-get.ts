@@ -3,6 +3,7 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Errors } from "config/errors";
 import { paginatedResponse } from "utils/paginate-response";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 
 export type Workspace = {
 	id: string,
@@ -11,22 +12,30 @@ export type Workspace = {
 }
 
 const DEFAULT_PAGE_NUMBER = 1; // Current page
-export const DEFAULT_LIMIT = 20; // Number of items per page
+export const DEFAULT_LIMIT = 20; // Number of items per page\
+
+export const getGitHubInstallationId = (subscriptions: Subscription[], subscriptionId: number): number => {
+	const matchingSubscription = subscriptions.find(sub => sub.id === subscriptionId);
+	return matchingSubscription!.gitHubInstallationId;
+};
 
 const findMatchingOrgs = async (subscriptions: Subscription[], orgName?: string): Promise<Workspace[]> => {
 	const matchingRepos = await Promise.all(subscriptions.map(async (subscription: Subscription) => {
-		return orgName ?
-			await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName) :
-			await RepoSyncState.findOneFromSubscription(subscription);
+		return orgName
+			? await RepoSyncState.findByOrgNameAndSubscriptionId(subscription, orgName)
+			: await RepoSyncState.findOneFromSubscription(subscription);
 	}));
 
 	const matchedOrgs = matchingRepos
 		.filter((org): org is RepoSyncState => org !== null)
 		.map(org => {
-			const { subscriptionId, repoOwner } = org;
+			const { subscriptionId, repoOwner, repoUrl } = org;
+			const gitHubInstallationId = getGitHubInstallationId(subscriptions, subscriptionId);
+			const baseUrl = new URL(repoUrl).origin;
+			const transformedId = transformRepositoryId(gitHubInstallationId, baseUrl);
 
 			return {
-				id: subscriptionId.toString(),
+				id: transformedId,
 				name: repoOwner,
 				canCreateContainer: false
 			};
