@@ -146,6 +146,17 @@ export type pullRequestNode = {
 			};
 		}[];
 	};
+	reviewRequests: {
+		nodes: {
+			author: {
+				login: string;
+				avatarUrl: string;
+				url: string;
+				name?: string;
+				email?: string;
+			};
+		}[];
+	};
 };
 
 export type pullRequestQueryResponse = {
@@ -248,6 +259,22 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 							}
 						}
 					}
+					reviewRequests(first: 100) {
+            nodes {
+              requestedReviewer {
+                __typename
+                ... on User {
+                  login
+                  avatarUrl
+                  url
+                  ... on User {
+                    name
+                    email
+                  }
+                }
+              }
+            }
+          }
 				}
 			}
     }

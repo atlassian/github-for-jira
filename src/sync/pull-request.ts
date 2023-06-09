@@ -116,7 +116,7 @@ const doGetPullRequestTask = async (
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
 
 	const pullRequests = response.repository?.pullRequests?.edges
-		?.map((edge) => transformPullRequest(jiraHost, edge.node, edge.node.reviews, logger))
+		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");

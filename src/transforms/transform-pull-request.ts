@@ -159,7 +159,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, reviews?: pullRequestNode["reviews"], log?: Logger) => {
+export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log?: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	if (isEmpty(issueKeys) || !pullRequest.headRef.repository) {
@@ -169,6 +169,7 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 		}, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
 	}
+
 
 	try {
 		return {
@@ -180,7 +181,7 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 			id: pullRequest.number,
 			issueKeys,
 			lastUpdate: pullRequest.updatedAt,
-			reviewers: mapReviews(reviews?.nodes),
+			reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
 			sourceBranch: pullRequest.headRef?.name || "",
 			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
 			status: pullRequest.state,
@@ -194,8 +195,9 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 	}
 };
 
-const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = []): JiraReview[] => {
-	const sortedReviews = orderBy(reviews, "submittedAt", "desc");
+const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {
+	const allReviews = [...reviews || [], ...reviewRequests || []] as pullRequestNode["reviews"]["nodes"];
+	const sortedReviews = orderBy(allReviews, "submittedAt", "desc");
 	const usernames: Record<string, any> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
