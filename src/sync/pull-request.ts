@@ -58,7 +58,7 @@ export const getPullRequestTask = async (
 	messagePayload: BackfillMessagePayload
 ) => {
 	if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string);
+		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string, perPage);
 	}
 
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
@@ -105,14 +105,15 @@ const doGetPullRequestTask = async (
 	jiraHost: string,
 	repository: Repository,
 	messagePayload: BackfillMessagePayload,
-	cursor?: string
+	cursor?: string,
+	perPage?: number
 ) => {
 	logger.info("Syncing PRs: started");
 	const startTime = Date.now();
 
 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 
-	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince,100, cursor);
+	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
 
 	const pullRequests = response.repository?.pullRequests?.edges
 		?.map((edge) => transformPullRequest(jiraHost, edge.node, edge.node.reviews, logger))
