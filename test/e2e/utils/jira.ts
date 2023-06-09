@@ -77,6 +77,8 @@ export const jiraCreateProject = async (page: Page, projectId: string): Promise<
 	// Waiting for the Issue Key to be filled
 	await page.waitForTimeout(2000);
 	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
+	// Waiting for the Project creation, don't care about the screens after that
+	await page.waitForTimeout(5000);
 };
 
 export const jiraRemoveProject = async (page: Page, projectId: string): Promise<boolean> => {
