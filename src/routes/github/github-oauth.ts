@@ -237,8 +237,8 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		// Everything's good, set it to res.locals
 		res.locals.githubToken = githubToken;
 		return next();
-	} catch (e) {
-		req.log.debug(`Github token is not valid.`);
+	} catch (err) {
+		req.log.info({ err }, `Github token is not valid.`);
 		if (req.session?.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
 			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, req.log);
