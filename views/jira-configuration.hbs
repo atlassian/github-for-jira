@@ -31,7 +31,6 @@
     <div class="jiraConfiguration">
       <header class="jiraConfiguration__header">
         <h1 class="jiraConfiguration__header__title">GitHub configuration</h1>
-
         {{#if hasConnections}}
           <button
               class="jiraConfiguration__header__title__cta ak-button ak-button__appearance-primary aui-button aui-dropdown2-trigger"
@@ -299,7 +298,6 @@
         {{> modal }}
       </section>
     </div>
-
     <script src="/public/js/jira-configuration.js" nonce="{{nonce}}"></script>
     <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
     <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
