@@ -4,6 +4,7 @@ import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { BulkSubmitRepositoryInfo } from "interfaces/jira";
 import { Subscription } from "models/subscription";
+import sanitizeHtml from "sanitize-html";
 
 type RepoAndSubscription = RepoSyncState & Subscription;
 
@@ -36,7 +37,7 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 		return;
 	}
 
-	const repo = await findMatchingRepository(Number(repoId), jiraHost);
+	const repo = await findMatchingRepository(Number(sanitizeHtml(repoId)), jiraHost);
 	const transformedRepository = repo ? transformedRepo(repo): {};
 
 	const payload = {

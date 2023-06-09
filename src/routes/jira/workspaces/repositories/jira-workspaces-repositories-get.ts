@@ -4,6 +4,7 @@ import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getGitHubInstallationId } from "routes/jira/workspaces/jira-workspaces-get";
+import sanitizeHtml from "sanitize-html";
 
 export interface WorkspaceRepo {
 	id: string,
@@ -46,11 +47,10 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
 	const { jiraHost } = res.locals;
-	const subscriptionId = Number(req.query?.workspaceId);
-	const repoName = req.query?.searchQuery as string;
-	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
-
+	const subscriptionId = Number(sanitizeHtml(req.query?.workspaceId));
+	const repoName = sanitizeHtml(req.query?.searchQuery as string);
+	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {

@@ -4,6 +4,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Errors } from "config/errors";
 import { paginatedResponse } from "utils/paginate-response";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import sanitizeHtml from "sanitize-html";
 
 export type Workspace = {
 	id: string,
@@ -56,9 +57,10 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 		return;
 	}
 
-	const orgName = req.query?.searchQuery as string;
-	const page = Number(req.query?.page) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(req.query?.limit) || DEFAULT_LIMIT;
+	const orgName = sanitizeHtml(req.query?.searchQuery as string);
+	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
+
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 
 	res.status(200).json({ success: true, workspaces: paginatedResponse(page, limit, matchedOrgs) });
