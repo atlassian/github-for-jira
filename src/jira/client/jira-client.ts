@@ -257,7 +257,6 @@ export const getJiraClient = async (
 				},
 				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
-
 					if (
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches) ||
@@ -391,7 +390,6 @@ const batchedBulkUpdate = async (
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
-
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 	const commitChunks: JiraCommit[][] = [];
 	do {

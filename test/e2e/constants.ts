@@ -30,7 +30,7 @@ export const testData: TestData = {
 			connectJson: `${e2eEnvVars.APP_URL}/jira/atlassian-connect.json`,
 			appMainPage: `${e2eEnvVars.APP_URL}/plugins/servlet/ac/${e2eEnvVars.APP_KEY}/gh-addon-admin`,
 			projects: `${e2eEnvVars.ATLASSIAN_URL}/jira/projects`,
-			project: (id?: string) => `${e2eEnvVars.ATLASSIAN_URL}/projects/${id || projectId()}`,
+			project: (id?: string) => `${e2eEnvVars.ATLASSIAN_URL}/browse/${id || projectId()}`,
 			projectDetails: (id?: string) => `${e2eEnvVars.ATLASSIAN_URL}/jira/software/projects/${id || projectId()}/settings/details`,
 			browse: (id: string) => `${e2eEnvVars.ATLASSIAN_URL}/browse/${id}`
 		},

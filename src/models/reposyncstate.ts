@@ -1,4 +1,19 @@
-import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions, JSON } from "sequelize";
+import {
+	BOOLEAN,
+	CountOptions,
+	CreateOptions,
+	DataTypes,
+	DATE,
+	DestroyOptions,
+	FindOptions,
+	INTEGER,
+	Model,
+	Op,
+	STRING,
+	UpdateOptions,
+	JSON,
+	QueryTypes
+} from "sequelize";
 import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
@@ -156,6 +171,26 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 	}
 
+	static async findRepoByRepoIdAndJiraHost(repoId: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoId\" = :repoId ",
+			{
+				replacements: { jiraHost, repoId },
+				type: QueryTypes.SELECT
+			}
+		);
+
+		if (results.length === 0) {
+			return null;
+		}
+
+		return results[0] as RepoSyncState & Subscription;
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
@@ -217,6 +252,50 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			}
 		});
 	}
+
+	static async findRepositoriesBySubscriptionIdsAndRepoName(
+		jiraHost: string,
+		subscriptionIds: number | number[],
+		page: number,
+		limit: number,
+		repoName?: string
+	): Promise<RepoSyncState[] | null> {
+		const subscriptionIdsArray = Array.isArray(subscriptionIds) ? subscriptionIds : [subscriptionIds];
+		const offset = (page - 1) * limit;
+		const replacements = {
+			jiraHost,
+			subscriptionIds: subscriptionIdsArray,
+			repoName,
+			offset,
+			limit
+		};
+
+		const query = `
+			SELECT DISTINCT ON (rss."id") rss.*
+			FROM "Subscriptions" s
+			LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+			WHERE s."jiraHost" = :jiraHost
+				AND s."id" IN (:subscriptionIds)
+				${replacements.repoName ? "AND rss.\"repoName\" ILIKE :repoName" : ""}
+			ORDER BY rss."id", rss."updatedAt" DESC
+			OFFSET :offset
+			LIMIT :limit
+		`;
+
+		const repositories = await this.sequelize!.query(query, {
+			replacements: {
+				jiraHost,
+				subscriptionIds: subscriptionIdsArray,
+				repoName: replacements.repoName ? `%${replacements.repoName}%` : undefined,
+				offset,
+				limit
+			},
+			type: QueryTypes.SELECT
+		});
+
+		return repositories as RepoSyncState[];
+	}
+
 
 	// Nullify statuses and cursors to start anew
 	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {

@@ -5,6 +5,7 @@ export enum Errors {
 	MISSING_SUBSCRIPTION = "No Subscription found",
 	MISSING_GITHUB_APP_CONFIG = "No gitHubAppConfig found",
 	IP_ALLOWLIST_MISCONFIGURED = "IP Allowlist Misconfigured",
-	MISSING_GITHUB_APP_NAME = "Github App name is missing"
+	MISSING_GITHUB_APP_NAME = "Github App name is missing",
+	MISSING_REPOSITORY_ID = "Missing repository ID"
 }
 
