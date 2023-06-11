@@ -24,3 +24,11 @@ export const parseCookiesAndSession = (response: Response): { cookies: any, sess
 	return { cookies: parsedCookies };
 };
 
+export const 	findOAuthStateInSession = (session: any) => Object.entries(session).find(keyValue =>
+	keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
+)![1];
+
+export const 	findOAuthStateKeyInSession = (session: any) => Object.entries(session).find(keyValue =>
+	keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
+)![0];
+
