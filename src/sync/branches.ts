@@ -26,7 +26,7 @@ export const getBranchTask = async (
 
 	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
 
-	logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.branches?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.branches?.length }, "Backfill task complete");
 
 	return {
 		edges,

@@ -127,7 +127,7 @@ const doGetPullRequestTask = async (
 	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -161,7 +161,7 @@ const doGetPullRequestTask = async (
 		)
 	).filter((value) => !!value);
 
-	logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
 
 	return {
 

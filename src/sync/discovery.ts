@@ -31,7 +31,7 @@ export const getRepositoryTask = async (
 
 	if (!subscription) {
 		logger.warn({ jiraHost, installationId, gitHubAppId }, "Subscription has been removed, ignoring repository task.");
-		logger.info({ endTime: Date.now() - startTime, RepositoriesLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: 0 }, "Backfill task complete");
 		return { edges: [], jiraPayload: undefined };
 	}
 
@@ -61,7 +61,7 @@ export const getRepositoryTask = async (
 		totalCount,
 		nextCursor
 	}, `Repository Discovery Page Information`);
-	logger.info({ endTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
 	const metrics = {

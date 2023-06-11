@@ -140,7 +140,7 @@ export const getDeploymentTask = async (
 
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -148,7 +148,7 @@ export const getDeploymentTask = async (
 	}
 
 	if (!deployments?.length) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges,
 			jiraPayload: undefined
@@ -163,7 +163,7 @@ export const getDeploymentTask = async (
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
 
-	logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.deployments?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.deployments?.length }, "Backfill task complete");
 
 	return {
 		edges,

@@ -81,7 +81,7 @@ const doGetBuildTask = async (
 	const { workflow_runs } = data;
 
 	if (areAllBuildsEarlierThanFromDate(workflow_runs, fromDate)) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -93,7 +93,7 @@ const doGetBuildTask = async (
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
 	if (!workflow_runs?.length) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -107,7 +107,7 @@ const doGetBuildTask = async (
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
 	if (!builds?.length) {
-		logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: edgesWithCursor,
 			jiraPayload: undefined
@@ -119,7 +119,7 @@ const doGetBuildTask = async (
 		builds
 	};
 
-	logger.info({ endTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload
