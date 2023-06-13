@@ -7,6 +7,10 @@ RUN apk add g++ make python3
 RUN apk add --update --upgrade busybox libretls openssl zlib curl
 
 COPY . /app
+
+# Add this the service Dockerfile, at the final stage if multi-stage
+COPY --from=docker.atl-paas.net/sox/brahmos-deps/stress-ng:latest /usr/bin/stress-ng /usr/bin/stress-ng
+
 WORKDIR /app
 
 # Installing packages
