@@ -1,5 +1,5 @@
 # HOW TO USE ME?
-#
+# `python3 /Users/jkay/repos/github-for-jira/etc/scripts/generate-github-test-data.py
 # Generate a personal access token from GitHub(PAT)
 # replace ACCESS_TOKEN with the PAT
 # replace USERNAME with GitHub username
@@ -14,7 +14,7 @@ import random
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = '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'
+ACCESS_TOKEN = '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'
 
 # GitHub username
 USERNAME = 'joshkay10'
@@ -61,11 +61,13 @@ try:
     os.system('echo "# README" >> README.md')
     os.system('git add README.md')
 
+    print(f'Current working directory: {os.getcwd()}')
     # Add main.yml to .github/workflows directory
     workflow_file_name = 'main.yml'
     workflow_file_path = os.path.join(os.getcwd(), '.github', 'workflows', workflow_file_name)
     os.makedirs(os.path.dirname(workflow_file_path), exist_ok=True)
-    with open('build-and-deploy-workflow-example.yml', 'r') as source_file:
+
+    with open('../build-and-deploy-workflow-example.yml', 'r') as source_file:
         content = source_file.read()
         with open(workflow_file_path, 'w') as workflow_file:
             workflow_file.write(content)
