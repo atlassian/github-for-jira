@@ -102,7 +102,7 @@ const getInstallationsWithAdmin = async (
 
 		// TODO: we should register the request in a separate POST endpoint. Short-cutting corners now for the spike,
 		// TODO: but must be addressed before rolling out for everyone, to avoid polluting redis
-		if (await booleanFlag(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, jiraHost) && !isAdmin) {
+		if (await booleanFlag(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, jiraHost)) {
 			const payload: SubscriptionDeferredInstallPayload = {
 				installationIdPk,
 				gitHubInstallationId: installation.id,
