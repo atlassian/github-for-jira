@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { extractParsedPayload } from "utils/subscription-deferred-install-payload";
+import { extractSubscriptionDeferredInstallPayload } from "services/subscription-deferred-install-service";
 import { hasAdminAccess } from "services/subscription-installation-service";
 
 const escapeHtml = (unsafe: string) => {
@@ -12,7 +12,7 @@ const escapeHtml = (unsafe: string) => {
 };
 
 export const GithubSubscriptionDeferredInstallGet = async (req: Request, res: Response) => {
-	const payload = await extractParsedPayload(req);
+	const payload = await extractSubscriptionDeferredInstallPayload(req);
 	const { githubToken, installation } = res.locals;
 
 	if (!await hasAdminAccess(githubToken, installation.jiraHost, payload.gitHubInstallationId, req.log, payload.gitHubServerAppIdPk)) {
@@ -37,9 +37,12 @@ export const GithubSubscriptionDeferredInstallGet = async (req: Request, res: Re
 		`
 		<html>
 			<body>
-				<pre>
+				<p>
+					Do you approve connecting ${escapeHtml(payload.orgName)} (${escapeHtml(res.locals.gitHubAppConfig.hostname)}) to ${res.locals.jiraHost}?
+				</p>
+				<textarea>
 ${escapeHtml(JSON.stringify(payloadObjForReview, null, 2))}
-				</pre>
+				</textarea>
 				<form method="post">
 					<input type="submit" value="Approve" />
 				</form>

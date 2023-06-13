@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
-import { extractParsedPayload } from "utils/subscription-deferred-install-payload";
+import {
+	extractSubscriptionDeferredInstallPayload,
+	forgetSubscriptionDeferredInstallRequest
+} from "services/subscription-deferred-install-service";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 
 export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: Response) => {
-	const payload = await extractParsedPayload(req);
+	const payload = await extractSubscriptionDeferredInstallPayload(req);
 	const { githubToken, installation } = res.locals;
 
 	const result = await verifyAdminPermsAndFinishInstallation(
@@ -13,6 +16,8 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 		res.status(401).json(result);
 		return;
 	}
+
+	await forgetSubscriptionDeferredInstallRequest(req);
 
 	res.status(200).json({ ok: true });
 };

@@ -5,8 +5,7 @@ import { isNodeTest } from "utils/is-node-env";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
-	JIRA_INSTANCE_SECRETS = "jira-instance-secrets",
-	SUBSCRIPTION_DEFERRED_INSTALL = "subscription-deferred-install"
+	JIRA_INSTANCE_SECRETS = "jira-instance-secrets"
 }
 
 export type EncryptionContext = Record<string, string | number>;

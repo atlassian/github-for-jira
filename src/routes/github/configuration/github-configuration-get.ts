@@ -13,8 +13,10 @@ import { createInstallationClient, createUserClient } from "~/src/util/get-githu
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
-import { SubscriptionDeferredInstallPayload } from "utils/subscription-deferred-install-payload";
-import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
+import {
+	registerSubscriptionDeferredInstallPayloadRequest,
+	SubscriptionDeferredInstallPayload
+} from "services/subscription-deferred-install-service";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -98,15 +100,15 @@ const getInstallationsWithAdmin = async (
 
 		let deferredInstallUrl: string | undefined;
 
-		if (await booleanFlag(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, jiraHost) && !isAdmin) {
+		if (await booleanFlag(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, jiraHost)) {
 			const payload: SubscriptionDeferredInstallPayload = {
 				installationIdPk,
 				gitHubInstallationId: installation.id,
 				orgName: installation.account.login,
 				gitHubServerAppIdPk: gitHubAppId
 			};
-			const payloadUriComponent = encodeURIComponent(await EncryptionClient.encrypt(EncryptionSecretKeyEnum.SUBSCRIPTION_DEFERRED_INSTALL, JSON.stringify(payload), {}));
-			deferredInstallUrl = `${envVars.APP_URL}/github/${gitHubAppUuid ? (gitHubAppUuid + "/") : ""}subscription-deferred-install/request/${payloadUriComponent}`;
+			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
+			deferredInstallUrl = `${envVars.APP_URL}/github/${gitHubAppUuid ? (gitHubAppUuid + "/") : ""}subscription-deferred-install/request/${requestId}`;
 		}
 
 		return {

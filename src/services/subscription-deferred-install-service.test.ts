@@ -1,9 +1,9 @@
-import { extractParsedPayload, SubscriptionDeferredInstallPayload } from "utils/subscription-deferred-install-payload";
+import { extractSubscriptionDeferredInstallPayload, SubscriptionDeferredInstallPayload } from "services/subscription-deferred-install-service";
 import { Request } from "express";
 
 describe("extractParsedPayload", () => {
 	it("decrypt parses the payload from request", async () => {
-		expect(await extractParsedPayload({
+		expect(await extractSubscriptionDeferredInstallPayload({
 			params: {
 				payload: "encrypted:" + JSON.stringify({
 					installationIdPk: 1,
@@ -19,7 +19,7 @@ describe("extractParsedPayload", () => {
 	});
 
 	it("throws an exception when payload is invalid", async () => {
-		await expect(extractParsedPayload({
+		await expect(extractSubscriptionDeferredInstallPayload({
 			params: {
 				payload: "foo"
 			}

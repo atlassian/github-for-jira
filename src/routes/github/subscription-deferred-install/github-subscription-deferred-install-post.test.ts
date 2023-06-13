@@ -2,14 +2,18 @@ import { getFrontendApp } from "~/src/app";
 import { Installation } from "models/installation";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { SubscriptionDeferredInstallPayload } from "utils/subscription-deferred-install-payload";
+import {
+	extractSubscriptionDeferredInstallPayload,
+	registerSubscriptionDeferredInstallPayloadRequest,
+	SubscriptionDeferredInstallPayload
+} from "services/subscription-deferred-install-service";
 import { Subscription } from "models/subscription";
-import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import supertest from "supertest";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
+import { Request } from "express";
 
 jest.mock("config/feature-flags");
 jest.mock("services/subscription-installation-service");
@@ -37,18 +41,15 @@ describe("github-subscription-deferred-install-post", () => {
 		when(stringFlag).calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), expect.anything()).mockResolvedValue("user,repo");
 	});
 
-	const payloadToURIComponent = async (payload: any) =>
-		encodeURIComponent(await EncryptionClient.encrypt(EncryptionSecretKeyEnum.SUBSCRIPTION_DEFERRED_INSTALL, JSON.stringify(payload), { }));
-
 	describe("cloud", () => {
 
 		it("should not allow call with invalid payload", async () => {
 			const payload = {
 				foo: "bar"
-			};
+			} as unknown as SubscriptionDeferredInstallPayload;
 
 			const result = await supertest(app)
-				.post(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
@@ -63,18 +64,18 @@ describe("github-subscription-deferred-install-post", () => {
 		it("should validate UUID and not allow call if belongs to a different GitHub server", async () => {
 			const gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
 
 		it("should return 401 when not github token", async () => {
 			const result = await supertest(app)
-				.post(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(401);
 		});
 
-		it("should respond with 200 and trigger installation if all good", async () => {
+		it("should respond with 200, forget request and trigger installation if all good", async () => {
 			githubNock
 				.get(/.*/)
 				.matchHeader("Authorization", "Bearer myToken")
@@ -84,13 +85,20 @@ describe("github-subscription-deferred-install-post", () => {
 				.calledWith("myToken", installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, expect.anything())
 				.mockResolvedValue({ });
 
+			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
+
 			const result = await supertest(app)
-				.post(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.post(`/github/subscription-deferred-install/request/${requestId}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken"
 				}));
 
 			expect(result.status).toStrictEqual(200);
+			await expect(extractSubscriptionDeferredInstallPayload({
+				params: {
+					requestId
+				}
+			} as unknown as Request)).toReject();
 		});
 
 		it("should return 401 if not GitHub admin", async () => {
@@ -106,7 +114,7 @@ describe("github-subscription-deferred-install-post", () => {
 				});
 
 			const result = await supertest(app)
-				.post(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.post(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken"
 				}));
@@ -126,10 +134,10 @@ describe("github-subscription-deferred-install-post", () => {
 		it("should not allow call with invalid payload", async () => {
 			const payload = {
 				foo: "bar"
-			};
+			} as unknown as SubscriptionDeferredInstallPayload;
 
 			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
@@ -143,14 +151,14 @@ describe("github-subscription-deferred-install-post", () => {
 
 		it("should validate UUID and not allow call if belongs to a different GitHub server", async () => {
 			const result = await supertest(app)
-				.post(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
 
 		it("should return 401 when no GitHub token", async () => {
 			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(401);
 		});
 
@@ -165,7 +173,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.mockResolvedValue({ });
 
 			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken",
 					gitHubUuid: gitHubServerApp.uuid
@@ -185,7 +193,7 @@ describe("github-subscription-deferred-install-post", () => {
 				.mockResolvedValue({ error: "not admin" });
 
 			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.post(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken",
 					gitHubUuid: gitHubServerApp.uuid

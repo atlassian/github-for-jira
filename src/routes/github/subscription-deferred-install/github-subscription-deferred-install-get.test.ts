@@ -2,9 +2,11 @@ import { getFrontendApp } from "~/src/app";
 import { Installation } from "models/installation";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { SubscriptionDeferredInstallPayload } from "utils/subscription-deferred-install-payload";
+import {
+	registerSubscriptionDeferredInstallPayloadRequest,
+	SubscriptionDeferredInstallPayload
+} from "services/subscription-deferred-install-service";
 import { Subscription } from "models/subscription";
-import { EncryptionClient, EncryptionSecretKeyEnum } from "utils/encryption-client";
 import supertest from "supertest";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { when } from "jest-when";
@@ -37,18 +39,15 @@ describe("github-subscription-deferred-install-get", () => {
 		when(stringFlag).calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), expect.anything()).mockResolvedValue("user,repo");
 	});
 
-	const payloadToURIComponent = async (payload: any) =>
-		encodeURIComponent(await EncryptionClient.encrypt(EncryptionSecretKeyEnum.SUBSCRIPTION_DEFERRED_INSTALL, JSON.stringify(payload), { }));
-
 	describe("cloud", () => {
 
 		it("should not allow call with invalid payload", async () => {
 			const payload = {
 				foo: "bar"
-			};
+			} as unknown as SubscriptionDeferredInstallPayload;
 
 			const result = await supertest(app)
-				.get(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
@@ -63,14 +62,14 @@ describe("github-subscription-deferred-install-get", () => {
 		it("should validate UUID and not allow call if belongs to a different GitHub server", async () => {
 			const gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
 
 		it("should redirect to GitHub when not user token", async () => {
 			const result = await supertest(app)
-				.get(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(302);
 			expect(result.headers.location).toContain(`https://github.com/login/oauth/authorize?client_id=`);
 		});
@@ -86,15 +85,13 @@ describe("github-subscription-deferred-install-get", () => {
 				.mockResolvedValue(true);
 
 			const result = await supertest(app)
-				.get(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.get(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken"
 				}));
 
 			expect(result.status).toStrictEqual(200);
-			expect(result.text).toContain(installation.jiraHost);
-			expect(result.text).toContain("https://github.com");
-			expect(result.text).toContain(payload.orgName);
+			expect(result.text).toContain(`Do you approve connecting ${payload.orgName} (https://github.com) to ${installation.jiraHost}?`);
 		});
 
 		it("should return 401 if not GitHub admin", async () => {
@@ -108,7 +105,7 @@ describe("github-subscription-deferred-install-get", () => {
 				.mockResolvedValue(false);
 
 			const result = await supertest(app)
-				.get(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.get(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken"
 				}));
@@ -128,10 +125,10 @@ describe("github-subscription-deferred-install-get", () => {
 		it("should not allow call with invalid payload", async () => {
 			const payload = {
 				foo: "bar"
-			};
+			} as unknown as SubscriptionDeferredInstallPayload;
 
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
@@ -145,14 +142,14 @@ describe("github-subscription-deferred-install-get", () => {
 
 		it("should validate UUID and not allow call if belongs to a different GitHub server", async () => {
 			const result = await supertest(app)
-				.get(`/github/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});
 
 		it("should redirect to GitHub when not user token", async () => {
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`);
+				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(302);
 			expect(result.headers.location).toContain(`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=`);
 		});
@@ -168,16 +165,14 @@ describe("github-subscription-deferred-install-get", () => {
 				.mockResolvedValue(true);
 
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken",
 					gitHubUuid: gitHubServerApp.uuid
 				}));
 
 			expect(result.status).toStrictEqual(200);
-			expect(result.text).toContain(installation.jiraHost);
-			expect(result.text).toContain(gitHubServerApp.gitHubBaseUrl);
-			expect(result.text).toContain(payload.orgName);
+			expect(result.text).toContain(`Do you approve connecting ${payload.orgName} (${gitHubServerApp.gitHubBaseUrl}) to ${installation.jiraHost}?`);
 		});
 
 		it("should return 401 if not GitHub admin", async () => {
@@ -191,7 +186,7 @@ describe("github-subscription-deferred-install-get", () => {
 				.mockResolvedValue(false);
 
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await payloadToURIComponent(payload)}`)
+				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`)
 				.set("Cookie", generateSignedSessionCookieHeader({
 					githubToken: "myToken",
 					gitHubUuid: gitHubServerApp.uuid
