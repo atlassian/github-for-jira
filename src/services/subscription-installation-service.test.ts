@@ -1,7 +1,7 @@
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
+import { hasAdminAccess, verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 import { getLogger } from "config/logger";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { GitHubServerApp } from "models/github-server-app";
@@ -19,260 +19,344 @@ describe("subscription-installation-service", () => {
 		subscription = result.subscription;
 	});
 
-	describe("cloud", () => {
+	const mockGitHub = (config: { isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean}) => {
+		const cloudOrGheNock = config.isGhe ? gheApiNock : githubNock;
+		cloudOrGheNock
+			.get("/user")
+			.matchHeader("Authorization", "token myToken")
+			.reply(config.is500Error ? 500 : 200, {
+				login: "my-user"
+			});
 
-		it("returns a error when GitHub errors out", async () => {
-			githubNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(500, {
-					login: "my-user"
-				});
-
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				undefined,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
-		});
-
-		it("returns a error when the app was installed in User's org", async () => {
-			githubNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
-				});
-
-			githubNock
+		if (config.isInstalledInUserSpace !== undefined) {
+			cloudOrGheNock
 				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(200, {
 					account: {
 						login: "my-org"
 					},
-					target_type: "User"
+					target_type: config.isInstalledInUserSpace ? "User" : "org"
 				});
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				undefined,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
-		});
+		}
 
-		it("returns a error when the the user is not an admin", async () => {
-			githubNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
-				});
-
-			githubNock
+		if (config.isAdmin !== undefined) {
+			cloudOrGheNock
 				.get("/user/memberships/orgs/my-org")
 				.matchHeader("Authorization", "token myToken")
 				.reply(200, {
-					role: "user"
+					role: config.isAdmin ? "admin" : "user"
+				});
+		}
+	};
+
+
+	describe("verifyAdminPermsAndFinishInstallation", () => {
+
+		describe("cloud", () => {
+
+			it("returns a error when GitHub errors out", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: true
 				});
 
-			githubNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(200, {
-					account: {
-						login: "my-org"
-					},
-					target_type: "org"
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
+
+			it("returns a error when the app was installed in User's org", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: true
 				});
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				undefined,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
+
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
+
+			it("returns a error when the the user is not an admin", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: false
+				});
+
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
+
+			it("on success: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
+				});
+
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, undefined)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
+			});
 		});
 
-		it("on success: creates a Db record, kicks off sync and updates isConfigured state", async () => {
-			githubNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
+		describe("server", () => {
+			let gitHubServerApp: GitHubServerApp;
+
+			beforeEach(async () => {
+				gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
+			});
+
+			it("returns a error when GitHub errors out", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: true
 				});
 
-			githubNock
-				.get("/user/memberships/orgs/my-org")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					role: "admin"
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
+
+			it("returns a error when the app was installed in User's org", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: true
 				});
 
-			githubNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(200, {
-					account: {
-						login: "my-org"
-					},
-					target_type: "org"
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
+
+			it("returns a error when the the user is not an admin", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: false
 				});
 
-			jiraNock
-				.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
-				.reply(200);
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).toBeDefined();
+			});
 
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				undefined,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
+			it("on success: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
+				});
 
-			expect(result.error).not.toBeDefined();
-			expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, undefined)).toBeDefined();
-			expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
-				gitHubInstallationId: subscription.gitHubInstallationId + 1
-			}), expect.anything(), "full", undefined, undefined, {
-				source: "initial-sync"
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, gitHubServerApp.id)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
 			});
 		});
 	});
 
-	describe("server", () => {
-		let gitHubServerApp: GitHubServerApp;
+	describe("hasAdminAccess", () => {
+		describe("cloud", () => {
+			it("returns false github throws a error", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: true
+				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result).toStrictEqual(false);
+			});
 
-		beforeEach(async () => {
-			gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
+			it("returns false when the app was installed in User's org", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: true
+				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result).toStrictEqual(false);
+			});
+
+			it("returns false when the user is not an admin", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: false
+				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result).toStrictEqual(false);
+			});
+
+			it("returns true when the user is an admin", async () => {
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
+				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result).toStrictEqual(true);
+			});
 		});
 
-		it("returns a error when GitHub errors out", async () => {
-			gheApiNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(500, {
-					login: "my-user"
-				});
+		describe("server", () => {
+			let gitHubServerApp: GitHubServerApp;
 
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				gitHubServerApp.id,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
-		});
+			beforeEach(async () => {
+				gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
+			});
 
-		it("returns a error when the app was installed in User's org", async () => {
-			gheApiNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
+			it("returns false github throws a error", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: true
 				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test"),
+					gitHubServerApp.id
+				);
+				expect(result).toStrictEqual(false);
+			});
 
-			gheApiNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(200, {
-					account: {
-						login: "my-org"
-					},
-					target_type: "User"
+			it("returns false when the app was installed in User's org", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: true
 				});
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				gitHubServerApp.id,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
-		});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test"),
+					gitHubServerApp.id
+				);
+				expect(result).toStrictEqual(false);
+			});
 
-		it("returns a error when the the user is not an admin", async () => {
-			gheApiNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
+			it("returns false when the user is not an admin", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: false
 				});
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test"),
+					gitHubServerApp.id
+				);
+				expect(result).toStrictEqual(false);
+			});
 
-			gheApiNock
-				.get("/user/memberships/orgs/my-org")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					role: "user"
+			it("returns true when the user is an admin", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
 				});
-
-			gheApiNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(200, {
-					account: {
-						login: "my-org"
-					},
-					target_type: "org"
-				});
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				gitHubServerApp.id,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).toBeDefined();
-		});
-
-		it("on success: creates a Db record, kicks off sync and updates isConfigured state", async () => {
-			gheApiNock
-				.get("/user")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					login: "my-user"
-				});
-
-			gheApiNock
-				.get("/user/memberships/orgs/my-org")
-				.matchHeader("Authorization", "token myToken")
-				.reply(200, {
-					role: "admin"
-				});
-
-			gheApiNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
-				.matchHeader("Authorization", /^Bearer .+$/)
-				.reply(200, {
-					account: {
-						login: "my-org"
-					},
-					target_type: "org"
-				});
-			jiraNock
-				.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
-				.reply(200);
-			const result = await verifyAdminPermsAndFinishInstallation(
-				"myToken",
-				installation,
-				gitHubServerApp.id,
-				subscription.gitHubInstallationId + 1,
-				getLogger("test")
-			);
-			expect(result.error).not.toBeDefined();
-			expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, gitHubServerApp.id)).toBeDefined();
-			expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
-				gitHubInstallationId: subscription.gitHubInstallationId + 1
-			}), expect.anything(), "full", undefined, undefined, {
-				source: "initial-sync"
+				const result = await hasAdminAccess(
+					"myToken",
+					installation.jiraHost,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test"),
+					gitHubServerApp.id
+				);
+				expect(result).toStrictEqual(true);
 			});
 		});
 	});

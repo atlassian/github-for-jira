@@ -402,6 +402,16 @@ environmentOverrides:
             decryptingServices:
               - github-for-jira
 
+      - &cryptorSubscriptionDeferredInstall
+        name: subscription-deferred-install
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+
       - name: deployment-history-cache
         type: dynamo-db
         attributes:
@@ -521,8 +531,8 @@ environmentOverrides:
           routes: *blackholeSpammingIPs
 
       - *cryptorGithubServerAppSecrets
-
       - *cryptorJiraInstanceSecrets
+      - *cryptorSubscriptionDeferredInstall
 
   prod:
     config:
@@ -747,6 +757,14 @@ environmentOverrides:
             decryptingServices:
               - github-for-jira
       - name: jira-instance-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+      - name: subscription-deferred-install
         type: cryptor
         attributes:
           parameters:
