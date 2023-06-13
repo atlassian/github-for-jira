@@ -7,6 +7,9 @@ import {
 	GithubSubscriptionDeferredInstallGet
 } from "routes/github/subscription-deferred-install/github-subscription-deferred-install-get";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import {
+	GithubSubscriptionDeferredInstallPost
+} from "routes/github/subscription-deferred-install/github-subscription-deferred-install-post";
 
 const GithubSubscriptionDeferredInstallRouter = Router({ mergeParams: true });
 
@@ -70,6 +73,8 @@ subRouter.use(validateGitHubConfig);
 subRouter.use(GithubAuthMiddleware);
 
 subRouter.get("/", GithubSubscriptionDeferredInstallGet);
+subRouter.post("/", GithubSubscriptionDeferredInstallPost);
+
 export default GithubSubscriptionDeferredInstallRouter;
 
 

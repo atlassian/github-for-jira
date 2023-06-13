@@ -1,6 +1,7 @@
 import { envVars } from "config/env";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { retry } from "ts-retry-promise";
+import { isNodeTest } from "utils/is-node-env";
 
 export enum EncryptionSecretKeyEnum {
 	GITHUB_SERVER_APP = "github-server-app-secrets",
@@ -18,8 +19,11 @@ interface DecryptResponse {
 	plainText: string;
 }
 
+// We don't want to sleep in tests
+const DELAY = isNodeTest() ? 10 : 500;
+
 /**
- * This client calling using Cryptor side-car to encrypt/decrypt data.
+ * This client calls Cryptor side-car to encrypt/decrypt data.
  *
  * How to use:
  *
@@ -44,7 +48,7 @@ export class EncryptionClient {
 				encryptionContext
 			});
 			return response.data.cipherText;
-		}, { retries: 5, delay: 500 });
+		}, { retries: 5, delay: DELAY });
 	}
 
 	static async decrypt(cipherText: string, encryptionContext: EncryptionContext = {}): Promise<string> {
@@ -54,7 +58,7 @@ export class EncryptionClient {
 				encryptionContext
 			});
 			return response.data.plainText;
-		}, { retries: 5, delay: 500 });
+		}, { retries: 5, delay: DELAY });
 	}
 
 	static async healthcheck(): Promise<AxiosResponse> {

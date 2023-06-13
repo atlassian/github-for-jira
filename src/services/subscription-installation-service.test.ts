@@ -19,8 +19,11 @@ describe("subscription-installation-service", () => {
 		subscription = result.subscription;
 	});
 
-	const mockGitHub = (config: { isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean}) => {
+	const mockGitHub = (config: {
+		isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean, gitHubInstallationId? : number
+	}) => {
 		const cloudOrGheNock = config.isGhe ? gheApiNock : githubNock;
+		const gitHubInstallationId = config.gitHubInstallationId || (subscription.gitHubInstallationId + 1);
 		cloudOrGheNock
 			.get("/user")
 			.matchHeader("Authorization", "token myToken")
@@ -30,7 +33,7 @@ describe("subscription-installation-service", () => {
 
 		if (config.isInstalledInUserSpace !== undefined) {
 			cloudOrGheNock
-				.get("/app/installations/" + (subscription.gitHubInstallationId + 1))
+				.get("/app/installations/" + gitHubInstallationId)
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(200, {
 					account: {
