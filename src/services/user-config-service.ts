@@ -18,10 +18,7 @@ const MAX_SERVICE_ID_COUNT = 100;
  * This function is meant to be called whenever there is a change in the repository so we can check
  * if the config file has changed.
  *
- * @param subscription the subscription to which the repository belongs.
- * @param repositoryId the ID of the repository.
- * @param githubInstallationId the ID of the installation to which the repository belongs.
- * @param modifiedFiles list of modified files (added, modified, or removed). The config will only be updated if this list contains
+ * The `modifiedFiles` in the args, is a list of modified files (added, modified, or removed). The config will only be updated if this list contains
  * the config file.
  */
 export const updateRepoConfig = async (
