@@ -90,7 +90,7 @@ export const transformPullRequest = async (
 		user,
 		comments,
 		base,
-		number,
+		number: pullRequestNumber,
 		updated_at,
 		head,
 		state,
@@ -104,7 +104,7 @@ export const transformPullRequest = async (
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {
 		log?.info({
-			pullRequestNumber: number,
+			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
 		}, "Ignoring pullrequest since it has no issue keys or repo");
 		return undefined;
@@ -125,11 +125,11 @@ export const transformPullRequest = async (
 				commentCount: comments || 0,
 				destinationBranch: base.ref || "",
 				destinationBranchUrl: `${base.repo.html_url}/tree/${base.ref}`,
-				displayId: `#${number}`,
-				id: number,
+				displayId: `#${pullRequestNumber}`,
+				id: pullRequestNumber,
 				issueKeys,
 				lastUpdate: updated_at,
-				reviewers: reviewers.reverse(),
+				reviewers: reviewers,
 				sourceBranch: head.ref || "",
 				sourceBranchUrl: `${head.repo.html_url}/tree/${head.ref}`,
 				status,

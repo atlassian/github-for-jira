@@ -174,17 +174,17 @@ describe("Pull Request Webhook", () => {
 							reviewers: [
 								{
 									avatar: "test-pull-request-reviewer-avatar",
-									name: "test-pull-request-reviewer-login",
-									email: "test-pull-request-reviewer-login@email.test",
-									url: "https://github.com/reviewer",
-									approvalStatus: "APPROVED"
-								},
-								{
-									avatar: "test-pull-request-reviewer-avatar",
 									name: "requested",
 									email: "requested@noreply.user.github.com",
 									url: "https://github.com/reviewer",
 									approvalStatus: "UNAPPROVED"
+								},
+								{
+									avatar: "test-pull-request-reviewer-avatar",
+									name: "test-pull-request-reviewer-login",
+									email: "test-pull-request-reviewer-login@email.test",
+									url: "https://github.com/reviewer",
+									approvalStatus: "APPROVED"
 								}
 							],
 							sourceBranch: "TEST-321-test-pull-request-head-ref",

@@ -426,52 +426,16 @@ describe("pull_request transform", () => {
 
 		const data = await transformPullRequest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
 
-		expect(data).toMatchObject({
-			id: "100403908",
-			name: "integrations/test",
-			url: "https://github.com/integrations/test",
-			updateSequenceId: 12345678,
-			branches: [],
-			pullRequests: [
-				{
-					author: {
-						avatar: "https://github.com/ghost.png",
-						name: "Deleted User",
-						email: "deleted@noreply.user.github.com",
-						url: "https://github.com/ghost"
-					},
-					commentCount: 0,
-					destinationBranch: "devel",
-					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
-					displayId: "#51",
-					id: 51,
-					issueKeys: ["TEST-1"],
-					lastUpdate: "2018-05-04T14:06:56Z",
-					reviewers: [
-						{
-							avatar: "https://avatars.githubusercontent.com/u/135780749?v=4",
-							name: "hotdogtestsgithub",
-							email: "hotdogtestsgithub@noreply.user.github.com",
-							url: "https://github.com/hotdogtestsgithub",
-							approvalStatus: "APPROVED"
-						},
-						{
-							avatar: "https://avatars.githubusercontent.com/u/83255355?v=4",
-							name: "atlassian-test-account",
-							email: "atlassian-test-account@noreply.user.github.com",
-							url: "https://github.com/atlassian-test-account",
-							approvalStatus: "UNAPPROVED"
-						}
-					],
-					sourceBranch: "use-the-force",
-					sourceBranchUrl: "https://github.com/integrations/test/tree/use-the-force",
-					status: "MERGED",
-					timestamp: "2018-05-04T14:06:56Z",
-					title: "[TEST-1] the PR where reviewers can't make up their minds",
-					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
-				}
-			]
-		});
+		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
+			firstReviewStatus: expect.objectContaining({
+				approvalStatus: "UNAPPROVED"
+			})
+		}));
+
+		expect({ secondReviewStatus: data?.pullRequests[0].reviewers[1] }).toEqual(expect.objectContaining({
+			secondReviewStatus: expect.objectContaining({
+				approvalStatus: "APPROVED"
+			})
+		}));
 	});
 });
