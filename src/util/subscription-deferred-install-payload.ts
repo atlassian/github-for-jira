@@ -3,7 +3,7 @@ import { Request } from "express";
 
 export interface SubscriptionDeferredInstallPayload {
 	installationIdPk: number,
-	gitHubServerAppIdPk: number | undefined,
+	gitHubServerAppIdPk?: number,
 	gitHubInstallationId: number,
 	orgName: string
 }
