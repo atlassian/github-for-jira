@@ -106,7 +106,7 @@ const getInstallationsWithAdmin = async (
 				gitHubServerAppIdPk: gitHubAppId
 			};
 			const payloadUriComponent = encodeURIComponent(await EncryptionClient.encrypt(EncryptionSecretKeyEnum.SUBSCRIPTION_DEFERRED_INSTALL, JSON.stringify(payload), {}));
-			deferredInstallUrl = `${envVars.APP_URL}/github/${gitHubAppUuid ? (gitHubAppUuid + "/") : ""}/subscription-deferred-install/request/${payloadUriComponent}`;
+			deferredInstallUrl = `${envVars.APP_URL}/github/${gitHubAppUuid ? (gitHubAppUuid + "/") : ""}subscription-deferred-install/request/${payloadUriComponent}`;
 		}
 
 		return {
@@ -182,7 +182,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 		const installationsWithAdmin = await getInstallationsWithAdmin(
 			res.locals.installation.id,
-			gitHubUserClient, log, login, installations, jiraHost, gitHubAppId, gitHubAppConfig.gitHubAppUuid
+			gitHubUserClient, log, login, installations, jiraHost, gitHubAppId, gitHubAppConfig.uuid
 		);
 
 		if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
