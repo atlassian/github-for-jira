@@ -4,9 +4,6 @@
 # replace ACCESS_TOKEN with the PAT
 # replace USERNAME with GitHub username
 #
-#
-
-
 import requests
 import os
 import subprocess
@@ -17,7 +14,7 @@ import random
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = ''
+ACCESS_TOKEN = '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'
 
 # GitHub username
 USERNAME = 'joshkay10'
@@ -63,7 +60,18 @@ try:
     os.system('git init')
     os.system('echo "# README" >> README.md')
     os.system('git add README.md')
-    os.system('git commit -m "first commit"')
+
+    # Add main.yml to .github/workflows directory
+    workflow_file_name = 'main.yml'
+    workflow_file_path = os.path.join(os.getcwd(), '.github', 'workflows', workflow_file_name)
+    os.makedirs(os.path.dirname(workflow_file_path), exist_ok=True)
+    with open('build-and-deploy-workflow-example.yml', 'r') as source_file:
+        content = source_file.read()
+        with open(workflow_file_path, 'w') as workflow_file:
+            workflow_file.write(content)
+
+    os.system(f'git add .github/workflows/{workflow_file_name}')
+    os.system('git commit -m "Add initial files"')
     os.system(f'git branch -M main')
     os.system(f'git remote add origin https://github.com/{USERNAME}/{repo_name}.git')
     os.system(f'git push -u origin main')
