@@ -5,10 +5,10 @@ import { updateRepoConfig } from "services/user-config-service";
 import { GitHubPushData } from "interfaces/github";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { Subscription } from "models/subscription";
-import { getInstallationId } from "./client/installation-id";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "../util/get-cloud-or-server";
+import { createInstallationClient  } from "utils/get-github-client-config";
 
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
@@ -51,7 +51,8 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		const modifiedFiles = context.payload?.commits?.reduce((acc, commit) =>
 			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
 		// TODO: this call must be updated to support GitHub Server events
-		await updateRepoConfig(subscription, payload.repository.id, getInstallationId(gitHubInstallationId), modifiedFiles);
+		const client = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "webhook", subTrigger: "push" }, context.log, gitHubAppId);
+		await updateRepoConfig(subscription, payload.repository.id, client, modifiedFiles);
 	} else {
 		context.log.warn("could not load user config because subscription does not exist");
 	}
