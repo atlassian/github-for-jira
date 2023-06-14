@@ -86,7 +86,7 @@ describe("sync/pull-request", () => {
 			"displayId": "#51",
 			"id": 51,
 			"issueKeys": [
-				"TES-15" // "KEY-15"
+				"TES-15"
 			],
 			"lastUpdate": "2018-05-04T14:06:56Z",
 			"reviewers": [
@@ -129,16 +129,9 @@ describe("sync/pull-request", () => {
 
 	describe("cloud", () => {
 
-		// let repoSyncState: RepoSyncState;
-
 		const PRS_INITIAL_CURSOR = 21;
 
 		beforeEach(async () => {
-			// repoSyncState = (await new DatabaseStateCreator()
-			// 	.withActiveRepoSyncState()
-			// 	.repoSyncStatePendingForPrs()
-			// 	.withPrsCustomCursor(String(PRS_INITIAL_CURSOR))
-			// 	.create()).repoSyncState!;
 
 			await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
@@ -149,17 +142,9 @@ describe("sync/pull-request", () => {
 
 		describe.each([
 			["[TES-15] Evernote Test", "use-the-force"]
-			// ["Evernote Test", "TES-15"]
 		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-				// githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-
-				//
-				// author: getJiraAuthor(pullRequest.author),
-				// 	reviewers: mapReviews(reviews.nodes),
-				//
-
 				githubNock
 					.post("/graphql")
 					.query(true)
