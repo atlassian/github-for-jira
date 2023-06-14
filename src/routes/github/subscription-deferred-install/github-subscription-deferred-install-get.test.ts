@@ -60,9 +60,9 @@ describe("github-subscription-deferred-install-get", () => {
 		});
 
 		it("should validate UUID and not allow call if belongs to a different GitHub server", async () => {
-			const gitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
+			const anotherGitHubServerApp = await DatabaseStateCreator.createServerApp(installation.id);
 			const result = await supertest(app)
-				.get(`/github/${gitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
+				.get(`/github/${anotherGitHubServerApp.uuid}/subscription-deferred-install/request/${await registerSubscriptionDeferredInstallPayloadRequest(payload)}`);
 			expect(result.status).toStrictEqual(400);
 			expect(result.body.error).toStrictEqual("Invalid payload");
 		});

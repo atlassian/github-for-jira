@@ -88,6 +88,7 @@ describe("github-configuration-get", () => {
 
 			const deferredInstallResponse = await supertest(app).get(url.replace(envVars.APP_URL, ""));
 			expect(deferredInstallResponse.status).toStrictEqual(302);
+			expect(deferredInstallResponse.headers.location).toContain("https://github.com/login/oauth/authorize?client_id=");
 		});
 	});
 
@@ -158,6 +159,7 @@ describe("github-configuration-get", () => {
 
 			const deferredInstallResponse = await supertest(app).get(url.replace(envVars.APP_URL, ""));
 			expect(deferredInstallResponse.status).toStrictEqual(302);
+			expect(deferredInstallResponse.headers.location).toContain(`${gitHubServerApp.gitHubBaseUrl}/login/oauth/authorize?client_id=`);
 		});
 	});
 
