@@ -20,6 +20,8 @@ import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
+import GithubSubscriptionDeferredInstallRouter
+	from "./subscription-deferred-install/github-subscription-deferred-install-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -48,6 +50,9 @@ subRouter.post("/webhooks",
 	header(["x-github-event", "x-hub-signature-256", "x-github-delivery"]).exists(),
 	returnOnValidationError,
 	WebhookReceiverPost);
+
+// Is called by GitHub admin, not Jira admin, therefore sits before jiraSymmetricMiddleware
+subRouter.use("/subscription-deferred-install", GithubSubscriptionDeferredInstallRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
