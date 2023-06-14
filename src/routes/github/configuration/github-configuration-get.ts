@@ -117,8 +117,8 @@ const getInstallationsWithAdmin = async (
 			...installation,
 			numberOfRepos,
 			isAdmin,
-			requiresSsoLogin: !!errors.find(err => err instanceof GithubClientSSOLoginError),
-			isIPBlocked: !!errors.find(err => err instanceof GithubClientBlockedIpError),
+			requiresSsoLogin: errors.some(err=>err instanceof GithubClientSSOLoginError),
+			isIPBlocked: errors.some(err=>err instanceof GithubClientBlockedIpError),
 			deferredInstallUrl
 		};
 	}));

@@ -6,7 +6,7 @@ import {
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 
 export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: Response) => {
-	const payload = await extractSubscriptionDeferredInstallPayload(req);
+	const payload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
 	const { githubToken, installation } = res.locals;
 
 	const result = await verifyAdminPermsAndFinishInstallation(
@@ -17,7 +17,12 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 		return;
 	}
 
-	await forgetSubscriptionDeferredInstallRequest(req);
+	await forgetSubscriptionDeferredInstallRequest(req.params["requestId"]);
 
-	res.status(200).json({ ok: true });
+	res.status(200).json({
+		jiraHost: installation.jiraHost,
+		orgName: payload.orgName,
+		status: "connected",
+		message: `${payload.orgName} has been connected to ${installation.jiraHost} Jira`
+	});
 };

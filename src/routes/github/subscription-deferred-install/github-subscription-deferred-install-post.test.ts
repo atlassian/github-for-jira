@@ -13,7 +13,6 @@ import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/featu
 import { when } from "jest-when";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
-import { Request } from "express";
 
 jest.mock("config/feature-flags");
 jest.mock("services/subscription-installation-service");
@@ -94,11 +93,7 @@ describe("github-subscription-deferred-install-post", () => {
 				}));
 
 			expect(result.status).toStrictEqual(200);
-			await expect(extractSubscriptionDeferredInstallPayload({
-				params: {
-					requestId
-				}
-			} as unknown as Request)).toReject();
+			await expect(extractSubscriptionDeferredInstallPayload(requestId)).toReject();
 		});
 
 		it("should return 401 if not GitHub admin", async () => {

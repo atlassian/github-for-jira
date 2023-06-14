@@ -11,8 +11,8 @@ const escapeHtml = (unsafe: string) => {
 		.replace(/'/g, "&#039;");
 };
 
-export const GithubSubscriptionDeferredInstallGet = async (req: Request, res: Response) => {
-	const payload = await extractSubscriptionDeferredInstallPayload(req);
+export const GitHubSubscriptionDeferredInstallGet = async (req: Request, res: Response) => {
+	const payload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
 	const { githubToken, installation } = res.locals;
 
 	if (!await hasAdminAccess(githubToken, installation.jiraHost, payload.gitHubInstallationId, req.log, payload.gitHubServerAppIdPk)) {

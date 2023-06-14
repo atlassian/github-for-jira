@@ -1,8 +1,7 @@
 import {
 	extractSubscriptionDeferredInstallPayload, forgetSubscriptionDeferredInstallRequest,
-	registerSubscriptionDeferredInstallPayloadRequest
+	registerSubscriptionDeferredInstallPayloadRequest, SubscriptionDeferredInstallPayload
 } from "services/subscription-deferred-install-service";
-import { Request } from "express";
 
 describe("subscription-deferred-install-service", () => {
 	describe("extractSubscriptionDeferredInstallPayload & registerSubscriptionDeferredInstallPayloadRequest", () => {
@@ -15,19 +14,27 @@ describe("subscription-deferred-install-service", () => {
 			};
 			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
 
-			expect(await extractSubscriptionDeferredInstallPayload({
-				params: {
-					requestId
-				}
-			} as unknown as Request)).toStrictEqual(payload);
+			expect(await extractSubscriptionDeferredInstallPayload(requestId)).toStrictEqual(payload);
 		});
 
 		it("throws an exception when requestId is unknown or invalid", async () => {
-			await expect(extractSubscriptionDeferredInstallPayload({
-				params: {
-					requestId: "foo"
-				}
-			} as unknown as Request)).toReject();
+			await expect(extractSubscriptionDeferredInstallPayload("foo")).toReject();
+		});
+	});
+
+	describe("extractSubscriptionDeferredInstallPayload", () => {
+		it("throws an exception when empty requestId", async () => {
+			await expect(extractSubscriptionDeferredInstallPayload(undefined)).toReject();
+		});
+
+		it("throws an exception when invalid requestId", async () => {
+			await expect(extractSubscriptionDeferredInstallPayload("unknown")).toReject();
+		});
+
+		it("throws an exception when payload is corrupted", async () => {
+			const corruptedPayload = { };
+			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(corruptedPayload as unknown as SubscriptionDeferredInstallPayload);
+			await expect(extractSubscriptionDeferredInstallPayload(requestId)).toReject();
 		});
 	});
 
@@ -40,14 +47,10 @@ describe("subscription-deferred-install-service", () => {
 				gitHubInstallationId: 2
 			};
 			const requestId = await registerSubscriptionDeferredInstallPayloadRequest(payload);
-			const request = {
-				params: {
-					requestId
-				}
-			} as unknown as Request;
-			await forgetSubscriptionDeferredInstallRequest(request);
+			await forgetSubscriptionDeferredInstallRequest(requestId);
 
-			await expect(extractSubscriptionDeferredInstallPayload(request)).toReject();
+			await expect(extractSubscriptionDeferredInstallPayload(requestId)).toReject();
 		});
 	});
 });
+

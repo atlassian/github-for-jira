@@ -4,7 +4,7 @@ import { Installation } from "models/installation";
 import { GithubServerAppMiddleware } from "middleware/github-server-app-middleware";
 import { GithubAuthMiddleware } from "routes/github/github-oauth";
 import {
-	GithubSubscriptionDeferredInstallGet
+	GitHubSubscriptionDeferredInstallGet
 } from "routes/github/subscription-deferred-install/github-subscription-deferred-install-get";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {
@@ -22,7 +22,7 @@ GithubSubscriptionDeferredInstallRouter.use("/request/:requestId", subRouter);
 const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	let parsedPayload: SubscriptionDeferredInstallPayload | undefined;
 	try {
-		parsedPayload = await extractSubscriptionDeferredInstallPayload(req);
+		parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
 	} catch (err) {
 		req.log.warn({ err }, "Cannot deserialize");
 		res.status(400).json({ error: INVALID_PAYLOAD_ERR });
@@ -49,7 +49,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 };
 
 const validateGitHubConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const parsedPayload = await extractSubscriptionDeferredInstallPayload(req);
+	const parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
 
 	if (parsedPayload.gitHubServerAppIdPk != res.locals.gitHubAppConfig.gitHubAppId) {
 		req.log.warn("Wrong appIdPk");
@@ -65,7 +65,7 @@ subRouter.use(GithubServerAppMiddleware);
 subRouter.use(validateGitHubConfig);
 subRouter.use(GithubAuthMiddleware);
 
-subRouter.get("/", GithubSubscriptionDeferredInstallGet);
+subRouter.get("/", GitHubSubscriptionDeferredInstallGet);
 subRouter.post("/", GithubSubscriptionDeferredInstallPost);
 
 export default GithubSubscriptionDeferredInstallRouter;
