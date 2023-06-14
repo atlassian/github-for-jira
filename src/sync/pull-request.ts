@@ -100,7 +100,7 @@ const emitStats = (jiraHost: string, startTime: number, requestType: string) => 
 };
 
 const doGetPullRequestTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
@@ -108,8 +108,10 @@ const doGetPullRequestTask = async (
 	cursor?: string,
 	perPage?: number
 ) => {
-	logger.info("Syncing PRs: started");
+	const logger = parentLogger.child({ backfillTask: "Repository" });
 	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 
@@ -119,7 +121,7 @@ const doGetPullRequestTask = async (
 		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
-	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
 
 	const jiraPayload = {
 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
@@ -136,16 +138,17 @@ const doGetPullRequestTask = async (
 };
 
 const doGetPullRequestTaskRest = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.debug("Syncing PRs: started");
-
+	const logger = parentLogger.child({ backfillTask: "Pull" });
 	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const {
 		data: edges,
@@ -180,6 +183,7 @@ const doGetPullRequestTaskRest = async (
 	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -211,9 +215,10 @@ const doGetPullRequestTaskRest = async (
 		)
 	).filter((value) => !!value);
 
-	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
 
 	return {
+
 		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length

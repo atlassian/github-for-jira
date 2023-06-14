@@ -7,7 +7,7 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { updateRepoConfigsFromGitHub } from "services/user-config-service";
 
 export const getRepositoryTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	githubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
@@ -16,7 +16,11 @@ export const getRepositoryTask = async (
 	messagePayload: BackfillMessagePayload
 ): Promise<TaskResultPayload> => {
 
-	logger.debug("Repository Discovery: started");
+	const logger = parentLogger.child({ backfillTask: "Repository" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
+
 	const installationId = githubInstallationClient.githubInstallationId.installationId;
 	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
@@ -27,6 +31,7 @@ export const getRepositoryTask = async (
 
 	if (!subscription) {
 		logger.warn({ jiraHost, installationId, gitHubAppId }, "Subscription has been removed, ignoring repository task.");
+		logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: 0 }, "Backfill task complete");
 		return { edges: [], jiraPayload: undefined };
 	}
 
@@ -56,7 +61,7 @@ export const getRepositoryTask = async (
 		totalCount,
 		nextCursor
 	}, `Repository Discovery Page Information`);
-	logger.info(`Added ${repositories.length} Repositories to state`);
+	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
 	const metrics = {

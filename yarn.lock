@@ -2686,9 +2686,9 @@ dotenv@^16.0.0, dotenv@^16.0.1:
   integrity sha512-1K6hR6wtk2FviQ4kEiSjFiH5rpzEVi8WW0x96aztHVMhEspNpc4DVOUTEHtEva5VThQ8IaBX1Pe4gSzpVVUsKQ==
 
 dottie@^2.0.2:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/dottie/-/dottie-2.0.3.tgz#797a4f4c92a9a65499806be4051b9d9dcd5a5d77"
-  integrity sha512-4liA0PuRkZWQFQjwBypdxPfZaRWiv5tkhMXY2hzsa2pNf5s7U3m9cwUchfNKe8wZQxdGPQQzO6Rm2uGe0rvohQ==
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/dottie/-/dottie-2.0.4.tgz#9ce42965f45e577a6fa7d988d47852fac70c4e82"
+  integrity sha512-iz64WUOmp/ECQhWMJjTWFzJN/wQ7RJ5v/a6A2OiCwjaGCpNo66WGIjlSf+IULO9DQd0b4cFawLOTbiKSrpKodw==
 
 double-ended-queue@^2.1.0-0:
   version "2.1.0-0"
