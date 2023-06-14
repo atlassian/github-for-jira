@@ -59,9 +59,7 @@ def run_bash_command(command):
     return process.returncode, stdout, stderr
 
 # Helper function to create a new branch
-def create_branch():
-    # Generate a unique branch name bwith the issue-key prefix and ranfom number
-    branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}'
+def create_branch(branch_name):
     create_branch_command = f'git checkout -b {branch_name}'
     return_code, stdout, stderr = run_bash_command(create_branch_command)
     if return_code != 0:
@@ -145,25 +143,27 @@ try:
         make_api_request('POST', create_repo_url, data=data)
         print(f'Repository "{repo_name}" created successfully.')
 
-        # Step 2: Initialize the repository, add README, and push initial commit
+        # Step 2: Initialize the repository, add README, create workflows, and push initial commit
         initialize_repository(repo_name)
 
         # Step 3: Create branches and commits
         for branch_index in range(args.num_branches):
 
+            # Generate a unique branch name with the issue-key prefix and ranfom number
+            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}'
             # Create a new branch
-            create_branch()
+            create_branch(branch_name)
 
             for commit_index in range(args.num_commits):
                 # Generate a unique file name based on epoch time and random number
                 file_name = f'file-{int(time.time())}-{random.randint(100, 999)}.txt'
 
-                # Generate a unique commit message based on issue prefix and random number
+                # Generate a commit message based on issue prefix and random number
                 commit_message = f'{args.issue_prefix}-{random.randint(100, 999)}'
 
                 # Create and write to the file
                 with open(file_name, 'w') as f:
-                    f.write(f'Commit {commit_index + 1} on branch {branch_name} of repository {repo_name}')
+                    f.write(f'Commit {commit_index + 1} on repository {repo_name}')
 
                 # Commit and push changes
                 commit_and_push_changes(branch_name, file_name, commit_message)
