@@ -66,18 +66,22 @@ const doGetBuildTaskInParallel = (
 );
 
 const doGetBuildTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
+	const logger = parentLogger.child({ backfillTask: "Build" });
+	const startTime = Date.now();
 
+	logger.info({ startTime }, "Backfill task started");
 	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
 
 	if (areAllBuildsEarlierThanFromDate(workflow_runs, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -89,6 +93,7 @@ const doGetBuildTask = async (
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
 	if (!workflow_runs?.length) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -99,10 +104,10 @@ const doGetBuildTask = async (
 	logger.info(`First workflow_run.updated_at=${workflow_runs[0].updated_at}`);
 
 	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
-	logger.info("Syncing Builds: finished");
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
 	if (!builds?.length) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: edgesWithCursor,
 			jiraPayload: undefined
@@ -114,6 +119,7 @@ const doGetBuildTask = async (
 		builds
 	};
 
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds?.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload

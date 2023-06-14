@@ -3,6 +3,7 @@ import { transformPullRequest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
+import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
@@ -408,5 +409,33 @@ describe("pull_request transform", () => {
 			url: "https://github.com/integrations/test",
 			updateSequenceId: 12345678
 		});
+	});
+
+	it("should send the correct review state for multiple reviewers", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+
+		const data = await transformPullRequest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+
+		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
+			firstReviewStatus: expect.objectContaining({
+				approvalStatus: "UNAPPROVED"
+			})
+		}));
+
+		expect({ secondReviewStatus: data?.pullRequests[0].reviewers[1] }).toEqual(expect.objectContaining({
+			secondReviewStatus: expect.objectContaining({
+				approvalStatus: "APPROVED"
+			})
+		}));
 	});
 });
