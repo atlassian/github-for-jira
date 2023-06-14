@@ -8,7 +8,7 @@ import { updateRepoConfigsFromGitHub } from "services/user-config-service";
 
 export const getRepositoryTask = async (
 	parentLogger: Logger,
-	githubInstallationClient: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
 	cursor: string | undefined,
@@ -21,7 +21,7 @@ export const getRepositoryTask = async (
 
 	logger.info({ startTime }, "Backfill task started");
 
-	const installationId = githubInstallationClient.githubInstallationId.installationId;
+	const installationId = gitHubInstallationClient.githubInstallationId.installationId;
 	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -35,7 +35,7 @@ export const getRepositoryTask = async (
 		return { edges: [], jiraPayload: undefined };
 	}
 
-	const response = await githubInstallationClient.getRepositoriesPage(perPage, cursor as string);
+	const response = await gitHubInstallationClient.getRepositoriesPage(perPage, cursor as string);
 	const hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 	const totalCount = response.viewer.repositories.totalCount;
 	const nextCursor = response.viewer.repositories.pageInfo.endCursor;
@@ -64,7 +64,7 @@ export const getRepositoryTask = async (
 	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient);
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, gitHubInstallationClient);
 
 	return {
 		edges,

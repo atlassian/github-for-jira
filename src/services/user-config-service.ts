@@ -34,7 +34,7 @@ export const updateRepoConfig = async (
 
 			if (!repoSyncState) {
 				logger.error({
-					githubInstallationId: gitHubInstallationClient.githubInstallationId,
+					gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 					repositoryId
 				}, "could not find RepoSyncState for repo");
 				return;
@@ -44,7 +44,7 @@ export const updateRepoConfig = async (
 		} catch (err) {
 			logger.error({
 				err,
-				githubInstallationId: gitHubInstallationClient.githubInstallationId,
+				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId
 			}, "error while updating the repo config");
 		}
@@ -164,7 +164,7 @@ export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[
 		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient)
 			.catch(err => logger.error({
 				err,
-				githubInstallationId: gitHubInstallationClient.githubInstallationId,
+				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId: repoSyncState.repoId
 			}, "error while updating a single repo config"));
 	}));
