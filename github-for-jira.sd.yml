@@ -521,7 +521,6 @@ environmentOverrides:
           routes: *blackholeSpammingIPs
 
       - *cryptorGithubServerAppSecrets
-
       - *cryptorJiraInstanceSecrets
 
   prod:
