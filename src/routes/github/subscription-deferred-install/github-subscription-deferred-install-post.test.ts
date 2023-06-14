@@ -93,6 +93,8 @@ describe("github-subscription-deferred-install-post", () => {
 				}));
 
 			expect(result.status).toStrictEqual(200);
+			expect(result.text).toContain(installation.jiraHost);
+			expect(result.text).toContain(payload.orgName);
 			await expect(extractSubscriptionDeferredInstallPayload(requestId)).toReject();
 		});
 
@@ -175,6 +177,8 @@ describe("github-subscription-deferred-install-post", () => {
 				}));
 
 			expect(result.status).toStrictEqual(200);
+			expect(result.text).toContain(installation.jiraHost);
+			expect(result.text).toContain(payload.orgName);
 		});
 
 		it("should return 401 if not GitHub admin", async () => {
