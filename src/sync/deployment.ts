@@ -66,11 +66,7 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 			}
 		} as any as DeploymentStatusEvent;
 
-		const metrics = {
-			trigger: "backfill",
-			subTrigger: "deployment"
-		};
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", metrics, logger, gitHubAppId);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);

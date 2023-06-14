@@ -6,14 +6,18 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import Logger from "bunyan";
 import { Installation } from "models/installation";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
-const hasAdminAccess = async (gitHubAppClient: GitHubAppClient, gitHubUserClient: GitHubUserClient, gitHubInstallationId: number, logger: Logger): Promise<boolean>  => {
+export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean>  => {
+	const metrics = {
+		trigger: "github-configuration-post"
+	};
 	try {
+		const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, logger, gitHubServerAppIdPk);
+		const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubServerAppIdPk, metrics);
+
 		logger.info("Fetching info about user");
 		const { data: { login } } = await gitHubUserClient.getUser();
 
@@ -52,14 +56,8 @@ export const verifyAdminPermsAndFinishInstallation =
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubServerAppIdPk);
 
 		try {
-			const metrics = {
-				trigger: "github-configuration-post"
-			};
-			const gitHubUserClient = await createUserClient(githubToken, installation.jiraHost, metrics, log, gitHubServerAppIdPk);
-			const gitHubAppClient = await createAppClient(log, installation.jiraHost, gitHubServerAppIdPk, metrics);
-
 			// Check if the user that posted this has access to the installation ID they're requesting
-			if (!await hasAdminAccess(gitHubAppClient, gitHubUserClient, gitHubInstallationId, log)) {
+			if (!await hasAdminAccess(githubToken, installation.jiraHost, gitHubInstallationId, log, gitHubServerAppIdPk)) {
 				log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
 				return {
 					error: "`User is not an admin of the installation"
