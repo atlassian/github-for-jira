@@ -1,6 +1,10 @@
 # usage
 # Step 1: Generate a Personal Access Token (PAT) from GitHub
-
+# Step 2: Replace YOUR_PAT_GOES_HERE and USERNAME with your own details
+# Step 3: python3 generate-github-test-data.py
+# it will create repo data locally and you have to manually clean it up for now, TODO
+#
+# For more control.........
 # You can customize the script behavior by providing command-line arguments:
 # --num-repos: Number of repositories to create.
 # --num-branches: Number of branches to create per repository.
@@ -21,10 +25,10 @@ import random
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = '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'
+ACCESS_TOKEN = 'YOUR_PAT_GOES_HERE'
 
 # GitHub username
-USERNAME = 'joshkay10'
+USERNAME = 'USERNAME'
 
 # Default values
 DEFAULT_NUM_REPOS = 2
