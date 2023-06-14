@@ -59,7 +59,9 @@ def run_bash_command(command):
     return process.returncode, stdout, stderr
 
 # Helper function to create a new branch
-def create_branch(branch_name):
+def create_branch():
+    # Generate a unique branch name bwith the issue-key prefix and ranfom number
+    branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}'
     create_branch_command = f'git checkout -b {branch_name}'
     return_code, stdout, stderr = run_bash_command(create_branch_command)
     if return_code != 0:
@@ -132,7 +134,6 @@ base_repo_name = f'repo-{int(time.time())}'
 
 try:
     for repo_index in range(args.num_repos):
-        # Generate a unique repository name based on epoch time
         repo_name = f'{base_repo_name}-{repo_index}'
 
         # Step 1: Create a new repository
@@ -149,11 +150,9 @@ try:
 
         # Step 3: Create branches and commits
         for branch_index in range(args.num_branches):
-            # Generate a unique branch name based on epoch time and random number
-            branch_name = f'branch-{int(time.time())}-{random.randint(100, 999)}'
 
             # Create a new branch
-            create_branch(branch_name)
+            create_branch()
 
             for commit_index in range(args.num_commits):
                 # Generate a unique file name based on epoch time and random number
