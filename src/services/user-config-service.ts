@@ -24,7 +24,7 @@ const MAX_SERVICE_ID_COUNT = 100;
 export const updateRepoConfig = async (
 	subscription: Subscription,
 	repositoryId: number,
-	client: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	modifiedFiles: string[] = []
 ): Promise<void> => {
 
@@ -34,17 +34,17 @@ export const updateRepoConfig = async (
 
 			if (!repoSyncState) {
 				logger.error({
-					githubInstallationId: client.githubInstallationId,
+					githubInstallationId: gitHubInstallationClient.githubInstallationId,
 					repositoryId
 				}, "could not find RepoSyncState for repo");
 				return;
 			}
 
-			await updateRepoConfigsFromGitHub([repoSyncState], client);
+			await updateRepoConfigsFromGitHub([repoSyncState], gitHubInstallationClient);
 		} catch (err) {
 			logger.error({
 				err,
-				githubInstallationId: client.githubInstallationId,
+				githubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId
 			}, "error while updating the repo config");
 		}
@@ -56,7 +56,7 @@ export const updateRepoConfig = async (
  */
 export const getRepoConfig = async (
 	subscription: Subscription,
-	client: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	repositoryId: number,
 	repoOwner: string,
 	repoName: string
@@ -68,7 +68,7 @@ export const getRepoConfig = async (
 	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
-		const yamlConfig = await getRepoConfigFromGitHub(client, repoOwner, repoName);
+		const yamlConfig = await getRepoConfigFromGitHub(gitHubInstallationClient, repoOwner, repoName);
 		return convertYamlToUserConfig(yamlConfig);
 	}
 
@@ -79,8 +79,8 @@ export const getRepoConfig = async (
 /**
  * Fetches contents from CONFIG_PATH from GitHub via GitHub's API, transforms it from base64 to ascii and returns the transformed string.
  */
-const getRepoConfigFromGitHub = async (client: GitHubInstallationClient, owner: string, repo: string): Promise<string | undefined> => {
-	const contents = await client.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
+const getRepoConfigFromGitHub = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string): Promise<string | undefined> => {
+	const contents = await gitHubInstallationClient.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
 
 	if (!contents) {
 		return undefined;
@@ -144,8 +144,8 @@ const convertYamlToUserConfig = (input?: string): Config => {
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, client: GitHubInstallationClient): Promise<void> => {
-	const yamlConfig = await getRepoConfigFromGitHub(client, repoSyncState.repoOwner, repoSyncState.repoName);
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, gitHubInstallationClient: GitHubInstallationClient): Promise<void> => {
+	const yamlConfig = await getRepoConfigFromGitHub(gitHubInstallationClient, repoSyncState.repoOwner, repoSyncState.repoName);
 	const config = convertYamlToUserConfig(yamlConfig);
 	await repoSyncState.update({ config });
 };
@@ -159,12 +159,12 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, client: 
  * @param jiraHost
  * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
  */
-export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], client: GitHubInstallationClient): Promise<void> => {
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], gitHubInstallationClient: GitHubInstallationClient): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
-		await updateRepoConfigFromGitHub(repoSyncState, client)
+		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient)
 			.catch(err => logger.error({
 				err,
-				githubInstallationId: client.githubInstallationId,
+				githubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId: repoSyncState.repoId
 			}, "error while updating a single repo config"));
 	}));
