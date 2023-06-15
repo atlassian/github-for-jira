@@ -302,7 +302,6 @@ export const transformDeployment = async (
 	payload: DeploymentStatusEvent,
 	jiraHost: string,
 	type: "backfill" | "webhook",
-	metrics: {trigger: string, subTrigger?: string},
 	logger: Logger, gitHubAppId: number | undefined
 ): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
@@ -329,11 +328,10 @@ export const transformDeployment = async (
 	if (subscription) {
 		config = await getRepoConfig(
 			subscription,
-			githubInstallationClient.githubInstallationId,
+			githubInstallationClient,
 			payload.repository.id,
 			payload.repository.owner.login,
-			payload.repository.name,
-			metrics
+			payload.repository.name
 		);
 	} else {
 		logger.warn({

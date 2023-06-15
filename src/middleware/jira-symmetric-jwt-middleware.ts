@@ -8,10 +8,11 @@ import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const authHeader = req.headers["authorization"];
+	const authHeader = req.headers["Authorization"] as string;
+	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
-		|| authHeader?.startsWith("JWT ") && authHeader.substring(4);
+		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 
 	if (token) {
 		let issuer;

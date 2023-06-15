@@ -123,6 +123,7 @@
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
                         data-installation-id="{{id}}"
                         type="submit"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
                       >
                         Connect
                       </button>
@@ -167,7 +168,12 @@
                         </span>
                     </button>
                   {{else}}
-                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
+                    <button
+                        class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button"
+                        aria-disabled="true"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
+                        disabled
+                    >
                       Connect
                     </button>
                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">

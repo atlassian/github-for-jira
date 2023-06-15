@@ -2,7 +2,8 @@
 import { RepoSyncState } from "models/reposyncstate";
 import { Subscription } from "models/subscription";
 import { getRepoConfig, updateRepoConfig } from "services/user-config-service";
-import { getInstallationId } from "~/src/github/client/installation-id";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { getLogger } from "config/logger";
 
 describe("User Config Service", () => {
 	const gitHubInstallationId = 1234;
@@ -34,6 +35,8 @@ describe("User Config Service", () => {
 
 	const configFileContentBase64 = Buffer.from(configFileContent).toString("base64");
 
+	let gitHubClient;
+
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({
@@ -64,6 +67,8 @@ describe("User Config Service", () => {
 			repoUpdatedAt: new Date(0)
 		});
 
+		gitHubClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "test", subTrigger: "test" }, getLogger("test"), undefined);
+
 	});
 
 	const givenGitHubReturnsConfigFile = (repoOwner: string = repoSyncState.repoOwner, repoName = repoSyncState.repoName) => {
@@ -83,16 +88,16 @@ describe("User Config Service", () => {
 	};
 
 	it("should not update config in database when config file hasn't been touched", async () => {
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
 		expect(config).toBeFalsy();
 	});
 
 	it("should update config in database when config file has been touched", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
@@ -100,16 +105,16 @@ describe("User Config Service", () => {
 	it("no Write perms case should be tolerated", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsAccessNotAllowed();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
 		expect(config).toBeFalsy();
 	});
 
 	it("should get service ids", async () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile();
-		await updateRepoConfig(subscription, repoSyncState.repoId, getInstallationId(gitHubInstallationId), { trigger: "test" }, ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, { trigger: "test" });
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.services?.ids).toHaveLength(4);
 	});
@@ -122,7 +127,7 @@ describe("User Config Service", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile(unknownRepoOwner, unknownRepoName);
-		const config = await getRepoConfig(subscription, getInstallationId(gitHubInstallationId), unknownRepoId, unknownRepoOwner, unknownRepoName, { trigger: "test" });
+		const config = await getRepoConfig(subscription, gitHubClient, unknownRepoId, unknownRepoOwner, unknownRepoName);
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});

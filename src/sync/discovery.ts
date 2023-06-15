@@ -7,8 +7,8 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { updateRepoConfigsFromGitHub } from "services/user-config-service";
 
 export const getRepositoryTask = async (
-	logger: Logger,
-	githubInstallationClient: GitHubInstallationClient,
+	parentLogger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
 	cursor: string | undefined,
@@ -16,8 +16,12 @@ export const getRepositoryTask = async (
 	messagePayload: BackfillMessagePayload
 ): Promise<TaskResultPayload> => {
 
-	logger.debug("Repository Discovery: started");
-	const installationId = githubInstallationClient.githubInstallationId.installationId;
+	const logger = parentLogger.child({ backfillTask: "Repository" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
+
+	const installationId = gitHubInstallationClient.githubInstallationId.installationId;
 	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -27,10 +31,11 @@ export const getRepositoryTask = async (
 
 	if (!subscription) {
 		logger.warn({ jiraHost, installationId, gitHubAppId }, "Subscription has been removed, ignoring repository task.");
+		logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: 0 }, "Backfill task complete");
 		return { edges: [], jiraPayload: undefined };
 	}
 
-	const response = await githubInstallationClient.getRepositoriesPage(perPage, cursor as string);
+	const response = await gitHubInstallationClient.getRepositoriesPage(perPage, cursor as string);
 	const hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 	const totalCount = response.viewer.repositories.totalCount;
 	const nextCursor = response.viewer.repositories.pageInfo.endCursor;
@@ -56,14 +61,10 @@ export const getRepositoryTask = async (
 		totalCount,
 		nextCursor
 	}, `Repository Discovery Page Information`);
-	logger.info(`Added ${repositories.length} Repositories to state`);
+	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	const metrics = {
-		trigger: "backfill",
-		subTrigger: "discovery"
-	};
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient.githubInstallationId, jiraHost, gitHubAppId, metrics);
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, gitHubInstallationClient);
 
 	return {
 		edges,
