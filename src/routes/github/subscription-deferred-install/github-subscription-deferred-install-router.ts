@@ -10,6 +10,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import {
 	GithubSubscriptionDeferredInstallPost
 } from "routes/github/subscription-deferred-install/github-subscription-deferred-install-post";
+import { csrfMiddleware } from "middleware/csrf-middleware";
 
 const GithubSubscriptionDeferredInstallRouter = Router({ mergeParams: true });
 
@@ -64,6 +65,7 @@ subRouter.use(validatePayloadAndPopulateJiraHost);
 subRouter.use(GithubServerAppMiddleware);
 subRouter.use(validateGitHubConfig);
 subRouter.use(GithubAuthMiddleware);
+subRouter.use(csrfMiddleware);
 
 subRouter.get("/", GitHubSubscriptionDeferredInstallGet);
 subRouter.post("/", GithubSubscriptionDeferredInstallPost);

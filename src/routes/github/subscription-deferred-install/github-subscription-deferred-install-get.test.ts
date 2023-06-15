@@ -91,10 +91,12 @@ describe("github-subscription-deferred-install-get", () => {
 				}));
 
 			expect(result.status).toStrictEqual(200);
-			expect(result.text).toContain(`Do you approve connecting ${payload.orgName} (https://github.com) to ${installation.jiraHost}?`);
+			expect(result.text).toContain(installation.jiraHost);
+			expect(result.text).toContain(payload.orgName);
+			expect(result.text).toContain(`https://github.com/${payload.orgName}`);
 		});
 
-		it("should return 401 if not GitHub admin", async () => {
+		it("should return error if not GitHub admin with reset link", async () => {
 			githubNock
 				.get(/.*/)
 				.matchHeader("Authorization", "Bearer myToken")
@@ -110,7 +112,9 @@ describe("github-subscription-deferred-install-get", () => {
 					githubToken: "myToken"
 				}));
 
-			expect(result.status).toStrictEqual(401);
+			expect(result.status).toStrictEqual(200);
+			expect(result.text).toContain("Error: not an admin of the GitHub organization.");
+			expect(result.text).toContain("?resetGithubToken=true");
 		});
 	});
 
@@ -171,11 +175,12 @@ describe("github-subscription-deferred-install-get", () => {
 					gitHubUuid: gitHubServerApp.uuid
 				}));
 
-			expect(result.status).toStrictEqual(200);
-			expect(result.text).toContain(`Do you approve connecting ${payload.orgName} (${gitHubServerApp.gitHubBaseUrl}) to ${installation.jiraHost}?`);
+			expect(result.text).toContain(installation.jiraHost);
+			expect(result.text).toContain(payload.orgName);
+			expect(result.text).toContain(`${gitHubServerApp.gitHubBaseUrl}/${payload.orgName}`);
 		});
 
-		it("should return 401 if not GitHub admin", async () => {
+		it("should return error with reset token link if not GitHub admin", async () => {
 			gheNock
 				.get("/api/v3")
 				.matchHeader("Authorization", "Bearer myToken")
@@ -192,7 +197,9 @@ describe("github-subscription-deferred-install-get", () => {
 					gitHubUuid: gitHubServerApp.uuid
 				}));
 
-			expect(result.status).toStrictEqual(401);
+			expect(result.status).toStrictEqual(200);
+			expect(result.text).toContain("Error: not an admin of the GitHub organization.");
+			expect(result.text).toContain("?resetGithubToken=true");
 		});
 	});
 

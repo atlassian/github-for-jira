@@ -19,10 +19,10 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 
 	await forgetSubscriptionDeferredInstallRequest(req.params["requestId"]);
 
-	res.status(200).json({
-		jiraHost: installation.jiraHost,
+	res.render("subscription-deferred-install-approval-form.hbs", {
+		success: true,
 		orgName: payload.orgName,
-		status: "connected",
-		message: `${payload.orgName} has been connected to ${installation.jiraHost} Jira`
+		orgUrl: `${res.locals.gitHubAppConfig.hostname}/${payload.orgName}`,
+		jiraHost: res.locals.jiraHost
 	});
 };
