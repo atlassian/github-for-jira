@@ -22,12 +22,13 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 	const paramStart = "xdm_e=";
 	const paramEnd = ".atlassian.net";
 	let logRequestUrl;
+	let jiraHostFromReqUrl;
 
 	if (requestUrl) {
 		const startIndex = requestUrl.indexOf(paramStart);
 		const endIndex = requestUrl.indexOf(paramEnd, startIndex);
 		const value = decodeURIComponent(requestUrl.substring(startIndex + paramStart.length, endIndex));
-		const jiraHostFromReqUrl = `${value}${paramEnd}`;
+		jiraHostFromReqUrl = `${value}${paramEnd}`;
 		logRequestUrl = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, jiraHostFromReqUrl);
 	}
 	/********************************************
@@ -40,7 +41,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			issuer = getIssuer(token, req.log);
 		} catch (err) {
 			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl }, "Could not get issuer");
+				req.log.warn({ err, requestUrl, jiraHostFromReqUrl }, "Could not get issuer");
 			} else {
 				req.log.warn({ err }, "Could not get issuer");
 			}
@@ -50,7 +51,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
 			if (logRequestUrl) {
-				req.log.warn({ requestUrl }, "No Installation found");
+				req.log.warn({ requestUrl, jiraHostFromReqUrl }, "No Installation found");
 			} else {
 				req.log.warn("No Installation found");
 			}
@@ -62,7 +63,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
 			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl }, "Could not verify symmetric JWT");
+				req.log.warn({ err, requestUrl, jiraHostFromReqUrl }, "Could not verify symmetric JWT");
 			} else {
 				req.log.warn({ err }, "Could not verify symmetric JWT");
 			}
@@ -87,7 +88,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
 			if (logRequestUrl) {
-				req.log.warn({ requestUrl }, "No Installation found");
+				req.log.warn({ requestUrl, jiraHostFromReqUrl }, "No Installation found");
 			} else {
 				req.log.warn("No Installation found");
 			}
@@ -102,7 +103,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 	}
 
 	if (logRequestUrl) {
-		req.log.warn({ requestUrl }, "No token found and session cookie has no jiraHost");
+		req.log.warn({ requestUrl, jiraHostFromReqUrl }, "No token found and session cookie has no jiraHost");
 	} else {
 		req.log.warn("No token found and session cookie has no jiraHost");
 	}
