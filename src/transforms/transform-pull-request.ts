@@ -15,6 +15,7 @@ const mapStatus = (status: string, merged_at?: string) => {
 	if (status.toLowerCase() === "open") return "OPEN";
 	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
 	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
+	if (status.toLowerCase() === "declined") return "DECLINED";
 	return "UNKNOWN";
 };
 
