@@ -214,7 +214,7 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 };
 
 const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {
-	const allReviews = [...reviews || [], ...reviewRequests || []] as pullRequestNode["reviews"]["nodes"];
+	const allReviews = [...reviewRequests || [], ...reviews || []] as pullRequestNode["reviews"]["nodes"];
 	const usernames: Record<string, any> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
