@@ -6,6 +6,7 @@ import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers["Authorization"] as string;
@@ -14,18 +15,46 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
 		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 
+	/********************************************
+		START TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
+	*********************************************/
+	const requestUrl = req.headers.referer;
+	const paramStart = "xdm_e=";
+	const paramEnd = ".atlassian.net";
+	let logRequestUrl;
+	let jiraHostFromReqHeaderReferer;
+
+	if (requestUrl) {
+		const startIndex = requestUrl.indexOf(paramStart);
+		const endIndex = requestUrl.indexOf(paramEnd, startIndex);
+		const value = decodeURIComponent(requestUrl.substring(startIndex + paramStart.length, endIndex));
+		jiraHostFromReqHeaderReferer = `${value}${paramEnd}`;
+		logRequestUrl = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, jiraHostFromReqHeaderReferer);
+	}
+	/********************************************
+		END TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
+	 *********************************************/
+
 	if (token) {
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
 		} catch (err) {
-			req.log.warn({ err }, "Could not get issuer");
+			if (logRequestUrl) {
+				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not get issuer");
+			} else {
+				req.log.warn({ err }, "Could not get issuer");
+			}
 			return res.status(401).send("Unauthorised");
 		}
 
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
-			req.log.warn("No Installation found");
+			if (logRequestUrl) {
+				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
+			} else {
+				req.log.warn("No Installation found");
+			}
 			return res.status(401).send("Unauthorised");
 		}
 
@@ -33,7 +62,11 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
-			req.log.warn({ err }, "Could not verify symmetric JWT");
+			if (logRequestUrl) {
+				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not verify symmetric JWT");
+			} else {
+				req.log.warn({ err }, "Could not verify symmetric JWT");
+			}
 			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
 			return res.status(401).send(errorMessage);
 		}
@@ -54,7 +87,11 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
-			req.log.warn("No Installation found");
+			if (logRequestUrl) {
+				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
+			} else {
+				req.log.warn("No Installation found");
+			}
 			req.session.jiraHost = undefined;
 			return res.status(401).send("Unauthorised");
 		}
@@ -65,7 +102,11 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has no jiraHost");
+	if (logRequestUrl) {
+		req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No token found and session cookie has no jiraHost");
+	} else {
+		req.log.warn("No token found and session cookie has no jiraHost");
+	}
 	return res.status(401).send("Unauthorised");
 
 };
