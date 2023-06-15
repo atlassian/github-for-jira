@@ -1,6 +1,10 @@
 import { createAnonymousClient } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
-import { GithubClientInvalidPermissionsError, GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
+import {
+	GithubClientBlockedIpError,
+	GithubClientInvalidPermissionsError,
+	GithubClientNotFoundError, GithubClientSSOLoginError
+} from "~/src/github/client/github-client-errors";
 
 describe("github-client-interceptors", () => {
 	it("correctly maps invalid permission error", async () => {
@@ -12,7 +16,7 @@ describe("github-client-interceptors", () => {
 		let error: Error;
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
-			await client.getMainPage(1000);
+			await client.getPage(1000);
 		} catch (err) {
 			error = err;
 		}
@@ -28,12 +32,38 @@ describe("github-client-interceptors", () => {
 		let error: Error;
 		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
 		try {
-			await client.getMainPage(1000);
+			await client.getPage(1000);
 		} catch (err) {
 			error = err;
 		}
 		expect(error!).toBeInstanceOf(GithubClientNotFoundError);
 	});
 
+	it("correctly maps blocked ip error", async () => {
+		gheNock.get("/").reply(403, {
+			"message": "blablabla has an IP allow list enabled"
+		});
 
+		let error: Error;
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
+		try {
+			await client.getPage(1000);
+		} catch (err) {
+			error = err;
+		}
+		expect(error!).toBeInstanceOf(GithubClientBlockedIpError);
+	});
+
+	it("correctly maps sso login error", async () => {
+		gheNock.get("/").reply(403, undefined, { "x-github-sso": "abcdef" });
+
+		let error: Error;
+		const client = await createAnonymousClient(gheUrl, jiraHost, { trigger: "test" }, getLogger("test"));
+		try {
+			await client.getPage(1000);
+		} catch (err) {
+			error = err;
+		}
+		expect(error!).toBeInstanceOf(GithubClientSSOLoginError);
+	});
 });

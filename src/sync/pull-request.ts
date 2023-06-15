@@ -1,7 +1,6 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
 import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
-import { transformPullRequest as transformPullRequestSync } from "./transforms/pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -12,8 +11,7 @@ import { Octokit } from "@octokit/rest";
 import { getCloudOrServerFromHost } from "utils/get-cloud-or-server";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
-import { getGithubUser } from "services/github/user";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -84,16 +82,17 @@ const doGetPullRequestTaskInParallel = (
 );
 
 const doGetPullRequestTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.debug("Syncing PRs: started");
-
+	const logger = parentLogger.child({ backfillTask: "Pull" });
 	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const {
 		data: edges,
@@ -115,23 +114,24 @@ const doGetPullRequestTask = async (
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
 		1,
-		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
+		{ status: String(status), gitHubProduct },
+		{ jiraHost }
+	);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
 	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
 
-	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
-		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
-		//Because GitHub rest api  doesn't support supply a from date in the query param,
-		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
-		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-			return {
-				edges: [],
-				jiraPayload: undefined
-			};
-		}
+	//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+	//Because GitHub rest api  doesn't support supply a from date in the query param,
+	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
 	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
@@ -153,28 +153,18 @@ const doGetPullRequestTask = async (
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
-				if (await booleanFlag(BooleanFlags.USE_SHARED_PR_TRANSFORM)) {
-					const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
-					const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
-					return data?.pullRequests[0];
-				}
-
-				const ghUser = await getGithubUser(gitHubInstallationClient, prDetails?.user.login);
-				const data = transformPullRequestSync(
-					{ pullRequest: pull, repository },
-					prDetails,
-					gitHubInstallationClient.baseUrl,
-					ghUser
-				);
+				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
+				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 
 			})
 		)
 	).filter((value) => !!value);
 
-	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
 
 	return {
+
 		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length

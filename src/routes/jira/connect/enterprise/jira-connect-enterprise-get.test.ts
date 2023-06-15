@@ -1,100 +1,127 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { mocked } from "ts-jest/utils";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { Express } from "express";
+import { getLogger } from "config/logger";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
+import { Installation } from "models/installation";
+import supertest from "supertest";
 import { GitHubServerApp } from "models/github-server-app";
-import { JiraConnectEnterpriseGet } from "routes/jira/connect/enterprise/jira-connect-enterprise-get";
+import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-const mockRequest = (): any => ({
-	log: {
-		info: jest.fn(),
-		warn: jest.fn(),
-		error: jest.fn(),
-		debug: jest.fn()
-	},
-	query: {},
-	csrfToken: jest.fn().mockReturnValue({})
-});
+jest.mock("config/feature-flags");
 
-const mockResponse = (): any => ({
-	locals: {
-		installation: { id: 1 },
-		jiraHost
-	},
-	render: jest.fn().mockReturnValue({}),
-	status: jest.fn().mockReturnValue({}),
-	send: jest.fn().mockReturnValue({})
-});
+describe("GET /jira/connect/enterprise", () => {
 
-jest.mock("models/github-server-app");
+	let app: Express;
+	let installation: Installation;
 
-describe("GET /jira/connect/enterprise - with existing GitHub Server apps", () => {
-	let servers;
-
-	beforeEach(async () => {
-		servers = [
-			{
-				id: 1,
-				uuid: "uuid-1",
-				appId: 1,
-				gitHubBaseUrl: "http://github.internal.atlassian.com",
-				gitHubClientId: "dragon",
-				gitHubClientSecret: "dragon",
-				webhookSecret: "dragon",
-				privateKey: "dragon",
-				gitHubAppName: "Monkey D. Dragon",
-				installationId: 1,
-				updatedAt: Date.now(),
-				createdAt: Date.now()
-			},
-			{
-				id: 2,
-				uuid: "uuid-2",
-				appId: 2,
-				gitHubBaseUrl: "http://github.internal2.atlassian.com",
-				gitHubClientId: "sabo",
-				gitHubClientSecret: "sabo",
-				webhookSecret: "sabo",
-				privateKey: "sabo",
-				gitHubAppName: "Sabo",
-				installationId: 1,
-				updatedAt: Date.now(),
-				createdAt: Date.now()
-			}
-		];
-
-		mocked(GitHubServerApp.findForInstallationId).mockResolvedValue(servers);
+	beforeEach(() => {
+		app = getFrontendApp();
 	});
 
-	it("GET Jira Connect Enterprise", async () => {
-		const response = mockResponse();
-		await JiraConnectEnterpriseGet(mockRequest(), response, jest.fn());
+	const generateJwt = async (query: any = {}) => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "GET",
+				pathname: "/jira/connect/enterprise",
+				query
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
-		expect(response.render.mock.calls[0][0]).toBe("jira-select-server.hbs");
-		expect(response.render.mock.calls[0][1].list).toHaveLength(2);
+	describe("returns unauthorised", () => {
+		beforeEach(async () => {
+			const result = await (new DatabaseStateCreator()).forServer().create();
+			installation = result.installation;
+		});
+
+		it("when invalid JWT", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: "boo"
+				});
+			expect(response.status).toStrictEqual(401);
+		});
+
+		it("when no JWT", async () => {
+			const response = await supertest(app)
+				.get(`/jira/connect/enterprise?jiraHost=${installation.jiraHost}`)
+				.set("Cookie", [`jiraHost=${installation.jiraHost}`]);
+
+			expect(response.status).toStrictEqual(401);
+		});
 	});
-});
 
-describe("GET /jira/connect/enterprise - with no GitHub Server apps", () => {
-	let servers;
+	describe("with existing GHE servers", () => {
+		let gitHubServerApp: GitHubServerApp;
 
-	beforeEach(async () => {
-		servers = [];
+		beforeEach(async () => {
+			const result = await (new DatabaseStateCreator()).forServer().create();
+			installation = result.installation;
+			gitHubServerApp = result.gitHubServerApp!;
+		});
 
-		mocked(GitHubServerApp.findForInstallationId).mockResolvedValue(servers);
+		it("renders list of servers with ADD_NEW_SERVER button", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt()
+				});
+			expect(response.text).toContain(gitHubServerApp.gitHubBaseUrl);
+			expect(response.text).toContain(`data-identifier="${gitHubServerApp.uuid}"`);
+			expect(response.text).toContain(`data-qs-for-path="{&quot;new&quot;:1}" data-path="github-server-url-page"`);
+		});
 	});
 
-	it("GET Jira Connect Enterprise", async () => {
-		const response = mockResponse();
-		await JiraConnectEnterpriseGet(mockRequest(), response, jest.fn());
+	describe("without existing GHE servers", () => {
 
-		expect(response.render.mock.calls[0][0]).toBe("jira-server-url.hbs");
+		beforeEach(async () => {
+			const result = await (new DatabaseStateCreator()).forCloud().create();
+			installation = result.installation;
+		});
+
+		it("renders GHE url page", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt()
+				});
+			expect(response.text).toContain(`<label for="gheServerURL">Server URL</label>`);
+		});
+
+		it("populates list of known HTTP headers", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_API_KEY_FEATURE,
+				jiraHost
+			).mockResolvedValue(true);
+
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt()
+				});
+			expect(response.text).toContain(`"sec-fetch-dest"`);
+		});
 	});
-});
 
-describe("GET /jira/connect/enterprise?new", () => {
-	it("Connect Jira GitHub Enterprise", async () => {
-		const response = mockResponse();
-		await JiraConnectEnterpriseGet(mockRequest(), response, jest.fn());
+	describe("with new flag", () => {
+		beforeEach(async () => {
+			const result = await (new DatabaseStateCreator()).forServer().create();
+			installation = result.installation;
+		});
 
-		expect(response.render.mock.calls[0][0]).toBe("jira-server-url.hbs");
+		it("renders GHE url page", async () => {
+			const response = await supertest(app)
+				.get("/jira/connect/enterprise")
+				.query({
+					jwt: await generateJwt({ new: "true" }),
+					new: "true"
+				});
+			expect(response.text).toContain(`<label for="gheServerURL">Server URL</label>`);
+		});
 	});
 });

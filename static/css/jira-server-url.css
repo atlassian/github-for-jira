@@ -16,7 +16,19 @@
 .jiraServerUrl__prompt {
   color: #344563;
   font-size: 1.01rem;
-  margin-bottom: 1.2em;
+}
+
+.jiraServerUrl__section {
+  margin-top: 1.2em;
+}
+
+.jiraServerUrl h3 {
+  display: block;
+}
+
+.jiraServerUrl h3 small{
+  vertical-align: bottom;
+  margin-top: 0px;
 }
 
 .jiraServerUrl__actionBtn {

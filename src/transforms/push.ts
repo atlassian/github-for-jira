@@ -92,7 +92,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	} = payload;
 
-	if (await isBlocked(gitHubInstallationId, rootLogger)) {
+	if (await isBlocked(jiraHost, gitHubInstallationId, rootLogger)) {
 		rootLogger.warn({ gitHubInstallationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
@@ -200,6 +200,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",
+					jiraHost,
 					log,
 					jiraResponse?.status,
 					gitHubAppId

@@ -69,11 +69,3 @@ export class SafeRawLogStream extends RawLogStream {
 		return recordClone;
 	}
 }
-
-export class UnsafeRawLogStream extends RawLogStream {
-	public async _write(record: ChunkData, encoding: BufferEncoding, next: Callback): Promise<void> {
-		// Tag the record it gets indexed to the [env]_unsafe logging environment
-		record.env_suffix = "unsafe";
-		await super._write(record, encoding, next);
-	}
-}

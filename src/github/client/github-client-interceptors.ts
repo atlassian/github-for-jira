@@ -4,7 +4,8 @@ import {
 	GithubClientTimeoutError,
 	GithubClientInvalidPermissionsError,
 	GithubClientRateLimitingError,
-	GithubClientNotFoundError
+	GithubClientNotFoundError,
+	GithubClientSSOLoginError
 } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
@@ -41,7 +42,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, gitHubProduct: string, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
+const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost: string, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -54,23 +55,24 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, response
 		method: response?.config?.method?.toUpperCase(),
 		path: extractPath(response?.config?.originalUrl),
 		status: status,
-		...extraTags
+		...extraTags,
+		...response?.config?.metrics
 	};
 
-	statsd.histogram(metricName, requestDurationMs, tags);
+	statsd.histogram(metricName, requestDurationMs, tags, { jiraHost });
 	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
-	statsd.histogram(metricName, requestDurationMs, tags);
+	statsd.histogram(metricName, requestDurationMs, tags, { jiraHost });
 	return response;
 };
 
-export const instrumentRequest = (metricName, host, extraTags?: Record<string, string | undefined>) =>
+export const instrumentRequest = (metricName, host, jiraHost: string, extraTags?: Record<string, string | undefined>) =>
 	(response) => {
 		if (!response) {
 			return;
 		}
 
 		const gitHubProduct = getCloudOrServerFromHost(host);
-		return sendResponseMetrics(metricName, gitHubProduct, response, undefined, extraTags);
+		return sendResponseMetrics(metricName, gitHubProduct, jiraHost, response, undefined, extraTags);
 	};
 
 /**
@@ -81,20 +83,22 @@ export const instrumentRequest = (metricName, host, extraTags?: Record<string, s
  * @param host - The rest API url for cloud/server
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-export const instrumentFailedRequest = (metricName: string, host: string, extraTags?: Record<string, string | undefined>) =>
+export const instrumentFailedRequest = (metricName: string, host: string, jiraHost: string, extraTags?: Record<string, string | undefined>) =>
 	(error) => {
 		const gitHubProduct = getCloudOrServerFromHost(host);
 		if (error instanceof GithubClientRateLimitingError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "rateLimiting", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "rateLimiting", extraTags);
 		} else if (error instanceof GithubClientBlockedIpError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "blockedIp", extraTags);
-			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct });
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "blockedIp", extraTags);
+			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct }, { jiraHost });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, "timeout", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "timeout", extraTags);
+		} else if (error instanceof GithubClientSSOLoginError) {
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "ssoLogin", extraTags);
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, gitHubProduct, error.cause?.response, undefined, extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, undefined, extraTags);
 		} else {
-			sendResponseMetrics(metricName, gitHubProduct, error.response, undefined, extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.response, undefined, extraTags);
 		}
 		return Promise.reject(error);
 	};
@@ -144,6 +148,12 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 					err: mappedError,
 					remote: response.data.message
 				}, "unauthorized");
+				return Promise.reject(mappedError);
+			}
+
+			if (status === 403 && response.headers?.["x-github-sso"]) {
+				const mappedError = new GithubClientSSOLoginError(err);
+				logger.warn({ err: mappedError, remote: response.data.message }, "SSO Login required");
 				return Promise.reject(mappedError);
 			}
 

@@ -24,13 +24,6 @@
 
 <body>
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
-<input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
-<input
-  type="hidden"
-  id="clientKey"
-  name="clientKey"
-  value="{{clientKey}}"
-/>
 
 {{> navigation hideBackButton=true }}
 
@@ -104,12 +97,33 @@
               {{! Connect }}
               {{#unless isIPBlocked}}
                 <div class="gitHubConfiguration__orgContent__connect">
+                  {{#if requiresSsoLogin}}
+                      <div data-aui-trigger aria-controls="sso-login-message-{{account.login}}" class="gitHubConfiguration__ssoWarning">
+                          <span class="aui-icon aui-icon-small aui-iconfont-warning">Warning</span>
+                      </div>
+                      <aui-inline-dialog class="gitHubConfiguration__ssoWarningMessage" id="sso-login-message-{{account.login}}" alignment="bottom center">
+                          <p class="gitHubConfiguration__ssoMessage">
+                              You cannot connect to this organization because you are not currently logged in through your SSO in GitHub.
+                              Please follow the following steps:
+                          </p>
+                          <ul>
+                              <li>
+                                  Please go to the <a target="_blank" href="{{#if ../gitHubServerApp}}{{../gitHubServerApp.gitHubBaseUrl}}/organizations/{{account.login}}/settings/profile{{else}}https://github.com/organizations/{{account.login}}/settings/profile{{/if}}"> organization settings</a> page and make sure you have admin access there.
+                              </li>
+                              <li>
+                                  Please click <a href="?resetGithubToken=true">this link</a> to reset your token. This will allow you to connect to this organization.
+                              </li>
+                          </ul>
+                      </aui-inline-dialog>
+                  {{/if}}
+
                   {{#if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
                         data-installation-id="{{id}}"
                         type="submit"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
                       >
                         Connect
                       </button>
@@ -154,7 +168,12 @@
                         </span>
                     </button>
                   {{else}}
-                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
+                    <button
+                        class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button"
+                        aria-disabled="true"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
+                        disabled
+                    >
                       Connect
                     </button>
                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
@@ -205,14 +224,14 @@
   <div class="gitHubConfiguration__serverError">
     {{> server-error-message-box }}
   </div>
-    
+
   <div class="text-center">
     <div class="no-organization-in-github">
       Don't see your Github organization? Install 'GitHub for Jira' on your Github organization to connect them to your Atlassian site.
     </div>
     <a
       class="aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
-      href="{{info.html_url}}/installations/new"
+      href="configuration/app-installations"
       target="_self"
     >
       Install GitHub for Jira on a new organization

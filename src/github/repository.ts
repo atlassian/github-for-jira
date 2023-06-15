@@ -1,11 +1,9 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
 
 export const repositoryWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	if (context.action === "deleted") {
@@ -39,10 +37,10 @@ export const createRepositoryWebhookHandler = async (context: WebhookContext, gi
 
 		await updateRepoCount(subscription);
 		await findOrStartSync(subscription, context.log, "partial", subscription.backfillSince,undefined, { source: "create-repo-webhook" });
-		webhookProcessComplete(context, 200);
+		webhookProcessComplete(context, 200, subscription.jiraHost);
 	} catch (err) {
 		context.log.error({ err }, "Error processing create repository webhook");
-		webhookProcessComplete(context, 500);
+		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
 };
 
@@ -51,30 +49,38 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId
 	});
+
+	if (!context?.payload?.repository?.id) {
+		context.log.warn("Cannot delete repository. Missing repository ID");
+		webhookProcessComplete(context, 500, subscription.jiraHost);
+		return;
+	}
+
 	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
+
+	const { id: repositoryId } = context.payload.repository;
 
 	try {
 		const jiraResponse = await jiraClient.devinfo.repository.delete(
-			transformRepositoryId(context.payload.repository?.id, context.gitHubAppConfig?.gitHubBaseUrl)
+			repositoryId,  context.gitHubAppConfig?.gitHubBaseUrl
 		);
 
-		// Only attempt to delete if we have the ID
-		if (context?.payload?.repository?.id) {
-			await RepoSyncState.deleteRepoForSubscription(subscription, context.payload.repository.id);
-			await updateRepoCount(subscription);
-		}
-		webhookProcessComplete(context, jiraResponse?.status);
+		await	RepoSyncState.deleteRepoForSubscription(subscription, repositoryId);
+		await	updateRepoCount(subscription);
+
+		webhookProcessComplete(context, jiraResponse?.status, subscription.jiraHost);
 	} catch (err) {
 		context.log.error({ err }, "Error processing delete repository webhook");
-		webhookProcessComplete(context, 500);
+		webhookProcessComplete(context, 500, subscription.jiraHost);
 	}
 };
 
-const webhookProcessComplete = (context: WebhookContext, status: number) => {
+const webhookProcessComplete = (context: WebhookContext, status: number, jiraHost: string) => {
 	const { webhookReceived, name, log } = context;
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraHost,
 		log,
 		status,
 		context.gitHubAppConfig?.gitHubAppId

@@ -12,7 +12,7 @@ import noKeysBuildFixture from "fixtures/api/build-no-keys.json";
 import compareReferencesFixture from "fixtures/api/compare-references.json";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { when } from "jest-when";
-import { numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { RepoSyncState } from "models/reposyncstate";
 import { getBuildTask } from "./build";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
@@ -26,7 +26,8 @@ describe("sync/builds", () => {
 	const makeExpectedJiraResponse = (builds) => ({
 		builds,
 		properties: {
-			"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			repositoryId: 1
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL",
@@ -161,7 +162,7 @@ describe("sync/builds", () => {
 		pageNocks.forEach(nock => {
 			expect(nock.isDone()).toBeTruthy();
 		});
-		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id)).buildCursor)).toStrictEqual({
+		expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.buildCursor || "")).toStrictEqual({
 			perPage: 20,
 			pageNo: 31
 		});
@@ -184,7 +185,7 @@ describe("sync/builds", () => {
 		});
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("scales cursor if necessary", async () => {
@@ -201,7 +202,7 @@ describe("sync/builds", () => {
 			.reply(200, []);
 
 		await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
-		expect((await RepoSyncState.findByPk(repoSyncState!.id)).buildStatus).toEqual("complete");
+		expect((await RepoSyncState.findByPk(repoSyncState!.id))?.buildStatus).toEqual("complete");
 	});
 
 	it("should sync multiple builds to Jira when they contain issue keys", async () => {
@@ -317,10 +318,6 @@ describe("sync/builds", () => {
 
 		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
 			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()

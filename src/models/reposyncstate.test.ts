@@ -196,7 +196,7 @@ describe("RepoSyncState", () => {
 			});
 			const result = await RepoSyncState.findOneFromSubscription(sub);
 			expect(result).toBeTruthy();
-			expect(result.repoId).toEqual(2);
+			expect(result?.repoId).toEqual(2);
 		});
 	});
 
@@ -256,16 +256,17 @@ describe("RepoSyncState", () => {
 
 	describe("Foreign key relation with subscriptions", () => {
 		it("should delete related RepoSyncStates when Subscription is deleted", async () => {
-
 			const subToBeDeleted: Subscription  = await Subscription.create({
 				gitHubInstallationId: 789,
 				jiraHost,
 				jiraClientKey: "myClientKey"
 			});
+
 			const repoStateThatShouldBeDeleted: RepoSyncState = await RepoSyncState.create({
 				...repo,
 				subscriptionId: subToBeDeleted.id
 			});
+
 			const repoStateThatShouldStay: RepoSyncState = await RepoSyncState.create({
 				...repo,
 				subscriptionId: otherSub.id
@@ -274,10 +275,11 @@ describe("RepoSyncState", () => {
 			await subToBeDeleted.destroy();
 
 			expect(await RepoSyncState.findByPk(repoStateThatShouldBeDeleted.id)).toBeNull();
-			const remainingState: RepoSyncState = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
-			expect(remainingState.subscriptionId).toBe(otherSub.id);
+			const remainingState: RepoSyncState | null = await RepoSyncState.findByPk(repoStateThatShouldStay.id);
+			expect(remainingState?.subscriptionId).toBe(otherSub.id);
 
 		});
+
 		it("should NOT delete parent Subscription when RepoSyncState is deleted", async () => {
 
 			const stateToDelete: RepoSyncState = await RepoSyncState.create({
@@ -287,10 +289,131 @@ describe("RepoSyncState", () => {
 
 			await stateToDelete.destroy();
 
-			const foundSub: Subscription = await Subscription.findByPk(sub.id);
-			expect(foundSub.id).toBe(sub.id);
-			expect(foundSub.jiraHost).toBe(sub.jiraHost);
+			const foundSub: Subscription | null = await Subscription.findByPk(sub.id);
+			expect(foundSub?.id).toBe(sub.id);
+			expect(foundSub?.jiraHost).toBe(sub.jiraHost);
 
+		});
+	});
+
+	describe("findRepositoriesBySubscriptionIdsAndRepoName", () => {
+		it("Should return repositories matching the subscription ID and repo name", async () => {
+			const repo1 = {
+				...repo,
+				subscriptionId: sub.id,
+				repoName: "github-for-jira"
+			};
+
+			const repo2 = {
+				...repo,
+				subscriptionId: otherSub.id,
+				repoName: "atlassian-connect-express"
+			};
+
+			await RepoSyncState.create(repo1);
+			await RepoSyncState.create(repo2);
+
+			const result = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, sub.id, 1, 10, "github-for-jira");
+
+			expect(result).toHaveLength(1);
+			expect(result![0]).toMatchObject(repo1);
+		});
+
+		it("Should return repositories matching the subscription ID when repo name is not provided", async () => {
+			const repo1 = {
+				...repo,
+				subscriptionId: sub.id,
+				repoName: "github-for-jira"
+			};
+
+			const repo2 = {
+				...repo,
+				subscriptionId: otherSub.id,
+				repoName: "atlassian-connect-express"
+			};
+
+			await RepoSyncState.create(repo1);
+			await RepoSyncState.create(repo2);
+
+			const result = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, sub.id, 1, 10);
+
+			expect(result).toHaveLength(1);
+			expect(result![0]).toMatchObject(repo1);
+		});
+
+		it("Should return empty array when no repositories match the subscription ID and repo name", async () => {
+			const repo1 = {
+				...repo,
+				subscriptionId: sub.id,
+				repoName: "github-for-jira"
+			};
+
+			const repo2 = {
+				...repo,
+				subscriptionId: otherSub.id,
+				repoName: "atlassian-connect-express"
+			};
+
+			await RepoSyncState.create(repo1);
+			await RepoSyncState.create(repo2);
+
+			const result = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, sub.id, 1, 10, "non-existing-repo");
+
+			expect(result).toHaveLength(0);
+		});
+
+		it("Should return repositories matching multiple subscription IDs", async () => {
+			const repo1 = {
+				...repo,
+				subscriptionId: sub.id,
+				repoName: "github-for-jira"
+			};
+
+			const repo2 = {
+				...repo,
+				subscriptionId: otherSub.id,
+				repoName: "atlassian-connect-express"
+			};
+
+			await RepoSyncState.create(repo1);
+			await RepoSyncState.create(repo2);
+
+			const result = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(
+				jiraHost,
+				[sub.id, otherSub.id],
+				1,
+				10
+			);
+
+			expect(result).toHaveLength(2);
+			expect(result).toEqual(
+				expect.arrayContaining([expect.objectContaining(repo1), expect.objectContaining(repo2)])
+			);
+		});
+	});
+
+	describe("findRepoByRepoIdAndJiraHost", () => {
+		it("Should return null if no repository matches the repoId and jiraHost", async () => {
+			const result = await RepoSyncState.findRepoByRepoIdAndJiraHost(2, "example.com");
+
+			expect(result).toBeNull();
+		});
+
+		it("Should return the repository if a matching repoId and jiraHost are found", async () => {
+			const repo = {
+				subscriptionId: sub.id,
+				repoId: 1,
+				repoName: "github-for-jira",
+				repoOwner: "atlassian",
+				repoFullName: "atlassian/github-for-jira",
+				repoUrl: "github.com/atlassian/github-for-jira"
+			};
+
+			await RepoSyncState.create(repo);
+
+			const result = await RepoSyncState.findRepoByRepoIdAndJiraHost(repo.repoId, jiraHost);
+
+			expect(result).toMatchObject(repo);
 		});
 	});
 });

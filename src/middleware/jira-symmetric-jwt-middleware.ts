@@ -5,13 +5,15 @@ import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
+import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-
-	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
+	const authHeader = req.headers["authorization"];
+	const token = req.query?.["jwt"]
+		|| req.cookies?.["jwt"] || req.body?.["jwt"]
+		|| authHeader?.startsWith("JWT ") && authHeader.substring(4);
 
 	if (token) {
-
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
@@ -26,19 +28,20 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			return res.status(401).send("Unauthorised");
 		}
 
-		const secret = await installation.decrypt("encryptedSharedSecret", req.log);
-
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		let verifiedClaims;
 		try {
-			verifySymmetricJwt(token, secret, req, tokenType, req.log);
+			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
-			return res.status(401).send("Unauthorised");
+			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
+			return res.status(401).send(errorMessage);
 		}
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
+		// Check whether logged-in user has Jira Admin permissions and save it to the session
+		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
@@ -61,7 +64,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has not jiraHost");
+	req.log.warn("No token found and session cookie has no jiraHost");
 	return res.status(401).send("Unauthorised");
 
 };
@@ -83,19 +86,19 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-const verifySymmetricJwt = (token: string, secret: string, req: Request, tokenType: TokenType, logger: Logger): boolean => {
+const verifySymmetricJwt = async (req: Request, token: string, installation: Installation) => {
 	const algorithm = getAlgorithm(token);
+	const secret = await installation.decrypt("encryptedSharedSecret", req.log);
 
-	/* eslint-disable @typescript-eslint/no-explicit-any*/
-	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
-		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
+		const claims = decodeSymmetric(token, secret, algorithm, false);
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		verifyJwtClaims(claims, tokenType, req);
+		return claims;
 	} catch (err) {
-		logger.warn({ err }, "Invalid JWT");
+		req.log.warn({ err }, "Invalid JWT");
 		throw new Error(`Unable to decode JWT token: ${err.message}`);
 	}
-
-	return verifyJwtClaims(verifiedClaims, tokenType, req);
 };
 
 export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, tokenType: TokenType, req: Request): boolean => {

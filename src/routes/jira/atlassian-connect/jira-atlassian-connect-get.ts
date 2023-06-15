@@ -1,21 +1,21 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
-import { EnvironmentEnum } from "interfaces/common";
 import { compact, map } from "lodash";
 
-const instance = envVars.INSTANCE_NAME;
+const instance = envVars.APP_KEY.split(".").pop();
+const isProd = instance === "production";
 
-const isProd = (instance === EnvironmentEnum.production);
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
-export const APP_NAME = `GitHub for Jira${isProd ? "" : (instance ? (` (${instance})`) : "")}`;
-export const APP_KEY = `com.github.integration${instance ? `.${instance}` : ""}`;
+export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
+export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
 	{
 		condition: "user_is_admin"
 	}
 ];
+
 const modules = {
 	jiraDevelopmentTool: {
 		application: {
@@ -28,11 +28,20 @@ const modules = {
 		],
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${APP_KEY}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
+			},
+			searchConnectedWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/search`
+			},
+			searchRepositories: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/repositories/search`
+			},
+			associateRepository: {
+				templateUrl: `${envVars.APP_URL}/jira/workspaces/repositories/associate`
 			}
 		},
 		key: "github-development-tool",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub"
 		},
@@ -43,12 +52,12 @@ const modules = {
 		name: {
 			value: "GitHub Actions"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com/features/actions"
 	},
 	jiraBuildInfoProvider: {
 		key: "github-actions",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub Actions"
 		},
@@ -59,7 +68,7 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
 	},
 	postInstallPage: {
@@ -103,7 +112,9 @@ const modules = {
 			name: {
 				value: "GitHub App Creation"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app?new={ac.new}",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -112,7 +123,9 @@ const modules = {
 			name: {
 				value: "GitHub Server Apps"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -121,7 +134,9 @@ const modules = {
 			name: {
 				value: "GitHub Manual App"
 			},
-			url: "/jira/connect/enterprise/{ac.serverUrl}/app/new",
+			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+			// Let's keep it vague and not differentiate to avoid brain melting
+			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
 			location: "none",
 			conditions: adminCondition
 		},
@@ -140,7 +155,7 @@ const modules = {
 			key: "gh-addon-admin-section",
 			location: "admin_plugins_menu",
 			name: {
-				value: "GitHub"
+				value: APP_NAME
 			}
 		}
 	],
@@ -149,7 +164,7 @@ const modules = {
 			url: postInstallUrl,
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: "Configure"
 			},
 			key: "gh-addon-admin",
 			location: "admin_plugins_menu/gh-addon-admin-section"
@@ -157,7 +172,7 @@ const modules = {
 			url: "/jira/configuration",
 			conditions: adminCondition,
 			name: {
-				value: "GitHub for Jira"
+				value: "Configure"
 			},
 			key: "gh-addon-admin-old",
 			location: "none"
@@ -177,7 +192,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		},
 		name: APP_NAME,
 		description: "Connect your code and your project with ease.",
-		key: APP_KEY,
+		key: envVars.APP_KEY,
 		baseUrl: envVars.APP_URL,
 		lifecycle: {
 			installed: "/jira/events/installed",

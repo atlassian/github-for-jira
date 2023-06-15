@@ -1,6 +1,7 @@
 import { findOrStartSync } from "./sync-utils";
 import { sqsQueues } from "../sqs/queues";
 import { Subscription } from "models/subscription";
+import { RepoSyncState } from "models/reposyncstate";
 import { GitHubServerApp } from "models/github-server-app";
 import { getLogger } from "config/logger";
 import { v4 as uuid } from "uuid";
@@ -21,6 +22,38 @@ describe("sync utils", () => {
 		const JIRA_CLIENT_KEY = "jira-client-key";
 		const CUTOFF_IN_MSECS = 1000;
 		const CUTOFF_IN_MSECS__DISABLED = -1;
+		describe("resetting fail code", () => {
+			let subscription: Subscription;
+			let repo1: RepoSyncState;
+			let repo2: RepoSyncState;
+			beforeEach(async () => {
+				subscription = await Subscription.install({
+					installationId: JIRA_INSTALLATION_ID,
+					host: jiraHost,
+					hashedClientKey: JIRA_CLIENT_KEY,
+					gitHubAppId: undefined
+				});
+				const repoBasicInfo = (repoId: number): Partial<RepoSyncState> => ({
+					repoId, repoName: `name-${repoId}`, repoFullName: `fullname-${repoId}`, repoOwner: `owner`, repoUrl: "blah"
+				});
+				repo1 = await RepoSyncState.createForSubscription(subscription, { ...repoBasicInfo(1), failedCode: "FAIL_1" });
+				repo2 = await RepoSyncState.createForSubscription(subscription, { ...repoBasicInfo(2), failedCode: "FAIL_2" });
+			});
+			it("should reset failedCode when target task provided", async () => {
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, ["commit", "branch"]);
+				await repo1.reload();
+				await repo2.reload();
+				expect(repo1.failedCode).toBe(null);
+				expect(repo2.failedCode).toBe(null);
+			});
+			it("should NOT reset failedCode when target task NOT provided", async () => {
+				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
+				await repo1.reload();
+				await repo2.reload();
+				expect(repo1.failedCode).toBe("FAIL_1");
+				expect(repo2.failedCode).toBe("FAIL_2");
+			});
+		});
 		describe("commit since date", () => {
 			let subscription: Subscription;
 			beforeEach(async () => {
@@ -55,15 +88,6 @@ describe("sync utils", () => {
 				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
 				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
 					expect.objectContaining({ commitsFromDate: undefined }),
-					expect.anything(), expect.anything());
-			});
-			it("should  send undefined commit since date in the msg payload if flag is set to -1 for branch commits from date", async () => {
-				when(jest.mocked(numberFlag))
-					.calledWith(NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, expect.anything(), jiraHost)
-					.mockResolvedValue(CUTOFF_IN_MSECS__DISABLED);
-				await findOrStartSync(subscription, getLogger("test"), undefined, undefined, undefined);
-				expect(sqsQueues.backfill.sendMessage).toBeCalledWith(
-					expect.objectContaining({ branchCommitsFromDate: undefined }),
 					expect.anything(), expect.anything());
 			});
 		});

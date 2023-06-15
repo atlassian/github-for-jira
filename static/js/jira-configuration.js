@@ -16,7 +16,7 @@ function openChildWindow(url) {
 
 $(".add-organization-link").click(function(event) {
 	event.preventDefault();
-	const queryParameter = $(this).data("gh-cloud") ? "" : "?ghRedirect=to";
+	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";
 	AP.context.getToken(function(token) {
 		const child = openChildWindow("/session/github/configuration" + queryParameter);
 		child.window.jwt = token;
@@ -51,18 +51,10 @@ $(".configure-connection-link").click(function(event) {
 
 const initializeBackfillDateInput = function (event) {
 	const dateElement = document.getElementById('backfill-date-picker');
-	const isIncrementalBackfillEnabled = $("body").data("is-incremental-backfill-enabled");
-	if(isIncrementalBackfillEnabled) {
-		const newBackfillDate = $(event.target).data('connection-backfill-since') ? new Date($(event.target).data('connection-backfill-since')) : new Date();
-		newBackfillDate.setMonth(newBackfillDate.getMonth() - 6);
-		dateElement.value = newBackfillDate.toISOString().split('T')[0];
-		dateElement.max = new Date().toISOString().split('T')[0];
-	} else {
-		const date = new Date();
-		date.setFullYear(date.getFullYear() - 1);
-		dateElement.value = date.toISOString().split('T')[0];
-		dateElement.max = new Date().toISOString().split('T')[0];
-	}
+	const newBackfillDate = $(event.target).data('connection-backfill-since') ? new Date($(event.target).data('connection-backfill-since')) : new Date();
+	newBackfillDate.setMonth(newBackfillDate.getMonth() - 6);
+	dateElement.value = newBackfillDate.toISOString().split('T')[0];
+	dateElement.max = new Date().toISOString().split('T')[0];
 }
 
 const setDisabledStatus = (el, status) => {
@@ -87,7 +79,6 @@ $("#cancel-backfill").click(() => {
 
 $(".sync-connection-link").click(event => {
 	const installationId = $(event.target).data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
 	const appId = $(event.target).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
@@ -96,14 +87,13 @@ $(".sync-connection-link").click(event => {
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
+		let syncType = undefined;
+		if (fullSyncCheckbox && fullSyncCheckbox.checked) {
+			syncType = "full";
+		}
 		window.AP.context.getToken(function (jwt) {
-			const isIncrementalBackfillEnabled = $("body")
-				.data("is-incremental-backfill-enabled");
-			if(isIncrementalBackfillEnabled) {
-				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, commitsFromDate, appId});
-			} else {
-				restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "full", installationId, commitsFromDate, appId});
-			}
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
 		});
 	});
 });
@@ -114,9 +104,8 @@ $(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
 });
 
 $(".jiraConfiguration__errorSummary__btn").click(event => {
-	const installationId = $(event.target).parent().data("installation-id");
-	const jiraHost = $(event.target).data("jira-host");
-	const appId = $(event.target).data("app-id");
+	const installationId = $(event.currentTarget).data("installation-id");
+	const appId = $(event.currentTarget).data("app-id");
 	const csrfToken = document.getElementById("_csrf").value;
 
 	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
@@ -124,7 +113,7 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
 		event.preventDefault();
 		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, jiraHost, syncType: "partial", installationId, undefined, appId});
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
 		});
 	});
 });
@@ -153,7 +142,10 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow(`/session/github/${$(event.target).data("app-uuid")}/configuration?ghRedirect=to`);
+		child.window.jwt = token;
+	});
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
@@ -321,4 +313,18 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 	} catch (e) {
 		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
 	}
+});
+
+$(document).ready(function () {
+	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
+	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
+
+	$(".jiraConfiguration__info__backfillDate-label").each(function () {
+		if ($(this).attr("data-backfill-since")) {
+			const backfillDate = new Date($(this).attr("data-backfill-since"));
+			$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
+			$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
+		}
+	});
 });

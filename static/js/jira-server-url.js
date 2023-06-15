@@ -2,14 +2,30 @@
 const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
+const gheServerURLElt = document.getElementById("gheServerURL");
+const apiKeyHeaderNameElt = document.getElementById("apiKeyHeaderName");
+const apiKeyValueElt = document.getElementById("apiKeyValue");
+
+function syncGheServerBtn() {
+	if (
+		gheServerURLElt.getAttribute("data-aui-validation-state") === "invalid" ||
+		(apiKeyHeaderNameElt && apiKeyHeaderNameElt.getAttribute("data-aui-validation-state") === "invalid") ||
+		(apiKeyValueElt && apiKeyValueElt.getAttribute("data-aui-validation-state") === "invalid")
+	) {
+		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+	} else {
+		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
+	}
+}
+
 AJS.formValidation.register(['ghe-url'], (field) => {
 	const inputURL = field.el.value;
 	if (!inputURL.trim().length) {
 		field.invalidate(AJS.format('This is a required field.'));
-		$("#gheServerBtn").attr({ "aria-disabled": true, "disabled": true });
+		syncGheServerBtn();
 	} else {
 		field.validate();
-		$("#gheServerBtn").attr({ "aria-disabled": false, "disabled": false });
+		syncGheServerBtn();
 	}
 });
 
@@ -41,7 +57,7 @@ const getGHEServerError = (error, url) => {
 		case "GHE_ERROR_GITHUB_CLOUD_HOST":
 			return {
 				title: "GitHub Cloud site",
-				message: `The entered URL is a GitHub Cloud site. <a href="/session/github/configuration&ghRedirect=to" target="_blank">Connect a GitHub Cloud site<a/>.`,
+				message: `The entered URL is a GitHub Cloud site.`,
 			};
 		case "GHE_ERROR_CANNOT_CONNECT":
 			return {
@@ -64,20 +80,32 @@ const handleGheUrlRequestErrors = (err) => {
 	$(".errorMessageBox__message").empty().append(message);
 }
 
-const verifyGitHubServerUrl = (gheServerURL) => {
+const verifyGitHubServerUrl = (gheServerURL, apiKeyHeaderName, apiKeyValue) => {
 	const csrf = document.getElementById("_csrf").value
 
 	AP.context.getToken(function(token) {
 		$.post("/jira/connect/enterprise", {
 				gheServerURL,
+				apiKeyHeaderName,
+				apiKeyValue,
 				_csrf: csrf,
-				jwt: token,
-				jiraHost
+				jwt: token
 			},
 			function(data) {
 				if (data.success) {
-					const pagePath = data.appExists ? "github-list-server-apps-page" : "github-app-creation-page";
-					const customData = data.appExists ?  { serverUrl: gheServerURL } : { serverUrl: gheServerURL, new: 1 };
+					const pagePath = data.appExists
+						? "github-list-server-apps-page"
+						: "github-app-creation-page";
+					const customData = data.appExists
+						? {
+							connectConfigUuid: data.connectConfigUuid,
+							serverUrl: data.connectConfigUuid // TODO remove when the new descriptor is propagated everywhere (in 1 month?)
+						}
+						: {
+							connectConfigUuid: data.connectConfigUuid,
+							serverUrl: data.connectConfigUuid, // TODO remove when the new descriptor is propagated everywhere (in 1 month?)
+							new: 1
+						};
 					AP.navigator.go(
 						"addonmodule",
 						{
@@ -102,11 +130,14 @@ const verifyGitHubServerUrl = (gheServerURL) => {
 
 AJS.$("#jiraServerUrl__form").on("aui-valid-submit", event => {
 	event.preventDefault();
-	const gheServerURL = $("#gheServerURL").val().replace(/\/+$/, "");
-	const installationId = $(event.currentTarget).data("installation-id");
+	const gheServerURL = gheServerURLElt.value.replace(/\/+$/, "");
 
 	if ($("#gheServerBtnSpinner").is(":hidden")) {
 		activeRequest();
-		verifyGitHubServerUrl(gheServerURL, installationId);
+		verifyGitHubServerUrl(
+			gheServerURL,
+			apiKeyHeaderNameElt ? apiKeyHeaderNameElt.value : '',
+			apiKeyValueElt ? apiKeyValueElt.value : ''
+		);
 	}
 });

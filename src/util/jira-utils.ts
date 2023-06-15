@@ -6,7 +6,7 @@ import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
-	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
+	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page` : "";
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/jira/marketplace/discover/app/com.github.integration.production` : "";

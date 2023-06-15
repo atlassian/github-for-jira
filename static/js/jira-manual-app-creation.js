@@ -86,6 +86,19 @@ $(document).ready(function() {
 		const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
 		const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
 
+		function submitData() {
+			AP.context.getToken((token) => {
+				data.jwt = token;
+				data.jiraHost = jiraHost;
+
+				if (isUpdatePage()) {
+					gitHubAppPutRequest(uuid, data);
+				} else {
+					gitHubAppPostRequest(data, token);
+				}
+			});
+		}
+
 		if (isFileChanged || isCreatePage()) {
 			const file = $("#privateKeyFile")[0].files[0];
 			const reader = new FileReader();
@@ -93,19 +106,11 @@ $(document).ready(function() {
 
 			reader.onload = () => {
 				data.privateKey = reader.result;
+				submitData();
 			};
+		} else {
+			submitData();
 		}
-
-		AP.context.getToken((token) => {
-			data.jwt = token;
-			data.jiraHost = jiraHost;
-
-			if (isUpdatePage()) {
-				gitHubAppPutRequest(uuid, data);
-			} else {
-				gitHubAppPostRequest(data, token);
-			}
-		});
 	});
 
 	const replaceSpacesAndChangeCasing = (str) => str.replace(/\s+/g, '-').toLowerCase();

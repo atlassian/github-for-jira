@@ -11,14 +11,12 @@ import pullRequestTriggeredByBot from "fixtures/pull-request-triggered-by-bot.js
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { createWebhookApp, WebhookApp } from "test/utils/create-webhook-app";
 
 jest.mock("config/feature-flags");
 
-describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
+describe("Pull Request Webhook", () => {
 	let app: WebhookApp;
 	const gitHubInstallationId = 1234;
 	const issueKeys = ["TEST-123", "TEST-321", "TEST-124"];
@@ -78,18 +76,11 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_SHARED_PR_TRANSFORM,
-			expect.anything()
-		).mockResolvedValue(useSharedPrFlag);
 
 	});
 
 	it("should have reviewers on pull request action", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -99,6 +90,15 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [{
+					...reviewsPayload[0].user,
+					login: "requested"
+				}],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-reviewer-login")
 			.reply(200, {
@@ -174,6 +174,13 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 							reviewers: [
 								{
 									avatar: "test-pull-request-reviewer-avatar",
+									name: "requested",
+									email: "requested@noreply.user.github.com",
+									url: "https://github.com/reviewer",
+									approvalStatus: "UNAPPROVED"
+								},
+								{
+									avatar: "test-pull-request-reviewer-avatar",
 									name: "test-pull-request-reviewer-login",
 									email: "test-pull-request-reviewer-login@email.test",
 									url: "https://github.com/reviewer",
@@ -200,11 +207,9 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 		await expect(app.receive(pullRequestBasic as any)).toResolve();
 	});
 
+
 	it("no Write perms case should be tolerated", async () => {
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 		githubNock.get("/users/test-pull-request-user-login")
 			.reply(200, {
 				login: "test-pull-request-author-login",
@@ -214,6 +219,12 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-reviewer-login")
 			.reply(200, {
@@ -260,7 +271,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		mockSystemTime(12345678);
 
-		const { gitHubServerApp } = await new DatabaseStateCreator()
+		const { subscription, gitHubServerApp } = await new DatabaseStateCreator()
 			.forServer()
 			.create();
 
@@ -286,7 +297,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 					delete: jiraClientDevinfoPullRequestDeleteMock
 				}
 			}
-		}, jest.fn(), gitHubInstallationId);
+		}, jest.fn(), gitHubInstallationId, subscription);
 		expect(jiraClientDevinfoPullRequestDeleteMock.mock.calls[0][0]).toEqual("6769746875626d79646f6d61696e636f6d-test-repo-id");
 	});
 
@@ -298,12 +309,16 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 	it("will not delete references if a branch still has an issue key", async () => {
 
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
-		githubUserTokenNock(gitHubInstallationId);
+		githubUserTokenNock(gitHubInstallationId).persist();
 
 		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 			.reply(200, reviewsPayload);
+
+		githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+			.reply(200, {
+				users: [],
+				teams: []
+			});
 
 		githubNock.get("/users/test-pull-request-user-login")
 			.twice()
@@ -321,10 +336,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 	describe("Trigged by Bot", () => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR opened action was triggered by bot", async () => {
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -335,6 +347,12 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
@@ -450,10 +468,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR closed action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.reply(200, {
@@ -464,6 +479,12 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {
@@ -540,11 +561,7 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 		it("should update the Jira issue with the linked GitHub pull_request if PR reopened action was triggered by bot", async () => {
 
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
-			githubUserTokenNock(gitHubInstallationId);
+			githubUserTokenNock(gitHubInstallationId).persist();
 
 			githubNock.get("/users/test-pull-request-user-login")
 				.twice()
@@ -560,6 +577,12 @@ describe.each([true, false])("Pull Request Webhook", (useSharedPrFlag) => {
 
 			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/reviews")
 				.reply(200, reviewsPayload);
+
+			githubNock.get("/repos/test-repo-owner/test-repo-name/pulls/1/requested_reviewers")
+				.reply(200, {
+					users: [],
+					teams: []
+				});
 
 			githubNock.get("/users/test-pull-request-reviewer-login")
 				.reply(200, {

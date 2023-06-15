@@ -6,7 +6,7 @@ import { RepoSyncState } from "models/reposyncstate";
 import singleInstallation from "fixtures/jira-configuration/single-installation.json";
 import failedInstallation from "fixtures/jira-configuration/failed-installation.json";
 import { getLogger } from "config/logger";
-import express, { Application } from "express";
+import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
@@ -15,7 +15,6 @@ jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
 
 describe("Jira Configuration Suite", () => {
-	let frontendApp: Application;
 	let subscription: Subscription;
 	let installation: Installation;
 
@@ -48,17 +47,10 @@ describe("Jira Configuration Suite", () => {
 			//secrets: "def234",
 			encryptedSharedSecret: "ghi345"
 		});
-
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
 	});
 
 	const mockRequest = (): any => ({
-		query: { xdm_e: jiraHost },
+		query: { },
 		csrfToken: jest.fn().mockReturnValue({}),
 		log: {
 			info: jest.fn(),
@@ -86,7 +78,7 @@ describe("Jira Configuration Suite", () => {
 
 		await JiraGet(mockRequest(), response, jest.fn());
 
-		expect(response.render).toHaveBeenCalledWith("jira-configuration-new.hbs", expect.objectContaining({
+		expect(response.render).toHaveBeenCalledWith("jira-configuration.hbs", expect.objectContaining({
 			hasConnections: true,
 			ghCloud: {
 				failedCloudConnections: [],
@@ -284,28 +276,22 @@ describe.each([
 	}
 ])("Jira Route", (testData) => {
 	const { url, testSharedSecret, testQsh } = testData;
-	let frontendApp, installation;
+	let frontendApp;
 
 	beforeEach(async () => {
-		installation = await Installation.install({
+		await Installation.install({
 			host: jiraHost,
 			sharedSecret: testSharedSecret,
 			clientKey: "jira-client-key"
 		});
 		frontendApp = express();
-		frontendApp.use((request, res, next) => {
-			res.locals = { jiraHost, installation };
-			request.log = getLogger("test");
+		frontendApp.use((request, _, next) => {
 			request.query = {
-				xdm_e: jiraHost,
 				jwt: encodeSymmetric({
 					qsh: testQsh,
 					iss: "jira-client-key"
 				}, testSharedSecret)
 			};
-			request.addLogFields = jest.fn();
-			request.csrfToken = jest.fn();
-
 			next();
 		});
 		frontendApp.use(getFrontendApp());

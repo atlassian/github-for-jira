@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { envVars }  from "config/env";
 import { SqsQueue } from "./sqs";
 import { backfillQueueMessageHandler } from "./backfill";
@@ -16,7 +17,7 @@ const logger = getLogger("sqs-queues");
 
 let backfillQueue: SqsQueue<BackfillMessagePayload> | undefined = undefined;
 
-const backfillQueueMessageSender = (message, delaySec, logger) =>
+const backfillQueueMessageSender = (message: BackfillMessagePayload, delaySec: number, logger: Logger) =>
 	// Given the single-threaded nature of Node.js, backfillQueue is always initialised
 	// because SqsQueue is not triggering messageHandler from ctor
 	backfillQueue!.sendMessage(message, delaySec, logger);
