@@ -18,6 +18,7 @@ export enum BooleanFlags {
 	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
+	USE_NEW_PULL_ALGO = "use-new-pull-algo",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
 	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",

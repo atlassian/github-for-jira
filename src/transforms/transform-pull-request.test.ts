@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequest } from "./transform-pull-request";
+import { transformPullRequestRest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
@@ -29,7 +29,7 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -86,7 +86,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -170,7 +170,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -243,7 +243,7 @@ describe("pull_request transform", () => {
 		// @ts-ignore
 		fixture.user = null;
 
-		const data = await transformPullRequest(client, fixture as any, reviewersListNoUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
 
 		const { updated_at, title } = fixture;
 
@@ -301,7 +301,7 @@ describe("pull_request transform", () => {
 		// @ts-ignore
 		delete reviewrsListNoState[0].state;
 
-		const data = await transformPullRequest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
 
 		const { updated_at, title } = pulLRequestFixture;
 
@@ -366,7 +366,7 @@ describe("pull_request transform", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
 
 		const { updated_at, title } = fixture;
 
@@ -424,7 +424,7 @@ describe("pull_request transform", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 
-		const data = await transformPullRequest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
 
 		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
@@ -438,4 +438,5 @@ describe("pull_request transform", () => {
 			})
 		}));
 	});
+
 });
