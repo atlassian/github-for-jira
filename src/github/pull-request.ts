@@ -1,4 +1,4 @@
-import { transformPullRequest } from "../transforms/transform-pull-request";
+import { transformPullRequestRest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
@@ -38,7 +38,7 @@ export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraCl
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, subscription.jiraHost, metrics, context.log, gitHubAppId);
 	const reviews = await getPullRequestReviews(subscription.jiraHost, gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 
-	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequestRest(gitHubInstallationClient, pull_request, reviews, context.log);
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
