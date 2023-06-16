@@ -58,19 +58,19 @@ export const getPullRequestTask = async (
 	messagePayload: BackfillMessagePayload
 ) => {
 	if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string, perPage);
+		return getPullRequestTaskGraphQL(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string, perPage);
 	}
 
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetPullRequestTaskRest(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return getPullRequestTaskRest(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return getPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
-const doGetPullRequestTaskInParallel = (
+const getPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
@@ -82,7 +82,7 @@ const doGetPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	(pageCursor) =>
-		doGetPullRequestTaskRest(
+		getPullRequestTaskRest(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
 			messagePayload
@@ -99,7 +99,7 @@ const emitStats = (jiraHost: string, startTime: number, requestType: string) => 
 	);
 };
 
-const doGetPullRequestTask = async (
+const getPullRequestTaskGraphQL = async (
 	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
@@ -137,7 +137,7 @@ const doGetPullRequestTask = async (
 
 };
 
-const doGetPullRequestTaskRest = async (
+const getPullRequestTaskRest = async (
 	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
