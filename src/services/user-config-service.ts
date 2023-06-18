@@ -116,12 +116,7 @@ const convertYamlToUserConfig = (input?: string): Config => {
 	const deployments = {};
 	if (configDeployments != null) {
 		if (configDeployments.environmentMapping) {
-			deployments["environmentMapping"] =  {
-				development: configDeployments.environmentMapping.development,
-				testing: configDeployments.environmentMapping.testing,
-				staging: configDeployments.environmentMapping.staging,
-				production: configDeployments.environmentMapping.production
-			};
+			deployments["environmentMapping"] = configDeployments.environmentMapping;
 		}
 		if (configDeployments.services?.ids) {
 			deployments["services"] = {

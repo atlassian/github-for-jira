@@ -33,10 +33,7 @@ describe("User Config Service", () => {
 		"      - \"test-id-3\"\n" +
 		"      - \"test-id-4\"";
 
-	const configFileContentBase64 = Buffer.from(configFileContent).toString("base64");
-
 	let gitHubClient;
-
 
 	beforeEach(async () => {
 		subscription = await Subscription.create({
@@ -71,11 +68,15 @@ describe("User Config Service", () => {
 
 	});
 
-	const givenGitHubReturnsConfigFile = (repoOwner: string = repoSyncState.repoOwner, repoName = repoSyncState.repoName) => {
+	const givenGitHubReturnsConfigFile = ({
+		repoOwner = repoSyncState.repoOwner,
+		repoName = repoSyncState.repoName,
+		fileContent = configFileContent
+	}: { repoOwner?: string, repoName?: string, fileContent?: string } = {}) => {
 		// see https://docs.github.com/en/rest/repos/contents#get-repository-content
 		githubNock.get(`/repos/${repoOwner}/${repoName}/contents/.jira/config.yml`)
 			.reply(200, {
-				content: configFileContentBase64
+				content: Buffer.from(fileContent).toString("base64")
 			});
 	};
 
@@ -126,10 +127,24 @@ describe("User Config Service", () => {
 		const unknownRepoId = 42;
 
 		githubUserTokenNock(gitHubInstallationId);
-		givenGitHubReturnsConfigFile(unknownRepoOwner, unknownRepoName);
+		givenGitHubReturnsConfigFile({ repoOwner: unknownRepoOwner, repoName: unknownRepoName });
 		const config = await getRepoConfig(subscription, gitHubClient, unknownRepoId, unknownRepoOwner, unknownRepoName);
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
 	});
 
+	it("should maintain environment order for top-down matching", async () => {
+		const fileContent = "deployments:\n" +
+			"  environmentMapping:\n" +
+			"    development: [\"DEV-*\"]\n" +
+			"    staging: [\"STG-*\"]\n" +
+			"    production: [\"PRD-*\"]\n" +
+			"    testing: [\"*\"]\n";
+
+		githubUserTokenNock(gitHubInstallationId);
+		givenGitHubReturnsConfigFile({ fileContent });
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		expect(Object.keys(config?.deployments?.environmentMapping ?? {})).toStrictEqual(["development", "staging", "production", "testing"]);
+	});
 });
