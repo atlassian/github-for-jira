@@ -9,6 +9,7 @@ import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permissio
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+	req.log.info({ headers: JSON.stringify(req.headers) }, "Request Headers");
 	const authHeader = req.headers["Authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
