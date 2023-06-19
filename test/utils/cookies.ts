@@ -3,11 +3,20 @@ import * as cookie from "cookie";
 import { Response } from "superagent";
 
 export const generateSignedSessionCookieHeader = (fixture:unknown): string[] => {
+	const cookie = generateSignedSessionCookie(fixture);
+	return [
+		`session=${cookie.session};session.sig=${cookie.sessionSig};`
+	];
+};
+
+
+export const generateSignedSessionCookie = (fixture:unknown) => {
 	const cookie = Buffer.from(JSON.stringify(fixture)).toString("base64");
 	const keygrip = Keygrip([process.env.GITHUB_CLIENT_SECRET || ""]);
-	return [
-		`session=${cookie};session.sig=${keygrip.sign(`session=${cookie}`)};`
-	];
+	return {
+		session: cookie,
+		sessionSig: keygrip.sign(`session=${cookie}`)
+	};
 };
 
 export const parseCookiesAndSession = (response: Response): { cookies: any, session?: any } =>  {
