@@ -25,7 +25,7 @@ describe("github-create-branch-post.frontend", () => {
 		server = app.listen(port);
 
 		const options = {
-			headless: false, slowMo: 100  // uncomment for debugging
+			// headless: false, slowMo: 100  // uncomment for debugging
 		};
 		browser = await chromium.launch(options);
 		context = await browser.newContext();
