@@ -9,67 +9,47 @@ import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permissio
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+	//Temp logging
 	req.log.info({ headers: JSON.stringify(req.headers) }, "Request Headers");
-	const authHeader = req.headers["Authorization"] as string;
+	const authHeader = req.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
 		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
-
-	/********************************************
-		START TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
-	*********************************************/
-	const requestUrl = req.headers.referer;
-	const paramStart = "xdm_e=";
-	const paramEnd = ".atlassian.net";
-	let logRequestUrl;
-	let jiraHostFromReqHeaderReferer;
-
-	if (requestUrl) {
-		const startIndex = requestUrl.indexOf(paramStart);
-		const endIndex = requestUrl.indexOf(paramEnd, startIndex);
-		const value = decodeURIComponent(requestUrl.substring(startIndex + paramStart.length, endIndex));
-		jiraHostFromReqHeaderReferer = `${value}${paramEnd}`;
-		logRequestUrl = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, jiraHostFromReqHeaderReferer);
-	}
-	/********************************************
-		END TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
-	 *********************************************/
-
+	//Temp logging
+	req.log.info({ token }, "JWT token");
 	if (token) {
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
 		} catch (err) {
-			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not get issuer");
-			} else {
-				req.log.warn({ err }, "Could not get issuer");
-			}
+			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-
+		//Temp logging
+		req.log.info("Issuer Found");
 		const installation = await Installation.getForClientKey(issuer);
+		const tempLogging = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, installation?.jiraHost);
 		if (!installation) {
-			if (logRequestUrl) {
-				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
-			} else {
-				req.log.warn("No Installation found");
-			}
+			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
+		}
+		//Temp logging
+		if (tempLogging) {
+			req.log.info({ id: installation.id, jiraHost: installation.jiraHost }, "Installation Found");
 		}
 
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
-			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not verify symmetric JWT");
-			} else {
-				req.log.warn({ err }, "Could not verify symmetric JWT");
-			}
+			req.log.warn({ err }, "Could not verify symmetric JWT");
 			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
 			return res.status(401).send(errorMessage);
+		}
+		//Temp logging
+		if (tempLogging) {
+			req.log.info("JWT verified");
 		}
 
 		res.locals.installation = installation;
@@ -88,11 +68,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
-			if (logRequestUrl) {
-				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
-			} else {
-				req.log.warn("No Installation found");
-			}
+			req.log.warn("No Installation found");
 			req.session.jiraHost = undefined;
 			return res.status(401).send("Unauthorised");
 		}
@@ -103,11 +79,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	if (logRequestUrl) {
-		req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No token found and session cookie has no jiraHost");
-	} else {
-		req.log.warn("No token found and session cookie has no jiraHost");
-	}
+	req.log.warn("No token found and session cookie has no jiraHost");
+
 	return res.status(401).send("Unauthorised");
 
 };
