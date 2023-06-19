@@ -8,6 +8,7 @@ import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
 	getBranchesQueryWithoutChangedFiles,
+	getBranchesQueryWithoutCommits,
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
@@ -18,7 +19,9 @@ import {
 	getDeploymentsResponse,
 	getDeploymentsQuery,
 	getDeploymentsQueryWithStatuses,
-	SearchedRepositoriesResponse, getBranchesQueryWithoutCommits
+	SearchedRepositoriesResponse,
+	getPullRequests,
+	pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
@@ -89,6 +92,17 @@ export class GitHubInstallationClient extends GitHubClient {
 			repo,
 			pullNumber
 		});
+	}
+
+	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
+		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
+			owner,
+			repo,
+			per_page,
+			commitSince: commitSince?.toISOString(),
+			cursor
+		}, { graphQuery: "getPullRequests" });
+		return response.data.data;
 	}
 
 	/**

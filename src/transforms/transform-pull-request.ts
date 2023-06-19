@@ -8,12 +8,14 @@ import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { pullRequestNode } from "~/src/github/client/github-queries";
 
 const mapStatus = (status: string, merged_at?: string) => {
-	if (status === "merged") return "MERGED";
-	if (status === "open") return "OPEN";
-	if (status === "closed" && merged_at) return "MERGED";
-	if (status === "closed" && !merged_at) return "DECLINED";
+	if (status.toLowerCase() === "merged") return "MERGED";
+	if (status.toLowerCase() === "open") return "OPEN";
+	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
+	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
+	if (status.toLowerCase() === "declined") return "DECLINED";
 	return "UNKNOWN";
 };
 
@@ -24,12 +26,8 @@ interface JiraReviewer extends JiraReview {
 const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
-// TODO: define arguments and return
-const mapReviews = async (
-	reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [],
-	gitHubInstallationClient: GitHubInstallationClient
-): Promise<JiraReview[]> =>
-{
+const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+
 	const usernames: Record<string, JiraReviewer> = {};
 
 	// The reduce function goes through all the reviews and creates an array of unique users
@@ -72,13 +70,17 @@ const mapReviews = async (
 	}));
 };
 
-export const extractIssueKeysFromPr = (pullRequest: Octokit.PullsListResponseItem) => {
+export const extractIssueKeysFromPrRest = (pullRequest: Octokit.PullsListResponseItem) => {
 	const { title: prTitle, head, body } = pullRequest;
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
 
-// TODO: define arguments and return
-export const transformPullRequest = async (
+export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
+	const { title, headRef, body } = pullRequest;
+	return jiraIssueKeyParser(`${title}\n${headRef?.name}\n${body}`);
+};
+
+export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
 	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
@@ -99,7 +101,7 @@ export const transformPullRequest = async (
 		html_url
 	} = pullRequest;
 
-	const issueKeys = extractIssueKeysFromPr(pullRequest);
+	const issueKeys = extractIssueKeysFromPrRest(pullRequest);
 
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {
@@ -113,7 +115,7 @@ export const transformPullRequest = async (
 	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
-	const reviewers = await mapReviews(reviews, gitHubInstallationClient);
+	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
 	const status = mapStatus(state, merged_at);
 
 	return {
@@ -172,4 +174,87 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 			updateSequenceId: Date.now()
 		}
 	];
+};
+
+export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log?: Logger) => {
+	const issueKeys = extractIssueKeysFromPr(pullRequest);
+
+	if (isEmpty(issueKeys) || !pullRequest.headRef?.repository) {
+		log?.info({
+			pullRequestNumber: pullRequest.number,
+			pullRequestId: pullRequest.id
+		}, "Ignoring pullrequest since it has no issue keys or repo");
+		return undefined;
+	}
+
+	const status = mapStatus(pullRequest.state, pullRequest.mergedAt);
+
+	try {
+		return {
+			author: getJiraAuthor(pullRequest.author),
+			commentCount: pullRequest.comments.totalCount || 0,
+			destinationBranch: pullRequest.baseRef?.name || "",
+			destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+			displayId: `#${pullRequest.number}`,
+			id: pullRequest.number,
+			issueKeys,
+			lastUpdate: pullRequest.updatedAt,
+			reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
+			sourceBranch: pullRequest.headRef?.name || "",
+			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+			status: status,
+			timestamp: pullRequest.updatedAt,
+			title: pullRequest.title,
+			url: pullRequest.url,
+			updateSequenceId: Date.now()
+		};
+	} catch (err) {
+		throw new Error();
+	}
+};
+
+const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {
+	const allReviews = [...reviewRequests || [], ...reviews || []] as pullRequestNode["reviews"]["nodes"];
+	const usernames: Record<string, any> = {};
+
+	// The reduce function goes through all the reviews and creates an array of unique users
+	// (so users' avatars won't be duplicated on the dev panel in Jira)
+	// and it considers 'APPROVED' as the main approval status for that user.
+	const reviewsReduced: JiraReviewer[] = allReviews.reduce((acc: JiraReviewer[], review) => {
+
+		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
+		const reviewer = review?.author;
+		const reviewerUsername = reviewer?.login;
+
+		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
+
+		if (!haveWeSeenThisReviewerAlready) {
+			usernames[reviewerUsername] = {
+				...getJiraAuthor(reviewer),
+				login: reviewerUsername,
+				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+			};
+
+			acc.push(usernames[reviewerUsername]);
+
+		} else {
+			usernames[reviewerUsername].approvalStatus = review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED;
+		}
+
+		// Returns the reviews' array with unique users
+		return acc;
+	}, []);
+
+	// Get GitHub user email, so it can be matched to an AAID
+	return reviewsReduced.map(reviewer => {
+		const mappedReviewer = {
+			...omit(reviewer, "login")
+		};
+		const isDeletedUser = !reviewer.login;
+		if (!isDeletedUser) {
+			const gitHubUser = getJiraAuthor(reviewer);
+			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
+		}
+		return mappedReviewer;
+	});
 };
