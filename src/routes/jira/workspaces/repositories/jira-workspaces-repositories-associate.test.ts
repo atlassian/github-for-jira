@@ -104,4 +104,34 @@ describe("Workspaces Associate Repository", () => {
 				expect(res.text).toContain(JSON.stringify(associateRepoRes));
 			});
 	});
+
+	it("Should return empty object when no repo is found", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		Date.now = jest.fn(() => 1487076708000);
+
+		const response = {
+			success: true,
+			associatedRepository: {}
+		};
+
+		await supertest(app)
+			.post("/jira/workspaces/repositories/associate")
+			.query({
+				jwt
+			})
+			.send({
+				id: "1"
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(response));
+			});
+	});
 });
