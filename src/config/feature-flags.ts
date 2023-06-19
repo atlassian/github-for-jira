@@ -79,10 +79,8 @@ export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boo
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);
 
-export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> => {
-	if (flag === NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES) return 5;
-	return await getLaunchDarklyValue(flag, defaultValue, key);
-};
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
+	await getLaunchDarklyValue(flag, defaultValue, key);
 
 export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
