@@ -77,7 +77,7 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
-	baseRef: {
+	baseRef?: {
 		name: string;
 		repository: {
 			url: string;
@@ -87,7 +87,7 @@ export type pullRequestNode = {
 			};
 		};
 	};
-	headRef: {
+	headRef?: {
 		id: string;
 		name: string;
 		repository: {
@@ -111,7 +111,7 @@ export type pullRequestNode = {
 	comments: {
 		totalCount: number;
 	};
-	author: {
+	author?: {
 		login: string;
 		avatarUrl: string;
 		url: string;
