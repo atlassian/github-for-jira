@@ -33,6 +33,7 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 				lastEdges = extraDeploymentsEdges;
 			} catch (e) {
 				logger.warn({ err: e }, "Error finding extraDeploymentData");
+				throw e;
 			}
 		}
 	}
