@@ -43,6 +43,7 @@ export enum NumberFlags {
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	BACKFILL_DEPLOYMENT_EXTRA_PAGES = "backfill-deployment-extra-pags",
 	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
@@ -78,8 +79,10 @@ export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boo
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);
 
-export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> =>
-	await getLaunchDarklyValue(flag, defaultValue, key);
+export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: string): Promise<number> => {
+	if (flag === NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES) return 5;
+	return await getLaunchDarklyValue(flag, defaultValue, key);
+};
 
 export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
