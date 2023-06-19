@@ -25,10 +25,10 @@ import random
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = 'YOUR_PAT_GOES_HERE'
+ACCESS_TOKEN = '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'
 
 # GitHub username
-USERNAME = 'USERNAME'
+USERNAME = 'githubForJiraTestData1'
 
 # Default values
 DEFAULT_NUM_REPOS = 2
@@ -95,7 +95,9 @@ def initialize_repository(repo_name):
     subprocess.run('git add .', shell=True, check=True)
     subprocess.run('git commit -m "Initial commit"', shell=True, check=True)
     subprocess.run('git branch -M main', shell=True, check=True)
-    subprocess.run(f'git remote add origin https://github.com/{USERNAME}/{repo_name}.git', shell=True, check=True)
+
+    subprocess.run(f'git remote add origin https://{USERNAME}:{ACCESS_TOKEN}@github.com/{USERNAME}/{repo_name}.git', shell=True, check=True)
+
     subprocess.run('git push -u origin main', shell=True, check=True)
     print(f'Repository "{repo_name}" initialized and initial commit pushed successfully.')
 
@@ -150,7 +152,7 @@ try:
         for branch_index in range(args.num_branches):
 
             # Generate a unique branch name with the issue-key prefix and ranfom number
-            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}'
+            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)} {int(time.time())}'
             # Create a new branch
             create_branch(branch_name)
 
