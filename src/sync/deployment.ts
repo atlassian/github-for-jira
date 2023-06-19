@@ -117,7 +117,7 @@ const saveDeploymentsForLaterUse = async (deployments: FetchDeploymentResponse["
 };
 
 export const getDeploymentTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
@@ -125,7 +125,11 @@ export const getDeploymentTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.debug("Syncing Deployments: started");
+
+	const logger = parentLogger.child({ backfillTask: "Deployment" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const { edges, deployments, extraDeployments } = await fetchDeployments(jiraHost, gitHubInstallationClient, repository, logger, cursor, perPage);
 
@@ -136,6 +140,7 @@ export const getDeploymentTask = async (
 
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
 			jiraPayload: undefined
@@ -143,6 +148,7 @@ export const getDeploymentTask = async (
 	}
 
 	if (!deployments?.length) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges,
 			jiraPayload: undefined
@@ -154,9 +160,10 @@ export const getDeploymentTask = async (
 	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
 
 	const transformedDeployments = await getTransformedDeployments(useDynamoForBackfill, deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
-	logger.debug("Syncing Deployments: finished");
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
+
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.deployments?.length }, "Backfill task complete");
 
 	return {
 		edges,
