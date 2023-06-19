@@ -7,6 +7,7 @@ import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlass
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { envVars } from "~/src/config/env";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	//Temp logging
@@ -108,7 +109,8 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(req.originalUrl)? TokenType.normal : TokenType.context;
+		req.log.info({ checkGenericContainerActionUrl: checkGenericContainerActionUrl(`${envVars.APP_URL}req.originalUrl`, req) }, "checkGenericContainerActionUrl");
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}req.originalUrl`, req)? TokenType.normal : TokenType.context;
 		req.log.info({ tokenType, originalUrl: req.originalUrl, url: req.url  }, "tokenType");
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
@@ -147,8 +149,10 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-const checkGenericContainerActionUrl = (url: string) => {
+const checkGenericContainerActionUrl = (url: string, req: Request) => {
+	req.log.info({ url }, "url");
 	return genericContainerActionUrls.some(moduleUrl => {
+		req.log.info({ moduleUrl }, "moduleUrl");
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };
