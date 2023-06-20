@@ -79,20 +79,10 @@ describe("Workspaces Associate Repository", () => {
 		Date.now = jest.fn(() => 1487076708000);
 
 		const associateRepoRes = {
-			success: true,
-			associatedRepository: {
-				preventTransitions: false,
-				operationType: "NORMAL",
-				repository: {
-					id: "1",
-					name: repo1.repoFullName,
-					url: repo1.repoUrl,
-					updateSequenceId: 1487076708000
-				},
-				properties: {
-					installationId: 1234
-				}
-			}
+			id: "1",
+			name: repo1.repoFullName,
+			url: repo1.repoUrl,
+			updateSequenceId: 1487076708000
 		};
 
 		await supertest(app)
