@@ -175,7 +175,7 @@ describe("Workspaces Get", () => {
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=Atlas")
 			.set({
-				authorization: `JWT ${await generateJwt(
+				AUTHORIZATION: `JWT ${await generateJwt(
 					{
 						searchQuery: "Atlas"
 					}
