@@ -106,9 +106,7 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	}
 
 	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
-	return uniq(Array.from(str.matchAll(jiraIssueRegex()), m => {
-		return m[2].toUpperCase()
-	}));
+	return uniq(Array.from(str.matchAll(jiraIssueRegex()), m => m[2].toUpperCase()));
 };
 
 export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
