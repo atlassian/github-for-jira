@@ -1,10 +1,10 @@
 import Logger from "bunyan";
 import { Request, Response } from "express";
 import { createAppClient, createInstallationClient } from "utils/get-github-client-config";
-import { RepositoryNode } from "~/src/github/client/github-queries";
-import { Subscription } from "~/src/models/subscription";
+import { Subscription, Repository } from "~/src/models/subscription";
 import { sendError } from "~/src/jira/util/jwt";
 import { Errors } from "config/errors";
+import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
@@ -51,7 +51,7 @@ export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubA
 	}
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const metrics = { trigger: "github-repo-get" };
@@ -63,7 +63,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
-			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:full_name`;
 
 			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
 				.then(responseInstallationSearch => {
@@ -79,10 +79,16 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 					return [];
 				});
 
-			return installationSearch;
+			// We don't want to return repos that are not in Database, otherwise we won't be able to fetch branches to branch from later
+			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
+			// the next steps (e.g. get repo branches to branch of) will fail
+			const subscriptionRepos = await RepoSyncState.findAllFromSubscription(subscription);
+			const subscriptionRepoIds = new Set(subscriptionRepos.map(repo => repo.repoId));
+			return installationSearch.filter(repo => subscriptionRepoIds.has(repo.id));
+
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to search repos for installation");
-			throw err;
+			return [];
 		}
 	});
 	const repos = (await Promise.all(repoTasks))
