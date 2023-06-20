@@ -219,7 +219,8 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	if (config) {
 		const environmentType = mapEnvironmentWithConfig(environment, config);
 		if (environmentType) {
-			return environmentType;
+			const validEnvs = ["development", "testing", "staging", "production"];
+			return validEnvs.includes(environmentType) ? environmentType : "unmapped";
 		}
 	}
 
