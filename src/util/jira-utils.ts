@@ -69,8 +69,8 @@ interface Author {
  *  then must be at least one more unicode-digit character up to 256 length to prefix the ID -\p{Nd}{1,255} means that it must be separated by a dash,
  *  then at least 1 number character up to 256 length
  */
-export const jiraIssueRegex = (): RegExp => {
-	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
+const jiraIssueRegex = (): RegExp => {
+	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})(?=$|[^A-Z\d])/giu;
 };
 
 /**
@@ -106,7 +106,9 @@ export const jiraIssueKeyParser = (str: string): string[] => {
 	}
 
 	// Parse all issue keys from string then we UPPERCASE the matched string and remove duplicate issue keys
-	return uniq(Array.from(str.matchAll(jiraIssueRegex()), m => m[2].toUpperCase()));
+	return uniq(Array.from(str.matchAll(jiraIssueRegex()), m => {
+		return m[2].toUpperCase()
+	}));
 };
 
 export const hasJiraIssueKey = (str: string): boolean => !isEmpty(jiraIssueKeyParser(str));
