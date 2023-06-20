@@ -82,7 +82,7 @@ resources:
   - type: sqs
     name: backfill
     attributes:
-      MaxReceiveCount: 3
+      MaxReceiveCount: 7
       MessageRetentionPeriod: 1209600
       VisibilityTimeout: 602 #Visibility timeout will be overridden by the SQS Listener when we read message from the queue. We set it here anyway in case if that override fails.
       dataType:
