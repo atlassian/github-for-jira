@@ -371,6 +371,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 
 	if (mainNextTask.task === "repository") {
+		log.warn("Cannot finish discovery task: marking the subscription as FAILED");
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
