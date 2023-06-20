@@ -3,70 +3,35 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { envVars } from "~/src/config/env";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const authHeader = req.headers["Authorization"] as string;
+	const authHeader = req.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
 		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
-
-	/********************************************
-		START TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
-	*********************************************/
-	const requestUrl = req.headers.referer;
-	const paramStart = "xdm_e=";
-	const paramEnd = ".atlassian.net";
-	let logRequestUrl;
-	let jiraHostFromReqHeaderReferer;
-
-	if (requestUrl) {
-		const startIndex = requestUrl.indexOf(paramStart);
-		const endIndex = requestUrl.indexOf(paramEnd, startIndex);
-		const value = decodeURIComponent(requestUrl.substring(startIndex + paramStart.length, endIndex));
-		jiraHostFromReqHeaderReferer = `${value}${paramEnd}`;
-		logRequestUrl = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, jiraHostFromReqHeaderReferer);
-	}
-	/********************************************
-		END TEMPORARY CODE TO DEBUG GENERIC CONTAINERS
-	 *********************************************/
-
 	if (token) {
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
 		} catch (err) {
-			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not get issuer");
-			} else {
-				req.log.warn({ err }, "Could not get issuer");
-			}
+			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
-			if (logRequestUrl) {
-				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
-			} else {
-				req.log.warn("No Installation found");
-			}
+			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
-			if (logRequestUrl) {
-				req.log.warn({ err, requestUrl, jiraHostFromReqHeaderReferer }, "Could not verify symmetric JWT");
-			} else {
-				req.log.warn({ err }, "Could not verify symmetric JWT");
-			}
+			req.log.warn({ err }, "Could not verify symmetric JWT");
 			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
 			return res.status(401).send(errorMessage);
 		}
@@ -87,11 +52,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
-			if (logRequestUrl) {
-				req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No Installation found");
-			} else {
-				req.log.warn("No Installation found");
-			}
+			req.log.warn("No Installation found");
 			req.session.jiraHost = undefined;
 			return res.status(401).send("Unauthorised");
 		}
@@ -102,11 +63,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	if (logRequestUrl) {
-		req.log.warn({ requestUrl, jiraHostFromReqHeaderReferer }, "No token found and session cookie has no jiraHost");
-	} else {
-		req.log.warn("No token found and session cookie has no jiraHost");
-	}
+	req.log.warn("No token found and session cookie has no jiraHost");
+
 	return res.status(401).send("Unauthorised");
 
 };
@@ -134,7 +92,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -168,6 +126,12 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
  */
 const checkPathValidity = (url: string) => {
 	return moduleUrls.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkGenericContainerActionUrl = (url: string) => {
+	return genericContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

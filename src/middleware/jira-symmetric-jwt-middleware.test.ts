@@ -205,7 +205,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			.expect(200);
 	});
 
-
 	const createApp = () => {
 		const app = express();
 		app.use((req: Request, _: Response, next: NextFunction) => {
