@@ -109,8 +109,8 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		req.log.info({ checkGenericContainerActionUrl: checkGenericContainerActionUrl(`${envVars.APP_URL}req.originalUrl`, req) }, "checkGenericContainerActionUrl");
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}req.originalUrl`, req)? TokenType.normal : TokenType.context;
+		req.log.info({ checkGenericContainerActionUrl: checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`, req) }, "checkGenericContainerActionUrl");
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`, req)? TokenType.normal : TokenType.context;
 		req.log.info({ tokenType, originalUrl: req.originalUrl, url: req.url  }, "tokenType");
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
