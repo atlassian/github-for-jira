@@ -5,7 +5,7 @@ import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, Workspace } from "routes/jira/workspaces/jira-workspaces-get";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
@@ -144,7 +144,6 @@ const generateMockResponse = (subscriptions: Subscription[], repositories: RepoS
 describe("Workspaces Get", () => {
 	let app: Application;
 	let installation: Installation;
-	let jwt: string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -152,12 +151,18 @@ describe("Workspaces Get", () => {
 			sharedSecret: "shared-secret",
 			clientKey: "jira-client-key"
 		});
-
-		jwt = encodeSymmetric({
-			qsh: "context-qsh",
-			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
+
+	const generateJwt = async (query: any = {}) => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "GET",
+				pathname: "/jira/workspaces/search",
+				query
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
 	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
@@ -169,8 +174,12 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=Atlas")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "Atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -190,8 +199,12 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=atlas")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify([]));
@@ -213,8 +226,8 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(response));
@@ -251,8 +264,12 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search?searchQuery=atlas")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(response));
@@ -274,8 +291,8 @@ describe("Workspaces Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/search")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify(response));

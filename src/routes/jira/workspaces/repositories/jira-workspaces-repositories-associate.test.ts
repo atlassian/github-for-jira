@@ -5,14 +5,13 @@ import supertest from "supertest";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 
 describe("Workspaces Associate Repository", () => {
 	let app: Application;
 	let installation: Installation;
 	let sub: Subscription;
-	let jwt: string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -27,12 +26,17 @@ describe("Workspaces Associate Repository", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
-
-		jwt = encodeSymmetric({
-			qsh: "context-qsh",
-			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
+
+	const generateJwt = async () => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "POST",
+				pathname: "/jira/workspaces/repositories/associate"
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
 	it("Should return a 400 status if no repoId is provided", async () => {
 		app = express();
@@ -45,8 +49,8 @@ describe("Workspaces Associate Repository", () => {
 
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -93,8 +97,8 @@ describe("Workspaces Associate Repository", () => {
 
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
 				id: repo1.repoId
@@ -123,8 +127,8 @@ describe("Workspaces Associate Repository", () => {
 
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
 				id: "1"

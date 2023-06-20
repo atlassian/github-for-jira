@@ -308,8 +308,8 @@ describe("Workspaces Repositories Get", () => {
 			sharedSecret: "shared-secret",
 			clientKey: "jira-client-key"
 		});
-
 	});
+
 	const generateJwt = async (query: any = {}) => {
 		return encodeSymmetric({
 			qsh: createQueryStringHash({
@@ -317,7 +317,7 @@ describe("Workspaces Repositories Get", () => {
 				pathname: "/jira/workspaces/repositories/search",
 				query
 			}, false),
-			iss:"jira-client-key"
+			iss: installation.plainClientKey
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	};
 
@@ -331,10 +331,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt: generateJwt({
-					searchQuery: "new"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -354,10 +356,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/repositories/search?searchQuery=atlas")
-			.query({
-				jwt: generateJwt({
-					searchQuery: "atlas"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify([]));
@@ -378,8 +382,8 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search`)
-			.query({
-				jwt: generateJwt()
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -400,10 +404,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt: generateJwt({
-					searchQuery: "new"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -468,12 +474,14 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=1&limit=2`)
-			.query({
-				jwt: generateJwt({
-					searchQuery: "repo",
-					page: "1",
-					limit: "2"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "1",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -482,12 +490,14 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=2&limit=2`)
-			.query({
-				jwt: generateJwt({
-					searchQuery: "repo",
-					page: "2",
-					limit: "2"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "2",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -510,10 +520,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo`)
-			.query({
-				jwt: generateJwt({
-					searchQuery: "repo"
-				})
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo"
+					}
+				)}`
 			})
 			.expect((res) => {
 				expect(res.status).toBe(200);
