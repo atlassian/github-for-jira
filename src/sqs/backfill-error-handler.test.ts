@@ -3,7 +3,7 @@ import { getLogger } from "config/logger";
 import { backfillErrorHandler } from "~/src/sqs/backfill-error-handler";
 import { Sequelize } from "sequelize";
 import { TaskError } from "~/src/sync/installation";
-import { Repository, Subscription } from "models/subscription";
+import { Repository, Subscription, SyncStatus } from "models/subscription";
 import { Task } from "~/src/sync/sync.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import _ from "lodash";
@@ -30,8 +30,8 @@ const TEST_REPO: Repository = {
 describe("backfillErrorHandler", () => {
 	const MOCKED_TIMESTAMP_MSECS = 12_345_678;
 
-	let installation: Installation | null;
-	let subscription: Subscription | null;
+	let installation: Installation;
+	let subscription: Subscription;
 	let repoSyncState: RepoSyncState;
 	let task: Task;
 	let sendMessageMock: jest.Mock;
@@ -183,10 +183,25 @@ describe("backfillErrorHandler", () => {
 		});
 	});
 
-	it("marks task as failed and reschedules message on last attempt", async () => {
+	it("marks subscription as FAILED when repository task fails on last attempt", async () => {
+		task.task = "repository";
 		const result = await backfillErrorHandler(sendMessageMock)(
 			new TaskError(task, new Error("boom")),
 			createContext(5, true)
+		);
+
+		expect(result).toEqual({
+			isFailure: false
+		});
+		expect(sendMessageMock.mock.calls.length).toEqual(0);
+		await subscription.reload();
+		expect(subscription.syncStatus).toStrictEqual(SyncStatus.FAILED);
+	});
+
+	it("fails fast for tasks other than repo", async () => {
+		const result = await backfillErrorHandler(sendMessageMock)(
+			new TaskError(task, new Error("boom")),
+			createContext(5, false)
 		);
 
 		expect(result).toEqual({
