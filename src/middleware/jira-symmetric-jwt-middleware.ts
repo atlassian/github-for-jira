@@ -6,19 +6,14 @@ import { Installation } from "~/src/models/installation";
 import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { envVars } from "~/src/config/env";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	//Temp logging
-	req.log.info({ headers: JSON.stringify(req.headers) }, "Request Headers");
 	const authHeader = req.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
 		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
-	//Temp logging
-	req.log.info({ token }, "JWT token");
 	if (token) {
 		let issuer;
 		try {
@@ -27,19 +22,11 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-		//Temp logging
-		req.log.info("Issuer Found");
 		const installation = await Installation.getForClientKey(issuer);
-		const tempLogging = await booleanFlag(BooleanFlags.TEMP_LOG_REQ_URL_TO_DEBUG_GENERIC_CONTAINERS, installation?.jiraHost);
 		if (!installation) {
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-		//Temp logging
-		if (tempLogging) {
-			req.log.info({ id: installation.id, jiraHost: installation.jiraHost }, "Installation Found");
-		}
-
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
@@ -47,10 +34,6 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not verify symmetric JWT");
 			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
 			return res.status(401).send(errorMessage);
-		}
-		//Temp logging
-		if (tempLogging) {
-			req.log.info("JWT verified");
 		}
 
 		res.locals.installation = installation;
@@ -109,9 +92,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		req.log.info({ checkGenericContainerActionUrl: checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`, req) }, "checkGenericContainerActionUrl");
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`, req)? TokenType.normal : TokenType.context;
-		req.log.info({ tokenType, originalUrl: req.originalUrl, url: req.url  }, "tokenType");
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -149,10 +130,8 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-const checkGenericContainerActionUrl = (url: string, req: Request) => {
-	req.log.info({ url }, "url");
+const checkGenericContainerActionUrl = (url: string) => {
 	return genericContainerActionUrls.some(moduleUrl => {
-		req.log.info({ moduleUrl }, "moduleUrl");
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };
