@@ -48,10 +48,15 @@ export const processDeployment = async (
 	rateLimited?: boolean
 ) => {
 
+	const { state, environment } = webhookPayload.deployment_status;
+
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		gitHubInstallationId,
 		jiraHost,
+		repositoryId: webhookPayload.repository?.id,
+		deploymentState: state,
+		deploymentEnvironment: environment,
 		webhookReceived: webhookReceivedDate
 	});
 
@@ -60,12 +65,7 @@ export const processDeployment = async (
 		return;
 	}
 
-	const { state, environment } = webhookPayload.deployment_status;
-
-	logger.info({
-		deploymentState: state,
-		deploymentEnvironment: environment
-	}, "processing deployment message!");
+	logger.info("processing deployment message!");
 
 	const jiraPayload = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, "webhook", logger, gitHubAppId);
 

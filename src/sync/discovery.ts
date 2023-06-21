@@ -84,7 +84,7 @@ export const getRepositoryTask = async (
 	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, gitHubInstallationClient);
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, gitHubInstallationClient, logger);
 
 	return {
 		edges,

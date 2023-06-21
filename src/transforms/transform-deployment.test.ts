@@ -11,6 +11,7 @@ import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
+import { Config } from "interfaces/common";
 
 jest.mock("services/user-config-service");
 jest.mock("config/feature-flags");
@@ -33,6 +34,7 @@ const mockConfig = {
 
 const mockGetRepoConfig = () => {
 	when(getRepoConfig).calledWith(
+		expect.anything(),
 		expect.anything(),
 		expect.anything(),
 		expect.anything(),
@@ -178,6 +180,19 @@ describe("deployment environment mapping", () => {
 		expect(mapEnvironment("banana-east")).toBe("unmapped");
 		expect(mapEnvironment("internet")).toBe("unmapped");
 		expect(mapEnvironment("製造")).toBe("unmapped");
+	});
+
+	it("classifies unknown user config entries as 'unmapped'", () => {
+		const userConfig = {
+			deployments: {
+				environmentMapping: {
+					// "prod" is not a valid key, it should be "production"
+					prod: ["prod-*"]
+				}
+			}
+		} as Config;
+
+		expect(mapEnvironment("prod-us-west-1", userConfig)).toBe("unmapped");
 	});
 });
 
@@ -661,6 +676,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					});
 
 				when(getRepoConfig).calledWith(
+					expect.anything(),
 					expect.anything(),
 					expect.anything(),
 					expect.anything(),

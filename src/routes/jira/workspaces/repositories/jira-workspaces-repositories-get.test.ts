@@ -5,7 +5,7 @@ import supertest from "supertest";
 import { Subscription } from "models/subscription";
 import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, WorkspaceRepo } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
 
@@ -301,7 +301,6 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 describe("Workspaces Repositories Get", () => {
 	let app: Application;
 	let installation: Installation;
-	let jwt: string;
 
 	beforeEach(async () => {
 		installation = await Installation.install({
@@ -309,12 +308,18 @@ describe("Workspaces Repositories Get", () => {
 			sharedSecret: "shared-secret",
 			clientKey: "jira-client-key"
 		});
-
-		jwt = encodeSymmetric({
-			qsh: "context-qsh",
-			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
+
+	const generateJwt = async (query: any = {}) => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "GET",
+				pathname: "/jira/workspaces/repositories/search",
+				query
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
 	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
@@ -326,8 +331,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -347,8 +356,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/repositories/search?searchQuery=atlas")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify([]));
@@ -369,8 +382,8 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -391,8 +404,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -457,8 +474,14 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=1&limit=2`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "1",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -467,8 +490,14 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=2&limit=2`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "2",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -491,8 +520,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo"
+					}
+				)}`
 			})
 			.expect((res) => {
 				expect(res.status).toBe(200);

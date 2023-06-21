@@ -219,7 +219,8 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	if (config) {
 		const environmentType = mapEnvironmentWithConfig(environment, config);
 		if (environmentType) {
-			return environmentType;
+			const validEnvs = ["development", "testing", "staging", "production"];
+			return validEnvs.includes(environmentType) ? environmentType : "unmapped";
 		}
 	}
 
@@ -331,7 +332,8 @@ export const transformDeployment = async (
 			githubInstallationClient,
 			payload.repository.id,
 			payload.repository.owner.login,
-			payload.repository.name
+			payload.repository.name,
+			logger
 		);
 	} else {
 		logger.warn({
