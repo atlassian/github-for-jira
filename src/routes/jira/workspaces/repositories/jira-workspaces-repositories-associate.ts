@@ -38,16 +38,8 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 	}
 
 	const repo = await findMatchingRepository(Number(sanitizeHtml(repoId)), jiraHost);
-	const transformedRepository = repo ? transformedRepo(repo): {};
-
-	const payload = {
-		preventTransitions: false,
-		operationType: "NORMAL",
-		repository: transformedRepository,
-		properties: {
-			installationId: repo?.gitHubInstallationId
-		}
-	};
+	const transformedRepository = repo && transformedRepo(repo);
+	const payload = repo ? transformedRepository : {};
 
 	res.status(200).json({ success: true, associatedRepository: payload });
 };

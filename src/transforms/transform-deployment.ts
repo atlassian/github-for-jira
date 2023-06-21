@@ -332,7 +332,8 @@ export const transformDeployment = async (
 			githubInstallationClient,
 			payload.repository.id,
 			payload.repository.owner.login,
-			payload.repository.name
+			payload.repository.name,
+			logger
 		);
 	} else {
 		logger.warn({
