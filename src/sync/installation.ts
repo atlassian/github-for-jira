@@ -348,14 +348,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	const failedCode = getFailedCode(err);
 	log.warn({ failedCode }, "Backfill task failed.");
 
-	const isDeployment = mainNextTask.task === "deployment";
-	const newStatus = isDeployment ? "complete" : "failed";
-	if (isDeployment) {
-		log.warn("Mapping failed status to complete until we fix deployment backfilling in ARC-2119");
-	}
-
 	// marking the current task as failed
-	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: newStatus, failedCode });
+	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
