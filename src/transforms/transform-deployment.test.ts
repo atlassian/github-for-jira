@@ -37,6 +37,7 @@ const mockGetRepoConfig = () => {
 		expect.anything(),
 		expect.anything(),
 		expect.anything(),
+		expect.anything(),
 		expect.anything()
 	).mockResolvedValue(mockConfig);
 };
@@ -661,6 +662,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 					});
 
 				when(getRepoConfig).calledWith(
+					expect.anything(),
 					expect.anything(),
 					expect.anything(),
 					expect.anything(),
