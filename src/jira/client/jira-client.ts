@@ -351,6 +351,12 @@ export const getJiraClient = async (
 						options,
 						...getDeploymentDebugInfo(data)
 					}, "Jira API rejected deployment!");
+				} else {
+					logger.info({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API accepted deployment!");
 				}
 
 				return {
