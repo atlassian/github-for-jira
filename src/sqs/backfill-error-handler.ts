@@ -54,12 +54,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 		};
 	}
 
-	const isNotRepoTaskLastAttempt = (context.receiveCount >= 3 && task.task !== "repository");
-
-	if (context.lastAttempt || isNotRepoTaskLastAttempt) {
-		if (isNotRepoTaskLastAttempt) {
-			log.warn("Fail backfill task earlier to avoid slugging");
-		}
+	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
 		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);

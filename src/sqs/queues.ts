@@ -29,7 +29,7 @@ backfillQueue = new SqsQueue<BackfillMessagePayload>(
 		queueRegion: envVars.SQS_BACKFILL_QUEUE_REGION,
 		longPollingIntervalSec: LONG_POLLING_INTERVAL_SEC,
 		timeoutSec: 10 * 60,
-		maxAttempts: 7
+		maxAttempts: 3
 	},
 	backfillQueueMessageHandler(backfillQueueMessageSender),
 	backfillErrorHandler(backfillQueueMessageSender)
