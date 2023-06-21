@@ -175,7 +175,9 @@ export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
 		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient, logger)
 			.catch(err => logger.error({
-				err
+				err,
+				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
+				repositoryId: repoSyncState.repoId
 			}, "error while updating a single repo config"));
 	}));
 };
