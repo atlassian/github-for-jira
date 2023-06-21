@@ -52,7 +52,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
 		// TODO: this call must be updated to support GitHub Server events
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "webhook", subTrigger: "push" }, context.log, gitHubAppId);
-		await updateRepoConfig(subscription, payload.repository.id, gitHubInstallationClient, modifiedFiles);
+		await updateRepoConfig(subscription, payload.repository.id, gitHubInstallationClient, context.log, modifiedFiles);
 	} else {
 		context.log.warn("could not load user config because subscription does not exist");
 	}
