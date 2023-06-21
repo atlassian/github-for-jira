@@ -147,8 +147,8 @@ describe("User Config Service", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile({ fileContent });
-		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, ["random.yml", "ignored.yml", ".jira/config.yml"]);
-		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName);
+		await updateRepoConfig(subscription, repoSyncState.repoId, gitHubClient, logger, ["random.yml", "ignored.yml", ".jira/config.yml"]);
+		const config = await getRepoConfig(subscription, gitHubClient, repoSyncState.repoId, repoSyncState.repoOwner, repoSyncState.repoName, logger);
 		expect(Object.keys(config?.deployments?.environmentMapping ?? {})).toStrictEqual(["development", "staging", "production", "testing"]);
 	});
 });
