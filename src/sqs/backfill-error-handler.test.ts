@@ -184,7 +184,6 @@ describe("backfillErrorHandler", () => {
 	});
 
 	it("marks task as failed and reschedules message on last attempt", async () => {
-		task.task = "repository";
 		const result = await backfillErrorHandler(sendMessageMock)(
 			new TaskError(task, new Error("boom")),
 			createContext(5, true)
