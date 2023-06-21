@@ -131,7 +131,7 @@ describe("User Config Service", () => {
 		githubUserTokenNock(gitHubInstallationId);
 		givenGitHubReturnsConfigFile({ repoOwner: unknownRepoOwner, repoName: unknownRepoName });
 
-    const config = await getRepoConfig(subscription, gitHubClient, unknownRepoId, unknownRepoOwner, unknownRepoName, logger);
+		const config = await getRepoConfig(subscription, gitHubClient, unknownRepoId, unknownRepoOwner, unknownRepoName, logger);
 
 		expect(config).toBeTruthy();
 		expect(config?.deployments?.environmentMapping?.development).toHaveLength(4);
