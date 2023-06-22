@@ -74,7 +74,7 @@ export const attachErrorHandler = (router: Router) => {
 			[Errors.MISSING_GITHUB_APP_NAME]: "There was a problem creating your GitHub App. Please make sure you filled the GitHub App name and try again."
 		};
 
-		const errorStatusCode = errorCodes[err.message] || 500;
+		const errorStatusCode = err instanceof UIDisplayableError ? err.httpStatus : (errorCodes[err.message] || 500);
 		const message = err instanceof UIDisplayableError ? err.message : messages[err.message];
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(res.locals.gitHubAppId);
 		const tags = { status: String(errorStatusCode), gitHubProduct };

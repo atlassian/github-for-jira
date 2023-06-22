@@ -10,4 +10,9 @@ export enum Errors {
 }
 
 export class UIDisplayableError extends Error {
+	httpStatus: number;
+	constructor(httpStatus: number, msg: string) {
+		super(msg);
+		this.httpStatus = httpStatus;
+	}
 }
