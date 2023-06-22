@@ -13,7 +13,7 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	const repoName = req.query?.repoName as string;
 	const jiraHost = jiraHostLocals || jiraHostParam;
 
-	const log = req.log.child({ jiraHost });
+	const log = req.log.child({ jiraHost, repoName });
 
 	if (!jiraHost) {
 		log.warn(Errors.MISSING_JIRA_HOST);
@@ -28,31 +28,30 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
+		log.info("Start searching for repos");
 		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, log);
 		res.send({
 			repositories
 		});
 	} catch (err) {
 		log.error({ err }, "Error fetching repositories");
-		res.status(500).send({
+		res.status(200).send({
 			repositories: []
 		});
 	}
 };
 
-export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubAppId, logger) => {
-	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
-		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, logger);
-		return repos || [];
-	} catch (err) {
-		logger.log.error({ err }, "Failed to get repos for subscription");
-		return [];
-	}
+const searchInstallationAndUserRepos = async (repoName: string, jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+	const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, logger);
+	const ret = repos || [];
+	logger.info({ reposLength: ret.length, subscriptionsLength: subscriptions.length }, ret.length === 0 ? "Couldn't find any match repos" : "Found match repos");
+	return ret;
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, logger: Logger): Promise<Repository[]> => {
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, loggerParent: Logger): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
+		const logger = loggerParent.child({ subscriptionId: subscription.id });
 		try {
 			const metrics = { trigger: "github-repo-get" };
 			const [orgName, gitHubInstallationClient] = await Promise.all([
