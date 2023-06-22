@@ -233,7 +233,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		} catch (err) {
 			try {
 				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
-					this.logger.warn("Found error listing deployments, run curl commands to get more details");
+					this.logger.warn("Found error listing repos, run curl commands to get more details");
 					const { headers } = await this.installationAuthenticationHeaders();
 					const { Authorization } = headers as { Authorization: string };
 					const output = await runCurl({
