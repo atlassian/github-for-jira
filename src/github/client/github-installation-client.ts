@@ -35,7 +35,7 @@ import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { runCurl } from "utils/curl/curl-utils";
+import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
@@ -220,15 +220,34 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	// TODO: remove this function after discovery backfill is deployed
 	public getRepositoriesPageOld = async (perPage: number, page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
-		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
-			perPage,
-			page
-		});
-		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
-		return {
-			...response,
-			hasNextPage
-		};
+		try {
+			const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+				perPage,
+				page
+			});
+			const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+			return {
+				...response,
+				hasNextPage
+			};
+		} catch (err) {
+			try {
+				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+					this.logger.warn("Found error listing repos, run curl commands to get more details");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.restApiUrl}/installation/repositories?per_page=${perPage}&page=${page}`,
+						method: "GET",
+						authorization: Authorization
+					});
+					logCurlOutputInChunks(output, this.logger);
+				}
+			} catch (curlE) {
+				this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
+			}
+			throw err;
+		}
 	};
 
 	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
@@ -288,7 +307,7 @@ export class GitHubInstallationClient extends GitHubClient {
 						method: "GET",
 						authorization: Authorization
 					});
-					this.logger.warn({ meta: output.meta }, "Curl for list deployments output generated");
+					logCurlOutputInChunks(output, this.logger);
 				}
 			} catch (curlE) {
 				this.logger.error({ err: curlE?.stderr }, "Error running curl for list deployments");
