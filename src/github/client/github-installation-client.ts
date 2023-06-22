@@ -35,7 +35,7 @@ import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
 import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
-import { runCurl } from "utils/curl/curl-utils";
+import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
@@ -241,7 +241,7 @@ export class GitHubInstallationClient extends GitHubClient {
 						method: "GET",
 						authorization: Authorization
 					});
-					this.logger.warn({ meta: output.meta, body: output.body }, "Curl for  list repos");
+					logCurlOutputInChunks(output, this.logger);
 				}
 			} catch (curlE) {
 				this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
@@ -307,7 +307,7 @@ export class GitHubInstallationClient extends GitHubClient {
 						method: "GET",
 						authorization: Authorization
 					});
-					this.logger.warn({ meta: output.meta }, "Curl for list deployments output generated");
+					logCurlOutputInChunks(output, this.logger);
 				}
 			} catch (curlE) {
 				this.logger.error({ err: curlE?.stderr }, "Error running curl for list deployments");
