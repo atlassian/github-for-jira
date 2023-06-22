@@ -209,7 +209,7 @@ const getPullRequestTaskRest = async (
 	).filter((value) => !!value);
 
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
-	
+
 	statsd.timing(
 		metricHttpRequest.syncPullRequest,
 		Date.now() - startTime,
