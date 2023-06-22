@@ -2,7 +2,7 @@ import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "config/env";
-import { Errors } from "config/errors";
+import { Errors, UIDisplayableError } from "config/errors";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { GitHubServerApp } from "models/github-server-app";
@@ -145,7 +145,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 	// Show the oauth error if there is one
 	if (error) {
 		req.log.warn(`OAuth Error: ${error}`);
-		next(new Error(`OAuth Error: ${error} URL: ${error_uri} ${error_description}`));
+		next(new UIDisplayableError(`OAuth Error: URL: ${error_uri} ${error_description}`));
 		return;
 	}
 
@@ -156,7 +156,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 
 	if (!secureState) {
 		req.log.warn("No state found");
-		next(new Error("No state was found"));
+		next(new UIDisplayableError("No state was found"));
 		return;
 	}
 	delete req.session[stateKey];
@@ -165,7 +165,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 
 	if (!code) {
 		req.log.warn("No code was found");
-		next(new Error("No code was found"));
+		next(new UIDisplayableError("No code was found"));
 	}
 
 	// Wrapping into a function to make sure it doesn't have direct access to raw "req" object, passing over only the "secure" state

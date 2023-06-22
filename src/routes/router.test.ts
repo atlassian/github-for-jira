@@ -29,10 +29,11 @@ describe("router", () => {
 
 	it("should render error page on error happen inside the routes", async () => {
 		await supertest(app)
-			.get("/test")
+			.get("/github/callback")
 			.set("content-type", "application/json")
 			.expect((resp) => {
 				expect(resp.text).toEqual(expect.stringContaining("Something went wrong."));
+				expect(resp.text).toEqual(expect.stringContaining("No state was found"));
 			});
 	});
 });
