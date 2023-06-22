@@ -2,7 +2,7 @@ import crypto from "crypto";
 import url from "url";
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "config/env";
-import { Errors } from "config/errors";
+import { Errors, UIDisplayableError } from "config/errors";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { GitHubServerApp } from "models/github-server-app";
@@ -127,7 +127,7 @@ const finishOAuthFlow = async (
 		return respondWithError(401, "Cannot retrieve access token from Github");
 	}
 };
-export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promise<void> => {
+export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const {
 		error,
 		error_description,
@@ -145,9 +145,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promi
 	// Show the oauth error if there is one
 	if (error) {
 		req.log.warn(`OAuth Error: ${error}`);
-		res.status(400).send(`OAuth Error: ${error}
-      URL: ${error_uri}
-      ${error_description}`);
+		next(new UIDisplayableError(400, `OAuth Error: URL: ${error_uri} ${error_description}`));
 		return;
 	}
 
@@ -158,7 +156,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promi
 
 	if (!secureState) {
 		req.log.warn("No state found");
-		res.status(400).send("No state was found");
+		next(new UIDisplayableError(400, "No state was found"));
 		return;
 	}
 	delete req.session[stateKey];
@@ -167,8 +165,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response): Promi
 
 	if (!code) {
 		req.log.warn("No code was found");
-		res.status(400).send("No code was found");
-		return;
+		next(new UIDisplayableError(400, "No code was found"));
 	}
 
 	// Wrapping into a function to make sure it doesn't have direct access to raw "req" object, passing over only the "secure" state

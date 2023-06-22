@@ -9,3 +9,10 @@ export enum Errors {
 	MISSING_REPOSITORY_ID = "Missing repository ID"
 }
 
+export class UIDisplayableError extends Error {
+	httpStatus: number;
+	constructor(httpStatus: number, msg: string) {
+		super(msg);
+		this.httpStatus = httpStatus;
+	}
+}

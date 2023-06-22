@@ -10,7 +10,7 @@ import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { SessionGet } from "./session/session-get";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
-import { ErrorRouter } from "./error-router";
+import { attachErrorHandler } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
@@ -83,4 +83,4 @@ RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Respon
 });
 
 // For when nothing gets triggered in the above routes, or an error occurs
-RootRouter.use(ErrorRouter);
+attachErrorHandler(RootRouter);
