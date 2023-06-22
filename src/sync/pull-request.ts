@@ -166,13 +166,6 @@ const getPullRequestTaskRest = async (
 			});
 
 	const gitHubProduct = getCloudOrServerFromHost(request.host);
-	statsd.timing(
-		metricHttpRequest.syncPullRequest,
-		Date.now() - startTime,
-		1,
-		{ status: String(status), gitHubProduct, requestType: "REST" },
-		{ jiraHost }
-	);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
@@ -216,6 +209,14 @@ const getPullRequestTaskRest = async (
 	).filter((value) => !!value);
 
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
+
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		{ status: String(status), gitHubProduct, requestType: "REST" },
+		{ jiraHost }
+	);
 
 	return {
 
