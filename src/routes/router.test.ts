@@ -26,4 +26,13 @@ describe("router", () => {
 				expect(capturedReq.rawBody).toEqual(BODY_WITH_SPACE_AT_THE_END);
 			});
 	});
+
+	it("should render error page on error happen inside the routes", async () => {
+		await supertest(app)
+			.get("/test")
+			.set("content-type", "application/json")
+			.expect((resp) => {
+				expect(resp.text).toEqual(expect.stringContaining("Something went wrong."));
+			});
+	});
 });
