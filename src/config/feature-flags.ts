@@ -24,7 +24,8 @@ export enum BooleanFlags {
 	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
-	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install"
+	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again"
 }
 
 export enum StringFlags {
