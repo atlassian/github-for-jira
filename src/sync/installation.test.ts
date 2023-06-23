@@ -373,21 +373,7 @@ describe("sync/installation", () => {
 			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
 		});
 
-		it("maps failed deployment to complete (until we fix it :allethings: in ARC-2119)", async () => {
-			repoSyncState.deploymentStatus = "pending";
-			await repoSyncState.save();
-
-			await markCurrentTaskAsFailedAndContinue(MESSAGE_PAYLOAD, {
-				...TASK,
-				task: "deployment"
-			}, false, jest.fn(), getLogger("test"), mockError);
-
-			const refreshedRepoSyncState = await RepoSyncState.findByPk(repoSyncState.id);
-			const refreshedSubscription = await Subscription.findByPk(subscription?.id);
-			expect(refreshedRepoSyncState?.deploymentStatus).toEqual("complete");
-			expect(refreshedSubscription?.get({ plain: true })).toStrictEqual(subscription?.get({ plain: true }));
-		});
-
+		// TODO: bgvozdev to finish off before enabling the FF for everyone
 		describe("parallel sync", () => {
 			let MESSAGE_PAYLOAD_BRANCHES_ONLY;
 

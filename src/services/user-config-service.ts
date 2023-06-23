@@ -1,13 +1,11 @@
-import { getLogger } from "config/logger";
+import Logger from "bunyan";
 import { RepoSyncState } from "models/reposyncstate";
 import { Config } from "interfaces/common";
 import YAML from "yaml";
-import { InstallationId } from "../github/client/installation-id";
 import { Subscription } from "models/subscription";
-import { createInstallationClient } from "utils/get-github-client-config";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 
 const USER_CONFIG_FILE = ".jira/config.yml";
-const logger = getLogger("services.user-config");
 const MAX_PATTERNS_PER_ENVIRONMENT = 10;
 const MAX_SERVICE_ID_COUNT = 100;
 
@@ -19,37 +17,36 @@ const MAX_SERVICE_ID_COUNT = 100;
  * This function is meant to be called whenever there is a change in the repository so we can check
  * if the config file has changed.
  *
- * @param subscription the subscription to which the repository belongs.
- * @param repositoryId the ID of the repository.
- * @param githubInstallationId the ID of the installation to which the repository belongs.
- * @param modifiedFiles list of modified files (added, modified, or removed). The config will only be updated if this list contains
+ * The `modifiedFiles` in the args, is a list of modified files (added, modified, or removed). The config will only be updated if this list contains
  * the config file.
  */
 export const updateRepoConfig = async (
 	subscription: Subscription,
 	repositoryId: number,
-	githubInstallationId: InstallationId,
-	metrics: { trigger: string, subTrigger?: string },
+	gitHubInstallationClient: GitHubInstallationClient,
+	logger: Logger,
 	modifiedFiles: string[] = []
 ): Promise<void> => {
-
 	if (modifiedFiles.includes(USER_CONFIG_FILE)) {
 		try {
+
+			logger.info("Found modifiedFiles include .jira/config.yml, proceed to update user config");
+
 			const repoSyncState = await RepoSyncState.findByRepoId(subscription, repositoryId);
 
 			if (!repoSyncState) {
 				logger.error({
-					githubInstallationId,
+					gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 					repositoryId
 				}, "could not find RepoSyncState for repo");
 				return;
 			}
 
-			await updateRepoConfigsFromGitHub([repoSyncState], githubInstallationId, subscription.jiraHost, subscription.gitHubAppId, metrics);
+			await updateRepoConfigsFromGitHub([repoSyncState], gitHubInstallationClient, logger);
 		} catch (err) {
 			logger.error({
 				err,
-				githubInstallationId,
+				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId
 			}, "error while updating the repo config");
 		}
@@ -61,11 +58,11 @@ export const updateRepoConfig = async (
  */
 export const getRepoConfig = async (
 	subscription: Subscription,
-	installationId: InstallationId,
+	gitHubInstallationClient: GitHubInstallationClient,
 	repositoryId: number,
 	repoOwner: string,
 	repoName: string,
-	metrics: { trigger: string, subTrigger?: string }
+	logger: Logger
 ): Promise<Config | undefined> => {
 	// In the future, we may look in other places for a config than just in the RepoSyncState (for example,
 	// we might fall back to default configs on the level of a subscription or an installation).
@@ -74,8 +71,8 @@ export const getRepoConfig = async (
 	// Edge case: we don't have a record of the repository in our DB, yet, so we're loading the
 	// config directly from the config file in the GitHub repo.
 	if (!repoSyncState) {
-		const yamlConfig = await getRepoConfigFromGitHub(installationId, repoOwner, repoName, subscription.jiraHost, subscription.gitHubAppId, metrics);
-		return convertYamlToUserConfig(yamlConfig);
+		const yamlConfig = await getRepoConfigFromGitHub(gitHubInstallationClient, repoOwner, repoName);
+		return convertYamlToUserConfig(yamlConfig, logger);
 	}
 
 	// Standard case: we return the config from our database.
@@ -85,9 +82,8 @@ export const getRepoConfig = async (
 /**
  * Fetches contents from CONFIG_PATH from GitHub via GitHub's API, transforms it from base64 to ascii and returns the transformed string.
  */
-const getRepoConfigFromGitHub = async (githubInstallationId: InstallationId, owner: string, repo: string, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<string | undefined> => {
-	const client = await createInstallationClient(githubInstallationId.installationId, jiraHost, metrics, logger, gitHubAppId);
-	const contents = await client.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
+const getRepoConfigFromGitHub = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string): Promise<string | undefined> => {
+	const contents = await gitHubInstallationClient.getRepositoryFile(owner, repo, USER_CONFIG_FILE);
 
 	if (!contents) {
 		return undefined;
@@ -111,29 +107,27 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 /**
  * Converts incoming YAML string to JSON (RepoConfig)
  */
-const convertYamlToUserConfig = (input?: string): Config => {
+const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Config => {
 
 	if (!input) {
 		return {};
 	}
 
 	const config: Config = YAML.parse(input);
+	logger.info("User config file yaml content parsed successfully");
 
 	const configDeployments = config?.deployments;
 	const deployments = {};
 	if (configDeployments != null) {
 		if (configDeployments.environmentMapping) {
-			deployments["environmentMapping"] =  {
-				development: configDeployments.environmentMapping.development,
-				testing: configDeployments.environmentMapping.testing,
-				staging: configDeployments.environmentMapping.staging,
-				production: configDeployments.environmentMapping.production
-			};
+			deployments["environmentMapping"] = configDeployments.environmentMapping;
+			logger.info("Found deployments mappings in user config files");
 		}
 		if (configDeployments.services?.ids) {
 			deployments["services"] = {
 				ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
 			};
+			logger.info("Found services ids mappings in user config files");
 		}
 	}
 
@@ -151,10 +145,16 @@ const convertYamlToUserConfig = (input?: string): Config => {
 	return output;
 };
 
-const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<void> => {
-	const yamlConfig = await getRepoConfigFromGitHub(githubInstallationId, repoSyncState.repoOwner, repoSyncState.repoName, jiraHost, gitHubAppId, metrics);
-	const config = convertYamlToUserConfig(yamlConfig);
+const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<void> => {
+
+	const yamlConfig = await getRepoConfigFromGitHub(gitHubInstallationClient, repoSyncState.repoOwner, repoSyncState.repoName);
+	if (!yamlConfig) {
+		logger.info("Unable to fetch content of user config file from GitHub");
+	}
+
+	const config = convertYamlToUserConfig(yamlConfig, logger);
 	await repoSyncState.update({ config });
+	logger.info("Update repoSyncState for user config successfully");
 };
 
 /**
@@ -166,12 +166,12 @@ const updateRepoConfigFromGitHub = async (repoSyncState: RepoSyncState, githubIn
  * @param jiraHost
  * @param gitHubAppId the primary key (postgres) of the GitHub Server App, if for server app
  */
-export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], githubInstallationId: InstallationId, jiraHost: string, gitHubAppId: number | undefined, metrics: { trigger: string, subTrigger?: string }): Promise<void> => {
+export const updateRepoConfigsFromGitHub = async (repoSyncStates: RepoSyncState[], gitHubInstallationClient: GitHubInstallationClient, logger: Logger): Promise<void> => {
 	await Promise.all(repoSyncStates.map(async (repoSyncState) => {
-		await updateRepoConfigFromGitHub(repoSyncState, githubInstallationId, jiraHost, gitHubAppId, metrics)
+		await updateRepoConfigFromGitHub(repoSyncState, gitHubInstallationClient, logger)
 			.catch(err => logger.error({
 				err,
-				githubInstallationId,
+				gitHubInstallationId: gitHubInstallationClient.githubInstallationId,
 				repositoryId: repoSyncState.repoId
 			}, "error while updating a single repo config"));
 	}));

@@ -109,6 +109,21 @@ describe("Jira Utils", () => {
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
 		});
+
+		describe.each([
+			["JIRA-123", "JIRA-123"],
+			["abcd JIRA-123", "JIRA-123"],
+			["abcd-JIRA-123", "JIRA-123"],
+			["JIRA-123-abcd", "JIRA-123"],
+			["JIRA-123 abcd", "JIRA-123"],
+			["JIRA-123 JIRA-456 abcd", "JIRA-123", "JIRA-456"],
+			["JIRA-123abcd"],
+			["JIRA-123abcd JIRA-456 abcd", "JIRA-456"]
+		])("matching with whole word", (full, ...issueKeys) => {
+			it(`should match "${full}" to "${issueKeys}"`, () => {
+				expect(jiraIssueKeyParser(full)).toEqual(issueKeys ? issueKeys : []);
+			});
+		});
 	});
 
 	describe("isGitHubCloudApp", () => {

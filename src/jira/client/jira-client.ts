@@ -338,12 +338,25 @@ export const getJiraClient = async (
 				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 
-				if (response.data?.rejectedDeployments?.length) {
+				if (
+					response.data?.rejectedDeployments?.length ||
+					response.data?.unknownIssueKeys?.length ||
+					response.data?.unknownAssociations?.length
+				) {
 					logger.warn({
+						acceptedDeployments: response.data?.acceptedDeployments,
 						rejectedDeployments: response.data?.rejectedDeployments,
+						unknownIssueKeys: response.data?.unknownIssueKeys,
+						unknownAssociations: response.data?.unknownAssociations,
 						options,
 						...getDeploymentDebugInfo(data)
 					}, "Jira API rejected deployment!");
+				} else {
+					logger.info({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API accepted deployment!");
 				}
 
 				return {

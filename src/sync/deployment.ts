@@ -6,7 +6,7 @@ import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/gi
 import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 
 type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] };
@@ -18,13 +18,23 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	const deployments = edges?.map(({ node: item }) => item) || [];
 
 	let extraDeploymentResponse: getDeploymentsResponse | undefined;
-	let extraDeployments: DeploymentQueryNode["node"][] = [];
+	const extraDeployments: DeploymentQueryNode["node"][] = [];
 	if (edges.length > 0 && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
-		try {
-			extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, edges[edges.length - 1].cursor);
-			extraDeployments = (extraDeploymentResponse.repository.deployments.edges || [])?.map(({ node: item }) => item) || [];
-		} catch (e) {
-			logger.warn({ err: e }, "Error finding extraDeploymentData");
+
+		const extraPagesCount = await numberFlag(NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES, 1, jiraHost);
+		let lastEdges = edges;
+
+		for (let i = 0; i < extraPagesCount && lastEdges.length > 0; i++) {
+			try {
+				extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, lastEdges[lastEdges.length - 1].cursor);
+				const extraDeploymentsEdges = extraDeploymentResponse.repository.deployments.edges || [];
+				const extraDeploymentsItems = extraDeploymentsEdges?.map(({ node: item }) => item);
+				extraDeployments.push(...extraDeploymentsItems);
+				lastEdges = extraDeploymentsEdges;
+			} catch (e) {
+				logger.warn({ err: e }, "Error finding extraDeploymentData");
+				throw e;
+			}
 		}
 	}
 
@@ -66,11 +76,7 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 			}
 		} as any as DeploymentStatusEvent;
 
-		const metrics = {
-			trigger: "backfill",
-			subTrigger: "deployment"
-		};
-		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", metrics, logger, gitHubAppId);
+		return transformDeployment(gitHubInstallationClient, deploymentStatus, jiraHost, "backfill", logger, gitHubAppId);
 	});
 
 	const transformedDeployments = await Promise.all(transformTasks);

@@ -219,7 +219,8 @@ export const mapEnvironment = (environment: string, config?: Config): string => 
 	if (config) {
 		const environmentType = mapEnvironmentWithConfig(environment, config);
 		if (environmentType) {
-			return environmentType;
+			const validEnvs = ["development", "testing", "staging", "production"];
+			return validEnvs.includes(environmentType) ? environmentType : "unmapped";
 		}
 	}
 
@@ -302,7 +303,6 @@ export const transformDeployment = async (
 	payload: DeploymentStatusEvent,
 	jiraHost: string,
 	type: "backfill" | "webhook",
-	metrics: {trigger: string, subTrigger?: string},
 	logger: Logger, gitHubAppId: number | undefined
 ): Promise<JiraDeploymentBulkSubmitData | undefined> => {
 	const deployment = payload.deployment;
@@ -329,11 +329,11 @@ export const transformDeployment = async (
 	if (subscription) {
 		config = await getRepoConfig(
 			subscription,
-			githubInstallationClient.githubInstallationId,
+			githubInstallationClient,
 			payload.repository.id,
 			payload.repository.owner.login,
 			payload.repository.name,
-			metrics
+			logger
 		);
 	} else {
 		logger.warn({

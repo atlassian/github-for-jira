@@ -3,16 +3,17 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
+import { envVars } from "~/src/config/env";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const authHeader = req.headers["authorization"];
+	const authHeader = req.headers["authorization"] as string;
+	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
-		|| authHeader?.startsWith("JWT ") && authHeader.substring(4);
-
+		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 	if (token) {
 		let issuer;
 		try {
@@ -21,13 +22,11 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
@@ -65,6 +64,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 	}
 
 	req.log.warn("No token found and session cookie has no jiraHost");
+
 	return res.status(401).send("Unauthorised");
 
 };
@@ -92,7 +92,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -126,6 +126,12 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
  */
 const checkPathValidity = (url: string) => {
 	return moduleUrls.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkGenericContainerActionUrl = (url: string) => {
+	return genericContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

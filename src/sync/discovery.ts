@@ -5,10 +5,12 @@ import { RepoSyncState } from "models/reposyncstate";
 import { TaskResultPayload } from "~/src/sync/sync.types";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { updateRepoConfigsFromGitHub } from "services/user-config-service";
+import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const getRepositoryTask = async (
 	parentLogger: Logger,
-	githubInstallationClient: GitHubInstallationClient,
+	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	_repository: Repository,
 	cursor: string | undefined,
@@ -21,7 +23,7 @@ export const getRepositoryTask = async (
 
 	logger.info({ startTime }, "Backfill task started");
 
-	const installationId = githubInstallationClient.githubInstallationId.installationId;
+	const installationId = gitHubInstallationClient.githubInstallationId.installationId;
 	const gitHubAppId = messagePayload.gitHubAppConfig?.gitHubAppId;
 	const subscription = await Subscription.getSingleInstallation(
 		jiraHost,
@@ -35,14 +37,32 @@ export const getRepositoryTask = async (
 		return { edges: [], jiraPayload: undefined };
 	}
 
-	const response = await githubInstallationClient.getRepositoriesPage(perPage, cursor as string);
-	const hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
-	const totalCount = response.viewer.repositories.totalCount;
-	const nextCursor = response.viewer.repositories.pageInfo.endCursor;
-	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
-	// fetches the cursor from one of the edges instead of letting us return it explicitly.
-	const edges = response.viewer.repositories.edges.map((edge) => ({ ...edge, cursor: nextCursor }));
-	const repositories = edges.map(edge => edge?.node);
+	let hasNextPage: boolean;
+	let totalCount: number;
+	let nextCursor: string;
+	let repositories: Repository[];
+	if (await booleanFlag(BooleanFlags.USE_REST_API_FOR_DISCOVERY, jiraHost)) {
+		const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
+		const response = await gitHubInstallationClient.getRepositoriesPageOld(smartCursor.perPage, smartCursor.pageNo);
+		hasNextPage = response.hasNextPage;
+		totalCount = response.data.total_count;
+		nextCursor = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
+		repositories = response.data.repositories;
+	} else {
+		const response = await gitHubInstallationClient.getRepositoriesPage(perPage, cursor as string);
+		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
+		totalCount = response.viewer.repositories.totalCount;
+		nextCursor = response.viewer.repositories.pageInfo.endCursor;
+		// Attach the "cursor" (next page number) to each edge, because the function that uses this data
+		// fetches the cursor from one of the edges instead of letting us return it explicitly.
+		const edges = response.viewer.repositories.edges.map((edge) => ({ ...edge, cursor: nextCursor }));
+
+		repositories = edges.map(edge => edge?.node);
+	}
+	const edges = repositories?.map(repo => ({
+		node: repo,
+		cursor: nextCursor
+	}));
 
 	await subscription.update({ totalNumberOfRepos: totalCount });
 	const createdRepoSyncStates = await RepoSyncState.bulkCreate(repositories.map(repo => ({
@@ -64,11 +84,7 @@ export const getRepositoryTask = async (
 	logger.info({ processingTime: Date.now() - startTime, RepositoriesLength: repositories.length }, "Backfill task complete");
 	logger.debug(hasNextPage ? "Repository Discovery: Continuing" : "Repository Discovery: finished");
 
-	const metrics = {
-		trigger: "backfill",
-		subTrigger: "discovery"
-	};
-	await updateRepoConfigsFromGitHub(createdRepoSyncStates, githubInstallationClient.githubInstallationId, jiraHost, gitHubAppId, metrics);
+	await updateRepoConfigsFromGitHub(createdRepoSyncStates, gitHubInstallationClient, logger);
 
 	return {
 		edges,

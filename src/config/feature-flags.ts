@@ -18,11 +18,14 @@ export enum BooleanFlags {
 	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
+	USE_NEW_PULL_ALGO = "use-new-pull-algo",
 	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
 	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
-	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers"
+	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
+	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again"
 }
 
 export enum StringFlags {
@@ -40,6 +43,7 @@ export enum NumberFlags {
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	BACKFILL_DEPLOYMENT_EXTRA_PAGES = "backfill-deployment-extra-pages",
 	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
