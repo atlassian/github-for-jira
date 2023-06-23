@@ -629,7 +629,7 @@ environmentOverrides:
             Dimensions:
               - Name: QueueName
                 Value: { "Ref": "QueueName" }
-            EvaluationPeriods: 5
+            EvaluationPeriods: 6
             Period: 600
             ComparisonOperator: GreaterThanThreshold
             Statistic: Maximum
