@@ -4,6 +4,8 @@ description: Connect app for integrating GitHub into Jira
 organization: Engineering-DevOps
 notifications:
   email: fusion-arc@atlassian.com
+tags:
+  brahmos: enabled
 
 compose:
   pgbouncer:
