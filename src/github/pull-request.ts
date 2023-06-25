@@ -1,8 +1,7 @@
-import { transformPullRequest } from "../transforms/transform-pull-request";
+import { transformPullRequestRest } from "../transforms/transform-pull-request";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { isEmpty } from "lodash";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { Octokit } from "@octokit/rest";
 import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
@@ -10,8 +9,9 @@ import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
+import { Subscription } from "models/subscription";
 
-export const pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
+export const 	pullRequestWebhookHandler = async (context: WebhookContext, jiraClient, util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const {
 		pull_request,
 		repository: {
@@ -23,9 +23,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	} = context.payload;
 
 	const { number: pullRequestNumber, id: pullRequestId } = pull_request;
-	const baseUrl = jiraClient.baseUrl || "none";
 	context.log = context.log.child({
-		jiraHost: jiraClient.baseURL,
 		gitHubInstallationId,
 		orgName: owner,
 		pullRequestNumber,
@@ -37,12 +35,10 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		trigger: "webhook",
 		subTrigger: "pullRequest"
 	};
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
-	let reviews: Octokit.PullsListReviewsResponse = [];
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, subscription.jiraHost, metrics, context.log, gitHubAppId);
+	const reviews = await getPullRequestReviews(subscription.jiraHost, gitHubInstallationClient, context.payload.repository, pull_request, context.log);
 
-	reviews = await getPullRequestReviews(gitHubInstallationClient, context.payload.repository, pull_request, context.log);
-
-	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequest(gitHubInstallationClient, pull_request, reviews, context.log);
+	const jiraPayload: JiraPullRequestBulkSubmitData | undefined = await transformPullRequestRest(gitHubInstallationClient, pull_request, reviews, context.log);
 	context.log.info("Pullrequest mapped to Jira Payload");
 
 	// Deletes PR link to jira if ticket id is removed from PR title
@@ -78,7 +74,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 		return;
 	}
 
-	context.log.info({ jiraHost : baseUrl }, `Sending pull request update to Jira`);
+	context.log.info(`Sending pull request update to Jira`);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 	const { webhookReceived, name, log } = context;
@@ -86,6 +82,7 @@ export const pullRequestWebhookHandler = async (context: WebhookContext, jiraCli
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		subscription.jiraHost,
 		log,
 		jiraResponse?.status,
 		gitHubAppId

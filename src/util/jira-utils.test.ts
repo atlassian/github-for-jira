@@ -13,18 +13,19 @@ jest.mock("models/github-server-app");
 
 describe("Jira Utils", () => {
 	describe("getJiraAppUrl", () => {
-		let instanceName: string;
-		beforeEach(() => instanceName = envVars.INSTANCE_NAME);
-		afterEach(() => process.env.INSTANCE_NAME = instanceName);
+		let appKeyBackup: string;
+		beforeEach(() => appKeyBackup = envVars.APP_KEY);
+		afterEach(() => process.env.APP_KEY = appKeyBackup);
 
 		it("should return the correct default URL", () => {
-			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.test-atlassian-instance/github-post-install-page`);
-			expect(getJiraAppUrl("https://foo.com")).toEqual(`https://foo.com/plugins/servlet/ac/com.github.integration.test-atlassian-instance/github-post-install-page`);
+			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page`);
+			expect(getJiraAppUrl("https://foo.com")).toEqual(`https://foo.com/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page`);
 		});
 
-		it("should return the correct URL for different INSTANCE_NAME", () => {
-			process.env.INSTANCE_NAME = "foo";
-			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/com.github.integration.foo/github-post-install-page`);
+		it("should return the correct URL for different APP_KEY", () => {
+			const appKey = "com.github.integration.foo";
+			process.env.APP_KEY = appKey;
+			expect(getJiraAppUrl(jiraHost)).toEqual(`${jiraHost}/plugins/servlet/ac/${appKey}/github-post-install-page`);
 		});
 
 		it("should return empty string if missing jiraHost", () => {
@@ -107,6 +108,21 @@ describe("Jira Utils", () => {
 
 		it("should extract multiple issue keys in a single string", () => {
 			expect(jiraIssueKeyParser("JRA-123 Jra-456-jra-901\n[bah-321]")).toEqual(["JRA-123", "JRA-456", "JRA-901", "BAH-321"]);
+		});
+
+		describe.each([
+			["JIRA-123", "JIRA-123"],
+			["abcd JIRA-123", "JIRA-123"],
+			["abcd-JIRA-123", "JIRA-123"],
+			["JIRA-123-abcd", "JIRA-123"],
+			["JIRA-123 abcd", "JIRA-123"],
+			["JIRA-123 JIRA-456 abcd", "JIRA-123", "JIRA-456"],
+			["JIRA-123abcd"],
+			["JIRA-123abcd JIRA-456 abcd", "JIRA-456"]
+		])("matching with whole word", (full, ...issueKeys) => {
+			it(`should match "${full}" to "${issueKeys}"`, () => {
+				expect(jiraIssueKeyParser(full)).toEqual(issueKeys ? issueKeys : []);
+			});
 		});
 	});
 

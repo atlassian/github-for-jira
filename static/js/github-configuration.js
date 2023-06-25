@@ -6,8 +6,7 @@ $('.install-link').click(function (event) {
 
 	$.post(window.location.href, {
 		installationId: $(event.target).data('installation-id'),
-		_csrf: document.getElementById('_csrf').value,
-		clientKey: document.getElementById('clientKey').value
+		_csrf: document.getElementById('_csrf').value
 	}, function (data) {
 		event.currentTarget.removeAttribute("disabled");
 		if (data.err) {

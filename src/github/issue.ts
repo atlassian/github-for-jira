@@ -1,10 +1,10 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
-import { WebhookPayloadIssues } from "@octokit/webhooks";
+import type { IssuesOpenedEvent, IssuesEditedEvent } from "@octokit/webhooks-types";
 import { GitHubIssue, GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 
-export const issueWebhookHandler = async (context: WebhookContext<WebhookPayloadIssues>, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
+export const issueWebhookHandler = async (context: WebhookContext<IssuesOpenedEvent | IssuesEditedEvent>, jiraClient, util, gitHubInstallationId: number): Promise<void> => {
 	const {
 		issue,
 		repository: {
@@ -28,7 +28,9 @@ export const issueWebhookHandler = async (context: WebhookContext<WebhookPayload
 	// TODO: need to create reusable function for unfurling
 	let linkifiedBody;
 	try {
-		linkifiedBody = await util.unfurl(issue.body);
+		if (issue.body !== null) {
+			linkifiedBody = await util.unfurl(issue.body);
+		}
 		if (!linkifiedBody) {
 			context.log.info("Halting further execution for issue since linkifiedBody is empty");
 			return;
@@ -55,6 +57,7 @@ export const issueWebhookHandler = async (context: WebhookContext<WebhookPayload
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.jiraHost,
 		log,
 		githubResponse?.status,
 		gitHubAppId

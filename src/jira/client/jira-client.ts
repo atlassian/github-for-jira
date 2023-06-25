@@ -5,15 +5,25 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
+
+import {
+	JiraAssociation,
+	JiraBuildBulkSubmitData,
+	JiraCommit,
+	JiraDeploymentBulkSubmitData,
+	JiraIssue,
+	JiraRemoteLink,
+	JiraSubmitOptions
+} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 
 // Max number of issue keys we can pass to the Jira API
-export const ISSUE_KEY_API_LIMIT = 100;
+export const ISSUE_KEY_API_LIMIT = 500;
 const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export interface DeploymentsResult {
@@ -209,18 +219,44 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				delete: (transformedRepositoryId: TransformedRepositoryId) =>
-					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
-						params: {
-							_updateSequenceId: Date.now()
-						},
-						urlParams: {
-							transformedRepositoryId
-						}
-					}),
+				delete: async (repositoryId: number, gitHubBaseUrl?: string) => {
+					const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
+					return Promise.all([
+						// We are sending devinfo events with the property "transformedRepositoryId", so we delete by this property.
+						instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}",
+							{
+								params: {
+									_updateSequenceId: Date.now()
+								},
+								urlParams: {
+									transformedRepositoryId
+								}
+							}
+						),
+
+						// We are sending build events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/builds/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						),
+
+						// We are sending deployments events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/deployments/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						)
+					]);
+				},
 				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
-
 					if (
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches) ||
@@ -250,8 +286,7 @@ export const getJiraClient = async (
 			}
 		},
 		workflow: {
-			submit: async (data, options?: JiraSubmitOptions) => {
-
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -261,10 +296,12 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
+
 				const payload = {
 					builds: data.builds,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					providerMetadata: {
 						product: data.product
@@ -278,8 +315,7 @@ export const getJiraClient = async (
 			}
 		},
 		deployment: {
-			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
-
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -292,7 +328,8 @@ export const getJiraClient = async (
 				const	payload = {
 					deployments: data.deployments,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						repositoryId
 					},
 					preventTransitions: options?.preventTransitions || false,
 					operationType: options?.operationType || "NORMAL"
@@ -300,6 +337,28 @@ export const getJiraClient = async (
 
 				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
+
+				if (
+					response.data?.rejectedDeployments?.length ||
+					response.data?.unknownIssueKeys?.length ||
+					response.data?.unknownAssociations?.length
+				) {
+					logger.warn({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						rejectedDeployments: response.data?.rejectedDeployments,
+						unknownIssueKeys: response.data?.unknownIssueKeys,
+						unknownAssociations: response.data?.unknownAssociations,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API rejected deployment!");
+				} else {
+					logger.info({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API accepted deployment!");
+				}
+
 				return {
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
@@ -344,7 +403,6 @@ const batchedBulkUpdate = async (
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
-
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 	const commitChunks: JiraCommit[][] = [];
 	do {
@@ -363,7 +421,6 @@ const batchedBulkUpdate = async (
 				installationId
 			}
 		};
-
 
 		return instance.post("/rest/devinfo/0.10/bulk", body);
 	});

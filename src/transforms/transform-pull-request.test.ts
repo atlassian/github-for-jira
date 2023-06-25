@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequest } from "./transform-pull-request";
+import { transformPullRequestRest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
+import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
+import _ from "lodash";
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 100403908;
@@ -27,7 +29,7 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -84,7 +86,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -168,7 +170,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -241,7 +243,7 @@ describe("pull_request transform", () => {
 		// @ts-ignore
 		fixture.user = null;
 
-		const data = await transformPullRequest(client, fixture as any, reviewersListNoUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
 
 		const { updated_at, title } = fixture;
 
@@ -286,6 +288,66 @@ describe("pull_request transform", () => {
 		});
 	});
 
+	it("maps empty state to UNAPPROVED", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const pulLRequestFixture = pullRequestList[0];
+		pulLRequestFixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+
+		const reviewrsListNoState = _.cloneDeep(reviewersListHasUser);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		delete reviewrsListNoState[0].state;
+
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+
+		const { updated_at, title } = pulLRequestFixture;
+
+		expect(data).toStrictEqual({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						email: "deleted@noreply.user.github.com",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							name: "octocat",
+							email: "octocat@noreply.user.github.com",
+							url: "https://github.com/octocat",
+							approvalStatus: "UNAPPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should resolve reviewer's email", async () => {
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
@@ -304,7 +366,7 @@ describe("pull_request transform", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
 
 		const { updated_at, title } = fixture;
 
@@ -348,4 +410,33 @@ describe("pull_request transform", () => {
 			updateSequenceId: 12345678
 		});
 	});
+
+	it("should send the correct review state for multiple reviewers", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+
+		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
+			firstReviewStatus: expect.objectContaining({
+				approvalStatus: "UNAPPROVED"
+			})
+		}));
+
+		expect({ secondReviewStatus: data?.pullRequests[0].reviewers[1] }).toEqual(expect.objectContaining({
+			secondReviewStatus: expect.objectContaining({
+				approvalStatus: "APPROVED"
+			})
+		}));
+	});
+
 });

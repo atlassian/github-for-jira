@@ -1,6 +1,10 @@
 import { PullRequestSort, PullRequestState, SortDirection } from "../github/client/github-client.types";
 import url from "url";
-import { extractIssueKeysFromPr, transformPullRequest } from "../transforms/transform-pull-request";
+import {
+	extractIssueKeysFromPrRest,
+	transformPullRequest,
+	transformPullRequestRest
+} from "../transforms/transform-pull-request";
 import { statsd }  from "config/statsd";
 import { metricHttpRequest } from "config/metric-names";
 import { Repository } from "models/subscription";
@@ -53,16 +57,20 @@ export const getPullRequestTask = async (
 	perPage: number,
 	messagePayload: BackfillMessagePayload
 ) => {
+	if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
+		return getPullRequestTaskGraphQL(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string, perPage);
+	}
+
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 	const numberOfPagesToFetchInParallel = await numberFlag(NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL, 0, jiraHost);
 	if (!numberOfPagesToFetchInParallel || numberOfPagesToFetchInParallel <= 1) {
-		return doGetPullRequestTask(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return getPullRequestTaskRest(logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	} else {
-		return doGetPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
+		return getPullRequestTaskInParallel(numberOfPagesToFetchInParallel, logger, gitHubInstallationClient, jiraHost, repository, smartCursor, messagePayload);
 	}
 };
 
-const doGetPullRequestTaskInParallel = (
+const getPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel: number,
 	logger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
@@ -74,24 +82,73 @@ const doGetPullRequestTaskInParallel = (
 	numberOfPagesToFetchInParallel,
 	pageSizeAwareCursor,
 	(pageCursor) =>
-		doGetPullRequestTask(
+		getPullRequestTaskRest(
 			logger, gitHubInstallationClient, jiraHost, repository,
 			pageCursor,
 			messagePayload
 		)
 );
 
-const doGetPullRequestTask = async (
-	logger: Logger,
+const emitStats = (jiraHost: string, startTime: number, requestType: string) => {
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		{ requestType },
+		{ jiraHost }
+	);
+};
+
+const getPullRequestTaskGraphQL = async (
+	parentLogger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	messagePayload: BackfillMessagePayload,
+	cursor?: string,
+	perPage?: number
+) => {
+	const logger = parentLogger.child({ backfillTask: "Repository" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
+
+	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+
+	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
+
+	const pullRequests = response.repository?.pullRequests?.edges
+		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
+		?.filter((pr) => pr !== undefined) || [];
+
+	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
+
+	const jiraPayload = {
+		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
+		pullRequests
+	};
+
+	emitStats(jiraHost, startTime, "GRAPHQL");
+
+	return {
+		edges: response.repository?.pullRequests?.edges || [],
+		jiraPayload
+	};
+
+};
+
+const getPullRequestTaskRest = async (
+	parentLogger: Logger,
 	gitHubInstallationClient: GitHubInstallationClient,
 	jiraHost: string,
 	repository: Repository,
 	pageSizeAwareCursor: PageSizeAwareCounterCursor,
 	messagePayload: BackfillMessagePayload
 ) => {
-	logger.debug("Syncing PRs: started");
-
+	const logger = parentLogger.child({ backfillTask: "Pull" });
 	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const {
 		data: edges,
@@ -109,59 +166,60 @@ const doGetPullRequestTask = async (
 			});
 
 	const gitHubProduct = getCloudOrServerFromHost(request.host);
-	statsd.timing(
-		metricHttpRequest.syncPullRequest,
-		Date.now() - startTime,
-		1,
-		[`status:${status}`, `gitHubProduct:${gitHubProduct}`]);
 
 	// Force us to go to a non-existant page if we're past the max number of pages
 	const nextPageNo = getNextPage(logger, headers) || (pageSizeAwareCursor.pageNo + 1);
 	const nextPageCursorStr = pageSizeAwareCursor.copyWithPageNo(nextPageNo).serialise();
 
-	if (await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost)) {
-		//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
-		//Because GitHub rest api  doesn't support supply a from date in the query param,
-		//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
-		const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-		if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
-			return {
-				edges: [],
-				jiraPayload: undefined
-			};
-		}
+	//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
+	//Because GitHub rest api  doesn't support supply a from date in the query param,
+	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
+	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
+		return {
+			edges: [],
+			jiraPayload: undefined
+		};
 	}
 
 	// Attach the "cursor" (next page number) to each edge, because the function that uses this data
 	// fetches the cursor from one of the edges instead of letting us return it explicitly.
 	const edgesWithCursor: PullRequestWithCursor[] = edges.map((edge) => ({ ...edge, cursor: nextPageCursorStr }));
 
-	// TODO: change this to reduce
 	const pullRequests = (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPr(pull))) {
+				if (isEmpty(extractIssueKeysFromPrRest(pull))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");
 					return undefined;
 				}
-
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
 				const prDetails = prResponse?.data;
 
-				const	reviews = await getPullRequestReviews(gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequest(gitHubInstallationClient, prDetails, reviews, logger);
+				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
+				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger);
 				return data?.pullRequests[0];
 
 			})
 		)
 	).filter((value) => !!value);
 
-	logger.info({ pullRequestsLength: pullRequests?.length || 0 }, "Syncing PRs: finished");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
+
+	statsd.timing(
+		metricHttpRequest.syncPullRequest,
+		Date.now() - startTime,
+		1,
+		{ status: String(status), gitHubProduct, requestType: "REST" },
+		{ jiraHost }
+	);
 
 	return {
+
 		edges: edgesWithCursor,
 		jiraPayload:
 			pullRequests?.length

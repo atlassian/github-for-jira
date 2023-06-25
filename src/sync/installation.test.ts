@@ -17,7 +17,7 @@ import branchNodesFixture from "fixtures/api/graphql/branch-ref-nodes.json";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { JiraClientError } from "~/src/jira/client/axios";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { GithubClientNotFoundError } from "~/src/github/client/github-client-errors";
 import { cloneDeep } from "lodash";
 
@@ -104,6 +104,18 @@ describe("sync/installation", () => {
 				uuid: UUID()
 			}
 		};
+
+		when(numberFlag).calledWith(
+			NumberFlags.BACKFILL_MAX_SUBTASKS,
+			0,
+			jiraHost
+		).mockResolvedValue(0);
+
+		when(numberFlag).calledWith(
+			NumberFlags.BACKFILL_PAGE_SIZE,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(20);
 	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -389,10 +401,11 @@ describe("sync/installation", () => {
 				}
 				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
 
-				when(booleanFlag).calledWith(
-					BooleanFlags.USE_SUBTASKS_FOR_BACKFILL,
-					expect.anything()
-				).mockResolvedValue(true);
+				when(numberFlag).calledWith(
+					NumberFlags.BACKFILL_MAX_SUBTASKS,
+					0,
+					jiraHost
+				).mockResolvedValue(100);
 
 				// That would give 2 tasks: one main and one subtask
 				configureRateLimit(1000, 1000);

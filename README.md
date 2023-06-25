@@ -36,6 +36,8 @@ For general support inquiries and bug reports, [please contact the Atlassian Sup
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
   - [Enterprise Features](#enterprise-features)
     - [IP Allow List](#ip-allow-list)
+    - [Known issues](#known-issues)
+      - [Connecting GitHub organizations with SSO](#connecting-github-organizations-with-sso) 
   - [Need help?](#need-help)
   - [Contribute](#contribute)
   - [License](#license)
@@ -162,6 +164,7 @@ To navigate to your Jira subscriptions
 
 > :information_source: This only gives you permission to delete the connection to Jira instances. To view development information in that Jira instance, you’ll need to be granted access in Jira.
 
+
 ## Send data and use the integration
 ### See GitHub development information in Jira
 To start seeing your development information from GitHub in Jira, simply add a Jira issue key to your commit message, branch name, or PR title.
@@ -189,8 +192,9 @@ When a workflow (e.g. GitHub Action) or development event (e.g. pull request, co
 
 ## How the backfill works
 The app is designed to backfill historical data into Jira. Once you have installed and configured the app successfully,
-it will automatically trigger the backfilling process for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits.
+it will automatically trigger the backfilling process, for 6 months, for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits. Once the initial backfilling process is complete, you will be able to view the backfilled date and status on the user interface. All branches will be backfilled, regardless of their creation date. However, pull requests, deployments, builds, and commits will only be backfilled for the last six months. If you wish to pull more historical data in Jira, you may continue the backfill process for older dates by selecting 'Continue backfill' from the action menu. If the historical data is substantial, we recommend backfilling your data in 6 month segments, and continuing the process until you've reached the desired backfilled date. 
 
+The historical data that meets the following criteria will be available in Jira:
 1. The backfilling process attempts to connect all branches that fulfill at least one of the following criteria:
     - The branch name contains the issue key.
     - The title of the latest pull request associated with the branch contains the issue key.
@@ -204,7 +208,7 @@ it will automatically trigger the backfilling process for the allowed repositori
 6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include 
    issue keys to the builds and deployments [here](#see-github-builds-and-deployments-in-jira).
 
-
+If an error occurs during the backfilling process, the app will prompt you to retry the backfilling for the failed repositories without having to restart the entire backfill process. However, this does not account for permission errors. You will need to resolve any permissions errors before retrying the backfill process.
 
 ## Migrate from the DVCS Connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
@@ -219,6 +223,30 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 
 GitHub has the ability to limit who can communicate with your organization's GitHub API which we now fully support.
 To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](./docs/ip-allowlist.md).
+
+### Known issues
+
+#### Connecting GitHub organizations with SSO
+
+If a GitHub organization is [protected with SAML](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-saml-single-sign-on-for-your-organization/about-identity-and-access-management-with-saml-single-sign-on),
+you might find its "Connect" button disabled. This may happen in a scenario
+when the user token (which GitHub for Jira app's UI is using) [does not have permissions to access the protected org](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso),
+because it was issued and saved to the app's session when the user didn't have an active SAML session in GitHub
+in the browser.
+
+To workaround the problem, perform the following:
+- create an active SAML session by going to `https://github.com/organizations/<YOUR-ORG-NAME>/settings`
+    - that should initiate an auth process with your SSO identity provider
+- in the same browser window, go to GitHub for Jira app and find the disabled "Connect" button for `<YOUR-ORG-NAME>` GitHub org
+    - it must be located either on one of these pages
+        - `https://github.atlassian.com/github/configuration` for GitHub cloud, or
+        - `https://github.atlassian.com/github/<UUID>/configuration` for GitHub server enterprise
+ - insert `resetGithubToken=true` query parameter to the URL of the page in the browser and reload it
+    - `https://github.atlassian.com/github/configuration?resetGithubToken=true` for GitHub cloud, or
+    - `https://github.atlassian.com/github/<UUID>/configuration?ghRedirect=to&resetGithubToken=true` for GitHub server enterprise
+
+After doing that, the token will be re-issued by GitHub with all necessary permissions and saved in the app's session, 
+and "Connect" button should become enabled.
 
 ## Need help?
 Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).

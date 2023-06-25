@@ -1,29 +1,23 @@
 import Logger from "bunyan";
 import { Request, Response } from "express";
-import { createAppClient, createInstallationClient, createUserClient } from "utils/get-github-client-config";
-import { RepositoryNode } from "~/src/github/client/github-queries";
-import { Subscription } from "~/src/models/subscription";
+import { createAppClient, createInstallationClient } from "utils/get-github-client-config";
+import { Subscription, Repository } from "~/src/models/subscription";
 import { sendError } from "~/src/jira/util/jwt";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { Errors } from "config/errors";
+import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
-	const { githubToken, jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
+	const { jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
 	const { jiraHost: jiraHostParam } = req.query;
 	const repoName = req.query?.repoName as string;
 	const jiraHost = jiraHostLocals || jiraHostParam;
 
-	const log = req.log.child({ jiraHost });
+	const log = req.log.child({ jiraHost, repoName });
 
 	if (!jiraHost) {
-		log.error("Unauthorised - No JiraHost found");
-		sendError(res, 401, "Unauthorised");
-		return;
-	}
-
-	if (!githubToken) {
-		log.error("Unauthorised - No githubToken found");
-		res.sendStatus(401);
+		log.warn(Errors.MISSING_JIRA_HOST);
+		sendError(res, 400, Errors.MISSING_JIRA_HOST);
 		return;
 	}
 
@@ -34,109 +28,72 @@ export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<
 	}
 
 	try {
-		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, githubToken, log);
+		log.info("Start searching for repos");
+		const repositories = await searchInstallationAndUserRepos(repoName, jiraHost, gitHubAppConfig.gitHubAppId || null, log);
 		res.send({
 			repositories
 		});
 	} catch (err) {
 		log.error({ err }, "Error fetching repositories");
-		res.status(500).send({
+		res.status(200).send({
 			repositories: []
 		});
 	}
 };
 
-export const searchInstallationAndUserRepos = async (repoName, jiraHost, gitHubAppId, githubToken, logger) => {
-	try {
-		const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
-		const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, githubToken, logger);
-		return repos || [];
-	} catch (err) {
-		logger.log.error({ err }, "Failed to get repos for subscription");
-		return [];
-	}
+const searchInstallationAndUserRepos = async (repoName: string, jiraHost: string, gitHubAppId: number | undefined, logger: Logger) => {
+	const subscriptions = await Subscription.getAllForHost(jiraHost, gitHubAppId);
+	const repos = await getReposBySubscriptions(repoName, subscriptions, jiraHost, logger);
+	const ret = repos || [];
+	logger.info({ reposLength: ret.length, subscriptionsLength: subscriptions.length }, ret.length === 0 ? "Couldn't find any match repos" : "Found match repos");
+	return ret;
 };
 
-const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, githubToken:string, logger: Logger): Promise<RepositoryNode[]> => {
+const getReposBySubscriptions = async (repoName: string, subscriptions: Subscription[], jiraHost: string, loggerParent: Logger): Promise<Repository[]> => {
 	const repoTasks = subscriptions.map(async (subscription) => {
+		const logger = loggerParent.child({ subscriptionId: subscription.id });
 		try {
 			const metrics = { trigger: "github-repo-get" };
-			const [orgName, gitHubInstallationClient, gitHubUserClient] = await Promise.all([
+			const [orgName, gitHubInstallationClient] = await Promise.all([
 				getOrgName(subscription, jiraHost, logger).then(orgName => {
 					logger.info({ orgName }, "Found orgName");
 					return orgName;
 				}),
-				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId),
-				createUserClient(githubToken, jiraHost, metrics, logger, subscription.gitHubAppId)
+				createInstallationClient(subscription.gitHubInstallationId, jiraHost, metrics, logger, subscription.gitHubAppId)
 			]);
 
-			const verboseLoggingEnabled = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+			const searchQueryInstallationString = `${repoName} org:${orgName} in:full_name`;
 
-			const gitHubUser = (await gitHubUserClient.getUser()).data.login;
-			const searchQueryInstallationString = `${repoName} org:${orgName} in:name`;
-			const searchQueryUserString = `${repoName} org:${orgName} org:${gitHubUser} in:name`;
+			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
+				.then(responseInstallationSearch => {
+					const userInstallationSearch = responseInstallationSearch.data?.items || [];
+					logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
+					return userInstallationSearch;
+				})
+				// When there are not enough perms, the API might throw errors. We don't want that to stop the routine because there might
+				// be other orgs connected where the customer has enough perms
+				// https://docs.github.com/en/rest/search?apiVersion=2022-11-28#access-errors-or-missing-search-results
+				.catch(err => {
+					logger.warn({ err },"Cannot search for repos using installation client, falling back to empty array");
+					return [];
+				});
 
-			const [userInstallationSearch, userClientSearch] = await Promise.all([
+			// We don't want to return repos that are not in Database, otherwise we won't be able to fetch branches to branch from later
+			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
+			// the next steps (e.g. get repo branches to branch of) will fail
+			const subscriptionRepos = await RepoSyncState.findAllFromSubscription(subscription);
+			const subscriptionRepoIds = new Set(subscriptionRepos.map(repo => repo.repoId));
+			return installationSearch.filter(repo => subscriptionRepoIds.has(repo.id));
 
-				gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
-					.then(responseInstallationSearch => {
-						const userInstallationSearch = responseInstallationSearch.data?.items || [];
-						logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
-						return userInstallationSearch;
-					})
-					// When no enough perms, API might throw errors. We don't want that to stop the routine because there might
-					// be other orgs connected where the customer has enough perms
-					// https://docs.github.com/en/rest/search?apiVersion=2022-11-28#access-errors-or-missing-search-results
-					.catch(err => {
-						logger.warn({ err },"Cannot search for repos using installation client, falling back to empty array");
-						return [];
-					}),
-
-				gitHubUserClient.searchRepositories(searchQueryUserString, "updated")
-					.then(responseUserSearch => {
-						const userClientSearch = responseUserSearch.data?.items || [];
-						logger.info(`Found ${userClientSearch.length} repos from user client search`);
-						return responseUserSearch.data?.items || [];
-					})
-					.catch(err => {
-						logger.warn({ err }, "Cannot search for repos using user client, falling back to empty array");
-						// Troubleshooting https://github.com/atlassian/github-for-jira/issues/1845
-						if (verboseLoggingEnabled) {
-							logger.warn({
-								unsafe: true,
-								err,
-								searchQueryUserString
-							}, "Cannot search for repos using user client, falling back to empty array");
-						}
-						return [];
-					})
-			]);
-
-			const repos = getIntersectingRepos(userInstallationSearch, userClientSearch);
-
-			return repos;
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to search repos for installation");
-			throw err;
+			return [];
 		}
 	});
 	const repos = (await Promise.all(repoTasks))
 		.flat()
 		.sort(sortByScoreAndUpdatedAt);
 	return repos.slice(0, MAX_REPOS_RETURNED);
-};
-
-// We want repos that exist in installation client and user client.
-const getIntersectingRepos = (installationRepos, userRepos) => {
-	const intersection: RepositoryNode[] = [];
-	installationRepos.forEach((installationRepo) => {
-		userRepos.forEach((userRepo) => {
-			if (installationRepo.id === userRepo.id) {
-				intersection.push(installationRepo);
-			}
-		});
-	});
-	return intersection;
 };
 
 const sortByScoreAndUpdatedAt = (a, b) => {

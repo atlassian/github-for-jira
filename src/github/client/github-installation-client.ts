@@ -8,6 +8,7 @@ import { InstallationId } from "./installation-id";
 import {
 	getBranchesQueryWithChangedFiles,
 	getBranchesQueryWithoutChangedFiles,
+	getBranchesQueryWithoutCommits,
 	getBranchesResponse,
 	getCommitsQueryWithChangedFiles,
 	getCommitsQueryWithoutChangedFiles,
@@ -17,10 +18,14 @@ import {
 	ViewerRepositoryCountQuery,
 	getDeploymentsResponse,
 	getDeploymentsQuery,
-	SearchedRepositoriesResponse
+	getDeploymentsQueryWithStatuses,
+	SearchedRepositoriesResponse,
+	getPullRequests,
+	pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
+	CreateReferenceBody,
 	GetPullRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
@@ -28,6 +33,16 @@ import {
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client/github-client-errors";
+import { cloneDeep } from "lodash";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
+
+// Unfortunately, the type is not exposed in Octokit...
+// https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
+export type PullRequestedReviewersResponse = {
+	users: Array<Octokit.PullsUpdateResponseRequestedReviewersItem>,
+	teams: Array<Octokit.PullsUpdateResponseRequestedTeamsItem>,
+}
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -49,7 +64,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		logger: Logger,
 		gshaId?: number
 	) {
-		super(gitHubConfig, metrics, logger);
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.jiraHost = jiraHost;
 
 		this.installationTokenCache = InstallationTokenCache.getInstance();
@@ -79,6 +94,17 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
+		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
+			owner,
+			repo,
+			per_page,
+			commitSince: commitSince?.toISOString(),
+			cursor
+		}, { graphQuery: "getPullRequests" });
+		return response.data.data;
+	}
+
 	/**
 	 * Get all reviews for a specific pull request.
 	 */
@@ -90,13 +116,31 @@ export class GitHubInstallationClient extends GitHubClient {
 		});
 	}
 
+	public async getPullRequestRequestedReviews(owner: string, repo: string, pullNumber: string | number): Promise<AxiosResponse<PullRequestedReviewersResponse>> {
+		return await this.get<PullRequestedReviewersResponse>(`/repos/{owner}/{repo}/pulls/{pullNumber}/requested_reviewers`, {}, {
+			owner,
+			repo,
+			pullNumber
+		});
+	}
+
 	/**
 	 * Get publicly available information for user with given username.
 	 */
 	public getUserByUsername = async (username: string): Promise<AxiosResponse<Octokit.UsersGetByUsernameResponse>> => {
-		return await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
+		const response = await this.get<Octokit.UsersGetByUsernameResponse>(`/users/{username}`, {}, {
 			username
 		});
+		if (response.status === 200 && response.data) {
+			if (!response.data.email) {
+				this.logger.info("Empty e-mail");
+			} else if (response.data.email.includes("noreply.github.com")) {
+				this.logger.info("Fake e-mail");
+			} else {
+				this.logger.info("OK e-mail");
+			}
+		}
+		return response;
 	};
 
 	/**
@@ -152,7 +196,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				per_page,
 				order_by,
 				cursor
-			});
+			}, { graphQuery: "GetRepositoriesQuery" });
 			return response.data.data;
 		} catch (err) {
 			err.isRetryable = true;
@@ -176,16 +220,66 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	// TODO: remove this function after discovery backfill is deployed
 	public getRepositoriesPageOld = async (perPage: number, page = 1): Promise<PaginatedAxiosResponse<Octokit.AppsListReposResponse>> => {
-		const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
-			perPage,
-			page
-		});
-		const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
-		return {
-			...response,
-			hasNextPage
-		};
+		try {
+			const response = await this.get<Octokit.AppsListReposResponse>(`/installation/repositories?per_page={perPage}&page={page}`, {}, {
+				perPage,
+				page
+			});
+			const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+			return {
+				...response,
+				hasNextPage
+			};
+		} catch (err) {
+			try {
+				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+					this.logger.warn("Found error listing repos, run curl commands to get more details");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.restApiUrl}/installation/repositories?per_page=${perPage}&page=${page}`,
+						method: "GET",
+						authorization: Authorization
+					});
+					logCurlOutputInChunks(output, this.logger);
+				}
+			} catch (curlE) {
+				this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
+			}
+			throw err;
+		}
 	};
+
+	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
+		return await this.get<Octokit.GitGetRefResponse>(`/repos/{owner}/{repo}/git/refs/heads/{branch}`, {}, {
+			owner,
+			repo,
+			branch
+		});
+	}
+
+	public async getReferences(owner: string, repo: string, per_page = 100): Promise<AxiosResponse<Octokit.ReposGetBranchResponse[]>> {
+		return await this.get<Octokit.ReposGetBranchResponse[]>(`/repos/{owner}/{repo}/branches?per_page={per_page}`, {},{
+			owner,
+			repo,
+			per_page
+		});
+	}
+
+	public async createReference(owner: string, repo: string, body: CreateReferenceBody): Promise<AxiosResponse<Octokit.GitCreateRefResponse>> {
+		return await this.post<Octokit.GitCreateRefResponse>(`/repos/{owner}/{repo}/git/refs`, body, {},
+			{
+				owner,
+				repo
+			});
+	}
+
+	public async getRepositoryByOwnerRepo(owner: string, repo: string): Promise<AxiosResponse<Octokit.ReposGetResponseSource>> {
+		return await this.get<Octokit.ReposGetResponseSource>(`/repos/{owner}/{repo}`, {}, {
+			owner,
+			repo
+		});
+	}
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
 		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
@@ -197,10 +291,29 @@ export class GitHubInstallationClient extends GitHubClient {
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
-		return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
-			{ environment, per_page },
-			{ owner, repo }
-		);
+		try {
+			return await this.get<Octokit.ReposListDeploymentsResponse>(`/repos/{owner}/{repo}/deployments`,
+				{ environment, per_page },
+				{ owner, repo }
+			);
+		} catch (e) {
+			try {
+				if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+					this.logger.warn("Found error listing deployments, run curl commands to get more details");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.restApiUrl}/repos/${owner}/${repo}/deployments`,
+						method: "GET",
+						authorization: Authorization
+					});
+					logCurlOutputInChunks(output, this.logger);
+				}
+			} catch (curlE) {
+				this.logger.error({ err: curlE?.stderr }, "Error running curl for list deployments");
+			}
+			throw e;
+		}
 	};
 
 	public listDeploymentStatuses = async (owner: string, repo: string, deployment_id: number, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentStatusesResponse>> => {
@@ -227,7 +340,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
-		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders());
+		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders(), undefined, { graphQuery: "ViewerRepositoryCountQuery" });
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
@@ -240,29 +353,56 @@ export class GitHubInstallationClient extends GitHubClient {
 			cursor
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables)
+		const response = await this.graphql<getBranchesResponse>(getBranchesQueryWithChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithChangedFiles" })
 			.catch((err) => {
 				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
 					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err }, "retrying branch graphql query without changedFiles");
-					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables);
+					return this.graphql<getBranchesResponse>(getBranchesQueryWithoutChangedFiles, config, variables, { graphQuery: "getBranchesQueryWithoutChangedFiles" })
+						.catch((err) => {
+							if (err instanceof GithubClientError && err.status === 502) {
+								this.logger.warn({ err, body: err.cause.response?.data }, "retrying branch graphql query without commits");
+								const variablesNoCommitSince = cloneDeep(variables);
+								delete variablesNoCommitSince.commitSince;
+								return this.graphql<getBranchesResponse>(
+									getBranchesQueryWithoutCommits,
+									config,
+									variablesNoCommitSince,
+									{ graphQuery: "getBranchesQueryWithoutCommits" }
+								).then(response => {
+									this.logger.info("retrying without commits fixed the issue!");
+									response.data.data.repository.refs.edges.forEach(edge => {
+										edge.node.target.history = {
+											nodes: []
+										};
+									});
+									return response;
+								});
+							}
+							return Promise.reject(err);
+						});
 				}
 				return Promise.reject(err);
 			});
 		return response?.data?.data;
 	}
 
-	public async getDeploymentsPage(owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
-		const response = await this.graphql<getDeploymentsResponse>(getDeploymentsQuery,
+	public async getDeploymentsPage(jiraHost: string, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
+
+		const useDyanmoForBackfill = await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost);
+		const graphQuery = useDyanmoForBackfill ? getDeploymentsQueryWithStatuses : getDeploymentsQuery;
+
+		const response = await this.graphql<getDeploymentsResponse>(graphQuery,
 			await this.installationAuthenticationHeaders(),
 			{
 				owner,
 				repo: repoName,
 				per_page: perPage,
 				cursor
-			});
+			},
+			{ graphQuery: "getDeploymentsQuery" });
 		return response?.data?.data;
 	}
 
@@ -278,14 +418,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			commitSince: commitSince?.toISOString()
 		};
 		const config = await this.installationAuthenticationHeaders();
-		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables)
+		const response = await this.graphql<getCommitsResponse>(getCommitsQueryWithChangedFiles, config, variables, { graphQuery: "getCommitsQueryWithChangedFiles" })
 			.catch((err) => {
 				if ((err instanceof GithubClientGraphQLError && err.isChangedFilesError()) ||
 					// Unfortunately, 502s are not going away when retried with changedFiles, even after delay
 					(err instanceof GithubClientError && err.status === 502)
 				) {
 					this.logger.warn({ err },"retrying commit graphql query without changedFiles");
-					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables);
+					return this.graphql<getCommitsResponse>(getCommitsQueryWithoutChangedFiles, config, variables, { graphQuery: "getCommitsQueryWithoutChangedFiles" });
 				}
 				return Promise.reject(err);
 			});
@@ -380,6 +520,14 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	private async patch<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
 		return this.axios.patch<T>(url, body, {
+			...await this.installationAuthenticationHeaders(),
+			params,
+			urlParams
+		});
+	}
+
+	private async post<T>(url, body = {}, params = {}, urlParams = {}): Promise<AxiosResponse<T>> {
+		return this.axios.post<T>(url, body, {
 			...await this.installationAuthenticationHeaders(),
 			params,
 			urlParams

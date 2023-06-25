@@ -19,13 +19,18 @@ const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: 
 };
 
 export const getCommitTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubClient: GitHubInstallationClient,
 	_jiraHost: string,
 	repository: Repository,
 	cursor: string | undefined,
 	perPage: number,
 	messagePayload: BackfillMessagePayload): Promise<TaskResultPayload<CommitQueryNode, JiraCommitBulkSubmitData>> => {
+
+	const logger = parentLogger.child({ backfillTask: "Commit" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
 
 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
@@ -38,7 +43,8 @@ export const getCommitTask = async (
 		{ commits, repository },
 		messagePayload.gitHubAppConfig?.gitHubBaseUrl
 	);
-	logger.debug("Syncing commits: finished");
+
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.commits?.length }, "Backfill task complete");
 
 	return {
 		edges,

@@ -2,13 +2,13 @@ import { Express } from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { v4 as uuid } from "uuid";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { buildQueryTypeJWTToken } from "test/utils/jwt";
 import { Installation } from "models/installation";
 import { GitHubServerApp } from "models/github-server-app";
-import { JiraConnectEnterpriseAppCreateOrEdit } from "./jira-connect-enterprise-app-create-or-edit";
+import { JiraConnectEnterpriseAppCreateOrEditGet } from "./jira-connect-enterprise-app-create-or-edit-get";
 
-jest.mock("./jira-connect-enterprise-app-create-or-edit");
+jest.mock("./jira-connect-enterprise-app-create-or-edit-get");
 
 describe("JiraConnectEnterpriseAppRouter", () => {
 	const GHE_APP_UUID = uuid();
@@ -38,13 +38,13 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 		it("should take valid uuid from path and convert to ghe app config", async () => {
 			const pathname = `/jira/connect/enterprise/app/${GHE_APP_UUID}`;
 			let capturedGHEAppConfig: any;
-			jest.mocked(JiraConnectEnterpriseAppCreateOrEdit).mockImplementationOnce(async (_req, res)=>{
+			jest.mocked(JiraConnectEnterpriseAppCreateOrEditGet).mockImplementationOnce(async (_req, res)=>{
 				capturedGHEAppConfig = res.locals.gitHubAppConfig;
 				res.status(200).send("ok");
 			});
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
@@ -59,7 +59,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${uuid()}`;
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname
@@ -89,7 +89,7 @@ describe("JiraConnectEnterpriseAppRouter", () => {
 			const pathname = `/jira/connect/enterprise/app/${anotherGheUUID}`;
 			await supertest(app)
 				.get(pathname)
-				.set("Cookie", getSignedCookieHeader({ jiraHost }))
+				.set("Cookie", generateSignedSessionCookieHeader({ jiraHost }))
 				.set("Authorization", `JWT ${buildQueryTypeJWTToken(SHARED_SECRET, {
 					method: "GET",
 					pathname

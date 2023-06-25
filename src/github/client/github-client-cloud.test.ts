@@ -127,7 +127,7 @@ describe("GitHub Client", () => {
 			method: "GET",
 			path,
 			status
-		}));
+		}), { jiraHost });
 	};
 
 	const verifyMetricStatus = (status: string) => {
@@ -135,7 +135,7 @@ describe("GitHub Client", () => {
 			client: "axios",
 			gitHubProduct: "cloud",
 			status
-		}));
+		}), { jiraHost });
 	};
 
 
@@ -209,7 +209,7 @@ describe("GitHub Client", () => {
 		}
 
 		expect(error).toBeInstanceOf(GithubClientBlockedIpError);
-		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" });
+		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" }, { jiraHost });
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
 	});
 

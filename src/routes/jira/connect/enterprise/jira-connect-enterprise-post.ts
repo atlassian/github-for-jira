@@ -10,6 +10,8 @@ import { createAnonymousClient } from "utils/get-github-client-config";
 import { GithubClientError } from "~/src/github/client/github-client-errors";
 import { AxiosError, AxiosResponse } from "axios";
 import { isUniquelyGitHubServerHeader } from "utils/http-headers";
+import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
+import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -28,7 +30,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
 	}
-	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj);
+	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
@@ -47,6 +49,15 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 		response.headers["server"] === "GitHub.com";
 };
 
+const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, installationId: number) => {
+	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig, installationId);
+	res.status(200).send({ success: true, connectConfigUuid, appExists: false });
+};
+
+const useExistingConfigAndRespond200 = async (res: Response, githubServerApp: GitHubServerApp) => {
+	res.status(200).send({ success: true, connectConfigUuid: githubServerApp.uuid, appExists: true });
+};
+
 export const JiraConnectEnterprisePost = async (
 	req: Request,
 	res: Response
@@ -56,7 +67,10 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const { gheServerURL } = req.body;
+	const gheServerURL = req.body.gheServerURL?.trim();
+	const apiKeyHeaderName = req.body.apiKeyHeaderName?.trim();
+	const apiKeyValue = req.body.apiKeyValue?.trim();
+
 	const { id: installationId } = res.locals.installation;
 
 	const jiraHost = res.locals.jiraHost;
@@ -74,6 +88,13 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
+	const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(apiKeyHeaderName, apiKeyValue);
+	if (maybeApiKeyInputsError) {
+		req.log.warn({ apiKeyHeaderName, apiKeyValue }, maybeApiKeyInputsError);
+		res.sendStatus(400); // Let's not bother too much: the same validation happened in frontend
+		return;
+	}
+
 	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).hostname)) {
 		res.status(200).send({ success: false, errors: [ { code: ErrorResponseCode.CLOUD_HOST } ] });
 		req.log.info("The entered URL is GitHub cloud site, return error");
@@ -83,17 +104,37 @@ export const JiraConnectEnterprisePost = async (
 
 	const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
+	const gitHubConnectConfig: GheConnectConfig = {
+		serverUrl: gheServerURL,
+		apiKeyHeaderName: apiKeyHeaderName || null,
+		encryptedApiKeyValue: apiKeyValue
+			? await GitHubServerApp.encrypt(jiraHost, apiKeyValue)
+			: null
+	};
+
 	if (gitHubServerApps?.length) {
 		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-		res.status(200).send({ success: true, appExists: true });
+		await useExistingConfigAndRespond200(res, gitHubServerApps[0]);
 		return;
 	}
 
 	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
 
 	try {
-		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log);
-		const response = await client.getMainPage(TIMEOUT_PERIOD_MS);
+		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
+			apiKeyHeaderName
+				? {
+					headerName: apiKeyHeaderName,
+					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
+				}
+				: undefined
+		);
+
+		// We want to simulate a production-like call, that's why call real endpoint with
+		// some fake Auth header
+		const response = await client.getPage(TIMEOUT_PERIOD_MS, "/api/v3/rate_limit", {
+			authorization: "Bearer ghs_fake0fake1fake2w1xVgkCPL2vk8L52AeEkv"
+		});
 
 		if (!isResponseFromGhe(req.log, response)) {
 			req.log.warn("Received OK response, but not GHE server");
@@ -107,7 +148,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		res.status(200).send({ success: true, appExists: false });
+		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
@@ -120,7 +161,7 @@ export const JiraConnectEnterprisePost = async (
 		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
-			res.status(200).send({ success: true, appExists: false });
+			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise,

@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 
@@ -32,10 +31,7 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 		const jiraClient = await getJiraClient(jiraHost, Number(gitHubInstallationId), gitHubAppId, req.log);
 		req.log.info({ jiraHost, gitHubInstallationId }, `Deleting DevInfo`);
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
-		const shouldUseBackfillAlgoIncremental = await booleanFlag(BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL, jiraHost);
-		if (shouldUseBackfillAlgoIncremental) {
-			await RepoSyncState.resetSyncFromSubscription(subscription);
-		}
+		await RepoSyncState.resetSyncFromSubscription(subscription);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
 	} catch (err) {
 		res.status(500).json(err);

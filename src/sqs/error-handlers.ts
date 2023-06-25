@@ -1,9 +1,8 @@
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
-import { ErrorHandler, ErrorHandlingResult, SQSMessageContext } from "./sqs.types";
+import { ErrorHandler, ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "./sqs.types";
 import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
-import { getLogger } from "config/logger";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -21,20 +20,19 @@ const EXPONENTIAL_BACKOFF_MULTIPLIER = 3;
 
 type ErrorTypes = JiraClientError | Octokit.HookError | GithubClientRateLimitingError | Error;
 
-export const handleUnknownError: ErrorHandler<unknown> = async (
+export const handleUnknownError: ErrorHandler<BaseMessagePayload> = async <MessagePayload extends BaseMessagePayload>(
 	err: ErrorTypes,
-	context: SQSMessageContext<unknown>
+	context: SQSMessageContext<MessagePayload>
 ): Promise<ErrorHandlingResult> => {
 	const delaySec = EXPONENTIAL_BACKOFF_BASE_SEC * Math.pow(EXPONENTIAL_BACKOFF_MULTIPLIER, context.receiveCount);
 	context.log.warn({ err, delaySec }, "Unknown error: retrying with exponential backoff");
 	return { retryable: true, retryDelaySec: delaySec, isFailure: true };
 };
 
-export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: ErrorTypes,
-	context: SQSMessageContext<unknown>): Promise<ErrorHandlingResult> => {
+export const jiraAndGitHubErrorsHandler: ErrorHandler<BaseMessagePayload> = async <MessagePayload extends BaseMessagePayload> (error: ErrorTypes,
+	context: SQSMessageContext<MessagePayload>): Promise<ErrorHandlingResult> => {
 
-	const unsafeLogger = getLogger("error-handler-unsafe", { level: "warn", unsafe: true });
-	unsafeLogger.warn({ error, context }, "Handling Jira or GitHub error");
+	context.log.warn({ err: error }, "Handling Jira or GitHub error");
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
 		|| maybeHandleRateLimitingError(error, context)
@@ -51,20 +49,20 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<unknown> = async (error: E
 /**
  * Error handler which sents failed webhook metric if the retry limit is reached
  */
-export const webhookMetricWrapper = (delegate: ErrorHandler<unknown>, webhookName: string) => {
-	return async (error: Error, context: SQSMessageContext<unknown>) => {
+export const webhookMetricWrapper = <MessagePayload extends BaseMessagePayload>(delegate: ErrorHandler<MessagePayload>, webhookName: string) => {
+	return async (error: Error, context: SQSMessageContext<MessagePayload>) => {
 		const errorHandlingResult = await delegate(error, context);
 
 		if (errorHandlingResult.isFailure && (!errorHandlingResult.retryable || context.lastAttempt)) {
 			context.log.error({ error }, `${webhookName} webhook processing failed and won't be retried anymore`);
-			emitWebhookFailedMetrics(webhookName);
+			emitWebhookFailedMetrics(webhookName, context.payload?.jiraHost);
 		}
 
 		return errorHandlingResult;
 	};
 };
 
-const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
+const maybeHandleNonFailureCase = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof JiraClientError &&
 		error.status &&
 		UNRETRYABLE_STATUS_CODES.includes(error.status)) {
@@ -75,7 +73,7 @@ const maybeHandleNonFailureCase = (error: Error, context: SQSMessageContext<unkn
 	return undefined;
 };
 
-const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
+const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	//If error is Octokit.HookError or GithubClientError, then we need to check the response status
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a class, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
@@ -88,7 +86,7 @@ const maybeHandleNonRetryableResponseCode = (error: Error, context: SQSMessageCo
 	return undefined;
 };
 
-const maybeHandleRateLimitingError = (error: Error, context: SQSMessageContext<unknown>): ErrorHandlingResult | undefined => {
+const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
 	if (error instanceof GithubClientRateLimitingError) {
 		context.log.warn({ error }, `Rate limiting error, retrying`);
 		const delaySec = error.rateLimitReset + RATE_LIMITING_DELAY_BUFFER_SEC - (Date.now() / 1000);

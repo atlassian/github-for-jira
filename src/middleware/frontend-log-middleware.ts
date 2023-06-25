@@ -81,7 +81,7 @@ const extractUnsafeJiraHost = (req: Request): string | undefined => {
 		return req.query.xdm_e as string;
 	} else if (["POST", "DELETE", "PUT"].includes(req.method)) {
 		return req.body?.jiraHost;
-	} else if (req.cookies.jiraHost) {
+	} else if (req.cookies && req.cookies.jiraHost) {
 		return req.cookies.jiraHost;
 	}
 	return undefined;

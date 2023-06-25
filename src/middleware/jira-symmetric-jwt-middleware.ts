@@ -3,41 +3,18 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
-import { JiraClient } from "models/jira-client";
-
-export const setJiraAdminPrivileges = async (req: Request, claims: Record<any, any>, installation: Installation) => {
-	const ADMIN_PERMISSION = "ADMINISTER";
-	// We only need to add this to the session if it doesn't exist
-	if (req.session.isJiraAdmin !== undefined) {
-		return;
-	}
-
-	try {
-		const userAccountId = claims.sub;
-		// Can't check permissions without userAccountId
-		if (!userAccountId) {
-			return;
-		}
-		const jiraClient = await JiraClient.getNewClient(installation, req.log);
-		// Make jira call to permissions with userAccountId.
-		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
-		const hasAdminPermissions = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
-
-		req.session.isJiraAdmin = hasAdminPermissions;
-		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
-	} catch (err) {
-		req.log.error({ err }, "Failed to fetch Jira Admin rights");
-	}
-};
+import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
+import { envVars } from "~/src/config/env";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-
-	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
-
+	const authHeader = req.headers["authorization"] as string;
+	const authHeaderPrefix = "JWT ";
+	const token = req.query?.["jwt"]
+		|| req.cookies?.["jwt"] || req.body?.["jwt"]
+		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 	if (token) {
-
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
@@ -45,26 +22,25 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-
 		let verifiedClaims;
 		try {
 			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
-			return res.status(401).send("Unauthorised");
+			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
+			return res.status(401).send(errorMessage);
 		}
+
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
-
-		// Check whether logged in user has Jira Admin permissions and save it to the session
-		await setJiraAdminPrivileges(req, verifiedClaims, installation);
+		// Check whether logged-in user has Jira Admin permissions and save it to the session
+		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
@@ -87,7 +63,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has not jiraHost");
+	req.log.warn("No token found and session cookie has no jiraHost");
+
 	return res.status(401).send("Unauthorised");
 
 };
@@ -115,7 +92,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -149,6 +126,12 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
  */
 const checkPathValidity = (url: string) => {
 	return moduleUrls.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkGenericContainerActionUrl = (url: string) => {
+	return genericContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

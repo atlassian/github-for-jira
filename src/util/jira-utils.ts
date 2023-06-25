@@ -6,7 +6,7 @@ import { isEmpty, isString, pickBy, uniq } from "lodash";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
-	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
+	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page` : "";
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/jira/marketplace/discover/app/com.github.integration.production` : "";
@@ -35,7 +35,7 @@ export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor =>
 		avatar: author.avatar_url || author.avatarUrl || (author.login ? `https://github.com/users/${author.login}.png` : undefined),
 		name: author.name || author.user?.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
-		url: author.html_url || author.url || author.user?.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
+		url: author.html_url || author.html_url || author.user?.url  || author.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
 	}) as JiraAuthor : {
 		avatar: "https://github.com/ghost.png",
 		name: "Deleted User",
@@ -69,8 +69,8 @@ interface Author {
  *  then must be at least one more unicode-digit character up to 256 length to prefix the ID -\p{Nd}{1,255} means that it must be separated by a dash,
  *  then at least 1 number character up to 256 length
  */
-export const jiraIssueRegex = (): RegExp => {
-	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
+const jiraIssueRegex = (): RegExp => {
+	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})(?=$|[^A-Z\d])/giu;
 };
 
 /**

@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>GitHub Approval Request</title>
+  <link rel="stylesheet" href="/public/css-reset/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/atlassian-ui-kit/bundle.css" media="all" />
+  <link rel="stylesheet" href="/public/css/global.css" media="all" />
+  <style>
+    section {
+      padding: 0 16px;
+      margin-top: 50px;
+      margin-bottom: 50px;
+      margin-left: auto;
+      margin-right: auto;
+      clear: both;
+      text-align: center;
+      font-size: 14px;
+      max-width: 573px;
+    }
+
+    section h2 {
+      margin: 24px 0 !important;
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body class="aui-page-hybrid">
+<div class="ac-content">
+  <div class="pageContent">
+    {{#if notAdmin}}
+        <section>
+            <div>
+                <h2>Error: not an admin of the GitHub organization.</h2>
+                <p>Only an admin user of the requested GitHub organization can access this page! Please make sure that you are
+                    signed in GitHub with a correct user and <a href="?resetGithubToken=true">try again</a>.
+                </p>
+            </div>
+        </section>
+    {{else}}
+
+        {{#if success}}
+            <section>
+              <div>
+                <h2>The request has been approved.</h2>
+                <p><a href="{{{orgUrl}}}" target="_blank">{{orgName}}</a> was successfully connected to <a href="{{{jiraHost}}}" target="_blank">{{jiraHost}}</a>.</p>
+                <p>You can close the tab now.</p>
+              </div>
+            </section>
+        {{else}}
+            <section>
+              <div>
+                <h2>Someone requested to connect <a href="{{{orgUrl}}}" target="_blank">{{orgName}}</a> to <a href="{{{jiraHost}}}" target="_blank">{{jiraHost}}</a>.</h2>
+                <p>
+                    If the request is approved, development information data (commits, branches, PRs, etc.) from this organization
+                    <a href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-github/" target="_blank"> will be visible by the users of the Jira</a>.
+                </p>
+                <p>Would you like to proceed?</p>
+              </div>
+            </section>
+            <section>
+                <form method="post">
+                    <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}">
+                    <input type="submit" value="I approve">
+                </form>
+            </section>
+        {{/if}}
+    {{/if}}
+  </div>
+</div>
+
+<!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+<!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+<script src="https://connect-cdn.atl-paas.net/all.js" nonce="{{nonce}}"></script>
+</body>
+</html>

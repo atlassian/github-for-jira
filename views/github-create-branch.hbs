@@ -31,10 +31,6 @@
     <div><a href="#" id="changeInstance">Change GitHub instance</a></div>
   </div>
   {{/if}}
-  <div class="gitHubCreateBranch__userDetails">
-    <div>GitHub account: <b>{{gitHubUser}}</b></div>
-    <div><a href="#" id="changeLogin">Change GitHub login</a></div>
-  </div>
 </div>
 <section class="gitHubCreateBranch">
   <div class="headerImage">
@@ -67,7 +63,7 @@
           Can't find the repository you're looking for?
         </a>
         <aui-inline-dialog id="show-no-repo-popup" alignment="bottom left" responds-to="hover">
-          <div>You need to configure your GitHub repositories to your Jira site to see them here.</div>
+          <div>You need to connect your GitHub repositories to your Jira site to see them here.</div>
           <a href="{{jiraHost}}/plugins/servlet/ac/com.github.integration.production/github-post-install-page" target="_blank" class="configure-link">Configure GitHub integration</a>
         </aui-inline-dialog>
       </div>

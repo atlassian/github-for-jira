@@ -19,6 +19,8 @@ interface GitHubServerAppPayload {
 	privateKey: string;
 	gitHubAppName: string;
 	installationId: number;
+	apiKeyHeaderName?: string | null;
+	encryptedApiKeyValue?: string | null; // must be encrypted with GitHubServerApp.encrypt()
 }
 
 interface GitHubServerAppUpdatePayload {
@@ -31,9 +33,12 @@ interface GitHubServerAppUpdatePayload {
 	privateKey?: string;
 	gitHubAppName?: string;
 	installationId?: number;
+	apiKeyHeaderName?: string | null;
+	encryptedApiKeyValue?: string | null; // must be encrypted with GitHubServerApp.encrypt()
 }
 
-type SECRETE_FIELD = "gitHubClientSecret" | "webhookSecret" | "privateKey";
+// TODO: rename all other columns to prefix with "encrypted"
+type SECRETE_FIELD = "gitHubClientSecret" | "webhookSecret" | "privateKey" | "encryptedApiKeyValue";
 
 export class GitHubServerApp extends Model {
 	id: number;
@@ -41,11 +46,13 @@ export class GitHubServerApp extends Model {
 	appId: number;
 	gitHubBaseUrl: string;
 	gitHubClientId: string;
-	gitHubClientSecret: string;
-	webhookSecret: string;
-	privateKey: string;
+	gitHubClientSecret: string; // TODO: rename column to prefix with "encrypted"
+	webhookSecret: string; // TODO: rename column to prefix with "encrypted"
+	privateKey: string; // TODO: rename column to prefix with "encrypted"
 	gitHubAppName: string;
-	installationId: number;
+	installationId: number; // TODO: rename to "installationIdPk" to distinguish from gitHubInstallationId
+	apiKeyHeaderName: string | null;
+	encryptedApiKeyValue: string | null;
 	updatedAt: Date;
 	createdAt: Date;
 
@@ -61,12 +68,24 @@ export class GitHubServerApp extends Model {
 		return this.decrypt(jiraHost, "webhookSecret");
 	}
 
+	getDecryptedApiKeyValue(jiraHost: string): Promise<string>  {
+		if (!this.encryptedApiKeyValue) {
+			return Promise.resolve("");
+		}
+		return this.decrypt(jiraHost, "encryptedApiKeyValue");
+	}
+
 	private async decrypt(jiraHost: string, field: SECRETE_FIELD): Promise<string> {
+		const encryptedField = this[field];
+		if (!encryptedField) {
+			log.error({ field }, "Cannot decrypt empty/null");
+			throw new Error("Cannot decrypt empty/null " + field);
+		}
 		try {
-			return await EncryptionClient.decrypt(this[field], GitHubServerApp.getEncryptContext(jiraHost));
+			return await GitHubServerApp.decrypt(jiraHost, encryptedField);
 		} catch (e1) {
 			try {
-				const plainText = await EncryptionClient.decrypt(this[field], {});
+				const plainText = await EncryptionClient.decrypt(encryptedField, {});
 				log.warn(`Fail to decrypt ${field} with jiraHost as encryptionContext, but empty encryptionContext success`);
 				return plainText;
 			} catch (e2) {
@@ -74,11 +93,14 @@ export class GitHubServerApp extends Model {
 				throw e2;
 			}
 		}
-
 	}
 
-	private static async encrypt(jiraHost: string, plainText: string) {
+	public static async encrypt(jiraHost: string, plainText: string) {
 		return await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, plainText, GitHubServerApp.getEncryptContext(jiraHost));
+	}
+
+	public static async decrypt(jiraHost: string, encryptedText: string) {
+		return await EncryptionClient.decrypt(encryptedText, GitHubServerApp.getEncryptContext(jiraHost));
 	}
 
 	private static getEncryptContext(jiraHost: string) {
@@ -147,13 +169,16 @@ export class GitHubServerApp extends Model {
 			gitHubClientSecret,
 			webhookSecret,
 			privateKey,
-			installationId
+			installationId,
+			apiKeyHeaderName,
+			encryptedApiKeyValue
 		} = payload;
 
 		const [gitHubServerApp] = await this.findOrCreate({
 			where: {
 				gitHubClientId,
-				gitHubBaseUrl
+				gitHubBaseUrl,
+				installationId
 			},
 			defaults: {
 				uuid,
@@ -162,7 +187,9 @@ export class GitHubServerApp extends Model {
 				webhookSecret: await GitHubServerApp.encrypt(jiraHost, webhookSecret),
 				privateKey: await GitHubServerApp.encrypt(jiraHost, privateKey),
 				gitHubAppName,
-				installationId
+				installationId,
+				apiKeyHeaderName: apiKeyHeaderName || null,
+				encryptedApiKeyValue: encryptedApiKeyValue || null
 			}
 		});
 
@@ -191,7 +218,9 @@ export class GitHubServerApp extends Model {
 			gitHubClientSecret,
 			webhookSecret,
 			privateKey,
-			installationId
+			installationId,
+			apiKeyHeaderName,
+			encryptedApiKeyValue
 		} = payload;
 
 		const existApp = await this.findForUuid(uuid);
@@ -204,7 +233,9 @@ export class GitHubServerApp extends Model {
 				webhookSecret: webhookSecret ? await GitHubServerApp.encrypt(jiraHost, webhookSecret) : undefined,
 				privateKey: privateKey ? await GitHubServerApp.encrypt(jiraHost, privateKey) : undefined,
 				gitHubAppName,
-				installationId
+				installationId,
+				apiKeyHeaderName: apiKeyHeaderName || null,
+				encryptedApiKeyValue: encryptedApiKeyValue || null
 			});
 		}
 
@@ -267,6 +298,14 @@ GitHubServerApp.init({
 	installationId: {
 		type: DataTypes.INTEGER,
 		allowNull: false
+	},
+	apiKeyHeaderName: {
+		type: DataTypes.STRING,
+		allowNull: true
+	},
+	encryptedApiKeyValue: {
+		type: DataTypes.TEXT,
+		allowNull: true
 	}
 }, {
 	sequelize
