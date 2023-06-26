@@ -71,6 +71,26 @@ const modules = {
 		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
 	},
+	jiraSecurityInfoProvider: {
+		homeUrl:  "https://github.com",
+		logoUrl: LOGO_URL,
+		documentationUrl: "https://docs.github.com/code-security",
+		actions: {
+			fetchWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/search`
+			},
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/repositories/search`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/repositories/search`
+			}
+		},
+		"name": {
+			"value": "GitHub Security"
+		},
+		"key": "github-security"
+	},
 	postInstallPage: {
 		key: "github-post-install-page",
 		name: {
