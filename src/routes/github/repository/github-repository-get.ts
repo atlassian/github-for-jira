@@ -80,10 +80,9 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 
 			// We don't want to return repos that are not in Database, otherwise we won't be able to fetch branches to branch from later
 			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
-			// the next steps (e.g. get repo branches to branch of) will fail
-			const subscriptionRepos = await RepoSyncState.findAllFromSubscription(subscription);
-			const subscriptionRepoIds = new Set(subscriptionRepos.map(repo => repo.repoId));
-			return installationSearch.filter(repo => subscriptionRepoIds.has(repo.id));
+			// the next step (e.g. get repo branches to branch of) will fail
+			const subscriptionOwners = await RepoSyncState.findAllRepoOwners(subscription);
+			return installationSearch.filter(repo => subscriptionOwners.has(repo.owner.login));
 
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to search repos for installation");
