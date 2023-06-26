@@ -45,7 +45,7 @@ describe("GitHub Repository Search", () => {
 					subscriptionId: subscription.id,
 					repoId: repoId,
 					repoName: fullName,
-					repoOwner: "myOwner",
+					repoOwner: "myOrgName",
 					repoFullName: "fullName",
 					repoUrl: "myUrl"
 				}));
@@ -68,14 +68,16 @@ describe("GitHub Repository Search", () => {
 		it("should return repos that the installation has access to", async () => {
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
+				.reply(200, { account: { login: "myOrgName" } });
 
 			githubNock
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:orgName in:full_name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second", id: 333 }]
+			const owner = { login: "myOrgName" };
+
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "second", id: 333 }]
 			});
 
 			await supertest(app)
@@ -97,13 +99,13 @@ describe("GitHub Repository Search", () => {
 		it("should not return repos that are not connected", async () => {
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
+				.reply(200, { account: { login: "myOrgName" } });
 
 			githubNock
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:orgName in:full_name`, {
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
 				items: [{ full_name: "forth", id: 4444 }]
 			});
 
@@ -130,11 +132,11 @@ describe("GitHub Repository Search", () => {
 
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
+				.reply(200, { account: { login: "myOrgName" } });
 
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId + 1}`)
-				.reply(200, { account: { login: "orgName2" } });
+				.reply(200, { account: { login: "anotherOrgName" } });
 
 			githubNock
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
@@ -144,11 +146,13 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${subscription.gitHubInstallationId + 1}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:orgName in:full_name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "third", id: 333 }]
+			const owner = { login: "myOrgName" };
+
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "third", id: 333 }]
 			});
 
-			nockSearchRepos422(`${randomString} org:orgName2 in:full_name`);
+			nockSearchRepos422(`${randomString} org:anotherOrgName in:full_name`);
 
 			await supertest(app)
 				.get("/github/repository").set(

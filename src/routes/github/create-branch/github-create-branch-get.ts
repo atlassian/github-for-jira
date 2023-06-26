@@ -113,9 +113,8 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 			const response = await gitHubInstallationClient.getRepositoriesPage(100, undefined, "UPDATED_AT");
 			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
 			// the next steps (e.g. get repo branches to branch of) will fail
-			const subscriptionRepos = await RepoSyncState.findAllFromSubscription(subscription);
-			const subscriptionRepoIds = new Set(subscriptionRepos.map(repo => repo.repoId));
-			const filteredRepos =  response.viewer.repositories.edges.filter(edge => subscriptionRepoIds.has(edge.node.id));
+			const repoOwners = await RepoSyncState.findAllRepoOwners(subscription);
+			const filteredRepos =  response.viewer.repositories.edges.filter(edge => repoOwners.has(edge.node.owner.login));
 			return filteredRepos.slice(0, MAX_REPOS_RETURNED);
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
