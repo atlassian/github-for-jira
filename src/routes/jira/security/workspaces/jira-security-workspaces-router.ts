@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { JiraSecurityWorkspacesPost } from "routes/jira/security/workspaces/jira-security-workspaces-post";
 import {
 	JiraSecurityWorkspacesRepositoriesRouter
@@ -7,7 +8,7 @@ import {
 
 export const JiraSecurityWorkspacesRouter = Router();
 
-JiraSecurityWorkspacesRouter.route("/search")
+JiraSecurityWorkspacesRouter.route("/workspaces/search")
 	.post(JiraSecurityWorkspacesPost);
 
-JiraSecurityWorkspacesRouter.use("/repositories", JiraSecurityWorkspacesRepositoriesRouter);
+JiraSecurityWorkspacesRouter.use("/wrokspaces/repositories", JiraSecurityWorkspacesRepositoriesRouter);

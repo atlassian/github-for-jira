@@ -6,7 +6,8 @@ export enum Errors {
 	MISSING_GITHUB_APP_CONFIG = "No gitHubAppConfig found",
 	IP_ALLOWLIST_MISCONFIGURED = "IP Allowlist Misconfigured",
 	MISSING_GITHUB_APP_NAME = "Github App name is missing",
-	MISSING_REPOSITORY_ID = "Missing repository ID"
+	MISSING_REPOSITORY_ID = "Missing repository ID",
+	MISSING_WORKSPACE_IDS = "Missing workspace IDs",
 }
 
 export class UIDisplayableError extends Error {

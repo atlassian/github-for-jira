@@ -201,9 +201,17 @@ const modules = {
 };
 
 export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
-export const genericContainerActionUrls = [modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
+export const genericContainerActionUrls = [
+	modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
 	modules.jiraDevelopmentTool.actions.searchRepositories.templateUrl,
-	modules.jiraDevelopmentTool.actions.associateRepository.templateUrl];
+	modules.jiraDevelopmentTool.actions.associateRepository.templateUrl
+];
+
+export const securityContainerActionUrls = [
+	modules.jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.searchContainers.templateUrl
+];
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({

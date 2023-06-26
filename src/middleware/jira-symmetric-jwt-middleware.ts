@@ -3,7 +3,11 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import {
+	genericContainerActionUrls,
+	moduleUrls,
+	securityContainerActionUrls
+} from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 import { envVars } from "~/src/config/env";
@@ -92,7 +96,10 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
+		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET"
+			|| checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)
+			|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)
+			? TokenType.normal : TokenType.context;
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -132,6 +139,12 @@ const checkPathValidity = (url: string) => {
 
 const checkGenericContainerActionUrl = (url: string) => {
 	return genericContainerActionUrls.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkSecurityContainerActionUrl = (url: string) => {
+	return securityContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };
