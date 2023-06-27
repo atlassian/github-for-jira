@@ -57,6 +57,8 @@ export interface RepoSyncStateProperties {
 	failedCode?: string;
 }
 
+type RepoSyncStateAndSubscription = RepoSyncState & Subscription;
+
 export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	id: number;
 	subscriptionId: number;
@@ -308,6 +310,21 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		});
 
 		return repositories as RepoSyncState[];
+	}
+
+	static async findBySubscriptionIdAndJiraHost(id: number, jiraHost: string): Promise<RepoSyncStateAndSubscription> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost AND s.\"id\" = :id",
+			{
+				replacements: { id, jiraHost },
+				type: QueryTypes.SELECT
+			}
+		);
+
+		return results[0] as RepoSyncStateAndSubscription;
 	}
 
 

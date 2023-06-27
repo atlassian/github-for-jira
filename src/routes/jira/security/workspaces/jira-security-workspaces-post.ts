@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { RepoSyncState } from "models/reposyncstate";
 
 interface Workspace {
 	id: string,
@@ -10,25 +11,26 @@ interface Workspace {
 	avatarUrl: string
 }
 
-const getAllWorkspaces = async (
-	subscriptionIds: number[]
-): Promise<(Subscription | null)[]> => {
-	const workspaces = await Promise.all(subscriptionIds.map(async (id) => {
-		return await Subscription.findOneForGitHubInstallationId(id, undefined);
-	}));
-
-	return workspaces.filter(workspace => workspace !== null);
+const omitRepoNameFromUrl = (url: string): string => {
+	const segments = url.split("/");
+	segments.pop(); // Remove the last segment
+	return segments.join("/");
 };
 
 const transformSubscriptions = async (
-	subscriptions: Subscription[]
+	subscriptions: Subscription[],
+	jiraHost: string
 ): Promise<Workspace[]> => {
+	const matchedSubscriptions = await Promise.all(subscriptions.map(async (sub) => {
+		return sub &&  await RepoSyncState.findBySubscriptionIdAndJiraHost(sub.id, jiraHost);
+	}));
 
-	const transformedSubscriptions = subscriptions.map((sub) => {
+	const transformedSubscriptions = matchedSubscriptions.map((sub) => {
+		const { repoOwner, repoUrl } = sub;
 		return {
 			id: transformRepositoryId(sub.gitHubInstallationId), // TODO - update this and write a test that includes server ids
-			name: "", // TODO - get name from reposyncstate (owner),
-			url: "", // TODO - get url from reposyncstate (repoUrl - trimmed)
+			name: repoOwner,
+			url: omitRepoNameFromUrl(repoUrl),
 			avatarUrl: "" // TODO - update DB to support new field
 		};
 	});
@@ -39,20 +41,24 @@ const transformSubscriptions = async (
 export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for POST workspaces");
 
-	const { ids: workspaceIds } = req.body;
+	const { ids: subscriptionIds } = req.body;
+	const { jiraHost } = res.locals;
 
-	if (!workspaceIds) {
+	if (!subscriptionIds) {
 		const errMessage = Errors.MISSING_WORKSPACE_IDS;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
 		return;
 	}
 
-	const allMatchingSubscriptions = await getAllWorkspaces(workspaceIds);
+	const subscriptions = await Promise.all(subscriptionIds.map(async (id) => {
+		return await Subscription.findOneForGitHubInstallationId(id, undefined);
+	}));
+
 	// TODO - fix this tomorrow
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	const workspaces = await transformSubscriptions(allMatchingSubscriptions);
+	const transformedSubscriptions = await transformSubscriptions(subscriptions, jiraHost);
 
-	res.status(200).json({ success: true, workspaces });
+	res.status(200).json({ success: true, workspaces: transformedSubscriptions });
 };

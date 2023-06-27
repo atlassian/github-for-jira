@@ -5,7 +5,6 @@ import {
 	JiraSecurityWorkspacesRepositoriesRouter
 } from "routes/jira/security/workspaces/repositories/jira-security-workspaces-repositories-router";
 
-
 export const JiraSecurityWorkspacesRouter = Router();
 
 JiraSecurityWorkspacesRouter.route("/workspaces/search")
