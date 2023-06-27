@@ -9,6 +9,7 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 	const payload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
 	const { githubToken, installation } = res.locals;
 
+	// TODO - update with avatarUrl
 	const result = await verifyAdminPermsAndFinishInstallation(
 		githubToken, installation, payload.gitHubServerAppIdPk, payload.gitHubInstallationId, req.log
 	);

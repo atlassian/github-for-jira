@@ -116,7 +116,8 @@ export class DatabaseStateCreator {
 			jiraHost,
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",
-			gitHubAppId: gitHubServerApp?.id
+			gitHubAppId: gitHubServerApp?.id,
+			avatarUrl: "test"
 		});
 
 		const repoSyncState = this.withActiveRepoSyncStateFlag ? await RepoSyncState.create({

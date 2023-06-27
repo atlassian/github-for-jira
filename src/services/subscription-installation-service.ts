@@ -24,12 +24,28 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
+		logger.info("avatarUrl: ", installation.account.avatar_url);
+
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
+};
+
+const getAvatarUrl = async (
+	gitHubInstallationId: number,
+	jiraHost: string,
+	logger: Logger,
+	gitHubServerAppIdPk?: number
+): Promise<string> => {
+	const metrics = {
+		trigger: "github-configuration-post"
+	};
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubServerAppIdPk, metrics);
+	const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+	return installation.account.avatar_url;
 };
 
 const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: number) => {
@@ -51,24 +67,28 @@ export const verifyAdminPermsAndFinishInstallation =
 	): Promise<ResultObject> => {
 
 		const log = parentLogger.child({ gitHubInstallationId });
+		const { jiraHost, clientKey } = installation;
 		log.debug("Received add subscription request");
 
 		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubServerAppIdPk);
 
 		try {
 			// Check if the user that posted this has access to the installation ID they're requesting
-			if (!await hasAdminAccess(githubToken, installation.jiraHost, gitHubInstallationId, log, gitHubServerAppIdPk)) {
+			if (!await hasAdminAccess(githubToken, jiraHost, gitHubInstallationId, log, gitHubServerAppIdPk)) {
 				log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
 				return {
 					error: "`User is not an admin of the installation"
 				};
 			}
 
+			const avatarUrl = await getAvatarUrl(gitHubInstallationId, jiraHost, log, gitHubServerAppIdPk);
+
 			const subscription: Subscription = await Subscription.install({
-				hashedClientKey: installation.clientKey,
+				hashedClientKey: clientKey,
 				installationId: gitHubInstallationId,
-				host: installation.jiraHost,
-				gitHubAppId: gitHubServerAppIdPk
+				host: jiraHost,
+				gitHubAppId: gitHubServerAppIdPk,
+				avatarUrl
 			});
 
 			log.info({ subscriptionId: subscription.id }, "Subscription was created");

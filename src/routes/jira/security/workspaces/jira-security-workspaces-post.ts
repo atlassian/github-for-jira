@@ -26,12 +26,12 @@ const transformSubscriptions = async (
 	}));
 
 	const transformedSubscriptions = matchedSubscriptions.map((sub) => {
-		const { repoOwner, repoUrl } = sub;
+		const { repoOwner, repoUrl, avatarUrl } = sub;
 		return {
 			id: transformRepositoryId(sub.gitHubInstallationId), // TODO - update this and write a test that includes server ids
 			name: repoOwner,
 			url: omitRepoNameFromUrl(repoUrl),
-			avatarUrl: "" // TODO - update DB to support new field
+			avatarUrl: avatarUrl || ""
 		};
 	});
 

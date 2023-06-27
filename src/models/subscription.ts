@@ -1,6 +1,7 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
 import { sequelize } from "models/sequelize";
+import { getLogger } from "config/logger";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -42,6 +43,7 @@ export class Subscription extends Model {
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
 	gitHubAppId: number | undefined;
+	avatarUrl: string | undefined;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -183,17 +185,22 @@ export class Subscription extends Model {
 
 	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
+		const logger = getLogger("test");
+		logger.info("here", payload);
 		const [subscription] = await this.findOrCreate({
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
 				jiraClientKey: payload.hashedClientKey,
-				gitHubAppId: payload.gitHubAppId || null
+				gitHubAppId: payload.gitHubAppId || null,
+				avatarUrl: payload.avatarUrl // TODO - default to GitHub logo
 			},
 			defaults: {
 				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
 			}
 		});
+
+		logger.info("WHHHHHHHHHHAAATTT", subscription);
 
 		return subscription;
 	}
@@ -254,6 +261,10 @@ Subscription.init({
 	gitHubAppId: {
 		type: DataTypes.INTEGER,
 		allowNull: true
+	},
+	avatarUrl: {
+		type: DataTypes.STRING,
+		allowNull: true
 	}
 }, { sequelize });
 
@@ -261,6 +272,7 @@ export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 	gitHubAppId: number | undefined;
+	avatarUrl?: string;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
