@@ -12,17 +12,18 @@ import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 export const attachErrorHandler = (router: Router) => {
 
 	// Error endpoints to test out different error pages and messages
-	router.get(["/error", "/error/:message", "/error/:message/:name"], (req: Request, res: Response, next: NextFunction) => {
+	const ErrorMiddlewareGet = (req: Request, res: Response, next: NextFunction) => {
 		res.locals.showError = true;
 		const error = new Error(req.params.message);
 		if (req.params.name) {
 			error.name = req.params.name;
 		}
 		next(error);
-	});
+	};
+	router.get(["/error", "/error/:message", "/error/:message/:name"], ErrorMiddlewareGet);
 
 	// Add Sentry Context Data
-	router.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	const sentryMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
 		Sentry.withScope((scope: Sentry.Scope): void => {
 			const jiraHost = res.locals.jiraHost;
 			if (jiraHost) {
@@ -35,13 +36,15 @@ export const attachErrorHandler = (router: Router) => {
 
 			next(err);
 		});
-	});
+	};
+	router.use(sentryMiddleware);
 
 	// Sentry error middleware
-	router.use(Sentry.Handlers.errorHandler());
+	const sentryErrorHandler = Sentry.Handlers.errorHandler();
+	router.use(sentryErrorHandler);
 
 	// Error and Catch all route - Handle anything that's missing or has throw an error
-	router.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+	const catchAllMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
 		const errorReference = uuidv4();
 
 		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend");
@@ -89,6 +92,7 @@ export const attachErrorHandler = (router: Router) => {
 			nonce: res.locals.nonce,
 			githubRepoUrl: envVars.GITHUB_REPO_URL
 		});
-	});
+	};
+	router.use(catchAllMiddleware);
 
 };

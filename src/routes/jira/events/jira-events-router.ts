@@ -8,10 +8,14 @@ import { getConfiguredAppProperties, saveConfiguredAppProperties } from "utils/a
 export const JiraEventsRouter = Router();
 
 // TODO: remove enabled and disabled events once the descriptor is updated in marketplace
-JiraEventsRouter.post("/disabled", (_: Request, res: Response) => {
+
+const JiraDisabledPost = (_: Request, res: Response) => {
 	return res.sendStatus(204);
-});
-JiraEventsRouter.post("/enabled", async (req: Request, res: Response) => {
+};
+
+JiraEventsRouter.post("/disabled", JiraDisabledPost);
+
+const JiraEnabledPost = async (req: Request, res: Response) => {
 	const { baseUrl } = req.body;
 
 	try {
@@ -25,7 +29,9 @@ JiraEventsRouter.post("/enabled", async (req: Request, res: Response) => {
 	}
 
 	return res.sendStatus(204);
-});
+};
+
+JiraEventsRouter.post("/enabled", JiraEnabledPost);
 
 JiraEventsRouter.post("/installed", validateAsymmetricJwtTokenMiddleware, JiraEventsInstallPost);
 JiraEventsRouter.post("/uninstalled", validateAsymmetricJwtTokenMiddleware, extractInstallationFromJiraCallback, JiraEventsUninstallPost);
