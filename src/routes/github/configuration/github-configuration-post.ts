@@ -24,7 +24,6 @@ export const GithubConfigurationPost = async (req: Request, res: Response): Prom
 		return;
 	}
 
-	// TODO - update with avatarUrl
 	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, req.log);
 	if (result.error) {
 		res.status(401)
