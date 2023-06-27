@@ -87,6 +87,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,SessionGet
 :GET ^\\\\/?(?=\\\\/|$)^\\\\/create-branch-options\\\\/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,maybeJiraSymmetricJwtMiddleware,GithubCreateBranchOptionsGet
+:GET ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/callback\\\\/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,GithubOAuthCallbackGet
 :POST ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/webhooks\\\\/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,middleware,returnOnValidationError,WebhookReceiverPost
 :GET ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/subscription-deferred-install\\\\/?(?=\\\\/|$)^\\\\/request\\\\/(?:([^\\\\/]+?))\\\\/?(?=\\\\/|$)^\\\\/?$
@@ -105,6 +107,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,csrf,GitHubRepositoryGet
 :GET ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/branch\\\\/?(?=\\\\/|$)^\\\\/owner\\\\/(?:([^\\\\/]+?))\\\\/repo\\\\/(?:([^\\\\/]+?))\\\\/(?:([^\\\\/]+?))\\\\/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,csrf,GithubBranchGet
+:GET ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/login\\\\/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,jiraAdminPermissionsMiddleware,GithubOAuthLoginGet
 :POST ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/encrypt\\\\/header\\\\/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubServerAppMiddleware,jiraAdminPermissionsMiddleware,GithubEncryptHeaderPost
 :GET ^\\\\/?(?=\\\\/|$)^\\\\/github\\\\/?(?=\\\\/|$)^(?:\\\\/([0-9a-fA-F]{8}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{4}\\\\b-[0-9a-fA-F]{12}))?\\\\/?(?=\\\\/|$)^\\\\/setup\\\\/?(?=\\\\/|$)^\\\\/?$
