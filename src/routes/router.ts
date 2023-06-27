@@ -41,7 +41,8 @@ RootRouter.use(json({
 	}
 }));
 
-RootRouter.use(cookieParser());
+const cookieParserMiddleware = cookieParser();
+RootRouter.use(cookieParserMiddleware);
 
 // Add pertinent information to logger for all subsequent routes
 RootRouter.use(LogMiddleware);
@@ -73,14 +74,15 @@ RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, Github
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
-// On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
+// On base path, redirect to GitHub App Marketplace URL
+const GitHubAppMarketplaceRedirectGet = async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "root_path" });
 	const { data: info } = await gitHubAppClient.getApp();
 
 	return res.redirect(info.external_url);
-});
+};
+RootRouter.get("/", jiraSymmetricJwtMiddleware, GitHubAppMarketplaceRedirectGet);
 
 // For when nothing gets triggered in the above routes, or an error occurs
 attachErrorHandler(RootRouter);
