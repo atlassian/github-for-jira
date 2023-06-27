@@ -1,5 +1,6 @@
 import { getFrontendApp } from "~/src/app";
 
+const sanitizeRegexStr = (regexStr: string) => regexStr.split("\\").join("");
 describe("app", () => {
 	describe("getFrontendApp", () => {
 		it("please review routes and update snapshot when adding or modifying the routes!", async () => {
@@ -7,12 +8,12 @@ describe("app", () => {
 
 			const appRoutes: Array<any> = [];
 			const collectRoutes = (stack, parentPath = "", parentMiddlewares: Array<any> = []) => {
-				const ROOT_REGEX = parentPath + "^\\/?(?=\\/|$)";
+				const ROOT_REGEX = parentPath + sanitizeRegexStr("^\\/?(?=\\/|$)");
 				const pathMiddlewares = {};
 				pathMiddlewares[ROOT_REGEX] = [...parentMiddlewares];
 
 				stack.forEach(layer => {
-					const newPath = parentPath + layer.regexp.source;
+					const newPath = parentPath + sanitizeRegexStr(layer.regexp.source);
 					if (!pathMiddlewares[newPath]) {
 						pathMiddlewares[newPath] = [...pathMiddlewares[ROOT_REGEX]];
 					}
