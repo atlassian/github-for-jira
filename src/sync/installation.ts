@@ -25,6 +25,7 @@ import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types"
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 import { getNextTasks } from "~/src/sync/scheduler";
+import { getAvatarUrl } from "services/subscription-installation-service";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -250,6 +251,20 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		commitsFromDate: data.commitsFromDate
 	});
 
+	const metrics = {
+		trigger: "backfill"
+	};
+
+	if (!subscription?.avatarUrl) {
+		const avatarUrl = await getAvatarUrl(
+			logger,
+			subscription.jiraHost,
+			subscription.gitHubInstallationId,
+			metrics,
+			undefined);
+		await subscription.update({ avatarUrl });
+	}
+
 	// The idea is to always process the main task (the first one from the list) and handle its errors while do the
 	// best effort for the other tasks (tail) that are picked randomly to use rate-limiting quota efficiently.
 	const nextTasks = await getNextTasks(subscription, data.targetTasks || [], logger);
@@ -266,7 +281,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				task: nextTask
 			});
 
-			logger.info("Starting task");
+			logger.info("Starting task", subscription.avatarUrl);
 			nextTask.startTime = Date.now();
 
 			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);

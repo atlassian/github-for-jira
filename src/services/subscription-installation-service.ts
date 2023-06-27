@@ -24,8 +24,6 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
-		logger.info("avatarUrl: ", installation.account.avatar_url);
-
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
 	}	catch (err) {
@@ -34,15 +32,15 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 	}
 };
 
-const getAvatarUrl = async (
-	gitHubInstallationId: number,
-	jiraHost: string,
+export const getAvatarUrl = async (
 	logger: Logger,
+	jiraHost: string,
+	gitHubInstallationId: number,
+	metrics: {
+		trigger: string
+	},
 	gitHubServerAppIdPk?: number
 ): Promise<string> => {
-	const metrics = {
-		trigger: "github-configuration-post"
-	};
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubServerAppIdPk, metrics);
 	const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 	return installation.account.avatar_url;
@@ -81,7 +79,17 @@ export const verifyAdminPermsAndFinishInstallation =
 				};
 			}
 
-			const avatarUrl = await getAvatarUrl(gitHubInstallationId, jiraHost, log, gitHubServerAppIdPk);
+			const metrics = {
+				trigger: "github-configuration-post"
+			};
+
+			const avatarUrl = await getAvatarUrl(
+				log,
+				jiraHost,
+				gitHubInstallationId,
+				metrics,
+				gitHubServerAppIdPk
+			);
 
 			const subscription: Subscription = await Subscription.install({
 				hashedClientKey: clientKey,
