@@ -26,10 +26,10 @@ describe("curl-utils", () => {
 			const result = await runCurl({
 				fullUrl: `https://www.atlassian.com`,
 				method: "GET",
-				authorization: "secrets"
+				authorization: "secrets with spaces in it secrets"
 			});
 			expect(result.meta).not.toContain("secrets");
-			expect(result.meta).not.toContain("set-cookie");
+			expect(result.meta).toContain("< set-cookie: *******");
 		});
 	});
 
