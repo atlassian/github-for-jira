@@ -17,6 +17,7 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { extraLoggerInfo } from "./webhook-logging-extra";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -24,12 +25,15 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	const payload = request.body;
-	const logger = (request.log || getLogger(LOGGER_NAME)).child({
+	const parentLogger = (request.log || getLogger(LOGGER_NAME));
+	const logger = parentLogger.child({
 		paramUuid: uuid,
 		xGitHubDelivery: id,
-		xGitHubEvent: eventName
+		xGitHubEvent: eventName,
+		...extraLoggerInfo(payload, parentLogger)
 	});
 	logger.info("Webhook received");
+	let webhookContext;
 	try {
 		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
@@ -50,7 +54,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
-		const webhookContext = new WebhookContext({
+		webhookContext = new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
@@ -75,11 +79,11 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 		});
 		await webhookRouter(webhookContext);
-		logger.info("Webhook was successfully processed");
+		webhookContext.log.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
 	} catch (err) {
-		logger.error({ err }, "Something went wrong, returning 400: " + err.message);
+		(webhookContext?.log || logger).error({ err }, "Something went wrong, returning 400: " + err.message);
 		response.sendStatus(400);
 	}
 };
