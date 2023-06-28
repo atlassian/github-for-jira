@@ -8,7 +8,9 @@ export enum Errors {
 	MISSING_GITHUB_APP_NAME = "Github App name is missing",
 	MISSING_REPOSITORY_ID = "Missing repository ID",
 	MISSING_WORKSPACE_IDS = "Missing workspace IDs",
+	MISSING_WORKSPACE_ID = "Missing workspace ID",
 	MISSING_CONTAINER_IDS = "Missing container IDs",
+	MISSING_CONTAINER_NAME = "Missing container name",
 }
 
 export class UIDisplayableError extends Error {

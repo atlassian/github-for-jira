@@ -1,6 +1,7 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
 import { sequelize } from "models/sequelize";
+import { RepoSyncStateAndSubscription } from "models/reposyncstate";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -78,18 +79,18 @@ export class Subscription extends Model {
 	}
 
 	static async findOneForGitHubInstallationIdAndGitHubCloudBaseUrl(
+		repoUrl: string,
 		gitHubInstallationId: string
 	): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			`SELECT *
     FROM "Subscriptions" s
     LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
-    WHERE s."gitHubInstallationId" = :gitHubInstallationId
-    AND (
-      rss."repoUrl" LIKE 'https://github.com/%'
-    )`,
+	  WHERE REPLACE("repoUrl", '.', '') LIKE :repoUrl
+    AND s."gitHubInstallationId" = :gitHubInstallationId`,
 			{
 				replacements: {
+					repoUrl: `%${repoUrl.replace(/\./g, "")}%`,
 					gitHubInstallationId
 				},
 				type: QueryTypes.SELECT
@@ -100,22 +101,49 @@ export class Subscription extends Model {
 	}
 
 	static async findOneForGitHubInstallationIdAndRepoUrl(
-		gitHubInstallationId: string,
+		gitHubInstallationId: number,
 		repoDomain: string
-	): Promise<Subscription | null> {
+	): Promise<RepoSyncStateAndSubscription | null> {
+		const modifiedRepoDomain = repoDomain.replace(/\./g, "");
+
 		const results = await this.sequelize!.query(
 			`SELECT *
     FROM "Subscriptions" s
     LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
     WHERE s."gitHubInstallationId" = :gitHubInstallationId
-    AND REPLACE(rss."repoUrl", '.', '') LIKE :repoDomain`,
+    AND REPLACE(rss."repoUrl", '.', '') LIKE :modifiedRepoDomain`,
 			{
-				replacements: { gitHubInstallationId, repoDomain: `%${repoDomain}%` },
+				replacements: {
+					gitHubInstallationId,
+					modifiedRepoDomain: `%${modifiedRepoDomain}%`
+				},
 				type: QueryTypes.SELECT
 			}
 		);
 
-		return results[0] as Subscription;
+		return results[0] as RepoSyncStateAndSubscription;
+	}
+
+	static async findAllForGitHubInstallationIdAndRepoName(
+		gitHubInstallationId: number,
+		repoName: string
+	): Promise<RepoSyncStateAndSubscription[]> {
+		const results = await this.sequelize!.query(
+			`SELECT *
+    FROM "Subscriptions" s
+    LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+    WHERE s."gitHubInstallationId" = :gitHubInstallationId
+    AND REPLACE(rss."repoUrl", '.', '') LIKE :repoName`,
+			{
+				replacements: {
+					gitHubInstallationId,
+					repoName: `%${repoName}%`
+				},
+				type: QueryTypes.SELECT
+			}
+		);
+
+		return results as RepoSyncStateAndSubscription[];
 	}
 
 	static getAllFiltered(

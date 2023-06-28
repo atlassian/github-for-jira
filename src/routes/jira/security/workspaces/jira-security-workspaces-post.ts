@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
-import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { RepoSyncState } from "models/reposyncstate";
+import {
+	getRepoUrlAndRepoId
+} from "routes/jira/security/workspaces/repositories/jira-security-workspaces-repositories-post";
 
 interface Workspace {
 	id: string,
@@ -49,15 +52,8 @@ export const splitServerId = (input: string): [string, string] => {
 const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscription[] | []> => {
 	const results = await Promise.all(
 		Array.from(new Set(gitHubInstallationIds)).map(async (id) => {
-			// Account for server gitHubInstallationIds which will be passed in a format similar to "XXXXXXX-XXXX"
-			if (/-/.test(id)) {
-				const [hashedRepoUrl, gitHubServerInstallationId] = splitServerId(id);
-				const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
-				return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(gitHubServerInstallationId, repoDomain);
-			} else {
-				// In the case of duplicate IDs across cloud and server, cross-reference against cloud base Url
-				return await Subscription.findOneForGitHubInstallationIdAndGitHubCloudBaseUrl(id);
-			}
+			const { repoUrl, id: gitHubInstallationId } = getRepoUrlAndRepoId(id);
+			return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(Number(gitHubInstallationId), repoUrl);
 		})
 	);
 

@@ -13,7 +13,7 @@ export type Workspace = {
 }
 
 const DEFAULT_PAGE_NUMBER = 1; // Current page
-export const DEFAULT_LIMIT = 20; // Number of items per page\
+export const DEFAULT_LIMIT = 20; // Number of items per page
 
 export const getGitHubInstallationId = (subscriptions: Subscription[], subscriptionId: number): number => {
 	const matchingSubscription = subscriptions.find(sub => sub.id === subscriptionId);

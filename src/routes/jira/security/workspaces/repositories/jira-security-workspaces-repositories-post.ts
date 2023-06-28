@@ -7,7 +7,7 @@ import { RepoSyncState } from "models/reposyncstate";
 
 interface RepoUrlAndRepoId {
 	repoUrl: string,
-	repoId: string
+	id: string
 }
 
 interface Container {
@@ -18,13 +18,13 @@ interface Container {
 	lastUpdatedDate: Date
 }
 
-const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
+export const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
 	if (/-/.test(id)) {
 		const [hashedRepoUrl, repoId] = splitServerId(id);
 		const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
-		return { repoUrl: repoDomain, repoId };
+		return { repoUrl: repoDomain, id: repoId };
 	} else {
-		return { repoUrl: GITHUB_CLOUD_BASEURL, repoId: id };
+		return { repoUrl: GITHUB_CLOUD_BASEURL, id };
 	}
 };
 
@@ -32,7 +32,7 @@ const getRepos = async (repoIds: string[]): Promise<RepoSyncState[] | []> => {
 	const results = await Promise.all(
 		Array.from(new Set(repoIds)).map(async (id) => {
 			// Account for server repoIds which will be passed in a format similar to "XXXXXXX-XXXX"
-			const { repoUrl, repoId } = getRepoUrlAndRepoId(id);
+			const { repoUrl, id: repoId } = getRepoUrlAndRepoId(id);
 			return await RepoSyncState.findOneForRepoUrlAndRepoId(repoUrl, repoId);
 		})
 	);
@@ -41,7 +41,7 @@ const getRepos = async (repoIds: string[]): Promise<RepoSyncState[] | []> => {
 	return results.filter((result) => result != null) as RepoSyncState[];
 };
 
-const transformRepositories = async (
+export const transformRepositories = async (
 	repos: RepoSyncState[]
 ): Promise<Container[]> => {
 	const transformedSubscriptions = repos.map((repo) => {
