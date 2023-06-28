@@ -269,7 +269,11 @@ describe("Workspaces Post", () => {
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
-				ids: [sub1.gitHubInstallationId, sub2.gitHubInstallationId, sub3.gitHubInstallationId]
+				ids: [
+					sub1.gitHubInstallationId,
+					`676974687562696e7465726e616c61746c61737369616e636f6d-${sub2.gitHubInstallationId.toString()}`,
+					sub3.gitHubInstallationId
+				]
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -277,7 +281,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 
-	it("Should trim ID passed for server orgs and return matching subscriptions", async () => {
+	it("Should trim ID passed for server orgs and return matching subscriptions for both cloud and server", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -289,16 +293,32 @@ describe("Workspaces Post", () => {
 			gitHubInstallationId: 2345,
 			jiraHost,
 			jiraClientKey: "client-key",
-			avatarUrl: "http://anotheravatarurl"
+			avatarUrl: "http://serveravatarurl"
+		});
+
+		const cloudSubscription = await Subscription.create({
+			gitHubInstallationId: 2345,
+			jiraHost,
+			jiraClientKey: "client-key",
+			avatarUrl: "http://cloudavatarurl"
 		});
 
 		await RepoSyncState.create({
 			subscriptionId: serverSubscription.id,
 			repoId: 1,
 			repoName: "my-server-repo",
-			repoOwner: "atlassian",
-			repoFullName: "atlassian/my-server-repo",
-			repoUrl: "https://github.internal.atlassian.com/atlassian/my-server-repo"
+			repoOwner: "server",
+			repoFullName: "server/my-server-repo",
+			repoUrl: "https://github.internal.atlassian.com/server/my-server-repo"
+		});
+
+		await RepoSyncState.create({
+			subscriptionId: cloudSubscription.id,
+			repoId: 2,
+			repoName: "my-cloud-repo",
+			repoOwner: "cloud",
+			repoFullName: "cloud/my-cloud-repo",
+			repoUrl: "https://github.com/cloud/my-cloud-repo"
 		});
 
 		const response = {
@@ -306,9 +326,15 @@ describe("Workspaces Post", () => {
 			workspaces: [
 				{
 					id: `676974687562696e7465726e616c61746c61737369616e636f6d-${serverSubscription.gitHubInstallationId.toString()}`,
-					name: "atlassian",
-					url: "https://github.internal.atlassian.com/atlassian",
-					avatarUrl: "http://anotheravatarurl"
+					name: "server",
+					url: "https://github.internal.atlassian.com/server",
+					avatarUrl: "http://serveravatarurl"
+				},
+				{
+					id: cloudSubscription.gitHubInstallationId.toString(),
+					name: "cloud",
+					url: "https://github.com/cloud",
+					avatarUrl: "http://cloudavatarurl"
 				}
 			]
 		};
@@ -319,7 +345,10 @@ describe("Workspaces Post", () => {
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
-				ids: [`676974687562696e7465726e616c61746c61737369616e636f6d-${serverSubscription.gitHubInstallationId.toString()}`]
+				ids: [
+					`676974687562696e7465726e616c61746c61737369616e636f6d-${serverSubscription.gitHubInstallationId.toString()}`,
+					cloudSubscription.gitHubInstallationId.toString()
+				]
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);

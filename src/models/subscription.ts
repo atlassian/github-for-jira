@@ -77,6 +77,28 @@ export class Subscription extends Model {
 		});
 	}
 
+	static async findOneForGitHubInstallationIdAndGitHubCloudBaseUrl(
+		gitHubInstallationId: string
+	): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			`SELECT *
+    FROM "Subscriptions" s
+    LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+    WHERE s."gitHubInstallationId" = :gitHubInstallationId
+    AND (
+      rss."repoUrl" LIKE 'https://github.com/%'
+    )`,
+			{
+				replacements: {
+					gitHubInstallationId
+				},
+				type: QueryTypes.SELECT
+			}
+		);
+
+		return results[0] as Subscription;
+	}
+
 	static async findOneForGitHubInstallationIdAndRepoUrl(
 		gitHubInstallationId: string,
 		repoDomain: string

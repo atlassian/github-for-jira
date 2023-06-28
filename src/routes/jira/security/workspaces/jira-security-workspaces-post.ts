@@ -3,6 +3,7 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { RepoSyncState } from "models/reposyncstate";
+import { getLogger } from "config/logger";
 
 interface Workspace {
 	id: string,
@@ -23,6 +24,8 @@ const transformSubscriptions = async (
 	subscriptions: Subscription[],
 	jiraHost: string
 ): Promise<Workspace[]> => {
+	const logger = getLogger("teset");
+	logger.info("IN HERE???");
 	const matchedSubscriptions = await Promise.all(subscriptions.map(async (sub) => {
 		return sub &&  await RepoSyncState.findBySubscriptionIdAndJiraHost(sub.id, jiraHost);
 	}));
@@ -55,13 +58,13 @@ const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscr
 				const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
 				return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(gitHubServerInstallationId, repoDomain);
 			} else {
-				return await Subscription.findOneForGitHubInstallationId(Number(id), undefined);
+				return await Subscription.findOneForGitHubInstallationIdAndGitHubCloudBaseUrl(id);
 			}
 		})
 	);
 
-	const subscriptions = results.filter((result) => result !== null) as Subscription[];
-	return subscriptions.length ? subscriptions : [];
+	// Loose check so we filter null and undefined values
+	return results.filter((result) => result != null) as Subscription[];
 };
 
 export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): Promise<void> => {
@@ -78,11 +81,14 @@ export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): P
 	}
 
 	const subscriptions = await getSubscriptions(gitHubInstallationIds);
+	const logger = getLogger("DOWNHERE");
+	logger.info("subscriptions", subscriptions);
 
-	const transformedSubscriptions = await transformSubscriptions(
-		subscriptions.filter((sub): sub is Subscription => sub !== null),
-		jiraHost
-	);
+	const transformedSubscriptions = subscriptions.length ?
+		await transformSubscriptions(
+			subscriptions.filter((sub): sub is Subscription => sub !== null),
+			jiraHost
+		) : [];
 
 	res.status(200).json({ success: true, workspaces: transformedSubscriptions });
 };
