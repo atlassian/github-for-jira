@@ -33,7 +33,7 @@ export const runCurl = async (opts: {
 	let meta = (cmd + "\n" + stderr).split(opts.authorization).join("********");
 	knownSensitiveHttpHeaders.forEach(header => {
 		// Some returned values might contain spaces/quotes
-		meta = _.replace(meta, new RegExp(`(< ${header}:\\s+?).*`, "gi"), "$1*******");
+		meta = _.replace(meta, new RegExp(`(< ${header}:\\s+).*`, "gi"), "$1*******");
 	});
 	return {
 		body: stdout,
