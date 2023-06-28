@@ -30,7 +30,7 @@ const createMultipleSubscriptionsAndRepos = async () => {
 		jiraClientKey: "client-key"
 	});
 
-	await RepoSyncState.create({
+	const repo1 = await RepoSyncState.create({
 		subscriptionId: sub1.id,
 		repoId: 1,
 		repoName: "repo",
@@ -39,7 +39,7 @@ const createMultipleSubscriptionsAndRepos = async () => {
 		repoUrl: "https://github.com/owner/repo"
 	});
 
-	await RepoSyncState.create({
+	const repo2 = await RepoSyncState.create({
 		subscriptionId: sub2.id,
 		repoId: 2,
 		repoName: "my-repo",
@@ -48,7 +48,7 @@ const createMultipleSubscriptionsAndRepos = async () => {
 		repoUrl: "https://github.internal.atlassian.com/atlassian/my-repo"
 	});
 
-	await RepoSyncState.create({
+	const repo3 = await RepoSyncState.create({
 		subscriptionId: sub3.id,
 		repoId: 3,
 		repoName: "repo3",
@@ -57,10 +57,10 @@ const createMultipleSubscriptionsAndRepos = async () => {
 		repoUrl: "https://github.com/owner3/repo3"
 	});
 
-	return { sub1, sub2, sub3 };
+	return { repo1, repo2, repo3 };
 };
 
-describe("Workspaces Post", () => {
+describe("Repositories Post", () => {
 	let app: Application;
 	let installation: Installation;
 
@@ -76,7 +76,7 @@ describe("Workspaces Post", () => {
 		return encodeSymmetric({
 			qsh: createQueryStringHash({
 				method: "POST",
-				pathname: "/jira/security/workspaces/search",
+				pathname: "/jira/security/workspaces/repositories/search",
 				query
 			}, false),
 			iss: installation.plainClientKey
@@ -92,17 +92,17 @@ describe("Workspaces Post", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.post("/jira/security/workspaces/search")
+			.post("/jira/security/workspaces/repositories/search")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
-				expect(res.text).toContain(Errors.MISSING_WORKSPACE_IDS);
+				expect(res.text).toContain(Errors.MISSING_CONTAINER_IDS);
 			});
 	});
 
-	it("Should return an empty array if no matching subscriptions are found", async () => {
+	it("Should return an empty array if no matching repositories are found", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -112,11 +112,11 @@ describe("Workspaces Post", () => {
 
 		const response = {
 			success: true,
-			workspaces: []
+			containers: []
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/search")
+			.post("/jira/security/workspaces/repositories/search")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
@@ -129,7 +129,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 
-	it("Should only return a subscription once even if the gitHubInstallationId is passed multiple times", async () => {
+	it("Should only return a repo once even if the repoId is passed multiple times", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -137,15 +137,15 @@ describe("Workspaces Post", () => {
 		});
 		app.use(getFrontendApp());
 
-		const sub1 = await Subscription.create({
+		const sub = await Subscription.create({
 			gitHubInstallationId: 1234,
 			jiraHost,
 			jiraClientKey: "client-key",
 			avatarUrl: "http://myavatarurl"
 		});
 
-		await RepoSyncState.create({
-			subscriptionId: sub1.id,
+		const repo = await RepoSyncState.create({
+			subscriptionId: sub.id,
 			repoId: 1,
 			repoName: "repo",
 			repoOwner: "owner",
@@ -153,25 +153,28 @@ describe("Workspaces Post", () => {
 			repoUrl: "https://github.com/owner/repo"
 		});
 
+		const { repoId, repoName, repoUrl, updatedAt } = repo;
+
 		const response = {
 			success: true,
-			workspaces: [
+			containers: [
 				{
-					id: sub1.gitHubInstallationId.toString(),
-					name: "owner",
-					url: "https://github.com/owner",
-					avatarUrl: "http://myavatarurl"
+					id: repoId.toString(),
+					name: repoName,
+					url: repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: updatedAt
 				}
 			]
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/search")
+			.post("/jira/security/workspaces/repositories/search")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
-				ids: [sub1.gitHubInstallationId, sub1.gitHubInstallationId]
+				ids: [repo.repoId, repo.repoId]
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -179,56 +182,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 
-	it("Should return the GitHub logo if there is no avatarUrl", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
-
-		const sub1 = await Subscription.create({
-			gitHubInstallationId: 1234,
-			jiraHost,
-			jiraClientKey: "client-key"
-		});
-
-		await RepoSyncState.create({
-			subscriptionId: sub1.id,
-			repoId: 1,
-			repoName: "repo",
-			repoOwner: "owner",
-			repoFullName: "owner/repo",
-			repoUrl: "https://github.com/owner/repo"
-		});
-
-		const response = {
-			success: true,
-			workspaces: [
-				{
-					id: sub1.gitHubInstallationId.toString(),
-					name: "owner",
-					url: "https://github.com/owner",
-					avatarUrl: DEFAULT_AVATAR
-				}
-			]
-		};
-
-		await supertest(app)
-			.post("/jira/security/workspaces/search")
-			.set({
-				authorization: `JWT ${await generateJwt()}`
-			})
-			.send({
-				ids: [sub1.gitHubInstallationId.toString(), sub1.gitHubInstallationId.toString()]
-			})
-			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
-			});
-	});
-
-	it("Should return all subscriptions for provided IDs (cloud and server)", async () => {
+	it("Should return all repos for provided IDs (cloud and server)", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -237,42 +191,45 @@ describe("Workspaces Post", () => {
 		app.use(getFrontendApp());
 
 		const subs = await createMultipleSubscriptionsAndRepos();
-		const { sub1, sub2, sub3 } = subs;
+		const { repo1, repo2, repo3 } = subs;
 
 		const response = {
 			success: true,
-			workspaces: [
+			containers: [
 				{
-					id: sub1.gitHubInstallationId.toString(),
-					name: "owner",
-					url: "https://github.com/owner",
-					avatarUrl: "http://myavatarurl"
+					id: repo1.repoId.toString(),
+					name: repo1.repoName,
+					url: repo1.repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: repo1.updatedAt
 				},
 				{
-					id: `676974687562696e7465726e616c61746c61737369616e636f6d-${sub2.gitHubInstallationId.toString()}`,
-					name: "atlassian",
-					url: "https://github.internal.atlassian.com/atlassian",
-					avatarUrl: "http://anotheravatarurl"
+					id: `676974687562696e7465726e616c61746c61737369616e636f6d-${repo2.repoId.toString()}`,
+					name: repo2.repoName,
+					url: repo2.repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: repo2.updatedAt
 				},
 				{
-					id: sub3.gitHubInstallationId.toString(),
-					name: "owner3",
-					url: "https://github.com/owner3",
-					avatarUrl: DEFAULT_AVATAR
+					id: repo3.repoId.toString(),
+					name: repo3.repoName,
+					url: repo3.repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: repo3.updatedAt
 				}
 			]
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/search")
+			.post("/jira/security/workspaces/repositories/search")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
 				ids: [
-					sub1.gitHubInstallationId.toString(),
-					`676974687562696e7465726e616c61746c61737369616e636f6d-${sub2.gitHubInstallationId.toString()}`,
-					sub3.gitHubInstallationId.toString()
+					repo1.repoId.toString(),
+					`676974687562696e7465726e616c61746c61737369616e636f6d-${repo2.repoId.toString()}`,
+					repo3.repoId.toString()
 				]
 			})
 			.expect(res => {
@@ -281,7 +238,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 
-	it("Should correctly return subscriptions for identical cloud and server IDs (once hash is trimmed)", async () => {
+	it("Should correctly return repos for identical cloud and server IDs (once hash is trimmed)", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -303,7 +260,7 @@ describe("Workspaces Post", () => {
 			avatarUrl: "http://cloudavatarurl"
 		});
 
-		await RepoSyncState.create({
+		const serverRepo = await RepoSyncState.create({
 			subscriptionId: serverSubscription.id,
 			repoId: 1,
 			repoName: "my-server-repo",
@@ -312,7 +269,7 @@ describe("Workspaces Post", () => {
 			repoUrl: "https://github.internal.atlassian.com/server/my-server-repo"
 		});
 
-		await RepoSyncState.create({
+		const cloudRepo = await RepoSyncState.create({
 			subscriptionId: cloudSubscription.id,
 			repoId: 2,
 			repoName: "my-cloud-repo",
@@ -323,31 +280,33 @@ describe("Workspaces Post", () => {
 
 		const response = {
 			success: true,
-			workspaces: [
+			containers: [
 				{
-					id: `676974687562696e7465726e616c61746c61737369616e636f6d-${serverSubscription.gitHubInstallationId.toString()}`,
-					name: "server",
-					url: "https://github.internal.atlassian.com/server",
-					avatarUrl: "http://serveravatarurl"
+					id: `676974687562696e7465726e616c61746c61737369616e636f6d-${serverRepo.repoId.toString()}`,
+					name: serverRepo.repoName,
+					url: serverRepo.repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: serverRepo.updatedAt
 				},
 				{
-					id: cloudSubscription.gitHubInstallationId.toString(),
-					name: "cloud",
-					url: "https://github.com/cloud",
-					avatarUrl: "http://cloudavatarurl"
+					id: cloudRepo.repoId.toString(),
+					name: cloudRepo.repoName,
+					url: cloudRepo.repoUrl,
+					avatarUrl: DEFAULT_AVATAR,
+					lastUpdatedDate: cloudRepo.updatedAt
 				}
 			]
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/search")
+			.post("/jira/security/workspaces/repositories/search")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
 				ids: [
-					`676974687562696e7465726e616c61746c61737369616e636f6d-${serverSubscription.gitHubInstallationId.toString()}`,
-					cloudSubscription.gitHubInstallationId.toString()
+					`676974687562696e7465726e616c61746c61737369616e636f6d-${serverRepo.repoId.toString()}`,
+					cloudRepo.repoId.toString()
 				]
 			})
 			.expect(res => {

@@ -10,4 +10,4 @@ export const JiraSecurityWorkspacesRouter = Router();
 JiraSecurityWorkspacesRouter.route("/workspaces/search")
 	.post(JiraSecurityWorkspacesPost);
 
-JiraSecurityWorkspacesRouter.use("/wrokspaces/repositories", JiraSecurityWorkspacesRepositoriesRouter);
+JiraSecurityWorkspacesRouter.use("/workspaces/repositories", JiraSecurityWorkspacesRepositoriesRouter);

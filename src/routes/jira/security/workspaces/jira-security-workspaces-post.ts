@@ -41,7 +41,7 @@ const transformSubscriptions = async (
 	return transformedSubscriptions;
 };
 
-const splitServerGitHubInstallationId = (input: string): [string, string] => {
+export const splitServerId = (input: string): [string, string] => {
 	const parts: string[] = input.split("-");
 	return [parts[0], parts[1]];
 };
@@ -51,7 +51,7 @@ const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscr
 		Array.from(new Set(gitHubInstallationIds)).map(async (id) => {
 			// Account for server gitHubInstallationIds which will be passed in a format similar to "XXXXXXX-XXXX"
 			if (/-/.test(id)) {
-				const [hashedRepoUrl, gitHubServerInstallationId] = splitServerGitHubInstallationId(id);
+				const [hashedRepoUrl, gitHubServerInstallationId] = splitServerId(id);
 				const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
 				return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(gitHubServerInstallationId, repoDomain);
 			} else {
@@ -79,12 +79,8 @@ export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): P
 	}
 
 	const subscriptions = await getSubscriptions(gitHubInstallationIds);
-
 	const transformedSubscriptions = subscriptions.length ?
-		await transformSubscriptions(
-			subscriptions.filter((sub): sub is Subscription => sub !== null),
-			jiraHost
-		) : [];
+		await transformSubscriptions(subscriptions, jiraHost) : [];
 
 	res.status(200).json({ success: true, workspaces: transformedSubscriptions });
 };
