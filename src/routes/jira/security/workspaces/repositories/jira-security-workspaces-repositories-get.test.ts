@@ -215,6 +215,41 @@ describe("Repositories Ge4t", () => {
 			});
 	});
 
+	it("Should not return repos if gitHubInstallationId doesn't match", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		await createSubscriptionWithMultipleReposCloud();
+		const sub2 = await Subscription.create({
+			gitHubInstallationId: 2345,
+			jiraHost,
+			jiraClientKey: "client-key",
+			avatarUrl: "http://myavatarurl"
+		});
+
+		const response = {
+			success: true,
+			containers: []
+		};
+
+		await supertest(app)
+			.get(`/jira/security/workspaces/repositories/search?workspaceId=${sub2.gitHubInstallationId.toString()}&searchQuery=thisistheexactmatch`)
+			.set({
+				authorization: `JWT ${await generateJwt({
+					workspaceId: sub2.gitHubInstallationId.toString(),
+					searchQuery: "thisistheexactmatch"
+				})}`
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(response));
+			});
+	});
+
 	it("Should return multiple repos on partial match of repoName", async () => {
 		app = express();
 		app.use((req, _, next) => {
