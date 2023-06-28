@@ -2,6 +2,7 @@ import { exec as execOrigin } from "child_process";
 import { promisify } from "util";
 import _ from "lodash";
 import Logger from "bunyan";
+import { knownSensitiveHttpHeaders } from "utils/http-headers";
 
 const exec = promisify(execOrigin);
 
@@ -29,9 +30,11 @@ export const runCurl = async (opts: {
 			...process.env
 		}
 	});
-	let meta = stderr;
-	meta = _.replace(meta, new RegExp(_.escapeRegExp(opts.authorization), "g"), "******");
-	meta = _.replace(meta, new RegExp("set-cookie.+", "g"), "");
+	let meta = (cmd + "\n" + stderr).split(opts.authorization).join("********");
+	knownSensitiveHttpHeaders.forEach(header => {
+		// Some returned values might contain spaces/quotes
+		meta = _.replace(meta, new RegExp(`(< ${header}:\\s+?).*`, "gi"), "$1*******");
+	});
 	return {
 		body: stdout,
 		meta
