@@ -281,7 +281,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				task: nextTask
 			});
 
-			logger.info("Starting task", subscription.avatarUrl);
+			logger.info("Starting task");
 			nextTask.startTime = Date.now();
 
 			const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, getTaskMetricsTags(nextTask), logger, data.gitHubAppConfig?.gitHubAppId);

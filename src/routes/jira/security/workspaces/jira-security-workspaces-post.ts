@@ -3,7 +3,6 @@ import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
 import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { RepoSyncState } from "models/reposyncstate";
-import { getLogger } from "config/logger";
 
 interface Workspace {
 	id: string,
@@ -24,8 +23,6 @@ const transformSubscriptions = async (
 	subscriptions: Subscription[],
 	jiraHost: string
 ): Promise<Workspace[]> => {
-	const logger = getLogger("teset");
-	logger.info("IN HERE???");
 	const matchedSubscriptions = await Promise.all(subscriptions.map(async (sub) => {
 		return sub &&  await RepoSyncState.findBySubscriptionIdAndJiraHost(sub.id, jiraHost);
 	}));
@@ -58,6 +55,7 @@ const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscr
 				const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
 				return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(gitHubServerInstallationId, repoDomain);
 			} else {
+				// In the case of duplicate IDs across cloud and server, cross-reference against cloud base Url
 				return await Subscription.findOneForGitHubInstallationIdAndGitHubCloudBaseUrl(id);
 			}
 		})
@@ -81,8 +79,6 @@ export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): P
 	}
 
 	const subscriptions = await getSubscriptions(gitHubInstallationIds);
-	const logger = getLogger("DOWNHERE");
-	logger.info("subscriptions", subscriptions);
 
 	const transformedSubscriptions = subscriptions.length ?
 		await transformSubscriptions(

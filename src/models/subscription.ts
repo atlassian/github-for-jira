@@ -103,16 +103,14 @@ export class Subscription extends Model {
 		gitHubInstallationId: string,
 		repoDomain: string
 	): Promise<Subscription | null> {
-		const modifiedRepoDomain = repoDomain.replace(/\./g, ""); // Remove periods from repoDomain
-
 		const results = await this.sequelize!.query(
 			`SELECT *
     FROM "Subscriptions" s
     LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
     WHERE s."gitHubInstallationId" = :gitHubInstallationId
-    AND REPLACE(rss."repoUrl", '.', '') LIKE :modifiedRepoDomain`,
+    AND REPLACE(rss."repoUrl", '.', '') LIKE :repoDomain`,
 			{
-				replacements: { gitHubInstallationId, modifiedRepoDomain: `%${modifiedRepoDomain}%` },
+				replacements: { gitHubInstallationId, repoDomain: `%${repoDomain}%` },
 				type: QueryTypes.SELECT
 			}
 		);
