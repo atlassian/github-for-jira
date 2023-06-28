@@ -72,6 +72,30 @@ const getLastSuccessDeploymentShaFromCache = async (
 
 		statsd.increment(metricDeploymentCache.lookup, tags, info);
 
+		if (!githubInstallationClient.baseUrl) {
+			logger.warn("Skip lookup from dynamodb as gitHub baseUrl is empty");
+			statsd.increment(metricDeploymentCache.miss, { missedType: "baseurl-empty", ...tags }, info);
+			return undefined;
+		}
+
+		if (!currentDeployEnv) {
+			logger.warn("Skip lookup from dynamodb as currentDeployEnv is empty");
+			statsd.increment(metricDeploymentCache.miss, { missedType: "env-empty", ...tags }, info);
+			return undefined;
+		}
+
+		if (!currentDeployDate) {
+			logger.warn("Skip lookup from dynamodb as currentDeployDate is empty");
+			statsd.increment(metricDeploymentCache.miss, { missedType: "date-empty", ...tags }, info);
+			return undefined;
+		}
+
+		if (!repoId) {
+			logger.warn("Skip lookup from dynamodb as repoId is empty");
+			statsd.increment(metricDeploymentCache.miss, { missedType: "repoId-empty", ...tags }, info);
+			return undefined;
+		}
+
 		const lastSuccessful = await findLastSuccessDeploymentFromCache({
 			gitHubBaseUrl: githubInstallationClient.baseUrl,
 			env: currentDeployEnv,
