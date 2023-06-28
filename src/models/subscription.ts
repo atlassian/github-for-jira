@@ -77,6 +77,27 @@ export class Subscription extends Model {
 		});
 	}
 
+	static async findOneForGitHubInstallationIdAndRepoUrl(
+		gitHubInstallationId: string,
+		repoDomain: string
+	): Promise<Subscription | null> {
+		const modifiedRepoDomain = repoDomain.replace(/\./g, ""); // Remove periods from repoDomain
+
+		const results = await this.sequelize!.query(
+			`SELECT *
+    FROM "Subscriptions" s
+    LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+    WHERE s."gitHubInstallationId" = :gitHubInstallationId
+    AND REPLACE(rss."repoUrl", '.', '') LIKE :modifiedRepoDomain`,
+			{
+				replacements: { gitHubInstallationId, modifiedRepoDomain: `%${modifiedRepoDomain}%` },
+				type: QueryTypes.SELECT
+			}
+		);
+
+		return results[0] as Subscription;
+	}
+
 	static getAllFiltered(
 		gitHubAppId: number | undefined,
 		installationIds: number[] = [],

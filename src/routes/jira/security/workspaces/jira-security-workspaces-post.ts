@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
-import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { RepoSyncState } from "models/reposyncstate";
 
 interface Workspace {
@@ -15,7 +15,7 @@ export const DEFAULT_AVATAR = "https://github.githubassets.com/images/modules/lo
 
 const omitRepoNameFromUrl = (url: string): string => {
 	const segments = url.split("/");
-	segments.pop(); // Remove the last segment
+	segments.pop();
 	return segments.join("/");
 };
 
@@ -41,14 +41,28 @@ const transformSubscriptions = async (
 	return transformedSubscriptions;
 };
 
-// const extractIdForServer = (id: string): string | null => {
-// 	const index = id.indexOf("-");
-// 	if (index !== -1) {
-// 		return id.substring(index + 1);
-// 	} else {
-// 		return id;
-// 	}
-// };
+const splitServerGitHubInstallationId = (input: string): [string, string] => {
+	const parts: string[] = input.split("-");
+	return [parts[0], parts[1]];
+};
+
+const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscription[] | []> => {
+	const results = await Promise.all(
+		Array.from(new Set(gitHubInstallationIds)).map(async (id) => {
+			// Account for server gitHubInstallationIds which will be passed in a format similar to "XXXXXXX-XXXX"
+			if (/-/.test(id)) {
+				const [hashedRepoUrl, gitHubServerInstallationId] = splitServerGitHubInstallationId(id);
+				const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
+				return await Subscription.findOneForGitHubInstallationIdAndRepoUrl(gitHubServerInstallationId, repoDomain);
+			} else {
+				return await Subscription.findOneForGitHubInstallationId(Number(id), undefined);
+			}
+		})
+	);
+
+	const subscriptions = results.filter((result) => result !== null) as Subscription[];
+	return subscriptions.length ? subscriptions : [];
+};
 
 export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): Promise<void> => {
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for POST workspaces");
@@ -63,13 +77,7 @@ export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): P
 		return;
 	}
 
-	const subscriptions = await Promise.all(
-		Array.from(new Set(gitHubInstallationIds)).map(async (id) => {
-			const subscriptionId = id as number;
-			// TODO - update this to cross check reposyncstate owner for server
-			return await Subscription.findOneForGitHubInstallationId(subscriptionId, undefined);
-		})
-	);
+	const subscriptions = await getSubscriptions(gitHubInstallationIds);
 
 	const transformedSubscriptions = await transformSubscriptions(
 		subscriptions.filter((sub): sub is Subscription => sub !== null),

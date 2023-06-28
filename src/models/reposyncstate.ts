@@ -57,7 +57,7 @@ export interface RepoSyncStateProperties {
 	failedCode?: string;
 }
 
-type RepoSyncStateAndSubscription = RepoSyncState & Subscription;
+export type RepoSyncStateAndSubscription = RepoSyncState & Subscription;
 
 export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	id: number;

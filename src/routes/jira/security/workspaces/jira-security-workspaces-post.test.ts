@@ -277,7 +277,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 
-	it("Should trim ID passed for server orgs and return matching subscrptions", async () => {
+	it("Should trim ID passed for server orgs and return matching subscriptions", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
