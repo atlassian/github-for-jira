@@ -34,6 +34,10 @@
         <section class="jiraConnectedRepos_content">
             <form class="aui">
                 <div class="jiraConnectedRepos__actionContainer">
+                    <div class="jiraConnectedRepos__action__search">
+                        <input class="text" type="search" id="repo-search" placeholder="Search repositories">
+                        <span id="repo-search-btn" class="aui-icon aui-icon-small aui-iconfont-search" role="img" aria-label="search" />
+                    </div>
                     <div class="jiraConnectedRepos__action__statusFilter">
                         <select class="select" id="status-filter">
                             <option value="all">All</option>
@@ -41,9 +45,6 @@
                             <option value="failed">Failed</option>
                         </select>
                     </div>
-                    <input type="search" id="repo-search" placeholder="Search Repo">
-                    <button id="repo-search-btn" type="button" class="aui-button aui-button-link">{{!-- <span
-                            class="aui-icon aui-icon-small aui-iconfont-configure"></span> --}}Search</button>
                 </div>
             </form>
             <div class="jiraConnectedRepos__tableContainer">
@@ -88,19 +89,23 @@
             </div>
             <div class="jiraConnectedRepos_pagination" data-subscription-id="{{subscriptionId}}">
                 {{#if hasPrevPage}}
-                <a href="#" class="prev-page page-selector" data-page-num="{{prevPageNum}}">Prev</a>
+                <div class="prev-page page-selector"><span  data-page-num="{{prevPageNum}}" class="aui-icon aui-iconfont-chevron-left"/></div>
+                {{else}}
+                <div class="prev-page"><span class="aui-icon aui-iconfont-chevron-left"/></div>
                 {{/if}}
 
                 {{#each pages}}
                 {{#if isCurrentPage}}
-                <span class="current-page">{{pageNum}}</span>
+                <div class="current-page">{{pageNum}}</div>
                 {{else}}
-                <a href="#" class="page-num-link page-selector" data-page-num="{{pageNum}}">{{pageNum}}</a>
+                <div class="page-num-link page-selector" data-page-num="{{pageNum}}">{{pageNum}}</div>
                 {{/if}}
                 {{/each}}
 
                 {{#if hasNextPage}}
-                <a href="#" class="next-page page-selector" data-page-num="{{nextPageNum}}">Next</a>
+                <div class="next-page page-selector"><span data-page-num="{{nextPageNum}}" class="aui-icon aui-iconfont-chevron-right"/></div>
+                {{else}}
+                <div class="next-page"><span class="aui-icon aui-iconfont-chevron-right"/></div>
                 {{/if}}
             </div>
         </section>
@@ -114,8 +119,7 @@
                         class="jiraConnectedRepos__backfillStatusModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
                 </div>
                 <div class="jiraConfiguration__restartBackfillModal__content">
-                    <div class="jiraConfiguration__restartBackfillModal__content__desc"> You can find the status of each
-                        backfill task below</div>
+                    <div class="jiraConfiguration__restartBackfillModal__content__desc"> Here are the following statuses of each backfill task within this repository.</div>
                     <div class="jiraConfiguration__restartBackfillModal__content__backfillTaskStatuses">
                         <div class="jiraConfiguration__restartBackfillModal__content__taskContainer">
                             <div class="jiraConfiguration__restartBackfillModal__content__taskName">Branches</div>
@@ -144,7 +148,9 @@
                         </div>
                     </div>
                     <div class="jiraConfiguration__restartBackfillModal__content__ErrorContainer ">
-                        <div class="jiraConfiguration__restartBackfillModal__content__error">Reason for failure - <span class="errorReason"></span></div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__divider"></div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__error">Reason for failure </div>
+                        <div class="jiraConfiguration__restartBackfillModal__content__errorReason"></div>
                     </div>
                 </div>
             </div>

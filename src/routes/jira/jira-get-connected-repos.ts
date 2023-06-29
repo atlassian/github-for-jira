@@ -30,6 +30,12 @@ export const JiraGetConnectedRepos = async (
 
 		const subscription = await Subscription.findByPk(subscriptionId);
 
+		if (!subscription) {
+			req.log.error("Missing Subscription");
+			res.status(401).send("Missing Subscription");
+			return;
+		}
+
 		let syncStatusCondition = {};
 		if (syncStatusFilter && syncStatusFilter !== "all") {
 			syncStatusCondition = {

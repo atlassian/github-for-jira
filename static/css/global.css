@@ -221,7 +221,7 @@ a:focus {
 
 .jiraConnectedRepos__backfillStatusModalContent {
   top: 15%;
-  width: 25%;
+  width: 550px;
 }
 
 .jiraConfiguration__restartBackfillModalContent {

@@ -25,7 +25,8 @@ export enum BooleanFlags {
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again"
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
+	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view"
 }
 
 export enum StringFlags {

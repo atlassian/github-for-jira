@@ -12,6 +12,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 
 interface FailedConnection {
 	id: number;
@@ -169,7 +170,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
 		APP_URL: process.env.APP_URL,
-		enableRepoConnectedPage: await booleanFlag(BooleanFlags.REPO_CREATED_EVENT, jiraHost),
+		enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
 		csrfToken: req.csrfToken(),
 		nonce
 	});

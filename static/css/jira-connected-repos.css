@@ -105,21 +105,66 @@
     margin: 1rem;
     display: flex;
     justify-content: center;
-    font-size: 1.2em;
+    align-items: center;
+    color: #42526e;
 }
 
-.jiraConnectedRepos_pagination .page-num-link,
+.jiraConnectedRepos_pagination .page-num-link {
+    margin: 0px 12px;
+    cursor: pointer;
+}
+
 .jiraConnectedRepos_pagination .current-page {
-    margin: 0px 5px;
+    background: #253858;
+    width: 32px;
+    height: 32px;
+    color: #F4F5F7;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.jiraConnectedRepos_pagination .next-page {
+    margin-left: 10px;
+}
+
+.jiraConnectedRepos_pagination .prev-page {
+    margin-right: 10px;    
+}
+
+.jiraConnectedRepos_pagination .next-page span,
+.jiraConnectedRepos_pagination .prev-page span {
+    --aui-icon-size: 20px;
+    color:#a5adba;
+}
+
+.jiraConnectedRepos_pagination .next-page.page-selector span,
+.jiraConnectedRepos_pagination .prev-page.page-selector span {
+    cursor: pointer;
+    color: #42526e;
 }
 
 .jiraConnectedRepos__actionContainer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
 }
 
 .jiraConnectedRepos__action__statusFilter {
     margin-right: 15px;
+}
+.jiraConnectedRepos__action__search {
+    position: relative;
+    width: 250px;
+    margin-right: 10px;
+}
+
+.jiraConnectedRepos__action__search .aui-iconfont-search {
+    position: absolute;
+    right: 20px;
+    top: 8px;
+    cursor: pointer;
+    color: #000000a6;
 }
 
 .jiraConnectedRepos__backfillStatusModal__header__container {
@@ -136,9 +181,8 @@
 .jiraConfiguration__restartBackfillModal__content__desc {
     display: flex;
     flex-direction: column;
-    align-items: center;
     color: #344563;
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-bottom: 1.2em
 }
 
@@ -150,33 +194,50 @@
 
 .jiraConfiguration__restartBackfillModal__content__taskName {
     width: 150px;
-    font-size: 1.05em;
+    font-weight: 600;
+    font-size: 1.15em;
 }
 
-.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-check {
-    color: blue;
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-approve {
+    color: #36B37E;
     align-items: center;
+    --aui-icon-size: 18px;
 }
 
-.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-cross {
-    color: red;
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-cross-circle {
+    color: #FF5630;
     align-items: center;
+    --aui-icon-size: 18px;
 }
 
-.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-progress {
+.jiraConfiguration__restartBackfillModal__content__taskContainer span.aui-iconfont-recent-filled {
+    color:#0065FF;
     align-items: center;
+    --aui-icon-size: 18px;
 }
 
 .jiraConfiguration__restartBackfillModal__content__backfillTaskStatuses{
     display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
 .jiraConfiguration__restartBackfillModal__content__ErrorContainer {
     display: none;
-    align-items: center;
-    margin: 20px 0px;
+    margin: 10px 0px;
+    flex-direction: column;
 }
+
+.jiraConfiguration__restartBackfillModal__content__error {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.jiraConfiguration__restartBackfillModal__content__divider {
+    width: 100%;
+    border: 1px solid #091E4224;
+    margin-bottom: 15px;
+}
+
+
 
 

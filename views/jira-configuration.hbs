@@ -165,166 +165,6 @@
             </div>
             <div class="jiraConfiguration__restartBackfillModalOverlay"></div>
           </div>
-
-          {{#if successfulConnections}}
-          <div class="jiraConfiguration__tableContainer">
-            <table class="jiraConfiguration__table aui">
-              <thead class="jiraConfiguration__table__head">
-                <tr class="jiraConfiguration__table__head_row">
-                  <th class="jiraConfiguration__table__head__title">Connected organization</th>
-                  <th class="jiraConfiguration__table__head__title">Repository access</th>
-                  <th class="jiraConfiguration__table__head__title">Backfill status
-                    <span class="jiraConfiguration__table__infoIcon aui-icon aui-iconfont-info-filled" id="sync-status-modal-btn">
-                      Information
-                    </span>
-                  </th>
-                  <th class="jiraConfiguration__table__head__title">Settings</th>
-                </tr>
-              </thead>
-
-              <tbody class="jiraConfiguration__table__body">
-                {{#each successfulConnections}}
-                  <tr class="jiraConfiguration__table__row">
-                    {{! Organization }}
-                    <td class="jiraConfiguration__table__cell">
-                      <img
-                          class="jiraConfiguration__table__cell__avatar"
-                          src="{{account.avatar_url}}"
-                          height="24"
-                          width="24"
-                          data-installation-id="{{id}}"
-                      />
-                      <span
-                        class="jiraConfiguration__table__cell__orgName"
-                      >{{account.login}}</span>
-                    </td>
-
-                    {{! Repos Synced }}
-                    <td class="jiraConfiguration__table__cell">
-                    {{#if enableRepoConnectedPage}}
-                      <a href="#" class="jiraConfiguration__table__repo_access" data-subscription-id="{{subscriptionId}}">
-                        {{#if isGlobalInstall}}
-                        <span>All repos</span>
-                        {{else}}
-                        <span>Only select repos</span>
-                        {{/if}}
-                      </a>
-                    {{else}}
-                      {{#if isGlobalInstall}}
-                        <span>All repos</span>
-                      {{else}}
-                        <span>Only select repos</span>
-                      {{/if}}
-                    {{/if}}
-
-                      {{#if totalNumberOfRepos}}
-                      <span class="jiraConfiguration__table__syncCount">
-                        {{ifAllReposSynced
-                          numberOfSyncedRepos
-                          totalNumberOfRepos
-                        }}
-                      </span>
-                      {{/if}}
-                      <a
-                        class="jiraConfiguration__table__editContainer"
-                        href="{{html_url}}"
-                        data-installation-link="{{html_url}}"
-                        target="_blank"
-                      >
-                        <span
-                          class="jiraConfiguration__table__edit aui-icon aui-icon-small aui-iconfont-new-edit"
-                        >
-                          Edit
-                        </span>
-                      </a>
-                    </td>
-
-                    {{! Backfill status }}
-                    <td class="jiraConfiguration__table__cell">
-                      <span
-                        id="{{id}}-status"
-                        class="jiraConfiguration__table__{{toLowerCase
-                            (replaceSpaceWithHyphen syncStatus)
-                          }}
-                          jiraConfiguration__table__syncStatus"
-                      >
-                        {{syncStatus}}
-                      </span>
-                      {{!-- Display any sync warnings --}}
-                      {{#if (inProgressOrPendingSync syncStatus)}}
-                        <div class="jiraConfiguration__loaderContainer">
-                          <aui-spinner size="small"></aui-spinner>
-                        </div>
-                      {{/if}}
-                      {{#if (failedSync syncStatus)}}
-                        <div class="jiraConfiguration__retryContainer">
-                          <button
-                            class="jiraConfiguration__retry sync-connection-link restart-backfill-button"
-                            data-jira-host="{{ ../host }}"
-                            data-installation-id="{{ id }}"
-                            id="restart-backfill"
-                          >
-                            &#x21bb;
-                          </button>
-                          <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          <div class="jiraConfiguration__retryMsg">Retry</div>
-                        </div>
-                      {{/if}}
-                    </td>
-                    {{! Settings }}
-                    <td class="jiraConfiguration__table__cell__settings">
-                      <button
-                        class="jiraConfiguration__table__cell__settings__ellipsis aui-button aui-dropdown2-trigger"
-                        aria-controls="settings-dropdown-{{id}}"
-                      >
-                        <span
-                          class="jiraConfiguration__table__cell__settings__ellipsisSpan"
-                        >...</span>
-                      </button>
-
-                      <aui-dropdown-menu class="jiraConfiguration__table__dropdown" id="settings-dropdown-{{id}}">
-                        <h6
-                          class="jiraConfiguration__table__cell__settings__header"
-                        >
-                          <span class="jiraConfiguration__table__cell__settings__headerItem">Organization</span>
-                        </h6>
-                        <aui-section
-                          class="jiraConfiguration__table__cell__settings__dropdownItems"
-                        >
-                          <a
-                            class="jiraConfiguration__table__cell__settings__dropdownItem configure-connection-link"
-                            href="{{html_url}}"
-                            data-installation-link="{{html_url}}"
-                            target="_blank"
-                          >
-                            Configure
-                          </a>
-                          <div class="jiraConfiguration__table__cell__settings__dropdownItem">
-                            <button
-                              class="sync-connection-link restart-backfill-button"
-                              data-jira-host="{{ ../host }}"
-                              data-installation-id="{{ id }}"
-                              id="restart-backfill"
-                            >
-                              Restart backfill
-                            </button>
-                            <input type="hidden" id="_csrf" name="_csrf" value="{{../csrfToken}}">
-                          </div>
-                          <button
-                            class="jiraConfiguration__table__cell__settings__dropdownItem delete-connection-link"
-                            data-installation-id="{{ id }}"
-                            data-org-name="{{account.login}}"
-                          >
-                            Disconnect
-                          </button>
-                        </aui-section>
-                      </aui-dropdown-menu>
-                    </td>
-                  </tr>
-                {{/each}}
-              </tbody>
-            </table>
-          </div>
           {{#if hasCloudAndEnterpriseServers}}
             <div class="jiraConfiguration__optionContainer">
               <button class="aui-button jiraConfiguration__option jiraConfiguration__selected"
@@ -355,6 +195,7 @@
                     csrfToken=csrfToken
                     successfulConnections=ghCloud.successfulCloudConnections
                     failedConnections=ghCloud.failedCloudConnections
+                    enableRepoConnectedPage=enableRepoConnectedPage
                 }}
               </div>
             </div>
@@ -431,6 +272,7 @@
                                 successfulConnections=app.successfulConnections
                                 failedConnections=app.failedConnections
                                 gitHubAppId=app.id
+                                enableRepoConnectedPage=enableRepoConnectedPage
                             }}
                           {{else}}
                             <div class="jiraConfiguration__collapsibleBody">

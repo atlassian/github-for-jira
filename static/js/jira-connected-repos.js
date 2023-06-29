@@ -38,33 +38,33 @@ $(document).ready(() => {
 		//set branch status icon
 		const  branchStatus = event.currentTarget.getAttribute("data-branch-status");
 		const branchStatusIconInfo = getStatusIconInfo(branchStatus);
-		$(".jiraConfiguration__restartBackfillModal__content__branchStatus span").attr("class", `aui-icon aui-icon-large ${branchStatusIconInfo.cls}`);
+		$(".jiraConfiguration__restartBackfillModal__content__branchStatus span").attr("class", `aui-icon ${branchStatusIconInfo.cls}`);
 		$(".jiraConfiguration__restartBackfillModal__content__branchStatus span").attr("title", branchStatusIconInfo.title);
 		//set commit status icon
 		const  commitStatus = event.currentTarget.getAttribute("data-commit-status");
 		const commitStatusIconInfo = getStatusIconInfo(commitStatus);
-		$(".jiraConfiguration__restartBackfillModal__content__commitStatus span").attr("class", `aui-icon aui-icon-large ${commitStatusIconInfo.cls}`);
+		$(".jiraConfiguration__restartBackfillModal__content__commitStatus span").attr("class", `aui-icon ${commitStatusIconInfo.cls}`);
 		$(".jiraConfiguration__restartBackfillModal__content__commitStatus span").attr("title", commitStatusIconInfo.title);
 		//set pull request status icon
 		const  pullRequestStatus = event.currentTarget.getAttribute("data-pull-request-status");
 		const pullRequestStatusIconInfo = getStatusIconInfo(pullRequestStatus);
-		$(".jiraConfiguration__restartBackfillModal__content__pullRequestStatus span").attr("class", `aui-icon aui-icon-large ${pullRequestStatusIconInfo.cls}`);
+		$(".jiraConfiguration__restartBackfillModal__content__pullRequestStatus span").attr("class", `aui-icon ${pullRequestStatusIconInfo.cls}`);
 		$(".jiraConfiguration__restartBackfillModal__content__pullRequestStatus span").attr("title", pullRequestStatusIconInfo.title);
 		//set build status icon
 		const  buildStatus = event.currentTarget.getAttribute("data-build-status");
 		const buildStatusIconInfo = getStatusIconInfo(buildStatus);
-		$(".jiraConfiguration__restartBackfillModal__content__buildStatus span").attr("class", `aui-icon aui-icon-large ${buildStatusIconInfo.cls}`);
+		$(".jiraConfiguration__restartBackfillModal__content__buildStatus span").attr("class", `aui-icon ${buildStatusIconInfo.cls}`);
 		$(".jiraConfiguration__restartBackfillModal__content__buildStatus span").attr("title", buildStatusIconInfo.title);
 		//set build status icon
 		const  deploymentStatus = event.currentTarget.getAttribute("data-deployment-status");
 		const deploymentStatusIconInfo = getStatusIconInfo(deploymentStatus);
-		$(".jiraConfiguration__restartBackfillModal__content__deploymentStatus span").attr("class", `aui-icon aui-icon-large ${deploymentStatusIconInfo.cls}`);
+		$(".jiraConfiguration__restartBackfillModal__content__deploymentStatus span").attr("class", `aui-icon ${deploymentStatusIconInfo.cls}`);
 		$(".jiraConfiguration__restartBackfillModal__content__deploymentStatus span").attr("title", deploymentStatusIconInfo.title);
 		//set error reason
 		const  dataFailedCode = event.currentTarget.getAttribute("data-failed-code");
 		if(dataFailedCode && dataFailedCode.length > 0) {
 			$(".jiraConfiguration__restartBackfillModal__content__ErrorContainer").css("display", "flex");
-			$(".jiraConfiguration__restartBackfillModal__content__error span").text(mapErrorToMessage(dataFailedCode));
+			$(".jiraConfiguration__restartBackfillModal__content__errorReason").text(mapErrorToMessage(dataFailedCode));
 		} else {
 			$(".jiraConfiguration__restartBackfillModal__content__ErrorContainer").css("display", "none");
 		}
@@ -77,19 +77,19 @@ $(document).ready(() => {
 
 const getStatusIconInfo = (status) => {
 	if(status == "complete") {
-		return  { cls: "aui-iconfont-check", title: "COMPLETE" }
+		return  { cls: "aui-iconfont-approve", title: "COMPLETE" }
 	}
 	if(status == "failed") {
-		return  { cls: "aui-iconfont-cross", title: "FAILED" }
+		return  { cls: "aui-iconfont-cross-circle", title: "FAILED" }
 	}
 	if(status == "pending") {
-		return  { cls: "aui-iconfont-progress", title: "IN PROGRESS" }
+		return  { cls: "aui-iconfont-recent-filled", title: "IN PROGRESS" }
 	}
 }
 
 const mapErrorToMessage = (errorCode) => {
 	if(errorCode == "CONNECTION_ERROR") {
-		return "This is caused due to the connection error. Restart of backfilling may rectify the error. If error persists, please contact the Atlassian support team."
+		return "This is caused by connection error. To fix this, restarting backfilling may rectify this error. If this error persists, please contact the Atlassian support team."
 	} 
 	return errorCode;
 };
