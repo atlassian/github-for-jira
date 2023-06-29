@@ -126,18 +126,27 @@ export class Subscription extends Model {
 
 	static async findAllForGitHubInstallationIdAndRepoName(
 		gitHubInstallationId: number,
-		repoName: string
+		repoName: string,
 	): Promise<RepoSyncStateAndSubscription[]> {
+		const page = 1;
+		const limit = 100;
+		const offset = (page - 1) * limit;
+
 		const results = await this.sequelize!.query(
 			`SELECT *
-    FROM "Subscriptions" s
-    LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
-    WHERE s."gitHubInstallationId" = :gitHubInstallationId
-    AND REPLACE(rss."repoUrl", '.', '') LIKE :repoName`,
+		FROM "Subscriptions" s
+		LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+		WHERE s."gitHubInstallationId" = :gitHubInstallationId
+		AND REPLACE(rss."repoUrl", '.', '') LIKE :repoName
+		ORDER BY rss."id", rss."updatedAt" DESC
+		OFFSET :offset
+		LIMIT :limit`,
 			{
 				replacements: {
 					gitHubInstallationId,
-					repoName: `%${repoName}%`
+					repoName: `%${repoName}%`,
+					offset,
+					limit
 				},
 				type: QueryTypes.SELECT
 			}

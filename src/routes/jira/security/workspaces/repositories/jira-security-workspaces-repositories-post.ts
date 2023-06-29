@@ -10,7 +10,7 @@ interface RepoUrlAndRepoId {
 	id: string
 }
 
-interface Container {
+export interface Container {
 	id: string,
 	name: string,
 	url: string,
