@@ -1,8 +1,58 @@
+"""
+GitHub Repository Automation Script
+
+This script automates the creation of repositories with branches and commits on GitHub. It utilizes the GitHub API and Git commands to perform the following actions:
+
+1. Create multiple repositories with specified names.
+2. Initialize each repository with a README file and a GitHub Actions workflow file.
+3. Create multiple branches within each repository.
+4. Make commits with random file content to each branch.
+5. Push the commits to the respective branches.
+6. Create pull requests from each branch to the main branch.
+7. Optionally merge the pull requests randomly.
+8. Repeat the above steps for the specified number of repositories, branches, and commits.
+
+Usage:
+1. Set the desired values for the following parameters at the top of the script:
+   - ACCESS_TOKEN: Your GitHub personal access token (PAT).
+   - ORGANIZATION_NAME: The name of your GitHub organization.
+   - DEFAULT_NUM_REPOS: The default number of repositories to create.
+   - DEFAULT_NUM_BRANCHES: The default number of branches to create per repository.
+   - DEFAULT_NUM_COMMITS: The default number of commits to make per branch.
+   - DEFAULT_ISSUE_PREFIX: The default prefix for issue/commit messages.
+
+2. Open a terminal and navigate to the directory containing this script.
+
+3. Run the script using the following command:
+   $ python3 generate-github-test-data.py.py [--num-repos NUM_REPOS] [--num-branches NUM_BRANCHES] [--num-commits NUM_COMMITS] [--issue-prefix ISSUE_PREFIX]
+
+   example:
+   $ python3 generate-github-test-data.py --num-repos 5 --num-branches 4 --num-commits 11 --issue-prefix CAT
+
+   Optional Arguments:
+   --num-repos NUM_REPOS: Number of repositories to create.
+   --num-branches NUM_BRANCHES: Number of branches to create per repository .
+   --num-commits NUM_COMMITS: Number of commits to make per branch.
+   --issue-prefix ISSUE_PREFIX: Prefix for issue/commit messages.
+
+4. The script will start creating repositories, branches, and making commits. The progress will be displayed in the terminal.
+
+5. If the script execution is interrupted, it will save the last successful state to a state file.
+
+6. To resume the script from the last successful state, run the script with the same arguments. It will skip already created repositories, branches, and commits.
+
+7. After completion or interruption, the script will save the state to the state file for future resumptions.
+
+Note: Make sure you have the necessary permissions and the GitHub organization exists.
+
+"""
+
 import argparse
 import requests
 import os
 import subprocess
 import time
+import string
 import random
 import json
 
@@ -13,7 +63,7 @@ BASE_URL = 'https://api.github.com'
 ACCESS_TOKEN = 'YOUR_PAT_GOES_HERE'
 
 # GitHub org name
-ORGANIZATION_NAME = 'ORG_NAME_GOES_HERE'
+ORGANIZATION_NAME = 'YOUR_ORG_GOES_HERE'
 
 # Default values
 DEFAULT_NUM_REPOS = 2
@@ -53,6 +103,10 @@ def create_branch(branch_name):
 
 # Helper function to commit and push changes
 def commit_and_push_changes(branch_name, file_name, commit_message):
+    content = generate_random_content()
+    with open(file_name, 'w') as file:
+        file.write(content)
+
     add_file_command = f'git add {file_name}'
     return_code, stdout, stderr = run_bash_command(add_file_command)
     if return_code != 0:
@@ -62,13 +116,19 @@ def commit_and_push_changes(branch_name, file_name, commit_message):
     return_code, stdout, stderr = run_bash_command(commit_command)
     if return_code != 0:
         raise RuntimeError(f'Error committing file "{file_name}": {stderr.decode()}')
-    print(f'File "{file_name}" committed successfully.')
 
     push_command = f'git push origin {branch_name}'
     return_code, stdout, stderr = run_bash_command(push_command)
     if return_code != 0:
         raise RuntimeError(f'Error pushing commits to branch "{branch_name}": {stderr.decode()}')
-    print(f'Commits pushed to branch "{branch_name}" successfully.')
+    print(f'Commit {commit_message} pushed to branch "{branch_name}" successfully.')
+
+def generate_random_content():
+    # Generate a random string of uppercase letters and digits
+    length = random.randint(10, 20)
+    characters = string.ascii_uppercase + string.digits
+    content = ''.join(random.choice(characters) for _ in range(length))
+    return content
 
 # Function to initialize the repository, add README, and push the initial commit
 def initialize_repository(repo_name):
@@ -132,19 +192,13 @@ try:
     else:
         # If the state file doesn't exist, initialize the state
         state = {
-            'repo_index': 0,
-            'branch_index': 0,
-            'commit_index': 0
+            'repo_index': -1,
+            'branch_index': -1,
+            'commit_index': -1
         }
 
-    for repo_index in range(state['repo_index'], args.num_repos):
+    for repo_index in range(state['repo_index'] + 1, args.num_repos):
         repo_name = f'{base_repo_name}-{repo_index}'
-
-        if repo_index == state['repo_index']:
-            # If resuming from a previous state, skip repositories already created
-            print(f'Skipping repository "{repo_name}" (already created).')
-            state['repo_index'] += 1
-            continue
 
         # Step 1: Create the repository
         create_repo_url = f'{BASE_URL}/orgs/{ORGANIZATION_NAME}/repos'
@@ -152,45 +206,52 @@ try:
         make_api_request('POST', create_repo_url, data=create_repo_data)
         print(f'Repository "{repo_name}" created successfully.')
 
-        initialize_repository(repo_name)
+        # Update the state after successful repository creation
+        state['repo_index'] = repo_index
+
+        try:
+            initialize_repository(repo_name)
+        except Exception as e:
+            print('ERROR:SKIPPING:REPO')
+            print(f'{e}')
+            continue
 
         for branch_index in range(state['branch_index'], args.num_branches):
-            branch_name = f'branch-{branch_index}-{int(time.time())}'
-
-            if branch_index == state['branch_index']:
-                # If resuming from a previous state, skip branches already created
-                print(f'Skipping branch "{branch_name}" (already created).')
-                state['branch_index'] += 1
-                continue
+            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}-{int(time.time())}'
 
             # Step 4: Create a new branch
-            create_branch(branch_name)
+            try:
+                create_branch(branch_name)
+            except Exception as e:
+                print('ERROR:SKIPPING:BRANCH')
+                print(f'{e}')
+                continue
 
             for commit_index in range(state['commit_index'], args.num_commits):
                 file_name = f'file-{commit_index}.txt'
                 commit_message = f'{args.issue_prefix}-{random.randint(100, 999)}: Commit message'
 
-                if commit_index == state['commit_index']:
-                    # If resuming from a previous state, skip commits already made
-                    print(f'Skipping commit "{commit_message}" (already made).')
-                    state['commit_index'] += 1
+                try:
+                    # Step 6: Make a commit and push the changes
+                    commit_and_push_changes(branch_name, file_name, commit_message)
+                except Exception as e:
+                    print('ERROR:SKIPPING:COMMIT')
+                    print(f'{e}')
                     continue
 
-                # Step 6: Make a commit and push the changes
-                commit_and_push_changes(branch_name, file_name, commit_message)
-
+            try:
                 # Step 7: Create a pull request
                 create_pull_request(repo_name, branch_name)
+            except Exception as e:
+                print('ERROR:SKIPPING:PULL')
+                print(f'{e}')
+                continue
 
-                # Update the state file after each successful commit
-                with open(state_file, 'w') as f:
-                    json.dump(state, f)
+        # move back up to original directory before next repo
+        os.chdir('..')
 
     print('Script completed successfully.')
 
+
 except Exception as e:
     print('An error occurred:', str(e))
-
-    # Save the state to resume from the last successful state
-    with open(state_file, 'w') as f:
-        json.dump(state, f)
