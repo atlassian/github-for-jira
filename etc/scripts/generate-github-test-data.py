@@ -37,11 +37,7 @@ Usage:
 
 4. The script will start creating repositories, branches, and making commits. The progress will be displayed in the terminal.
 
-5. If the script execution is interrupted, it will save the last successful state to a state file.
-
-6. To resume the script from the last successful state, run the script with the same arguments. It will skip already created repositories, branches, and commits.
-
-7. After completion or interruption, the script will save the state to the state file for future resumptions.
+5. If the script execution runs into an error, it don't give a damn and just moves onto the next task
 
 Note: Make sure you have the necessary permissions and the GitHub organization exists.
 
@@ -54,7 +50,6 @@ import subprocess
 import time
 import string
 import random
-import json
 
 # GitHub API base URL
 BASE_URL = 'https://api.github.com'
@@ -181,23 +176,9 @@ def create_pull_request(repo_name, branch_name):
 # Generate a unique repository name based on epoch time
 base_repo_name = f'repo-{int(time.time())}'
 
-# Create a state file path
-state_file = 'state.json'
-
 try:
-    if os.path.isfile(state_file):
-        # If the state file exists, load the last successful state
-        with open(state_file, 'r') as f:
-            state = json.load(f)
-    else:
-        # If the state file doesn't exist, initialize the state
-        state = {
-            'repo_index': -1,
-            'branch_index': -1,
-            'commit_index': -1
-        }
 
-    for repo_index in range(state['repo_index'] + 1, args.num_repos):
+    for repo_index  in range(args.num_repos):
         repo_name = f'{base_repo_name}-{repo_index}'
 
         # Step 1: Create the repository
@@ -216,7 +197,7 @@ try:
             print(f'{e}')
             continue
 
-        for branch_index in range(state['branch_index'], args.num_branches):
+        for branch_index in range(args.num_branches):
             branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}-{int(time.time())}'
 
             # Step 4: Create a new branch
@@ -227,7 +208,7 @@ try:
                 print(f'{e}')
                 continue
 
-            for commit_index in range(state['commit_index'], args.num_commits):
+            for commit_index in range(args.num_commits):
                 file_name = f'file-{commit_index}.txt'
                 commit_message = f'{args.issue_prefix}-{random.randint(100, 999)}: Commit message'
 
