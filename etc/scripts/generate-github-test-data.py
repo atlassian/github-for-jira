@@ -3,7 +3,7 @@ GitHub Repository Automation Script
 
 This script automates the creation of repositories with branches and commits on GitHub. It utilizes the GitHub API and Git commands to perform the following actions:
 
-1. Create multiple repositories with specified names.
+1. Create multiple repositories with random names.
 2. Initialize each repository with a README file and a GitHub Actions workflow file.
 3. Create multiple branches within each repository.
 4. Make commits with random file content to each branch.
@@ -16,10 +16,6 @@ Usage:
 1. Set the desired values for the following parameters at the top of the script:
    - ACCESS_TOKEN: Your GitHub personal access token (PAT).
    - ORGANIZATION_NAME: The name of your GitHub organization.
-   - DEFAULT_NUM_REPOS: The default number of repositories to create.
-   - DEFAULT_NUM_BRANCHES: The default number of branches to create per repository.
-   - DEFAULT_NUM_COMMITS: The default number of commits to make per branch.
-   - DEFAULT_ISSUE_PREFIX: The default prefix for issue/commit messages.
 
 2. Open a terminal and navigate to the directory containing this script.
 
@@ -33,9 +29,9 @@ Usage:
    --num-repos NUM_REPOS: Number of repositories to create.
    --num-branches NUM_BRANCHES: Number of branches to create per repository .
    --num-commits NUM_COMMITS: Number of commits to make per branch.
-   --issue-prefix ISSUE_PREFIX: Prefix for issue/commit messages.
+   --issue-prefix ISSUE_PREFIX: Prefix for issue key used on branch, commit.
 
-4. The script will start creating repositories, branches, and making commits. The progress will be displayed in the terminal.
+4. The script will start creating repositories, branches, and making commits. Events will be displayed in the terminal.
 
 5. If the script execution runs into an error, it don't give a damn and just moves onto the next task
 
@@ -88,7 +84,6 @@ def run_bash_command(command):
     stdout, stderr = process.communicate()
     return process.returncode, stdout, stderr
 
-# Helper function to create a new branch
 def create_branch(branch_name):
     create_branch_command = f'git checkout -b {branch_name}'
     return_code, stdout, stderr = run_bash_command(create_branch_command)
@@ -96,7 +91,6 @@ def create_branch(branch_name):
         raise RuntimeError(f'Error creating branch "{branch_name}": {stderr.decode()}')
     print(f'Branch "{branch_name}" created successfully.')
 
-# Helper function to commit and push changes
 def commit_and_push_changes(branch_name, file_name, commit_message):
     content = generate_random_content()
     with open(file_name, 'w') as file:
