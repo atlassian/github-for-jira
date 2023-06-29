@@ -176,7 +176,7 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log?: Logger) => {
+export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	if (isEmpty(issueKeys) || !pullRequest.headRef?.repository) {
