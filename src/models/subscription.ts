@@ -126,7 +126,7 @@ export class Subscription extends Model {
 
 	static async findAllForGitHubInstallationIdAndRepoName(
 		gitHubInstallationId: number,
-		repoName: string,
+		repoName: string
 	): Promise<RepoSyncStateAndSubscription[]> {
 		const page = 1;
 		const limit = 100;

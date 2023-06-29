@@ -6,7 +6,7 @@ import { Installation } from "models/installation";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { Subscription } from "models/subscription";
-import { RepoSyncState } from "models/reposyncstate";
+import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { DEFAULT_AVATAR } from "routes/jira/security/workspaces/jira-security-workspaces-post";
 
 const createSubscriptionWithMultipleReposCloud = async () => {
@@ -47,6 +47,60 @@ const createSubscriptionWithMultipleReposCloud = async () => {
 	return { sub, repo1, repo2, repo3 };
 };
 
+const generateRepoId = ((): () => number => {
+	let repoIdCounter = 0;
+
+	return () => {
+		repoIdCounter++;
+		return repoIdCounter;
+	};
+})();
+
+// Function to generate a unique repository name
+const generateRepoName = (): string => {
+	// Example: Generates a name with "repo-" prefix and a random number between 0 and 999
+	const name = `repo-${Math.floor(Math.random() * 1000)}`;
+	return name;
+};
+
+// Function to generate a unique repository owner
+const generateUniqueRepoOwner = (): string => {
+	const prefix = "repo-owner";
+	const uniqueId = Math.floor(Math.random() * 1000); // Generate a random number
+
+	return `${prefix}-${uniqueId}`;
+};
+
+const createMultipleRepositoriesForOneSubscription = async (subscriptionId: number, numberOfReposToCreate: number) => {
+	const repositories: RepoSyncStateProperties[] = [];
+
+	for (let i = 0; i < numberOfReposToCreate; i++) {
+		const repoId = generateRepoId();
+		const repoOwner = generateUniqueRepoOwner();
+		const repoName = generateRepoName();
+
+		const repo: RepoSyncStateProperties = {
+			id: repoId,
+			subscriptionId: subscriptionId,
+			repoId,
+			repoName,
+			repoOwner,
+			repoFullName: `${repoOwner}/${repoName}`,
+			repoUrl: `http://github.com/${repoOwner}/${repoName}`,
+			repoPushedAt: new Date(),
+			updatedAt: new Date(),
+			repoUpdatedAt: new Date(),
+			createdAt: new Date(),
+			repoCreatedAt: new Date()
+		};
+
+		await RepoSyncState.create(repo as any);
+		repositories.push(repo);
+	}
+
+	return repositories;
+};
+
 const createSubscriptionWithMultipleReposServer = async () => {
 	const sub = await Subscription.create({
 		gitHubInstallationId: 1234,
@@ -85,7 +139,7 @@ const createSubscriptionWithMultipleReposServer = async () => {
 	return { sub, repo1, repo2, repo3 };
 };
 
-describe("Repositories Ge4t", () => {
+describe("Repositories Get", () => {
 	let app: Application;
 	let installation: Installation;
 
@@ -349,6 +403,44 @@ describe("Repositories Ge4t", () => {
 			.expect(res => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain(JSON.stringify(response));
+			});
+	});
+
+	it("Should return paginated repositories when number of repositories exceeds the default limit", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const totalNumberOfRepos = 104;
+		const sub = await Subscription.create({
+			gitHubInstallationId: 1234,
+			jiraHost,
+			jiraClientKey: "client-key",
+			avatarUrl: "http://myavatarurl"
+		});
+
+		await createMultipleRepositoriesForOneSubscription(
+			sub.id,
+			totalNumberOfRepos
+		);
+
+		await supertest(app)
+			.get(`/jira/security/workspaces/repositories/search?workspaceId=${sub.gitHubInstallationId}&searchQuery=repo`)
+			.set({
+				authorization: `JWT ${await generateJwt({
+					workspaceId: sub.gitHubInstallationId,
+					searchQuery: "repo"
+				})}`
+			})
+			.expect((res) => {
+				expect(res.status).toBe(200);
+				const responseBody = JSON.parse(res.text);
+				expect(responseBody.success).toBe(true);
+				expect(responseBody.containers).toHaveLength(100);
+				expect(responseBody.containers).not.toHaveLength(totalNumberOfRepos);
 			});
 	});
 });
