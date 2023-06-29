@@ -6,21 +6,41 @@ import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
+import { Installation } from "models/installation";
+import { encodeSymmetric } from "atlassian-jwt";
+import { getHashedKey } from "models/sequelize";
 
 jest.mock("config/feature-flags");
 
+const generateJwt = async (installation: Installation) => {
+	return encodeSymmetric({
+		qsh: "context-qsh",
+		iss: installation.plainClientKey
+	}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+};
+
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
-	beforeEach(() => {
-		const tenantUrl = jiraHost.replace("https://", "");
+
+	beforeEach(async () => {
+
+		const installation  = await Installation.create({
+			jiraHost,
+			encryptedSharedSecret: "secret",
+			clientKey: getHashedKey("client-key"),
+			plainClientKey: "client-key"
+		});
+		const jwt = await generateJwt(installation);
+
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string", tenantUrl };
+			req.query = { issueKey: "1", issueSummary: "random-string", jwt };
 			req.csrfToken = jest.fn();
 			next();
 		});
 		app.use(getFrontendApp());
+
 	});
 
 	it("No connection - should open the no-configuration page", async () => {
@@ -44,6 +64,7 @@ describe("GitHub Create Branch Options Get", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
+
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",
@@ -76,6 +97,7 @@ describe("GitHub Create Branch Options Get", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
+
 		await supertest(app)
 			.get("/create-branch-options").set(
 				"Cookie",

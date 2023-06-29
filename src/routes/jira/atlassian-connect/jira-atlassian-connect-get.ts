@@ -28,7 +28,7 @@ const modules = {
 		],
 		actions: {
 			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			},
 			searchConnectedWorkspaces: {
 				templateUrl: `${envVars.APP_URL}/jira/workspaces/search`
