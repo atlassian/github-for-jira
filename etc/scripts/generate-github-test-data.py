@@ -1,34 +1,60 @@
-# usage
-# Step 1: Generate a Personal Access Token (PAT) from GitHub
-# Step 2: Replace YOUR_PAT_GOES_HERE and USERNAME with your own details
-# Step 3: python3 generate-github-test-data.py
-# it will create repo data locally and you have to manually clean it up for now, TODO
-#
-# For more control.........
-# You can customize the script behavior by providing command-line arguments:
-# --num-repos: Number of repositories to create.
-# --num-branches: Number of branches to create per repository.
-# --num-commits: Number of commits to make per branch.
-# --issue-prefix: Prefix for issue/commit messages.
+"""
+GitHub Repository Automation Script
 
-# python3 generate-github-test-data.py --num-repos 5 --num-branches 3 --num-commits 2
+This script automates the creation of repositories with branches and commits on GitHub. It utilizes the GitHub API and Git commands to perform the following actions:
 
+1. Create multiple repositories with random names.
+2. Initialize each repository with a README file and a GitHub Actions workflow file.
+3. Create multiple branches within each repository.
+4. Make commits with random file content to each branch.
+5. Push the commits to the respective branches.
+6. Create pull requests from each branch to the main branch.
+7. Optionally merge the pull requests randomly.
+8. Repeat the above steps for the specified number of repositories, branches, and commits.
+
+Usage:
+1. Set the desired values for the following parameters at the top of the script:
+   - ACCESS_TOKEN: Your GitHub personal access token (PAT).
+   - ORGANIZATION_NAME: The name of your GitHub organization.
+
+2. Open a terminal and navigate to the directory containing this script.
+
+3. Run the script using the following command:
+   $ python3 generate-github-test-data.py.py [--num-repos NUM_REPOS] [--num-branches NUM_BRANCHES] [--num-commits NUM_COMMITS] [--issue-prefix ISSUE_PREFIX]
+
+   example:
+   $ python3 generate-github-test-data.py --num-repos 5 --num-branches 4 --num-commits 11 --issue-prefix CAT
+
+   Optional Arguments:
+   --num-repos NUM_REPOS: Number of repositories to create.
+   --num-branches NUM_BRANCHES: Number of branches to create per repository .
+   --num-commits NUM_COMMITS: Number of commits to make per branch.
+   --issue-prefix ISSUE_PREFIX: Prefix for issue key used on branch, commit.
+
+4. The script will start creating repositories, branches, and making commits. Events will be displayed in the terminal.
+
+5. If the script execution runs into an error, it don't give a damn and just moves onto the next task
+
+Note: Make sure you have the necessary permissions and the GitHub organization exists.
+
+"""
 
 import argparse
 import requests
 import os
 import subprocess
 import time
+import string
 import random
 
 # GitHub API base URL
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = 'YOUR_PAT_GOES_HERE'
+ACCESS_TOKEN = ''
 
-# GitHub username
-USERNAME = 'USERNAME'
+# GitHub org name
+ORGANIZATION_NAME = 'real-fake-org'
 
 # Default values
 DEFAULT_NUM_REPOS = 2
@@ -58,7 +84,6 @@ def run_bash_command(command):
     stdout, stderr = process.communicate()
     return process.returncode, stdout, stderr
 
-# Helper function to create a new branch
 def create_branch(branch_name):
     create_branch_command = f'git checkout -b {branch_name}'
     return_code, stdout, stderr = run_bash_command(create_branch_command)
@@ -66,8 +91,11 @@ def create_branch(branch_name):
         raise RuntimeError(f'Error creating branch "{branch_name}": {stderr.decode()}')
     print(f'Branch "{branch_name}" created successfully.')
 
-# Helper function to commit and push changes
 def commit_and_push_changes(branch_name, file_name, commit_message):
+    content = generate_random_content()
+    with open(file_name, 'w') as file:
+        file.write(content)
+
     add_file_command = f'git add {file_name}'
     return_code, stdout, stderr = run_bash_command(add_file_command)
     if return_code != 0:
@@ -77,13 +105,19 @@ def commit_and_push_changes(branch_name, file_name, commit_message):
     return_code, stdout, stderr = run_bash_command(commit_command)
     if return_code != 0:
         raise RuntimeError(f'Error committing file "{file_name}": {stderr.decode()}')
-    print(f'File "{file_name}" committed successfully.')
 
     push_command = f'git push origin {branch_name}'
     return_code, stdout, stderr = run_bash_command(push_command)
     if return_code != 0:
         raise RuntimeError(f'Error pushing commits to branch "{branch_name}": {stderr.decode()}')
-    print(f'Commits pushed to branch "{branch_name}" successfully.')
+    print(f'Commit {commit_message} pushed to branch "{branch_name}" successfully.')
+
+def generate_random_content():
+    # Generate a random string of uppercase letters and digits
+    length = random.randint(10, 20)
+    characters = string.ascii_uppercase + string.digits
+    content = ''.join(random.choice(characters) for _ in range(length))
+    return content
 
 # Function to initialize the repository, add README, and push the initial commit
 def initialize_repository(repo_name):
@@ -95,7 +129,7 @@ def initialize_repository(repo_name):
     subprocess.run('git add .', shell=True, check=True)
     subprocess.run('git commit -m "Initial commit"', shell=True, check=True)
     subprocess.run('git branch -M main', shell=True, check=True)
-    subprocess.run(f'git remote add origin https://github.com/{USERNAME}/{repo_name}.git', shell=True, check=True)
+    subprocess.run(f'git remote add origin https://github.com/{ORGANIZATION_NAME}/{repo_name}.git', shell=True, check=True)
     subprocess.run('git push -u origin main', shell=True, check=True)
     print(f'Repository "{repo_name}" initialized and initial commit pushed successfully.')
 
@@ -110,10 +144,16 @@ def create_workflow_file():
         with open(workflow_file_path, 'w') as workflow_file:
             workflow_file.write(content)
 
-    os.system(f'git add .github/workflows/{workflow_file_name}')
+    subprocess.run(f'git add .github/workflows/{workflow_file_name}', shell=True, check=True)
 
 def create_pull_request(repo_name, branch_name):
-    create_pull_request_url = f'{BASE_URL}/repos/{USERNAME}/{repo_name}/pulls'
+    create_pull_request_url = f'{BASE_URL}/repos/{ORGANIZATION_NAME}/{repo_name}/pulls'
+    pull_request_data = {
+        'title': f'{args.issue_prefix}-{random.randint(100, 999)}: Pull request',
+        'body': f'{args.issue_prefix}-{random.randint(100, 999)}: Pull request body',
+        'head': branch_name,
+        'base': 'main'
+    }
     pull_request_response = make_api_request('POST', create_pull_request_url, data=pull_request_data)
     print(f'Pull request created from "{branch_name}" to main successfully.')
 
@@ -121,7 +161,7 @@ def create_pull_request(repo_name, branch_name):
     should_merge = random.choice([True, False])
     if should_merge:
         pull_request_number = pull_request_response['number']
-        merge_pull_request_url = f'{BASE_URL}/repos/{USERNAME}/{repo_name}/pulls/{pull_request_number}/merge'
+        merge_pull_request_url = f'{BASE_URL}/repos/{ORGANIZATION_NAME}/{repo_name}/pulls/{pull_request_number}/merge'
         make_api_request('PUT', merge_pull_request_url)
         print(f'Pull request from "{branch_name}" to main merged successfully.')
     else:
@@ -131,56 +171,59 @@ def create_pull_request(repo_name, branch_name):
 base_repo_name = f'repo-{int(time.time())}'
 
 try:
-    for repo_index in range(args.num_repos):
+
+    for repo_index  in range(args.num_repos):
         repo_name = f'{base_repo_name}-{repo_index}'
 
-        # Step 1: Create a new repository
-        create_repo_url = f'{BASE_URL}/user/repos'
-        data = {
-            'name': repo_name,
-            'private': False
-        }
-        make_api_request('POST', create_repo_url, data=data)
+        # Step 1: Create the repository
+        create_repo_url = f'{BASE_URL}/orgs/{ORGANIZATION_NAME}/repos'
+        create_repo_data = {'name': repo_name}
+        make_api_request('POST', create_repo_url, data=create_repo_data)
         print(f'Repository "{repo_name}" created successfully.')
 
-        # Step 2: Initialize the repository, add README, create workflows, and push initial commit
-        initialize_repository(repo_name)
+        try:
+            initialize_repository(repo_name)
+        except Exception as e:
+            print('ERROR:SKIPPING:REPO')
+            print(f'{e}')
+            continue
 
-        # Step 3: Create branches and commits
         for branch_index in range(args.num_branches):
+            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}-{int(time.time())}'
 
-            # Generate a unique branch name with the issue-key prefix and ranfom number
-            branch_name = f'{args.issue_prefix}-{random.randint(100, 999)}'
-            # Create a new branch
-            create_branch(branch_name)
+            # Step 4: Create a new branch
+            try:
+                create_branch(branch_name)
+            except Exception as e:
+                print('ERROR:SKIPPING:BRANCH')
+                print(f'{e}')
+                continue
 
             for commit_index in range(args.num_commits):
-                # Generate a unique file name based on epoch time and random number
-                file_name = f'file-{int(time.time())}-{random.randint(100, 999)}.txt'
+                file_name = f'file-{commit_index}.txt'
+                commit_message = f'{args.issue_prefix}-{random.randint(100, 999)}: Commit message'
 
-                # Generate a commit message based on issue prefix and random number
-                commit_message = f'{args.issue_prefix}-{random.randint(100, 999)}'
+                try:
+                    # Step 6: Make a commit and push the changes
+                    commit_and_push_changes(branch_name, file_name, commit_message)
+                except Exception as e:
+                    print('ERROR:SKIPPING:COMMIT')
+                    print(f'{e}')
+                    continue
 
-                # Create and write to the file
-                with open(file_name, 'w') as f:
-                    f.write(f'Commit {commit_index + 1} on repository {repo_name}')
+            try:
+                # Step 7: Create a pull request
+                create_pull_request(repo_name, branch_name)
+            except Exception as e:
+                print('ERROR:SKIPPING:PULL')
+                print(f'{e}')
+                continue
 
-                # Commit and push changes
-                commit_and_push_changes(branch_name, file_name, commit_message)
-
-                # Remove the file
-                os.remove(file_name)
-
-            pull_request_data = {
-                'title': f'Pull request from {branch_name} to main',
-                'head': branch_name,
-                'base': 'main'
-            }
-
-            create_pull_request(repo_name, branch_name)
-
-        # Back out of repo
+        # move back up to original directory before next repo
         os.chdir('..')
 
+    print('Script completed successfully.')
+
+
 except Exception as e:
-    print(f'An error occurred: {str(e)}')
+    print('An error occurred:', str(e))
