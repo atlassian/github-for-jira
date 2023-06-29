@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { compact, map } from "lodash";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
 const instance = envVars.APP_KEY.split(".").pop();
 const isProd = instance === "production";
@@ -16,17 +18,9 @@ const adminCondition = [
 	}
 ];
 
-const modules = {
-	jiraDevelopmentTool: {
-		application: {
-			value: "GitHub"
-		},
-		capabilities: [
-			"branch",
-			"commit",
-			"pull_request"
-		],
-		actions: {
+const defineJiraDevelopmentToolModuleActions = async () => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+		return {
 			createBranch: {
 				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			},
@@ -39,151 +33,194 @@ const modules = {
 			associateRepository: {
 				templateUrl: `${envVars.APP_URL}/jira/workspaces/repositories/associate`
 			}
-		},
-		key: "github-development-tool",
-		logoUrl: LOGO_URL,
-		name: {
-			value: "GitHub"
-		},
-		url: "https://github.com"
-	},
-	jiraDeploymentInfoProvider: {
-		key: "github-deployments",
-		name: {
-			value: "GitHub Actions"
-		},
-		logoUrl: LOGO_URL,
-		homeUrl: "https://github.com/features/actions"
-	},
-	jiraBuildInfoProvider: {
-		key: "github-actions",
-		logoUrl: LOGO_URL,
-		name: {
-			value: "GitHub Actions"
-		},
-		homeUrl: "https://github.com/features/actions"
-	},
-	jiraRemoteLinkInfoProvider: {
-		key: "github-remotelinks-integration",
-		name: {
-			value: "GitHub"
-		},
-		logoUrl: LOGO_URL,
-		homeUrl: "https://github.com"
-	},
-	postInstallPage: {
-		key: "github-post-install-page",
-		name: {
-			value: "GitHub Configuration"
-		},
-		url: postInstallUrl,
-		conditions: adminCondition
-	},
-	generalPages: [
-		{
-			key: "github-select-product-page",
-			name: {
-				value: "GitHub Select Product"
-			},
-			url: "/jira/connect",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-server-url-page",
-			name: {
-				value: "GitHub Server Url"
-			},
-			url: "/jira/connect/enterprise?new={ac.new}",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-list-servers-page",
-			name: {
-				value: "GitHub Enterprise Servers"
-			},
-			url: "/jira/connect/enterprise",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-app-creation-page",
-			name: {
-				value: "GitHub App Creation"
-			},
-			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
-			// Let's keep it vague and not differentiate to avoid brain melting
-			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-list-server-apps-page",
-			name: {
-				value: "GitHub Server Apps"
-			},
-			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
-			// Let's keep it vague and not differentiate to avoid brain melting
-			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-manual-app-page",
-			name: {
-				value: "GitHub Manual App"
-			},
-			// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
-			// Let's keep it vague and not differentiate to avoid brain melting
-			url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
-			location: "none",
-			conditions: adminCondition
-		},
-		{
-			key: "github-edit-app-page",
-			name: {
-				value: "GitHub Edit App"
-			},
-			url: "/jira/connect/enterprise/app/{ac.uuid}",
-			location: "none",
-			conditions: adminCondition
-		}
-	],
-	webSections: [
-		{
-			key: "gh-addon-admin-section",
-			location: "admin_plugins_menu",
-			name: {
-				value: APP_NAME
+		};
+	} else {
+		return {
+			createBranch: {
+				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
 			}
-		}
-	],
-	adminPages: [
-		{
-			url: postInstallUrl,
-			conditions: adminCondition,
-			name: {
-				value: "Configure"
-			},
-			key: "gh-addon-admin",
-			location: "admin_plugins_menu/gh-addon-admin-section"
-		}, {
-			url: "/jira/configuration",
-			conditions: adminCondition,
-			name: {
-				value: "Configure"
-			},
-			key: "gh-addon-admin-old",
-			location: "none"
-		}
-	]
+		};
+	}
 };
 
-export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
-export const genericContainerActionUrls = [modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
-	modules.jiraDevelopmentTool.actions.searchRepositories.templateUrl,
-	modules.jiraDevelopmentTool.actions.associateRepository.templateUrl];
+let modules;
+let moduleUrls;
+
+const initializeModules = async () => {
+	modules = {
+		jiraDevelopmentTool: {
+			application: {
+				value: "GitHub"
+			},
+			capabilities: [
+				"branch",
+				"commit",
+				"pull_request"
+			],
+			actions: await defineJiraDevelopmentToolModuleActions(),
+			key: "github-development-tool",
+			logoUrl: LOGO_URL,
+			name: {
+				value: "GitHub"
+			},
+			url: "https://github.com"
+		},
+		jiraDeploymentInfoProvider: {
+			key: "github-deployments",
+			name: {
+				value: "GitHub Actions"
+			},
+			logoUrl: LOGO_URL,
+			homeUrl: "https://github.com/features/actions"
+		},
+		jiraBuildInfoProvider: {
+			key: "github-actions",
+			logoUrl: LOGO_URL,
+			name: {
+				value: "GitHub Actions"
+			},
+			homeUrl: "https://github.com/features/actions"
+		},
+		jiraRemoteLinkInfoProvider: {
+			key: "github-remotelinks-integration",
+			name: {
+				value: "GitHub"
+			},
+			logoUrl: LOGO_URL,
+			homeUrl: "https://github.com"
+		},
+		postInstallPage: {
+			key: "github-post-install-page",
+			name: {
+				value: "GitHub Configuration"
+			},
+			url: postInstallUrl,
+			conditions: adminCondition
+		},
+		generalPages: [
+			{
+				key: "github-select-product-page",
+				name: {
+					value: "GitHub Select Product"
+				},
+				url: "/jira/connect",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-server-url-page",
+				name: {
+					value: "GitHub Server Url"
+				},
+				url: "/jira/connect/enterprise?new={ac.new}",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-list-servers-page",
+				name: {
+					value: "GitHub Enterprise Servers"
+				},
+				url: "/jira/connect/enterprise",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-app-creation-page",
+				name: {
+					value: "GitHub App Creation"
+				},
+				// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+				// Let's keep it vague and not differentiate to avoid brain melting
+				url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-list-server-apps-page",
+				name: {
+					value: "GitHub Server Apps"
+				},
+				// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+				// Let's keep it vague and not differentiate to avoid brain melting
+				url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-manual-app-page",
+				name: {
+					value: "GitHub Manual App"
+				},
+				// connectConfigUuid might be either an existing app uuid or a key of one stored in Redis (see GheConnectConfigTempStorage)
+				// Let's keep it vague and not differentiate to avoid brain melting
+				url: "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
+				location: "none",
+				conditions: adminCondition
+			},
+			{
+				key: "github-edit-app-page",
+				name: {
+					value: "GitHub Edit App"
+				},
+				url: "/jira/connect/enterprise/app/{ac.uuid}",
+				location: "none",
+				conditions: adminCondition
+			}
+		],
+		webSections: [
+			{
+				key: "gh-addon-admin-section",
+				location: "admin_plugins_menu",
+				name: {
+					value: APP_NAME
+				}
+			}
+		],
+		adminPages: [
+			{
+				url: postInstallUrl,
+				conditions: adminCondition,
+				name: {
+					value: "Configure"
+				},
+				key: "gh-addon-admin",
+				location: "admin_plugins_menu/gh-addon-admin-section"
+			}, {
+				url: "/jira/configuration",
+				conditions: adminCondition,
+				name: {
+					value: "Configure"
+				},
+				key: "gh-addon-admin-old",
+				location: "none"
+			}
+		]
+	};
+
+	moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
+};
+
+let genericContainerActionUrls;
+const logger = getLogger("atlassian-connect");
+
+(async () => {
+	try {
+		await initializeModules();
+
+		if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+			genericContainerActionUrls = [
+				modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
+				modules.jiraDevelopmentTool.actions.searchRepositories.templateUrl,
+				modules.jiraDevelopmentTool.actions.associateRepository.templateUrl
+			];
+		}
+	} catch (error) {
+		logger.error({ error }, "Error initializing modules");
+	}
+})().catch((error) => {
+	logger.error({ error }, "Unhandled error in async function");
+});
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	res.status(200).json({
@@ -219,3 +256,5 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 		modules
 	});
 };
+
+export { moduleUrls, genericContainerActionUrls };
