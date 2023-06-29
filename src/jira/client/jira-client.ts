@@ -395,6 +395,21 @@ export const getJiraClient = async (
 };
 
 const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {
+	try {
+		return {
+			deployments: (data.deployments || []).map(deployment => ({
+				updateSequenceNumber: deployment.updateSequenceNumber,
+				state: createHashWithSharedSecret(deployment.state),
+				url: createHashWithSharedSecret(deployment.url),
+				issueKeys: (deployment.associations || [])
+					.filter(a => ["issueKeys", "issueIdOrKeys", "serviceIdOrKeys"].includes(a.associationType))
+					.flatMap(a => (a.values as string[] || []).map((v: string) => createHashWithSharedSecret(v)))
+			}))
+		};
+	} catch (error) {
+		logger.error({ error }, "Fail extractDeploymentDataForLoggingPurpose");
+		return {};
+	}
 };
 
 /**
