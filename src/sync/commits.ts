@@ -6,6 +6,7 @@ import { CommitQueryNode } from "../github/client/github-queries";
 import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { TaskResultPayload } from "~/src/sync/sync.types";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -37,6 +38,7 @@ export const getCommitTask = async (
 
 	if (commits.length > 0) {
 		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate}`);
+		(logger.fields || {}).commitShaArray = commits.map(c => createHashWithSharedSecret(String(c.oid)));
 	}
 
 	const jiraPayload = transformCommit(
