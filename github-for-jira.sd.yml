@@ -266,7 +266,7 @@ workers:
             # Scale up if max value from queues, cpu and memory is over 80 for 3 consecutive periods of 60 seconds
             Upper: 80
           Metrics:
-            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/20)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
+            - Expression: "MAX([cpuUsage, memoryUsage, (pushQueueMessages/250)*100, (backfillQueueMessages/10)*100, (branchQueueMessages/250)*100, (deploymentQueueMessages/250)*100])"
               Id: "combinedCpuRamAndQueues"
               Label: "Scaling based on Queue Sizes and CPU and Memory consumption"
             - MetricStat:
