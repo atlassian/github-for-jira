@@ -337,7 +337,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
+				logger?.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 
 				if (
