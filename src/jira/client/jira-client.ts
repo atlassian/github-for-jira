@@ -373,6 +373,19 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		security: {
+			submit: async (data, options?: JiraSubmitOptions) => {
+				const	payload = {
+					vulnerabilities: data.vulnerabilities,
+					properties: {
+						gitHubInstallationId
+					},
+					operationType: options?.operationType || "NORMAL"
+				};
+				logger.info("Sending vulnerabilities payload to jira.");
+				await instance.post("/rest/security/1.0/bulk", payload);
+			}
 		}
 	};
 

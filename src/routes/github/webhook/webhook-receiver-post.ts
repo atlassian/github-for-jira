@@ -17,6 +17,7 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -76,6 +77,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		});
 		await webhookRouter(webhookContext);
 		logger.info("Webhook was successfully processed");
+		logger.info(webhookContext);
 		response.sendStatus(204);
 
 	} catch (err) {
@@ -125,6 +127,9 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "code_scanning_alert":
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
+			break;
+		case "dependabot_alert":
+			await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
 			break;
 	}
 };

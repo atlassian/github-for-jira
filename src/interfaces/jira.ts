@@ -192,6 +192,49 @@ export interface JiraRemoteLinkStatus {
 	label: string;
 }
 
+export interface JiraVulnerabilityBulkSubmitData {
+	vulnerabilities: JiraVulnerability[];
+}
+
+export interface JiraVulnerability {
+	id: string;
+	schemaVersion: string;
+	updateSequenceNumber: number;
+	containerId: string;
+	displayName: string;
+	description: string;
+	url: string;
+	type: string;
+	introducedDate: string;
+	lastUpdated: string;
+	severity: JiraVulnerabilitySeverity;
+	identifiers: JiraVulnerabilityIdentifier[];
+	status: JiraVulnerabilityStatusEnum;
+	additionalInfo: JiraVulnerabilityAdditionalInfo;
+	associations: JiraAssociation[];
+}
+
+export interface JiraVulnerabilitySeverity {
+	level: string;
+}
+
+export interface JiraVulnerabilityIdentifier {
+	displayName: string;
+	url: string;
+}
+
+export enum JiraVulnerabilityStatusEnum {
+	OPEN = "open",
+	CLOSED = "closed",
+	IGNORED = "ignored",
+	UNKNOWN = "unknown"
+}
+
+export interface JiraVulnerabilityAdditionalInfo {
+	content: string;
+	url: string;
+}
+
 // These align with Atlaskit's lozenge values:
 // https://atlassian.design/components/lozenge/examples
 export type JiraRemoteLinkStatusAppearance = "default" | "inprogress" | "moved" | "new" | "removed" | "prototype" | "success";
