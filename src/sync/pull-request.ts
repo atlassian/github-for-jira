@@ -20,6 +20,7 @@ import { isEmpty } from "lodash";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 /**
  * Find the next page number from the response headers.
@@ -108,7 +109,7 @@ const getPullRequestTaskGraphQL = async (
 	cursor?: string,
 	perPage?: number
 ) => {
-	const logger = parentLogger.child({ backfillTask: "Repository" });
+	const logger = parentLogger.child({ backfillTask: "PullRequest" });
 	const startTime = Date.now();
 
 	logger.info({ startTime }, "Backfill task started");
@@ -121,6 +122,7 @@ const getPullRequestTaskGraphQL = async (
 		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
+	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
 	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
 
 	const jiraPayload = {

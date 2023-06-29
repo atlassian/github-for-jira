@@ -5,6 +5,7 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 import {
 	JiraAssociation,
@@ -280,6 +281,7 @@ export const getJiraClient = async (
 						data,
 						instance,
 						gitHubInstallationId,
+						logger,
 						options
 					);
 				}
@@ -335,7 +337,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
+				logger?.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 
 				if (
@@ -392,6 +394,24 @@ export const getJiraClient = async (
 	return client;
 };
 
+const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {
+	try {
+		return {
+			deployments: (data.deployments || []).map(deployment => ({
+				updateSequenceNumber: deployment.updateSequenceNumber,
+				state: createHashWithSharedSecret(deployment.state),
+				url: createHashWithSharedSecret(deployment.url),
+				issueKeys: (deployment.associations || [])
+					.filter(a => ["issueKeys", "issueIdOrKeys", "serviceIdOrKeys"].includes(a.associationType))
+					.flatMap(a => (a.values as string[] || []).map((v: string) => createHashWithSharedSecret(v)))
+			}))
+		};
+	} catch (error) {
+		logger.error({ error }, "Fail extractDeploymentDataForLoggingPurpose");
+		return {};
+	}
+};
+
 /**
  * Splits commits in data payload into chunks of 400 and makes separate requests
  * to avoid Jira API limit
@@ -400,6 +420,7 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number | undefined,
+	logger: Logger,
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
@@ -409,7 +430,7 @@ const batchedBulkUpdate = async (
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
 
-	const batchedUpdates = commitChunks.map((commitChunk) => {
+	const batchedUpdates = commitChunks.map(async (commitChunk: JiraCommit[]) => {
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
@@ -422,9 +443,39 @@ const batchedBulkUpdate = async (
 			}
 		};
 
-		return instance.post("/rest/devinfo/0.10/bulk", body);
+		logger.info({
+			issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger)
+		}, "Posting to Jira devinfo bulk update api");
+		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
+		logger.info({
+			responseStatus: response.status,
+			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)
+		}, "Jira devinfo bulk update api returned");
+
+		return response;
 	});
 	return Promise.all(batchedUpdates);
+};
+
+const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], logger: Logger): string[] => {
+	try {
+		return commitChunk
+			.flatMap((chunk: JiraCommit) => chunk.issueKeys)
+			.filter(key => !!key)
+			.map((key: string) => createHashWithSharedSecret(key));
+	} catch (error) {
+		logger.error({ error }, "Fail extract and hash issue keys before sending to jira");
+		return [];
+	}
+};
+
+const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, logger: Logger): string[] => {
+	try {
+		return (responseData["unknownIssueKeys"] || []).map((key: string) => createHashWithSharedSecret(key));
+	} catch (error) {
+		logger.error({ error }, "Error parsing unknownIssueKeys from jira api response");
+		return [];
+	}
 };
 
 const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>
