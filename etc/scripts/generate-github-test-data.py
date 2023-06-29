@@ -55,10 +55,10 @@ import random
 BASE_URL = 'https://api.github.com'
 
 # GitHub access token
-ACCESS_TOKEN = 'YOUR_PAT_GOES_HERE'
+ACCESS_TOKEN = ''
 
 # GitHub org name
-ORGANIZATION_NAME = 'YOUR_ORG_GOES_HERE'
+ORGANIZATION_NAME = 'real-fake-org'
 
 # Default values
 DEFAULT_NUM_REPOS = 2
@@ -186,9 +186,6 @@ try:
         create_repo_data = {'name': repo_name}
         make_api_request('POST', create_repo_url, data=create_repo_data)
         print(f'Repository "{repo_name}" created successfully.')
-
-        # Update the state after successful repository creation
-        state['repo_index'] = repo_index
 
         try:
             initialize_repository(repo_name)
