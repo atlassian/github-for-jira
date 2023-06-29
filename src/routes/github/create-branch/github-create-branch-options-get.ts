@@ -15,27 +15,22 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		fields: req.log?.fields
 	});
 
-	console.log("START");
 	if (!res.locals.jiraHost) {
 		logger.warn({ req, res }, Errors.MISSING_JIRA_HOST);
 		res.status(400).send(Errors.MISSING_JIRA_HOST);
 		return next();
 	}
 
-	console.log("START2");
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
 	const jiraHost = res.locals.jiraHost;
 
-	console.log("START3 - jiraHost");
-	console.log("START4");
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
-		console.log("START - redirect");
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
 			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
@@ -48,7 +43,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 		return;
 	}
-	console.log("START5");
 
 	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
 	const encodedJiraHost = encodeURIComponent(jiraHost);
