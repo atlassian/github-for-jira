@@ -1,7 +1,12 @@
-import { JiraVulnerabilityBulkSubmitData, JiraVulnerabilityStatusEnum } from "interfaces/jira";
+import {
+	JiraVulnerabilityBulkSubmitData,
+	JiraVulnerabilityIdentifier,
+	JiraVulnerabilityStatusEnum
+} from "interfaces/jira";
 import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { GitHubVulnIdentifier, GitHubVulnReference } from "interfaces/github";
 
 // From GitHub: Status can be one of: open, fixed, dismissed, auto_dismissed
 // To Jira: Status can be one of: : open, closed, ignored, unknown
@@ -19,6 +24,23 @@ const transformGitHubStateToJiraStatus = (state: string, context: WebhookContext
 			context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
 			return JiraVulnerabilityStatusEnum.UNKNOWN;
 	}
+};
+
+const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: GitHubVulnReference[]): JiraVulnerabilityIdentifier[] => {
+	const mappedIdentifiers:JiraVulnerabilityIdentifier[] = [];
+
+	identifiers.forEach((identifier) => {
+		const foundUrl = references.find((reference) => reference.url.includes(identifier.value))?.url;
+
+		const mappedIdentifier:JiraVulnerabilityIdentifier = {
+			displayName: identifier.value,
+			url: foundUrl ? foundUrl : identifier.value
+		};
+
+		mappedIdentifiers.push(mappedIdentifier);
+	});
+
+	return mappedIdentifiers;
 };
 
 export const transformDependabotAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | undefined> => {
@@ -45,16 +67,11 @@ export const transformDependabotAlert = async (context: WebhookContext, githubIn
 			severity: {
 				level: alert.security_vulnerability.severity
 			},
-			identifiers: [ // todo mapping
-				{
-					displayName: "CWE-123",
-					url: "https://cwe.mitre.org/data/definitions/123.html"
-				}
-			],
+			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
 			status: transformGitHubStateToJiraStatus(alert.state, context),
-			additionalInfo: { //todo mapping
-				content: "More information on the vulnerability, as a string",
-				url: "https://example.com/project/CWE-123/additionalInfo"
+			additionalInfo: {
+				content: "Manifest Path",
+				url: alert.dependency.manifest_path
 			},
 			associations: [{
 				associationType: "issueKeys",

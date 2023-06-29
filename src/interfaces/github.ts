@@ -262,3 +262,12 @@ export interface GitHubPushData {
 	commits: GitHubCommit[];
 	installation: GitHubInstallation;
 }
+
+export interface GitHubVulnIdentifier {
+	value: string;
+	type: string;
+}
+
+export interface GitHubVulnReference {
+	url: string;
+}
