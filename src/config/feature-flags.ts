@@ -26,6 +26,7 @@ export enum BooleanFlags {
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
+	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view"
 }
 

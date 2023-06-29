@@ -416,4 +416,37 @@ describe("RepoSyncState", () => {
 			expect(result).toMatchObject(repo);
 		});
 	});
+
+	describe("findAllRepoOwners", () => {
+		it("should return empty list when no orgs were connected", async () => {
+			const result = await RepoSyncState.findAllRepoOwners(sub);
+			expect(result).toStrictEqual(new Set([]));
+		});
+
+		it("should return connected orgs", async () => {
+			await RepoSyncState.create(repo);
+
+			const anotherRepo = {
+				...repo,
+				repoOwner: "anotherOne"
+			};
+			await RepoSyncState.create(anotherRepo);
+
+			const result = await RepoSyncState.findAllRepoOwners(sub);
+			expect(result).toStrictEqual(new Set(["atlassian", "anotherOne"]));
+		});
+
+		it("should dedup records", async () => {
+			await RepoSyncState.create(repo);
+
+			const anotherRepo = {
+				...repo,
+				repoName: "github-for-jira"
+			};
+			await RepoSyncState.create(anotherRepo);
+
+			const result = await RepoSyncState.findAllRepoOwners(sub);
+			expect(result).toStrictEqual(new Set(["atlassian"]));
+		});
+	});
 });

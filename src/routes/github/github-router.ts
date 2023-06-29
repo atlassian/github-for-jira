@@ -43,7 +43,7 @@ GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 // The mental model is that we are continuing GitHubOAuthGet from where it stopped, not adding anything outside),
 // however it is required here by historical reasons (initially we implemented it with :UUID, which means
 // our customers have some GitHub Enterprise apps that have callback URLs with UUID).
-subRouter.use(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
+subRouter.get(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
 
 // Webhook Route
 subRouter.post("/webhooks",
@@ -63,7 +63,7 @@ subRouter.use("/branch", csrfMiddleware, GithubBranchRouter);
 
 subRouter.use(jiraAdminPermissionsMiddleware); // This must stay after jiraSymmetricJwtMiddleware
 
-subRouter.use("/login",  GithubOAuthLoginGet);
+subRouter.get("/login",  GithubOAuthLoginGet);
 
 subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
 
