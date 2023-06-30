@@ -12,7 +12,13 @@ export const SessionGet = (req: Request, res: Response) => {
 
 	const url = createUrlWithQueryString(req, req.params[0] || "");
 	const title = configForPage(req);
-
+	req.log.info({
+		url,
+		appUrl: process.env.APP_URL,
+		redirectUrl: new URL(url, process.env.APP_URL).href,
+		nonce: res.locals.nonce,
+		title
+	}, "SessionGet");
 	res.render("session.hbs", {
 		redirectUrl: new URL(url, process.env.APP_URL).href,
 		nonce: res.locals.nonce,

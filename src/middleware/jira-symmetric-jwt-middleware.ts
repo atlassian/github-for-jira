@@ -40,8 +40,8 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
 		// Check whether logged-in user has Jira Admin permissions and save it to the session
-		req.log.info("jiraSymmetricJwtMiddleware", res.locals);
-		req.log.info("jiraSymmetricJwtMiddleware", req.session);
+
+		req.log.info({ session: req.session, locals: res.locals }, "jiraSymmetricJwtMiddleware");
 		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {

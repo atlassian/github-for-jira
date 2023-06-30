@@ -174,7 +174,7 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			// TODO: pretty sure this whole function is some dead code that we can delete, because in getErrorMiddleware
 			// TODO: the error is mapped to JiraClientError. If that's the case, the log line below should never be logged
 			// TODO: and we are safe to kill the thing.
-			logger.info("Ok, looks like still works.");
+			logger.error({ error }, "Ok, looks like still works.");
 		}
 		instrumentRequest(baseURL)(error?.response);
 
@@ -191,11 +191,13 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 				} else if (e.response.status === 302) {
 					logger.info("405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
 					error.response.status = 404;
+				} else if (e.response.status === 404) {
+					logger.info({ error: e }, "GOT 404 :(")
 				}
 			}
 		}
 
-		logger.info({ errorStatus: error.response?.status }, "Rejecting final error");
+		logger.info({ errorStatus: error.response?.status, error }, "Rejecting final error");
 		return Promise.reject(error);
 	};
 };

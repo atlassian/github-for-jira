@@ -84,6 +84,7 @@ const finishOAuthFlow = async (
 	respondWithError: (status: number, msg: string) => void,
 	populateSession: (gitHubToken: string, gitHubRefreshToke: string, gitHubServerUuid?: string) => void
 ) => {
+	log.info("finishOAuthFlow", finishOAuthFlow);
 	const jiraHost = (await Installation.findByPk(secureState.installationIdPk))?.jiraHost;
 	if (!jiraHost) {
 		return respondWithError(400, "No installation found");
@@ -135,6 +136,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		code,
 		state: stateKey
 	} = req.query as Record<string, string>;
+	req.log.info("IN GithubOAuthCallbackGet")
 
 	const timestampBefore = req.session["timestamp_before_oauth"] as number;
 	if (timestampBefore) {

@@ -34,13 +34,18 @@
             (E.g. they can be stored in browser's session or hijacked.)
             More secure is to pass it using the cookies.
       */--}}
+
+      window.alert("HAVE JWT", window.jwt, document.cookie)
       document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
+    } else {
+		window.alert("DON'T HAVE JWT");
     }
   });
 </script>
 <script nonce="{{nonce}}">
   $(function() {
     window.location = "{{{redirectUrl}}}";
+	console.log("redirectUrl", redirectUrl);
   });
 </script>
 </body>

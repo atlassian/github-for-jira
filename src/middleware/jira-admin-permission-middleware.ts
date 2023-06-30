@@ -5,7 +5,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Record<any, any>, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
-	req.log.info("fetchAndSaveUserJiraAdminStatus", req.session);
+	req.log.info({ isJiraAdmin: req.session.isJiraAdmin }, "fetchAndSaveUserJiraAdminStatus");
 	// We only need to fetch this from Jira if it doesn't exist in the session
 	if (req.session.isJiraAdmin !== undefined) {
 		return;
@@ -13,12 +13,17 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Reco
 
 	try {
 		const userAccountId = claims.sub;
+		req.log.info({ userAccountId }, "userAccountId");
 		// Can't check permissions without userAccountId
 		if (!userAccountId) {
+			req.log.info({ userAccountId }, "NO USER ACCOUTN ID");
 			return;
 		}
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
+		req.log.info({ jiraClient }, "jiraClient");
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
+
+		req.log.info({ permissions }, "permissions");
 
 		req.session.isJiraAdmin = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);
 		req.log.info({ isAdmin :req.session.isJiraAdmin }, "Admin permissions set");
@@ -32,7 +37,8 @@ export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response
 		return next();
 	}
 
-	req.log.info("jiraAdminPermissionsMiddleware", req.session);
+	// THERE IS NO isJiraAdmin in staging
+	req.log.info({ session: req.session }, "jiraAdminPermissionsMiddleware");
 	const { isJiraAdmin } = req.session;
 
 	if (isJiraAdmin === undefined) {

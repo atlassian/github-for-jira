@@ -15,6 +15,7 @@ import {
 } from "~/src/github/client/github-client-interceptors";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { metricHttpRequest } from "config/metric-names";
+import { getLogger } from "config/logger";
 
 export interface GitHubClientApiKeyConfig {
 	headerName: string;
@@ -148,6 +149,8 @@ export class GitHubClient {
 	private buildProxyConfig(proxyBaseUrl: string): Partial<AxiosRequestConfig> {
 		const proxyHttpAgent = new HttpProxyAgent(proxyBaseUrl);
 		const proxyHttpsAgent = new HttpsProxyAgent(proxyBaseUrl);
+		const logger = getLogger("buildProxyConfig");
+		logger.info("buildProxyConfig", proxyHttpAgent, proxyHttpsAgent);
 		return {
 			// Even though Axios provides the `proxy` option to configure a proxy, this doesn't work and will
 			// always cause an HTTP 501 (see https://github.com/axios/axios/issues/3459). The workaround is to
