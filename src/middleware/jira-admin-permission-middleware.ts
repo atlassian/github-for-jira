@@ -5,6 +5,7 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Record<any, any>, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
+	req.log.info("fetchAndSaveUserJiraAdminStatus", req.session);
 	// We only need to fetch this from Jira if it doesn't exist in the session
 	if (req.session.isJiraAdmin !== undefined) {
 		return;
@@ -30,6 +31,8 @@ export const jiraAdminPermissionsMiddleware = async (req: Request, res: Response
 	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
 		return next();
 	}
+
+	req.log.info("jiraAdminPermissionsMiddleware", req.session);
 	const { isJiraAdmin } = req.session;
 
 	if (isJiraAdmin === undefined) {
