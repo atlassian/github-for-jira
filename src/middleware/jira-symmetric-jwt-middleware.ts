@@ -96,7 +96,9 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 		let tokenType;
 
 		if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
-			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
+			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET"
+				|| checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`) ? TokenType.normal
+				: TokenType.context;
 		} else {
 			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
 		}
