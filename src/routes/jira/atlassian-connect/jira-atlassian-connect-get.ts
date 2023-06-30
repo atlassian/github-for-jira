@@ -208,13 +208,6 @@ const logger = getLogger("atlassian-connect");
 	try {
 		await initializeModules();
 
-		if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
-			genericContainerActionUrls = [
-				modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
-				modules.jiraDevelopmentTool.actions.searchRepositories.templateUrl,
-				modules.jiraDevelopmentTool.actions.associateRepository.templateUrl
-			];
-		}
 	} catch (error) {
 		logger.error({ error }, "Error initializing modules");
 	}
@@ -223,6 +216,20 @@ const logger = getLogger("atlassian-connect");
 });
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
+
+	// Todo: remove on clean-up FF ENABLE_GENERIC_CONTAINERS
+	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions();
+
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+		genericContainerActionUrls = [
+			modules.jiraDevelopmentTool.actions.searchConnectedWorkspaces.templateUrl,
+			modules.jiraDevelopmentTool.actions.searchRepositories.templateUrl,
+			modules.jiraDevelopmentTool.actions.associateRepository.templateUrl
+		];
+	} else  {
+		genericContainerActionUrls = [];
+	}
+
 	res.status(200).json({
 		// Will need to be set to `true` once we verify the app will work with
 		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
