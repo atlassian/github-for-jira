@@ -19,6 +19,7 @@ $(".add-organization-link").click(function(event) {
 	const queryParameter = $(this).data("gh-cloud") ? "?resetSession=true" : "?ghRedirect=to&resetSession=true";
 	AP.context.getToken(function(token) {
 		const child = openChildWindow("/session/github/configuration" + queryParameter);
+		console.log("TOKEN: ", token);
 		child.window.jwt = token;
 	});
 });

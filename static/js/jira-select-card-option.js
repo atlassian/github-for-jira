@@ -38,6 +38,7 @@ $(document).ready(function() {
 
 		if (selectedVersion === "cloud") {
 			AP.context.getToken(function(token) {
+				console.log("token???", token);
 				const child = openChildWindow("/session/github/configuration?resetSession=true");
 				child.window.jwt = token;
 			});
