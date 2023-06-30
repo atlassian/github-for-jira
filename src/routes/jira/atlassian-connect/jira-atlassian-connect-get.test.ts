@@ -34,6 +34,12 @@ describe("Atlassian Connect", () => {
 					const jiraDevelopmentToolActions = response.body.modules.jiraDevelopmentTool.actions;
 					expect(response.body).toMatchSnapshot();
 					expect(Object.keys(jiraDevelopmentToolActions)).toEqual(["createBranch"]);
+					expect(Object.keys(jiraDevelopmentToolActions)).not.toEqual([
+						"createBranch",
+						"searchConnectedWorkspaces",
+						"searchRepositories",
+						"associateRepository"
+					]);
 				});
 		});
 
@@ -56,6 +62,7 @@ describe("Atlassian Connect", () => {
 						"searchRepositories",
 						"associateRepository"
 					]);
+					expect(Object.keys(jiraDevelopmentToolActions)).not.toEqual(["createBranch"]);
 				});
 		});
 
