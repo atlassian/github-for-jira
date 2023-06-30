@@ -6,12 +6,6 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 
-const turnFF_OnOff = (newStatus: boolean) => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.ENABLE_GENERIC_CONTAINERS, expect.anything())
-		.mockResolvedValue(newStatus);
-};
-
 describe("Atlassian Connect", () => {
 	let app: Express;
 
@@ -44,28 +38,24 @@ describe("Atlassian Connect", () => {
 		});
 
 		it("should return generic container actions when feature flag is enabled", async () => {
-			turnFF_OnOff(true);
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS
+			).mockResolvedValue(true);
 
-			return supertest(app)
+			const response = await supertest(app)
 				.get("/jira/atlassian-connect.json")
-				.expect(200)
-				.then(response => {
-					// removing keys that changes for every test run
-					delete response.body.baseUrl;
-					delete response.body.name;
-					delete response.body.key;
-					const jiraDevelopmentToolActions = response.body.modules.jiraDevelopmentTool.actions;
-					expect(response.body).toMatchSnapshot();
-					expect(Object.keys(jiraDevelopmentToolActions)).toEqual([
-						"createBranch",
-						"searchConnectedWorkspaces",
-						"searchRepositories",
-						"associateRepository"
-					]);
-					expect(Object.keys(jiraDevelopmentToolActions)).not.toEqual(["createBranch"]);
-				});
-		});
+				.expect(200);
 
+			const jiraDevelopmentToolActions = response.body.modules.jiraDevelopmentTool.actions;
+			expect(response.body).toMatchSnapshot();
+			expect(Object.keys(jiraDevelopmentToolActions)).toEqual([
+				"createBranch",
+				"searchConnectedWorkspaces",
+				"searchRepositories",
+				"associateRepository"
+			]);
+			expect(response).not.toEqual(["createBranch"]);
+		});
 	});
 
 });
