@@ -148,6 +148,15 @@ const modules = {
 			url: "/jira/connect/enterprise/app/{ac.uuid}",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "spa-index-page",
+			name: {
+				value: "GitHub for Jira SPA Index Page"
+			},
+			url: "/spa",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
