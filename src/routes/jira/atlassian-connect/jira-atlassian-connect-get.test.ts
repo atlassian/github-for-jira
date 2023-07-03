@@ -67,4 +67,32 @@ describe("Atlassian Connect", () => {
 			expect(Object.keys(jiraDevelopmentToolActions)).toEqual(["createBranch"]);
 		});
 	});
+
+	describe("Security info provider module", () => {
+		it("Should return jiraSecurityInfoProvider when security FF is enabled", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA
+			).mockResolvedValue(true);
+
+			const response = await supertest(app)
+				.get("/jira/atlassian-connect.json")
+				.expect(200);
+
+			expect(response.body).toMatchSnapshot();
+			expect(response.body.modules).toHaveProperty("jiraSecurityInfoProvider");
+		});
+
+		it("Should not return jiraSecurityInfoProvider module when security FF is disabled", async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA
+			).mockResolvedValue(false);
+
+			const response = await supertest(app)
+				.get("/jira/atlassian-connect.json")
+				.expect(200);
+
+			expect(response.body).toMatchSnapshot();
+			expect(response.body.modules).not.toHaveProperty("jiraSecurityInfoProvider");
+		});
+	});
 });
