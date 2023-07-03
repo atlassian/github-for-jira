@@ -282,12 +282,30 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
+		const resp =  await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
 			{
 				queryString,
 				order
 			}
 		);
+		if (!resp.data?.items?.length) {
+			if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+				try {
+					this.logger.warn({ queryString, order }, "Couldn't find repo, run curl for commands to get from github, try again with curl");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.restApiUrl}/search/repositories?q=${encodeURIComponent(queryString)}&order=${order}`,
+						method: "GET",
+						authorization: Authorization
+					});
+					logCurlOutputInChunks(output, this.logger);
+				} catch (curlE) {
+					this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
+				}
+			}
+		}
+		return resp;
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
