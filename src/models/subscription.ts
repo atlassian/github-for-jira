@@ -269,7 +269,7 @@ export class Subscription extends Model {
 				jiraHost: payload.host,
 				jiraClientKey: payload.hashedClientKey,
 				gitHubAppId: payload.gitHubAppId || null,
-				avatarUrl: payload.avatarUrl
+				avatarUrl: payload.avatarUrl || null
 			},
 			defaults: {
 				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
