@@ -1,8 +1,10 @@
 import { Server } from "http";
 import { Express } from "express";
 import httpProxy from "http-proxy";
-import { isNodeDev } from "utils/is-node-env";
+import { isNodeDev, isNodeProd } from "utils/is-node-env";
 
+const LOCAL_PORT = 5173;
+const PROD_PORT = 4173;
 /**
  * This is only for Dev environment,
  * You need to run spa separately by `yarn start`, which will be running at port `3000`,
@@ -11,7 +13,7 @@ import { isNodeDev } from "utils/is-node-env";
 const proxy = httpProxy.createProxyServer({
 	target: {
 		host: "localhost",
-		port: 5173,
+		port: isNodeProd() ? PROD_PORT : LOCAL_PORT,
 		path: "/spa"
 	},
 	ws: true
