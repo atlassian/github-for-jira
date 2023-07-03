@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import Button from '@atlaskit/button';
+import { useState } from "react";
+import Button from "@atlaskit/button";
 
 /**
  * This is just for testing
