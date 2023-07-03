@@ -45,7 +45,7 @@ export const getGenericContainerUrls = async (): Promise<string[] | null> => {
 			SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
 			SEARCH_REPOSITORIES_ENDPOINT,
 			ASSOCIATE_REPOSITORY_ENDPOINT
-		] as string[];
+		];
 	}
 
 	return null;

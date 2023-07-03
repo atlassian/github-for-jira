@@ -143,11 +143,9 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-const checkGenericContainerActionUrl = async (url: string) => {
+const checkGenericContainerActionUrl = async (url: string) : Promise<boolean | undefined> => {
 	const genericContainerActionUrls = await getGenericContainerUrls();
-	const urls = genericContainerActionUrls?.some(moduleUrl => {
+	return genericContainerActionUrls?.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
-
-	return urls;
 };
