@@ -48,7 +48,10 @@
 		"test:e2e:start:headed": "yarn test:e2e:start --headed",
 		"test:e2e:debug": "PWDEBUG=1 yarn test:e2e:headed",
 		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
-		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'"
+		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'",
+		"spa:dev": "vite",
+		"spa:build": "vite build",
+		"spa:preview": "vite preview"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
@@ -77,6 +80,7 @@
 		"hbs": "^4.1.2",
 		"helmet": "^3.21.2",
 		"hot-shots": "^8.3.2",
+		"http-proxy": "^1.18.1",
 		"https-proxy-agent": "5.0.0",
 		"ioredis": "^4.16.3",
 		"is-base64": "^1.1.0",
