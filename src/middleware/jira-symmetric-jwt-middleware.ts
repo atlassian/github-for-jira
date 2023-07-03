@@ -3,10 +3,14 @@ import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
 import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { genericContainerActionUrls, moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import {
+	getGenericContainerUrls,
+	moduleUrls
+} from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
 import { envVars } from "~/src/config/env";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	const authHeader = req.headers["authorization"] as string;
@@ -92,7 +96,16 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" || checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`)? TokenType.normal : TokenType.context;
+		let tokenType;
+
+		if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET"
+				|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`) ? TokenType.normal
+				: TokenType.context;
+		} else {
+			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		}
+
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
 	} catch (err) {
@@ -130,8 +143,9 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-const checkGenericContainerActionUrl = (url: string) => {
-	return genericContainerActionUrls.some(moduleUrl => {
+const checkGenericContainerActionUrl = async (url: string) : Promise<boolean | undefined> => {
+	const genericContainerActionUrls = await getGenericContainerUrls();
+	return genericContainerActionUrls?.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };
