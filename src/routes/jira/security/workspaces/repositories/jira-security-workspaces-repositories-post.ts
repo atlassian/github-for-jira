@@ -60,11 +60,13 @@ export const transformRepositories = async (
 };
 
 export const JiraSecurityWorkspacesRepositoriesPost = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to POST repositories");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security POST repositories");
 
 	const { ids: repoIds } = req.body;
 
 	if (!repoIds) {
+		// TODO: Return fetchContainers error handling spec once implemented
+		// https://hello.atlassian.net/wiki/spaces/CDX/pages/2639314030/RFC+Handle+fetchContainers+errors
 		const errMessage = Errors.MISSING_CONTAINER_IDS;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);

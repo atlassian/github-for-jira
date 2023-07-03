@@ -15,7 +15,7 @@ const getRepos = async (gitHubInstallationId: string, repoName: string): Promise
 };
 
 export const JiraSecurityWorkspacesRepositoriesGet = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security GET repositories");
 
 	const gitHubInstallationId = sanitizeHtml(req.query?.workspaceId as string);
 

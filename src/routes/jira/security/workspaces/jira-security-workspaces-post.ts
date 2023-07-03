@@ -62,7 +62,7 @@ const getSubscriptions = async (gitHubInstallationIds: string[]): Promise<Subscr
 };
 
 export const JiraSecurityWorkspacesPost = async (req: Request, res: Response): Promise<void> => {
-	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for POST workspaces");
+	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security POST workspaces");
 
 	const { ids: gitHubInstallationIds } = req.body;
 	const { jiraHost } = res.locals;
