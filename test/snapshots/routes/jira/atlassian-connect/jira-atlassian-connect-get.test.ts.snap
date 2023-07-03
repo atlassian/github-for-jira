@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Atlassian Connect Frontend Atlassian Connect should return correct connect app descriptor 1`] = `
+exports[`Atlassian Connect Generic Container endpoints should only return the create branch action when generic container FF is not enabled 1`] = `
 Object {
   "apiMigrations": Object {
     "gdpr": false,
@@ -10,7 +10,230 @@ Object {
   "authentication": Object {
     "type": "jwt",
   },
+  "baseUrl": "https://test-github-app-instance.com",
   "description": "Connect your code and your project with ease.",
+  "key": "com.github.integration.test-atlassian-instance",
+  "lifecycle": Object {
+    "disabled": "/jira/events/disabled",
+    "enabled": "/jira/events/enabled",
+    "installed": "/jira/events/installed",
+    "uninstalled": "/jira/events/uninstalled",
+  },
+  "modules": Object {
+    "adminPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin",
+        "location": "admin_plugins_menu/gh-addon-admin-section",
+        "name": Object {
+          "value": "Configure",
+        },
+        "url": "/jira",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin-old",
+        "location": "none",
+        "name": Object {
+          "value": "Configure",
+        },
+        "url": "/jira/configuration",
+      },
+    ],
+    "generalPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-select-product-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Select Product",
+        },
+        "url": "/jira/connect",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-server-url-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Url",
+        },
+        "url": "/jira/connect/enterprise?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-servers-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Enterprise Servers",
+        },
+        "url": "/jira/connect/enterprise",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-app-creation-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub App Creation",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-server-apps-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Apps",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-manual-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Manual App",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-edit-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Edit App",
+        },
+        "url": "/jira/connect/enterprise/app/{ac.uuid}",
+      },
+    ],
+    "jiraBuildInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-actions",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDeploymentInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-deployments",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDevelopmentTool": Object {
+      "actions": Object {
+        "createBranch": Object {
+          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
+        },
+      },
+      "application": Object {
+        "value": "GitHub",
+      },
+      "capabilities": Array [
+        "branch",
+        "commit",
+        "pull_request",
+      ],
+      "key": "github-development-tool",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub",
+      },
+      "url": "https://github.com",
+    },
+    "jiraRemoteLinkInfoProvider": Object {
+      "homeUrl": "https://github.com",
+      "key": "github-remotelinks-integration",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub",
+      },
+    },
+    "postInstallPage": Object {
+      "conditions": Array [
+        Object {
+          "condition": "user_is_admin",
+        },
+      ],
+      "key": "github-post-install-page",
+      "name": Object {
+        "value": "GitHub Configuration",
+      },
+      "url": "/jira",
+    },
+    "webSections": Array [
+      Object {
+        "key": "gh-addon-admin-section",
+        "location": "admin_plugins_menu",
+        "name": Object {
+          "value": "GitHub for Jira (test-atlassian-instance)",
+        },
+      },
+    ],
+  },
+  "name": "GitHub for Jira (test-atlassian-instance)",
+  "scopes": Array [
+    "READ",
+    "WRITE",
+    "DELETE",
+  ],
+  "vendor": Object {
+    "name": "Atlassian",
+    "url": "https://atlassian.com",
+  },
+}
+`;
+
+exports[`Atlassian Connect Generic Container endpoints should return generic container actions when feature flag is enabled 1`] = `
+Object {
+  "apiMigrations": Object {
+    "gdpr": false,
+    "signed-install": true,
+  },
+  "apiVersion": 1,
+  "authentication": Object {
+    "type": "jwt",
+  },
+  "baseUrl": "https://test-github-app-instance.com",
+  "description": "Connect your code and your project with ease.",
+  "key": "com.github.integration.test-atlassian-instance",
   "lifecycle": Object {
     "disabled": "/jira/events/disabled",
     "enabled": "/jira/events/enabled",
@@ -168,6 +391,225 @@ Object {
         },
         "searchRepositories": Object {
           "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search",
+        },
+      },
+      "application": Object {
+        "value": "GitHub",
+      },
+      "capabilities": Array [
+        "branch",
+        "commit",
+        "pull_request",
+      ],
+      "key": "github-development-tool",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub",
+      },
+      "url": "https://github.com",
+    },
+    "jiraRemoteLinkInfoProvider": Object {
+      "homeUrl": "https://github.com",
+      "key": "github-remotelinks-integration",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub",
+      },
+    },
+    "postInstallPage": Object {
+      "conditions": Array [
+        Object {
+          "condition": "user_is_admin",
+        },
+      ],
+      "key": "github-post-install-page",
+      "name": Object {
+        "value": "GitHub Configuration",
+      },
+      "url": "/jira",
+    },
+    "webSections": Array [
+      Object {
+        "key": "gh-addon-admin-section",
+        "location": "admin_plugins_menu",
+        "name": Object {
+          "value": "GitHub for Jira (test-atlassian-instance)",
+        },
+      },
+    ],
+  },
+  "name": "GitHub for Jira (test-atlassian-instance)",
+  "scopes": Array [
+    "READ",
+    "WRITE",
+    "DELETE",
+  ],
+  "vendor": Object {
+    "name": "Atlassian",
+    "url": "https://atlassian.com",
+  },
+}
+`;
+
+exports[`Atlassian Connect should return correct connect app descriptor 1`] = `
+Object {
+  "apiMigrations": Object {
+    "gdpr": false,
+    "signed-install": true,
+  },
+  "apiVersion": 1,
+  "authentication": Object {
+    "type": "jwt",
+  },
+  "description": "Connect your code and your project with ease.",
+  "lifecycle": Object {
+    "disabled": "/jira/events/disabled",
+    "enabled": "/jira/events/enabled",
+    "installed": "/jira/events/installed",
+    "uninstalled": "/jira/events/uninstalled",
+  },
+  "modules": Object {
+    "adminPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin",
+        "location": "admin_plugins_menu/gh-addon-admin-section",
+        "name": Object {
+          "value": "Configure",
+        },
+        "url": "/jira",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-admin-old",
+        "location": "none",
+        "name": Object {
+          "value": "Configure",
+        },
+        "url": "/jira/configuration",
+      },
+    ],
+    "generalPages": Array [
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-select-product-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Select Product",
+        },
+        "url": "/jira/connect",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-server-url-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Url",
+        },
+        "url": "/jira/connect/enterprise?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-servers-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Enterprise Servers",
+        },
+        "url": "/jira/connect/enterprise",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-app-creation-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub App Creation",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app?new={ac.new}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-list-server-apps-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Server Apps",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-manual-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Manual App",
+        },
+        "url": "/jira/connect/enterprise/{ac.connectConfigUuid}/app/new",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "github-edit-app-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub Edit App",
+        },
+        "url": "/jira/connect/enterprise/app/{ac.uuid}",
+      },
+    ],
+    "jiraBuildInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-actions",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDeploymentInfoProvider": Object {
+      "homeUrl": "https://github.com/features/actions",
+      "key": "github-deployments",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Actions",
+      },
+    },
+    "jiraDevelopmentTool": Object {
+      "actions": Object {
+        "createBranch": Object {
+          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
         },
       },
       "application": Object {
