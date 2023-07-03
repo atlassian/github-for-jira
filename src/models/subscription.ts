@@ -128,8 +128,9 @@ export class Subscription extends Model {
 		gitHubInstallationId: number,
 		repoName: string
 	): Promise<RepoSyncStateAndSubscription[]> {
+		// TODO: Replace 200 limit with pagination in ISOC-3699
 		const page = 1;
-		const limit = 100;
+		const limit = 200;
 		const offset = (page - 1) * limit;
 
 		const results = await this.sequelize!.query(
