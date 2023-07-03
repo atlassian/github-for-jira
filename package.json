@@ -50,7 +50,7 @@
 		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
 		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'",
 		"spa:dev": "cd spa && yarn dev",
-		"spa:production": "cd spa && yarn build && yarn preview"
+		"spa:production": "cd spa && yarn && yarn build && yarn preview"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
