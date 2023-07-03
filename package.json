@@ -15,7 +15,7 @@
 		"start": "run-p spa:dev start:main start:worker",
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
 		"start:worker": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
-		"start:production": "run-p spa:production start:main:production start:worker:production",
+		"start:production": "run-p start:main:production start:worker:production",
 		"start:main:production": "node -r tsconfig-paths/register src/main",
 		"start:worker:production": "node -r tsconfig-paths/register src/worker",
 		"setup": "dotenv -- ts-node -r tsconfig-paths/register prestart.ts",
@@ -50,7 +50,7 @@
 		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
 		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'",
 		"spa:dev": "cd spa && yarn dev",
-		"spa:production": "cd spa && yarn && yarn build && yarn preview"
+		"spa:build": "etc/spa-build/spa-build.sh"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",
