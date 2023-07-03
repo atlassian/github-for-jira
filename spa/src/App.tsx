@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import Button from '@atlaskit/button';
 
+/**
+ * This is just for testing
+ * TODO: Remove this dummy component and add the actual ones
+ */
 const App = () => {
   const [count, setCount] = useState(0);
 
