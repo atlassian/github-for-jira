@@ -1,0 +1,25 @@
+.container {
+    margin: 0 auto;
+    width: 80%;
+    text-align: center;
+    padding: 5%
+}
+
+.logo-container {
+    display: inline-flex;
+    align-items: center;
+}
+
+.logo {
+    height: 64px;
+    padding: 8px;
+}
+
+.sync-logo {
+    height: 40px;
+    padding: 8px;
+}
+
+.title {
+    margin: 36px 0 0;
+}
