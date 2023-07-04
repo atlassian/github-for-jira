@@ -1,8 +1,7 @@
-import "@atlaskit/css-reset";
-import "../styles/SyncHeader.css";
+import "../styles/sync-header.css";
 
 const SyncHeader = () => (
-	<div className="container">
+	<div className="center-align">
 		<div className="logo-container">
 			<img className="logo" src="public/assets/jira-logo.svg" alt=""/>
 			<img className="sync-logo" src="public/assets/sync.svg" alt=""/>
