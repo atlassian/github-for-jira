@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { NextFunction, Request, Response, Router, static as Static } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -17,6 +17,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
+import path from "path";
 
 export const RootRouter = Router();
 
@@ -49,6 +50,13 @@ RootRouter.use(LogMiddleware);
 
 // Static Assets
 RootRouter.use("/public", PublicRouter);
+
+/**
+ * For PROD
+ * This route is for the production version of `spa`
+ * We are simply associating `index.html` under the `dist` folder to the router `spa`
+ */
+RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/dist")));
 
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
