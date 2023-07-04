@@ -15,7 +15,7 @@ describe("Atlassian Connect", () => {
 
 	it("should return correct connect app descriptor", () => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GENERIC_CONTAINERS
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 		).mockResolvedValue(false);
 
 		return supertest(app)
@@ -33,7 +33,7 @@ describe("Atlassian Connect", () => {
 	describe("Generic Container endpoints", () => {
 		it("should return generic container actions when feature flag is enabled", async () => {
 			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(true);
 
 			const response = await supertest(app)
