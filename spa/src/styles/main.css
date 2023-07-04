@@ -1,7 +1,10 @@
 .container {
     margin: 0 auto;
     width: 80%;
-    padding: 5%;
+    height: calc(100vh - 56px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .center-align {
