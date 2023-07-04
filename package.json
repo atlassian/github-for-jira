@@ -26,8 +26,8 @@
 		"lint:ts": "eslint . --ext .ts,.tsx",
 		"lint:yaml": "yamllint github-for-jira.sd.yml",
 		"pretest": "NODE_ENV=test run-p clean setup db:test",
-		"test": "jest --runInBand --forceExit --coverage",
-		"test:watch": "jest --runInBand --watchAll --coverage=false",
+		"test": "jest --runInBand --forceExit --coverage && yarn spa:test",
+		"test:watch": "jest --runInBand --watchAll --coverage=false && yarn spa:test",
 		"db": "run-s db:create db:migrate",
 		"db:create": "run-p db:create:dev db:create:test",
 		"db:create:dev": "dotenv -c development -- sequelize db:create || exit 0",
@@ -50,7 +50,8 @@
 		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
 		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'",
 		"spa:dev": "cd spa && yarn dev",
-		"spa:build": "etc/spa-build/spa-build.sh"
+		"spa:build": "etc/spa-build/spa-build.sh",
+		"spa:test": "cd spa && yarn test"
 	},
 	"dependencies": {
 		"@atlaskit/css-reset": "^2.0.5",

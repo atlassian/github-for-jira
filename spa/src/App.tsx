@@ -11,9 +11,8 @@ const App = () => {
 	return (
     <>
 			<h1>SPA</h1>
-			<Button onClick={() => setCount((count) => count + 1)}>
-				count is {count}
-			</Button>
+			<p>count is {count}</p>
+			<Button onClick={() => setCount((count) => count + 1)}>Click</Button>
     </>
   );
 };
