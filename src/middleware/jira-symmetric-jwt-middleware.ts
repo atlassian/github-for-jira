@@ -148,13 +148,7 @@ const checkPathValidity = (url: string) => {
 export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
 	const genericContainerActionUrls = await getGenericContainerUrls();
 
-	const urls = genericContainerActionUrls
-		?.filter(moduleUrl => {
-			return !moduleUrl.includes("create-branch");
-		})
-		.some(moduleUrl => {
-			return matchRouteWithPattern(moduleUrl, url);
-		});
-
-	return urls;
+	return genericContainerActionUrls?.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
 };
