@@ -140,6 +140,19 @@ Object {
         },
         "url": "/jira/connect/enterprise/app/{ac.uuid}",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "spa-index-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira SPA Index Page",
+        },
+        "url": "/spa",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
@@ -360,6 +373,19 @@ Object {
           "value": "GitHub Edit App",
         },
         "url": "/jira/connect/enterprise/app/{ac.uuid}",
+      },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "spa-index-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira SPA Index Page",
+        },
+        "url": "/spa",
       },
     ],
     "jiraBuildInfoProvider": Object {
