@@ -90,21 +90,23 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
+export const getTokenType = async (url: string, method: string): Promise<TokenType> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+		return checkPathValidity(url) && method == "GET"
+		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
+			: TokenType.context;
+	} else {
+		return checkPathValidity(url) && method == "GET" ? TokenType.normal : TokenType.context;
+	}
+};
+
 const verifySymmetricJwt = async (req: Request, token: string, installation: Installation) => {
 	const algorithm = getAlgorithm(token);
 	const secret = await installation.decrypt("encryptedSharedSecret", req.log);
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		let tokenType;
-
-		if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
-			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET"
-				|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${req.originalUrl}`) ? TokenType.normal
-				: TokenType.context;
-		} else {
-			tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
-		}
+		const tokenType = await getTokenType(req.originalUrl, req.method);
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
@@ -143,9 +145,16 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-const checkGenericContainerActionUrl = async (url: string) : Promise<boolean | undefined> => {
+export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
 	const genericContainerActionUrls = await getGenericContainerUrls();
-	return genericContainerActionUrls?.some(moduleUrl => {
-		return matchRouteWithPattern(moduleUrl, url);
-	});
+
+	const urls = genericContainerActionUrls
+		?.filter(moduleUrl => {
+			return !moduleUrl.includes("create-branch");
+		})
+		.some(moduleUrl => {
+			return matchRouteWithPattern(moduleUrl, url);
+		});
+
+	return urls;
 };
