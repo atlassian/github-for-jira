@@ -90,10 +90,10 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-export const getTokenType = async (url: string, method: string): Promise<TokenType> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+export const getTokenType = async (url: string, method: string, jiraHost: string): Promise<TokenType> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return checkPathValidity(url) && method == "GET"
-		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
+		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`, jiraHost) ? TokenType.normal
 			: TokenType.context;
 	} else {
 		return checkPathValidity(url) && method == "GET" ? TokenType.normal : TokenType.context;
@@ -106,7 +106,7 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 	try {
 		const claims = decodeSymmetric(token, secret, algorithm, false);
-		const tokenType = await getTokenType(req.originalUrl, req.method);
+		const tokenType = await getTokenType(req.originalUrl, req.method, installation.jiraHost);
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
@@ -145,8 +145,8 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
-	const genericContainerActionUrls = await getGenericContainerUrls();
+export const checkGenericContainerActionUrl = async (url: string, jiraHost: string): Promise<boolean | undefined> => {
+	const genericContainerActionUrls = await getGenericContainerUrls(jiraHost);
 
 	return genericContainerActionUrls?.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);

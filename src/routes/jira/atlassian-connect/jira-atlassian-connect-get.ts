@@ -38,8 +38,8 @@ const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
 
-export const getGenericContainerUrls = async (): Promise<string[] | null> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+export const getGenericContainerUrls = async (jiraHost: string): Promise<string[] | null> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return [
 			SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
 			SEARCH_REPOSITORIES_ENDPOINT,
@@ -50,8 +50,8 @@ export const getGenericContainerUrls = async (): Promise<string[] | null> => {
 	return null;
 };
 
-const defineJiraDevelopmentToolModuleActions = async (): Promise<JiraDevelopmentToolActions> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return {
 			createBranch: {
 				templateUrl: CREATE_BRANCH_ENDPOINT
@@ -236,7 +236,8 @@ const	modules = {
 };
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
-	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions();
+	const { jiraHost } =  res.locals;
+	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
 
 	res.status(200).json({
 		apiMigrations: {
