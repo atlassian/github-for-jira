@@ -13,6 +13,7 @@
   "dependencies": {
     "@atlaskit/button": "^16.8.0",
     "@atlaskit/css-reset": "^6.5.2",
+    "@atlaskit/icon": "^21.12.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.1"
