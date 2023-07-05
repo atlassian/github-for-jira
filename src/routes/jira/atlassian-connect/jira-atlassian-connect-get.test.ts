@@ -91,29 +91,60 @@ describe("Atlassian Connect", () => {
 
 	describe("Security info provider module", () => {
 		it("Should return jiraSecurityInfoProvider when security FF is enabled", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA
-			).mockResolvedValue(true);
+			when(booleanFlag)
+				.calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)
+				.mockResolvedValue(true);
 
-			const response = await supertest(app)
-				.get("/jira/atlassian-connect.json")
-				.expect(200);
+			const mockJson = jest.fn();
+			const mockStatus = jest.fn(() => ({ json: mockJson }));
 
-			expect(response.body).toMatchSnapshot();
-			expect(response.body.modules).toHaveProperty("jiraSecurityInfoProvider");
+			await JiraAtlassianConnectGet(
+				{ log: getLogger("test") } as any,
+				{
+					status: mockStatus,
+					locals: { jiraHost }
+				} as any
+			);
+
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(
+				mockJson.mock.calls[0][0].modules.jiraSecurityInfoProvider
+			).toMatchObject({
+				actions: {
+					fetchContainers: {
+						templateUrl:
+							"https://test-github-app-instance.com/jira/security/workspaces/containers/search"
+					}
+				},
+				documentationUrl: "https://docs.github.com/code-security",
+				homeUrl: "https://github.com",
+				key: "github-security",
+				logoUrl:
+					"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+				name: { value: "GitHub Security" }
+			});
 		});
 
-		it("Should not return jiraSecurityInfoProvider module when security FF is disabled", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA
-			).mockResolvedValue(false);
+		it("Should not return jiraSecurityInfoProvider module when security FF is not enabled", async () => {
+			when(booleanFlag)
+				.calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)
+				.mockResolvedValue(false);
 
-			const response = await supertest(app)
-				.get("/jira/atlassian-connect.json")
-				.expect(200);
+			const mockJson = jest.fn();
+			const mockStatus = jest.fn(() => ({ json: mockJson }));
 
-			expect(response.body).toMatchSnapshot();
-			expect(response.body.modules).not.toHaveProperty("jiraSecurityInfoProvider");
+			await JiraAtlassianConnectGet(
+				{ log: getLogger("test") } as any,
+				{
+					status: mockStatus,
+					locals: { jiraHost }
+				} as any
+			);
+
+			expect(mockStatus).toHaveBeenCalledWith(200);
+			expect(mockJson.mock.calls[0][0].modules).not.toHaveProperty(
+				"jiraSecurityInfoProvider"
+			);
 		});
 	});
 });

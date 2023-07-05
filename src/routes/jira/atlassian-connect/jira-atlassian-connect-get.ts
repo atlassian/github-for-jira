@@ -78,14 +78,6 @@ const jiraSecurityInfoProvider = {
 	actions: {
 		fetchContainers: {
 			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
-		},
-		fetchWorkspaces: {
-			// TODO: implement this endpoint
-			templateUrl: ""
-		},
-		searchContainers: {
-			// TODO: implement this endpoint
-			templateUrl: ""
 		}
 	},
 	"name": {
@@ -95,9 +87,7 @@ const jiraSecurityInfoProvider = {
 };
 
 export const securityContainerActionUrls = [
-	jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl,
-	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
-	jiraSecurityInfoProvider.actions.searchContainers.templateUrl
+	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl
 ];
 
 const	modules = {
@@ -259,6 +249,7 @@ const	modules = {
 		}
 	]
 };
+
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	const { jiraHost } =  res.locals;
