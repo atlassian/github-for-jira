@@ -57,6 +57,10 @@ RootRouter.use("/public", PublicRouter);
  * We are simply associating `index.html` under the `dist` folder to the router `spa`
  */
 RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/dist")));
+RootRouter.use([
+	"/spa/spa-assets", // For fetching the assets in Production build
+	"/spa-assets" // For fetching the assets in local development environment
+], Static(path.join(process.cwd(), "static/assets")));
 
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);

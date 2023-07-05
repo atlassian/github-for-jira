@@ -27,9 +27,9 @@ const Title = styled.h2`
 const SyncHeader = () => (
 	<HeaderWrapper>
 		<LogoContainer>
-			<Logo className="logo" src="public/assets/jira-logo.svg" alt=""/>
-			<SyncLogo className="sync-logo" src="public/assets/sync.svg" alt=""/>
-			<Logo className="logo" src="public/assets/github-logo.svg" alt=""/>
+			<Logo className="logo" src="spa-assets/jira-logo.svg" alt=""/>
+			<SyncLogo className="sync-logo" src="spa-assets/sync.svg" alt=""/>
+			<Logo className="logo" src="spa-assets/github-logo.svg" alt=""/>
 		</LogoContainer>
 		<Title>Connect Github to Jira</Title>
 	</HeaderWrapper>
