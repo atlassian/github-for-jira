@@ -151,7 +151,7 @@ describe("Workspaces Get", () => {
 
 	beforeEach(async () => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GENERIC_CONTAINERS
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 		).mockResolvedValue(true);
 
 		installation = await Installation.install({
