@@ -6,8 +6,8 @@ import UnlockIcon from "@atlaskit/icon/glyph/unlock";
 import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
-import SyncHeader from "../components/SyncHeader";
-import { Wrapper } from "../styles/Wrapper";
+import SyncHeader from "../../components/SyncHeader";
+import { Wrapper } from "../../common/Wrapper";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle", "#44546F")};

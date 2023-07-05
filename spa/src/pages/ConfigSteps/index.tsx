@@ -1,5 +1,5 @@
-import SyncHeader from "../components/SyncHeader";
-import { Wrapper } from "../styles/Wrapper";
+import SyncHeader from "../../components/SyncHeader";
+import { Wrapper } from "../../common/Wrapper";
 
 /**
  * This is the second page with steps,
