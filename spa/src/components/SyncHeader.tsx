@@ -1,3 +1,4 @@
+import { token } from "@atlaskit/tokens";
 import styled from "@emotion/styled";
 
 const HeaderWrapper = styled.div`
@@ -10,16 +11,16 @@ const LogoContainer = styled.div`
 `;
 
 const Logo = styled.img`
-	height: 64px;
-	padding: 8px;
+	height: ${token("space.800", "64px")};
+	padding: ${token("space.100", "8px")};
 `;
 
 const SyncLogo = styled.img`
-	height: 40px;
-	padding: 8px;
+	height: ${token("space.500", "40px")};
+	padding: ${token("space.100", "8px")};
 `;
 const Title = styled.h2`
-	margin: 36px 0 0;
+	margin: ${token("space.400", "32px")} ${token("space.0", "0px")}; ${token("space.0", "0px")};;
 `;
 
 
