@@ -53,12 +53,13 @@ const InlineDialog = styled(TooltipPrimitive)`
 	top: -22px;
 `;
 
+const GITHUB_CLOUD_ORG_SETTINGS_URL = "https://github.com/settings/organizations";
+
 const InlineDialogContent = () => (
 	<>
 		<InlineDialogDiv>To check your GitHub permissions:</InlineDialogDiv>
 		<ol>
-			{/* TODO: Add the URL for this link */}
-			<li>Go to <a href="">manage organizations</a></li>
+			<li>Go to <a href={GITHUB_CLOUD_ORG_SETTINGS_URL} target="_blank">manage organizations</a></li>
 			<li>Your permission level will be next to your organization name.</li>
 		</ol>
 		<InlineDialogImgContainer>
