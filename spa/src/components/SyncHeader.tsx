@@ -11,18 +11,17 @@ const LogoContainer = styled.div`
 `;
 
 const Logo = styled.img`
-	height: ${token("space.800", "64px")};
-	padding: ${token("space.100", "8px")};
+	height: ${token("space.800")};
+	padding: ${token("space.100")};
 `;
 
 const SyncLogo = styled.img`
-	height: ${token("space.500", "40px")};
-	padding: ${token("space.100", "8px")};
+	height: ${token("space.500")};
+	padding: ${token("space.100")};
 `;
 const Title = styled.h2`
-	margin: ${token("space.400", "32px")} ${token("space.0", "0px")} ${token("space.0", "0px")};
+	margin: ${token("space.400")} ${token("space.0")} ${token("space.0")};
 `;
-
 
 const SyncHeader = () => (
 	<HeaderWrapper>

@@ -10,45 +10,45 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 
 const BeforeText = styled.div`
-	color: ${token("color.text.subtle", "#44546F")};
-	margin: ${token("space.300", "24px")} ${token("space.0", "0px")};
+	color: ${token("color.text.subtle")};
+	margin: ${token("space.300")};
 	text-align: center;
 `;
 const ListContainer = styled.div`
-	background: ${token("color.background.input.hovered", "#F7F8F9")};
+	background: ${token("color.background.input.hovered")};
 	max-width: 368px;
-	padding: ${token("space.250", "20px")};
-	border-radius: ${token("space.050", "4px")};
+	padding: ${token("space.250")};
+	border-radius: ${token("space.050")};
 	margin: 0 auto;
 `;
 const ListItem = styled.div`
 	display: flex;
-	margin-bottom: ${token("space.075", "6px")};
+	margin-bottom: ${token("space.075")};
 `;
 const Logo = styled.div`
-	margin: ${token("space.025", "2px")} ${token("space.075", "6px")} 0 0;
+	margin: ${token("space.025")} ${token("space.075")} 0 0;
 `;
 const ButtonContainer = styled.div`
 	text-align: center;
-	margin: ${token("space.300", "24px")} 0 0;
+	margin: ${token("space.300")} 0 0;
 `;
 const InlineDialogLink = styled.a`
 	cursor: pointer;
 `;
 const InlineDialogDiv = styled.div`
-	padding-left: ${token("space.150", "12px")};
+	padding-left: ${token("space.150")};
 `;
 const InlineDialogImgContainer = styled.div`
 	height: 180px;
 	text-align: center;
-	padding-bottom: ${token("space.150", "12px")};
+	padding-bottom: ${token("space.150")};
 `;
 const InlineDialog = styled(TooltipPrimitive)`
 	background: white;
-	border-radius: ${token("space.050", "4px")};
+	border-radius: ${token("space.050")};
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	box-sizing: content-box;
-	padding: ${token("space.100", "8px")} ${token("space.150", "12px")};
+	padding: ${token("space.100")} ${token("space.150")};
 	position: absolute;
 	top: -22px;
 `;
@@ -57,7 +57,7 @@ const InlineDialogContent = () => (
 	<>
 		<InlineDialogDiv>To check your GitHub permissions:</InlineDialogDiv>
 		<ol>
-			{/* TODO: Add the URL for this link*/}
+			{/* TODO: Add the URL for this link */}
 			<li>Go to <a href="">manage organizations</a></li>
 			<li>Your permission level will be next to your organization name.</li>
 		</ol>

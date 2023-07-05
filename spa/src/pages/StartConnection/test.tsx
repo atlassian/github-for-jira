@@ -20,5 +20,4 @@ test("Entry Config Screen", async () => {
 
 	await userEvent.click(screen.getByRole("button"));
 	expect(window.location.pathname).toBe("/steps");
-
 });
