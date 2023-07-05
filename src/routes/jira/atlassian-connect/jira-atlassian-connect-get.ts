@@ -46,7 +46,7 @@ export const getGenericContainerUrls = async (): Promise<string[]> => {
 	];
 };
 
-const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
+export const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
 	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return {
 			createBranch: {
