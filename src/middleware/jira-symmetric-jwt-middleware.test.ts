@@ -249,7 +249,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				});
 
 			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/search", jiraHost))
+				"https://test-github-app-instance.com/jira/workspaces/search"))
 				.toBeTruthy();
 		});
 
@@ -276,7 +276,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 				});
 
 			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas", jiraHost))
+				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
 				.toBeTruthy();
 		});
 
@@ -298,7 +298,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate", jiraHost)).toBeTruthy();
+			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
 		});
 
 		it("should return false for create branch", async () => {
@@ -311,7 +311,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					}));
 
 			expect(await checkGenericContainerActionUrl(
-				"https://test-github-app-instance.com/create-branch-options", jiraHost))
+				"https://test-github-app-instance.com/create-branch-options"))
 				.toBeFalsy();
 		});
 	});

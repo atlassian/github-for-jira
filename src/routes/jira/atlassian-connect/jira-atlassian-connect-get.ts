@@ -38,16 +38,12 @@ const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
 
-export const getGenericContainerUrls = async (jiraHost: string): Promise<string[] | null> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
-		return [
-			SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
-			SEARCH_REPOSITORIES_ENDPOINT,
-			ASSOCIATE_REPOSITORY_ENDPOINT
-		];
-	}
-
-	return null;
+export const getGenericContainerUrls = async (): Promise<string[]> => {
+	return [
+		SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
+		SEARCH_REPOSITORIES_ENDPOINT,
+		ASSOCIATE_REPOSITORY_ENDPOINT
+	];
 };
 
 const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {

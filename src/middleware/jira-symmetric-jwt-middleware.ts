@@ -93,7 +93,7 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 export const getTokenType = async (url: string, method: string, jiraHost: string): Promise<TokenType> => {
 	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return checkPathValidity(url) && method == "GET"
-		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`, jiraHost) ? TokenType.normal
+		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
 			: TokenType.context;
 	} else {
 		return checkPathValidity(url) && method == "GET" ? TokenType.normal : TokenType.context;
@@ -145,8 +145,8 @@ const checkPathValidity = (url: string) => {
 	});
 };
 
-export const checkGenericContainerActionUrl = async (url: string, jiraHost: string): Promise<boolean | undefined> => {
-	const genericContainerActionUrls = await getGenericContainerUrls(jiraHost);
+export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
+	const genericContainerActionUrls = await getGenericContainerUrls();
 
 	return genericContainerActionUrls?.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
