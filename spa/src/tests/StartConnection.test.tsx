@@ -1,12 +1,24 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
 import StartConnection from "./../pages/StartConnection";
 
-/**
- * This is a test case for the dummy component
- * TODO: Remove this dummy component test case and add the actual ones
- */
-test("Testing the dummy component", async () => {
-	render(<StartConnection />);
-	expect(screen.queryByText("Connect GitHub to Jira")).toBeTruthy();
+test("Entry Config Screen", async () => {
+	render(
+		<BrowserRouter>
+			<StartConnection />
+		</BrowserRouter>
+	);
+
+	expect(screen.getByText("Connect Github to Jira")).toBeTruthy();
+	expect(screen.getByText("Before you start, you'll need:")).toBeTruthy();
+	expect(screen.getByText("A GitHub account")).toBeTruthy();
+	expect(screen.getByText("Owner permission for a GitHub organization")).toBeTruthy();
+	expect(screen.getByRole("button")).toHaveTextContent("Continue");
+	expect(window.location.pathname).toBe("/");
+
+	await userEvent.click(screen.getByRole("button"));
+	expect(window.location.pathname).toBe("/steps");
+
 });
