@@ -4,7 +4,8 @@ import { noop } from "lodash";
 import supertest from "supertest";
 import { getLogger } from "~/src/config/logger";
 import {
-	checkGenericContainerActionUrl, getTokenType,
+	checkGenericContainerActionUrl,
+	getTokenType,
 	jiraSymmetricJwtMiddleware
 } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
@@ -225,7 +226,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			});
 
 			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(true);
 		});
 
@@ -328,7 +329,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			});
 
 			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_GENERIC_CONTAINERS
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(true);
 		});
 
@@ -350,7 +351,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/search", "GET")).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/search", "GET", jiraHost)).toEqual("normal");
 		});
 
 		it("should return normal tokenType for search repositories", async () => {
@@ -375,7 +376,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					)}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET")).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET", jiraHost)).toEqual("normal");
 		});
 
 		it("should return normal tokenType for associate repository", async () => {
@@ -396,7 +397,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 					authorization: `JWT ${await generateJwt()}`
 				});
 
-			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST")).toEqual("normal");
+			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST", jiraHost)).toEqual("normal");
 		});
 
 		it("should return context tokenType for create branch", async () => {
@@ -408,7 +409,7 @@ describe("jiraSymmetricJwtMiddleware", () => {
 						githubToken: "random-token"
 					}));
 
-			expect(await getTokenType("/create-branch-options", "GET")).toEqual("context");
+			expect(await getTokenType("/create-branch-options", "GET", jiraHost)).toEqual("context");
 		});
 	});
 
