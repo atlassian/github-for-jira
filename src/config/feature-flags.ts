@@ -28,6 +28,7 @@ export enum BooleanFlags {
 	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
+	ENABLE_DEDUP_BACKFILL_SQS_MSG = "enable-dedup-backfill-sqs-msg",
 }
 
 export enum StringFlags {

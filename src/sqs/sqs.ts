@@ -8,6 +8,7 @@ import { sqsQueueMetrics } from "config/metric-names";
 import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
 import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
 import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
+import { trySaveMessageToRedisForDedup, isBackfillMessagePresentAndValidAsSQSVisibilityHidden } from "./backfill-sqs-msg-dedup-helper";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
 const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
@@ -84,7 +85,10 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 			.promise();
 		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags, { jiraHost: payload.jiraHost });
-		return sendMessageResult;
+		return {
+			delaySeconds: delaySec,
+			...sendMessageResult
+		};
 	}
 
 	/**
@@ -242,6 +246,29 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		}
 	}
 
+	public async deleteDuplicatedBackfillMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
+
+		if (this.queueName !== "backfill") {
+			return false;
+		}
+
+		if (!await booleanFlag(BooleanFlags.ENABLE_DEDUP_BACKFILL_SQS_MSG, jiraHost)) {
+			return false;
+		}
+
+		context.log.info("FF for enable dedup sqs msg on backfill is true, now looking at the backfill msg from redis");
+		if (!await isBackfillMessagePresentAndValidAsSQSVisibilityHidden(message.MessageId, message.Body, context.log)) {
+			return false;
+		}
+
+		context.log.info({ jiraHost, payload: message.Body }, "Found duplicated backfill msg, deleting it now");
+		await this.deleteMessage(context);
+		context.log.info({ jiraHost, payload: message.Body }, "Found duplicated backfill msg, deleted");
+
+		return true;
+
+	}
+
 	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
 		if (!await booleanFlag(BooleanFlags.REMOVE_STALE_MESSAGES, jiraHost)) {
 			return false;
@@ -303,6 +330,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		try {
 			const messageProcessingStartTime = Date.now();
 			if (await this.deleteStaleMessages(message, context, payload?.jiraHost)) return;
+			if (await this.deleteDuplicatedBackfillMessages(message, context, payload?.jiraHost)) return;
 
 			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
 			if (rateLimitCheckResult.isExceedThreshold) {
@@ -311,7 +339,15 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				// Next step is to postpone the processing.
 				// For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
 				// Therefore, sending a new msg instead of keep polling GitHub until rate limit is raised.
-				const { MessageId } = await this.sendMessage({ ...payload, rateLimited: true }, rateLimitCheckResult.resetTimeInSeconds, context.log);
+				const { MessageId, delaySeconds } = await this.sendMessage({ ...payload, rateLimited: true }, rateLimitCheckResult.resetTimeInSeconds, context.log);
+
+				if (this.queueName === "backfill") {
+					if (await booleanFlag(BooleanFlags.ENABLE_DEDUP_BACKFILL_SQS_MSG, context.payload?.jiraHost)) {
+						context.log.info("FF for enable dedup sqs msg on backfill is true, try save the backfill msg into redis");
+						await trySaveMessageToRedisForDedup(MessageId, message.Body, delaySeconds * 1000, context.log);
+					}
+				}
+
 				await this.deleteMessage(context);
 				context.log.warn({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
 				return;
@@ -319,7 +355,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
-			await this.changeVisibilityTimeout(message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, context.log);
+			await this.changeVisibilityTimeout(context, message, this.timeoutSec + EXTRA_VISIBILITY_TIMEOUT_DELAY, context.log);
 
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(() => reject(new SqsTimeoutError()), this.timeoutSec * 1000)
@@ -358,18 +394,18 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				await this.deleteMessage(context);
 			} else {
 				context.log.warn({ err }, "SQS message visibility timeout changed");
-				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
+				await this.changeVisibilityTimeoutIfNeeded(context, errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
 
-	private async changeVisibilityTimeoutIfNeeded(errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger) {
+	private async changeVisibilityTimeoutIfNeeded(context: SQSMessageContext<MessagePayload>, errorHandlingResult: ErrorHandlingResult, message: Message, log: Logger) {
 		const retryDelaySec = errorHandlingResult.retryDelaySec;
 		if (retryDelaySec !== undefined /*zero seconds delay is also supported*/) {
 			log.info(`Delaying the retry for ${retryDelaySec} seconds`);
-			await this.changeVisibilityTimeout(message, retryDelaySec, log);
+			await this.changeVisibilityTimeout(context, message, retryDelaySec, log);
 		}
 	}
 
@@ -377,7 +413,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	private async changeVisibilityTimeout(context: SQSMessageContext<MessagePayload>, message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;
@@ -400,6 +436,14 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 		};
 		try {
 			await this.sqs.changeMessageVisibility(params).promise();
+
+			if (this.queueName === "backfill") {
+				if (await booleanFlag(BooleanFlags.ENABLE_DEDUP_BACKFILL_SQS_MSG, context.payload?.jiraHost)) {
+					context.log.info("FF for enable dedup sqs msg on backfill is true, try save the backfill msg into redis");
+					await trySaveMessageToRedisForDedup(message.MessageId, message.Body, params.VisibilityTimeout * 1000, context.log);
+				}
+			}
+
 		} catch (err) {
 			logger.error("Message visibility timeout change failed");
 		}
