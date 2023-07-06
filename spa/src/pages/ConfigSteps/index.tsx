@@ -29,6 +29,8 @@ const TooltipContainer = styled.div`
 `;
 const GitHubOption = styled.div<GitHubOptionType>`
 	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : token("color.background.neutral")};
+	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
+	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
