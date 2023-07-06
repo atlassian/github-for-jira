@@ -13,7 +13,7 @@ import { envVars } from "~/src/config/env";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const authHeader = req.headers["authorization"] as string;
+	const authHeader = req	.headers["authorization"] as string;
 	const authHeaderPrefix = "JWT ";
 	const token = req.query?.["jwt"]
 		|| req.cookies?.["jwt"] || req.body?.["jwt"]
