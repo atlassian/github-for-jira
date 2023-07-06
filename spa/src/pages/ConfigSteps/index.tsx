@@ -64,18 +64,16 @@ const ConfigSteps = () => {
 
 	const authorize = () => {
 		switch (selectedOption) {
-			// TODO: Authorize
 			case 1:
+				// TODO: Authorize
 				setCompletedStep1(!completedStep1);
 				setCanViewContentForStep2(!canViewContentForStep2);
 				break;
 			case 2:
-				AP.navigator.go(
-					"addonmodule",
-					{
-						moduleKey: "github-server-url-page"
-					}
-				);
+				AP.getLocation((location: string) => {
+					const GHEServerUrl = location.replace("/spa-index-page", "/github-server-url-page");
+					window.open(GHEServerUrl);
+				});
 				break;
 			default:
 		}

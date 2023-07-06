@@ -1,8 +1,8 @@
 declare const AP: AtlassianPlugin;
 
 interface AtlassianPlugin {
+	getLocation: (...args) => void;
 	navigator: {
-		getLocation: () => void;
 		go: (...args) => void;
 		reload: () => void;
 	}
