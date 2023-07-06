@@ -246,4 +246,14 @@ describe("Test getting a jira client", () => {
 		const jiraRes = await client.devinfo.repository.delete(123, "https://githubBaseTest.com");
 		expect(jiraRes[0].status).toEqual(202);
 	});
+
+	it("Should return success response for the linked workspace API", async () => {
+
+		jiraNock.post("/rest/security/1.0/linkedWorkspaces/bulk", {
+			"workspaceIds": ["test-org-id"]
+		}).reply(202);
+
+		const jiraRes = await client.linkedWorkspace.submit("test-org-id");
+		expect(jiraRes.status).toEqual(202);
+	});
 });

@@ -39,6 +39,9 @@ Object {
       "addForIssue": [Function],
     },
   },
+  "linkedWorkspace": Object {
+    "submit": [Function],
+  },
   "remoteLink": Object {
     "submit": [Function],
   },

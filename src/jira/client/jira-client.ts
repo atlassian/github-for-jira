@@ -388,6 +388,15 @@ export const getJiraClient = async (
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
+		},
+		linkedWorkspace: {
+			submit: async (orgId: string) => {
+				const payload = {
+					"workspaceIds": [orgId]
+				};
+				logger.info("Sending linkedWorkspaces payload to jira.");
+				return await instance.post("/rest/security/1.0/linkedWorkspaces/bulk", payload);
+			}
 		}
 	};
 
