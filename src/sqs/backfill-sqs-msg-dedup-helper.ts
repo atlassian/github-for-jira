@@ -17,7 +17,7 @@ export const trySaveMessageToRedisForDedup = async (
 
 	try {
 
-		logger = parentLogger.child({ jiraHost, visibilityTimeoutInMS });
+		logger = parentLogger.child({ messageId, payload, visibilityTimeoutInMS });
 
 		if (!messageId) {
 			logger.warn("messageId is empty, shouldn't happen, ignore and return now for backfill msg dedeup");
@@ -61,7 +61,7 @@ export const isBackfillMessagePresentAndValidAsSQSVisibilityHidden = async (
 
 	try {
 
-		logger = parentLogger.child({ jiraHost });
+		logger = parentLogger.child({ messageId, payload });
 
 		if (!messageId) {
 			logger.warn("messageId is empty, shouldn't happen, ignore and return now for backfill msg dedeup");
@@ -83,7 +83,7 @@ export const isBackfillMessagePresentAndValidAsSQSVisibilityHidden = async (
 		}
 
 		const { flagCreateTime, messageId: messageIdInRedis } = JSON.parse(result);
-		logger = logger.child({ key, result, flagCreateTime, messageId, messageIdInRedis });
+		logger = logger.child({ key, result, flagCreateTime, messageIdInRedis });
 		if (isNaN(flagCreateTime)) {
 			logger.info ("Invalid flag creation time, can't verify, ignore the duplication check");
 			return false;
