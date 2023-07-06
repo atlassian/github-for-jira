@@ -1,14 +1,15 @@
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformDependabotAlert } from "~/src/transforms/transform-dependabot-alert";
+import { JiraClient } from "../jira/client/jira-client";
 
-export const dependabotAlertWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const dependabotAlertWebhookHandler = async (context: WebhookContext, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
 	});
 
-	const jiraPayload = await transformDependabotAlert(context, gitHubInstallationId, jiraClient.baseUrl);
+	const jiraPayload = await transformDependabotAlert(context, gitHubInstallationId, jiraClient.baseURL);
 
 	if (!jiraPayload) {
 		context.log.info({ noop: "no_jira_payload_dependabot_alert" }, "Halting further execution for dependabot alert since jiraPayload is empty");
@@ -25,7 +26,7 @@ export const dependabotAlertWebhookHandler = async (context: WebhookContext, jir
 		"dependabot_alert",
 		jiraClient.baseURL,
 		context.log,
-		result?.status,
+		result.status,
 		gitHubAppId
 	);
 };

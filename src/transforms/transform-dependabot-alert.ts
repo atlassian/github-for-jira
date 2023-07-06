@@ -27,12 +27,12 @@ const transformGitHubStateToJiraStatus = (state: string, context: WebhookContext
 };
 
 const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: GitHubVulnReference[]): JiraVulnerabilityIdentifier[] => {
-	const mappedIdentifiers:JiraVulnerabilityIdentifier[] = [];
+	const mappedIdentifiers: JiraVulnerabilityIdentifier[] = [];
 
 	identifiers.forEach((identifier) => {
 		const foundUrl = references.find((reference) => reference.url.includes(identifier.value))?.url;
 
-		const mappedIdentifier:JiraVulnerabilityIdentifier = {
+		const mappedIdentifier: JiraVulnerabilityIdentifier = {
 			displayName: identifier.value,
 			url: foundUrl ? foundUrl : identifier.value
 		};
@@ -43,7 +43,7 @@ const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: Git
 	return mappedIdentifiers;
 };
 
-export const transformDependabotAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | undefined> => {
+export const transformDependabotAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
 	const { alert, repository } = context.payload;
 
 	const metrics = {
@@ -75,7 +75,7 @@ export const transformDependabotAlert = async (context: WebhookContext, githubIn
 			},
 			associations: [{
 				associationType: "issueKeys",
-				values: ["placeholder"]//// todo create relationship manually, tbd longer term
+				values: ["placeholder"] //// todo create relationship manually, tbd longer term
 			}]
 		}]
 	};

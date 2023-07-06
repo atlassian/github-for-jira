@@ -44,6 +44,18 @@ export const processBranch = async (
 
 	const jiraPayload: JiraBranchBulkSubmitData | undefined = await transformBranch(github, webhookPayload, logger);
 
+	const jiraClient = await getJiraClient(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId,
+		logger
+	);
+
+	if (!jiraClient) {
+		logger.info("Halting further execution for createBranch as JiraClient is empty for this installation");
+		return;
+	}
+
 	if (!jiraPayload) {
 		logger.info("Halting further execution for createBranch since jiraPayload is empty");
 		return;
@@ -51,12 +63,6 @@ export const processBranch = async (
 
 	logger.info(`Sending jira update for create branch event`);
 
-	const jiraClient = await getJiraClient(
-		jiraHost,
-		gitHubInstallationId,
-		gitHubAppId,
-		logger
-	);
 
 	const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
 

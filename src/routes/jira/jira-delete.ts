@@ -47,6 +47,12 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
+	if (!jiraClient) {
+		req.log.info("Halting further execution for delete DevInfo as JiraClient is empty for this installation");
+		res.status(500).send("Cannot find JiraClient for null gitHubAppId");
+		return;
+	}
+
 	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
 	await subscription.destroy();
 

@@ -75,6 +75,18 @@ export const processDeployment = async (
 
 	logger.info("deployment message transformed");
 
+	const jiraClient = await getJiraClient(
+		jiraHost,
+		gitHubInstallationId,
+		gitHubAppId,
+		logger
+	);
+
+	if (!jiraClient) {
+		logger.info("Halting further execution for deployment as JiraClient is empty for this installation");
+		return;
+	}
+
 	if (!jiraPayload) {
 		logger.info(
 			{ noop: "no_jira_payload_deployment" },
@@ -83,12 +95,6 @@ export const processDeployment = async (
 		return;
 	}
 
-	const jiraClient = await getJiraClient(
-		jiraHost,
-		gitHubInstallationId,
-		gitHubAppId,
-		logger
-	);
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 

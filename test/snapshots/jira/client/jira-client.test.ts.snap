@@ -42,6 +42,9 @@ Object {
   "remoteLink": Object {
     "submit": [Function],
   },
+  "security": Object {
+    "submit": [Function],
+  },
   "workflow": Object {
     "submit": [Function],
   },
