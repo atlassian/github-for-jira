@@ -34,7 +34,7 @@ const StepTitle = styled.span`
 	margin: 0 0 0 ${token("space.200")};
 `;
 const Content = styled.div`
-	margin: ${token("space.100")} 0 0 ${token("space.600")};
+	margin: ${token("space.200")} 0 0 ${token("space.600")};
 `;
 
 const CollapsibleStep = ({
