@@ -28,7 +28,7 @@ export enum BooleanFlags {
 	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
-	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete_message_on_backfill_when_others_working_on_it",
+	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 }
 
 export enum StringFlags {
