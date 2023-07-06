@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router, static as Static } from "express";
+import { Request, Response, Router, static as Static } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -21,14 +21,6 @@ import path from "path";
 
 export const RootRouter = Router();
 
-// TODO - remove function once rollout complete
-// False flag wont parse the jwt query param so we need to allow current functionality to work while this happens
-const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	if (req.query.jwt && req.query.jwt !== "{jwt}") {
-		return jiraSymmetricJwtMiddleware(req, res, next);
-	}
-	return next();
-};
 
 // The request handler must be the first middleware on the app
 RootRouter.use(Sentry.Handlers.requestHandler());
@@ -81,7 +73,7 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
 
-RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

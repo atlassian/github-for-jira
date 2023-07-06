@@ -90,7 +90,7 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :GET ^/?(?=/|$)(?:^/session/?$|^/session/(.*)/?$)
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,SessionGet
 :GET ^/?(?=/|$)^/create-branch-options/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,maybeJiraSymmetricJwtMiddleware,GithubCreateBranchOptionsGet
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubCreateBranchOptionsGet
 :GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/callback/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,GithubOAuthCallbackGet
 :POST ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/webhooks/?$
