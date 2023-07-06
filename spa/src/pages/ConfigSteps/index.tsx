@@ -102,7 +102,7 @@ const ConfigSteps = () => {
 								}}
 							>
 								<img src="/spa-assets/cloud.svg" alt=""/>
-								<span>Github Cloud</span>
+								<span>GitHub Cloud</span>
 							</GitHubOption>
 							<GitHubOption
 								optionKey={2}
@@ -113,7 +113,7 @@ const ConfigSteps = () => {
 								}}
 							>
 								<img src="/spa-assets/server.svg" alt=""/>
-								<span>Github Enterprise Server</span>
+								<span>GitHub Enterprise Server</span>
 							</GitHubOption>
 						</GitHubOptionContainer>
 						<TooltipContainer>
