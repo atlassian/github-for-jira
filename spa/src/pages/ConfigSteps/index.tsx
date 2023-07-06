@@ -59,6 +59,7 @@ const InlineDialog = styled(TooltipPrimitive)`
 const ConfigSteps = () => {
 	const [completedStep1, setCompletedStep1] = useState(false);
 	const [completedStep2] = useState(false);
+	const [showStep2, setShowStep2] = useState(true);
 	const [canViewContentForStep2, setCanViewContentForStep2] = useState(false);
 	const [selectedOption, setSelectedOption] = useState(0);
 
@@ -95,7 +96,10 @@ const ConfigSteps = () => {
 							<GitHubOption
 								optionKey={1}
 								selectedOption={selectedOption}
-								onClick={() => setSelectedOption(1)}
+								onClick={() => {
+									setShowStep2(true);
+									setSelectedOption(1);
+								}}
 							>
 								<img src="/spa-assets/cloud.svg" alt=""/>
 								<span>Github Cloud</span>
@@ -103,7 +107,10 @@ const ConfigSteps = () => {
 							<GitHubOption
 								optionKey={2}
 								selectedOption={selectedOption}
-								onClick={() => setSelectedOption(2)}
+								onClick={() => {
+									setShowStep2(false);
+									setSelectedOption(2);
+								}}
 							>
 								<img src="/spa-assets/server.svg" alt=""/>
 								<span>Github Enterprise Server</span>
@@ -127,15 +134,17 @@ const ConfigSteps = () => {
 						</Button>
 					</>
 				</CollapsibleStep>
-				<CollapsibleStep
-					step="2"
-					title="Connect your GitHub organization to Jira"
-					canViewContent={canViewContentForStep2}
-					expanded={false}
-					completed={completedStep2}
-				>
-					<div>Content inside</div>
-				</CollapsibleStep>
+				{
+					showStep2 && <CollapsibleStep
+						step="2"
+						title="Connect your GitHub organization to Jira"
+						canViewContent={canViewContentForStep2}
+						expanded={false}
+						completed={completedStep2}
+					>
+						<div>Content inside</div>
+					</CollapsibleStep>
+				}
 			</ConfigContainer>
 		</Wrapper>
 	);
