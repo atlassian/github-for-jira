@@ -8,6 +8,11 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
 
+type GitHubOptionType = {
+	selectedOption: number;
+	optionKey: number;
+}
+
 const ConfigContainer = styled.div`
 	max-width: 580px;
 	margin: 0 auto;
@@ -22,9 +27,9 @@ const TooltipContainer = styled.div`
 		cursor: pointer;
 	}
 `;
-const GitHubOption = styled.div`
+const GitHubOption = styled.div<GitHubOptionType>`
+	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : token("color.background.neutral")};
 	padding: ${token("space.100")} ${token("space.200")};
-	background: ${token("color.background.neutral")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
 	display: flex;
@@ -44,17 +49,35 @@ const InlineDialog = styled(TooltipPrimitive)`
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 	box-sizing: content-box;
 	padding: ${token("space.100")} ${token("space.150")};
-	width: 322px;
+	width: 280px;
 	position: absolute;
 	top: -22px;
 `;
 
 const ConfigSteps = () => {
-	const [completedStep1] = useState(false);
+	const [completedStep1, setCompletedStep1] = useState(false);
 	const [completedStep2] = useState(false);
+	const [canViewContentForStep2, setCanViewContentForStep2] = useState(false);
+	const [selectedOption, setSelectedOption] = useState(0);
 
-	// TODO: Authorize
-	const authorize = () => {};
+	const authorize = () => {
+		switch (selectedOption) {
+			// TODO: Authorize
+			case 1:
+				setCompletedStep1(!completedStep1);
+				setCanViewContentForStep2(!canViewContentForStep2);
+				break;
+			case 2:
+				AP.navigator.go(
+					"addonmodule",
+					{
+						moduleKey: "github-server-url-page"
+					}
+				);
+				break;
+			default:
+		}
+	};
 
 	return (
 		<Wrapper>
@@ -63,17 +86,25 @@ const ConfigSteps = () => {
 				<CollapsibleStep
 					step="1"
 					title="Log in and authorize"
-					canExpand={true}
+					canViewContent={true}
 					expanded={true}
 					completed={completedStep1}
 				>
 					<>
 						<GitHubOptionContainer>
-							<GitHubOption>
+							<GitHubOption
+								optionKey={1}
+								selectedOption={selectedOption}
+								onClick={() => setSelectedOption(1)}
+							>
 								<img src="/spa-assets/cloud.svg" alt=""/>
 								<span>Github Cloud</span>
 							</GitHubOption>
-							<GitHubOption>
+							<GitHubOption
+								optionKey={2}
+								selectedOption={selectedOption}
+								onClick={() => setSelectedOption(2)}
+							>
 								<img src="/spa-assets/server.svg" alt=""/>
 								<span>Github Enterprise Server</span>
 							</GitHubOption>
@@ -99,13 +130,12 @@ const ConfigSteps = () => {
 				<CollapsibleStep
 					step="2"
 					title="Connect your GitHub organization to Jira"
-					canExpand={false}
+					canViewContent={canViewContentForStep2}
 					expanded={false}
 					completed={completedStep2}
 				>
 					<div>Content inside</div>
 				</CollapsibleStep>
-
 			</ConfigContainer>
 		</Wrapper>
 	);

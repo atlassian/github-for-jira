@@ -3,11 +3,16 @@ import { token } from "@atlaskit/tokens";
 import styled from "@emotion/styled";
 import CheckIcon from "@atlaskit/icon/glyph/check";
 
-const Container = styled.div`
+type ContainerType = {
+	isExpanded: boolean
+}
+
+const Container = styled.div<ContainerType>`
 	border: ${token("space.025")} solid ${token("color.border")};
 	border-radius: ${token("space.050")};
 	padding: ${token("space.400")};
 	margin: ${token("space.400")} 0;
+	background: ${props => props.isExpanded ? "transparent" : token("elevation.surface.sunken")};
 `;
 const Header = styled.div`
 	display: flex;
@@ -42,29 +47,25 @@ const CollapsibleStep = ({
 	step,
 	expanded = false,
 	completed = false,
-	canExpand,
+	canViewContent,
 	children,
 }: {
 	title: string,
 	step: string,
-	canExpand: boolean,
+	canViewContent: boolean,
 	expanded?: boolean,
 	completed?: boolean,
 	children: JSX.Element,
 }) => {
 	const [ isExpanded, setIsExpanded ] = useState(expanded);
 	const clickedTitle = () => {
-		if (canExpand) {
+		if (canViewContent) {
 			setIsExpanded(!isExpanded);
 		}
 	};
 
 	return (
-		<Container
-			style={{
-				background: isExpanded ? `transparent` : `${token("elevation.surface.sunken")}`
-			}}
-		>
+		<Container isExpanded={isExpanded}>
 			<Header>
 				{
 					completed ? (

@@ -13,7 +13,7 @@ test("When it can not be expanded", async () => {
 		<CollapsibleStep
 			step={DUMMY_STEP}
 			title={DUMMY_TITLE}
-			canExpand={false}
+			canViewContent={false}
 			expanded={false}
 		>
 			<div>{DUMMY_CONTENT}</div>
@@ -33,7 +33,7 @@ test("When it can be expanded, but is not expanded", async () => {
 		<CollapsibleStep
 			step={DUMMY_STEP}
 			title={DUMMY_TITLE}
-			canExpand={true}
+			canViewContent={true}
 			expanded={false}
 		>
 			<div>{DUMMY_CONTENT}</div>
@@ -54,7 +54,7 @@ test("When it can be expanded and is expanded", async () => {
 		<CollapsibleStep
 			step={DUMMY_STEP}
 			title={DUMMY_TITLE}
-			canExpand={true}
+			canViewContent={true}
 			expanded={true}
 		>
 			<div>{DUMMY_CONTENT}</div>
