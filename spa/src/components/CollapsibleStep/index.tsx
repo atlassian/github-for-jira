@@ -53,7 +53,6 @@ const CollapsibleStep = ({
 	children: JSX.Element,
 }) => {
 	const [ isExpanded, setIsExpanded ] = useState(expanded);
-	const [ isCompleted ] = useState(completed);
 	const clickedTitle = () => {
 		if (canExpand) {
 			setIsExpanded(!isExpanded);
@@ -68,7 +67,7 @@ const CollapsibleStep = ({
 		>
 			<Header>
 				{
-					isCompleted ? (
+					completed ? (
 						<CompletedIcon>
 							<CheckIcon label="completed" primaryColor={token("color.icon.success")} />
 						</CompletedIcon>
