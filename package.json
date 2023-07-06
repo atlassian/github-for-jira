@@ -10,6 +10,7 @@
 	"main": "src/main",
 	"scripts": {
 		"prestart": "run-p setup clean db:dev",
+		"postinstall": "cd spa && yarn",
 		"clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map test/**/*.js test/**/*.js.map",
 		"init": "run-p db",
 		"start": "run-p spa:dev start:main start:worker",
