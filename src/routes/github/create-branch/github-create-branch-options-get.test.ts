@@ -58,7 +58,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch?issueKey=TEST-123&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net");
+				expect(res.text).toBe("Found. Redirecting to /github/create-branch?issueKey=TEST-123");
 			});
 	});
 
@@ -90,7 +90,7 @@ describe("GitHub Create Branch Options Get", () => {
 				}))
 			.expect(res => {
 				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch?issueKey=TEST-123&jiraHost=https%3A%2F%2Ftest-atlassian-instance.atlassian.net`);
+				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch?issueKey=TEST-123`);
 			});
 	});
 
