@@ -5,5 +5,6 @@ interface AtlassianPlugin {
 	navigator: {
 		go: (...args) => void;
 		reload: () => void;
-	}
+	},
+	getToken: ((token: string) => void);
 }
