@@ -10,10 +10,8 @@ import { verifyAdminPermsAndFinishInstallation } from "services/subscription-ins
 
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
-import { booleanFlag , BooleanFlags } from "~/src/config/feature-flags";
 
 jest.mock("services/subscription-installation-service");
-jest.mock("~/src/config/feature-flags");
 
 describe("github-configuration-post", () => {
 	let app;
@@ -130,31 +128,6 @@ describe("github-configuration-post", () => {
 		});
 	});
 
-	it("creates subscription when the user is an admin and ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
-		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
-		githubNock
-			.get("/")
-			.matchHeader("Authorization", "Bearer myToken")
-			.reply(200);
-
-		when(verifyAdminPermsAndFinishInstallation).calledWith(
-			"myToken", installation, undefined, subscription.gitHubInstallationId + 1, expect.anything()
-		).mockResolvedValue({ });
-
-		const result = await supertest(app)
-			.post("/github/configuration")
-			.query({
-				jwt: await generateJwt()
-			})
-			.set("Cookie", generateSignedSessionCookieHeader({
-				githubToken: "myToken"
-			}))
-			.send({
-				installationId: subscription.gitHubInstallationId + 1
-			});
-		expect(result.status).toStrictEqual(200);
-	});
-
 	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
@@ -236,31 +209,6 @@ describe("github-configuration-post", () => {
 		});
 
 		it("creates subscription when the user is an admin", async () => {
-			gheNock
-				.get("/api/v3")
-				.matchHeader("Authorization", "Bearer myToken")
-				.reply(200);
-
-			when(verifyAdminPermsAndFinishInstallation).calledWith(
-				"myToken", installation, gitHubServerApp.id, subscription.gitHubInstallationId + 1, expect.anything()
-			).mockResolvedValue({  });
-
-			const result = await supertest(app)
-				.post(`/github/${gitHubServerApp.uuid}/configuration`)
-				.query({
-					jwt: await generateJwt()
-				})
-				.set("Cookie", generateSignedSessionCookieHeader({
-					githubToken: "myToken",
-					gitHubUuid: gitHubServerApp.uuid
-				}))
-				.send({
-					installationId: subscription.gitHubInstallationId + 1
-				});
-			expect(result.status).toStrictEqual(200);
-		});
-		it("creates subscription when the user is an admin and FF ENABLE_GITHUB_SECURITY_IN_JIRA is on", async () => {
-			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 			gheNock
 				.get("/api/v3")
 				.matchHeader("Authorization", "Bearer myToken")
