@@ -88,12 +88,12 @@ The first time you run the app, simply run:
 ```
 yarn install # installs node modules
 docker-compose up # Spin up docker containers
+yarn start #Spin up websever and worker
 ```
 
-That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
-If you want to debug, you can connect to the remote port of 9229 for the main thread and 9230 for the worker thread in docker.  Any changes to the code will restart the node server automatically.
+That's it.  Dependant services ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread) run in local `yarn start`.
 For tests, run `yarn test`.
-If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
+If you want to run a different tunneling tool, run `docker-compose up redis postgres localstack cryptor` and `yarn start` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://localhost:8080`.
 
 ### Installing the App
 
