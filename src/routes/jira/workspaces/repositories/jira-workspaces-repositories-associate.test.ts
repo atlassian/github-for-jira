@@ -107,7 +107,7 @@ describe("Workspaces Associate Repository", () => {
 			});
 	});
 
-	it("Should return empty object when no repo is found", async () => {
+	it("Should return 404 not found status when no repo is found", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -118,11 +118,6 @@ describe("Workspaces Associate Repository", () => {
 
 		Date.now = jest.fn(() => 1487076708000);
 
-		const response = {
-			success: true,
-			associatedRepository: {}
-		};
-
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
 			.set({
@@ -132,8 +127,8 @@ describe("Workspaces Associate Repository", () => {
 				id: "1"
 			})
 			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
+				expect(res.status).toBe(404);
+				expect(res.text).toContain(Errors.REPOSITORY_NOT_FOUND);
 			});
 	});
 });
