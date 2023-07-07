@@ -10,16 +10,20 @@ import {
 	UserOrganizationsResponse
 } from "~/src/github/client/github-queries";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
+import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
 
 /**
  * A GitHub client that supports authentication as a GitHub User.
  */
 export class GitHubUserClient extends GitHubClient {
 	private readonly userToken: string;
+	private readonly jiraHost: string;
 
 	constructor(userToken: string, gitHubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
 		super(gitHubConfig, jiraHost, metrics, logger);
 		this.userToken = userToken;
+		this.jiraHost = jiraHost;
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
 			return {
@@ -82,7 +86,23 @@ export class GitHubUserClient extends GitHubClient {
 	};
 
 	public async getInstallations(): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponse>> {
-		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
+		const resp = await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
+		try {
+			if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+				const userResp = await this.getUser();
+				const userLogin = userResp.data?.login;
+				this.logger.warn({ userLogin }, "Run curl commands to get more details for installations");
+				const output = await runCurl({
+					fullUrl: `${this.restApiUrl}/user/installations`,
+					method: "GET",
+					authorization: `token ${this.userToken}`
+				});
+				logCurlOutputInChunks(output, this.logger.child({ userLogin }));
+			}
+		} catch (curlE) {
+			this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
+		}
+		return resp;
 	}
 
 	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {
