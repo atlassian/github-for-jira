@@ -88,7 +88,7 @@ The first time you run the app, simply run:
 ```
 yarn install # installs node modules
 docker-compose up # Spin up docker containers
-yarn start #Spin up websever and worker
+yarn start #Spin up web server and worker
 ```
 
 That's it.  Dependant services ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread) run in local `yarn start`.
