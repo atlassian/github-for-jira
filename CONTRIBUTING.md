@@ -91,7 +91,7 @@ docker-compose up # Spin up docker containers
 yarn start #Spin up web server and worker
 ```
 
-That's it.  Dependant services ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread) run in local `yarn start`.
+That's it.  Dependant services ran in docker-compose, including redis, postgres and ngrok. And now to run the app (main and worker thread), please run in local `yarn start`.
 For tests, run `yarn test`.
 If you want to run a different tunneling tool, run `docker-compose up redis postgres localstack cryptor` and `yarn start` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://localhost:8080`.
 
