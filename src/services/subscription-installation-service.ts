@@ -9,6 +9,8 @@ import { Installation } from "models/installation";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { JiraClient } from "~/src/models/jira-client";
 
 export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean>  => {
 	const metrics = {
@@ -73,6 +75,11 @@ export const verifyAdminPermsAndFinishInstallation =
 
 			log.info({ subscriptionId: subscription.id }, "Subscription was created");
 
+			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
+				await submitSecurityWorkspaceToLink(installation, gitHubInstallationId, gitHubServerAppIdPk, log);
+				log.info({ subscriptionId: subscription.id }, "Linked security workspace");
+			}
+
 			await Promise.all(
 				[
 					saveConfiguredAppProperties(installation.jiraHost, log, true),
@@ -107,3 +114,25 @@ export const verifyAdminPermsAndFinishInstallation =
 			throw err;
 		}
 	};
+
+const submitSecurityWorkspaceToLink = async (
+	installation: Installation,
+	gitHubInstallationId: number,
+	gitHubServerAppIdPk: number | undefined,
+	logger: Logger
+) => {
+
+	try {
+		const gitHubAppClient = await createAppClient(logger, installation.jiraHost, gitHubServerAppIdPk, { trigger: "github-configuration-post" });
+
+		logger.info("Fetching info about GitHub installation");
+		const { data: ghInstallation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+
+		const jiraClient = await JiraClient.getNewClient(installation, logger);
+		await jiraClient.linkedWorkspace(ghInstallation.account.id);
+
+	} catch (err) {
+		logger.warn({ err }, "Failed to submit security workspace to Jira");
+	}
+
+};
