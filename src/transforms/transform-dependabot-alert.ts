@@ -1,6 +1,7 @@
 import {
 	JiraVulnerabilityBulkSubmitData,
 	JiraVulnerabilityIdentifier,
+	JiraVulnerabilitySeverityEnum,
 	JiraVulnerabilityStatusEnum
 } from "interfaces/jira";
 import { createInstallationClient } from "utils/get-github-client-config";
@@ -23,6 +24,23 @@ const transformGitHubStateToJiraStatus = (state: string, context: WebhookContext
 		default:
 			context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
 			return JiraVulnerabilityStatusEnum.UNKNOWN;
+	}
+};
+// From GitHub: Severity can be one of: low, medium, high, critical
+// To Jira: Status can be one of: low, medium, high, critical, unknown.
+const transformGitHubSeverityToJiraSeverity = (state: string, context: WebhookContext): JiraVulnerabilitySeverityEnum => {
+	switch (state) {
+		case "low":
+			return JiraVulnerabilitySeverityEnum.LOW;
+		case "medium":
+			return JiraVulnerabilitySeverityEnum.MEDIUM;
+		case "high":
+			return JiraVulnerabilitySeverityEnum.HIGH;
+		case "critical":
+			return JiraVulnerabilitySeverityEnum.CRITICAL;
+		default:
+			context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
+			return JiraVulnerabilitySeverityEnum.UNKNOWN;
 	}
 };
 
@@ -65,18 +83,13 @@ export const transformDependabotAlert = async (context: WebhookContext, githubIn
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at || alert.created_at,
 			severity: {
-				level: alert.security_vulnerability.severity
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity, context)
 			},
 			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
 			status: transformGitHubStateToJiraStatus(alert.state, context),
 			additionalInfo: {
-				content: "Manifest Path",
-				url: alert.dependency.manifest_path
-			},
-			associations: [{
-				associationType: "issueKeys",
-				values: ["placeholder"] //// todo create relationship manually, tbd longer term
-			}]
+				content: alert.dependency.manifest_path
+			}
 		}]
 	};
 };

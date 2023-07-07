@@ -82,7 +82,7 @@ export interface JiraClient {
 		submit: (data: any, options?: JiraSubmitOptions) => Promise<void>;
 	},
 	security: {
-		submit: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
+		submitVulnerabilities: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
 	}
 }
 
@@ -430,7 +430,7 @@ export const getJiraClient = async (
 			}
 		},
 		security: {
-			submit: async (data, options?: JiraSubmitOptions): Promise<AxiosResponse> => {
+			submitVulnerabilities: async (data, options?: JiraSubmitOptions): Promise<AxiosResponse> => {
 				const payload = {
 					vulnerabilities: data.vulnerabilities,
 					properties: {

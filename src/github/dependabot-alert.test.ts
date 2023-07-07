@@ -8,6 +8,7 @@ import {
 } from "~/src/github/client/github-client-constants";
 import {
 	JiraVulnerabilityBulkSubmitData,
+	JiraVulnerabilitySeverityEnum,
 	JiraVulnerabilityStatusEnum
 } from "../interfaces/jira";
 import { JiraClient } from "../jira/client/jira-client";
@@ -23,7 +24,7 @@ const DEPENDABOT_ALERT = "dependabot_alert";
 const TEST_LOG = "test";
 const CREATED = "created";
 const OPEN = "open";
-const HIGH = "high";
+const HIGH = JiraVulnerabilitySeverityEnum.HIGH;
 const PATH_TO_MANIFEST = "path/to/manifest";
 const SAMPLE_SECURITY_ADVISORY_SUMMARY = "Sample security advisory summary";
 const SAMPLE_SECURITY_ADVISORY_DESCRIPTION =
@@ -49,7 +50,7 @@ describe("BranchhWebhookHandler", () => {
 	beforeEach(() => {
 		jiraClient = {
 			baseURL: jiraHost,
-			security: { submit: jest.fn(() =>({ status: 200 })) }
+			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
 		} as unknown as JiraClient;
 	});
 	it("should call jira client with tarnsformed vulnerability", async () => {
@@ -59,7 +60,7 @@ describe("BranchhWebhookHandler", () => {
 			undefined,
 			GITHUB_INSTALLATION_ID
 		);
-		expect(jiraClient.security.submit).toBeCalledWith(
+		expect(jiraClient.security.submitVulnerabilities).toBeCalledWith(
 			getVulnerabilityPayload()
 		);
 	});
@@ -154,13 +155,7 @@ describe("BranchhWebhookHandler", () => {
 					additionalInfo: {
 						content: "Manifest Path",
 						url: PATH_TO_MANIFEST
-					},
-					associations: [
-						{
-							associationType: "issueKeys",
-							values: ["placeholder"]
-						}
-					]
+					}
 				}
 			]
 		};

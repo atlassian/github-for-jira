@@ -18,6 +18,7 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -128,7 +129,9 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
-			await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
+			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
+			}
 			break;
 	}
 };

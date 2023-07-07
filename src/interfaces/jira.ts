@@ -211,11 +211,10 @@ export interface JiraVulnerability {
 	identifiers: JiraVulnerabilityIdentifier[];
 	status: JiraVulnerabilityStatusEnum;
 	additionalInfo: JiraVulnerabilityAdditionalInfo;
-	associations: JiraAssociation[];
 }
 
 export interface JiraVulnerabilitySeverity {
-	level: string;
+	level: JiraVulnerabilitySeverityEnum;
 }
 
 export interface JiraVulnerabilityIdentifier {
@@ -230,9 +229,18 @@ export enum JiraVulnerabilityStatusEnum {
 	UNKNOWN = "unknown"
 }
 
+
+export enum JiraVulnerabilitySeverityEnum {
+	LOW = "low",
+	MEDIUM = "medium",
+	HIGH = "high",
+	CRITICAL = "critical",
+	UNKNOWN = "unknown"
+}
+
 export interface JiraVulnerabilityAdditionalInfo {
 	content: string;
-	url: string;
+	url?: string;
 }
 
 // These align with Atlaskit's lozenge values:

@@ -17,7 +17,7 @@ export const dependabotAlertWebhookHandler = async (context: WebhookContext, jir
 	}
 
 	context.log.info(`Sending dependabot alert event as Vulnerability data to Jira's Security endpoint: ${jiraClient.baseURL}`);
-	const result = await jiraClient.security.submit(jiraPayload);
+	const result = await jiraClient.security.submitVulnerabilities(jiraPayload);
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	const webhookReceived = context.payload.webhookReceived;

@@ -75,6 +75,14 @@ export const processDeployment = async (
 
 	logger.info("deployment message transformed");
 
+	if (!jiraPayload) {
+		logger.info(
+			{ noop: "no_jira_payload_deployment" },
+			"Halting further execution for deployment since jiraPayload is empty"
+		);
+		return;
+	}
+
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationId,
@@ -86,15 +94,6 @@ export const processDeployment = async (
 		logger.info("Halting further execution for deployment as JiraClient is empty for this installation");
 		return;
 	}
-
-	if (!jiraPayload) {
-		logger.info(
-			{ noop: "no_jira_payload_deployment" },
-			"Halting further execution for deployment since jiraPayload is empty"
-		);
-		return;
-	}
-
 
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
