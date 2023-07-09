@@ -6,8 +6,11 @@ import { getLogger } from "config/logger";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { envVars } from "config/env";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("~/src/sync/sync-utils");
+jest.mock("~/src/config/feature-flags");
 
 describe("subscription-installation-service", () => {
 	let installation: Installation;
@@ -137,6 +140,35 @@ describe("subscription-installation-service", () => {
 					source: "initial-sync"
 				});
 			});
+
+			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
+				});
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, undefined)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
+			});
 		});
 
 		describe("server", () => {
@@ -198,6 +230,33 @@ describe("subscription-installation-service", () => {
 			});
 
 			it("on success: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					isAdmin: true
+				});
+
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, gitHubServerApp.id)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
+			});
+			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 				mockGitHub({
 					isGhe: true,
 					is500Error: false,
