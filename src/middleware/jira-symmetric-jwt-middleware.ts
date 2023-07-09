@@ -6,7 +6,7 @@ import { Installation } from "~/src/models/installation";
 import {
 	getGenericContainerUrls,
 	moduleUrls,
-	securityContainerActionUrls
+	getSecurityContainerActionUrls
 } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
@@ -157,7 +157,7 @@ export const checkGenericContainerActionUrl = async (url: string): Promise<boole
 };
 
 const checkSecurityContainerActionUrl = (url: string) => {
-	return securityContainerActionUrls.some(moduleUrl => {
+	return getSecurityContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

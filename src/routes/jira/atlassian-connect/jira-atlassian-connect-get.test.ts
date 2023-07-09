@@ -109,11 +109,17 @@ describe("Atlassian Connect", () => {
 			expect(mockStatus).toHaveBeenCalledWith(200);
 			expect(
 				mockJson.mock.calls[0][0].modules.jiraSecurityInfoProvider
-			).toMatchObject({
+			).toEqual({
 				actions: {
 					fetchContainers: {
 						templateUrl:
 							"https://test-github-app-instance.com/jira/security/workspaces/containers/search"
+					},
+					fetchWorkspaces: {
+						templateUrl: ""
+					},
+					searchContainers: {
+						templateUrl: ""
 					}
 				},
 				documentationUrl: "https://docs.github.com/code-security",

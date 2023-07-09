@@ -78,6 +78,12 @@ const jiraSecurityInfoProvider = {
 	actions: {
 		fetchContainers: {
 			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
+		},
+		fetchWorkspaces: {
+			templateUrl: ""
+		},
+		searchContainers: {
+			templateUrl: ""
 		}
 	},
 	"name": {
@@ -86,7 +92,7 @@ const jiraSecurityInfoProvider = {
 	"key": "github-security"
 };
 
-export const securityContainerActionUrls = [
+export const getSecurityContainerActionUrls = [
 	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl
 ];
 
