@@ -13,7 +13,7 @@ import { getBuildTask } from "./build";
 import { getDeploymentTask } from "./deployment";
 import { metricSyncStatus, metricTaskStatus } from "config/metric-names";
 import { repoCountToBucket } from "config/metric-helpers";
-import { isBlocked, numberFlag, NumberFlags } from "config/feature-flags";
+import { isBlocked, numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
@@ -348,14 +348,8 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	const failedCode = getFailedCode(err);
 	log.warn({ failedCode }, "Backfill task failed.");
 
-	const isDeployment = mainNextTask.task === "deployment";
-	const newStatus = isDeployment ? "complete" : "failed";
-	if (isDeployment) {
-		log.warn("Mapping failed status to complete until we fix deployment backfilling in ARC-2119");
-	}
-
 	// marking the current task as failed
-	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: newStatus, failedCode });
+	await updateRepo(subscription, mainNextTask.repositoryId, { [getStatusKey(mainNextTask.task)]: "failed", failedCode });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
 	if (isPermissionError) {
@@ -371,6 +365,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 	}
 
 	if (mainNextTask.task === "repository") {
+		log.warn("Cannot finish discovery task: marking the subscription as FAILED");
 		await subscription.update({ syncStatus: SyncStatus.FAILED });
 		return;
 	}
@@ -466,19 +461,25 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
-					logger.warn("Duplicate job was detected, rescheduling");
-					// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
-					// Worker A - doing a long-running task
-					// Redis/SQS - reports that the task execution takes too long and sends it to another worker
-					// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
-					// Worker A dies (e.g. node is rotated).
-					// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
-					//
-					// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
-					// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
-					// is finished.
-					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
-					break;
+					if (await booleanFlag(BooleanFlags.DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT, jiraHost)) {
+						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it");
+						//doing nothing and return normally will endup delete the message.
+						break;
+					} else {
+						logger.warn("Duplicate job was detected, rescheduling");
+						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
+						// Worker A - doing a long-running task
+						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
+						// Worker B - checks the status of the task and sees that the Worker A is actually doing work, drops the message
+						// Worker A dies (e.g. node is rotated).
+						// In this situation we have a staled job since no message is on the queue an noone is doing the processing.
+						//
+						// Always rescheduling should be OK given that only one worker is working on the task right now: even if we
+						// gather enough messages at the end of the queue, they all will be processed very quickly once the sync
+						// is finished.
+						await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC + RETRY_DELAY_BASE_SEC * Math.random(), logger);
+						break;
+					}
 				}
 			}
 		} catch (err) {

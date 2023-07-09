@@ -9,11 +9,12 @@ const ignoredPaths = [
 	"/jira/events/uninstalled"
 ];
 
-MaintenanceRouter.use(async (req: Request, res: Response, next: NextFunction) => {
+const maintenanceMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	if (!ignoredPaths.includes(req.path) && await booleanFlag(BooleanFlags.MAINTENANCE_MODE, res.locals.jiraHost)) {
 		return MaintenanceGet(req, res);
 	}
 	next();
-});
+};
+MaintenanceRouter.use(maintenanceMiddleware);
 
 MaintenanceRouter.get("/maintenance", MaintenanceGet);

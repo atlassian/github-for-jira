@@ -9,21 +9,14 @@ import sanitizeHtml from "sanitize-html";
 export interface WorkspaceRepo {
 	id: string,
 	name: string,
-	workspaceId: string
+	workspace: {
+		id: string,
+		name: string
+	}
 }
 
 const DEFAULT_PAGE_NUMBER = 1; // Current page
 export const DEFAULT_LIMIT = 20; // Number of items per page
-
-const getReposForWorkspaceId = async (
-	jiraHost: string,
-	subscriptionId: number,
-	page: number,
-	limit: number,
-	repoName?: string
-): Promise<RepoSyncState[] | null> => {
-	return await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, subscriptionId, page, limit, repoName);
-};
 
 const getAllRepos = async (
 	jiraHost: string,
@@ -47,7 +40,6 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
 	const { jiraHost } = res.locals;
-	const subscriptionId = Number(sanitizeHtml(req.query?.workspaceId));
 	const repoName = sanitizeHtml(req.query?.searchQuery as string);
 	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
 	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
@@ -59,19 +51,20 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 		return;
 	}
 
-	const repos = subscriptionId ?
-		await getReposForWorkspaceId(jiraHost, subscriptionId, page, limit, repoName) :
-		await getAllRepos(jiraHost, subscriptions, page, limit, repoName);
+	const repos = await getAllRepos(jiraHost, subscriptions, page, limit, repoName);
 
 	const repositories: WorkspaceRepo[] = repos ? repos.map((repo) => {
-		const { repoId, repoName, subscriptionId, repoUrl } = repo;
+		const { repoId, repoName, subscriptionId, repoUrl, repoOwner } = repo;
 		const gitHubInstallationId = getGitHubInstallationId(subscriptions, subscriptionId);
 		const baseUrl = new URL(repoUrl).origin;
 
 		return {
 			id: transformRepositoryId(repoId, baseUrl),
 			name: repoName,
-			workspaceId: transformRepositoryId(gitHubInstallationId, baseUrl)
+			workspace: {
+				id: transformRepositoryId(gitHubInstallationId, baseUrl),
+				name: repoOwner
+			}
 		};
 	}) : [];
 
