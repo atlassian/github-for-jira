@@ -34,7 +34,7 @@ export const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
 	}
 };
 
-const getRepos = async (repoIds: string[]): Promise<RepoSyncState[] | []> => {
+const getRepos = async (repoIds: string[], jiraHost: string): Promise<RepoSyncState[] | []> => {
 	const results = await Promise.all(
 		Array.from(new Set(repoIds)).map(async (id) => {
 			// Account for server repoIds which will be passed in a format similar to "XXXXXXX-XXXX"
@@ -69,6 +69,7 @@ export const JiraSecurityWorkspacesContainersPost = async (req: Request, res: Re
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security POST repositories");
 
 	const { ids: repoIds } = req.body;
+	const { jiraHost } = res.locals;
 
 	if (!repoIds) {
 		// TODO: Return fetchContainers error handling spec once implemented
@@ -79,7 +80,7 @@ export const JiraSecurityWorkspacesContainersPost = async (req: Request, res: Re
 		return;
 	}
 
-	const repos = await getRepos(repoIds);
+	const repos = await getRepos(repoIds, jiraHost);
 	const transformedRepositories = repos.length ?
 		await transformRepositories(repos) : [];
 
