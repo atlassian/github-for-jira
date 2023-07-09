@@ -310,20 +310,28 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return repositories as RepoSyncState[];
 	}
 
-	static async findOneForRepoUrlAndRepoId(repoUrl: string, repoId: string) {
+	static async findOneForRepoUrlAndRepoIdAndJiraHost(repoUrl: string, repoId: number, jiraHost: string):Promise<RepoSyncState | null> {
 		const results = await this.sequelize!.query(
-			`SELECT *
-    		FROM "RepoSyncStates"
-    		WHERE REPLACE("repoUrl", '.', '') LIKE :repoUrl
-    		AND "repoId" = :repoId`,
+			`SELECT rss.* 
+			FROM "RepoSyncStates" rss
+			JOIN "Subscriptions" s ON rss."subscriptionId" = s."id"
+			WHERE REPLACE(rss."repoUrl", '.', '') LIKE :repoUrl
+			AND rss."repoId" = :repoId
+			AND s."jiraHost" = :jiraHost
+			`,
 			{
 				replacements: {
 					repoUrl: `%${repoUrl.replace(/\./g, "")}%`,
-					repoId
+					repoId,
+					jiraHost
 				},
 				type: QueryTypes.SELECT
 			}
 		);
+
+		if (results.length === 0) {
+			return null;
+		}
 
 		return results[0] as RepoSyncState;
 	}

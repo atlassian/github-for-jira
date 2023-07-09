@@ -6,7 +6,7 @@ import { RepoSyncState } from "models/reposyncstate";
 
 interface RepoUrlAndRepoId {
 	repoUrl: string,
-	id: string
+	id: number
 }
 
 export interface SecurityContainer {
@@ -28,9 +28,9 @@ export const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
 	if (/-/.test(id)) {
 		const [hashedRepoUrl, repoId] = splitServerId(id);
 		const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
-		return { repoUrl: repoDomain, id: repoId };
+		return { repoUrl: repoDomain, id: parseInt(repoId) };
 	} else {
-		return { repoUrl: GITHUB_CLOUD_BASEURL, id };
+		return { repoUrl: GITHUB_CLOUD_BASEURL, id: parseInt(id) };
 	}
 };
 
@@ -39,7 +39,7 @@ const getRepos = async (repoIds: string[]): Promise<RepoSyncState[] | []> => {
 		Array.from(new Set(repoIds)).map(async (id) => {
 			// Account for server repoIds which will be passed in a format similar to "XXXXXXX-XXXX"
 			const { repoUrl, id: repoId } = getRepoUrlAndRepoId(id);
-			return await RepoSyncState.findOneForRepoUrlAndRepoId(repoUrl, repoId);
+			return await RepoSyncState.findOneForRepoUrlAndRepoIdAndJiraHost(repoUrl, repoId, jiraHost);
 		})
 	);
 
