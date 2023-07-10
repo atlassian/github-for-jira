@@ -1,4 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
+
 exports[`Atlassian Connect should return correct connect app descriptor 1`] = `
 Object {
   "apiMigrations": Object {
