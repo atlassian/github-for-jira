@@ -1,25 +1,25 @@
 import ApiRequest from "../api";
-
 class OauthManager {
-	private accessToken: string | undefined;
+	private static accessToken: string | undefined;
+	// TODO: remove this comment later
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	private refreshToken: string | undefined;
+	private static refreshToken: string | undefined;
 
-	async checkValidity() {
+	static async checkValidity() {
 		if (!this.accessToken) return;
 		const res = await ApiRequest.token.checkValidity(this.accessToken);
 		return res.status === 200;
 	}
 
-	async authenticateInGitHub() {
+	static async authenticateInGitHub() {
 		const res = await ApiRequest.githubAuth.authenticate();
 		if (res.data.redirectUrl) {
 			window.open(res.data.redirectUrl);
 		}
 	}
 
-	setTokens(accessToken: string, refreshToken: string) {
+	static setTokens(accessToken: string, refreshToken: string) {
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
 	}

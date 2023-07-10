@@ -58,7 +58,6 @@ const InlineDialog = styled(TooltipPrimitive)`
 `;
 
 const ConfigSteps = () => {
-	const OAuthManagerInstance = new OauthManager();
 	const originalUrl = window.location.origin;
 	const [completedStep1, setCompletedStep1] = useState(false);
 	const [completedStep2] = useState(false);
@@ -69,15 +68,14 @@ const ConfigSteps = () => {
 	useEffect(() => {
 		window.addEventListener("message", (event) => {
 			if (event.origin !== originalUrl) return;
-			OAuthManagerInstance.setTokens(event.data.accessToken, event.data.refreshToken);
+			OauthManager.setTokens(event.data.accessToken, event.data.refreshToken);
 		});
-	}, [OAuthManagerInstance]);
+	}, [OauthManager]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
 			case 1: {
-				// TODO: Authorize
-				await OAuthManagerInstance.authenticateInGitHub();
+				await OauthManager.authenticateInGitHub();
 				setCompletedStep1(true);
 				setCanViewContentForStep2(true);
 				break;
