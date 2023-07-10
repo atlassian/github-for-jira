@@ -6,5 +6,7 @@ interface AtlassianPlugin {
 		go: (...args) => void;
 		reload: () => void;
 	},
-	getToken: ((token: string) => void);
+	context: {
+		getToken: ((token: string) => void);
+	}
 }

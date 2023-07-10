@@ -1,3 +1,5 @@
+import { GetRedirectUrlResponse } from "../rest-interfaces/oauth-types";
+
 export function createRestApi() {
 
 	let gitHubAccessToken: string | undefined;
@@ -37,7 +39,26 @@ export function createRestApi() {
 	}
 
 	async function generateOAuthUrl() {
-		return "";
+		try {
+
+			const jiraJwt = await getNewJiraToken();
+
+			const resp = await fetch("/rest/app/cloud/oauth/redirecturl", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${jiraJwt}###${gitHubAccessToken}`
+				}
+			});
+			if (!resp.ok) {
+				return { success: false, orgs: [] };
+			} else {
+				const { redirectUrl } = await resp.json() as GetRedirectUrlResponse;
+				return { success: true, redirectUrl };
+			}
+		} catch (e) {
+			console.log("Some network error on the request", e);
+			return { success: false, orgs: [] };
+		}
 	}
 
 	async function fetchInstalledOrganisations() {
