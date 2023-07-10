@@ -7,6 +7,10 @@ import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Workspaces Associate Repository", () => {
 	let app: Application;
@@ -14,6 +18,10 @@ describe("Workspaces Associate Repository", () => {
 	let sub: Subscription;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -140,7 +148,8 @@ describe("Workspaces Associate Repository", () => {
 			});
 	});
 
-	it("Should return empty object when no repo is found", async () => {
+
+	it("Should return 404 not found status when no repo is found", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -151,11 +160,6 @@ describe("Workspaces Associate Repository", () => {
 
 		Date.now = jest.fn(() => 1487076708000);
 
-		const response = {
-			success: true,
-			associatedRepository: {}
-		};
-
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
 			.set({
@@ -165,8 +169,8 @@ describe("Workspaces Associate Repository", () => {
 				id: "1"
 			})
 			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
+				expect(res.status).toBe(404);
+				expect(res.text).toContain(Errors.REPOSITORY_NOT_FOUND);
 			});
 	});
 });

@@ -179,7 +179,6 @@
           <div class="jiraManualAppCreation__formFileErrorBorder"></div>
         </div>
 
-{{#if withApiKeyFeature}}
         <div class="jiraManualAppCreation__formTitle">API key <small>(Optional)</small></div>
         <div class="jiraManualAppCreation__formSubTitle">
           Add an additional layer of security by creating or using an API key. Please keep the secret key securely stored to authenticate HTTP connection.
@@ -214,7 +213,6 @@
                 id="apiKeyValue"
                  />
         </div>
-{{/if}}
 
         <input type="hidden" id="_csrf" value="{{csrfToken}}">
         <input type="hidden" name="uuid" value="{{uuid}}">
@@ -247,7 +245,6 @@
       nonce="{{nonce}}"
     ></script>
   <script src="/public/js/jira-manual-app-creation.js" nonce="{{nonce}}"></script>
-{{#if withApiKeyFeature}}
   <script src="/public/js/jira-api-key-validation.js" nonce="{{nonce}}"></script>
       <script>
           initApiKeyValidation(
@@ -262,7 +259,6 @@
               {{{json knownHttpHeadersLowerCase}}}
           );
       </script>
-{{/if}}
   <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>

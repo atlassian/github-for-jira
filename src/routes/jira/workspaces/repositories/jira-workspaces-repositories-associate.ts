@@ -54,7 +54,10 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 
 	const repo = await findMatchingRepository(sanitizeHtml(repoId), jiraHost);
 	const transformedRepository = repo && transformedRepo(repo);
-	const payload = repo ? transformedRepository : {};
 
-	res.status(200).json({ success: true, associatedRepository: payload });
+	if (repo) {
+		res.status(200).json({ success: true, associatedRepository: transformedRepository });
+	} else {
+		res.status(404).send(Errors.REPOSITORY_NOT_FOUND);
+	}
 };

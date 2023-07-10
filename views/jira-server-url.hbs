@@ -82,7 +82,6 @@
 
             <div class="jiraServerUrl__section">
 
-            {{#if withApiKeyFeature}}
               <h3 class="jiraServerUrl__options__subTitle">
                 API key <small>(Optional)</small>
               </h3>
@@ -118,7 +117,6 @@
                          id="apiKeyValue"
                          name="apiKeyValue" />
                 </div>
-            {{/if}}
 
                 <button
                     type="submit"
@@ -152,7 +150,6 @@
     ></script>
     <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
 
-{{#if withApiKeyFeature}}
     <script src="/public/js/jira-api-key-validation.js" nonce="{{nonce}}"></script>
     <script>
         initApiKeyValidation(
@@ -168,7 +165,6 @@
             syncGheServerBtn
         );
     </script>
-{{/if}}
     <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>
