@@ -2,9 +2,10 @@ import { Router } from "express";
 import { JwtHandler } from "./jwt/jwt-handler";
 import { OAuthRouter } from "./oauth/oauth-router";
 
-export const RestRouter = Router();
+export const RestRouter = Router({ mergeParams: true });
 
-RestRouter.use(JwtHandler);
+const subRouter = Router({ mergeParams: true });
+RestRouter.use("/app/:cloudOrUUID", subRouter);
 
-RestRouter.use("/oauth", OAuthRouter);
-
+subRouter.use(JwtHandler);
+subRouter.use("/oauth", OAuthRouter);
