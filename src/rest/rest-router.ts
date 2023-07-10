@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { JwtHandler } from "~/src/rest/middleware/jwt/jwt-handler";
 import { OAuthRouter } from "~/src/rest/routes/oauth";
+import { GitHubCallbackRoute } from "~/src/rest/routes/github-callback";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -15,3 +16,5 @@ RestRouter.use("/app/:cloudOrUUID", subRouter);
 subRouter.use(JwtHandler);
 
 subRouter.use("/oauth", OAuthRouter);
+
+subRouter.use("/github-callback", GitHubCallbackRoute);
