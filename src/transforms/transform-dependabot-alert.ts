@@ -4,7 +4,7 @@ import {
 	JiraVulnerabilitySeverityEnum,
 	JiraVulnerabilityStatusEnum
 } from "interfaces/jira";
-import { createInstallationClient } from "utils/get-github-client-config";
+import { getGitHubClientConfigFromAppId } from "utils/get-github-client-config";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { GitHubVulnIdentifier, GitHubVulnReference } from "interfaces/github";
@@ -62,19 +62,14 @@ const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: Git
 	return mappedIdentifiers;
 };
 
-export const transformDependabotAlert = async (context: WebhookContext<DependabotAlertEvent>, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
+export const transformDependabotAlert = async (context: WebhookContext<DependabotAlertEvent>, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
 	const { alert, repository } = context.payload;
 
-	const metrics = {
-		trigger: "webhook",
-		subTrigger: "dependabot_alert"
-	};
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
-
+	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
+			id: `d-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id),
 			displayName: alert.security_advisory.summary,

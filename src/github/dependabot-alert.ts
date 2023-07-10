@@ -10,7 +10,7 @@ export const dependabotAlertWebhookHandler = async (context: WebhookContext<Depe
 		jiraHost: jiraClient.baseURL
 	});
 
-	const jiraPayload = await transformDependabotAlert(context, gitHubInstallationId, jiraClient.baseURL);
+	const jiraPayload = await transformDependabotAlert(context, jiraClient.baseURL);
 
 	if (!jiraPayload) {
 		context.log.info({ noop: "no_jira_payload_dependabot_alert" }, "Halting further execution for dependabot alert since jiraPayload is empty");

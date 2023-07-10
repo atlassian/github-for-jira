@@ -51,7 +51,6 @@ const getContext = (state): WebhookContext => ({
 });
 
 describe("transformDependabotAlert", () => {
-	const gitHubInstallationId = 1;
 	const jiraHost = "https://jira.example.com";
 
 	it.each([
@@ -62,19 +61,19 @@ describe("transformDependabotAlert", () => {
 		["unmapped_state", JiraVulnerabilityStatusEnum.UNKNOWN]
 	])("should correctly transform dependabot alert with state %s", async (state, expectedStatus) => {
 		const context = getContext(state);
-		const result = await transformDependabotAlert(context, gitHubInstallationId, jiraHost);
+		const result = await transformDependabotAlert(context, jiraHost);
 		expect(result.vulnerabilities[0].status).toEqual(expectedStatus);
 	});
 
 	it("should log unmapped state", async () => {
 		const context = getContext("unmapped_state");
-		await transformDependabotAlert(context, gitHubInstallationId, jiraHost);
+		await transformDependabotAlert(context, jiraHost);
 		expect(context.log.info).toHaveBeenCalledWith("Received unmapped state from dependabot_alert webhook: unmapped_state");
 	});
 
 	it("should correctly map vulnerability identifiers", async () => {
 		const context = getContext("open");
-		const result = await transformDependabotAlert(context, gitHubInstallationId, jiraHost);
+		const result = await transformDependabotAlert(context, jiraHost);
 		expect(result.vulnerabilities[0].identifiers).toEqual([
 			{ displayName: "CVE-123", url: "https://example.com/CVE-123" }
 		]);
