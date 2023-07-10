@@ -19,6 +19,7 @@ import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { Subscription } from "~/src/models/subscription";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -88,6 +89,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "review_requested"];
+	const subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, undefined);
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -129,7 +131,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
-			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
 				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
 			}
 			break;
