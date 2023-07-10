@@ -3,7 +3,7 @@ import { envVars } from "config/env";
 import axios from "axios";
 
 const GITHUB_CLOUD_LOGIN_URL = "https://github.com/login/oauth/access_token";
-export const getAccessToken = async (req: Request, res) => {
+export const getAccessToken = async (req: Request) => {
 	const { code } = req.query;
 	if (!code) {
 		req.log.error("No code provided!");
@@ -19,11 +19,16 @@ export const getAccessToken = async (req: Request, res) => {
 		// Result comes as a string `access_token=XXXXXX&refresh_token=XXXXX`
 		const tokenObj = Object.fromEntries(new URLSearchParams(response.data));
 
-		res.json({
+		if (!tokenObj.access_token || !tokenObj.refresh_token) {
+			throw new Error(response.data);
+		}
+
+		return {
 			accessToken: tokenObj.access_token,
 			refreshToken: tokenObj.refresh_token
-		});
+		};
 	} catch (error) {
 		req.log.warn({ error }, "Failed to renew Github token...");
+		return null;
 	}
 };

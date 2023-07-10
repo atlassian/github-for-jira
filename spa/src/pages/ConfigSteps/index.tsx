@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -7,6 +7,7 @@ import CollapsibleStep from "../../components/CollapsibleStep";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
+import OauthManager from "../../oauth-manager";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -57,25 +58,37 @@ const InlineDialog = styled(TooltipPrimitive)`
 `;
 
 const ConfigSteps = () => {
+	const OAuthManagerInstance = new OauthManager();
+	const originalUrl = window.location.origin;
 	const [completedStep1, setCompletedStep1] = useState(false);
 	const [completedStep2] = useState(false);
 	const [showStep2, setShowStep2] = useState(true);
 	const [canViewContentForStep2, setCanViewContentForStep2] = useState(false);
 	const [selectedOption, setSelectedOption] = useState(0);
 
-	const authorize = () => {
+	useEffect(() => {
+		window.addEventListener("message", (event) => {
+			if (event.origin !== originalUrl) return;
+			OAuthManagerInstance.setTokens(event.data.accessToken, event.data.refreshToken);
+		});
+	}, [OAuthManagerInstance]);
+
+	const authorize = async () => {
 		switch (selectedOption) {
-			case 1:
+			case 1: {
 				// TODO: Authorize
-				setCompletedStep1(!completedStep1);
-				setCanViewContentForStep2(!canViewContentForStep2);
+				await OAuthManagerInstance.authenticateInGitHub();
+				setCompletedStep1(true);
+				setCanViewContentForStep2(true);
 				break;
-			case 2:
+			}
+			case 2: {
 				AP.getLocation((location: string) => {
 					const GHEServerUrl = location.replace("/spa-index-page", "/github-server-url-page");
 					window.open(GHEServerUrl);
 				});
 				break;
+			}
 			default:
 		}
 	};

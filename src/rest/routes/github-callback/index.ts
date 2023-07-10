@@ -4,8 +4,25 @@ import { getAccessToken } from "~/src/rest/routes/github-callback/service";
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
 GitHubCallbackRoute.get("/", async (req: Request, res: Response) => {
-	res.status(200).json({
-		data: await getAccessToken(req, res)
-	});
+	try {
+		const data = await getAccessToken(req);
+
+		/**
+		 * A static page,
+		 * which simply sends the tokens back to the parent window
+		 * and then closes itself
+		 */
+		res.send(`
+		<html>
+			<body></body>
+			<script>
+				window.opener.postMessage(${JSON.stringify(data)}, window.origin);
+				window.close();
+			</script>
+		</html>
+	`);
+	} catch (error) {
+		res.send(500).json(error);
+	}
 });
 
