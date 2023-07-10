@@ -8,8 +8,23 @@ import sanitizeHtml from "sanitize-html";
 
 type RepoAndSubscription = RepoSyncState & Subscription;
 
-const findMatchingRepository = async (id: number, jiraHost: string): Promise<(RepoAndSubscription | null)> => {
-	return await RepoSyncState.findRepoByRepoIdAndJiraHost(id, jiraHost);
+const splitServerId = (input: string): string => {
+	const parts: string[] = input.split("-");
+	return parts[1];
+};
+
+const getRepoIdForCloudAndServer = (id: string): { id: number } => {
+	if (/-/.test(id)) {
+		const repoId = splitServerId(id);
+		return { id: parseInt(repoId) };
+	} else {
+		return { id: parseInt(id) };
+	}
+};
+
+const findMatchingRepository = async (id: string, jiraHost: string): Promise<(RepoAndSubscription | null)> => {
+	const { id: repoId } = getRepoIdForCloudAndServer(id);
+	return await RepoSyncState.findRepoByRepoIdAndJiraHost(repoId, jiraHost);
 };
 
 const transformedRepo = (repo: RepoSyncStateProperties): BulkSubmitRepositoryInfo => {
@@ -37,7 +52,7 @@ export const JiraWorkspacesRepositoriesAssociate = async (req: Request, res: Res
 		return;
 	}
 
-	const repo = await findMatchingRepository(Number(sanitizeHtml(repoId)), jiraHost);
+	const repo = await findMatchingRepository(sanitizeHtml(repoId), jiraHost);
 	const transformedRepository = repo && transformedRepo(repo);
 
 	if (repo) {
