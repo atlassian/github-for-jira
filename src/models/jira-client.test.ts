@@ -81,4 +81,16 @@ describe("JiraClient", () => {
 			expect(await jiraClient?.appPropertiesDelete()).toBeDefined();
 		});
 	});
+
+	describe("linkedWorkspace()", () => {
+		it("linked workspace",  async () => {
+			jiraNock.post("/rest/security/1.0/linkedWorkspaces/bulk", {
+				"workspaceIds": [123]
+			}).reply(202);
+
+			const jiraRes = await jiraClient?.linkedWorkspace(123);
+			expect(jiraRes?.status).toEqual(202);
+		});
+	});
+
 });
