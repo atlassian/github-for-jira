@@ -6,7 +6,6 @@ import { getLogger } from "~/src/config/logger";
 import { JwtHandler } from "./jwt-handler";
 import { Installation } from "~/src/models/installation";
 
-
 const testSharedSecret = "test-secret";
 
 describe("jwt handler", () => {

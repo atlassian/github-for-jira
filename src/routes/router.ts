@@ -17,6 +17,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
+import { RestRouter } from "routes/rest/rest-router";
 import path from "path";
 
 export const RootRouter = Router();
@@ -53,6 +54,7 @@ RootRouter.use([
 	"/spa/spa-assets", // For fetching the assets in Production build
 	"/spa-assets" // For fetching the assets in local development environment
 ], Static(path.join(process.cwd(), "static/assets")));
+RootRouter.use("/rest", RestRouter);
 
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
