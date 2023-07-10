@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { JwtHandler } from "routes/rest/middleware/jwt/jwt-handler";
-import { OAuthRouter } from "routes/rest/routes/oauth";
+import { JwtHandler } from "~/src/rest/middleware/jwt/jwt-handler";
+import { OAuthRouter } from "~/src/rest/routes/oauth";
 
 export const RestRouter = Router({ mergeParams: true });
 

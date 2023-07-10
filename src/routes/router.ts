@@ -17,7 +17,7 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
-import { RestRouter } from "routes/rest/rest-router";
+import { RestRouter } from "~/src/rest/rest-router";
 import path from "path";
 
 export const RootRouter = Router();
