@@ -8,6 +8,7 @@ import { createInstallationClient } from "utils/get-github-client-config";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { GitHubVulnIdentifier, GitHubVulnReference } from "interfaces/github";
+import { DependabotAlertEvent } from "@octokit/webhooks-types";
 
 // From GitHub: Status can be one of: open, fixed, dismissed, auto_dismissed
 // To Jira: Status can be one of: : open, closed, ignored, unknown
@@ -61,7 +62,7 @@ const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: Git
 	return mappedIdentifiers;
 };
 
-export const transformDependabotAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
+export const transformDependabotAlert = async (context: WebhookContext<DependabotAlertEvent>, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
 	const { alert, repository } = context.payload;
 
 	const metrics = {

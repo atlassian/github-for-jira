@@ -5,9 +5,13 @@ import supertest from "supertest";
 import { Subscription } from "models/subscription";
 import { RepoSyncState, RepoSyncStateProperties } from "models/reposyncstate";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
 import { DEFAULT_LIMIT, WorkspaceRepo } from "routes/jira/workspaces/repositories/jira-workspaces-repositories-get";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 const createSubscriptions = async (jiraHost: string, numberOfSubs: number): Promise<Subscription[]> => {
 	const subscriptions: Subscription[] = [];
@@ -92,7 +96,7 @@ type Response = {
 const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumberOfRepos: number, subscriptions: Subscription[]): Response => {
 	const response = {
 		success: true,
-		repositories: [] as { id: string; name: string; workspaceId: string }[]
+		repositories: [] as { id: string; name: string; workspace: { id: string, name: string } }[]
 	};
 
 	const numberOfItemsToAdd = Math.min(totalNumberOfRepos, DEFAULT_LIMIT);
@@ -103,7 +107,10 @@ const generateMockResponse = (repositories: RepoSyncStateProperties[], totalNumb
 		const workspace = {
 			id: repository.repoId.toString(),
 			name: repository.repoName,
-			workspaceId: subscriptions[0].gitHubInstallationId.toString()
+			workspace: {
+				id: subscriptions[0].gitHubInstallationId.toString(),
+				name: repository.repoOwner
+			}
 		};
 
 		response.repositories.push(workspace);
@@ -146,17 +153,26 @@ const createReposWhenNoQueryParamsArePassed = async (subscriptions: Subscription
 			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
-				workspaceId: subscriptions[0].gitHubInstallationId.toString()
+				workspace: {
+					id: subscriptions[0].gitHubInstallationId.toString(),
+					name: repoOne.repoOwner
+				}
 			},
 			{
 				id: repoTwo.repoId.toString(),
 				name: repoTwo.repoName,
-				workspaceId: subscriptions[0].gitHubInstallationId.toString()
+				workspace: {
+					id: subscriptions[0].gitHubInstallationId.toString(),
+					name: repoTwo.repoOwner
+				}
 			},
 			{
 				id: repoThree.repoId.toString(),
 				name: repoThree.repoName,
-				workspaceId: subscriptions[1].gitHubInstallationId.toString()
+				workspace: {
+					id: subscriptions[1].gitHubInstallationId.toString(),
+					name: repoThree.repoOwner
+				}
 			}
 		]
 	};
@@ -223,80 +239,26 @@ const createReposWhenRepoNameIsPassedAsParam = async (subscriptions: Subscriptio
 			{
 				id: repoOne.repoId.toString(),
 				name: repoOne.repoName,
-				workspaceId: subscriptions[0].gitHubInstallationId.toString()
+				workspace: {
+					id: subscriptions[0].gitHubInstallationId.toString(),
+					name: repoOne.repoOwner
+				}
 			},
 			{
 				id: repoTwo.repoId.toString(),
 				name: repoTwo.repoName,
-				workspaceId: subscriptions[0].gitHubInstallationId.toString()
+				workspace: {
+					id: subscriptions[0].gitHubInstallationId.toString(),
+					name: repoTwo.repoOwner
+				}
 			},
 			{
 				id: repoThree.repoId.toString(),
 				name: repoThree.repoName,
-				workspaceId: subscriptions[1].gitHubInstallationId.toString()
-			}
-		]
-	};
-};
-
-const createReposWhenRepoNameAndWorkspaceIdPassedAsParams = async (subscriptions: Subscription[]) => {
-	await RepoSyncState.create({
-		subscriptionId: subscriptions[0].id,
-		repoId: 1,
-		repoName: "new-repo",
-		repoOwner: "atlassian",
-		repoFullName: "atlassian/new-repo",
-		repoUrl: "http://github.internal.atlassian.com/atlassian/new-repo"
-	});
-
-	await RepoSyncState.create({
-		subscriptionId: subscriptions[0].id,
-		repoId: 2,
-		repoName: "another-new-repo",
-		repoOwner: "atlassian",
-		repoFullName: "atlassian/another-new-repo",
-		repoUrl: "http://github.internal.atlassian.com/atlassian/another-new-repo"
-	});
-
-	await RepoSyncState.create({
-		subscriptionId: subscriptions[0].id,
-		repoId: 3,
-		repoName: "this-one-shouldnotmatch",
-		repoOwner: "atlassian",
-		repoFullName: "atlassian/shouldnotmatch",
-		repoUrl: "http://github.internal.atlassian.com/atlassian/shouldnotmatch"
-	});
-
-	await RepoSyncState.create({
-		subscriptionId: subscriptions[1].id,
-		repoId: 3,
-		repoName: "neither-should-this-one",
-		repoOwner: "another-org",
-		repoFullName: "another-org/neither-should-this-one",
-		repoUrl: "http://github.internal.atlassian.com/another-org/neither-should-this-one"
-	});
-
-	await RepoSyncState.create({
-		subscriptionId: subscriptions[1].id,
-		repoId: 3,
-		repoName: "nor-this-one",
-		repoOwner: "org3",
-		repoFullName: "org3/nor-this-one",
-		repoUrl: "http://github.internal.atlassian.com/org3/nor-this-one"
-	});
-
-	return {
-		success: true,
-		repositories: [
-			{
-				id: "676974687562696e7465726e616c61746c61737369616e636f6d-1",
-				name: "new-repo",
-				workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-1"
-			},
-			{
-				id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
-				name: "another-new-repo",
-				workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-1"
+				workspace: {
+					id: subscriptions[1].gitHubInstallationId.toString(),
+					name: repoThree.repoOwner
+				}
 			}
 		]
 	};
@@ -343,20 +305,29 @@ const createReposWhenPageAndLimitArePassedAsParams = async (subscriptions: Subsc
 describe("Workspaces Repositories Get", () => {
 	let app: Application;
 	let installation: Installation;
-	let jwt: string;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
 			clientKey: "jira-client-key"
 		});
-
-		jwt = encodeSymmetric({
-			qsh: "context-qsh",
-			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
+
+	const generateJwt = async (query: any = {}) => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "GET",
+				pathname: "/jira/workspaces/repositories/search",
+				query
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
 	it("Should return a 400 status if no Subscription is found for host", async () => {
 		app = express();
@@ -368,8 +339,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -389,8 +364,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get("/jira/workspaces/repositories/search?searchQuery=atlas")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "atlas"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.text).toContain(JSON.stringify([]));
@@ -398,7 +377,7 @@ describe("Workspaces Repositories Get", () => {
 			});
 	});
 
-	it("Should return all matching repos across multiple orgs when both workspaceId and repoName are not provided", async () => {
+	it("Should return all matching repos across multiple orgs when no searchQuery (repoName) is provided", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -411,8 +390,8 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -420,7 +399,7 @@ describe("Workspaces Repositories Get", () => {
 			});
 	});
 
-	it("Should return all matching repos across multiple orgs when repoName is provided but workspaceId is not", async () => {
+	it("Should return all matching repos across multiple orgs when repoName is provided", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -433,30 +412,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=new`)
-			.query({
-				jwt
-			})
-			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
-			});
-	});
-
-	it("Should return all matching repos for one org based on workspaceId", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
-
-		const subscriptions = await createSubscriptions(jiraHost, 3);
-		const response = await createReposWhenRepoNameAndWorkspaceIdPassedAsParams(subscriptions);
-
-		await supertest(app)
-			.get(`/jira/workspaces/repositories/search?workspaceId=${subscriptions[0].id}&searchQuery=new`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "new"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -481,12 +442,18 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: "1",
 					name: "repo1",
-					workspaceId: subscriptions[0].gitHubInstallationId.toString()
+					workspace: {
+						id: subscriptions[0].gitHubInstallationId.toString(),
+						name: "owner1"
+					}
 				},
 				{
 					id: "2",
 					name: "repo2",
-					workspaceId: subscriptions[0].gitHubInstallationId.toString()
+					workspace: {
+						id: subscriptions[0].gitHubInstallationId.toString(),
+						name: "owner1"
+					}
 				}
 			]
 		};
@@ -497,20 +464,32 @@ describe("Workspaces Repositories Get", () => {
 				{
 					id: "676974687562696e7465726e616c61746c61737369616e636f6d-3",
 					name: "repo3",
-					workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-2"
+					workspace: {
+						id: "676974687562696e7465726e616c61746c61737369616e636f6d-2",
+						name: "owner2"
+					}
 				},
 				{
 					id: "676974687562696e7465726e616c61746c61737369616e636f6d-4",
 					name: "repo4",
-					workspaceId: "676974687562696e7465726e616c61746c61737369616e636f6d-3"
+					workspace: {
+						id: "676974687562696e7465726e616c61746c61737369616e636f6d-3",
+						name: "owner3"
+					}
 				}
 			]
 		};
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=1&limit=2`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "1",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -519,8 +498,14 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo&page=2&limit=2`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo",
+						page: "2",
+						limit: "2"
+					}
+				)}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(200);
@@ -543,8 +528,12 @@ describe("Workspaces Repositories Get", () => {
 
 		await supertest(app)
 			.get(`/jira/workspaces/repositories/search?searchQuery=repo`)
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt(
+					{
+						searchQuery: "repo"
+					}
+				)}`
 			})
 			.expect((res) => {
 				expect(res.status).toBe(200);

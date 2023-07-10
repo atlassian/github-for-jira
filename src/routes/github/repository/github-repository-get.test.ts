@@ -5,6 +5,7 @@ import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { Subscription } from "~/src/models/subscription";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { Installation } from "models/installation";
+import { RepoSyncState } from "models/reposyncstate";
 
 const randomString = "random-string";
 describe("GitHub Repository Search", () => {
@@ -38,47 +39,45 @@ describe("GitHub Repository Search", () => {
 			const result = await new DatabaseStateCreator().create();
 			installation = result.installation;
 			subscription = result.subscription;
+
+			[[1, "first"], [22, "second"], [333, "third"]].forEach(([repoId, fullName]) =>
+				RepoSyncState.create({
+					subscriptionId: subscription.id,
+					repoId: repoId,
+					repoName: fullName,
+					repoOwner: "myOrgName",
+					repoFullName: "fullName",
+					repoUrl: "myUrl"
+				}));
 		});
 
-		it("should hit the create branch on GET if authorized", async () => {
-			githubNock
-				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
-
-			githubNock
-				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
-				.reply(200);
-
-			nockSearchRepos200(`${randomString} org:orgName in:name`, {
-				items: [{ full_name: "first", id: 2 }, { full_name: "second", id: 1 }]
-			});
+		it("shouldn't hit the create branch on GET if not authorized", async () => {
 
 			await supertest(app)
 				.get("/github/repository").set(
 					"Cookie",
-					generateSignedSessionCookieHeader({
-						jiraHost: installation.jiraHost
-					}))
-				.query({
-					repoName: randomString
+					"jiraHost=" + installation.jiraHost
+				).query({
+					jiraHost: installation.jiraHost
 				})
 				.expect(res => {
-					expect(res.status).toBe(200);
-					expect(res.body?.repositories).toHaveLength(2);
+					expect(res.status).toBe(401);
 				});
 		});
 
 		it("should return repos that the installation has access to", async () => {
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
+				.reply(200, { account: { login: "myOrgName" } });
 
 			githubNock
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:orgName in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
+			const owner = { login: "myOrgName" };
+
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "second", id: 333 }]
 			});
 
 			await supertest(app)
@@ -97,6 +96,34 @@ describe("GitHub Repository Search", () => {
 				});
 		});
 
+		it("should not return repos that are not connected", async () => {
+			githubNock
+				.get(`/app/installations/${subscription.gitHubInstallationId}`)
+				.reply(200, { account: { login: "myOrgName" } });
+
+			githubNock
+				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
+				.reply(200);
+
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+				items: [{ full_name: "forth", id: 4444 }]
+			});
+
+			await supertest(app)
+				.get("/github/repository").set(
+					"Cookie",
+					generateSignedSessionCookieHeader({
+						jiraHost
+					}))
+				.query({
+					repoName: randomString
+				})
+				.expect(res => {
+					expect(res.status).toBe(200);
+					expect(res.body?.repositories).toHaveLength(0);
+				});
+		});
+
 		it("a single error shouldn't nuke everything", async () => {
 			await Subscription.create({
 				gitHubInstallationId: subscription.gitHubInstallationId + 1,
@@ -105,11 +132,11 @@ describe("GitHub Repository Search", () => {
 
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId}`)
-				.reply(200, { account: { login: "orgName" } });
+				.reply(200, { account: { login: "myOrgName" } });
 
 			githubNock
 				.get(`/app/installations/${subscription.gitHubInstallationId + 1}`)
-				.reply(200, { account: { login: "orgName2" } });
+				.reply(200, { account: { login: "anotherOrgName" } });
 
 			githubNock
 				.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)
@@ -119,11 +146,13 @@ describe("GitHub Repository Search", () => {
 				.post(`/app/installations/${subscription.gitHubInstallationId + 1}/access_tokens`)
 				.reply(200);
 
-			nockSearchRepos200(`${randomString} org:orgName in:name`, {
-				items: [{ full_name: "first", id: 1 }, { full_name: "second", id: 22 }, { full_name: "second" }]
+			const owner = { login: "myOrgName" };
+
+			nockSearchRepos200(`${randomString} org:myOrgName in:full_name`, {
+				items: [{ owner, full_name: "first", id: 1 }, { owner, full_name: "second", id: 22 }, { owner, full_name: "third", id: 333 }]
 			});
 
-			nockSearchRepos422(`${randomString} org:orgName2 in:name`);
+			nockSearchRepos422(`${randomString} org:anotherOrgName in:full_name`);
 
 			await supertest(app)
 				.get("/github/repository").set(

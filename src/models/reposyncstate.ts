@@ -200,6 +200,20 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return result || [];
 	}
 
+	// TODO: move repoOwner to Subscription table and get rid of this.
+	// The current schema implies a subscription might have multiple
+	// "repoOwner"s associated with it, while that's impossible
+	static async findAllRepoOwners(subscription: Subscription): Promise<Set<string>> {
+		const owners = await RepoSyncState.findAll({
+			attributes: ["repoOwner"],
+			where: {
+				subscriptionId: subscription.id
+			},
+			group: "repoOwner"
+		});
+		return new Set(owners.map((owner) => owner.getDataValue("repoOwner")));
+	}
+
 	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState | null> {
 		return RepoSyncState.findOne(merge(options, {
 			where: {

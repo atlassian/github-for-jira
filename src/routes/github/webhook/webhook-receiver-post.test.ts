@@ -12,8 +12,14 @@ import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
+import { Subscription } from "~/src/models/subscription";
+import { DependabotAlertEvent, Schema } from "@octokit/webhooks-types";
+import { booleanFlag } from "~/src/config/feature-flags";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
+jest.mock("~/src/config/feature-flags");
+jest.mock("~/src/models/subscription");
 
 const EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120002";
 const NON_EXIST_GHES_UUID = "97da6b0e-ec61-11ec-8ea0-0242ac120003";
@@ -31,7 +37,7 @@ describe("webhook-receiver-post", () => {
 	let res;
 	let gitHubApp: GitHubServerApp;
 
-	const gitHubAppConfigForCloud= () => {
+	const gitHubAppConfigForCloud = () => {
 		return {
 			gitHubAppId: undefined,
 			appId: parseInt(envVars.APP_ID),
@@ -42,7 +48,7 @@ describe("webhook-receiver-post", () => {
 		};
 	};
 
-	const gitHubAppConfigForGHES= () => {
+	const gitHubAppConfigForGHES = () => {
 		return {
 			gitHubAppId: gitHubApp.id,
 			appId: gitHubApp.appId,
@@ -63,7 +69,7 @@ describe("webhook-receiver-post", () => {
 
 		const installation = await Installation.install({
 			clientKey: "clientKey123",
-			host:  jiraHost,
+			host: jiraHost,
 			sharedSecret: "secrete123"
 		});
 
@@ -108,7 +114,7 @@ describe("webhook-receiver-post", () => {
 
 	});
 
-	describe("Pulling cloud or GHES app config", ()=>{
+	describe("Pulling cloud or GHES app config", () => {
 		it("should pull cloud gitHubAppConfig with undefined UUID", async () => {
 			req = createCloudReqForEvent("push");
 			const spy = jest.fn();
@@ -302,6 +308,29 @@ describe("webhook-receiver-post", () => {
 			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
+	it("should not call dependabot handler when ENABLE_GITHUB_SECURITY_IN_JIRA is disabled", async () => {
+		req = createGHESReqForEvent("dependabot_alert", "", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as DependabotAlertEvent);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		jest.mocked(booleanFlag).mockReturnValue(Promise.resolve(false));
+		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).not.toBeCalledWith(dependabotAlertWebhookHandler);
+	});
+	it("should call dependabot handler", async () => {
+		req = createGHESReqForEvent("dependabot_alert", "", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as DependabotAlertEvent);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		jest.mocked(booleanFlag).mockReturnValue(Promise.resolve(true));
+		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(dependabotAlertWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "dependabot_alert",
+			gitHubAppConfig: gitHubAppConfigForGHES()
+		}));
+	});
 
 });
 
@@ -332,17 +361,17 @@ const createCloudReqForEventWithRandomWebhookSecret = (event: string, action?: s
 	});
 };
 
-const createGHESReqForEvent = (event: string, action?: string, uuid?: string) => {
+const createGHESReqForEvent = (event: string, action?: string, uuid?: string, payload?: Schema) => {
 	return createReqForEvent({
-		event, action, uuid, webhookSecret: GHES_WEBHOOK_SECRET
+		event, action, uuid, webhookSecret: GHES_WEBHOOK_SECRET, payload
 	});
 };
 
 const createReqForEvent = (
-	{ event, action, uuid, webhookSecret, signature }:
-	{event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string }
+	{ event, action, uuid, webhookSecret, signature, payload }:
+		{ event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string, payload?: Schema }
 ) => {
-	const body = action ? { action } : {};
+	const body = action ? { action, ...payload } : { ...payload };
 
 	const req = {
 		headers: {

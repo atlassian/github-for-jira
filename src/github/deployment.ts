@@ -6,7 +6,6 @@ import type { DeploymentStatusEvent } from "@octokit/webhooks-types";
 import Logger from "bunyan";
 import { isBlocked, booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubInstallationClient } from "./client/github-installation-client";
-import { JiraDeploymentBulkSubmitData } from "interfaces/jira";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 import { Subscription } from "models/subscription";
@@ -49,10 +48,15 @@ export const processDeployment = async (
 	rateLimited?: boolean
 ) => {
 
+	const { state, environment } = webhookPayload.deployment_status;
+
 	const logger = rootLogger.child({
 		webhookId: webhookId,
 		gitHubInstallationId,
 		jiraHost,
+		repositoryId: webhookPayload.repository?.id,
+		deploymentState: state,
+		deploymentEnvironment: environment,
 		webhookReceived: webhookReceivedDate
 	});
 
@@ -61,17 +65,9 @@ export const processDeployment = async (
 		return;
 	}
 
-	const { state, environment } = webhookPayload.deployment_status;
+	logger.info("processing deployment message!");
 
-	logger.info({
-		deploymentState: state,
-		deploymentEnvironment: environment
-	}, "processing deployment message!");
-
-	const metrics = {
-		trigger: "deployment_queue"
-	};
-	const jiraPayload: JiraDeploymentBulkSubmitData | undefined = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, "webhook", metrics, logger, gitHubAppId);
+	const jiraPayload = await transformDeployment(newGitHubClient, webhookPayload, jiraHost, "webhook", logger, gitHubAppId);
 
 	logger.info("deployment message transformed");
 

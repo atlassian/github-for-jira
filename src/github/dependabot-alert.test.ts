@@ -34,6 +34,7 @@ const SAMPLE_SECURITY_URL =
 const JIRA_VULNERABILITY_STATUS_ENUM_OPEN = JiraVulnerabilityStatusEnum.OPEN;
 const SAMPLE_SECURITY_CREATED_DATE = "2022-01-01T00:00:00Z";
 const SAMPLE_SECURITY_UPDATED_DATE = "2022-01-02T00:00:00Z";
+const WEBHOOK_RECIEVED_ISO = 1688951387;
 jest.mock("utils/webhook-utils");
 
 describe("BranchhWebhookHandler", () => {
@@ -72,7 +73,7 @@ describe("BranchhWebhookHandler", () => {
 			GITHUB_INSTALLATION_ID
 		);
 		expect(emitWebhookProcessedMetrics).toBeCalledWith(
-			new Date(SAMPLE_SECURITY_UPDATED_DATE).getTime(),
+			WEBHOOK_RECIEVED_ISO,
 			"dependabot_alert",
 			jiraHost,
 			expect.any(Object),
@@ -82,8 +83,8 @@ describe("BranchhWebhookHandler", () => {
 	});
 
 
-	const getWebhookContext = <T>({ cloud }: { cloud: boolean }) => {
-		return new WebhookContext<T>({
+	const getWebhookContext = <T>({ cloud }: { cloud: boolean }): WebhookContext<T> => {
+		return {
 			id: ID_1,
 			name: DEPENDABOT_ALERT,
 			log: getLogger(TEST_LOG),
@@ -111,7 +112,6 @@ describe("BranchhWebhookHandler", () => {
 				repository: {
 					id: 456
 				},
-				webhookReceived: SAMPLE_SECURITY_UPDATED_DATE,
 				ref: "TEST-1"
 			} as unknown as T,
 			gitHubAppConfig: cloud
@@ -130,8 +130,9 @@ describe("BranchhWebhookHandler", () => {
 					clientId: GHES_GITHUB_APP_CLIENT_ID,
 					gitHubBaseUrl: gheUrl,
 					gitHubApiUrl: gheUrl
-				}
-		});
+				},
+			webhookReceived: WEBHOOK_RECIEVED_ISO
+		};
 	};
 	const getVulnerabilityPayload = (): JiraVulnerabilityBulkSubmitData => {
 		return {
@@ -153,8 +154,7 @@ describe("BranchhWebhookHandler", () => {
 					identifiers: [],
 					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
 					additionalInfo: {
-						content: "Manifest Path",
-						url: PATH_TO_MANIFEST
+						content: PATH_TO_MANIFEST
 					}
 				}
 			]

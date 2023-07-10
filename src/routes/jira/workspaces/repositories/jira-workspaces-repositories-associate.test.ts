@@ -5,16 +5,23 @@ import supertest from "supertest";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
+import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import { Errors } from "config/errors";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 describe("Workspaces Associate Repository", () => {
 	let app: Application;
 	let installation: Installation;
 	let sub: Subscription;
-	let jwt: string;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -27,12 +34,17 @@ describe("Workspaces Associate Repository", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
-
-		jwt = encodeSymmetric({
-			qsh: "context-qsh",
-			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
+
+	const generateJwt = async () => {
+		return encodeSymmetric({
+			qsh: createQueryStringHash({
+				method: "POST",
+				pathname: "/jira/workspaces/repositories/associate"
+			}, false),
+			iss: installation.plainClientKey
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+	};
 
 	it("Should return a 400 status if no repoId is provided", async () => {
 		app = express();
@@ -45,8 +57,8 @@ describe("Workspaces Associate Repository", () => {
 
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.expect(res => {
 				expect(res.status).toBe(400);
@@ -75,26 +87,16 @@ describe("Workspaces Associate Repository", () => {
 		Date.now = jest.fn(() => 1487076708000);
 
 		const associateRepoRes = {
-			success: true,
-			associatedRepository: {
-				preventTransitions: false,
-				operationType: "NORMAL",
-				repository: {
-					id: "1",
-					name: repo1.repoFullName,
-					url: repo1.repoUrl,
-					updateSequenceId: 1487076708000
-				},
-				properties: {
-					installationId: 1234
-				}
-			}
+			id: "1",
+			name: repo1.repoFullName,
+			url: repo1.repoUrl,
+			updateSequenceId: 1487076708000
 		};
 
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
-			.query({
-				jwt
+			.set({
+				authorization: `JWT ${await generateJwt()}`
 			})
 			.send({
 				id: repo1.repoId
@@ -102,6 +104,31 @@ describe("Workspaces Associate Repository", () => {
 			.expect(res => {
 				expect(res.status).toBe(200);
 				expect(res.text).toContain(JSON.stringify(associateRepoRes));
+			});
+	});
+
+	it("Should return 404 not found status when no repo is found", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		Date.now = jest.fn(() => 1487076708000);
+
+		await supertest(app)
+			.post("/jira/workspaces/repositories/associate")
+			.set({
+				authorization: `JWT ${await generateJwt()}`
+			})
+			.send({
+				id: "1"
+			})
+			.expect(res => {
+				expect(res.status).toBe(404);
+				expect(res.text).toContain(Errors.REPOSITORY_NOT_FOUND);
 			});
 	});
 });

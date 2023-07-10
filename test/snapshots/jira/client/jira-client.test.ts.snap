@@ -43,7 +43,7 @@ Object {
     "submit": [Function],
   },
   "security": Object {
-    "submit": [Function],
+    "submitVulnerabilities": [Function],
   },
   "workflow": Object {
     "submit": [Function],

@@ -18,12 +18,17 @@ export enum BooleanFlags {
 	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
-	ENABLE_API_KEY_FEATURE = "enable-api-key-feature",
+	USE_NEW_PULL_ALGO = "use-new-pull-algo",
 	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
 	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
 	LOG_CURLV_OUTPUT = "log-curlv-output",
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
-	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira"
+	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
+	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
+	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
+	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
+	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 }
 
 export enum StringFlags {
@@ -41,6 +46,7 @@ export enum NumberFlags {
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	BACKFILL_DEPLOYMENT_EXTRA_PAGES = "backfill-deployment-extra-pages",
 	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }

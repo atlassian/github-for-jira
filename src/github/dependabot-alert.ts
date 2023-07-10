@@ -2,8 +2,9 @@ import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformDependabotAlert } from "~/src/transforms/transform-dependabot-alert";
 import { JiraClient } from "../jira/client/jira-client";
+import { DependabotAlertEvent } from "@octokit/webhooks-types";
 
-export const dependabotAlertWebhookHandler = async (context: WebhookContext, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const dependabotAlertWebhookHandler = async (context: WebhookContext<DependabotAlertEvent>, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
@@ -20,7 +21,7 @@ export const dependabotAlertWebhookHandler = async (context: WebhookContext, jir
 	const result = await jiraClient.security.submitVulnerabilities(jiraPayload);
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
-	const webhookReceived = context.payload.webhookReceived;
+	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
 		new Date(webhookReceived).getTime(),
 		"dependabot_alert",
