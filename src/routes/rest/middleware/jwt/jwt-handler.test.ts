@@ -2,9 +2,9 @@ import { encodeSymmetric } from "atlassian-jwt";
 import express, { Application, NextFunction, Request, Response } from "express";
 import { noop } from "lodash";
 import supertest from "supertest";
-import { getLogger } from "~/src/config/logger";
+import { getLogger } from "config/logger";
 import { JwtHandler } from "./jwt-handler";
-import { Installation } from "~/src/models/installation";
+import { Installation } from "models/installation";
 
 const testSharedSecret = "test-secret";
 

@@ -1,12 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import Logger from "bunyan";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
-import { Installation } from "~/src/models/installation";
+import { Installation } from "models/installation";
 
 const INVALID_SECRET = "some-invalid-secret";
 
 export const JwtHandler = async (req: Request, res: Response, next: NextFunction) => {
-
 	const token = req.headers["authorization"];
 
 	if (!token) {
@@ -15,13 +14,12 @@ export const JwtHandler = async (req: Request, res: Response, next: NextFunction
 	}
 
 	try {
-
 		const { jiraHost } = await verifySymmetricJwt(token, req.log);
 		res.locals.jiraHost = jiraHost;
 		next();
 
 	} catch (e) {
-		req.log.warn({ err: e }, "Fail to verify jwt token");
+		req.log.warn({ err: e }, "Failed to verify JWT token");
 		res.status(401).send("Unauthorised");
 		return;
 	}
@@ -29,10 +27,9 @@ export const JwtHandler = async (req: Request, res: Response, next: NextFunction
 };
 
 const verifySymmetricJwt = async (token: string, logger: Logger) => {
-
 	const algorithm = getAlgorithm(token);
 
-	// decode without verification;
+	// Decode without verification;
 	const unverifiedClaims = decodeSymmetric(token, INVALID_SECRET, algorithm, true);
 	if (!unverifiedClaims.iss) {
 		throw new Error("JWT claim did not contain the issuer (iss) claim");
@@ -60,5 +57,4 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 	}
 
 	return { jiraHost: installation.jiraHost };
-
 };
