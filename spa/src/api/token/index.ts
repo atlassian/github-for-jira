@@ -1,8 +1,9 @@
-import AxiosInstance from "../../utils/axiosInstance";
+import axios from "axios";
 
 const Token = {
-	// TODO: create this endpoint
-	checkValidity: () => AxiosInstance.get("rest/app/cloud/oauth/validation")
+	checkValidity: (token: string) => axios.get("https://api.github.com/user", {
+		headers: { Authorization: `Bearer ${token}`}
+	})
 };
 
 export default Token;

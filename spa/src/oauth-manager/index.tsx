@@ -1,15 +1,15 @@
 import ApiRequest from "../api";
 
 class OauthManager {
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
 	private accessToken: string | undefined;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	private refreshToken: string | undefined;
 
-	checkValidity() {
-		// TODO: API call to check the validity for the tokens in this class
+	async checkValidity() {
+		if (!this.accessToken) return;
+		const res = await ApiRequest.token.checkValidity(this.accessToken);
+		return res.status === 200;
 	}
 
 	async authenticateInGitHub() {
