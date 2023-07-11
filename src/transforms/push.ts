@@ -131,6 +131,10 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			gitHubAppId,
 			log
 		);
+		if (!jiraClient) {
+			log.info("Halting further execution for push as JiraClient is empty for this installation");
+			return;
+		}
 
 		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commits: JiraCommit[] = await Promise.all(
@@ -196,7 +200,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			log.info("Sending data to Jira");
 			try {
 				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",

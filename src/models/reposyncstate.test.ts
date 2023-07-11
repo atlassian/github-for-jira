@@ -449,4 +449,46 @@ describe("RepoSyncState", () => {
 			expect(result).toStrictEqual(new Set(["atlassian"]));
 		});
 	});
+
+	describe("findOneForRepoUrlAndRepoIdAndJiraHost", () => {
+		it("Should return null if no repository matches the repoUrl, repoId and JiraHost", async () => {
+			await RepoSyncState.create(repo);
+
+			expect(
+				await RepoSyncState.findOneForRepoUrlAndRepoIdAndJiraHost(
+					"github.com/different/repo",
+					repo.repoId,
+					sub.jiraHost
+				)
+			).toBeNull();
+
+			expect(
+				await RepoSyncState.findOneForRepoUrlAndRepoIdAndJiraHost(
+					repo.repoUrl,
+					99999,
+					sub.jiraHost
+				)
+			).toBeNull();
+
+			expect(
+				await RepoSyncState.findOneForRepoUrlAndRepoIdAndJiraHost(
+					repo.repoUrl,
+					repo.repoId,
+					"differenthost.atlassian.net"
+				)
+			).toBeNull();
+		});
+
+		it("Should return the repo if a repo matches the repoUrl, repoId and jiraHost", async () => {
+			await RepoSyncState.create(repo);
+
+			const result = await RepoSyncState.findOneForRepoUrlAndRepoIdAndJiraHost(
+				repo.repoUrl,
+				repo.repoId,
+				sub.jiraHost
+			);
+
+			expect(result).toMatchObject(repo);
+		});
+	});
 });
