@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { finishOAuthFlow } from "~/src/rest/routes/github-callback/service";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
@@ -15,13 +14,6 @@ GitHubCallbackRoute.get("/", async (req: Request, res: Response) => {
 			res.status(400).send("Missing code in queryFail acquire access token");
 		}
 
-		const data = await finishOAuthFlow(undefined, code, state, req.log);
-
-		if (data === null) {
-			req.log.warn("Fail to finish oauth flow");
-			res.status(400).send("Fail acquire access token");
-		}
-
 		/**
 		 * A static page,
 		 * which simply sends the tokens back to the parent window
@@ -31,7 +23,7 @@ GitHubCallbackRoute.get("/", async (req: Request, res: Response) => {
 			<html>
 				<body></body>
 				<script>
-					window.opener.postMessage(${JSON.stringify(data)}, window.origin);
+					window.opener.postMessage(${JSON.stringify({ code, state })}, window.origin);
 					window.close();
 				</script>
 			</html>

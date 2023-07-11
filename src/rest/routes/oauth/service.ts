@@ -1,8 +1,8 @@
+import Logger from "bunyan";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { GetRedirectUrlResponse } from "rest-interfaces/oauth-types";
-
-const appUrl = envVars.APP_URL;
+import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
 
 export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
 
@@ -22,9 +22,59 @@ export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRe
 		clientId = envVars.GITHUB_CLIENT_ID;
 	}
 	const scopes = [ "user", "repo" ];
-	const callbackURI = `${appUrl}${callbackPath}`;
+	const callbackURI = `${envVars.APP_URL}${callbackPath}`;
 
 	return {
 		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}`
 	};
+};
+
+
+type TokenType = {
+	accessToken: string;
+	refreshToken: string;
+};
+
+export const finishOAuthFlow = async (
+	gheUUID: string | undefined,
+	code: string,
+	state: string,
+	log: Logger
+): Promise<TokenType | null> => {
+
+	if (!code) {
+		log.warn("No code provided!");
+		return null;
+	}
+
+	if (gheUUID) {
+		log.warn("GHE not supported yet in rest oauth");
+		return null;
+	}
+
+	try {
+
+		const githubClient = await createAnonymousClientByGitHubAppId(
+			undefined,
+			undefined,
+			{ trigger: "getAccessToken" },
+			log
+		);
+
+		const { accessToken, refreshToken } = await githubClient.exchangeGitHubToken({
+			clientId: envVars.GITHUB_CLIENT_ID,
+			clientSecret: envVars.GITHUB_CLIENT_SECRET,
+			code,
+			state
+		});
+
+		return {
+			accessToken,
+			refreshToken
+		};
+
+	} catch (error) {
+		log.warn({ error }, "Failed to acquire Github token...");
+		return null;
+	}
 };
