@@ -1,19 +1,21 @@
-import { Request } from "express";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { GetRedirectUrlResponse } from "rest-interfaces/oauth-types";
 
 const appUrl = envVars.APP_URL;
 
-export const getRedirectUrl = (req: Request): GetRedirectUrlResponse => {
-	let callbackPath, hostname, clientId;
+export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
 
-	if (req.params.uuid) {
+	let callbackPath: string, hostname: string, clientId: string;
+
+	if (gheUUID) {
 		/**
 		 * This is for the GitHub enterprise flow, which is not being used for now,
 		 * TODO: Fetch the hostname and clientId for the GitHubServerApp using the UUID
 		 */
-		callbackPath = `/rest/app/${req.params.uuid}/github-callback`;
+		callbackPath = `/rest/app/${gheUUID}/github-callback`;
+		hostname = "";
+		clientId = "";
 	} else {
 		callbackPath = `/rest/app/cloud/github-callback`;
 		hostname = GITHUB_CLOUD_BASEURL;
