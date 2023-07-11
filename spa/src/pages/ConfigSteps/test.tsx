@@ -6,7 +6,10 @@ import ConfigSteps from "./index";
 
 // Mocking the global variable
 (global as any).AP = {
-	getLocation: jest.fn()
+	getLocation: jest.fn(),
+	context: {
+		getContext: jest.fn()
+	}
 };
 
 test("Connect GitHub Screen - Initial Loading of the page", () => {

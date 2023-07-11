@@ -146,6 +146,15 @@
     "@atlaskit/theme" "^12.5.0"
     "@babel/runtime" "^7.0.0"
 
+"@atlaskit/skeleton@^0.2.3":
+  version "0.2.3"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/skeleton/-/skeleton-0.2.3.tgz#e56db536f01adaeb0dfc9eb39478337c09315e96"
+  integrity sha512-FgTsjQAgJ/vPQs+uV6hRilSzHos38LB6d2FPhsZbsIoPll5aMzIBz7hHG6oVqkXiwL4w37BmxG+ijUU9Cs7RTQ==
+  dependencies:
+    "@atlaskit/theme" "^12.5.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/spinner@^15.5.0":
   version "15.5.2"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/spinner/-/spinner-15.5.2.tgz#b251a324ebd792c25ff286834f71df6f966ea1c5"

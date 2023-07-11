@@ -1,28 +1,47 @@
 import ApiRequest from "../api";
-class OauthManager {
-	private static accessToken: string | undefined;
-	// TODO: remove this comment later
+
+const OauthManager = () => {
+	let accessToken: string;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	private static refreshToken: string | undefined;
+	let refreshToken: string;
+	let username: string;
+	let email: string;
 
-	static async checkValidity() {
-		if (!this.accessToken) return;
-		const res = await ApiRequest.token.checkValidity(this.accessToken);
+	async function checkValidity() {
+		if (!accessToken) return;
+		const res = await ApiRequest.token.getUserDetails(accessToken);
+		username = res.data.login;
+		email = res.data.email;
+
 		return res.status === 200;
 	}
 
-	static async authenticateInGitHub() {
+	async function authenticateInGitHub() {
 		const res = await ApiRequest.githubAuth.authenticate();
 		if (res.data.redirectUrl) {
 			window.open(res.data.redirectUrl);
 		}
 	}
 
-	static setTokens(accessToken: string, refreshToken: string) {
-		this.accessToken = accessToken;
-		this.refreshToken = refreshToken;
+	function setTokens(at: string, rt: string) {
+		accessToken = at;
+		refreshToken = rt;
 	}
-}
+
+	function getUserDetails() {
+		return {
+			username,
+			email
+		};
+	}
+
+	return {
+		checkValidity,
+		authenticateInGitHub,
+		setTokens,
+		getUserDetails,
+	};
+};
 
 export default OauthManager;
