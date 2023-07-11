@@ -3,7 +3,7 @@ import { getRedirectUrl, finishOAuthFlow } from "./service";
 
 export const OAuthRouter = Router({ mergeParams: true });
 
-OAuthRouter.get("/redirectUrl", async (req: Request, res: Response) => {
+OAuthRouter.get("/redirectUrl", async function OAuthRedirectUrl(req: Request, res: Response) {
 
 	const cloudOrUUID = req.params.cloudOrUUID;
 
@@ -12,7 +12,7 @@ OAuthRouter.get("/redirectUrl", async (req: Request, res: Response) => {
 	res.status(200).json(await getRedirectUrl(gheUUID));
 });
 
-OAuthRouter.post("/exchangeToken", async (req: Request, res: Response) => {
+OAuthRouter.post("/exchangeToken", async function OAuthExchangeToken(req: Request, res: Response) {
 
 	try {
 		const code = req.body.code || "";

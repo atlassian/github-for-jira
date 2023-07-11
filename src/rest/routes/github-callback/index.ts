@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
-GitHubCallbackRoute.get("/", async (req: Request, res: Response) => {
+GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res: Response) {
 
 	try {
 

@@ -58,9 +58,9 @@ describe("rest oauth router", () => {
 					.post("/rest/app/cloud/oauth/exchangeToken")
 					.set("authorization", `${getToken()}`)
 					.send({ code })
-					.expect("content-type", "text/html; charset=utf-8");
+					.expect("content-type", "application/json; charset=utf-8");
 
-				expect(resp.text).toEqual({
+				expect(resp.body).toEqual({
 					accessToken: "behold!",
 					refreshToken: "my-refresh-token"
 				});
