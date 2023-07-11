@@ -86,6 +86,11 @@ export const processDeployment = async (
 		logger
 	);
 
+	if (!jiraClient) {
+		logger.info("Halting further execution for deployment as JiraClient is empty for this installation");
+		return;
+	}
+
 	const result: DeploymentsResult = await jiraClient.deployment.submit(jiraPayload, webhookPayload.repository.id);
 
 	// TODO - remove the rate limited test once valid metrics have been decided

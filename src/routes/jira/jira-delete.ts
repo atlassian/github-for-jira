@@ -20,7 +20,6 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
 	const gitHubInstallationId = Number(req.params.installationId) || Number(req.body.gitHubInstallationId);
 	const gitHubAppId = req.body.appId;
-
 	req.log.info({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
 
 	if (!jiraHost) {
@@ -52,7 +51,8 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
-	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+	// jiraClient is null when jiraHost is an empty string which we know is defined above.
+	await jiraClient!.devinfo.installation.delete(gitHubInstallationId);
 	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
 		await deleteSecurityWorkspaceLink(installation, gitHubInstallationId, gitHubAppId, req.log);
 		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace");

@@ -14,7 +14,8 @@ import {
 	JiraDeploymentBulkSubmitData,
 	JiraIssue,
 	JiraRemoteLink,
-	JiraSubmitOptions
+	JiraSubmitOptions,
+	JiraVulnerabilityBulkSubmitData
 } from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
@@ -32,6 +33,60 @@ export interface DeploymentsResult {
 	rejectedDeployments?: any[];
 }
 
+
+export interface JiraClient {
+	baseURL: string;
+	issues: {
+		get: (issueId: string, query?: { fields: string }) => Promise<AxiosResponse<JiraIssue>>;
+		getAll: (issueIds: string[], query?: { fields: string }) => Promise<JiraIssue[]>;
+		parse: (text: string) => string[] | undefined;
+		comments: {
+			list: (issue_id: string) => any;
+			addForIssue: (issue_id: string, payload: any) => any;
+			updateForIssue: (issue_id: string, comment_id: string, payload: any) => any;
+			deleteForIssue: (issue_id: string, comment_id: string) => any;
+		};
+		transitions: {
+			getForIssue: (issue_id: string) => any;
+			updateForIssue: (issue_id: string, transition_id: string) => any;
+		};
+		worklogs: {
+			addForIssue: (issue_id: string, payload: any) => any;
+		};
+	};
+	devinfo: {
+		branch: {
+			delete: (transformedRepositoryId: TransformedRepositoryId, branchRef: string) => any;
+		};
+		installation: {
+			delete: (gitHubInstallationId: string | number) => Promise<any[]>;
+		};
+		pullRequest: {
+			delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) => any;
+		};
+		repository: {
+			delete: (repositoryId: number, gitHubBaseUrl?: string) => Promise<any[]>;
+			update: (data: any, options?: JiraSubmitOptions) => any;
+		},
+	},
+	workflow: {
+		submit: (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => Promise<any>;
+	},
+	deployment: {
+		submit: (
+			data: JiraDeploymentBulkSubmitData,
+			repositoryId: number,
+			options?: JiraSubmitOptions
+		) => Promise<DeploymentsResult>;
+	},
+	remoteLink: {
+		submit: (data: any, options?: JiraSubmitOptions) => Promise<void>;
+	},
+	security: {
+		submitVulnerabilities: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
+	}
+}
+
 /*
  * Similar to the existing Octokit rest.js instance included in probot
  * apps by default, this client adds a Jira client that allows us to
@@ -46,7 +101,7 @@ export const getJiraClient = async (
 	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
-): Promise<any> => {
+): Promise<JiraClient| void> => {
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
@@ -62,7 +117,7 @@ export const getJiraClient = async (
 	);
 
 	// TODO: need to create actual class for this
-	const client = {
+	const client: JiraClient = {
 		baseURL: installation.jiraHost,
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
@@ -327,7 +382,7 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const	payload = {
+				const payload = {
 					deployments: data.deployments,
 					properties: {
 						gitHubInstallationId,
@@ -377,7 +432,7 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				const	payload = {
+				const payload = {
 					remoteLinks: data.remoteLinks,
 					properties: {
 						gitHubInstallationId
@@ -387,6 +442,19 @@ export const getJiraClient = async (
 				};
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
+			}
+		},
+		security: {
+			submitVulnerabilities: async (data, options?: JiraSubmitOptions): Promise<AxiosResponse> => {
+				const payload = {
+					vulnerabilities: data.vulnerabilities,
+					properties: {
+						gitHubInstallationId
+					},
+					operationType: options?.operationType || "NORMAL"
+				};
+				logger.info("Sending vulnerabilities payload to jira.");
+				return await instance.post("/rest/security/1.0/bulk", payload);
 			}
 		}
 	};
@@ -434,7 +502,7 @@ const batchedBulkUpdate = async (
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
-		const	body = {
+		const body = {
 			preventTransitions: options?.preventTransitions || false,
 			operationType: options?.operationType || "NORMAL",
 			repositories: [data],

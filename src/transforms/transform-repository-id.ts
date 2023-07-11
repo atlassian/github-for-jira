@@ -36,3 +36,8 @@ export const transformRepositoryId = (repositoryId: number, gitHubBaseUrl?: stri
 
 	return `${calculatePrefix(gitHubBaseUrl)}-${repositoryId}` as TransformedRepositoryId;
 };
+
+export const reverseCalculatePrefix = (hash: string): string => {
+	// Decoding the hex string to get the original prefix
+	return Buffer.from(hash, "hex").toString();
+};

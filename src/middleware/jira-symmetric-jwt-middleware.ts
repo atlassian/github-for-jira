@@ -5,7 +5,8 @@ import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
 import {
 	getGenericContainerUrls,
-	moduleUrls
+	moduleUrls,
+	getSecurityContainerActionUrls
 } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
 import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
@@ -93,10 +94,12 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 export const getTokenType = async (url: string, method: string, jiraHost: string): Promise<TokenType> => {
 	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return checkPathValidity(url) && method == "GET"
-		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
+		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`)
+		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
 			: TokenType.context;
 	} else {
-		return checkPathValidity(url) && method == "GET" ? TokenType.normal : TokenType.context;
+		return checkPathValidity(url) && method == "GET"
+		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal : TokenType.context;
 	}
 };
 
@@ -149,6 +152,12 @@ export const checkGenericContainerActionUrl = async (url: string): Promise<boole
 	const genericContainerActionUrls = await getGenericContainerUrls();
 
 	return genericContainerActionUrls?.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkSecurityContainerActionUrl = (url: string) => {
+	return getSecurityContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };
