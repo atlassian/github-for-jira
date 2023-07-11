@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { token } from "@atlaskit/tokens";
 import styled from "@emotion/styled";
 import CheckIcon from "@atlaskit/icon/glyph/check";
@@ -58,6 +58,11 @@ const CollapsibleStep = ({
 	children: JSX.Element,
 }) => {
 	const [ isExpanded, setIsExpanded ] = useState(expanded);
+
+	useEffect(() => {
+		setIsExpanded(expanded);
+	}, [expanded]);
+
 	const clickedTitle = () => {
 		if (canViewContent) {
 			setIsExpanded(!isExpanded);

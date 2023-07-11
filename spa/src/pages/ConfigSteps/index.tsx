@@ -56,7 +56,11 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
-
+const LoggedInContent = styled.div`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+`;
 const ConfigSteps = () => {
 	const { username, email } = OAuthManagerInstance.getUserDetails();
 	const isAuthenticated = !!(username && email);
@@ -71,7 +75,7 @@ const ConfigSteps = () => {
 	const [canViewContentForStep2, setCanViewContentForStep2] = useState(isAuthenticated);
 
 	const [expandStep1, setExpandStep1] = useState(true);
-	const [expandStep2] = useState(false);
+	const [expandStep2, setExpandStep2] = useState(false);
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
@@ -84,6 +88,7 @@ const ConfigSteps = () => {
 			setIsLoggedIn(true);
 			setCompletedStep1(true);
 			setExpandStep1(false);
+			setExpandStep2(true);
 			setCanViewContentForStep2(true);
 		});
 	}, []);
@@ -122,6 +127,8 @@ const ConfigSteps = () => {
 		setCompletedStep1(false);
 		setLoaderForLogin(false);
 		setCanViewContentForStep2(false);
+		setExpandStep1(true);
+		setExpandStep2(false);
 		setLoggedInUser("");
 	};
 
@@ -146,9 +153,10 @@ const ConfigSteps = () => {
 										borderRadius="5px"
 										isShimmering
 									/>
-								</> : <>
-									Logged in as <b>{loggedInUser}</b>. <Button appearance="link" onClick={logout}>Change GitHub login</Button>
-								</>
+								</> : <LoggedInContent>
+									<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+									<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
+								</LoggedInContent>
 							}
 						</> : <>
 							<GitHubOptionContainer>
