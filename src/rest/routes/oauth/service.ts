@@ -1,10 +1,27 @@
+import crypto  from "crypto";
 import Logger from "bunyan";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces/oauth-types";
 import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
+import IORedis from "ioredis";
+import { getRedisInfo } from "config/redis-info";
 
-export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
+const FIVE_MINUTE_IN_MS = 5 * 60 * 1000;
+const redis = new IORedis(getRedisInfo("oauth-state-nonce"));
+
+/*
+ * security method: https://auth0.com/docs/secure/attack-protection/state-parameters
+ */
+const generateNonce = async (jiraHost: string): Promise<string> => {
+	const nonce = crypto.randomBytes(16).toString("base64");
+	await redis.set(nonce, JSON.stringify({
+		jiraHost
+	}), "px", FIVE_MINUTE_IN_MS);
+	return nonce;
+};
+
+export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
 
 	let callbackPath: string, hostname: string, clientId: string;
 
@@ -21,11 +38,14 @@ export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRe
 		hostname = GITHUB_CLOUD_BASEURL;
 		clientId = envVars.GITHUB_CLIENT_ID;
 	}
+
 	const scopes = [ "user", "repo" ];
 	const callbackURI = `${envVars.APP_URL}${callbackPath}`;
+	const nonce = await generateNonce(jiraHost);
 
 	return {
-		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}`
+		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}`,
+		state: nonce
 	};
 };
 

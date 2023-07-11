@@ -1,5 +1,6 @@
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
+	state: string;
 };
 
 export type ExchangeTokenResponse = {
