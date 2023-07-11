@@ -74,8 +74,8 @@ const ConfigSteps = () => {
 	const [showStep2, setShowStep2] = useState(true);
 	const [canViewContentForStep2, setCanViewContentForStep2] = useState(isAuthenticated);
 
-	const [expandStep1, setExpandStep1] = useState(true);
-	const [expandStep2, setExpandStep2] = useState(false);
+	const [expandStep1, setExpandStep1] = useState(!isAuthenticated);
+	const [expandStep2, setExpandStep2] = useState(isAuthenticated);
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
