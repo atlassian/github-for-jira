@@ -1,23 +1,28 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
-import { removeInterceptor } from "nock";
+import { removeInterceptor, cleanAll as nockCleanAll } from "nock";
 import { processInstallation } from "./installation";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
+import { dynamodb as ddb } from "config/dynamodb";
+import { createHashWithoutSharedSecret } from "utils/encryption";
+import { envVars } from "config/env";
 
 import deploymentNodesFixture from "fixtures/api/graphql/deployment-nodes.json";
 import mixedDeploymentNodes from "fixtures/api/graphql/deployment-nodes-mixed.json";
-import { getDeploymentsQuery } from "~/src/github/client/github-queries";
+import { getDeploymentsQuery, getDeploymentsQueryWithStatuses } from "~/src/github/client/github-queries";
 import { waitUntil } from "test/utils/wait-until";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { GitHubServerApp } from "models/github-server-app";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
+import { GitHubInstallationClient } from "../github/client/github-installation-client";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
+const logger = getLogger("test");
 
 describe("sync/deployments", () => {
 	const installationId = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
@@ -31,6 +36,283 @@ describe("sync/deployments", () => {
 		},
 		preventTransitions: true,
 		operationType: "BACKFILL"
+	});
+	describe("using dynamodb as cache", () => {
+
+		//-- shared testing states --
+		const PAGE_SIZE__TWO_ITEMS = 2;
+		const DEPLOYMENT_CURSOR_EMPTY = undefined;
+		const REPEAT_ONCE = 1;
+		const REPEAT_LOTS_OF_TIME = 20;
+		let gitHubClient: GitHubInstallationClient;
+		let repoSyncState: RepoSyncState;
+		let repositoryData;
+
+		beforeEach(async () => {
+
+			gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, logger, undefined);
+
+			const dbState = await new DatabaseStateCreator().withActiveRepoSyncState().repoSyncStatePendingForDeployments().create();
+
+			repoSyncState = dbState.repoSyncState!;
+			repositoryData = {
+				id: repoSyncState.repoId,
+				name: repoSyncState.repoName,
+				full_name: repoSyncState.repoFullName,
+				owner: { login: repoSyncState.repoOwner },
+				html_url: repoSyncState.repoUrl,
+				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+			};
+
+			Array.from({ length: REPEAT_LOTS_OF_TIME }).forEach(() => githubUserTokenNock(installationId));
+		});
+
+		afterEach(async () => {
+			nockCleanAll();
+		});
+
+		describe("when ff is on", () => {
+
+			beforeEach(() => {
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+				when(numberFlag).calledWith(NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES, 1, jiraHost).mockResolvedValue(1);
+			});
+
+			it("should get the url from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						url: "deployment-url-4",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-4"
+						})
+					}),
+					expect.objectContaining({
+						url: "deployment-url-3",
+						pipeline: expect.objectContaining({
+							url: "deployment-url-3"
+						})
+					})
+				]);
+			});
+
+			it("should get the correct state from previous NON-INACTIVE status", async () => {
+
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				expect(result.jiraPayload?.deployments).toEqual([
+					expect.objectContaining({
+						state: "successful"
+					}),
+					expect.objectContaining({
+						state: "successful"
+					})
+				]);
+			});
+
+			// eslint-disable-next-line jest/expect-expect
+			it("should save deployments to dynamodb and process WITHOUT calling rest listing api", async () => {
+
+				const deploymentCount = 4;
+				const deployments = createDeploymentEntities(deploymentCount);
+
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+				nockFetchingDeploymentgPagesGraphQL(getDeploymentsQueryWithStatuses, deployments[2].cursor, [deployments[1], deployments[0]]); //this is for extra page when fetching current deployments
+
+				nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+				const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+				await expectDeploymentEntryInDB([deployments[3], deployments[2]]);
+				expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
+
+			});
+		});
+
+		describe("when ff is off", () => {
+
+			beforeEach(() => {
+				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(false);
+			});
+
+			describe("for empty demployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from beginning", async () => {
+
+					const deploymentCount = 4;
+					const deployments = createDeploymentEntities(deploymentCount);
+
+					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, DEPLOYMENT_CURSOR_EMPTY, [deployments[3], deployments[2]]);
+
+					nockDeploymentCommitGetApi([deployments[3], deployments[2]], REPEAT_ONCE);
+
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
+
+					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, DEPLOYMENT_CURSOR_EMPTY, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[3], deployments[2]]);
+				});
+			});
+
+			describe("for existing deployment cursor", () => {
+				// eslint-disable-next-line jest/expect-expect
+				it("should fetch deployments from existing cursor", async () => {
+
+					const deploymentCount = 4;
+					const deployments = createDeploymentEntities(deploymentCount);
+
+					nockFetchingDeploymentgPagesGraphQL(getDeploymentsQuery, deployments[2].cursor, [deployments[1], deployments[0]]);
+
+					nockDeploymentCommitGetApi([deployments[1], deployments[0]], REPEAT_ONCE);
+
+					//because ff is off, it won't find cache in history, so need to call the rest listing api lots of times
+					nockDeploymentListingApi(deployments, REPEAT_LOTS_OF_TIME);
+					nockDeploymentStatusApi(deployments, REPEAT_LOTS_OF_TIME);
+
+					const result = await getDeploymentTask(logger, gitHubClient, jiraHost, repositoryData, deployments[2].cursor, PAGE_SIZE__TWO_ITEMS, msgPayload());
+
+					expectEdgesAndPayloadMatchToDeploymentCommits(result, [deployments[1], deployments[0]]);
+				});
+			});
+		});
+
+		//--helper funcs--
+		const msgPayload = () => ({
+			jiraHost,
+			installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			commitsFromDate: "2023-01-01T00:00:00Z"
+		});
+
+		//size up to 9 entities
+		const createDeploymentEntities = (size: number) => {
+			return Array.from({ length: size }).map((_, idx) => {
+				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
+				clone._seq = idx + 1;
+				clone.cursor = `cursor:${idx + 1}`;
+				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
+				clone.node.updatedAt = `2023-01-0${idx + 1}T10:00:00Z`;
+				clone.node.databaseId = `dbid-${idx + 1}`;
+				clone.node.commitOid = `SHA${idx + 1}`;
+				clone.node.statuses.nodes.forEach(n => {
+					n.createdAt = clone.node.createdAt;
+					n.updatedAt = clone.node.updatedAt;
+					if (n.state === "SUCCESS") {
+						n.logUrl = `deployment-url-${idx + 1}`;
+					}
+				});
+				return clone;
+			});
+		};
+
+		const nockFetchingDeploymentgPagesGraphQL = (query, cursor, deployments) => {
+			githubNock.post("/graphql", { query, variables: { owner: repoSyncState.repoOwner, repo: repoSyncState.repoName, per_page: PAGE_SIZE__TWO_ITEMS, cursor } })
+				.query(true).reply(200, { data: { repository: { deployments: { edges: deployments } } } });
+		};
+
+		const nockDeploymentListingApi = (deployments, repeatTimes) => {
+			Array.from({ length: repeatTimes }).forEach(() => {
+				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
+					.reply(200, deployments.map((item, idx) => ({
+						id: item.node.databaseId,
+						sha: item.node.commitOid,
+						ref: "random",
+						task: `task for deployment ${idx + 1}`,
+						payload: {},
+						original_environment: item.node.environment,
+						environment: item.node.environment,
+						description: `description for deployment ${idx + 1}`,
+						creator: { login: "test-repo-owner", id: 1, type: "User" },
+						created_at: item.node.createdAt,
+						updated_at: item.node.createdAt,
+						statuses_url: "random",
+						repository_url: "random",
+						transient_environment: false,
+						production_environment: true
+					})));
+			});
+		};
+
+		const nockDeploymentStatusApi = (deployments, repeatTimes) => {
+			Array.from({ length: repeatTimes }).forEach(() => {
+				deployments.forEach((item, idx) => {
+					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
+						.reply(200, [
+							{ id: idx * 1000 + 1, state: "inactive", description: "random", environment: item.node.environment },
+							{ id: idx * 1000 + 2, state: "success", description: "random", environment: item.node.environment }
+						]);
+				});
+			});
+		};
+
+		const nockDeploymentCommitGetApi = (deployments, repeatTimes) => {
+			Array.from({ length: repeatTimes }).forEach(() => {
+				deployments.forEach(item => {
+					githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
+						.reply(200, {
+							commit: {
+								author: { name: "random", email: "random", date: new Date() },
+								message: `commit message [JIRA-${item._seq}]`
+							}, html_url: "random"
+						});
+				});
+			});
+		};
+
+		const expectDeploymentEntryInDB = async (deployments) => {
+			for (const deployment of deployments) {
+				const { repository: { id: repoId }, environment, statuses, commitOid } = deployment.node;
+				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${repoId}_env_${environment}`);
+				const successStatusDate = new Date(statuses.nodes.find(n=>n.state === "SUCCESS")?.updatedAt).getTime();
+				const result = await ddb.getItem({
+					TableName: envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME,
+					Key: {
+						Id: { "S": key },
+						CreatedAt: { "N": String(successStatusDate) }
+					},
+					AttributesToGet: [ "CommitSha" ]
+				}).promise();
+				expect(result.$response.error).toBeNull();
+				expect(result.Item).toEqual({ CommitSha: { "S": commitOid } });
+			}
+		};
+
+		const expectEdgesAndPayloadMatchToDeploymentCommits = (result, deployments) => {
+			expect(result).toEqual({
+				edges: deployments.map(d =>
+					expect.objectContaining({ cursor: d.cursor, node: expect.objectContaining({ commitOid: d.node.commitOid }) })
+				),
+				jiraPayload: {
+					deployments: deployments.map(d => expect.objectContaining({
+						associations: [{ associationType: "issueIdOrKeys", values: [ `JIRA-${d._seq}`] }] })
+					)
+				}
+			});
+		};
+		//--helper funcs end --
 	});
 
 	describe("cloud", () => {
@@ -79,12 +361,7 @@ describe("sync/deployments", () => {
 			expect(mockBackfillQueueSendMessage.mock.calls[0][1]).toEqual(delaySec || 0);
 		};
 
-		it("should sync nothing to jira if all edges are earlier than fromDate -- when ff is on", async () => {
-
-			when(booleanFlag).calledWith(
-				BooleanFlags.USE_BACKFILL_ALGORITHM_INCREMENTAL,
-				jiraHost
-			).mockResolvedValue(true);
+		it("should sync nothing to jira if all edges are earlier than fromDate", async () => {
 
 			githubUserTokenNock(installationId);
 			githubNock
@@ -207,14 +484,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+					"url": null
 				},
 				"environment": {
 					"id": "prod",
@@ -605,14 +882,14 @@ describe("sync/deployments", () => {
 				"deploymentSequenceNumber": 500226426,
 				"updateSequenceNumber": 500226426,
 				"displayName": "[TEST-123] test-commit-message",
-				"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks",
+				"url": null,
 				"description": "deploy",
 				"lastUpdated": "2022-02-03T22:45:04.000Z",
-				"state": "successful",
+				"state": "unknown",
 				"pipeline": {
 					"id": "deploy",
 					"displayName": "deploy",
-					"url": "https://github.com/test-repo-owner/test-repo-name/commit/51e16759cdac67b0d2a94e0674c9603b75a840f6/checks"
+					"url": null
 				},
 				"environment": {
 					"id": "prod",

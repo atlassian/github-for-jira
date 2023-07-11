@@ -12,21 +12,22 @@ export const JiraConnectEnterpriseAppPost = async (
 
 	const { installation, jiraHost } = res.locals;
 
-	try {
-		req.log.debug("Received Jira Connect Enterprise App POST request");
+	req.log.debug("Received Jira Connect Enterprise App POST request");
 
-		const {
-			uuid,
-			appId,
-			gitHubAppName,
-			gitHubBaseUrl,
-			gitHubClientId,
-			gitHubClientSecret,
-			webhookSecret,
-			privateKey,
-			apiKeyHeaderName,
-			apiKeyValue
-		} = req.body;
+	const {
+		uuid,
+		appId,
+		gitHubAppName,
+		gitHubBaseUrl,
+		gitHubClientId,
+		gitHubClientSecret,
+		webhookSecret,
+		privateKey,
+		apiKeyHeaderName,
+		apiKeyValue
+	} = req.body;
+
+	try {
 
 		const existing = await GitHubServerApp.findForUuid(uuid);
 		if (existing && existing.installationId != installation.id) {
@@ -61,6 +62,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise,
+			withApiKey: !!apiKeyValue,
 			success: true
 		});
 
@@ -72,6 +74,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise,
+			withApiKey: !!apiKeyValue,
 			success: false
 		});
 

@@ -22,10 +22,36 @@ describe("environment variables", () => {
 	it("Should not be able to change variables in envVars", () => {
 		process.env.NODE_ENV = EnvironmentEnum.production;
 		expect(envVars.NODE_ENV).toBe(EnvironmentEnum.test);
+		process.env.NODE_ENV = EnvironmentEnum.test;
 	});
 
 	it("Should not change process.env when changing a variable in envVars", () => {
 		envVars.NODE_ENV = EnvironmentEnum.production;
 		expect(process.env.NODE_ENV).toBe("test");
+	});
+
+	describe("WEBHOOK_SECRETS", () => {
+		let oldWebhookSecrets;
+		beforeEach(() => {
+			oldWebhookSecrets = process.env.WEBHOOK_SECRETS;
+		});
+		afterEach(() => {
+			process.env.WEBHOOK_SECRETS = oldWebhookSecrets;
+		});
+
+		it("should convert a string to an array", () => {
+			process.env.WEBHOOK_SECRETS = "abc";
+			expect(envVars.WEBHOOK_SECRETS).toStrictEqual(["abc"]);
+		});
+
+		it("should parse json array", () => {
+			process.env.WEBHOOK_SECRETS = `["abc", "qwe"]`;
+			expect(envVars.WEBHOOK_SECRETS).toStrictEqual(["abc", "qwe"]);
+		});
+
+		it("should return empty array when undefined or null", () => {
+			delete process.env.WEBHOOK_SECRETS;
+			expect(envVars.WEBHOOK_SECRETS).toStrictEqual([]);
+		});
 	});
 });

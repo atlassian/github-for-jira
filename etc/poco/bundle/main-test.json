@@ -25,8 +25,40 @@
       "allowed": true
     },
     {
-      "name": "Allow external users open jira configuration page",
+      "name": "Allow external users to access the base route",
+      "path": "/",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+		{
+      "name": "Allow external users to access create-branch-options",
+      "path": "/create-branch-options",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+		{
+      "name": "Allow external users to access jira route",
+      "path": "/jira",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+		{
+      "name": "Allow external users to open jira configuration page",
       "path": "/jira/configuration",
+      "method": "GET",
+      "mechanism": "open",
+      "principals": [],
+      "allowed": true
+    },
+		{
+      "name": "Allow external users to open maintenance page",
+      "path": "/maintenance",
       "method": "GET",
       "mechanism": "open",
       "principals": [],
@@ -48,6 +80,47 @@
 			"principals": [],
 			"allowed": true
 		},
+		{
+			"name": "Allow external users to access the session route",
+			"path": "/session",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access the error route",
+			"path": "/error",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access the routes through the session route",
+			"path": "/session/whatever-route",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access the routes through the error route",
+			"path": "/error/whatever-route",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access the setup route",
+			"path": "/setup",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+
 		{
 			"name": "Allow external users to disconnect github account",
 			"path": "/jira/configuration",
@@ -89,11 +162,35 @@
 			"allowed": true
 		},
 		{
+			"name": "Allow micros-sv--github-for-jira-dl-admins staff to microscope endpoints",
+			"path": "/microscope/dlq/queues",
+			"method": "GET",
+			"mechanism": "group",
+			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"allowed": true
+		},
+		{
+			"name": "Restrict other users from microscope endpoints",
+			"path": "/microscope/dlq/queues",
+			"method": "GET",
+			"mechanism": "asap",
+			"principals": ["random-asap"],
+			"allowed": false
+		},
+		{
+			"name": "Restrict other users from microscope endpoints",
+			"path": "/microscope/dlq/queues",
+			"method": "GET",
+			"mechanism": "group",
+			"principals": ["random-group"],
+			"allowed": false
+		},
+		{
 			"name": "Allow support team to call API endpoints",
 			"path": "/api/hash",
 			"method": "POST",
 			"mechanism": "group",
-			"principals": ["enterprise-cloud-support-all"],
+			"principals": ["micros-sv--github-for-jira-dl-safe-logging-read"],
 			"allowed": true
 		},
 		{

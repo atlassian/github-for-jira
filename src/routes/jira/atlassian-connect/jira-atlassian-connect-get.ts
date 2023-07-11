@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { envVars } from "config/env";
 import { compact, map } from "lodash";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const instance = envVars.APP_KEY.split(".").pop();
 const isProd = instance === "production";
@@ -8,13 +9,94 @@ const isProd = instance === "production";
 // TODO: implement named routes (https://www.npmjs.com/package/named-routes) to facilitate rerouting between files
 export const postInstallUrl = "/jira";
 export const APP_NAME = `GitHub for Jira${isProd ? "" : ` (${instance})`}`;
+export const LOGO_URL = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
 
 const adminCondition = [
 	{
 		condition: "user_is_admin"
 	}
 ];
-const modules = {
+
+interface JiraDevelopmentToolActions {
+	createBranch?: {
+		templateUrl: string;
+	};
+	searchConnectedWorkspaces?: {
+		templateUrl: string;
+	};
+	searchRepositories?: {
+		templateUrl: string;
+	};
+	associateRepository?: {
+		templateUrl: string;
+	};
+}
+
+const CREATE_BRANCH_ENDPOINT =
+	`${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`;
+const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/search`;
+const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
+const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
+
+export const getGenericContainerUrls = async (): Promise<string[]> => {
+	return [
+		SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
+		SEARCH_REPOSITORIES_ENDPOINT,
+		ASSOCIATE_REPOSITORY_ENDPOINT
+	];
+};
+
+export const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
+		return {
+			createBranch: {
+				templateUrl: CREATE_BRANCH_ENDPOINT
+			},
+			searchConnectedWorkspaces: {
+				templateUrl: SEARCH_CONNECTED_WORKSPACES_ENDPOINT
+			},
+			searchRepositories: {
+				templateUrl: SEARCH_REPOSITORIES_ENDPOINT
+			},
+			associateRepository: {
+				templateUrl: ASSOCIATE_REPOSITORY_ENDPOINT
+			}
+		};
+	} else {
+		return {
+			createBranch: {
+				templateUrl: CREATE_BRANCH_ENDPOINT
+			}
+		};
+	}
+};
+
+const jiraSecurityInfoProvider = {
+	homeUrl:  "https://github.com",
+	logoUrl: LOGO_URL,
+	documentationUrl: "https://docs.github.com/code-security",
+	actions: {
+		fetchContainers: {
+			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
+		},
+		fetchWorkspaces: {
+			templateUrl: ""
+		},
+		searchContainers: {
+			templateUrl: ""
+		}
+	},
+	"name": {
+		"value": "GitHub Security"
+	},
+	"key": "github-security"
+};
+
+export const getSecurityContainerActionUrls = [
+	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl
+];
+
+const	modules = {
 	jiraDevelopmentTool: {
 		application: {
 			value: "GitHub"
@@ -24,13 +106,9 @@ const modules = {
 			"commit",
 			"pull_request"
 		],
-		actions: {
-			createBranch: {
-				templateUrl: `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`
-			}
-		},
+		actions: {} as JiraDevelopmentToolActions,
 		key: "github-development-tool",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub"
 		},
@@ -41,12 +119,12 @@ const modules = {
 		name: {
 			value: "GitHub Actions"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com/features/actions"
 	},
 	jiraBuildInfoProvider: {
 		key: "github-actions",
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		name: {
 			value: "GitHub Actions"
 		},
@@ -57,7 +135,7 @@ const modules = {
 		name: {
 			value: "GitHub"
 		},
-		logoUrl: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
 	},
 	postInstallPage: {
@@ -137,6 +215,15 @@ const modules = {
 			url: "/jira/connect/enterprise/app/{ac.uuid}",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "spa-index-page",
+			name: {
+				value: "GitHub for Jira SPA Index Page"
+			},
+			url: "/spa",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
@@ -169,12 +256,13 @@ const modules = {
 	]
 };
 
-export const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
+	const { jiraHost } =  res.locals;
+	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
+	const isGitHubSecurityInJiraEnabled = await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost);
+
 	res.status(200).json({
-		// Will need to be set to `true` once we verify the app will work with
-		// GDPR compliant APIs. Ref: https://github.com/github/ce-extensibility/issues/220
 		apiMigrations: {
 			gdpr: false,
 			"signed-install": true
@@ -202,6 +290,11 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules
+		modules: {
+			...(isGitHubSecurityInJiraEnabled && { jiraSecurityInfoProvider }),
+			...modules
+		}
 	});
 };
+const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));
+export { moduleUrls };

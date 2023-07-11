@@ -94,6 +94,10 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log
 	);
 
+	if (!jiraClient) {
+		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
+		return;
+	}
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {

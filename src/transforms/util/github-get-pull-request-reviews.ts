@@ -2,15 +2,42 @@ import { GitHubInstallationClient } from "~/src/github/client/github-installatio
 import { Repository } from "models/subscription";
 import { Octokit } from "@octokit/rest";
 import Logger from "bunyan";
+import { statsd } from "config/statsd";
+import { metricPrReviewers } from "config/metric-names";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-export const getPullRequestReviews = async (gitHubInstallationClient: GitHubInstallationClient, repository: Repository, pullRequest: Octokit.PullsListResponseItem, logger: Logger): Promise<Octokit.PullsListReviewsResponse> => {
+export const 	getPullRequestReviews = async (
+	jiraHost: string,
+	gitHubInstallationClient: GitHubInstallationClient,
+	repository: Repository,
+	pullRequest: Octokit.PullsListResponseItem,
+	logger: Logger
+): Promise<Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>> =>
+{
 	const { owner: { login: repositoryOwner }, name: repositoryName, id: repositoryId } = repository;
 	const { number: pullRequestNumber, id: pullRequestId } = pullRequest;
 
 	try {
-		const response = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
-		return response.data;
+		if (await booleanFlag(BooleanFlags.SKIP_REQUESTED_REVIEWERS, jiraHost)) {
+			const response = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
+			return response.data;
+		}
+
+		const requestedReviewsResponse = await gitHubInstallationClient.getPullRequestRequestedReviews(repositoryOwner, repositoryName, pullRequestNumber);
+		const requestedReviewsData = requestedReviewsResponse.data;
+
+		statsd.incrementWithValue(metricPrReviewers.requestedReviewsCount, requestedReviewsData.users.length, {}, { jiraHost });
+		statsd.histogram(metricPrReviewers.requestedReviewsHist, requestedReviewsData.users.length, {}, { jiraHost });
+
+		const submittedReviewsResponse = await gitHubInstallationClient.getPullRequestReviews(repositoryOwner, repositoryName, pullRequestNumber);
+		const submittedReviewsData = submittedReviewsResponse.data;
+
+		statsd.incrementWithValue(metricPrReviewers.submittedReviewsCount, submittedReviewsData.length, {}, { jiraHost });
+		statsd.histogram(metricPrReviewers.submittedReviewsHist, submittedReviewsData.length, {}, { jiraHost });
+
+		return requestedReviewsData.users.map(user => ({ user })).concat(submittedReviewsData);
 	} catch (err) {
+		statsd.increment(metricPrReviewers.failedCount, {}, { jiraHost });
 		logger.warn({ pullRequestNumber, pullRequestId, repositoryId },"Get Pull Reviews Failed - Check Github Permissions: Can't retrieve reviewers");
 		return [];
 	}

@@ -634,6 +634,10 @@
     font-size: 0.75rem;
 }
 
+.aui-tooltip {
+  max-width: 400px;
+}
+
 .aui-iconfont-question-filled + .jiraConfiguration__connectGHCloudTooltip {
     top: -1.8em;
 }

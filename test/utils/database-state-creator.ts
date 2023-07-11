@@ -85,15 +85,8 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
-	public async create(): Promise<CreatorResult> {
-		const installation  = await Installation.create({
-			jiraHost,
-			encryptedSharedSecret: "secret",
-			clientKey: getHashedKey("client-key"),
-			plainClientKey: "client-key"
-		});
-
-		const gitHubServerApp = this.forServerFlag ? await GitHubServerApp.install({
+	public static createServerApp(installationIdPk: number): Promise<GitHubServerApp> {
+		return GitHubServerApp.install({
 			uuid: v4(),
 			appId: 12321,
 			gitHubBaseUrl: gheUrl,
@@ -102,8 +95,21 @@ export class DatabaseStateCreator {
 			webhookSecret: "webhook-secret",
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
 			gitHubAppName: "app-name",
-			installationId: installation.id
-		}, jiraHost) : undefined;
+			installationId: installationIdPk
+		}, jiraHost);
+	}
+
+	public async create(): Promise<CreatorResult> {
+		const installation  = await Installation.create({
+			jiraHost,
+			encryptedSharedSecret: "secret",
+			clientKey: getHashedKey("client-key"),
+			plainClientKey: "client-key"
+		});
+
+		const gitHubServerApp = this.forServerFlag
+			? await DatabaseStateCreator.createServerApp(installation.id)
+			: undefined;
 
 		const subscription = await Subscription.create({
 			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,

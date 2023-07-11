@@ -21,7 +21,6 @@
       "paths": [
         "/",
         "/github/**",
-        "/github-manifest",
         "/create-branch-options",
         "/jira",
         "/jira/**",
@@ -69,7 +68,7 @@
 			"principals": {
 				"staff": {
 					"groups": [
-						"enterprise-cloud-support-all"
+						"micros-sv--github-for-jira-dl-safe-logging-read"
 					]
 				}
 			}

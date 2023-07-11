@@ -62,3 +62,23 @@ export const metricCreateBranch = {
 	created: `${server}.create-branch.created`,
 	failed: `${server}.create-branch.failed`
 };
+
+export const metricDeploymentCache = {
+	toCreate: `${server}.deployment-history-cache.to-create`,
+	created: `${server}.deployment-history-cache.created`,
+	failed: `${server}.deployment-history-cache.failed`,
+	lookup: `${server}.deployment-history-cache.lookup`,
+	hit: `${server}.deployment-history-cache.hit`,
+	miss: `${server}.deployment-history-cache.miss`
+};
+
+export const metricPrReviewers = {
+	requestedReviewsCount: `${server}.prs.reviews.requested.count`,
+	requestedReviewsHist: `${server}.prs.reviews.requested.histogram`,
+
+	submittedReviewsCount: `${server}.prs.reviews.submitted.count`,
+	submittedReviewsHist: `${server}.prs.reviews.submitted.histogram`,
+
+	failedCount: `${server}.prs.failed.count`
+};
+

@@ -45,6 +45,20 @@
     margin-bottom: 0.7em;
 }
 
+.gitHubConfiguration__ssoWarning {
+    margin-right: 10px;
+    cursor: pointer;
+}
+aui-inline-dialog.aui-layer[open]:focus-visible  {
+    box-shadow: none;
+}
+.gitHubConfiguration__ssoMessage {
+    width: 378px;
+}
+.gitHubConfiguration__ssoMessage ~ ul {
+    padding: 6px 16px;
+}
+
 .Box {
     border: 0;
     border-radius: 0;

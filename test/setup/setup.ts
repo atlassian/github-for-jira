@@ -4,6 +4,7 @@ import "./matchers/nock";
 import "./matchers/to-promise";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
+import { dynamodb } from "config/dynamodb";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
@@ -65,7 +66,8 @@ declare global {
 }
 
 const clearState = async () => Promise.all([
-	sequelize.truncate({ truncate: true, cascade: true })
+	sequelize.truncate({ truncate: true, cascade: true }),
+	purgeItemsInTable(envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME)
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
@@ -178,3 +180,30 @@ afterAll(async () => {
 	// Close connection when tests are done
 	await sequelize.close();
 });
+
+export const purgeItemsInTable = async (tableName: string) => {
+
+	try {
+
+		const rows = await dynamodb.scan({
+			TableName: tableName,
+			AttributesToGet: [ "Id", "CreatedAt" ]
+		}).promise();
+
+		const deleteRequests: Promise<unknown>[] = ((rows.Items || []).map(item => {
+			return dynamodb.deleteItem({
+				TableName: tableName,
+				Key: {
+					"Id": { "S": item.Id.S },
+					"CreatedAt": { "N" : item.CreatedAt.N }
+				}
+			}).promise();
+		}));
+
+		await Promise.all(deleteRequests);
+
+	} catch (e) {
+		//do nothing as this method is for local test only
+	}
+
+};

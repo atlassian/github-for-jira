@@ -7,6 +7,7 @@ import { Repository, Subscription } from "models/subscription";
 import Logger from "bunyan";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
+import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -109,8 +110,12 @@ const getReposBySubscriptions = async (subscriptions: Subscription[], logger: Lo
 	const repoTasks = subscriptions.map(async (subscription) => {
 		try {
 			const gitHubInstallationClient = await createInstallationClient(subscription.gitHubInstallationId, jiraHost, { trigger: "github-create-branch" }, logger, subscription.gitHubAppId);
-			const response = await gitHubInstallationClient.getRepositoriesPage(MAX_REPOS_RETURNED, undefined, "UPDATED_AT");
-			return response.viewer.repositories.edges;
+			const response = await gitHubInstallationClient.getRepositoriesPage(100, undefined, "UPDATED_AT");
+			// The app can be installed in a GitHub org but that org might not be connected to Jira, therefore we must filter them out, or
+			// the next steps (e.g. get repo branches to branch of) will fail
+			const repoOwners = await RepoSyncState.findAllRepoOwners(subscription);
+			const filteredRepos =  response.viewer.repositories.edges.filter(edge => repoOwners.has(edge.node.owner.login));
+			return filteredRepos.slice(0, MAX_REPOS_RETURNED);
 		} catch (err) {
 			logger.error({ err }, "Create branch - Failed to fetch repos for installation");
 			throw err;

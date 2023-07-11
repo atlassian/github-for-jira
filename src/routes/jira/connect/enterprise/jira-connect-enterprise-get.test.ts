@@ -7,10 +7,6 @@ import { Installation } from "models/installation";
 import supertest from "supertest";
 import { GitHubServerApp } from "models/github-server-app";
 import { getFrontendApp } from "~/src/app";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
 
 describe("GET /jira/connect/enterprise", () => {
 
@@ -94,11 +90,6 @@ describe("GET /jira/connect/enterprise", () => {
 		});
 
 		it("populates list of known HTTP headers", async () => {
-			when(booleanFlag).calledWith(
-				BooleanFlags.ENABLE_API_KEY_FEATURE,
-				jiraHost
-			).mockResolvedValue(true);
-
 			const response = await supertest(app)
 				.get("/jira/connect/enterprise")
 				.query({

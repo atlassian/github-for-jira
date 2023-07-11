@@ -63,6 +63,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise,
+			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: true
 		});
 
@@ -79,6 +80,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise,
+			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: false
 		});
 

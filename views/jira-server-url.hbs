@@ -82,16 +82,19 @@
 
             <div class="jiraServerUrl__section">
 
-            {{#if withApiKeyFeature}}
               <h3 class="jiraServerUrl__options__subTitle">
                 API key <small>(Optional)</small>
               </h3>
               <div class="jiraServerUrl__prompt">
-                An additional layer of security by creating or using an API key. Remember the key for future use.
-                <a href='#'>Learn more about API keys</a>
+                An additional layer of security by creating or using an API key. Please keep the secret key securely stored to authenticate HTTP connection.
+                <a href="https://support.atlassian.com/jira-cloud-administration/docs/connect-a-github-enterprise-server-account-to-jira-software/#API-key-based-pre-authorization" target="_blank">Learn more about API keys</a>
               </div>
                 <div class="field-group">
-                  <label for="apiKeyHeaderName">HTTP request header name</label>
+                  <label
+                    for="apiKeyHeaderName"
+                    id="apiKeyHeaderNameLabel"
+                    title="The name of the custom header in the incoming HTTP requests."
+                  >HTTP request header name</label>
                   <input class="text full-width-field" type="text"
                          data-aui-validation-field
                          data-aui-validation-api-key-header-name
@@ -102,7 +105,11 @@
                 </div>
 
                 <div class="field-group">
-                  <label for="apiKeyValue">Value</label>
+                  <label
+                    for="apiKeyValue"
+                    id="apiKeyValueLabel"
+                    title="The secret API key value of the custom header in the incoming HTTP requests."
+                  >Value</label>
                   <input class="text full-width-field" type="password"
                          data-aui-validation-field
                          data-aui-validation-api-key-header-value
@@ -110,7 +117,6 @@
                          id="apiKeyValue"
                          name="apiKeyValue" />
                 </div>
-            {{/if}}
 
                 <button
                     type="submit"
@@ -144,7 +150,6 @@
     ></script>
     <script src="/public/js/jira-server-url.js" nonce="{{nonce}}"></script>
 
-{{#if withApiKeyFeature}}
     <script src="/public/js/jira-api-key-validation.js" nonce="{{nonce}}"></script>
     <script>
         initApiKeyValidation(
@@ -160,7 +165,6 @@
             syncGheServerBtn
         );
     </script>
-{{/if}}
     <script src="/public/js/navigation.js" nonce="{{nonce}}"></script>
   </body>
 </html>

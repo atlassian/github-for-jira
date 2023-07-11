@@ -51,18 +51,10 @@ $(".configure-connection-link").click(function(event) {
 
 const initializeBackfillDateInput = function (event) {
 	const dateElement = document.getElementById('backfill-date-picker');
-	const isIncrementalBackfillEnabled = $("body").data("is-incremental-backfill-enabled");
-	if(isIncrementalBackfillEnabled) {
-		const newBackfillDate = $(event.target).data('connection-backfill-since') ? new Date($(event.target).data('connection-backfill-since')) : new Date();
-		newBackfillDate.setMonth(newBackfillDate.getMonth() - 6);
-		dateElement.value = newBackfillDate.toISOString().split('T')[0];
-		dateElement.max = new Date().toISOString().split('T')[0];
-	} else {
-		const date = new Date();
-		date.setFullYear(date.getFullYear() - 1);
-		dateElement.value = date.toISOString().split('T')[0];
-		dateElement.max = new Date().toISOString().split('T')[0];
-	}
+	const newBackfillDate = $(event.target).data('connection-backfill-since') ? new Date($(event.target).data('connection-backfill-since')) : new Date();
+	newBackfillDate.setMonth(newBackfillDate.getMonth() - 6);
+	dateElement.value = newBackfillDate.toISOString().split('T')[0];
+	dateElement.max = new Date().toISOString().split('T')[0];
 }
 
 const setDisabledStatus = (el, status) => {
@@ -150,7 +142,10 @@ $('.jiraConfiguration__option').click(function (event) {
 
 $(".jiraConfiguration__connectNewApp").click((event) => {
 	event.preventDefault();
-	openChildWindow(`/github/${$(event.target).data("app-uuid")}/configuration`);
+	window.AP.context.getToken(function(token) {
+		const child = openChildWindow(`/session/github/${$(event.target).data("app-uuid")}/configuration?ghRedirect=to`);
+		child.window.jwt = token;
+	});
 });
 
 const syncStatusBtn = document.getElementById("sync-status-modal-btn");
@@ -321,17 +316,15 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 });
 
 $(document).ready(function () {
-	const isIncrementalBackfillEnabled = $("body").data("is-incremental-backfill-enabled");
-	if (isIncrementalBackfillEnabled) {
-		AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
-		AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
+	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
+	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
 
-		$(".jiraConfiguration__info__backfillDate-label").each(function () {
-			if ($(this).attr("data-backfill-since")) {
-				const backfillDate = new Date($(this).attr("data-backfill-since"));
-				$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
-				$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
-			}
-		});
-	}
+	$(".jiraConfiguration__info__backfillDate-label").each(function () {
+		if ($(this).attr("data-backfill-since")) {
+			const backfillDate = new Date($(this).attr("data-backfill-since"));
+			$(this).text(backfillDate.toLocaleDateString(undefined, { dateStyle: "short" }));
+			$(this).attr("title", (backfillDate.toLocaleDateString(undefined, { dateStyle: "long" })));
+		}
+	});
 });

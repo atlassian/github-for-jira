@@ -6,7 +6,7 @@ import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import {
 	buildAxiosStubErrorForGraphQlErrors,
 	GithubClientGraphQLError, GithubClientInvalidPermissionsError,
-	GithubClientRateLimitingError, GithubClientNotFoundError
+	GithubClientRateLimitingError, GithubClientNotFoundError, GithubClientBlockedIpError, GithubClientSSOLoginError
 } from "~/src/github/client/github-client-errors";
 import {
 	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
@@ -79,15 +79,16 @@ export class GitHubClient {
 		);
 		this.axios.interceptors.response.use(
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
 				...this.metrics
 			}),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
 				...this.metrics
 			})
 		);
 
 		if (gitHubConfig.apiKeyConfig) {
-			logger.info("Use API key");
 			const apiKeyConfig = gitHubConfig.apiKeyConfig;
 			this.axios.interceptors.request.use(async (config) => {
 				if (!config.headers) {
@@ -125,6 +126,14 @@ export class GitHubClient {
 			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && graphqlError.message === "Resource not accessible by integration")) {
 				this.logger.info({ err }, "Mapping GraphQL errors to a InvalidPermission error");
 				return Promise.reject(new GithubClientInvalidPermissionsError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && graphqlError.message === "has an IP allow list enabled")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a BlockedIpError error");
+				return Promise.reject(new GithubClientBlockedIpError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && response.headers?.["x-github-sso"])) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a SSOLoginError error");
+				return Promise.reject(new GithubClientSSOLoginError(buildAxiosStubErrorForGraphQlErrors(response)));
 
 			} else if (graphqlErrors.find(graphQLError => graphQLError.type == "NOT_FOUND")) {
 				this.logger.info({ err }, "Mapping GraphQL error to not found");
