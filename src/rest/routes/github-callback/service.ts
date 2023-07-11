@@ -1,39 +1,52 @@
-import { Request } from "express";
+import Logger from "bunyan";
 import { envVars } from "config/env";
-import axios from "axios";
+import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
 
 type TokenType = {
 	accessToken: string;
 	refreshToken: string;
 };
 
-export const getAccessToken = async (url: string, req: Request): Promise<TokenType | null> => {
-	const { code } = req.query;
+export const finishOAuthFlow = async (
+	gheUUID: string | undefined,
+	code: string,
+	state: string,
+	log: Logger
+): Promise<TokenType | null> => {
+
 	if (!code) {
-		req.log.error("No code provided!");
+		log.warn("No code provided!");
+		return null;
+	}
+
+	if (gheUUID) {
+		log.warn("GHE not supported yet in rest oauth");
 		return null;
 	}
 
 	try {
-		const response = await axios.post(url, {
-			code: req.query.code,
-			client_id: envVars.GITHUB_CLIENT_ID,
-			client_secret: envVars.GITHUB_CLIENT_SECRET
+
+		const githubClient = await createAnonymousClientByGitHubAppId(
+			undefined,
+			undefined,
+			{ trigger: "getAccessToken" },
+			log
+		);
+
+		const { accessToken, refreshToken } = await githubClient.exchangeGitHubToken({
+			clientId: envVars.GITHUB_CLIENT_ID,
+			clientSecret: envVars.GITHUB_CLIENT_SECRET,
+			code,
+			state
 		});
 
-		// Result comes as a string `access_token=XXXXXX&refresh_token=XXXXX`
-		const tokenObj = Object.fromEntries(new URLSearchParams(response.data));
-
-		if (!tokenObj.access_token || !tokenObj.refresh_token) {
-			throw new Error(response.data);
-		}
-
 		return {
-			accessToken: tokenObj.access_token,
-			refreshToken: tokenObj.refresh_token
+			accessToken,
+			refreshToken
 		};
+
 	} catch (error) {
-		req.log.warn({ error }, "Failed to renew Github token...");
+		log.warn({ error }, "Failed to acquire Github token...");
 		return null;
 	}
 };
