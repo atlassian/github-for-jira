@@ -82,7 +82,7 @@ const ConfigSteps = () => {
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
 	useEffect(() => {
-		window.addEventListener("message", (event) => {
+		const handler = (event: any) => {
 			if (event.origin !== originalUrl) return;
 			OAuthManagerInstance.setTokens(event.data.accessToken, event.data.refreshToken);
 			setIsLoggedIn(true);
@@ -90,7 +90,9 @@ const ConfigSteps = () => {
 			setExpandStep1(false);
 			setExpandStep2(true);
 			setCanViewContentForStep2(true);
-		});
+			window.removeEventListener("message", handler);
+		};
+		window.addEventListener("message", handler);
 	}, []);
 
 	useEffect(() => {
