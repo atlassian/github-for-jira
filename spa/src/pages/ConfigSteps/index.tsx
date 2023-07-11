@@ -115,7 +115,7 @@ const ConfigSteps = () => {
 		}
 	};
 
-	const logout = async () => {
+	const logout = () => {
 		window.open("https://github.com/logout");
 		OAuthManagerInstance.clear();
 		setIsLoggedIn(false);
