@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
 import { getRedirectUrl, finishOAuthFlow } from "./service";
+import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces/oauth-types";
 
 export const OAuthRouter = Router({ mergeParams: true });
 
-OAuthRouter.get("/redirectUrl", async function OAuthRedirectUrl(req: Request, res: Response) {
+OAuthRouter.get("/redirectUrl", async function OAuthRedirectUrl(req: Request, res: Response<GetRedirectUrlResponse>) {
 
 	const cloudOrUUID = req.params.cloudOrUUID;
 
@@ -12,7 +13,7 @@ OAuthRouter.get("/redirectUrl", async function OAuthRedirectUrl(req: Request, re
 	res.status(200).json(await getRedirectUrl(gheUUID));
 });
 
-OAuthRouter.post("/exchangeToken", async function OAuthExchangeToken(req: Request, res: Response) {
+OAuthRouter.post("/exchangeToken", async function OAuthExchangeToken(req: Request, res: Response<ExchangeTokenResponse | string>) {
 
 	try {
 		const code = req.body.code || "";
@@ -38,6 +39,7 @@ OAuthRouter.post("/exchangeToken", async function OAuthExchangeToken(req: Reques
 		});
 
 	} catch (error) {
-		res.send(500).json(error);
+		req.log.error({ err: error }, "Fail during exchanging token");
+		res.status(500).send("Fail to acquire access token");
 	}
 });
