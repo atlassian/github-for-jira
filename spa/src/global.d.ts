@@ -19,4 +19,5 @@ export interface OAuthManagerType {
 	authenticateInGitHub: () => Promise<void>;
 	setTokens: (...args: any) => void;
 	getUserDetails: () => { username: string, email: string };
+	clear: () => void;
 }

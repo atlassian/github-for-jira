@@ -6,14 +6,14 @@ const getHeaders = (): Promise<string> => new Promise(resolve => {
 	});
 });
 
-const AxiosInstance = axios.create({
+const InternalAxiosInstance = axios.create({
 	timeout: 3000
 });
 
 // Adding the token in the headers through interceptors because it is an async value
-AxiosInstance.interceptors.request.use(async (config) => {
+InternalAxiosInstance.interceptors.request.use(async (config) => {
 	config.headers.Authorization = await getHeaders();
 	return config;
 });
 
-export default AxiosInstance;
+export default InternalAxiosInstance;

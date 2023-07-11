@@ -58,22 +58,24 @@ const InlineDialog = styled(TooltipPrimitive)`
 `;
 
 const ConfigSteps = () => {
+	const { username, email } = OAuthManagerInstance.getUserDetails();
+	const isAuthenticated = !!(username && email);
+
 	const originalUrl = window.location.origin;
 	const [selectedOption, setSelectedOption] = useState(0);
 
-	const [completedStep1, setCompletedStep1] = useState(false);
+	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
 
 	const [showStep2, setShowStep2] = useState(true);
-	const [canViewContentForStep2, setCanViewContentForStep2] = useState(false);
+	const [canViewContentForStep2, setCanViewContentForStep2] = useState(isAuthenticated);
 
 	const [expandStep1, setExpandStep1] = useState(true);
 	const [expandStep2] = useState(false);
 
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [loggedInUser, setLoggedInUser] = useState("");
+	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
+	const [loggedInUser, setLoggedInUser] = useState<string>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
-	console.log("Check the values now", OAuthManagerInstance.getUserDetails());
 
 	useEffect(() => {
 		window.addEventListener("message", (event) => {
@@ -113,6 +115,16 @@ const ConfigSteps = () => {
 		}
 	};
 
+	const logout = async () => {
+		window.open("https://github.com/logout");
+		OAuthManagerInstance.clear();
+		setIsLoggedIn(false);
+		setCompletedStep1(false);
+		setLoaderForLogin(false);
+		setCanViewContentForStep2(false);
+		setLoggedInUser("");
+	};
+
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -135,7 +147,7 @@ const ConfigSteps = () => {
 										isShimmering
 									/>
 								</> : <>
-									Logged in as <b>{loggedInUser}</b>. <a href="https://github.com/logout" target="_blank">Change GitHub login</a>
+									Logged in as <b>{loggedInUser}</b>. <Button appearance="link" onClick={logout}>Change GitHub login</Button>
 								</>
 							}
 						</> : <>

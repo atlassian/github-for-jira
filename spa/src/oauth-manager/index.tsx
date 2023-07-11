@@ -1,12 +1,12 @@
 import ApiRequest from "../api";
 
 const OauthManager = () => {
-	let accessToken: string;
+	let accessToken: string | undefined;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
-	let refreshToken: string;
-	let username: string;
-	let email: string;
+	let refreshToken: string | undefined;
+	let username: string | undefined;
+	let email: string | undefined;
 
 	async function checkValidity() {
 		if (!accessToken) return;
@@ -36,11 +36,19 @@ const OauthManager = () => {
 		};
 	}
 
+	function clear() {
+		accessToken = undefined;
+		refreshToken = undefined;
+		username = undefined;
+		email = undefined;
+	}
+
 	return {
 		checkValidity,
 		authenticateInGitHub,
 		setTokens,
 		getUserDetails,
+		clear,
 	};
 };
 
