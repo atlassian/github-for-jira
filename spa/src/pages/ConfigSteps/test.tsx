@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import ConfigSteps from "./index";
+import OauthManager from "../../oauth-manager";
 
 // Mocking the global variable
 (global as any).AP = {
@@ -11,6 +12,7 @@ import ConfigSteps from "./index";
 		getContext: jest.fn()
 	}
 };
+(global as any).OAuthManagerInstance = OauthManager();
 
 test("Connect GitHub Screen - Initial Loading of the page", () => {
 	render(
