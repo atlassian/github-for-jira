@@ -1,7 +1,7 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 
 const Token = {
-	getUserDetails: (token: string) => axios.get("https://api.github.com/user", {
+	getUserDetails: (token: string): Promise<AxiosResponse> => axios.get("https://api.github.com/user", {
 		headers: { Authorization: `Bearer ${token}`}
 	})
 };

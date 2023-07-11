@@ -2,15 +2,20 @@ import { Request } from "express";
 import { envVars } from "config/env";
 import axios from "axios";
 
-const GITHUB_CLOUD_LOGIN_URL = "https://github.com/login/oauth/access_token";
-export const getAccessToken = async (req: Request) => {
+type TokenType = {
+	accessToken: string;
+	refreshToken: string;
+};
+
+export const getAccessToken = async (url: string, req: Request): Promise<TokenType | null> => {
 	const { code } = req.query;
 	if (!code) {
 		req.log.error("No code provided!");
+		return null;
 	}
 
 	try {
-		const response = await axios.post(GITHUB_CLOUD_LOGIN_URL, {
+		const response = await axios.post(url, {
 			code: req.query.code,
 			client_id: envVars.GITHUB_CLIENT_ID,
 			client_secret: envVars.GITHUB_CLIENT_SECRET

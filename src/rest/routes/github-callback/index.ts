@@ -5,7 +5,7 @@ export const GitHubCallbackRoute = Router({ mergeParams: true });
 
 GitHubCallbackRoute.get("/", async (req: Request, res: Response) => {
 	try {
-		const data = await getAccessToken(req);
+		const data = await getAccessToken("https://github.com/login/oauth/access_token", req);
 
 		/**
 		 * A static page,
