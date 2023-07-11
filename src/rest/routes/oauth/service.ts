@@ -1,7 +1,7 @@
 import Logger from "bunyan";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
-import { GetRedirectUrlResponse } from "rest-interfaces/oauth-types";
+import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces/oauth-types";
 import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
 
 export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRedirectUrlResponse> => {
@@ -29,18 +29,12 @@ export const getRedirectUrl = async (gheUUID: string | undefined): Promise<GetRe
 	};
 };
 
-
-type TokenType = {
-	accessToken: string;
-	refreshToken: string;
-};
-
 export const finishOAuthFlow = async (
 	gheUUID: string | undefined,
 	code: string,
 	state: string,
 	log: Logger
-): Promise<TokenType | null> => {
+): Promise<ExchangeTokenResponse | null> => {
 
 	if (!code) {
 		log.warn("No code provided!");

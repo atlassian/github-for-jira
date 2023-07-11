@@ -60,8 +60,10 @@ describe("rest oauth router", () => {
 					.send({ code })
 					.expect("content-type", "text/html; charset=utf-8");
 
-				expect(resp.text).toEqual(expect.stringContaining("behold!"));
-				expect(resp.text).toEqual(expect.stringContaining("my-refresh-token"));
+				expect(resp.text).toEqual({
+					accessToken: "behold!",
+					refreshToken: "my-refresh-token"
+				});
 
 			});
 		});
