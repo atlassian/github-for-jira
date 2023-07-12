@@ -124,6 +124,7 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManagerInstance.finishOAuthFlow(event.data?.code, event.data?.state);
+				// TODO: add some visual input in case of errors
 				if (!success) return;
 			}
 			setIsLoggedIn(true);
