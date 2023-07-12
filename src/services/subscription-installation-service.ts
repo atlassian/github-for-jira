@@ -12,7 +12,7 @@ import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { JiraClient } from "~/src/models/jira-client";
 
-export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean>  => {
+export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean> => {
 	const metrics = {
 		trigger: "github-configuration-post"
 	};
@@ -28,10 +28,24 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
-	}	catch (err) {
+	} catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
+};
+
+export const getAvatarUrl = async (
+	logger: Logger,
+	jiraHost: string,
+	gitHubInstallationId: number,
+	metrics: {
+		trigger: string
+	},
+	gitHubServerAppIdPk?: number
+): Promise<string> => {
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubServerAppIdPk, metrics);
+	const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+	return installation.account.avatar_url;
 };
 
 const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: number) => {
@@ -66,11 +80,26 @@ export const verifyAdminPermsAndFinishInstallation =
 				};
 			}
 
+			const metrics = {
+				trigger: "github-configuration-post"
+			};
+			let avatarUrl;
+			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
+				avatarUrl = await getAvatarUrl(
+					log,
+					jiraHost,
+					gitHubInstallationId,
+					metrics,
+					gitHubServerAppIdPk
+				);
+			}
+
 			const subscription: Subscription = await Subscription.install({
 				hashedClientKey: installation.clientKey,
 				installationId: gitHubInstallationId,
 				host: installation.jiraHost,
-				gitHubAppId: gitHubServerAppIdPk
+				gitHubAppId: gitHubServerAppIdPk,
+				avatarUrl
 			});
 
 			log.info({ subscriptionId: subscription.id }, "Subscription was created");
@@ -98,7 +127,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				gitHubProduct
 			});
 
-			return { };
+			return {};
 		} catch (err) {
 
 			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
