@@ -1,5 +1,5 @@
 import { getLogger } from "config/logger";
-import express, { Application } from "express";
+import { Application } from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest from "supertest";
 import { Installation } from "models/installation";
@@ -97,12 +97,7 @@ describe("Workspaces Post", () => {
 	};
 
 	it("Should return a 400 status if no IDs are passed in the body", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		await supertest(app)
 			.post("/jira/security/workspaces")
@@ -116,12 +111,7 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return an empty array if no matching subscriptions are found", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		const response = {
 			success: true,
@@ -142,12 +132,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 	it("Should return a half response if a some of the entries are missin or malformed", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		const response = {
 			success: true,
@@ -175,12 +160,7 @@ describe("Workspaces Post", () => {
 			});
 	});
 	it("Should not return subscriptions without repos", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		const response = {
 			success: true,
@@ -203,12 +183,7 @@ describe("Workspaces Post", () => {
 
 
 	it("Should only return a subscription once even if the subscription is passed multiple times", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		const response = {
 			success: true,
@@ -237,12 +212,7 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return the GitHub logo if there is no avatarUrl", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 
 		const response = {
@@ -272,12 +242,7 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return all subscriptions for provided IDs", async () => {
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
 
 		const response = {
 			success: true,
