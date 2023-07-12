@@ -104,7 +104,7 @@ const ConfigSteps = () => {
 	}, []);
 
 	const getOrganizations = useCallback(async () => {
-		await setTimeout(() => {},3000);
+		// TODO: API call to fetch the list of orgs
 		setOrganizations([
 			{ label: "Adelaide", value: "adelaide" },
 			{ label: "Brisbane", value: "brisbane" },
@@ -174,6 +174,10 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+	};
+
+	const connectGitHubOrg = () => {
+		// TODO: API call to connect to an org
 	};
 
 	return (
@@ -266,6 +270,7 @@ const ConfigSteps = () => {
 								label="Select organization"
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
+							<Button appearance="primary" onClick={connectGitHubOrg}>Connect GitHub organization</Button>
 						</>
 					</CollapsibleStep>
 				}
