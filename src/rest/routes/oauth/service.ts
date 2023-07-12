@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 import crypto  from "crypto";
+=======
+>>>>>>> main
 import Logger from "bunyan";
 import { envVars } from "config/env";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces/oauth-types";
 import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
+<<<<<<< HEAD
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 
