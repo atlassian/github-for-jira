@@ -81,6 +81,22 @@
 			"allowed": true
 		},
 		{
+			"name": "Allow external users to access spa resources",
+			"path": "/spa/index.html",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access rest api resources",
+			"path": "/rest/app/cloud",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
 			"name": "Allow external users to access the session route",
 			"path": "/session",
 			"method": "GET",
