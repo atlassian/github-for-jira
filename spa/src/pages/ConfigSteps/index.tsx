@@ -8,6 +8,8 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
+import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
+import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -66,7 +68,7 @@ const LoggedInContent = styled.div`
 	align-items: center;
 `;
 const Paragraph = styled.div`
-	color: ${token("color.text.subtle")}
+	color: ${token("color.text.subtle")};
 `;
 
 const ConfigSteps = () => {
@@ -75,8 +77,9 @@ const ConfigSteps = () => {
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
-	const [selectedOption, setSelectedOption] = useState(0);
+	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 
+	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
 
@@ -90,7 +93,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const getJiraHost = useCallback(() => {
+	const getJiraHostUrls = useCallback(() => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
 			setHostUrl({
@@ -98,6 +101,20 @@ const ConfigSteps = () => {
 				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
+	}, []);
+
+	const getOrganizations = useCallback(async () => {
+		await setTimeout(() => {},3000);
+		setOrganizations([
+			{ label: "Adelaide", value: "adelaide" },
+			{ label: "Brisbane", value: "brisbane" },
+			{ label: "Canberra", value: "canberra" },
+			{ label: "Darwin", value: "darwin" },
+			{ label: "Hobart", value: "hobart" },
+			{ label: "Melbourne", value: "melbourne" },
+			{ label: "Perth", value: "perth" },
+			{ label: "Sydney", value: "sydney" },
+		]);
 	}, []);
 
 	useEffect(() => {
@@ -115,7 +132,8 @@ const ConfigSteps = () => {
 		};
 		window.addEventListener("message", handler);
 		return () => {
-			getJiraHost();
+			getJiraHostUrls();
+			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
@@ -237,9 +255,18 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<Paragraph>
-							Repositories from this organization will be available to all projects in <b>{hostUrl?.jiraHost}</b>.
-						</Paragraph>
+						<>
+							<Paragraph>
+								Repositories from this organization will be available to all <br />
+								projects in <b>{hostUrl?.jiraHost}</b>.
+							</Paragraph>
+
+							<SelectDropdown
+								options={organizations}
+								label="Select organization"
+								icon={<OfficeBuildingIcon label="org" size="medium" />}
+							/>
+						</>
 					</CollapsibleStep>
 				}
 			</ConfigContainer>
