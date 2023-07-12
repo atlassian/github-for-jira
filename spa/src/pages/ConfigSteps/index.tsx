@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -12,6 +12,10 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 type GitHubOptionType = {
 	selectedOption: number;
 	optionKey: number;
+};
+type HostUrlType = {
+	jiraHost: string;
+	gheServerUrl: string;
 }
 
 const ConfigContainer = styled.div`
@@ -58,14 +62,19 @@ const InlineDialog = styled(TooltipPrimitive)`
 `;
 const LoggedInContent = styled.div`
 	display: flex;
-	justify-content: center;
+	justify-content: start;
 	align-items: center;
 `;
+const Paragraph = styled.div`
+	color: ${token("color.text.subtle")}
+`;
+
 const ConfigSteps = () => {
 	const { username, email } = OAuthManagerInstance.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
 	const originalUrl = window.location.origin;
+	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 	const [selectedOption, setSelectedOption] = useState(0);
 
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
@@ -81,6 +90,16 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
+	const getJiraHost = useCallback(() => {
+		AP.getLocation((location: string) => {
+			const locationUrl = new URL(location);
+			setHostUrl({
+				jiraHost: locationUrl.origin,
+				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
+			});
+		});
+	}, []);
+
 	useEffect(() => {
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
@@ -95,6 +114,7 @@ const ConfigSteps = () => {
 		};
 		window.addEventListener("message", handler);
 		return () => {
+			getJiraHost();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
@@ -116,10 +136,9 @@ const ConfigSteps = () => {
 				break;
 			}
 			case 2: {
-				AP.getLocation((location: string) => {
-					const GHEServerUrl = location.replace("/spa-index-page", "/github-server-url-page");
-					window.open(GHEServerUrl);
-				});
+				if (hostUrl?.gheServerUrl) {
+					window.open(hostUrl?.gheServerUrl);
+				}
 				break;
 			}
 			default:
@@ -217,7 +236,9 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<div>Content inside</div>
+						<Paragraph>
+							Repositories from this organization will be available to all projects in <b>{hostUrl?.jiraHost}</b>.
+						</Paragraph>
 					</CollapsibleStep>
 				}
 			</ConfigContainer>
