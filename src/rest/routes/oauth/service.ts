@@ -44,12 +44,13 @@ export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefin
 	const nonce = await generateNonce(jiraHost);
 
 	return {
-		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}`,
+		redirectUrl: `${hostname}/login/oauth/authorize?client_id=${clientId}&scope=${encodeURIComponent(scopes.join(" "))}&redirect_uri=${encodeURIComponent(callbackURI)}&state=${encodeURIComponent(nonce)}`,
 		state: nonce
 	};
 };
 
 export const finishOAuthFlow = async (
+	jiraHost: string,
 	gheUUID: string | undefined,
 	code: string,
 	state: string,
@@ -61,12 +62,31 @@ export const finishOAuthFlow = async (
 		return null;
 	}
 
+	if (!state) {
+		log.warn("State is empty");
+		return null;
+	}
+
 	if (gheUUID) {
 		log.warn("GHE not supported yet in rest oauth");
 		return null;
 	}
 
 	try {
+
+		const redisState = await redis.get(state) || "";
+
+		if (!redisState) {
+			log.warn({ state }, "state is missing in redis in oauth exchange token");
+			return null;
+		}
+
+		const parsedState = JSON.parse(redisState);
+
+		if (jiraHost !== parsedState.jiraHost) {
+			log.warn("Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token");
+			return null;
+		}
 
 		const githubClient = await createAnonymousClientByGitHubAppId(
 			undefined,
