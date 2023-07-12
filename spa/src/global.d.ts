@@ -17,7 +17,7 @@ interface AtlassianPlugin {
 export interface OAuthManagerType {
 	checkValidity: () => Promise<boolean | undefined>;
 	authenticateInGitHub: () => Promise<void>;
-	finishOAuthFlow: (code: string, state: string) => Promise<void>;
+	finishOAuthFlow: (code: string, state: string) => Promise<boolean>;
 	getUserDetails: () => { username: string, email: string };
 	clear: () => void;
 }

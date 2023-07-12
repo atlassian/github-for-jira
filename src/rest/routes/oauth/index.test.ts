@@ -35,7 +35,8 @@ describe("rest oauth router", () => {
 					.set("authorization", `${getToken()}`);
 				expect(resp.status).toBe(200);
 				expect(resp.body).toEqual({
-					redirectUrl: expect.stringContaining("github-callback")
+					redirectUrl: expect.stringContaining("github-callback"),
+					state: expect.stringMatching(".+")
 				});
 			});
 		});
@@ -43,8 +44,12 @@ describe("rest oauth router", () => {
 	describe("exchange token", () => {
 		describe("cloud", () => {
 			it("should exchange for github access token", async () => {
+
+				const state = (await supertest(app).get("/rest/app/cloud/oauth/redirectUrl").set("authorization", `${getToken()}`)).body.state;
+				expect(state).toEqual(expect.stringMatching(".+"));
+
 				const code = "abcd";
-				const nockUrl = `/login/oauth/access_token?client_id=${envVars.GITHUB_CLIENT_ID}&client_secret=${envVars.GITHUB_CLIENT_SECRET}&code=${code}&state=`;
+				const nockUrl = `/login/oauth/access_token?client_id=${encodeURIComponent(envVars.GITHUB_CLIENT_ID)}&client_secret=${envVars.GITHUB_CLIENT_SECRET}&code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`;
 				nock("https://github.com")
 					.get(nockUrl)
 					.matchHeader("accept", "application/json")
@@ -57,7 +62,7 @@ describe("rest oauth router", () => {
 				const resp = await supertest(app)
 					.post("/rest/app/cloud/oauth/exchangeToken")
 					.set("authorization", `${getToken()}`)
-					.send({ code })
+					.send({ code, state })
 					.expect("content-type", "application/json; charset=utf-8");
 
 				expect(resp.body).toEqual({

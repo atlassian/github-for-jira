@@ -85,7 +85,8 @@ const ConfigSteps = () => {
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
-				await OAuthManagerInstance.finishOAuthFlow(event.data?.code, event.data?.state);
+				const success = await OAuthManagerInstance.finishOAuthFlow(event.data?.code, event.data?.state);
+				if (!success) return;
 			}
 			setIsLoggedIn(true);
 			setCompletedStep1(true);
