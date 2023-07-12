@@ -87,7 +87,7 @@ export const verifyAdminPermsAndFinishInstallation =
 			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
 				avatarUrl = await getAvatarUrl(
 					log,
-					jiraHost,
+					installation.jiraHost,
 					gitHubInstallationId,
 					metrics,
 					gitHubServerAppIdPk
