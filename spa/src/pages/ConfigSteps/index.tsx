@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -106,7 +106,6 @@ const ConfigSteps = () => {
 	};
 
 	const getOrganizations = async () => {
-		console.log("Method called");
 		// TODO: API call to fetch the list of orgs
 		setOrganizations([
 			{ label: "Adelaide", value: "adelaide" },
@@ -134,7 +133,6 @@ const ConfigSteps = () => {
 			setCanViewContentForStep2(true);
 		};
 		window.addEventListener("message", handler);
-		getOrganizations();
 		return () => {
 			getJiraHostUrls();
 			window.removeEventListener("message", handler);
@@ -146,9 +144,10 @@ const ConfigSteps = () => {
 			if (status) {
 				setLoggedInUser(OAuthManagerInstance.getUserDetails().username);
 				setLoaderForLogin(false);
+				getOrganizations();
 			}
 		});
-	}, [isLoggedIn]);
+	}, [isLoggedIn, loggedInUser]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
