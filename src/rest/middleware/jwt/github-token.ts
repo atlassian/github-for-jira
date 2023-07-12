@@ -4,7 +4,7 @@ export const GitHubTokenHandler = async (req: Request, res: Response, next: Next
 	const token = req.headers["github-auth"];
 
 	if (!token) {
-		res.status(401).send("Unauthorized");
+		res.status(401).send("No github token passed!");
 		return;
 	}
 
@@ -13,7 +13,7 @@ export const GitHubTokenHandler = async (req: Request, res: Response, next: Next
 		next();
 	} catch (e) {
 		req.log.warn({ err: e }, "No Github token");
-		res.status(401).send("Unauthorized");
+		res.status(401).send("No github token passed");
 		return;
 	}
 

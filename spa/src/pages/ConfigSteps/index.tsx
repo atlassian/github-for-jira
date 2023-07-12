@@ -106,9 +106,7 @@ const ConfigSteps = () => {
 	}, []);
 
 	const getOrganizations = useCallback(async () => {
-		// TODO: API call to fetch the list of orgs
 		const response = await OAuthManagerInstance.fetchOrgs();
-
 		setOrganizations(response?.orgs.map((org: any) => ({
 			label: org.account.login,
 			value: org.id,
@@ -133,6 +131,7 @@ const ConfigSteps = () => {
 		window.addEventListener("message", handler);
 		return () => {
 			getJiraHostUrls();
+			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
