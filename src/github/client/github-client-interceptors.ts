@@ -42,7 +42,7 @@ export const setRequestTimeout = async (config: AxiosRequestConfig): Promise<Axi
 
 //TODO Move to util/axios/common-github-webhook-middleware.ts and use with Jira Client
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost: string, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
+const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost: string | undefined, response?: any, status?: string | number, extraTags?: Record<string, string | undefined>) => {
 	status = `${status || response?.status}`;
 	const requestDurationMs = Number(
 		Date.now() - (response?.config?.requestStartTime || 0)
@@ -65,7 +65,7 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost
 	return response;
 };
 
-export const instrumentRequest = (metricName, host, jiraHost: string, extraTags?: Record<string, string | undefined>) =>
+export const instrumentRequest = (metricName, host, jiraHost: string | undefined, extraTags?: Record<string, string | undefined>) =>
 	(response) => {
 		if (!response) {
 			return;
@@ -83,7 +83,7 @@ export const instrumentRequest = (metricName, host, jiraHost: string, extraTags?
  * @param host - The rest API url for cloud/server
  * @returns {Promise<Error>} a rejected promise with the error inside.
  */
-export const instrumentFailedRequest = (metricName: string, host: string, jiraHost: string, extraTags?: Record<string, string | undefined>) =>
+export const instrumentFailedRequest = (metricName: string, host: string, jiraHost: string | undefined, extraTags?: Record<string, string | undefined>) =>
 	(error) => {
 		const gitHubProduct = getCloudOrServerFromHost(host);
 		if (error instanceof GithubClientRateLimitingError) {
