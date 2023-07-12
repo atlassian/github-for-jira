@@ -9,7 +9,6 @@ import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Installation } from "~/src/models/installation";
 import { JiraClient } from "~/src/models/jira-client";
-import { createAppClient } from "~/src/util/get-github-client-config";
 
 /**
  * Handle the when a user deletes an entry in the UI
@@ -54,7 +53,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	// jiraClient is null when jiraHost is an empty string which we know is defined above.
 	await jiraClient!.devinfo.installation.delete(gitHubInstallationId);
 	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
-		await deleteSecurityWorkspaceLink(installation, gitHubInstallationId, gitHubAppId, req.log);
+		await deleteSecurityWorkspaceLink(installation, subscription, req.log);
 		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace");
 	}
 	await subscription.destroy();
@@ -70,20 +69,15 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 
 const deleteSecurityWorkspaceLink = async (
 	installation: Installation,
-	gitHubInstallationId: number,
-	gitHubServerAppIdPk: number | undefined,
+	subscription: Subscription,
 	logger: Logger
 ) => {
 
 	try {
-		const gitHubAppClient = await createAppClient(logger, installation.jiraHost, gitHubServerAppIdPk, { trigger: "jira-delete" });
-
 		logger.info("Fetching info about GitHub installation");
-		const { data: ghInstallation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		const jiraClient = await JiraClient.getNewClient(installation, logger);
-		await jiraClient.deleteWorkspace(ghInstallation.account.id);
-
+		await jiraClient.deleteWorkspace(subscription.id);
 	} catch (err) {
 		logger.warn({ err }, "Failed to delete security workspace from Jira");
 	}

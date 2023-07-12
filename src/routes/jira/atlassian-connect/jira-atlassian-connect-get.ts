@@ -80,7 +80,7 @@ const jiraSecurityInfoProvider = {
 			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
 		},
 		fetchWorkspaces: {
-			templateUrl: ""
+			templateUrl: `${envVars.APP_URL}/jira/security/workspaces`
 		},
 		searchContainers: {
 			templateUrl: ""
@@ -93,7 +93,8 @@ const jiraSecurityInfoProvider = {
 };
 
 export const getSecurityContainerActionUrls = [
-	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl
+	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
+	jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl
 ];
 
 const	modules = {

@@ -23,7 +23,7 @@ describe("subscription-installation-service", () => {
 	});
 
 	const mockGitHub = (config: {
-		isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean, gitHubInstallationId? : number
+		isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean, gitHubInstallationId?: number, fetchAvatar?: boolean
 	}) => {
 		const cloudOrGheNock = config.isGhe ? gheApiNock : githubNock;
 		const gitHubInstallationId = config.gitHubInstallationId || (subscription.gitHubInstallationId + 1);
@@ -43,6 +43,17 @@ describe("subscription-installation-service", () => {
 						login: "my-org"
 					},
 					target_type: config.isInstalledInUserSpace ? "User" : "org"
+				});
+		}
+
+		if (config.fetchAvatar === true) {
+			cloudOrGheNock
+				.get("/app/installations/" + gitHubInstallationId)
+				.matchHeader("Authorization", /^Bearer .+$/)
+				.reply(200, {
+					account: {
+						avatarUrl: "www.test.url.com"
+					}
 				});
 		}
 
@@ -117,6 +128,7 @@ describe("subscription-installation-service", () => {
 					isGhe: false,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: false,
 					isAdmin: true
 				});
 
@@ -147,6 +159,7 @@ describe("subscription-installation-service", () => {
 					isGhe: false,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: true,
 					isAdmin: true
 				});
 				jiraNock
@@ -234,6 +247,7 @@ describe("subscription-installation-service", () => {
 					isGhe: true,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: false,
 					isAdmin: true
 				});
 
@@ -261,6 +275,7 @@ describe("subscription-installation-service", () => {
 					isGhe: true,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: true,
 					isAdmin: true
 				});
 
