@@ -1,15 +1,16 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "@atlaskit/css-reset";
+import { setGlobalTheme } from "@atlaskit/tokens";
 import {
 	BrowserRouter,
 	Route,
 	Routes,
 } from "react-router-dom";
-import StartConnection from "./pages/StartConnection";
-import "@atlaskit/css-reset";
-import ConfigSteps from "./pages/ConfigSteps";
-import { setGlobalTheme } from "@atlaskit/tokens";
 import OauthManager from "./oauth-manager";
+import StartConnection from "./pages/StartConnection";
+import ConfigSteps from "./pages/ConfigSteps";
+import Connected from "./pages/Connected";
 
 /**
  * This is the global variable for handling Auth related methods
@@ -34,6 +35,7 @@ const App = () => {
 				<Route path="/spa">
 					<Route index element={<StartConnection/>}/>
 					<Route path="steps" element={<ConfigSteps/>}/>
+					<Route path="connected" element={<Connected />}/>
 				</Route>
 			</Routes>
 		</BrowserRouter>
