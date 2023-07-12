@@ -81,8 +81,24 @@
 			"allowed": true
 		},
 		{
+			"name": "Allow external users to access spa root",
+			"path": "/spa",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
 			"name": "Allow external users to access spa resources",
 			"path": "/spa/index.html",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access spa assets resources",
+			"path": "/spa-assets/some.css",
 			"method": "GET",
 			"mechanism": "open",
 			"principals": [],
