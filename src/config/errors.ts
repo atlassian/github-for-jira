@@ -8,6 +8,8 @@ export enum Errors {
 	MISSING_GITHUB_APP_NAME = "Github App name is missing",
 	MISSING_REPOSITORY_ID = "Missing repository ID",
 	MISSING_SECURITY_CONTAINER_IDS = "Missing security container IDs",
+	MISSING_WORKSPACE_IDS = "Missing workspace IDs",
+	UNEXPECTED_REPOSITORY_URL_STRUCTURE = "Repository url structure is unexpected and cannot be opperated on",
 	REPOSITORY_NOT_FOUND = "Repository not found"
 }
 

@@ -86,14 +86,8 @@ describe("DELETE /jira/configuration", () => {
 			.query({ gitHubInstallationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
-		githubNock
-			.get(`/app/installations/${subscription.githubInstallationId}`)
-			.reply(200, {
-				account: { login: "test-org", id: 101 }
-			});
-
 		jiraNock
-			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=101")
+			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+subscription.id)
 			.reply(202);
 
 

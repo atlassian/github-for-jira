@@ -39,6 +39,7 @@
 		"db:migrate:dev": "dotenv -c development -- sequelize db:migrate",
 		"db:migrate:test": "dotenv -c test -- sequelize db:migrate --env test",
 		"db:migrate:prod": "sequelize db:migrate --env production-migrate",
+		"db:migrate:create": "yarn run sequelize migration:create --name",
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
