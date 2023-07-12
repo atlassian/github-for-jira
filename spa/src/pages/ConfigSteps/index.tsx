@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -8,10 +8,17 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
+import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
+import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
+import { useNavigate } from "react-router-dom";
 
 type GitHubOptionType = {
 	selectedOption: number;
 	optionKey: number;
+};
+type HostUrlType = {
+	jiraHost: string;
+	gheServerUrl: string;
 }
 
 const ConfigContainer = styled.div`
@@ -58,16 +65,23 @@ const InlineDialog = styled(TooltipPrimitive)`
 `;
 const LoggedInContent = styled.div`
 	display: flex;
-	justify-content: center;
+	justify-content: start;
 	align-items: center;
 `;
+const Paragraph = styled.div`
+	color: ${token("color.text.subtle")};
+`;
+
 const ConfigSteps = () => {
+	const navigate = useNavigate();
 	const { username, email } = OAuthManagerInstance.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
 	const originalUrl = window.location.origin;
-	const [selectedOption, setSelectedOption] = useState(0);
+	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
+	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 
+	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
 
@@ -80,6 +94,30 @@ const ConfigSteps = () => {
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
+
+	const getJiraHostUrls = useCallback(() => {
+		AP.getLocation((location: string) => {
+			const locationUrl = new URL(location);
+			setHostUrl({
+				jiraHost: locationUrl.origin,
+				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
+			});
+		});
+	}, []);
+
+	const getOrganizations = useCallback(async () => {
+		// TODO: API call to fetch the list of orgs
+		setOrganizations([
+			{ label: "Adelaide", value: "adelaide" },
+			{ label: "Brisbane", value: "brisbane" },
+			{ label: "Canberra", value: "canberra" },
+			{ label: "Darwin", value: "darwin" },
+			{ label: "Hobart", value: "hobart" },
+			{ label: "Melbourne", value: "melbourne" },
+			{ label: "Perth", value: "perth" },
+			{ label: "Sydney", value: "sydney" },
+		]);
+	}, []);
 
 	useEffect(() => {
 		const handler = async (event: any) => {
@@ -96,6 +134,8 @@ const ConfigSteps = () => {
 		};
 		window.addEventListener("message", handler);
 		return () => {
+			getJiraHostUrls();
+			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
@@ -117,10 +157,9 @@ const ConfigSteps = () => {
 				break;
 			}
 			case 2: {
-				AP.getLocation((location: string) => {
-					const GHEServerUrl = location.replace("/spa-index-page", "/github-server-url-page");
-					window.open(GHEServerUrl);
-				});
+				if (hostUrl?.gheServerUrl) {
+					window.open(hostUrl?.gheServerUrl);
+				}
 				break;
 			}
 			default:
@@ -137,6 +176,11 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+	};
+
+	const connectGitHubOrg = () => {
+		// TODO: API call to connect to an org
+		navigate("/spa/connected");
 	};
 
 	return (
@@ -218,7 +262,19 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<div>Content inside</div>
+						<>
+							<Paragraph>
+								Repositories from this organization will be available to all <br />
+								projects in <b>{hostUrl?.jiraHost}</b>.
+							</Paragraph>
+
+							<SelectDropdown
+								options={organizations}
+								label="Select organization"
+								icon={<OfficeBuildingIcon label="org" size="medium" />}
+							/>
+							<Button appearance="primary" onClick={connectGitHubOrg}>Connect GitHub organization</Button>
+						</>
 					</CollapsibleStep>
 				}
 			</ConfigContainer>
