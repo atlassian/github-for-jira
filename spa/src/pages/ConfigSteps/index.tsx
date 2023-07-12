@@ -95,7 +95,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const getJiraHostUrls = useCallback(() => {
+	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
 			setHostUrl({
@@ -103,9 +103,10 @@ const ConfigSteps = () => {
 				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
-	}, []);
+	};
 
-	const getOrganizations = useCallback(async () => {
+	const getOrganizations = async () => {
+		console.log("Method called");
 		// TODO: API call to fetch the list of orgs
 		setOrganizations([
 			{ label: "Adelaide", value: "adelaide" },
@@ -117,7 +118,7 @@ const ConfigSteps = () => {
 			{ label: "Perth", value: "perth" },
 			{ label: "Sydney", value: "sydney" },
 		]);
-	}, []);
+	};
 
 	useEffect(() => {
 		const handler = async (event: any) => {
@@ -133,9 +134,9 @@ const ConfigSteps = () => {
 			setCanViewContentForStep2(true);
 		};
 		window.addEventListener("message", handler);
+		getOrganizations();
 		return () => {
 			getJiraHostUrls();
-			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
