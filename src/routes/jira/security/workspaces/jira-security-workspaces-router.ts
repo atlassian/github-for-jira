@@ -4,6 +4,6 @@ import { JiraSecurityWorkspacesContainersRouter } from "~/src/routes/jira/securi
 export const JiraSecurityWorkspacesRouter = Router();
 
 JiraSecurityWorkspacesRouter.use(
-	"/workspaces/containers",
+	"/workspaces",
 	JiraSecurityWorkspacesContainersRouter
 );
