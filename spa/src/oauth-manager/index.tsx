@@ -18,9 +18,16 @@ const OauthManager = () => {
 	}
 
 	async function authenticateInGitHub() {
-		const res = await ApiRequest.githubAuth.authenticate();
+		const res = await ApiRequest.githubAuth.generateOAuthUrl();
 		if (res.data.redirectUrl) {
 			window.open(res.data.redirectUrl);
+		}
+	}
+
+	async function finishOAuthFlow(code: string, state: string) {
+		const token = await ApiRequest.githubAuth.exchangeToken(code, state);
+		if (token.data.accessToken && token.data.refreshToken) {
+			setTokens(token.data.accessToken, token.data.refreshToken);
 		}
 	}
 
@@ -46,7 +53,7 @@ const OauthManager = () => {
 	return {
 		checkValidity,
 		authenticateInGitHub,
-		setTokens,
+		finishOAuthFlow,
 		getUserDetails,
 		clear,
 	};
