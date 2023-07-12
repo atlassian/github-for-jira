@@ -26,6 +26,8 @@
         "/jira/**",
         "/maintenance",
         "/public/**",
+				"/spa/**",
+				"/rest/**",
         "/session",
         "/session/**",
         "/error",

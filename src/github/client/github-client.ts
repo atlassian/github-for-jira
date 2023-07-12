@@ -52,7 +52,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		jiraHost: string,
+		jiraHost: string | undefined,
 		metrics: Metrics,
 		logger: Logger
 	) {
