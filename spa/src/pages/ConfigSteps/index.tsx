@@ -10,6 +10,7 @@ import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
+import { useNavigate } from "react-router-dom";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -72,6 +73,7 @@ const Paragraph = styled.div`
 `;
 
 const ConfigSteps = () => {
+	const navigate = useNavigate();
 	const { username, email } = OAuthManagerInstance.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
@@ -178,6 +180,7 @@ const ConfigSteps = () => {
 
 	const connectGitHubOrg = () => {
 		// TODO: API call to connect to an org
+		navigate("/spa/connected");
 	};
 
 	return (
