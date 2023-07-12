@@ -1,8 +1,9 @@
 import ApiRequest from "../api";
+import { OAuthManagerType } from "../global";
 
 const STATE_KEY = "oauth-localStorage-state";
 
-const OauthManager = () => {
+const OauthManager = (): OAuthManagerType => {
 	let accessToken: string | undefined;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
@@ -12,11 +13,28 @@ const OauthManager = () => {
 
 	async function checkValidity() {
 		if (!accessToken) return;
-		const res = await ApiRequest.token.getUserDetails(accessToken);
-		username = res.data.login;
-		email = res.data.email;
+		try {
+			const res = await ApiRequest.token.getUserDetails(accessToken);
+			username = res.data.login;
+			email = res.data.email;
 
-		return res.status === 200;
+			return res.status === 200;
+		}catch (e) {
+			console.error(e, "Failed to check validity");
+			return false;
+		}
+	}
+
+	async function fetchOrgs() {
+		if (!accessToken) return;
+
+		try {
+			const response = await ApiRequest.token.getOrganizations(accessToken);
+			return response.data;
+		} catch (e) {
+			console.error(e, "Failed to fetch organizations");
+			return [];
+		}
 	}
 
 	async function authenticateInGitHub() {
@@ -66,6 +84,7 @@ const OauthManager = () => {
 
 	return {
 		checkValidity,
+		fetchOrgs,
 		authenticateInGitHub,
 		finishOAuthFlow,
 		getUserDetails,

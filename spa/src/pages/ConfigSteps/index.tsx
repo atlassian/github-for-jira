@@ -92,7 +92,7 @@ const ConfigSteps = () => {
 	const [expandStep2, setExpandStep2] = useState(isAuthenticated);
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
-	const [loggedInUser, setLoggedInUser] = useState<string>(username);
+	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
 	const getJiraHostUrls = useCallback(() => {
@@ -107,16 +107,12 @@ const ConfigSteps = () => {
 
 	const getOrganizations = useCallback(async () => {
 		// TODO: API call to fetch the list of orgs
-		setOrganizations([
-			{ label: "Adelaide", value: "adelaide" },
-			{ label: "Brisbane", value: "brisbane" },
-			{ label: "Canberra", value: "canberra" },
-			{ label: "Darwin", value: "darwin" },
-			{ label: "Hobart", value: "hobart" },
-			{ label: "Melbourne", value: "melbourne" },
-			{ label: "Perth", value: "perth" },
-			{ label: "Sydney", value: "sydney" },
-		]);
+		const response = await OAuthManagerInstance.fetchOrgs();
+
+		setOrganizations(response?.orgs.map((org: any) => ({
+			label: org.account.login,
+			value: org.id,
+		})));
 	}, []);
 
 	useEffect(() => {
@@ -132,11 +128,11 @@ const ConfigSteps = () => {
 			setExpandStep1(false);
 			setExpandStep2(true);
 			setCanViewContentForStep2(true);
+			await getOrganizations();
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			getJiraHostUrls();
-			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
