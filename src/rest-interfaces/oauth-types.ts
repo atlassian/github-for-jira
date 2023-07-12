@@ -8,11 +8,6 @@ export type ExchangeTokenResponse = {
 	refreshToken: string;
 };
 
-export type ExchangeTokenResponse = {
-	accessToken: string;
-	refreshToken: string;
-};
-
 export type UsersGetAuthenticatedResponse = {
 	avatar_url: string;
 	bio: string;
