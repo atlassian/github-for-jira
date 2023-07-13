@@ -76,7 +76,7 @@ describe("Repositories Post", () => {
 		return encodeSymmetric({
 			qsh: createQueryStringHash({
 				method: "POST",
-				pathname: "/jira/security/workspaces/containers/search",
+				pathname: "/jira/security/workspaces/containers",
 				query
 			}, false),
 			iss: installation.plainClientKey
@@ -92,7 +92,7 @@ describe("Repositories Post", () => {
 		app.use(getFrontendApp());
 
 		await supertest(app)
-			.post("/jira/security/workspaces/containers/search")
+			.post("/jira/security/workspaces/containers")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
@@ -116,7 +116,7 @@ describe("Repositories Post", () => {
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/containers/search")
+			.post("/jira/security/workspaces/containers")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
@@ -169,7 +169,7 @@ describe("Repositories Post", () => {
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/containers/search")
+			.post("/jira/security/workspaces/containers")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
@@ -221,7 +221,7 @@ describe("Repositories Post", () => {
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/containers/search")
+			.post("/jira/security/workspaces/containers")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
@@ -299,7 +299,7 @@ describe("Repositories Post", () => {
 		};
 
 		await supertest(app)
-			.post("/jira/security/workspaces/containers/search")
+			.post("/jira/security/workspaces/containers")
 			.set({
 				authorization: `JWT ${await generateJwt()}`
 			})
