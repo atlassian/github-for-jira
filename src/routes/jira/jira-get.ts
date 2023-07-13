@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { groupBy, chain, difference } from "lodash";
+import { groupBy, chain, difference, countBy } from "lodash";
 import { NextFunction, Request, Response } from "express";
 import { Subscription, SyncStatus } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
@@ -7,11 +7,11 @@ import { statsd }  from "config/statsd";
 import { metricError } from "config/metric-names";
 import { AppInstallation, FailedAppInstallation } from "config/interfaces";
 import { createAppClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { Errors } from "config/errors";
 
 interface FailedConnection {
 	id: number;
@@ -38,14 +38,15 @@ interface GitHubCloudObj {
 	failedConnections: FailedConnection[]
 }
 
-const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): string => {
+export type ConnectionSyncStatus = "IN PROGRESS" | "FINISHED" | "PENDING" | "FAILED" | undefined;
+const mapSyncStatus = (syncStatus: SyncStatus = SyncStatus.PENDING): ConnectionSyncStatus => {
 	switch (syncStatus) {
 		case "ACTIVE":
 			return "IN PROGRESS";
 		case "COMPLETE":
 			return "FINISHED";
 		default:
-			return syncStatus;
+			return syncStatus as ConnectionSyncStatus;
 	}
 };
 
@@ -64,7 +65,7 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 
 const getInstallation = async (subscription: Subscription, gitHubAppId: number | undefined, log: Logger): Promise<AppInstallation> => {
 	const { jiraHost, gitHubInstallationId } = subscription;
-	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId, { trigger: "jira-get" });
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	try {
@@ -74,7 +75,9 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,
-			numberOfSyncedRepos: await RepoSyncState.countSyncedReposFromSubscription(subscription),
+			numberOfSyncedRepos: await RepoSyncState.countFullySyncedReposForSubscription(subscription),
+			backfillSince: subscription.backfillSince,
+			failedSyncErrors: await getRetryableFailedSyncErrors(subscription),
 			jiraHost
 		};
 
@@ -83,7 +86,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 			{ installationId: gitHubInstallationId, error: err, uninstalled: err.status === 404 },
 			"Failed connection"
 		);
-		statsd.increment(metricError.failedConnection, { gitHubProduct });
+		statsd.increment(metricError.failedConnection, { gitHubProduct }, { jiraHost });
 		return Promise.reject({ error: err, id: gitHubInstallationId, deleted: err.status === 404 });
 	}
 };
@@ -118,37 +121,10 @@ const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number =>
 	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
 };
 
-const renderJiraCloud = async (res: Response, req: Request): Promise<void> => {
-	const { jiraHost, nonce } = res.locals;
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
-	const { installations, successfulConnections, failedConnections } = await getConnectionsAndInstallations(subscriptions, req);
-	const hasConnections = !!installations.total;
-
-	res.render("jira-configuration.hbs", {
-		host: jiraHost,
-		successfulConnections,
-		failedConnections,
-		hasConnections,
-		APP_URL: process.env.APP_URL,
-		csrfToken: req.csrfToken(),
-		nonce
-	});
-
-	const completeConnections = successfulConnections.filter(connection => connection.syncStatus === "FINISHED");
-
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
-		jiraHost,
-		connectedOrgCount: installations.total,
-		failedCloudBackfillCount: countStatus(successfulConnections, "FAILED"),
-		successfulCloudBackfillCount: countStatus(successfulConnections, "FINISHED"),
-		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
-		hasConnections
-	});
-};
-
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
+
 	const { jiraHost, nonce } = res.locals;
+
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
 
@@ -184,7 +160,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
-	res.render("jira-configuration-new.hbs", {
+	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
 		ghCloud: { successfulCloudConnections, failedCloudConnections },
@@ -216,6 +192,18 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	});
 };
 
+const getRetryableFailedSyncErrors = async (subscription: Subscription) => {
+	const RETRYABLE_ERROR_CODES = ["PERMISSIONS_ERROR", "CONNECTION_ERROR"];
+	const failedSyncs = await RepoSyncState.getFailedFromSubscription(subscription);
+	const errorCodes = failedSyncs.map(sync => sync.failedCode);
+	const retryableErrorCodes = errorCodes.filter(errorCode => errorCode && RETRYABLE_ERROR_CODES.includes(errorCode));
+
+	if (retryableErrorCodes.length === 0) {
+		return undefined;
+	}
+	return countBy(retryableErrorCodes);
+};
+
 export const JiraGet = async (
 	req: Request,
 	res: Response,
@@ -223,20 +211,15 @@ export const JiraGet = async (
 ): Promise<void> => {
 	try {
 		const { jiraHost } = res.locals;
-
 		if (!jiraHost) {
-			req.log.warn({ jiraHost, req, res }, "Missing jiraHost");
-			res.status(404).send(`Missing Jira Host '${jiraHost}'`);
+			req.log.warn({ jiraHost, req, res }, Errors.MISSING_JIRA_HOST);
+			res.status(400).send(Errors.MISSING_JIRA_HOST);
 			return;
 		}
 
 		req.log.debug("Received jira configuration page request");
 
-		if (await booleanFlag(BooleanFlags.GHE_SERVER, jiraHost)) {
-			await renderJiraCloudAndEnterpriseServer(res, req);
-		} else {
-			await renderJiraCloud(res, req);
-		}
+		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error) {
 		return next(new Error(`Failed to render Jira configuration: ${error}`));

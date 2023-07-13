@@ -1,10 +1,25 @@
-import { BOOLEAN, CountOptions, CreateOptions, DataTypes, DATE, DestroyOptions, FindOptions, INTEGER, Model, Op, STRING, UpdateOptions, JSON } from "sequelize";
+import {
+	BOOLEAN,
+	CountOptions,
+	CreateOptions,
+	DataTypes,
+	DATE,
+	DestroyOptions,
+	FindOptions,
+	INTEGER,
+	Model,
+	Op,
+	STRING,
+	UpdateOptions,
+	JSON,
+	QueryTypes
+} from "sequelize";
 import { Subscription, TaskStatus } from "./subscription";
 import { merge } from "lodash";
 import { sequelize } from "models/sequelize";
 import { Config } from "interfaces/common";
 
-export class RepoSyncState extends Model {
+export interface RepoSyncStateProperties {
 	id: number;
 	subscriptionId: number;
 	repoId: number;
@@ -25,6 +40,11 @@ export class RepoSyncState extends Model {
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -34,7 +54,47 @@ export class RepoSyncState extends Model {
 	config?: Config;
 	updatedAt: Date;
 	createdAt: Date;
+	failedCode?: string;
+}
 
+export class RepoSyncState extends Model implements RepoSyncStateProperties {
+	id: number;
+	subscriptionId: number;
+	repoId: number;
+	repoName: string;
+	repoOwner: string;
+	repoFullName: string;
+	repoUrl: string;
+	priority?: number;
+	branchStatus?: TaskStatus;
+	commitStatus?: TaskStatus;
+	issueStatus?: TaskStatus;
+	pullStatus?: TaskStatus;
+	buildStatus?: TaskStatus;
+	deploymentStatus?: TaskStatus;
+	branchCursor?: string;
+	commitCursor?: string;
+	issueCursor?: string;
+	pullCursor?: string;
+	buildCursor?: string;
+	deploymentCursor?: string;
+	commitFrom?: Date;
+	branchFrom?: Date;
+	pullFrom?: Date;
+	buildFrom?: Date;
+	deploymentFrom?: Date;
+	forked?: boolean;
+	repoPushedAt: Date;
+	repoUpdatedAt: Date;
+	repoCreatedAt: Date;
+	syncUpdatedAt?: Date;
+	syncCompletedAt?: Date;
+	config?: Config;
+	updatedAt: Date;
+	createdAt: Date;
+	failedCode?: string;
+
+	// TODO: why it is only for pullStatus, branchStatus and commitStatus ?!
 	get status(): TaskStatus {
 		const statuses = [this.pullStatus, this.branchStatus, this.commitStatus];
 		if (statuses.some(s => s === "failed")) {
@@ -48,8 +108,8 @@ export class RepoSyncState extends Model {
 		return "pending";
 	}
 
-	static async countSyncedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFullySyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				pullStatus: "complete",
 				branchStatus: "complete",
@@ -60,8 +120,8 @@ export class RepoSyncState extends Model {
 		});
 	}
 
-	static async countFailedReposFromSubscription(subscription: Subscription): Promise<number> {
-		return RepoSyncState.countFromSubscription(subscription, {
+	static async countFailedSyncedReposForSubscription(subscription: Subscription): Promise<number> {
+		return RepoSyncState.countSubscriptionRepos(subscription, {
 			where: {
 				[Op.or]: {
 					pullStatus: "failed",
@@ -74,11 +134,28 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+	static async getFailedFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
+
+		const result = await RepoSyncState.findAll(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				[Op.or]: {
+					pullStatus: "failed",
+					branchStatus: "failed",
+					commitStatus: "failed",
+					buildStatus: "failed",
+					deploymentStatus: "failed"
+				}
+			}
+		}));
+		return result || [];
+	}
+
 	static async createForSubscription(subscription: Subscription, values: Partial<RepoSyncState>, options: CreateOptions = {}): Promise<RepoSyncState> {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
-	static async countFromSubscription(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+	private static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
 		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -94,6 +171,26 @@ export class RepoSyncState extends Model {
 		});
 	}
 
+	static async findRepoByRepoIdAndJiraHost(repoId: number, jiraHost: string): Promise<RepoSyncState & Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoId\" = :repoId ",
+			{
+				replacements: { jiraHost, repoId },
+				type: QueryTypes.SELECT
+			}
+		);
+
+		if (results.length === 0) {
+			return null;
+		}
+
+		return results[0] as RepoSyncState & Subscription;
+	}
+
 	static async findAllFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState[]> {
 		const result = await RepoSyncState.findAll(merge(options, {
 			where: {
@@ -103,7 +200,21 @@ export class RepoSyncState extends Model {
 		return result || [];
 	}
 
-	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState> {
+	// TODO: move repoOwner to Subscription table and get rid of this.
+	// The current schema implies a subscription might have multiple
+	// "repoOwner"s associated with it, while that's impossible
+	static async findAllRepoOwners(subscription: Subscription): Promise<Set<string>> {
+		const owners = await RepoSyncState.findAll({
+			attributes: ["repoOwner"],
+			where: {
+				subscriptionId: subscription.id
+			},
+			group: "repoOwner"
+		});
+		return new Set(owners.map((owner) => owner.getDataValue("repoOwner")));
+	}
+
+	static async findOneFromSubscription(subscription: Subscription, options: FindOptions = {}): Promise<RepoSyncState | null> {
 		return RepoSyncState.findOne(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -112,7 +223,7 @@ export class RepoSyncState extends Model {
 		} as FindOptions));
 	}
 
-	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateFromSubscription(subscription: Subscription, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.update(values, merge(options || {}, {
 			where: {
 				subscriptionId: subscription.id
@@ -120,7 +231,7 @@ export class RepoSyncState extends Model {
 		} as UpdateOptions));
 	}
 
-	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[number, RepoSyncState[]]> {
+	static async updateRepoFromSubscription(subscription: Subscription, repoId: number, values: Record<string, unknown>, options: Partial<UpdateOptions> = {}): Promise<[affectedCount: number]> {
 		return RepoSyncState.updateFromSubscription(subscription, values, merge(options, {
 			where: {
 				repoId
@@ -136,8 +247,98 @@ export class RepoSyncState extends Model {
 		}));
 	}
 
+	static async deleteRepoForSubscription(subscription: Subscription, repoId: number, options: DestroyOptions = {}): Promise<number> {
+		return RepoSyncState.destroy(merge(options, {
+			where: {
+				subscriptionId: subscription.id,
+				repoId
+			}
+		}));
+	}
+
+	static async findByOrgNameAndSubscriptionId(subscription: Subscription, orgName: string): Promise<RepoSyncState | null> {
+		return await RepoSyncState.findOne({
+			where: {
+				subscriptionId: subscription.id,
+				repoOwner: {
+					[Op.iLike]: `%${orgName}%`
+				}
+			}
+		});
+	}
+
+	static async findRepositoriesBySubscriptionIdsAndRepoName(
+		jiraHost: string,
+		subscriptionIds: number | number[],
+		page: number,
+		limit: number,
+		repoName?: string
+	): Promise<RepoSyncState[] | null> {
+		const subscriptionIdsArray = Array.isArray(subscriptionIds) ? subscriptionIds : [subscriptionIds];
+		const offset = (page - 1) * limit;
+		const replacements = {
+			jiraHost,
+			subscriptionIds: subscriptionIdsArray,
+			repoName,
+			offset,
+			limit
+		};
+
+		const query = `
+			SELECT DISTINCT ON (rss."id") rss.*
+			FROM "Subscriptions" s
+			LEFT JOIN "RepoSyncStates" rss ON s."id" = rss."subscriptionId"
+			WHERE s."jiraHost" = :jiraHost
+				AND s."id" IN (:subscriptionIds)
+				${replacements.repoName ? "AND rss.\"repoName\" ILIKE :repoName" : ""}
+			ORDER BY rss."id", rss."updatedAt" DESC
+			OFFSET :offset
+			LIMIT :limit
+		`;
+
+		const repositories = await this.sequelize!.query(query, {
+			replacements: {
+				jiraHost,
+				subscriptionIds: subscriptionIdsArray,
+				repoName: replacements.repoName ? `%${replacements.repoName}%` : undefined,
+				offset,
+				limit
+			},
+			type: QueryTypes.SELECT
+		});
+
+		return repositories as RepoSyncState[];
+	}
+
+	static async findOneForRepoUrlAndRepoIdAndJiraHost(repoUrl: string, repoId: number, jiraHost: string):Promise<RepoSyncState | null> {
+		const results = await this.sequelize!.query(
+			`SELECT rss.* 
+			FROM "RepoSyncStates" rss
+			JOIN "Subscriptions" s ON rss."subscriptionId" = s."id"
+			WHERE REPLACE(rss."repoUrl", '.', '') LIKE :repoUrl
+			AND rss."repoId" = :repoId
+			AND s."jiraHost" = :jiraHost
+			`,
+			{
+				replacements: {
+					repoUrl: `%${repoUrl.replace(/\./g, "")}%`,
+					repoId,
+					jiraHost
+				},
+				type: QueryTypes.SELECT
+			}
+		);
+
+		if (results.length === 0) {
+			return null;
+		}
+
+		return results[0] as RepoSyncState;
+	}
+
+
 	// Nullify statuses and cursors to start anew
-	static async resetSyncFromSubscription(subscription: Subscription): Promise<[number, RepoSyncState[]]> {
+	static async resetSyncFromSubscription(subscription: Subscription): Promise<[affectedCount: number]> {
 		return RepoSyncState.update({
 			repoUpdatedAt: null,
 			branchStatus: null,
@@ -149,7 +350,8 @@ export class RepoSyncState extends Model {
 			buildStatus: null,
 			buildCursor: null,
 			deploymentStatus: null,
-			deploymentCursor: null
+			deploymentCursor: null,
+			commitFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -202,6 +404,11 @@ RepoSyncState.init({
 	pullCursor: STRING,
 	buildCursor: STRING,
 	deploymentCursor: STRING,
+	commitFrom: DATE,
+	branchFrom: DATE,
+	pullFrom: DATE,
+	buildFrom: DATE,
+	deploymentFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,
@@ -210,5 +417,6 @@ RepoSyncState.init({
 	syncCompletedAt: DATE,
 	config: JSON,
 	createdAt: DATE,
-	updatedAt: DATE
+	updatedAt: DATE,
+	failedCode: STRING
 }, { sequelize });

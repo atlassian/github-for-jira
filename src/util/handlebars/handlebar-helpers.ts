@@ -1,15 +1,23 @@
 import hbs from "hbs";
 import { isPlainObject } from "lodash";
+import { ConnectionSyncStatus } from "~/src/routes/jira/jira-get";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
+export const toISOStringHelper = (date?: Date) => date ? date.toISOString() : undefined;
+
+type Connection = { syncStatus?: ConnectionSyncStatus, syncWarning?: string };
+export const isAllSyncSuccess = (conn?: Connection) => {
+	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning ? true : false;
+};
 
 export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("toLowerCase", toLowercaseHelper);
 
 	hbs.registerHelper("replaceSpaceWithHyphen", replaceSpaceWithHyphenHelper);
 	hbs.registerHelper("concat", concatStringHelper);
+	hbs.registerHelper("toISOString", toISOStringHelper);
 
 	hbs.registerHelper(
 		"ifAllReposSynced",
@@ -30,6 +38,7 @@ export const registerHandlebarsHelpers = () => {
 		: `/github/subscriptions/${installationId}`
 	);
 
+	hbs.registerHelper("isAllSyncSuccess", isAllSyncSuccess);
 	hbs.registerHelper(
 		"inProgressOrPendingSync",
 		(syncStatus) => syncStatus === "IN PROGRESS" || syncStatus === "PENDING"
@@ -52,4 +61,18 @@ export const registerHandlebarsHelpers = () => {
 
 
 	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
+
+	hbs.registerHelper(
+		"disableDeleteSubscription",
+		(subscriptionHost, jiraHost) =>
+			subscriptionHost !== jiraHost
+	);
+
+	// Greater than
+	hbs.registerHelper("gt", (a: string, b: string) => a > b);
+
+	hbs.registerHelper("json", (context) =>
+		JSON.stringify(context)
+	);
+
 };

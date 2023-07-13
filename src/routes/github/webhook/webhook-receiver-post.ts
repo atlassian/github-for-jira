@@ -11,12 +11,16 @@ import { issueWebhookHandler } from "~/src/github/issue";
 import { envVars } from "~/src/config/env";
 import { pullRequestWebhookHandler } from "~/src/github/pull-request";
 import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/github/branch";
-import { deleteRepositoryWebhookHandler } from "~/src/github/repository";
+import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
-import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "utils/get-github-client-config";
 import { getLogger } from "config/logger";
+import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { Subscription } from "~/src/models/subscription";
+import { extraLoggerInfo } from "./webhook-logging-extra";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -24,22 +28,36 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	const id = request.headers["x-github-delivery"] as string;
 	const uuid = request.params.uuid;
 	const payload = request.body;
-	const logger = (request.log || getLogger(LOGGER_NAME)).child({
+	const parentLogger = (request.log || getLogger(LOGGER_NAME));
+	const logger = parentLogger.child({
 		paramUuid: uuid,
 		xGitHubDelivery: id,
-		xGitHubEvent: eventName
+		xGitHubEvent: eventName,
+		...extraLoggerInfo(payload, parentLogger)
 	});
 	logger.info("Webhook received");
+	let webhookContext;
 	try {
-		const { webhookSecret, gitHubServerApp } = await getWebhookSecret(uuid);
-		const verification = createHash(request.rawBody, webhookSecret);
+		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
+		const isVerified = webhookSecrets.some((secret, index) => {
+			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
+			/**
+			 * The latest updated webhook secret will be at index 0,
+			 * Once we stop receiving logs with index other than 0,
+			 * can then completely remove the old webhook secrets.
+			 */
+			if (matchesSignature) {
+				logger.info({ index }, "Matched webhook index");
+			}
+			return matchesSignature;
+		});
 
-		if (verification != signatureSHA256) {
+		if (!isVerified) {
 			logger.warn("Signature validation failed, returning 400");
 			response.status(400).send("signature does not match event payload and secret");
 			return;
 		}
-		const webhookContext = new WebhookContext({
+		webhookContext = new WebhookContext({
 			id: id,
 			name: eventName,
 			payload: payload,
@@ -64,17 +82,18 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			}
 		});
 		await webhookRouter(webhookContext);
-		logger.info("Webhook was successfully processed");
+		webhookContext.log.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
 	} catch (err) {
-		logger.error({ err }, "Something went wrong, returning 400: " + err.message);
+		(webhookContext?.log || logger).error({ err }, "Something went wrong, returning 400: " + err.message);
 		response.sendStatus(400);
 	}
 };
 
 const webhookRouter = async (context: WebhookContext) => {
-	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited"];
+	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "review_requested"];
+	let subscriptions;
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -104,9 +123,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(deleteBranchWebhookHandler)(context);
 			break;
 		case "repository":
-			if (context.action === "deleted") {
-				await GithubWebhookMiddleware(deleteRepositoryWebhookHandler)(context);
-			}
+			await GithubWebhookMiddleware(repositoryWebhookHandler)(context);
 			break;
 		case "workflow_run":
 			await GithubWebhookMiddleware(workflowWebhookHandler)(context);
@@ -116,6 +133,12 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "code_scanning_alert":
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
+			break;
+		case "dependabot_alert":
+			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, undefined);
+			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
+				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
+			}
 			break;
 	}
 };
@@ -129,21 +152,29 @@ export const createHash = (data: BinaryLike | undefined, secret: string): string
 		.digest("hex")}`;
 };
 
-const getWebhookSecret = async (uuid?: string): Promise<{ webhookSecret: string, gitHubServerApp?: GitHubServerApp }> => {
+const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array<string>, gitHubServerApp?: GitHubServerApp }> => {
 	if (uuid) {
 		const gitHubServerApp = await GitHubServerApp.findForUuid(uuid);
 		if (!gitHubServerApp) {
 			throw new Error(`GitHub app not found for uuid ${uuid}`);
 		}
-		const installation: Installation = await Installation.findByPk(gitHubServerApp.installationId);
+		const installation: Installation = (await Installation.findByPk(gitHubServerApp.installationId))!;
 		if (!installation) {
 			throw new Error(`Installation not found for gitHubApp with uuid ${uuid}`);
 		}
 		const webhookSecret = await gitHubServerApp.getDecryptedWebhookSecret(installation.jiraHost);
-		return { webhookSecret, gitHubServerApp };
+		/**
+		 * If we ever need to rotate the webhook secrets for Enterprise Customers,
+		 * we can add it in the array: ` [ webhookSecret ]`
+		 */
+		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
 	}
-	if (!envVars.WEBHOOK_SECRET) {
-		throw new Error("Environment variable 'WEBHOOK_SECRET' not defined");
-	}
-	return { webhookSecret: envVars.WEBHOOK_SECRET };
+
+	return {
+		/**
+		 * The environment WEBHOOK_SECRETS is a JSON array string in the format: ["key1", "key1"]
+		 * Basically an array of the new as well as any old webhook secrets
+		 */
+		webhookSecrets: envVars.WEBHOOK_SECRETS
+	};
 };

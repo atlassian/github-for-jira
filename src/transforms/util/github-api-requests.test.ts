@@ -16,7 +16,7 @@ describe("GitHub API Request Suite", () => {
 
 	const gitHubInstallationId = 123;
 	beforeEach(() => {
-		gitHubInstallationClient = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		gitHubInstallationClient = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 	});
 
 	describe("compareCommitsBetweenBaseAndHeadBranches", () => {

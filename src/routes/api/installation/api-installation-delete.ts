@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import { RepoSyncState } from "~/src/models/reposyncstate";
 
 export const ApiInstallationDelete = async (req: Request, res: Response): Promise<void> => {
 	const gitHubInstallationId = req.params.installationId;
@@ -28,8 +29,13 @@ export const ApiInstallationDelete = async (req: Request, res: Response): Promis
 
 	try {
 		const jiraClient = await getJiraClient(jiraHost, Number(gitHubInstallationId), gitHubAppId, req.log);
+		if (!jiraClient) {
+			req.log.info("Halting further execution for delete DevInfo as JiraClient is empty for this installation");
+			throw new Error("Unable to get Jira client for undefined githubAppId");
+		}
 		req.log.info({ jiraHost, gitHubInstallationId }, `Deleting DevInfo`);
 		await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+		await RepoSyncState.resetSyncFromSubscription(subscription);
 		res.status(200).send(`DevInfo deleted for jiraHost: ${jiraHost} gitHubInstallationId: ${gitHubInstallationId}`);
 	} catch (err) {
 		res.status(500).json(err);

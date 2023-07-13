@@ -1,5 +1,11 @@
 import LRUCache from "lru-cache";
 import { AuthToken } from "./auth-token";
+import { statsd } from "config/statsd";
+import { metricTokenCacheStatus } from "config/metric-names";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { numberFlag, NumberFlags, onFlagChange } from "config/feature-flags";
+import { getLogger } from "config/logger";
+import Logger from "bunyan";
 
 /**
  * A cache that holds installation tokens for the most recently used installations.
@@ -10,7 +16,8 @@ import { AuthToken } from "./auth-token";
  */
 export class InstallationTokenCache {
 	private static instance: InstallationTokenCache;
-	private readonly installationTokenCache: LRUCache<number, AuthToken>;
+	private readonly installationTokenCache: LRUCache<string, AuthToken>;
+	private logger: Logger;
 
 	/**
 	 * Creates a new InstallationTokenCache. This cache should be shared between all GitHub clients so that the clients don't
@@ -19,7 +26,28 @@ export class InstallationTokenCache {
 	 * number, the least recently used tokens are evicted from the cache.
 	 */
 	constructor() {
-		this.installationTokenCache = new LRUCache<number, AuthToken>({ max: 1000 });
+		this.installationTokenCache = new LRUCache<string, AuthToken>({ max: 1000 });
+		this.logger = getLogger("installation-token-cache");
+		this.setupCacheSizeListener();
+	}
+
+	private async updateCacheMaxSizeFromFlags() {
+		this.logger.info("Max size of installation token cache changed, now querying new value.");
+		try {
+			const newMax = await numberFlag(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, 1000);
+			this.logger.info({ newMax, oldMax: this.installationTokenCache.max }, "Found new max cache size, now updating cache options.");
+			this.installationTokenCache.max = newMax;
+			this.logger.info({ max: this.installationTokenCache.max }, "InstallationTokenCache max udpated");
+		} catch (e) {
+			this.logger.error("Error updating InstallationTokenCache max");
+		}
+	}
+
+	private setupCacheSizeListener() {
+		this.logger.info("Setting up cache max size listener");
+		onFlagChange(NumberFlags.INSTALLATION_TOKEN_CACHE_MAX_SIZE, async () => { await this.updateCacheMaxSizeFromFlags(); });
+		this.updateCacheMaxSizeFromFlags().catch(e => this.logger.error({ err: e }, "Error setting max cache size on first setup"));
+		this.logger.info("Set up cache max size listener done");
 	}
 
 	public static getInstance(): InstallationTokenCache {
@@ -39,18 +67,42 @@ export class InstallationTokenCache {
 	 */
 	public async getInstallationToken(
 		githubInstallationId: number,
+		gitHubAppId: number | undefined,
 		generateNewInstallationToken: () => Promise<AuthToken>): Promise<AuthToken> {
-		let token = this.installationTokenCache.get(githubInstallationId);
+
+		let token = this.installationTokenCache.get(this.key(githubInstallationId, gitHubAppId));
+
+		this.sendMetrics(token, gitHubAppId);
 
 		if (!token || token.isAboutToExpire()) {
 			token = await generateNewInstallationToken();
-			this.installationTokenCache.set(githubInstallationId, token, token.millisUntilAboutToExpire());
+			this.installationTokenCache.set(this.key(githubInstallationId, gitHubAppId), token, token.millisUntilAboutToExpire());
 		}
 
 		return token;
 	}
 
+	private sendMetrics(token: AuthToken | undefined, gitHubAppId: number | undefined) {
+		const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
+		const tags = {
+			gitHubProduct,
+			maxItemCount: String(this.installationTokenCache.max),
+			itemCountInHundreds: String(Math.floor(this.installationTokenCache.itemCount / 100))
+		};
+		if (!token) {
+			statsd.increment(metricTokenCacheStatus.miss, tags, {});
+		} else if (token.isAboutToExpire()) {
+			statsd.increment(metricTokenCacheStatus.expired, tags, {});
+		} else {
+			statsd.increment(metricTokenCacheStatus.hit, tags, {});
+		}
+	}
+
 	public clear(): void {
 		this.installationTokenCache.reset();
+	}
+
+	private key(githubInstallationId: number, gitHubAppId: number | undefined): string {
+		return `${githubInstallationId}_${gitHubAppId}`;
 	}
 }

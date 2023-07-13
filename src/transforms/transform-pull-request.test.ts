@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequest } from "./transform-pull-request";
+import { transformPullRequestRest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
+import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
+import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
+import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-
-jest.mock("config/feature-flags");
+import _ from "lodash";
 
 describe("pull_request transform", () => {
 	const gitHubInstallationId = 100403908;
@@ -15,10 +15,7 @@ describe("pull_request transform", () => {
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
-		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
-		when(booleanFlag).calledWith(
-			BooleanFlags.ASSOCIATE_PR_TO_ISSUES_IN_BODY
-		).mockResolvedValue(true);
+		client = new GitHubInstallationClient(getInstallationId(gitHubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 	});
 
 	it("should not contain branches on the payload if pull request status is closed.", async () => {
@@ -32,7 +29,7 @@ describe("pull_request transform", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -89,7 +86,7 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
@@ -173,11 +170,11 @@ describe("pull_request transform", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any);
 
 		const { updated_at, title } = fixture;
 
-		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i}`);
+		const issueKeys = Array.from(new Array(250)).map((_, i) => `TEST-${i+1}`);
 
 		expect(data).toMatchObject({
 			id: "100403908",
@@ -234,4 +231,212 @@ describe("pull_request transform", () => {
 			updateSequenceId: 12345678
 		});
 	});
+
+	it("should transform deleted author and reviewers without exploding", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/ghost.png",
+							name: "Deleted User",
+							email: "deleted@noreply.user.github.com",
+							url: "https://github.com/ghost",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("maps empty state to UNAPPROVED", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const pulLRequestFixture = pullRequestList[0];
+		pulLRequestFixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+
+		const reviewrsListNoState = _.cloneDeep(reviewersListHasUser);
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		delete reviewrsListNoState[0].state;
+
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+
+		const { updated_at, title } = pulLRequestFixture;
+
+		expect(data).toStrictEqual({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						email: "deleted@noreply.user.github.com",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							name: "octocat",
+							email: "octocat@noreply.user.github.com",
+							url: "https://github.com/octocat",
+							approvalStatus: "UNAPPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should resolve reviewer's email", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
+			.reply(200, {
+				...reviewersListHasUser[0].user,
+				email: "octocat-mapped@github.com"
+			});
+
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							email: "octocat-mapped@github.com",
+							name: "octocat",
+							url: "https://github.com/octocat",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should send the correct review state for multiple reviewers", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "[TEST-1] the PR where reviewers can't make up their minds";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+
+		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
+			firstReviewStatus: expect.objectContaining({
+				approvalStatus: "UNAPPROVED"
+			})
+		}));
+
+		expect({ secondReviewStatus: data?.pullRequests[0].reviewers[1] }).toEqual(expect.objectContaining({
+			secondReviewStatus: expect.objectContaining({
+				approvalStatus: "APPROVED"
+			})
+		}));
+	});
+
 });

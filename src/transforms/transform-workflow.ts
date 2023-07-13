@@ -1,5 +1,5 @@
 import Logger from "bunyan";
-import { GitHubPullRequest , GitHubWorkflowPayload } from "interfaces/github";
+import { GitHubPullRequest, GitHubWorkflowPayload } from "interfaces/github";
 import { JiraBuildBulkSubmitData, JiraPullRequestHead } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -59,7 +59,6 @@ export const transformWorkflow = async (
 		workflow_run: {
 			conclusion,
 			head_branch,
-			head_commit,
 			html_url,
 			name,
 			pull_requests,
@@ -83,7 +82,7 @@ export const transformWorkflow = async (
 		logger
 	) : "";
 
-	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${head_commit.message}\n${commitMessages}`);
+	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message}\n${commitMessages}`);
 	if (!issueKeys.length) {
 		return undefined;
 	}

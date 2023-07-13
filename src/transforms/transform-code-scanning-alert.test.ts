@@ -2,36 +2,29 @@ import { transformCodeScanningAlert } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-
-jest.mock("config/feature-flags");
 
 const buildContext = (payload, gitHubAppConfig?: GitHubAppConfig): WebhookContext => {
 	return new WebhookContext({
 		"id": "hi",
 		"name": "hi",
 		"payload": payload,
-		gitHubAppConfig: gitHubAppConfig,
+		gitHubAppConfig: gitHubAppConfig || {
+			gitHubAppId: undefined,
+			appId: 1,
+			clientId: "abc",
+			gitHubBaseUrl: "https://github.com",
+			gitHubApiUrl: "https://api.github.com",
+			uuid: undefined
+		},
 		log: getLogger("foo")
 	});
-};
-
-const turnOnGHESFF = () => {
-	when(jest.mocked(booleanFlag))
-		.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-		.mockResolvedValue(true);
 };
 
 describe("code_scanning_alert transform", () => {
 	beforeEach(() => {
 		Date.now = jest.fn(() => 12345678);
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.USE_REPO_ID_TRANSFORMER
-		).mockResolvedValue(true);
 	});
 	const gitHubInstallationId = 1234;
 	const jiraHost = "testHost";
@@ -61,7 +54,6 @@ describe("code_scanning_alert transform", () => {
 	});
 
 	it("code_scanning_alert is transformed into a remote link for server", async () => {
-		turnOnGHESFF();
 
 		const builderOutput = await new DatabaseStateCreator()
 			.forServer()

@@ -1,25 +1,25 @@
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import Logger from "bunyan";
 import { NextFunction, Request, Response } from "express";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
-import { TokenType, verifyQsh } from "~/src/jira/util/jwt";
+import { getJWTRequest, TokenType, validateQsh } from "~/src/jira/util/jwt";
 import { Installation } from "~/src/models/installation";
-import { moduleUrls } from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
+import {
+	getGenericContainerUrls,
+	moduleUrls,
+	getSecurityContainerActionUrls
+} from "~/src/routes/jira/atlassian-connect/jira-atlassian-connect-get";
 import { matchRouteWithPattern } from "~/src/util/match-route-with-pattern";
+import { fetchAndSaveUserJiraAdminStatus } from "middleware/jira-admin-permission-middleware";
+import { envVars } from "~/src/config/env";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-
-	if (!await booleanFlag(BooleanFlags.NEW_JWT_VALIDATION)) {
-		req.log.info("Skipping jiraSymmetricJwtMiddleware...");
-		return next();
-	}
-
-	req.log.info("Executing jiraSymmetricJwtMiddleware...");
-
-	const token = req.query?.["jwt"] || req.cookies?.["jwt"] || req.body?.["jwt"];
-
+	const authHeader = req.headers["authorization"] as string;
+	const authHeaderPrefix = "JWT ";
+	const token = req.query?.["jwt"]
+		|| req.cookies?.["jwt"] || req.body?.["jwt"]
+		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 	if (token) {
-
 		let issuer;
 		try {
 			issuer = getIssuer(token, req.log);
@@ -27,30 +27,30 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 			req.log.warn({ err }, "Could not get issuer");
 			return res.status(401).send("Unauthorised");
 		}
-
 		const installation = await Installation.getForClientKey(issuer);
 		if (!installation) {
 			req.log.warn("No Installation found");
 			return res.status(401).send("Unauthorised");
 		}
-
-		const secret = await installation.decrypt("encryptedSharedSecret");
-
-		const tokenType = checkPathValidity(req.originalUrl) && req.method == "GET" ? TokenType.normal : TokenType.context;
+		let verifiedClaims;
 		try {
-			verifySymmetricJwt(token, secret, req, tokenType, req.log);
+			verifiedClaims = await verifySymmetricJwt(req, token, installation);
 		} catch (err) {
 			req.log.warn({ err }, "Could not verify symmetric JWT");
-			return res.status(401).send("Unauthorised");
+			const errorMessage = req.path === "/create-branch-options" ? "Create branch link expired" : "Unauthorised";
+			return res.status(401).send(errorMessage);
 		}
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
 		req.session.jiraHost = installation.jiraHost;
+		// Check whether logged-in user has Jira Admin permissions and save it to the session
+		await fetchAndSaveUserJiraAdminStatus(req, verifiedClaims, installation);
 
 		if (req.cookies.jwt) {
 			res.clearCookie("jwt");
 		}
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 
 	} else if (req.session?.jiraHost) {
@@ -64,10 +64,12 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
+		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 	}
 
-	req.log.warn("No token found and session cookie has not jiraHost");
+	req.log.warn("No token found and session cookie has no jiraHost");
+
 	return res.status(401).send("Unauthorised");
 
 };
@@ -89,19 +91,32 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	return unverifiedClaims.iss;
 };
 
-const verifySymmetricJwt = (token: string, secret: string, req: Request, tokenType: TokenType, logger: Logger): boolean => {
-	const algorithm = getAlgorithm(token);
+export const getTokenType = async (url: string, method: string, jiraHost: string): Promise<TokenType> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
+		return checkPathValidity(url) && method == "GET"
+		|| await checkGenericContainerActionUrl(`${envVars.APP_URL}${url}`)
+		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal
+			: TokenType.context;
+	} else {
+		return checkPathValidity(url) && method == "GET"
+		|| checkSecurityContainerActionUrl(`${envVars.APP_URL}${url}`) ? TokenType.normal : TokenType.context;
+	}
+};
 
-	/* eslint-disable @typescript-eslint/no-explicit-any*/
-	let verifiedClaims: any; //due to decodeSymmetric return any
+const verifySymmetricJwt = async (req: Request, token: string, installation: Installation) => {
+	const algorithm = getAlgorithm(token);
+	const secret = await installation.decrypt("encryptedSharedSecret", req.log);
+
 	try {
-		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
+		const claims = decodeSymmetric(token, secret, algorithm, false);
+		const tokenType = await getTokenType(req.originalUrl, req.method, installation.jiraHost);
+
+		verifyJwtClaims(claims, tokenType, req);
+		return claims;
 	} catch (err) {
-		logger.warn({ err }, "Invalid JWT");
+		req.log.warn({ err }, "Invalid JWT");
 		throw new Error(`Unable to decode JWT token: ${err.message}`);
 	}
-
-	return verifyJwtClaims(verifiedClaims, tokenType, req);
 };
 
 export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, tokenType: TokenType, req: Request): boolean => {
@@ -112,14 +127,7 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
 	}
 
 	if (verifiedClaims.qsh) {
-		let qshVerified: boolean;
-		if (tokenType === TokenType.context) {
-			//If we use context jwt tokens, their qsh will be constant
-			qshVerified = verifiedClaims.qsh === "context-qsh";
-		} else {
-			//validate query string hash
-			qshVerified = verifyQsh(verifiedClaims.qsh, req);
-		}
+		const qshVerified = validateQsh(tokenType, verifiedClaims.qsh, getJWTRequest(req));
 
 		if (!qshVerified) {
 			throw new Error("JWT Verification Failed, wrong qsh");
@@ -136,6 +144,20 @@ export const verifyJwtClaims = (verifiedClaims: { exp: number, qsh: string }, to
  */
 const checkPathValidity = (url: string) => {
 	return moduleUrls.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
+	const genericContainerActionUrls = await getGenericContainerUrls();
+
+	return genericContainerActionUrls?.some(moduleUrl => {
+		return matchRouteWithPattern(moduleUrl, url);
+	});
+};
+
+const checkSecurityContainerActionUrl = (url: string) => {
+	return getSecurityContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

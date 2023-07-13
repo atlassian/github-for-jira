@@ -1,10 +1,25 @@
 import Logger from "bunyan";
-import { getLogger } from "~/src/config/logger";
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { HttpProxyAgent } from "http-proxy-agent";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
-import { GithubClientGraphQLError, RateLimitingError } from "~/src/github/client/github-client-errors";
+import {
+	buildAxiosStubErrorForGraphQlErrors,
+	GithubClientGraphQLError, GithubClientInvalidPermissionsError,
+	GithubClientRateLimitingError, GithubClientNotFoundError, GithubClientBlockedIpError, GithubClientSSOLoginError
+} from "~/src/github/client/github-client-errors";
+import {
+	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
+	setRequestStartTime,
+	setRequestTimeout
+} from "~/src/github/client/github-client-interceptors";
+import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
+import { metricHttpRequest } from "config/metric-names";
+
+export interface GitHubClientApiKeyConfig {
+	headerName: string;
+	apiKeyGenerator: () => Promise<string>;
+}
 
 export interface GitHubConfig {
 	hostname: string;
@@ -12,6 +27,12 @@ export interface GitHubConfig {
 	apiUrl: string;
 	graphqlUrl: string;
 	proxyBaseUrl?: string;
+	apiKeyConfig?: GitHubClientApiKeyConfig;
+}
+
+export interface Metrics {
+	trigger: string,
+	subTrigger?: string,
 }
 
 /**
@@ -27,15 +48,19 @@ export class GitHubClient {
 	protected readonly restApiUrl: string;
 	protected readonly graphqlUrl: string;
 	protected readonly axios: AxiosInstance;
+	protected readonly metrics: Metrics;
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		logger: Logger = getLogger("gitHub-client")
+		jiraHost: string | undefined,
+		metrics: Metrics,
+		logger: Logger
 	) {
 		this.logger = logger;
 		this.baseUrl = gitHubConfig.baseUrl;
 		this.restApiUrl = gitHubConfig.apiUrl;
 		this.graphqlUrl = gitHubConfig.graphqlUrl;
+		this.metrics = metrics;
 
 		this.axios = axios.create({
 			baseURL: this.restApiUrl,
@@ -44,25 +69,77 @@ export class GitHubClient {
 			},
 			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
 		});
+
+		this.axios.interceptors.request.use(setRequestStartTime);
+		this.axios.interceptors.request.use(setRequestTimeout);
+		this.axios.interceptors.request.use(urlParamsMiddleware);
+		this.axios.interceptors.response.use(
+			undefined,
+			handleFailedRequest(this.logger)
+		);
+		this.axios.interceptors.response.use(
+			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
+				...this.metrics
+			}),
+			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
+				withApiKey: "" + (!!gitHubConfig.apiKeyConfig),
+				...this.metrics
+			})
+		);
+
+		if (gitHubConfig.apiKeyConfig) {
+			const apiKeyConfig = gitHubConfig.apiKeyConfig;
+			this.axios.interceptors.request.use(async (config) => {
+				if (!config.headers) {
+					config.headers = {};
+				}
+				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator();
+				return config;
+			});
+		}
 	}
 
-	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
+	protected async graphql<T>(query: string, config: AxiosRequestConfig, variables?: Record<string, string | number | undefined>, metrics?: Record<string, string>): Promise<AxiosResponse<GraphQlQueryResponse<T>>> {
 		const response = await this.axios.post<GraphQlQueryResponse<T>>(this.graphqlUrl,
 			{
 				query,
 				variables
 			},
-			config);
+			Object.assign({}, {
+				...config,
+				metrics
+			}));
 
 		const graphqlErrors = response.data?.errors;
 		if (graphqlErrors?.length) {
-			this.logger.warn({ res: response }, "GraphQL errors");
-			if (graphqlErrors.find(err => err.type == "RATE_LIMITED")) {
-				return Promise.reject(new RateLimitingError(response));
-			}
+			const err = new GithubClientGraphQLError(response, graphqlErrors);
+			this.logger.warn({ err }, "GraphQL errors");
 
-			const graphQlErrorMessage = graphqlErrors[0].message + (graphqlErrors.length > 1 ? ` and ${graphqlErrors.length - 1} more errors` : "");
-			return Promise.reject(new GithubClientGraphQLError(graphQlErrorMessage, graphqlErrors));
+			// Please keep in sync with REST error mappings!!!!
+			// TODO: consider moving both into some single error mapper to keep them close and avoid being not in sync
+
+			if (graphqlErrors.find(graphQLError => graphQLError.type == "RATE_LIMITED")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a rate-limiting error");
+				return Promise.reject(new GithubClientRateLimitingError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && graphqlError.message === "Resource not accessible by integration")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a InvalidPermission error");
+				return Promise.reject(new GithubClientInvalidPermissionsError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && graphqlError.message === "has an IP allow list enabled")) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a BlockedIpError error");
+				return Promise.reject(new GithubClientBlockedIpError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && response.headers?.["x-github-sso"])) {
+				this.logger.info({ err }, "Mapping GraphQL errors to a SSOLoginError error");
+				return Promise.reject(new GithubClientSSOLoginError(buildAxiosStubErrorForGraphQlErrors(response)));
+
+			} else if (graphqlErrors.find(graphQLError => graphQLError.type == "NOT_FOUND")) {
+				this.logger.info({ err }, "Mapping GraphQL error to not found");
+				return Promise.reject(new GithubClientNotFoundError(buildAxiosStubErrorForGraphQlErrors(response)));
+			}
+			return Promise.reject(err);
 		}
 
 		return response;

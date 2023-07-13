@@ -45,6 +45,20 @@
     margin-bottom: 0.7em;
 }
 
+.gitHubConfiguration__ssoWarning {
+    margin-right: 10px;
+    cursor: pointer;
+}
+aui-inline-dialog.aui-layer[open]:focus-visible  {
+    box-shadow: none;
+}
+.gitHubConfiguration__ssoMessage {
+    width: 378px;
+}
+.gitHubConfiguration__ssoMessage ~ ul {
+    padding: 6px 16px;
+}
+
 .Box {
     border: 0;
     border-radius: 0;
@@ -124,11 +138,11 @@
 
 .gitHubConfiguration__orgContent__connectBtn--disabled:hover,
 .gitHubConfiguration__orgContent__settingsContainer--disabled:hover,
-.gitHubConfiguration__manageSubscriptions--notAdmin:hover {
+.gitHubConfiguration__deleteSubscription--notAdmin:hover {
     cursor: not-allowed;
 }
 
-.gitHubConfiguration__manageSubscriptions--notAdmin {
+.gitHubConfiguration__deleteSubscription--notAdmin {
     position: absolute;
 }
 
@@ -146,8 +160,9 @@
 }
 
 .gitHubConfiguration__notAdminMsg,
-.gitHubConfiguration__manageSubscriptions,
-.gitHubConfiguration__manageSubscriptions--notAdmin,
+.gitHubConfiguration__deleteSubscription,
+.gitHubConfiguration__deleteSubscription--notConnected,
+.gitHubConfiguration__deleteSubscription--notAdmin,
 .gitHubConfiguration__failedSyncWarningLabel {
     color: #b4bbc5;
     font-size: 0.7rem;
@@ -161,12 +176,22 @@
 }
 
 .gitHubConfiguration__orgContent__settingsContainer,
-.gitHubConfiguration__orgContent__settingsContainer--disabled {
+.gitHubConfiguration__orgContent__settingsContainer--disabled,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected {
+    background: none;
+    border: 0;
     margin-left: 10px;
-    border-radius: 3px;
-    cursor: pointer;
     padding: 0.45em;
     position: relative;
+}
+
+.gitHubConfiguration__orgContent__settingsContainer,
+.gitHubConfiguration__orgContent__settingsContainer--disabled {
+    cursor: pointer;
+}
+
+.gitHubConfiguration__orgContent__settingsContainer--notConnected {
+    cursor: not-allowed;
 }
 
 .gitHubConfiguration__orgContent__editContainer {
@@ -187,7 +212,11 @@
 .gitHubConfiguration__orgContent__settingsContainer,
 .gitHubConfiguration__orgContent__settingsContainer:hover,
 .gitHubConfiguration__orgContent__settingsContainer:active,
-.gitHubConfiguration__orgContent__settingsContainer:focus {
+.gitHubConfiguration__orgContent__settingsContainer:focus,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected:hover,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected:active,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected:focus {
     color: inherit;
 }
 
@@ -197,27 +226,35 @@
 }
 
 .gitHubConfiguration__orgContent__settingsContainer:hover
-~ .gitHubConfiguration__manageSubscriptions,
+~ .gitHubConfiguration__deleteSubscription,
 .gitHubConfiguration__orgContent__settingsContainer--disabled:hover
-~ .gitHubConfiguration__manageSubscriptions--notAdmin,
+~ .gitHubConfiguration__deleteSubscription--notAdmin,
 .gitHubConfiguration__orgContent__connectFailed__warningIconContainer:hover
 ~ .gitHubConfiguration__failedSyncWarningLabel,
 .gitHubConfiguration__orgContent__connectBtn--disabled:hover
-~ .gitHubConfiguration__notAdminMsg {
+~ .gitHubConfiguration__notAdminMsg,
+.gitHubConfiguration__orgContent__settingsContainer--notConnected:hover
+~ .gitHubConfiguration__deleteSubscription--notConnected {
     display: block;
     text-align: center;
 }
 
-.gitHubConfiguration__manageSubscriptions--notAdmin {
+.gitHubConfiguration__deleteSubscription--notAdmin {
     left: -2em;
     top: -4em;
     width: 24em;
 }
 
-.gitHubConfiguration__manageSubscriptions {
+.gitHubConfiguration__deleteSubscription {
     left: 3em;
     top: -2.4em;
-    width: 13.8em;
+    width: 11.5em;
+}
+
+.gitHubConfiguration__deleteSubscription--notConnected {
+    left: 0em;
+    top: -5.4em;
+    width: 20em;
 }
 
 .gitHubConfiguration__noOrganizations {
@@ -250,6 +287,14 @@
     margin: 0 auto 18px;
 }
 
+.gitHubConfiguration__serverError {
+    display: none;
+    margin-top: 2.5em;
+  }
+  .gitHubConfiguration__serverError  .errorMessageBox__container {
+    align-items: center;
+  }
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);
@@ -277,12 +322,12 @@
         left: -12em;
     }
 
-    .gitHubConfiguration__manageSubscriptions--notAdmin,
+    .gitHubConfiguration__deleteSubscription--notAdmin,
     .gitHubConfiguration__failedSyncWarningLabel {
         top: -0.5em;
     }
 
-    .gitHubConfiguration__manageSubscriptions--notAdmin {
+    .gitHubConfiguration__deleteSubscription--notAdmin {
         left: -16em;
     }
 

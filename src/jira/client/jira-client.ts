@@ -5,22 +5,86 @@ import { getAxiosInstance } from "./axios";
 import { getJiraId } from "../util/id";
 import { AxiosInstance, AxiosResponse } from "axios";
 import Logger from "bunyan";
-import { JiraAssociation, JiraCommit, JiraIssue, JiraRemoteLink, JiraSubmitOptions } from "interfaces/jira";
+import { createHashWithSharedSecret } from "utils/encryption";
+
+import {
+	JiraAssociation,
+	JiraBuildBulkSubmitData,
+	JiraCommit,
+	JiraDeploymentBulkSubmitData,
+	JiraIssue,
+	JiraRemoteLink,
+	JiraSubmitOptions,
+	JiraVulnerabilityBulkSubmitData
+} from "interfaces/jira";
 import { getLogger } from "config/logger";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { uniq } from "lodash";
-import { shouldTagBackfillRequests } from "config/feature-flags";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
-import { TransformedRepositoryId } from "~/src/transforms/transform-repository-id";
-import { getAppKey } from "utils/app-properties-utils";
+import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
 
 // Max number of issue keys we can pass to the Jira API
-export const ISSUE_KEY_API_LIMIT = 100;
+export const ISSUE_KEY_API_LIMIT = 500;
 const issueKeyLimitWarning = "Exceeded issue key reference limit. Some issues may not be linked.";
 
 export interface DeploymentsResult {
 	status: number;
 	rejectedDeployments?: any[];
+}
+
+
+export interface JiraClient {
+	baseURL: string;
+	issues: {
+		get: (issueId: string, query?: { fields: string }) => Promise<AxiosResponse<JiraIssue>>;
+		getAll: (issueIds: string[], query?: { fields: string }) => Promise<JiraIssue[]>;
+		parse: (text: string) => string[] | undefined;
+		comments: {
+			list: (issue_id: string) => any;
+			addForIssue: (issue_id: string, payload: any) => any;
+			updateForIssue: (issue_id: string, comment_id: string, payload: any) => any;
+			deleteForIssue: (issue_id: string, comment_id: string) => any;
+		};
+		transitions: {
+			getForIssue: (issue_id: string) => any;
+			updateForIssue: (issue_id: string, transition_id: string) => any;
+		};
+		worklogs: {
+			addForIssue: (issue_id: string, payload: any) => any;
+		};
+	};
+	devinfo: {
+		branch: {
+			delete: (transformedRepositoryId: TransformedRepositoryId, branchRef: string) => any;
+		};
+		installation: {
+			delete: (gitHubInstallationId: string | number) => Promise<any[]>;
+		};
+		pullRequest: {
+			delete: (transformedRepositoryId: TransformedRepositoryId, pullRequestId: string) => any;
+		};
+		repository: {
+			delete: (repositoryId: number, gitHubBaseUrl?: string) => Promise<any[]>;
+			update: (data: any, options?: JiraSubmitOptions) => any;
+		},
+	},
+	workflow: {
+		submit: (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => Promise<any>;
+	},
+	deployment: {
+		submit: (
+			data: JiraDeploymentBulkSubmitData,
+			repositoryId: number,
+			options?: JiraSubmitOptions
+		) => Promise<DeploymentsResult>;
+	},
+	remoteLink: {
+		submit: (data: any, options?: JiraSubmitOptions) => Promise<void>;
+	},
+	security: {
+		submitVulnerabilities: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
+	}
 }
 
 /*
@@ -34,10 +98,10 @@ export interface DeploymentsResult {
 // TODO: need to type jiraClient ASAP
 export const getJiraClient = async (
 	jiraHost: string,
-	gitHubInstallationId: number | undefined,
+	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
-): Promise<any> => {
+): Promise<JiraClient| void> => {
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
@@ -48,12 +112,12 @@ export const getJiraClient = async (
 	}
 	const instance = getAxiosInstance(
 		installation.jiraHost,
-		await installation.decrypt("encryptedSharedSecret"),
+		await installation.decrypt("encryptedSharedSecret", logger),
 		logger
 	);
 
 	// TODO: need to create actual class for this
-	const client = {
+	const client: JiraClient = {
 		baseURL: installation.jiraHost,
 		issues: {
 			get: (issueId: string, query = { fields: "summary" }): Promise<AxiosResponse<JiraIssue>> =>
@@ -211,18 +275,44 @@ export const getJiraClient = async (
 					)
 			},
 			repository: {
-				delete: (transformedRepositoryId: TransformedRepositoryId) =>
-					instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}", {
-						params: {
-							_updateSequenceId: Date.now()
-						},
-						urlParams: {
-							transformedRepositoryId
-						}
-					}),
+				delete: async (repositoryId: number, gitHubBaseUrl?: string) => {
+					const transformedRepositoryId = transformRepositoryId(repositoryId, gitHubBaseUrl);
+					return Promise.all([
+						// We are sending devinfo events with the property "transformedRepositoryId", so we delete by this property.
+						instance.delete("/rest/devinfo/0.10/repository/{transformedRepositoryId}",
+							{
+								params: {
+									_updateSequenceId: Date.now()
+								},
+								urlParams: {
+									transformedRepositoryId
+								}
+							}
+						),
+
+						// We are sending build events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/builds/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						),
+
+						// We are sending deployments events with the property "repositoryId", so we delete by this property.
+						instance.delete(
+							"/rest/deployments/0.1/bulkByProperties",
+							{
+								params: {
+									repositoryId
+								}
+							}
+						)
+					]);
+				},
 				update: async (data, options?: JiraSubmitOptions) => {
 					dedupIssueKeys(data);
-
 					if (
 						!withinIssueKeyLimit(data.commits) ||
 						!withinIssueKeyLimit(data.branches) ||
@@ -246,13 +336,14 @@ export const getJiraClient = async (
 						data,
 						instance,
 						gitHubInstallationId,
+						logger,
 						options
 					);
 				}
 			}
 		},
 		workflow: {
-			submit: async (data, options?: JiraSubmitOptions) => {
+			submit: async (data: JiraBuildBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions) => {
 				updateIssueKeysFor(data.builds, uniq);
 				if (!withinIssueKeyLimit(data.builds)) {
 					logger.warn({
@@ -262,36 +353,26 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				let payload;
-				if (await shouldTagBackfillRequests()) {
-					payload = {
-						builds: data.builds,
-						properties: {
-							gitHubInstallationId
-						},
-						providerMetadata: {
-							product: data.product
-						},
-						preventTransitions: options?.preventTransitions || false,
-						operationType: options?.operationType || "NORMAL"
-					};
-				} else {
-					payload = {
-						builds: data.builds,
-						properties: {
-							gitHubInstallationId
-						},
-						providerMetadata: {
-							product: data.product
-						}
-					};
-				}
+
+				const payload = {
+					builds: data.builds,
+					properties: {
+						gitHubInstallationId,
+						repositoryId
+					},
+					providerMetadata: {
+						product: data.product
+					},
+					preventTransitions: options?.preventTransitions || false,
+					operationType: options?.operationType || "NORMAL"
+				};
+
 				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
 		deployment: {
-			submit: async (data, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
+			submit: async (data: JiraDeploymentBulkSubmitData, repositoryId: number, options?: JiraSubmitOptions): Promise<DeploymentsResult> => {
 				updateIssueKeysFor(data.deployments, uniq);
 				if (!withinIssueKeyLimit(data.deployments)) {
 					logger.warn({
@@ -301,26 +382,40 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				let payload;
-				if (await shouldTagBackfillRequests()) {
-					payload = {
-						deployments: data.deployments,
-						properties: {
-							gitHubInstallationId
-						},
-						preventTransitions: options?.preventTransitions || false,
-						operationType: options?.operationType || "NORMAL"
-					};
-				} else {
-					payload = {
-						deployments: data.deployments,
-						properties: {
-							gitHubInstallationId
-						}
-					};
-				}
-				logger?.info({ gitHubProduct }, "Sending deployments payload to jira.");
+				const payload = {
+					deployments: data.deployments,
+					properties: {
+						gitHubInstallationId,
+						repositoryId
+					},
+					preventTransitions: options?.preventTransitions || false,
+					operationType: options?.operationType || "NORMAL"
+				};
+
+				logger?.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
+
+				if (
+					response.data?.rejectedDeployments?.length ||
+					response.data?.unknownIssueKeys?.length ||
+					response.data?.unknownAssociations?.length
+				) {
+					logger.warn({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						rejectedDeployments: response.data?.rejectedDeployments,
+						unknownIssueKeys: response.data?.unknownIssueKeys,
+						unknownAssociations: response.data?.unknownAssociations,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API rejected deployment!");
+				} else {
+					logger.info({
+						acceptedDeployments: response.data?.acceptedDeployments,
+						options,
+						...getDeploymentDebugInfo(data)
+					}, "Jira API accepted deployment!");
+				}
+
 				return {
 					status: response.status,
 					rejectedDeployments: response.data?.rejectedDeployments
@@ -329,6 +424,7 @@ export const getJiraClient = async (
 		},
 		remoteLink: {
 			submit: async (data, options?: JiraSubmitOptions) => {
+
 				// Note: RemoteLinks doesn't have an issueKey field and takes in associations instead
 				updateIssueKeyAssociationValuesFor(data.remoteLinks, uniq);
 				if (!withinIssueKeyAssociationsLimit(data.remoteLinks)) {
@@ -336,39 +432,52 @@ export const getJiraClient = async (
 					const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 					await subscription?.update({ syncWarning: issueKeyLimitWarning });
 				}
-				let payload;
-				if (await shouldTagBackfillRequests()) {
-					payload = {
-						remoteLinks: data.remoteLinks,
-						properties: {
-							gitHubInstallationId
-						},
-						preventTransitions: options?.preventTransitions || false,
-						operationType: options?.operationType || "NORMAL"
-					};
-				} else {
-					payload = {
-						remoteLinks: data.remoteLinks,
-						properties: {
-							gitHubInstallationId
-						}
-					};
-				}
+				const payload = {
+					remoteLinks: data.remoteLinks,
+					properties: {
+						gitHubInstallationId
+					},
+					preventTransitions: options?.preventTransitions || false,
+					operationType: options?.operationType || "NORMAL"
+				};
 				logger.info("Sending remoteLinks payload to jira.");
 				await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
 		},
-		appProperties: {
-			create: (isConfiguredState: string) =>
-				instance.put(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`, {
-					"isConfigured": isConfiguredState
-				}),
-			get: () => instance.get(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`),
-			delete: () => instance.delete(`/rest/atlassian-connect/latest/addons/${getAppKey()}/properties/is-configured`)
+		security: {
+			submitVulnerabilities: async (data, options?: JiraSubmitOptions): Promise<AxiosResponse> => {
+				const payload = {
+					vulnerabilities: data.vulnerabilities,
+					properties: {
+						gitHubInstallationId
+					},
+					operationType: options?.operationType || "NORMAL"
+				};
+				logger.info("Sending vulnerabilities payload to jira.");
+				return await instance.post("/rest/security/1.0/bulk", payload);
+			}
 		}
 	};
 
 	return client;
+};
+
+const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {
+	try {
+		return {
+			deployments: (data.deployments || []).map(deployment => ({
+				updateSequenceNumber: deployment.updateSequenceNumber,
+				state: createHashWithSharedSecret(deployment.state),
+				url: createHashWithSharedSecret(deployment.url),
+				issueKeys: (deployment.associations || [])
+					.filter(a => ["issueKeys", "issueIdOrKeys", "serviceIdOrKeys"].includes(a.associationType))
+					.flatMap(a => (a.values as string[] || []).map((v: string) => createHashWithSharedSecret(v)))
+			}))
+		};
+	} catch (error) {
+		logger.error({ error }, "Fail extractDeploymentDataForLoggingPurpose");
+		return {};
+	}
 };
 
 /**
@@ -379,44 +488,62 @@ const batchedBulkUpdate = async (
 	data,
 	instance: AxiosInstance,
 	installationId: number | undefined,
+	logger: Logger,
 	options?: JiraSubmitOptions
 ) => {
 	const dedupedCommits = dedupCommits(data.commits);
-
 	// Initialize with an empty chunk of commits so we still process the request if there are no commits in the payload
 	const commitChunks: JiraCommit[][] = [];
 	do {
 		commitChunks.push(dedupedCommits.splice(0, 400));
 	} while (dedupedCommits.length);
 
-	const shouldTagBackfillRequestsValue = await shouldTagBackfillRequests();
-	const batchedUpdates = commitChunks.map((commitChunk) => {
+	const batchedUpdates = commitChunks.map(async (commitChunk: JiraCommit[]) => {
 		if (commitChunk.length) {
 			data.commits = commitChunk;
 		}
-		let body;
-		if (shouldTagBackfillRequestsValue) {
-			body = {
-				preventTransitions: options?.preventTransitions || false,
-				operationType: options?.operationType || "NORMAL",
-				repositories: [data],
-				properties: {
-					installationId
-				}
-			};
-		} else {
-			body = {
-				preventTransitions: options?.preventTransitions || false,
-				repositories: [data],
-				properties: {
-					installationId
-				}
-			};
-		}
+		const body = {
+			preventTransitions: options?.preventTransitions || false,
+			operationType: options?.operationType || "NORMAL",
+			repositories: [data],
+			properties: {
+				installationId
+			}
+		};
 
-		return instance.post("/rest/devinfo/0.10/bulk", body);
+		logger.info({
+			issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger)
+		}, "Posting to Jira devinfo bulk update api");
+		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
+		logger.info({
+			responseStatus: response.status,
+			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)
+		}, "Jira devinfo bulk update api returned");
+
+		return response;
 	});
 	return Promise.all(batchedUpdates);
+};
+
+const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], logger: Logger): string[] => {
+	try {
+		return commitChunk
+			.flatMap((chunk: JiraCommit) => chunk.issueKeys)
+			.filter(key => !!key)
+			.map((key: string) => createHashWithSharedSecret(key));
+	} catch (error) {
+		logger.error({ error }, "Fail extract and hash issue keys before sending to jira");
+		return [];
+	}
+};
+
+const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, logger: Logger): string[] => {
+	try {
+		return (responseData["unknownIssueKeys"] || []).map((key: string) => createHashWithSharedSecret(key));
+	} catch (error) {
+		logger.error({ error }, "Error parsing unknownIssueKeys from jira api response");
+		return [];
+	}
 };
 
 const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | undefined =>

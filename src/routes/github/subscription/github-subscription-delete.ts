@@ -9,21 +9,24 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 	const { installationId: gitHubInstallationId } = req.body;
 	const logger = req.log.child({ jiraHost, gitHubInstallationId });
 
-	logger.debug("Received DELETE subscription request");
+	logger.info("Received DELETE subscription request");
 
 	const gitHubAppId = gitHubAppConfig?.gitHubAppId;
-	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId);
-	const gitHubUserClient = await createUserClient(githubToken, jiraHost, logger, gitHubAppId);
+	const metrics = {
+		trigger: "github-subscription-delete"
+	};
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId, metrics);
+	const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, logger, gitHubAppId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
 	if (!githubToken) {
-		logger.debug("No GitHub token found when trying to delete subscription.");
+		logger.info("No GitHub token found when trying to delete subscription.");
 		res.sendStatus(401);
 		return;
 	}
 
 	if (!gitHubInstallationId || !jiraHost) {
-		logger.debug("Missing gitHubInstallationId and/or jiraHost. Unable to delete subscription.");
+		logger.info("Missing gitHubInstallationId and/or jiraHost. Unable to delete subscription.");
 		res.status(400).json({ err: "installationId and jiraHost must be provided to delete a subscription." });
 		return;
 	}
@@ -38,8 +41,10 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 			gitHubUserClient,
 			installation.account.login,
 			login,
-			installation.target_type
+			installation.target_type,
+			logger
 		)) {
+			logger.warn("Not an admin");
 			res.status(401).json({ err: `Unauthorized access to delete subscription.` });
 			return;
 		}
@@ -47,12 +52,14 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		try {
 			const subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
 			if (!subscription) {
+				logger.warn("Cannot find subscription");
 				res.status(404).send("Cannot find Subscription.");
 				return;
 			}
 			await subscription.destroy();
 			res.sendStatus(202);
 		} catch (err) {
+			logger.warn("Cannot delete subscription");
 			res.status(403).json({ err: `Failed to delete subscription.` });
 		}
 

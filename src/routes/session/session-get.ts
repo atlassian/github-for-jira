@@ -2,40 +2,35 @@ import { Request, Response } from "express";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
 
 export const SessionGet = (req: Request, res: Response) => {
+	if (req.query.resetSession) {
+		const cookies = req.cookies;
+		for (const cookieName in cookies) {
+			res.clearCookie(cookieName);
+		}
+		delete req.query.resetSession;
+	}
+
 	const url = createUrlWithQueryString(req, req.params[0] || "");
-	const { title, loadAutoAppCreation } = configForPage(req);
+	const title = configForPage(req);
 
 	res.render("session.hbs", {
 		redirectUrl: new URL(url, process.env.APP_URL).href,
 		nonce: res.locals.nonce,
-		title,
-		loadAutoAppCreation
+		title
 	});
 };
 
 /**
  * This method returns the title for the session loading page,
  * Query parameter `ghRedirect` determines the text to be displayed on the loading screen
- * Query parameter `autoApp` determines whether to load the auto app creation script `github-redirect.js`
- * or the page refreshing script
  */
-export const configForPage = (req: Request) => {
-	let title = "";
-
+export const configForPage = (req: Request): string => {
 	switch (req.query?.ghRedirect) {
 		case "to":
-			title = "Redirecting to your GitHub Enterprise Server instance";
-			break;
+			return "Redirecting to your GitHub Enterprise Server instance";
 		case "from":
-			title = "Retrieving data from your GitHub Enterprise Server";
-			break;
+			return "Retrieving data from your GitHub Enterprise Server";
 		default:
-			title = "Redirecting to GitHub Cloud";
-			break;
+			return "Redirecting to GitHub Cloud";
 	}
-
-	return {
-		loadAutoAppCreation: req.query?.autoApp,
-		title
-	};
 };

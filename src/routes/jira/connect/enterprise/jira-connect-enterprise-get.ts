@@ -3,6 +3,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { chain, groupBy } from "lodash";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { getAllKnownHeaders } from "utils/http-headers";
 
 export const JiraConnectEnterpriseGet = async (
 	req: Request,
@@ -17,22 +18,24 @@ export const JiraConnectEnterpriseGet = async (
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);
 
 		if (!isNew && gheServers?.length) {
-			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((_, key) => ({
+			const servers = chain(groupBy(gheServers, "gitHubBaseUrl")).map((servers, key) => ({
 				identifier: key,
-				uuid: key
+				uuid: servers[0].uuid
 			})).value();
 
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerListScreenEventName });
 			res.render("jira-select-server.hbs", {
 				list: servers,
 				// Passing these query parameters for the route when clicking `Connect a new server`
-				queryStringForPath: JSON.stringify({ new: 1 })
+				pathNameForAddNew: "github-server-url-page",
+				queryStringForPathNew: JSON.stringify({ new: 1 })
 			});
 		} else {
 			sendScreenAnalytics({ isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubServerUrlScreenEventName });
 			res.render("jira-server-url.hbs", {
 				csrfToken: req.csrfToken(),
-				installationId: res.locals.installation.id
+				installationId: res.locals.installation.id,
+				knownHttpHeadersLowerCase: getAllKnownHeaders()
 			});
 		}
 

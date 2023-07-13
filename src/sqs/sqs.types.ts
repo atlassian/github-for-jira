@@ -1,6 +1,5 @@
-import { WebhookPayloadDeploymentStatus } from "@octokit/webhooks";
-import type { WebhookPayloadCreate } from "@octokit/webhooks";
-import type { TaskType } from "~/src/sync/sync.types";
+import type { CreateEvent, DeploymentStatusEvent } from "@octokit/webhooks-types";
+import type { TaskType, SyncType } from "~/src/sync/sync.types";
 import { Message } from "aws-sdk/clients/sqs";
 import Logger from "bunyan";
 
@@ -120,43 +119,39 @@ export interface SQSContext {
 	log: Logger;
 }
 
-export type BranchMessagePayload = {
+export type BaseMessagePayload = {
 	jiraHost: string,
 	installationId: number,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+	webhookId?: string,
+}
+
+export type BranchMessagePayload = BaseMessagePayload & {
 	webhookReceived: number,
 	webhookId: string,
-
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
 	// that payload size for deployment_status webhooks maxes out at 9KB.
-	webhookPayload: WebhookPayloadCreate,
+	webhookPayload: CreateEvent,
 }
 
-export type BackfillMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export type BackfillMessagePayload = BaseMessagePayload & {
+	syncType?: SyncType,
 	startTime?: string,
-	commitsFromDate?: string,
-	targetTasks?: TaskType[]
+	commitsFromDate?: string, //main commits from date, ISO string
+	targetTasks?: TaskType[],
+	metricTags?: Record<string, string> //extra tags for metrics
 }
 
-export type DeploymentMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export type DeploymentMessagePayload = BaseMessagePayload & {
 	webhookReceived: number,
 	webhookId: string,
-
 	// The original webhook payload from GitHub. We don't need to worry about the SQS size limit because metrics show
 	// that payload size for deployment_status webhooks maxes out at 13KB.
-	webhookPayload: WebhookPayloadDeploymentStatus,
+	webhookPayload: DeploymentStatusEvent,
+	rateLimited?: boolean
 }
 
-export type PushQueueMessagePayload = {
-	jiraHost: string,
-	installationId: number,
-	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
+export type PushQueueMessagePayload = BaseMessagePayload & {
 	repository: PayloadRepository,
 	shas: { id: string, issueKeys: string[] }[],
 	webhookId: string,

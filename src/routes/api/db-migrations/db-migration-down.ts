@@ -41,18 +41,24 @@ export const DBMigrationDown = async (req: Request, res: Response): Promise<void
 
 };
 
-const validateScriptAgainstDB = async (targetScript: string) => {
+type LastScript = {
+	name: string;
+}
 
-	const lastScript = await sequelize.query(`select "name" from "SequelizeMeta" order by "name" desc limit 1`, {
+const validateScriptAgainstDB = async (targetScript: string) => {
+	const lastScript: LastScript[] = await sequelize.query(`select "name" from "SequelizeMeta" order by "name" desc limit 1`, {
 		type: QueryTypes.SELECT
 	});
+
 	if (lastScript.length < 1) {
 		throw {
 			statusCode: 500,
 			message: `There're no scripts in db to migration down, stop proceeding. \n ${lastScript}`
 		};
 	}
+
 	const scriptInDB = lastScript[0].name;
+
 	if (scriptInDB !== targetScript) {
 		throw {
 			statusCode: 400,

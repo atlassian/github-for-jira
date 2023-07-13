@@ -115,11 +115,12 @@ export enum JiraCommitFileChangeTypeEnum {
 }
 
 export interface JiraAuthor {
-	avatar?: string;
 	email: string;
-	name: string;
+	name?: string;
+	avatar?: string;
 	url?: string;
 }
+
 export interface JiraReview extends JiraAuthor {
 	approvalStatus: string;
 }
@@ -189,6 +190,57 @@ export interface JiraRemoteLink {
 export interface JiraRemoteLinkStatus {
 	appearance: JiraRemoteLinkStatusAppearance;
 	label: string;
+}
+
+export interface JiraVulnerabilityBulkSubmitData {
+	vulnerabilities: JiraVulnerability[];
+}
+
+export interface JiraVulnerability {
+	id: string;
+	schemaVersion: string;
+	updateSequenceNumber: number;
+	containerId: string;
+	displayName: string;
+	description: string;
+	url: string;
+	type: string;
+	introducedDate: string;
+	lastUpdated: string;
+	severity: JiraVulnerabilitySeverity;
+	identifiers: JiraVulnerabilityIdentifier[];
+	status: JiraVulnerabilityStatusEnum;
+	additionalInfo: JiraVulnerabilityAdditionalInfo;
+}
+
+export interface JiraVulnerabilitySeverity {
+	level: JiraVulnerabilitySeverityEnum;
+}
+
+export interface JiraVulnerabilityIdentifier {
+	displayName: string;
+	url: string;
+}
+
+export enum JiraVulnerabilityStatusEnum {
+	OPEN = "open",
+	CLOSED = "closed",
+	IGNORED = "ignored",
+	UNKNOWN = "unknown"
+}
+
+
+export enum JiraVulnerabilitySeverityEnum {
+	LOW = "low",
+	MEDIUM = "medium",
+	HIGH = "high",
+	CRITICAL = "critical",
+	UNKNOWN = "unknown"
+}
+
+export interface JiraVulnerabilityAdditionalInfo {
+	content: string;
+	url?: string;
 }
 
 // These align with Atlaskit's lozenge values:

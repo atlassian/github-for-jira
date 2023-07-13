@@ -3,30 +3,33 @@ import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { NumberFlags } from "config/feature-flags";
-import { getCommitSinceDate } from "~/src/sync/sync-utils";
+import { createHashWithSharedSecret } from "utils/encryption";
 
 // TODO: better typings
 export const getBranchTask = async (
-	logger: Logger,
+	parentLogger: Logger,
 	gitHubClient: GitHubInstallationClient,
-	jiraHost: string,
+	_jiraHost: string,
 	repository: Repository,
-	cursor?: string | number,
-	perPage?: number,
-	messagePayload?: BackfillMessagePayload) => {
-	// TODO: fix typings for graphql
-	logger.debug("Syncing branches: started");
-	perPage = perPage || 20;
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload) => {
 
-	const commitSince = await getCommitSinceDate(jiraHost, NumberFlags.SYNC_BRANCH_COMMIT_TIME_LIMIT, messagePayload?.commitsFromDate);
+	const logger = parentLogger.child({ backfillTask: "Branch" });
+	const startTime = Date.now();
+
+	logger.info({ startTime }, "Backfill task started");
+
+	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
 	const edges = result?.repository?.refs?.edges || [];
 	const branches = edges.map(edge => edge?.node);
+	(logger.fields || {}).branchNameArray = (branches || []).map(b => createHashWithSharedSecret(String(b.name)));
+	(logger.fields || {}).branchShaArray = (branches || []).map(b => createHashWithSharedSecret(String(b.target?.oid)));
 
-	logger.debug("Syncing branches: finished");
+	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
 
-	const jiraPayload = await transformBranches({ branches, repository }, messagePayload?.gitHubAppConfig?.gitHubBaseUrl);
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.branches?.length }, "Backfill task complete");
 
 	return {
 		edges,

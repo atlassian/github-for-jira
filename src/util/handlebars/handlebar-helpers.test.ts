@@ -3,7 +3,8 @@
 import {
 	replaceSpaceWithHyphenHelper,
 	toLowercaseHelper,
-	concatStringHelper
+	concatStringHelper,
+	isAllSyncSuccess
 } from "./handlebar-helpers";
 
 describe("Handlebar Helpers", () => {
@@ -54,6 +55,24 @@ describe("Handlebar Helpers", () => {
 			expect(concatStringHelper("I", "am", "Legend")).toEqual("I am Legend");
 			expect(concatStringHelper("Gotta", "catch", "'em", "all!")).toEqual("Gotta catch 'em all!");
 			expect(concatStringHelper("More", " ", "space")).toEqual("More   space");
+		});
+	});
+
+	describe("isAllSyncSuccess", () => {
+		it("should return false on undefined parameter", () => {
+			expect(isAllSyncSuccess(undefined)).toBe(false);
+		});
+		it("should return false if subscription has warning", () => {
+			expect(isAllSyncSuccess({ syncWarning: "something went wrong" })).toBe(false);
+		});
+		it("should return false if subscription status is not complete", () => {
+			expect(isAllSyncSuccess({ syncStatus: undefined })).toBe(false);
+			expect(isAllSyncSuccess({ syncStatus: "PENDING" })).toBe(false);
+			expect(isAllSyncSuccess({ syncStatus: "IN PROGRESS" })).toBe(false);
+			expect(isAllSyncSuccess({ syncStatus: "FAILED" })).toBe(false);
+		});
+		it("should return true if subscription is COMPLETE and no warning", () => {
+			expect(isAllSyncSuccess({ syncStatus: "FINISHED" })).toBe(true);
 		});
 	});
 });

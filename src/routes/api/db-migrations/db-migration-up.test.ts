@@ -1,4 +1,3 @@
-import express from "express";
 import { getFrontendApp } from "~/src/app";
 import supertest, { Test } from "supertest";
 import { runDbMigration, DBMigrationType, validateScriptLocally } from "./db-migration-utils";
@@ -21,8 +20,7 @@ const MIGRATION_SCRIPT_LAST = "20220101000001-second-script.js";
 describe("DB migration up", ()=>{
 	let frontendApp;
 	beforeEach(async ()=>{
-		frontendApp = express();
-		frontendApp.use(getFrontendApp());
+		frontendApp = getFrontendApp();
 	});
 	describe("Param validation", ()=>{
 		it("should fail when targetScript is missing in body", async ()=>{
@@ -54,11 +52,15 @@ describe("DB migration up", ()=>{
 					stdout: "success",
 					stderr: ""
 				});
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
 			sequelize.query = jest.fn(async () => []);
 			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(200);
 		});
 		it("should failed migration db up if target script is already in db", async () => {
 			jest.mocked(runDbMigration).mockRejectedValue("Shouldn't call this");
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
 			sequelize.query = jest.fn(async () => [MIGRATION_SCRIPT_LAST]);
 			await triggerDBUp(MIGRATION_SCRIPT_LAST).expect(400);
 			expect(runDbMigration).not.toBeCalled();

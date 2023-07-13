@@ -63,8 +63,6 @@ const gitHubAppPostRequest = (data, token) => {
 		data,
 		success: function() {
 			const child = openChildWindow(`/session/github/${data.uuid}/configuration?ghRedirect=to`);
-			// Remove below line on cleaning up NEW_JWT_VALIDATION flag
-			child.window.jiraHost = jiraHost;
 			child.window.jwt = token;
 		},
 		error: handleFormErrors
@@ -88,6 +86,19 @@ $(document).ready(function() {
 		const renderedFilename = document.getElementById("jiraManualAppCreation__uploadedFile").innerText;
 		const isFileChanged = renderedFilename !== `${appName}.private-key.pem`;
 
+		function submitData() {
+			AP.context.getToken((token) => {
+				data.jwt = token;
+				data.jiraHost = jiraHost;
+
+				if (isUpdatePage()) {
+					gitHubAppPutRequest(uuid, data);
+				} else {
+					gitHubAppPostRequest(data, token);
+				}
+			});
+		}
+
 		if (isFileChanged || isCreatePage()) {
 			const file = $("#privateKeyFile")[0].files[0];
 			const reader = new FileReader();
@@ -95,19 +106,11 @@ $(document).ready(function() {
 
 			reader.onload = () => {
 				data.privateKey = reader.result;
+				submitData();
 			};
+		} else {
+			submitData();
 		}
-
-		AP.context.getToken((token) => {
-			data.jwt = token;
-			data.jiraHost = jiraHost;
-
-			if (isUpdatePage()) {
-				gitHubAppPutRequest(uuid, data);
-			} else {
-				gitHubAppPostRequest(data, token);
-			}
-		});
 	});
 
 	const replaceSpacesAndChangeCasing = (str) => str.replace(/\s+/g, '-').toLowerCase();

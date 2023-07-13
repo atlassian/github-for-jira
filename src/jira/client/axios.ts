@@ -3,10 +3,13 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 
 import url from "url";
 import { statsd } from "config/statsd";
-import { getLogger } from "config/logger";
 import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { jiraAuthMiddleware } from "utils/axios/jira-auth-middleware";
+
+type SkipRedirect ={
+	result: string;
+}
 
 /**
  * Wrapper for AxiosError, which includes error status
@@ -18,9 +21,7 @@ export class JiraClientError extends Error {
 	constructor(message: string, cause: AxiosError, status?: number) {
 		super(message);
 		this.status = status;
-
-		//Remove config from the cause to prevent large payloads from being logged
-		this.cause = { ...cause, config: {} };
+		this.cause = cause;
 	}
 }
 
@@ -46,6 +47,11 @@ export const getJiraErrorMessages = (status: number) => {
 /**
  * Middleware to enhance failed requests in Jira.
  */
+const API_PATHS_TO_IGNORE_ON_405 = [
+	"/rest/devinfo/0.10/bulk",
+	"/rest/builds/0.1/bulk",
+	"/rest/deployments/0.1/bulk"
+];
 const getErrorMiddleware = (logger: Logger) =>
 	/**
 	 * Potentially enrich the promise's rejection.
@@ -53,7 +59,18 @@ const getErrorMiddleware = (logger: Logger) =>
 	 * @param {import("axios").AxiosError} error - The error response from Axios
 	 * @returns {Promise<Error>} The rejected promise
 	 */
-	(error: AxiosError): Promise<Error> => {
+	(error: AxiosError): Promise<Error|SkipRedirect> => {
+		/**
+		 * EDGE CASE:
+		 * When sending a POST request to `https://OLD.atlassian.net/rest/deployments/0.1/bulk`, it sends a 302 response,
+		 * and redirects to a GET request `https://NEW.atlassian.net/rest/deployments/0.1/bulk`
+		 * This GET request is now failing with a 405 response, which is not an error on the app side
+		 * So treating this as a non-error case
+		 */
+		if (error?.request?.method === "GET" && API_PATHS_TO_IGNORE_ON_405.includes(error?.request?.path)) {
+			logger.warn({ error } , "Ignoring the error when redirected to GET api on another jira site");
+			return Promise.resolve({ status: 200, result: "SKIP_REDIRECTED" });
+		}
 
 		const status = error?.response?.status;
 
@@ -125,24 +142,26 @@ const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_600
  * @param {import("axios").AxiosResponse} response - The successful axios response object.
  * @returns {import("axios").AxiosResponse} The response object.
  */
-const instrumentRequest = (response) => {
-	if (!response) {
-		return;
-	}
-	const requestDurationMs = Number(
-		Date.now() - (response.config?.requestStartTime || 0)
-	);
-	const tags = {
-		method: response.config?.method?.toUpperCase(),
-		path: extractPath(response.config?.originalUrl),
-		status: response.status
+const instrumentRequest = (baseURL: string) => {
+	return (response) => {
+		if (!response) {
+			return;
+		}
+		const requestDurationMs = Number(
+			Date.now() - (response.config?.requestStartTime || 0)
+		);
+		const tags = {
+			method: response.config?.method?.toUpperCase(),
+			path: extractPath(response.config?.originalUrl),
+			status: response.status
+		};
+
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+		tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
+
+		return response;
 	};
-
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
-	statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags);
-
-	return response;
 };
 
 /**
@@ -150,20 +169,33 @@ const instrumentRequest = (response) => {
  */
 const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 	return async (error: AxiosError) => {
-		instrumentRequest(error?.response);
+		logger = logger.child({ jiraHost: baseURL, errorStatus: error.response?.status });
+		if (error.response) {
+			// TODO: pretty sure this whole function is some dead code that we can delete, because in getErrorMiddleware
+			// TODO: the error is mapped to JiraClientError. If that's the case, the log line below should never be logged
+			// TODO: and we are safe to kill the thing.
+			logger.info("Ok, looks like still works.");
+		}
+		instrumentRequest(baseURL)(error?.response);
+
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {
-				await axios.get("/status", { baseURL });
+				logger.info("Try fetching status for 503 and 405 failure request");
+				const statusResponse = await axios.get("/status", { baseURL });
+				logger.info({ statusApiStatus: statusResponse.status }, "Status fetched successfully");
 			} catch (e) {
+				logger.info({ statusApiStatus: e.response.status }, "Status fetched with error");
 				if (e.response.status === 503) {
-					logger.info({ jiraHost: baseURL }, "503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
+					logger.info("503 from Jira: Jira instance has been deactivated, is suspended or does not exist. Returning 404 to our application.");
 					error.response.status = 404;
 				} else if (e.response.status === 302) {
-					logger.info({ jiraHost: baseURL },"405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
+					logger.info("405 from Jira: Jira instance has been renamed. Returning 404 to our application.");
 					error.response.status = 404;
 				}
 			}
 		}
+
+		logger.info({ errorStatus: error.response?.status }, "Rejecting final error");
 		return Promise.reject(error);
 	};
 };
@@ -179,9 +211,8 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 export const getAxiosInstance = (
 	baseURL: string,
 	secret: string,
-	logger?: Logger
+	logger: Logger
 ): AxiosInstance => {
-	logger = logger || getLogger("jira.client.axios");
 	const instance = axios.create({
 		baseURL,
 		timeout: Number(process.env.JIRA_TIMEOUT) || 30000
@@ -202,7 +233,7 @@ export const getAxiosInstance = (
 	instance.interceptors.request.use(urlParamsMiddleware);
 
 	instance.interceptors.response.use(
-		instrumentRequest,
+		instrumentRequest(baseURL),
 		instrumentFailedRequest(baseURL, logger)
 	);
 

@@ -2,9 +2,9 @@ import nock, { cleanAll  as nockCleanAll } from "nock";
 import { envVars } from "config/env";
 import "./matchers/nock";
 import "./matchers/to-promise";
-import "./matchers/to-have-sent-metrics";
 import "./matchers/to-be-called-with-delay";
 import { sequelize } from "models/sequelize";
+import { dynamodb } from "config/dynamodb";
 import IORedis from "ioredis";
 import { getRedisInfo } from "config/redis-info";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
@@ -16,8 +16,8 @@ jest.mock("lru-cache");
 
 const redis = new IORedis(getRedisInfo("test"));
 
-type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => void
-type GithubAppTokenNockFunc = () => void
+type GithubUserTokenNockFunc = (id: number, returnToken?: string, expires?: number, expectedAuthToken?: string) => nock.Scope
+type GithubAppTokenNockFunc = () => nock.Scope
 type MockSystemTimeFunc = (time: number | string | Date) => jest.MockInstance<number, []>;
 
 export const testEnvVars: TestEnvVars = envVars as TestEnvVars;
@@ -66,12 +66,13 @@ declare global {
 }
 
 const clearState = async () => Promise.all([
-	sequelize.truncate({ truncate: true })
+	sequelize.truncate({ truncate: true, cascade: true }),
+	purgeItemsInTable(envVars.DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME)
 ]);
 
 const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 	(githubInstallationId: number | string, returnToken = "token", expires = Date.now() + 3600, expectedAuthToken?: string) => {
-		scope
+		return scope
 			.post(`/app/installations/${githubInstallationId}/access_tokens`)
 			.matchHeader(
 				"Authorization",
@@ -85,7 +86,7 @@ const githubUserToken = (scope: nock.Scope): GithubUserTokenNockFunc =>
 
 const githubAppToken = (scope: nock.Scope): GithubAppTokenNockFunc =>
 	() => {
-		scope
+		return scope
 			.get("/app")
 			// .matchHeader("Authorization", /^Bearer .+$/i)
 			.reply(200, {
@@ -130,8 +131,9 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-	global.jiraHost = process.env.ATLASSIAN_URL || `https://${process.env.INSTANCE_NAME}.atlassian.net`;
-	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${process.env.INSTANCE_NAME}.jira-dev.com`;
+	const instance = envVars.APP_KEY.split(".").pop();
+	global.jiraHost = process.env.ATLASSIAN_URL || `https://${instance}.atlassian.net`;
+	global.jiraStaginHost = process.env.ATLASSIAN_URL?.replace(".atlassian.net", ".jira-dev.com") || `https://${instance}.jira-dev.com`;
 	global.jiraNock = nock(global.jiraHost);
 	global.jiraStagingNock = nock(global.jiraHost);
 	global.githubNock = nock("https://api.github.com");
@@ -178,3 +180,30 @@ afterAll(async () => {
 	// Close connection when tests are done
 	await sequelize.close();
 });
+
+export const purgeItemsInTable = async (tableName: string) => {
+
+	try {
+
+		const rows = await dynamodb.scan({
+			TableName: tableName,
+			AttributesToGet: [ "Id", "CreatedAt" ]
+		}).promise();
+
+		const deleteRequests: Promise<unknown>[] = ((rows.Items || []).map(item => {
+			return dynamodb.deleteItem({
+				TableName: tableName,
+				Key: {
+					"Id": { "S": item.Id.S },
+					"CreatedAt": { "N" : item.CreatedAt.N }
+				}
+			}).promise();
+		}));
+
+		await Promise.all(deleteRequests);
+
+	} catch (e) {
+		//do nothing as this method is for local test only
+	}
+
+};

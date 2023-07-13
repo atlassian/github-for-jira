@@ -45,7 +45,9 @@ export enum AnalyticsTrackEventsEnum {
 	ConnectToOrgTrackEventName = "connectOrg",
 	DisconnectToOrgTrackEventName = "disconnectOrg",
 	ManualRestartBackfillTrackEventName = "manualRestartBackfill",
-	RemoveGitHubServerTrackEventName = "removeGitHubServer"
+	RemoveGitHubServerTrackEventName = "removeGitHubServer",
+	CommitsPushedTrackEventName = "commitsPushed",
+	BackfullSyncOperationEventName = "backfillSync"
 }
 
 export enum AnalyticsTrackSource {
@@ -62,7 +64,9 @@ declare global {
 			session: {
 				jiraHost?: string;
 				githubToken?: string;
+				githubRefreshToken?: string;
 				gitHubUuid?: string;
+				isJiraAdmin?: boolean;
 				temp?:  {
 					[key: string]: string;
 				}

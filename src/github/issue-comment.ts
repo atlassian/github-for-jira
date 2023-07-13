@@ -30,7 +30,11 @@ export const issueCommentWebhookHandler = async (
 
 	let linkifiedBody;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
-	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, context.log, gitHubAppId);
+	const metrics = {
+		trigger: "webhook",
+		subTrigger: "issueComment"
+	};
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
 
 	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
 		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
@@ -70,6 +74,7 @@ export const issueCommentWebhookHandler = async (
 	webhookReceived && emitWebhookProcessedMetrics(
 		webhookReceived,
 		name,
+		jiraClient.baseURL,
 		log,
 		status,
 		gitHubAppId
@@ -89,6 +94,10 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log
 	);
 
+	if (!jiraClient) {
+		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
+		return;
+	}
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {

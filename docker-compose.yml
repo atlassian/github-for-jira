@@ -19,15 +19,19 @@ services:
   ngrok:
     image: wernight/ngrok
     container_name: ngrok
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "4040:4040"
-    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN app:8080
+    command: ngrok http -log stdout --authtoken $NGROK_AUTHTOKEN host.docker.internal:8080
 
   localstack:
     image: localstack/localstack:1.0.4
     container_name: localstack
     environment:
       - DEFAULT_REGION=us-west-1
+      - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME=deployment-history-cache
+      - DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION=us-west-1
       - LAMBDA_REMOTE_DOCKER=false
       - LAMBDA_EXECUTOR=local # runs lambda inside temp directory instead of new docker container
       - SQS_ENDPOINT_STRATEGY=off # sets the SQS queue domain/path to the legacy version
@@ -61,6 +65,8 @@ services:
       - "9229:9229" # main debug port
       - "8081:8081" # worker port
       - "9230:9230" # worker debug port
+    profiles:
+      - e2e
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
       CRYPTOR_URL: http://cryptor:26272
@@ -70,4 +76,15 @@ services:
       SQS_BRANCH_QUEUE_URL: http://localstack:4566/000000000000/branch
       SQS_TEST_QUEUE_URL: http://localstack:4566/000000000000/test-sqs-client
       REDISX_CACHE_HOST: redis
-      NODE_ENV: $NODE_ENV
+      NODE_ENV: ${NODE_ENV:-development} # defaults to development if NODE_ENV not set
+
+  installation:
+    depends_on:
+      - app
+    volumes:
+      - ./etc/app-install:/app
+    build:
+      context: .
+      dockerfile: etc/app-install/Dockerfile
+    env_file:
+      - .env

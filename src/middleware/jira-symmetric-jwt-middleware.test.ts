@@ -1,20 +1,37 @@
 import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
 import express, { Application, NextFunction, Request, Response } from "express";
-import { when } from "jest-when";
+import { noop } from "lodash";
 import supertest from "supertest";
-import { booleanFlag, BooleanFlags } from "~/src/config/feature-flags";
 import { getLogger } from "~/src/config/logger";
-import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import {
+	checkGenericContainerActionUrl,
+	getTokenType,
+	jiraSymmetricJwtMiddleware
+} from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { Installation } from "~/src/models/installation";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 
 
 jest.mock("config/feature-flags");
 const testSharedSecret = "test-secret";
 
+const getToken = ({
+	secret = "secret",
+	iss = "jira-client-key",
+	exp = Date.now() / 1000 + 10000,
+	qsh = "context-qsh" }): any => {
+	return encodeSymmetric({
+		qsh,
+		iss,
+		exp
+	}, secret);
+};
+
 describe("jiraSymmetricJwtMiddleware", () => {
 	let app: Application;
-	let locals;
-	let session;
+	let session: { jiraHost?: string } = { };
 
 	beforeEach(async () => {
 
@@ -25,10 +42,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			host: jiraHost,
 			sharedSecret: testSharedSecret
 		});
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.NEW_JWT_VALIDATION
-		).mockResolvedValue(true);
 	});
 
 	it("should throw error when token is missing and no jiraHost in session", async () => {
@@ -79,7 +92,6 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should set res.locals and req.session when token is valid", async () => {
 
-		locals = {};
 		session = {};
 		const token = getToken({ secret: testSharedSecret });
 
@@ -88,8 +100,8 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			.query({ jwt: token })
 			.then((res) => {
 				expect(res.status).toEqual(200);
-				expect(locals.installation.jiraHost).toEqual(jiraHost);
-				expect(locals.jiraHost).toEqual(jiraHost);
+				expect(JSON.parse(res.text).installation.jiraHost).toEqual(jiraHost);
+				expect(JSON.parse(res.text).jiraHost).toEqual(jiraHost);
 				expect(session.jiraHost).toEqual(jiraHost);
 			});
 	});
@@ -131,14 +143,13 @@ describe("jiraSymmetricJwtMiddleware", () => {
 
 	it("should set res.locals and req.session when jiraHost set in session", async () => {
 
-		locals = {};
 		session.jiraHost = jiraHost;
 
 		await supertest(app)
 			.get(`/test`)
-			.then(() => {
-				expect(locals.installation.jiraHost).toEqual(jiraHost);
-				expect(locals.jiraHost).toEqual(jiraHost);
+			.then((res) => {
+				expect(JSON.parse(res.text).installation.jiraHost).toEqual(jiraHost);
+				expect(JSON.parse(res.text).jiraHost).toEqual(jiraHost);
 				expect(session.jiraHost).toEqual(jiraHost);
 			});
 	});
@@ -202,33 +213,220 @@ describe("jiraSymmetricJwtMiddleware", () => {
 			.expect(200);
 	});
 
+	describe("Util - checkGenericContainerActionUrl",  () => {
+		let installation;
+
+		beforeEach(async () => {
+			app = createApp();
+
+			installation = await Installation.install({
+				clientKey: "jira-client-key",
+				host: jiraHost,
+				sharedSecret: testSharedSecret
+			});
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+			).mockResolvedValue(true);
+		});
+
+		it("should return true for search workspaces", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/search")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/jira/workspaces/search"))
+				.toBeTruthy();
+		});
+
+		it("should return true for search repositories", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/repositories/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/repositories/search?searchQuery=atlas")
+				.set({
+					authorization: `JWT ${await generateJwt(
+						{
+							searchQuery: "atlas"
+						}
+					)}`
+				});
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/jira/workspaces/repositories/search?searchQuery=atlas"))
+				.toBeTruthy();
+		});
+
+		it("should return true for associate repository", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "POST",
+						pathname: "/jira/workspaces/repositories/associate",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.post("/jira/workspaces/repositories/associate")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await checkGenericContainerActionUrl("https://test-github-app-instance.com/jira/workspaces/repositories/associate")).toBeTruthy();
+		});
+
+		it("should return false for create branch", async () => {
+			await supertest(app)
+				.get("/create-branch-options").set(
+					"Cookie",
+					generateSignedSessionCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}));
+
+			expect(await checkGenericContainerActionUrl(
+				"https://test-github-app-instance.com/create-branch-options"))
+				.toBeFalsy();
+		});
+	});
+
+	describe("Util - getTokenType",  () => {
+		let installation;
+
+		beforeEach(async () => {
+			app = createApp();
+
+			installation = await Installation.install({
+				clientKey: "jira-client-key",
+				host: jiraHost,
+				sharedSecret: testSharedSecret
+			});
+
+			when(booleanFlag).calledWith(
+				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
+			).mockResolvedValue(true);
+		});
+
+		it("should return normal tokenType for search workspaces", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/search")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/search", "GET", jiraHost)).toEqual("normal");
+		});
+
+		it("should return normal tokenType for search repositories", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "GET",
+						pathname: "/jira/workspaces/repositories/search",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.get("/jira/workspaces/repositories/search?searchQuery=atlas")
+				.set({
+					authorization: `JWT ${await generateJwt(
+						{
+							searchQuery: "atlas"
+						}
+					)}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/repositories/search?searchQuery=atlas", "GET", jiraHost)).toEqual("normal");
+		});
+
+		it("should return normal tokenType for associate repository", async () => {
+			const generateJwt = async (query: any = {}) => {
+				return encodeSymmetric({
+					qsh: createQueryStringHash({
+						method: "POST",
+						pathname: "/jira/workspaces/repositories/associate",
+						query
+					}, false),
+					iss: installation.plainClientKey
+				}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
+			};
+
+			await supertest(app)
+				.post("/jira/workspaces/repositories/associate")
+				.set({
+					authorization: `JWT ${await generateJwt()}`
+				});
+
+			expect(await getTokenType("/jira/workspaces/repositories/associate", "POST", jiraHost)).toEqual("normal");
+		});
+
+		it("should return context tokenType for create branch", async () => {
+			await supertest(app)
+				.get("/create-branch-options").set(
+					"Cookie",
+					generateSignedSessionCookieHeader({
+						jiraHost,
+						githubToken: "random-token"
+					}));
+
+			expect(await getTokenType("/create-branch-options", "GET", jiraHost)).toEqual("context");
+		});
+	});
 
 	const createApp = () => {
 		const app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = locals || {};
-			req.session = session || {};
-			req.cookies = {};
+		app.use((req: Request, _: Response, next: NextFunction) => {
+			req.session = session; // by reference
+			req.cookies = { };
 			req.log = getLogger("test");
+			req.addLogFields = () => noop;
 			next();
 		});
 		app.use(jiraSymmetricJwtMiddleware);
 		app.get("/test", (_req, res) => {
-			res.send("ok");
+			res.send(JSON.stringify(res.locals));
 		});
 		return app;
 	};
 
 });
-
-const getToken = ({
-	secret = "secret",
-	iss = "jira-client-key",
-	exp = Date.now() / 1000 + 10000,
-	qsh = "context-qsh" }): any => {
-	return encodeSymmetric({
-		qsh,
-		iss,
-		exp
-	}, secret);
-};

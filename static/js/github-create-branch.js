@@ -111,7 +111,9 @@ $("#changeInstance").click(function (event) {
 const validateSourceBranch = (branchName) => {
 	hideValidationErrorMessage("ghParentBranch");
 	const repo = getRepoDetails();
-	const url = `/github/branch/owner/${repo.owner}/repo/${repo.name}/${encodeURIComponent(branchName)}`;
+  const jiraHost = encodeURIComponent($("#jiraHost").val());
+	const uuid = $("#createBranchForm").attr("data-ghe-uuid");
+	const url = `/github/${uuid ? uuid + "/" : ""}branch/owner/${repo.owner}/repo/${repo.name}/${encodeURIComponent(branchName)}?jiraHost=${jiraHost}`;
 
 	$.get(url)
 		.fail((err) => {

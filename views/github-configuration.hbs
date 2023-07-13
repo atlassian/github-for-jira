@@ -17,19 +17,13 @@
     href="/public/css/github-configuration.css"
     media="all"
   />
+  <link rel="stylesheet" href="/public/css/server-error-message-box.css" media="all" />
   <link rel="stylesheet" href="/public/css/global.css" media="all" />
   <script src="/public/js/jquery.min.js" nonce="{{nonce}}"></script>
 </head>
 
 <body>
 <input type="hidden" id="_csrf" name="_csrf" value="{{csrfToken}}" />
-<input type="hidden" id="jiraHost" name="jiraHost" value="{{jiraHost}}" />
-<input
-  type="hidden"
-  id="clientKey"
-  name="clientKey"
-  value="{{clientKey}}"
-/>
 
 {{> navigation hideBackButton=true }}
 
@@ -103,12 +97,33 @@
               {{! Connect }}
               {{#unless isIPBlocked}}
                 <div class="gitHubConfiguration__orgContent__connect">
+                  {{#if requiresSsoLogin}}
+                      <div data-aui-trigger aria-controls="sso-login-message-{{account.login}}" class="gitHubConfiguration__ssoWarning">
+                          <span class="aui-icon aui-icon-small aui-iconfont-warning">Warning</span>
+                      </div>
+                      <aui-inline-dialog class="gitHubConfiguration__ssoWarningMessage" id="sso-login-message-{{account.login}}" alignment="bottom center">
+                          <p class="gitHubConfiguration__ssoMessage">
+                              You cannot connect to this organization because you are not currently logged in through your SSO in GitHub.
+                              Please follow the following steps:
+                          </p>
+                          <ul>
+                              <li>
+                                  Please go to the <a target="_blank" href="{{#if ../gitHubServerApp}}{{../gitHubServerApp.gitHubBaseUrl}}/organizations/{{account.login}}/settings/profile{{else}}https://github.com/organizations/{{account.login}}/settings/profile{{/if}}"> organization settings</a> page and make sure you have admin access there.
+                              </li>
+                              <li>
+                                  Please click <a href="?resetGithubToken=true">this link</a> to reset your token. This will allow you to connect to this organization.
+                              </li>
+                          </ul>
+                      </aui-inline-dialog>
+                  {{/if}}
+
                   {{#if isAdmin}}
                     {{#if (isNotConnected syncStatus)}}
                       <button
                         class="gitHubConfiguration__orgContent__connectBtn aui-button install-link"
                         data-installation-id="{{id}}"
                         type="submit"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
                       >
                         Connect
                       </button>
@@ -136,22 +151,33 @@
                         Connected
                       </p>
                     {{/if}}
-                    <a
-                        class="gitHubConfiguration__orgContent__settingsContainer"
+                    <button
+                            class="gitHubConfiguration__orgContent__settingsContainer{{#if (isNotConnected syncStatus)}}--notConnected{{else}} delete-subscription{{/if}}"
                         href="{{setSubscriptionUrl ../gitHubServerApp.uuid id}}"
+                        aria-disabled={{isNotConnected syncStatus}}
+                        disabled={{isNotConnected syncStatus}}
                     >
-                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
-                        Manage Jira Subscriptions
-                      </span>
-                    </a>
+                        <span
+                                class="aui-icon aui-icon-small aui-iconfont-trash delete-subscription"
+                                data-jira-host="{{jiraHost}}"
+                                data-github-installation-id="{{id}}"
+                                data-github-app-uuid="{{../gitHubAppUuid}}"
+                                data-org-name="{{account.login}}"
+                        >
+                            Delete subscription
+                        </span>
+                    </button>
                   {{else}}
-                    <button class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button" aria-disabled="true" disabled>
+                    <button
+                        class="gitHubConfiguration__orgContent__connectBtn--disabled aui-button"
+                        aria-disabled="true"
+                        data-deferred-install-url="{{deferredInstallUrl}}"
+                        disabled
+                    >
                       Connect
                     </button>
                     <div class="gitHubConfiguration__orgContent__settingsContainer--disabled">
-                      <span class="gitHubConfiguration__orgContent__settings aui-icon aui-icon-medium aui-iconfont-settings">
-                        Manage Jira Subscriptions
-                      </span>
+                      <span class="aui-icon aui-icon-small aui-iconfont-trash">Delete subscription</span>
                     </div>
                   {{/if}}
 
@@ -160,14 +186,19 @@
                     You need repository admin permissions to install this app. Please contact your admin.
                   </p>
 
-                  {{!-- Hidden unless user hovers over settings icon --}}
-                  <p class="gitHubConfiguration__manageSubscriptions">
-                    Manage Jira subscriptions
+                  {{!-- Hidden unless user hovers over trash can icon and org is connected --}}
+                  <p class="gitHubConfiguration__deleteSubscription">
+                    Delete subscription
                   </p>
 
-                  {{!-- Hidden unless user hovers over settings icon when user is not an admin --}}
-                  <p class="gitHubConfiguration__manageSubscriptions--notAdmin">
-                    You must have admin permissions to manage Jira subscriptions. Please contact your admin.
+                    {{!-- Hidden unless user hovers over trash can icon and org is not connected --}}
+                  <p class="gitHubConfiguration__deleteSubscription--notConnected">
+                    This organisation hasn't been connected yet. Cannot delete this subscription.
+                  </p>
+
+                  {{!-- Hidden unless user hovers over trash can icon when user is not an admin --}}
+                  <p class="gitHubConfiguration__deleteSubscription--notAdmin">
+                    You must have admin permissions to delete Jira subscriptions. Please contact your admin.
                   </p>
 
                   {{!-- Hidden unless user hovers over warning icon when a sync fails --}}
@@ -185,7 +216,13 @@
           <p class="gitHubConfiguration__noOrganizations">No GitHub organizations with Jira installed.</p>
         {{/unless}}
       </div>
+
+        {{> modal }}
     </div>
+  </div>
+
+  <div class="gitHubConfiguration__serverError">
+    {{> server-error-message-box }}
   </div>
 
   <div class="text-center">
@@ -194,7 +231,7 @@
     </div>
     <a
       class="aui-button aui-button-{{#if installations}}default{{else}}primary{{/if}}"
-      href="{{info.html_url}}/installations/new"
+      href="configuration/app-installations"
       target="_self"
     >
       Install GitHub for Jira on a new organization

@@ -21,12 +21,15 @@
       "paths": [
         "/",
         "/github/**",
-        "/github-manifest",
         "/create-branch-options",
         "/jira",
         "/jira/**",
         "/maintenance",
         "/public/**",
+				"/spa",
+				"/spa/**",
+				"/spa-assets/**",
+				"/rest/**",
         "/session",
         "/session/**",
         "/error",
@@ -57,6 +60,43 @@
           ]
         }
       }
-    }
+    },
+		{
+			"description": "Allow support team to call hash endpoint",
+			"paths": [
+				"/api/hash"
+			],
+			"methods": [
+				"POST"
+			],
+			"principals": {
+				"staff": {
+					"groups": [
+						"micros-sv--github-for-jira-dl-safe-logging-read"
+					]
+				}
+			}
+		},
+		{
+			"description": "Microscope Panel Routes",
+			"paths": [
+				"/microscope/**"
+			],
+			"methods": [
+				"*"
+			],
+			"principals": {
+				"asap": {
+					"issuers": [
+						"micros/manager-service"
+					]
+				},
+				"staff": {
+					"groups": [
+						"micros-sv--github-for-jira-dl-admins"
+					]
+				}
+			}
+		}
   ]
 }

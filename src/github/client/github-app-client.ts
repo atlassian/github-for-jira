@@ -2,12 +2,9 @@ import Logger from "bunyan";
 import { Octokit } from "@octokit/rest";
 import { AxiosRequestConfig, AxiosRequestHeaders, AxiosResponse } from "axios";
 import { AppTokenHolder } from "./app-token-holder";
-import { handleFailedRequest, instrumentFailedRequest, instrumentRequest, setRequestStartTime, setRequestTimeout } from "./github-client-interceptors";
-import { metricHttpRequest } from "config/metric-names";
-import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { AuthToken } from "~/src/github/client/auth-token";
-import { GITHUB_ACCEPT_HEADER } from "~/src/util/get-github-client-config";
-import { GitHubClient, GitHubConfig } from "./github-client";
+import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
+import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
 
 /**
  * A GitHub client that supports authentication as a GitHub app.
@@ -20,24 +17,14 @@ export class GitHubAppClient extends GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
+		jiraHost: string,
+		metrics: Metrics,
 		logger: Logger,
 		appId: string,
 		privateKey: string
 	) {
-		super(gitHubConfig, logger);
+		super(gitHubConfig, jiraHost, metrics, logger);
 		this.appToken = AppTokenHolder.createAppJwt(privateKey, appId);
-
-		this.axios.interceptors.request.use(setRequestStartTime);
-		this.axios.interceptors.request.use(setRequestTimeout);
-		this.axios.interceptors.request.use(urlParamsMiddleware);
-		this.axios.interceptors.response.use(
-			undefined,
-			handleFailedRequest(this.logger)
-		);
-		this.axios.interceptors.response.use(
-			instrumentRequest(metricHttpRequest.github, this.restApiUrl),
-			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl)
-		);
 
 		this.axios.interceptors.request.use((config: AxiosRequestConfig) => {
 			return {

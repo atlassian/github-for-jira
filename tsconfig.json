@@ -30,6 +30,7 @@
 			"utils/*": ["src/util/*"],
 			"config/*": ["src/config/*"],
 			"interfaces/*": ["src/interfaces/*"],
+			"rest-interfaces/*": ["src/rest-interfaces/*"],
 			"models/*": ["src/models/*"],
 			"services/*": ["src/services/*"],
 			"db/*": ["db/*"],

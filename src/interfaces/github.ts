@@ -158,7 +158,8 @@ interface GitHubWorkflowRun {
 	html_url: string;
 	pull_requests: GitHubWorkflowRunPullRequests[];
 	updated_at: string;
-	head_commit: GitHubWorkflowRunHeadCommit;
+	// Can be null according to https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28 (see response schema)
+	head_commit: GitHubWorkflowRunHeadCommit | null;
 	repository: GitHubWorkflowRunRepository;
 }
 
@@ -260,4 +261,13 @@ export interface GitHubPushData {
 	repository: GitHubRepository;
 	commits: GitHubCommit[];
 	installation: GitHubInstallation;
+}
+
+export interface GitHubVulnIdentifier {
+	value: string;
+	type: string;
+}
+
+export interface GitHubVulnReference {
+	url: string;
 }

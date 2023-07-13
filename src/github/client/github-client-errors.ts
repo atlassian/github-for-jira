@@ -1,53 +1,68 @@
 import { AxiosError, AxiosResponse } from "axios";
-import { getLogger } from "config/logger";
 
 export class GithubClientError extends Error {
-	status?: number;
-	cause?: AxiosError;
+	cause: AxiosError;
 	isRetryable = true;
 
-	constructor(message: string, status?: number, cause?: AxiosError) {
+	status?: number;
+	code?: string;
+
+	constructor(message: string, cause: AxiosError) {
 		super(message);
-		this.status = status;
-		if (cause) {
-			this.cause = { ...cause, config: {} };
-			this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
-		}
+
+		this.status = cause.response?.status;
+		this.code = cause.code;
+
+		this.cause = { ...cause };
+		this.stack = this.stack?.split("\n").slice(0, 2).join("\n") + "\n" + cause.stack;
 	}
 }
 
 export class GithubClientTimeoutError extends GithubClientError {
-	constructor(cause?: AxiosError) {
-		super("Timeout", undefined, cause);
+	constructor(cause: AxiosError) {
+		super("Timeout", cause);
 	}
 }
 
-export class RateLimitingError extends GithubClientError {
+export class GithubClientRateLimitingError extends GithubClientError {
 	/**
 	 * The value of the x-ratelimit-reset header, i.e. the epoch seconds when the rate limit is refreshed.
 	 */
 	rateLimitReset: number;
 
-	constructor(response: AxiosResponse, cause?: AxiosError) {
-		super("Rate limiting error", response.status, cause);
-		const rateLimitResetHeaderValue: string = response.headers?.["x-ratelimit-reset"];
-		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || Date.now() / 1000 + ONE_HOUR_IN_SECONDS;
+	constructor(cause: AxiosError) {
+		super("Rate limiting error", cause);
+		const rateLimitResetHeaderValue: string = cause.response?.headers?.["x-ratelimit-reset"] || "";
+		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || ((Date.now() / 1000) + ONE_HOUR_IN_SECONDS);
 		this.isRetryable = false;
 	}
 }
 
-export class BlockedIpError extends GithubClientError {
-	constructor(error: AxiosError, status?: number) {
-		super("Blocked by GitHub allowlist", status, error);
+export class GithubClientBlockedIpError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Blocked by GitHub allowlist", cause);
 		this.isRetryable = false;
 	}
 }
 
-export class InvalidPermissionsError extends GithubClientError {
-	constructor(error: AxiosError, status?: number) {
-		super("Resource not accessible by integration", status, error);
+export class GithubClientSSOLoginError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("SSO Login required", cause);
 	}
 }
+
+export class GithubClientInvalidPermissionsError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Resource not accessible by integration", cause);
+	}
+}
+
+export class GithubClientNotFoundError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("Not found", cause);
+	}
+}
+
 
 /**
  * Type for errors section in GraphQL response
@@ -55,19 +70,29 @@ export class InvalidPermissionsError extends GithubClientError {
 export type GraphQLError = {
 	message: string;
 	type: string;
-	path?: [string];
+	path?: string[];
 	extensions?: {
 		code?: string;
 		timestamp?: string;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		[key: string]: any;
 	};
-	locations?: [
+	locations?:
 		{
 			line: number;
 			column: number;
-		}
-	];
+		}[];
+};
+
+export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
+	return {
+		name: "GraphQLError",
+		message: "GraphQLError(s)",
+		config: response.config,
+		response,
+		request: response.request,
+		isAxiosError: true
+	} as AxiosError;
 };
 
 export class GithubClientGraphQLError extends GithubClientError {
@@ -77,23 +102,22 @@ export class GithubClientGraphQLError extends GithubClientError {
 	 */
 	errors: GraphQLError[];
 
-	constructor(message: string, errors: GraphQLError[]) {
-		super(message);
+	constructor(response: AxiosResponse, errors: GraphQLError[]) {
+		super(
+			errors[0].message + (errors.length > 1 ? ` and ${errors.length - 1} more errors` : ""),
+			buildAxiosStubErrorForGraphQlErrors(response)
+		);
 		this.errors = errors;
-		this.isRetryable = !!errors?.find(
+		this.isRetryable = !!errors.find(
 			(error) =>
 				"MAX_NODE_LIMIT_EXCEEDED" == error.type ||
 				error.message?.startsWith("Something went wrong while executing your query")
 		);
 	}
-}
 
-const logger = getLogger("github.errors");
-export const isChangedFilesError = (err: GithubClientGraphQLError | GithubClientError): boolean => {
-	const bool = err instanceof GithubClientGraphQLError || !(err instanceof RateLimitingError || err instanceof GithubClientTimeoutError);
-	logger.warn({ isChangedFilesError: bool , error: err }, "isChangedFilesError");
-	return bool;
-	// return !!err?.errors?.find(e => e.message?.includes("changedFiles"));
-};
+	isChangedFilesError(): boolean {
+		return !!this.errors.find(err => err.message.includes("changedFiles"));
+	}
+}
 
 const ONE_HOUR_IN_SECONDS = 60 * 60;

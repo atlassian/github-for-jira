@@ -1,6 +1,6 @@
 import { DataTypes, DATE, Model, Op, QueryTypes, WhereOptions } from "sequelize";
 import { uniq } from "lodash";
-import { sequelize, getHashedKey } from "models/sequelize";
+import { sequelize } from "models/sequelize";
 
 export enum SyncStatus {
 	PENDING = "PENDING",
@@ -32,6 +32,7 @@ export class Subscription extends Model {
 	selectedRepositories?: number[];
 	syncStatus?: SyncStatus;
 	syncWarning?: string;
+	backfillSince?: Date;
 	jiraClientKey: string;
 	plainClientKey: string;
 	updatedAt: Date;
@@ -41,6 +42,7 @@ export class Subscription extends Model {
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
 	gitHubAppId: number | undefined;
+	avatarUrl: string | undefined;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -135,15 +137,10 @@ export class Subscription extends Model {
 		});
 	}
 
-	// TODO: currently, this function returns the first subscription that matches the jiraHost
-	// and installationId. Theoretically, the same Jira instance can have two subscriptions
-	// with the same installation ID (for example, when they have multiple GitHub Enterprise Servers
-	// connected). All calls of this function must be changed to pass in an additional appId parameter
-	// to make it 100% safe.
 	static getSingleInstallation(
 		jiraHost: string,
-		gitHubInstallationId?: number,
-		gitHubAppId?: number
+		gitHubInstallationId: number,
+		gitHubAppId: number | undefined
 	): Promise<Subscription | null> {
 		return this.findOne({
 			where: {
@@ -170,17 +167,33 @@ export class Subscription extends Model {
 		return results[0] as Subscription;
 	}
 
+	static async findForRepoOwner(repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+		const results = await this.sequelize!.query(
+			"SELECT * " +
+			"FROM \"Subscriptions\" s " +
+			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
+			"WHERE s.\"jiraHost\" = :jiraHost " +
+			"AND rss.\"repoOwner\" = :repoOwner",
+			{
+				replacements: { jiraHost, repoOwner },
+				type: QueryTypes.SELECT
+			}
+		);
+		return results[0] as Subscription;
+	}
+
 	// TODO: Change name to 'create' to follow sequelize standards
 	static async install(payload: SubscriptionInstallPayload): Promise<Subscription> {
 		const [subscription] = await this.findOrCreate({
 			where: {
 				gitHubInstallationId: payload.installationId,
 				jiraHost: payload.host,
-				jiraClientKey: getHashedKey(payload.clientKey),
-				gitHubAppId: payload.gitHubAppId || null
+				jiraClientKey: payload.hashedClientKey,
+				gitHubAppId: payload.gitHubAppId || null,
+				avatarUrl: payload.avatarUrl || null
 			},
 			defaults: {
-				plainClientKey: payload.clientKey
+				plainClientKey: null //TODO: Need an admin api to restore plain key on this from installations table
 			}
 		});
 
@@ -214,6 +227,19 @@ export class Subscription extends Model {
 	async uninstall(): Promise<void> {
 		await this.destroy();
 	}
+
+
+	static async findAllForSubscriptionIds(
+		subscriptionIds: number[]
+	): Promise<Subscription[]> {
+		return this.findAll({
+			where: {
+				id: {
+					[Op.in]: uniq(subscriptionIds)
+				}
+			}
+		});
+	}
 }
 
 Subscription.init({
@@ -228,6 +254,7 @@ Subscription.init({
 	selectedRepositories: DataTypes.ARRAY(DataTypes.INTEGER),
 	syncStatus: DataTypes.ENUM("PENDING", "COMPLETE", "ACTIVE", "FAILED"),
 	syncWarning: DataTypes.STRING,
+	backfillSince: DataTypes.DATE,
 	jiraClientKey: DataTypes.STRING,
 	plainClientKey: {
 		type: DataTypes.STRING,
@@ -242,6 +269,10 @@ Subscription.init({
 	gitHubAppId: {
 		type: DataTypes.INTEGER,
 		allowNull: true
+	},
+	avatarUrl: {
+		type: DataTypes.STRING,
+		allowNull: true
 	}
 }, { sequelize });
 
@@ -249,8 +280,9 @@ export interface SubscriptionPayload {
 	installationId: number;
 	host: string;
 	gitHubAppId: number | undefined;
+	avatarUrl?: string;
 }
 
 export interface SubscriptionInstallPayload extends SubscriptionPayload {
-	clientKey: string;
+	hashedClientKey: string;
 }

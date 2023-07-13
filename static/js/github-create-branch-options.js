@@ -45,10 +45,9 @@ $(document).ready(() => {
 });
 
 const createUrlForGH = (uuid, multiGHInstance) => {
-	const jiraHost = $("#jiraHost").val();
   return uuid ?
-    `session/github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&ghRedirect=to&multiGHInstance=${multiGHInstance}` :
-    `session/github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&jiraHost=${jiraHost}&multiGHInstance=${multiGHInstance}`;
+    `github/${uuid}/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&ghRedirect=to&multiGHInstance=${multiGHInstance}` :
+    `github/create-branch?issueKey=${issueKey}&issueSummary=${issueSummary}&multiGHInstance=${multiGHInstance}`;
 };
 
 const goToCreateBranch = (url) => {

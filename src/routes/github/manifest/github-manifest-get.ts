@@ -1,54 +1,30 @@
 import { Request, Response } from "express";
-import { v4 as uuidv4 } from "uuid";
 import { envVars } from "~/src/config/env";
+import { GheConnectConfigTempStorage, resolveIntoConnectConfig } from "utils/ghe-connect-config-temp-storage";
+import { GitHubServerApp } from "models/github-server-app";
 
 export const GithubManifestGet = async (req: Request, res: Response) => {
-	const gheHost = req.query.gheHost as string;
-	if (!gheHost) {
-		throw new Error("GHE URL not found");
-	}
-	const manifest = getAppManifest();
-	req.session.temp = { gheHost };
-	res.json(manifest);
-};
-
-const getAppManifest = () => {
 	const appHost = envVars.APP_URL;
-	const uuid=  uuidv4();
-	return {
-		"name": "Jira",
-		"url": "https://github.com/marketplace/jira-software-github",
-		"redirect_url": `${appHost}/github/manifest/${uuid}/complete`,
-		"hook_attributes": {
-			"url": `${appHost}/github/${uuid}/webhooks`
-		},
-		"setup_url": `${appHost}/github/${uuid}/setup`,
-		"callback_url": `${appHost}/github/${uuid}/callback`,
-		"public": true,
-		"default_permissions": {
-			"actions": "read",
-			"security_events": "read",
-			"contents": "write",
-			"deployments": "read",
-			"issues": "write",
-			"metadata": "read",
-			"pull_requests": "write",
-			"members": "read"
-		},
-		"default_events": [
-			"code_scanning_alert",
-			"commit_comment",
-			"create",
-			"delete",
-			"deployment_status",
-			"issue_comment",
-			"issues",
-			"pull_request",
-			"pull_request_review",
-			"push",
-			"repository",
-			"workflow_run"
-		]
-	};
+	const connectConfigUuid = req.params.uuid;
 
+	const connectConfig = await resolveIntoConnectConfig(connectConfigUuid, res.locals.installation.id);
+	if (!connectConfig) {
+		req.log.warn({ connectConfigUuid }, "Cannot find connect config");
+		res.sendStatus(404);
+		return;
+	}
+
+	// We don't want to reuse existing UUIDs. On the other hand, we cannot re-generate it in "complete" step
+	// because the links in manifest must contain the final UUID
+	const uuid = await GitHubServerApp.findForUuid(connectConfigUuid)
+		? await new GheConnectConfigTempStorage().store(connectConfig, res.locals.installation.id)
+		: connectConfigUuid;
+
+	res.render("github-manifest.hbs", {
+		nonce: res.locals.nonce,
+		appHost,
+		uuid,
+		gheHost: connectConfig.serverUrl,
+		title: "Creating manifest and redirecting to your GitHub Enterprise Server instance"
+	});
 };

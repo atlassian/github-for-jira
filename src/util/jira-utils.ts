@@ -3,11 +3,10 @@ import { envVars } from "config/env";
 import axios from "axios";
 import { JiraAuthor } from "interfaces/jira";
 import { isEmpty, isString, pickBy, uniq } from "lodash";
-import { booleanFlag, BooleanFlags, onFlagChange } from "config/feature-flags";
 import { GitHubServerApp } from "models/github-server-app";
 
 export const getJiraAppUrl = (jiraHost: string): string =>
-	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/com.github.integration.${envVars.INSTANCE_NAME}/github-post-install-page` : "";
+	jiraHost?.length ? `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-post-install-page` : "";
 
 export const getJiraMarketplaceUrl = (jiraHost: string): string =>
 	jiraHost?.length ? `${jiraHost}/jira/marketplace/discover/app/com.github.integration.production` : "";
@@ -36,7 +35,7 @@ export const getJiraAuthor = (...authors: (Author | undefined)[]): JiraAuthor =>
 		avatar: author.avatar_url || author.avatarUrl || (author.login ? `https://github.com/users/${author.login}.png` : undefined),
 		name: author.name || author.user?.name || author.login || author.email?.match(/^(.*)@/)?.pop() || "unknown",
 		email: author.email || `${author.login}@noreply.user.github.com`,
-		url: author.html_url || author.url || author.user?.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
+		url: author.html_url || author.html_url || author.user?.url  || author.url || (author.login ? `https://github.com/users/${author.login}` : undefined)
 	}) as JiraAuthor : {
 		avatar: "https://github.com/ghost.png",
 		name: "Deleted User",
@@ -64,31 +63,14 @@ interface Author {
 	};
 }
 
-let regexFixFeature = false;
-onFlagChange(BooleanFlags.REGEX_FIX, async () => {
-	regexFixFeature = await booleanFlag(BooleanFlags.REGEX_FIX);
-});
-
-let issueKeyRegexCharLimitFeature = false;
-onFlagChange(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT, async () => {
-	issueKeyRegexCharLimitFeature = await booleanFlag(BooleanFlags.ISSUEKEY_REGEX_CHAR_LIMIT);
-});
-
 /**
  *  Based on the JIRA Ticket parser extended regex: ^\p{L}[\p{L}\p{Digit}_]{1,255}-\p{Digit}{1,255}$ (^|[^\p{L}\p{Nd}]) means that it must be at the start of the string
  *  or be a non unicode-digit character (separator like space, new line, or special character like [) [\p{L}][\p{L}\p{Nd}_]{1,255} means that the id must start with a unicode letter,
  *  then must be at least one more unicode-digit character up to 256 length to prefix the ID -\p{Nd}{1,255} means that it must be separated by a dash,
  *  then at least 1 number character up to 256 length
  */
-export const jiraIssueRegex = (): RegExp => {
-	if (issueKeyRegexCharLimitFeature) {
-		return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})/giu;
-	} else if (regexFixFeature) {
-		// Old regex which was working before trying to update it to the "correct" one
-		return /(^|[^A-Z\d])([A-Z][A-Z\d]+-[1-9]\d*)/giu;
-	}
-
-	return /(^|[^\p{L}\p{Nd}])([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})/giu;
+const jiraIssueRegex = (): RegExp => {
+	return /(^|[^A-Z\d])([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})(?=$|[^A-Z\d])/giu;
 };
 
 /**
@@ -97,13 +79,7 @@ export const jiraIssueRegex = (): RegExp => {
  * This regex is used when adding links to Jira issues in GitHub PR issue/descriptions.
  */
 export const jiraIssueInSquareBracketsRegex = (): RegExp => {
-	if (issueKeyRegexCharLimitFeature) {
-		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
-	} else if (regexFixFeature) {
-		return /(^|[^A-Z\d])\[([A-Z][A-Z\d]+-[1-9]\d*)\]/giu;
-	}
-
-	return /(^|[^\p{L}\p{Nd}])\[([\p{L}][\p{L}\p{Nd}_]{1,255}-\p{Nd}{1,255})\]/giu;
+	return /(^|[^A-Z\d])\[([A-Z][A-Z\d]{1,255}-[1-9]\d{0,255})\]/giu;
 };
 
 /**

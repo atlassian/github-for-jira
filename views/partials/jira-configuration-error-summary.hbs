@@ -1,0 +1,57 @@
+<!-- Error Summary modal-->
+<div class='jiraConfiguration__errorSummaryModal' id="error-summary-modal-{{id}}">
+  <div class='jiraConfiguration__errorSummaryModalContent'>
+    <div class="jiraConfiguration__errorSummaryModal__header__container">
+      <h3>Errors occurred during the backfill</h3>
+      <span id="close-error-summary" data-installation-id="{{id}}" class="jiraConfiguration__syncErrorSummaryModal__closeBtn aui-icon aui-iconfont-close-dialog"></span>
+    </div>
+    <div class="jiraConfiguration__errorSummaryModal__header__content">
+      <p>The backfill finished but following entities were not backfilled. This may be because of permission issues, GitHub API rate-limiting and network outages. Learn more
+        You could continue to use the integration and still view the backfilled data in Jira, while the app attempts to reprocess these entities.</p>
+    </div>
+
+    <div class="error-summary-border-top">
+      <h4 class="error-summary-errors-header">
+        Please resolve the following errors:
+      </h4>
+      <ul>
+      {{#if syncErrors.PERMISSIONS_ERROR}}
+      <li>
+        <b>{{syncErrors.PERMISSIONS_ERROR}}</b>
+        {{#if (gt syncErrors.PERMISSIONS_ERROR 1)}}
+        tasks have
+        {{else}}
+        task has
+        {{/if}}
+        not been backfilled. Please
+        <a href="{{html_url}}"
+           data-installation-link="{{html_url}}"
+           target="_blank">accept permissions on GitHub</a>
+         (you must be the admin of your organization), then retry backfill.
+      </li>
+      {{/if}}
+
+      {{#if syncErrors.CONNECTION_ERROR}}
+      <li>
+        We were unable to complete backfill for <b>{{syncErrors.CONNECTION_ERROR}}</b>
+        {{#if (gt syncErrors.CONNECTION_ERROR 1)}}
+        repositories
+        {{else}}
+        repository
+        {{/if}}
+        because something unexpected occurred. Please retry the backfill or raise a support ticket.
+      </li>
+      {{/if}}
+      </ul>
+    </div>
+
+    <form class="jiraConfiguration__errorSummaryModal__form">
+      <div class="jiraConfiguration__errorSummaryModal__actions">
+        <a href="https://support.atlassian.com/" target="_blank" class="aui-button aui-button-link">Raise a support ticket</a>
+        <button type="submit" id="submit-backfill-retry" class="aui-button aui-button-primary">Retry</button>
+      </div>
+    </form>
+  </div>
+  <div class="jiraConfiguration__errorSummaryModalOverlay"></div>
+</div>
+

@@ -31,6 +31,24 @@ const transforms: Transforms<EnvVars> = {
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 		return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 	},
+	WEBHOOK_SECRETS: (value?: string): Array<string> => {
+		try {
+			const parsed = value ? JSON.parse(value) as Array<string> : undefined;
+			if (!parsed) {
+				return [];
+			}
+			if (parsed && !Array.isArray(parsed)) {
+				return [parsed];
+			}
+			return parsed;
+		} catch {
+			if (value) {
+				return [value];
+			} else {
+				return [];
+			}
+		}
+	},
 	GITHUB_REPO_URL: (value?: string) => value || "https://github.com/atlassian/github-for-jira"
 };
 
@@ -46,8 +64,9 @@ export const envVars: EnvVars = new Proxy<object>({}, {
 envCheck(
 	"APP_ID",
 	"APP_URL",
-	"INSTANCE_NAME",
-	"WEBHOOK_SECRET",
+	"APP_KEY",
+	"WEBHOOK_SECRETS",
+	"COOKIE_SESSION_KEY",
 	"GITHUB_CLIENT_ID",
 	"GITHUB_CLIENT_SECRET",
 	"SQS_BACKFILL_QUEUE_URL",
@@ -58,10 +77,14 @@ envCheck(
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
+	"DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION",
+	"DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME",
 	"MICROS_AWS_REGION",
 	"GLOBAL_HASH_SECRET",
 	"CRYPTOR_URL",
-	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE"
+	"CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE",
+	"MICROS_PLATFORM_STATSD_HOST",
+	"MICROS_PLATFORM_STATSD_PORT"
 );
 
 export interface EnvVars {
@@ -80,10 +103,11 @@ export interface EnvVars {
 
 	APP_ID: string;
 	APP_URL: string;
-	WEBHOOK_SECRET: string;
+	APP_KEY: string;
+	WEBHOOK_SECRETS: Array<string>;
+	COOKIE_SESSION_KEY: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;
-	INSTANCE_NAME: string;
 	DATABASE_URL: string;
 	STORAGE_SECRET: string;
 	PRIVATE_KEY_PATH: string;
@@ -105,6 +129,10 @@ export interface EnvVars {
 	DEPLOYMENT_DATE: string;
 	GLOBAL_HASH_SECRET: string;
 
+	//DyamoDB for deployment status history
+	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION: string;
+	DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME: string;
+
 	// Micros Lifecycle Env Vars
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_URL?: string;
 	SNS_NOTIFICATION_LIFECYCLE_QUEUE_NAME?: string;
@@ -117,4 +145,9 @@ export interface EnvVars {
 	REDISX_CACHE_PORT: string;
 	REDISX_CACHE_HOST: string;
 	REDISX_CACHE_TLS_ENABLED?: string;
+
+	MICROS_PLATFORM_STATSD_HOST: string;
+	MICROS_PLATFORM_STATSD_PORT: string;
+
+	JIRA_TEST_SITES: string;
 }

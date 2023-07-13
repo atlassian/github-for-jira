@@ -8,7 +8,7 @@ integration is an open-source project, built and maintained by [Atlassian](https
 
 ## Support
 
-For general support inquiries, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For technical issues, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
+For general support inquiries and bug reports, [please contact the Atlassian Support team](https://support.atlassian.com/contact/#/?inquiry_category=technical_issues&is_cloud=true&product_key=jira-software).  For feature requests, [please create a new issue](https://github.com/atlassian/github-for-jira/issues/new).
 
 ## Table of Contents
   - [Install app](#install-app)
@@ -32,9 +32,12 @@ For general support inquiries, [please contact the Atlassian Support team](https
     - [See Jira issues in GitHub](#see-jira-issues-in-github)
     - [See GitHub builds and deployments in Jira](#see-github-builds-and-deployments-in-jira)
     - [How the integration works](#how-the-integration-works)
+    - [How the backfill works](#how-the-backfill-works)
   - [Migrate from the DVCS Connector](#migrate-from-the-dvcs-connector)
   - [Enterprise Features](#enterprise-features)
     - [IP Allow List](#ip-allow-list)
+    - [Known issues](#known-issues)
+      - [Connecting GitHub organizations with SSO](#connecting-github-organizations-with-sso) 
   - [Need help?](#need-help)
   - [Contribute](#contribute)
   - [License](#license)
@@ -123,8 +126,8 @@ Read, Write, and Admin for Development Information (branches, commits, and pull 
 | **Read-only** access to code scanning alerts / security events| If you want to see links to GitHub code scanning alerts in Jira, the app will need read permissions to Security events. The GitHub App will listen to [`code_scanning_alert`](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#code_scanning_alert) webhooks and send details of the Security reports to Jira. These will appear under the "Other links" tab of the Development Panel on Jira issues.                                                                                                                                                     |
 | **Read-only** access to deployments                           | If you want to see build and deployment information in Jira, the app will need read permissions for deployments. This will allow the integration to listen to the webhook `deployment_status` event which occurs when a deployment is created. Read-only deployment permissions are used for the following webhooks: <br> - deployment status                                                                                                                                                                                                                                                           |
 | **Read-only** access to metadata                              | **Metadata** All GitHub apps have read-only metadata permission set by default. This is a [mandatory requirement by GitHub](https://docs.github.com/en/rest/reference/permissions-required-for-github-apps#metadata-permissions) and is needed to provide access to a collection of read-only endpoints with metadata for various resources. These endpoints do not provide sensitive private repository information. Read-only metadata permissions are used for the following webhook: <br> - repository                                                                                              |
-| **Read** and **write** access to issues and pull requests     | **Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. "Unfurling" means that the app looks for Jira issue keys like `[ABC-123]` in pull request or issue comments and then replaces those issue keys with a link to the respective Jira issue. <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> - issue comment <br> - issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> - pull request <br> - pull request review. <br> <br> *Note:* for GitHub Enterprise integration (where the user owns the GitHub app) "Write" permission is optional. When not provided, the "unfurl" logic is gently skipped. |
-| **Read** and **write** access to contents                     | **Contents (aka code):** Read-only permissions are needed to sync development information to Jira for the following webhooks: <br> - commit comment <br> - delete <br> - push <br> - workflow run <br><br> We need write permissions for the **create** webhook so you have the ability to create a branch from an issue's dev panel.
+| **Read** and **write** access to issues and pull requests     | **Issues** and **pull requests** are used by the GitHub for Jira app to power Smart Commit actions and unfurl Jira URLs. "Unfurling" means that the app looks for Jira issue keys **in square brackets** like `[ABC-123]` in pull request or issue comments and then replaces those issue keys with a link to the respective Jira issue. <br><br> **Issues:** Read and write issue permissions are used for the following webhooks: <br> - issue comment <br> - issues <br><br> **Pull requests:** Read and write pull request permissions are used for the following webhooks: <br> - pull request <br> - pull request review. <br> <br> *Notes:* <ol><li>The square brackets are required, without which the pull request may appear in the Jira issue's Development section, but the issue key won't be expanded to a link.</li><li>For GitHub Enterprise integration (where the user owns the GitHub app) "Write" permission is optional. When not provided, the "unfurl" logic is gently skipped.</li></ol> |
+| **Read** and **write** access to contents                     | **Contents (aka code):** Read-only permissions are needed to sync development information to Jira for the following webhooks: <br> - commit comment <br> - delete <br> - push <br> - workflow run <br><br> We need write permissions for the **create** webhook so you have the ability to create a branch from an issue's dev panel.<br><br> *Note:* for GitHub Enterprise integration (where the user owns the GitHub app) "Write" permission is optional. When not provided, the "Create Branch" feature will not function.
 
 ##### Organization permissions
 
@@ -161,6 +164,7 @@ To navigate to your Jira subscriptions
 
 > :information_source: This only gives you permission to delete the connection to Jira instances. To view development information in that Jira instance, you’ll need to be granted access in Jira.
 
+
 ## Send data and use the integration
 ### See GitHub development information in Jira
 To start seeing your development information from GitHub in Jira, simply add a Jira issue key to your commit message, branch name, or PR title.
@@ -172,9 +176,11 @@ For example: the text `[DEV-2095]` will be sent through to Jira and appear in th
 ![See development insights in Jira issues and quickly jump into action.](./docs/images/devinfo.png)
 
 ### See Jira issues in GitHub
-If an issue body contains a valid Jira issue key on your instance, the integration will automatically expand it into a reference link when surrounded in brackets `[]`. For example: [DEV-2095] will be turned into a link to `https://<your-instance>.atlassian.net/browse/DEV-2095`.
+If an issue body contains a valid Jira issue key on your instance, the integration will automatically expand (unfurl) it into a reference link when surrounded in brackets `[]`. For example: [DEV-2095] will be turned into a link to `https://<your-instance>.atlassian.net/browse/DEV-2095`.
 
 This makes it so Jira issues can be linked inside a comment without it interrupting the flow of the comment as a whole.
+
+**Note:** The square brackets are required, without which the pull request may appear in the Jira issue's Development section, but the issue key won't be expanded to a link.
 
 ### See GitHub builds and deployments in Jira
 GitHub Actions workflows and deployments will automatically be sent to your connected Jira instances so that they will be visible in Jira issues. If you’re setting this up for the first time, follow [GitHub Actions Documentation - GitHub Docs](https://docs.github.com/en/actions). If you already have GitHub Actions and want to see CI/CD data from GitHub in Jira, include the Jira issue key in your commit message, branch name, or PR title.
@@ -183,6 +189,26 @@ Also see our guides for [builds](./docs/builds.md) and [deployments](./docs/depl
 
 ### How the integration works
 When a workflow (e.g. GitHub Action) or development event (e.g. pull request, commit, branch) runs, the app receives a webhook from GitHub. The app then extract the issue key from the respective branch/commit/PR and send this information to Jira.
+
+## How the backfill works
+The app is designed to backfill historical data into Jira. Once you have installed and configured the app successfully,
+it will automatically trigger the backfilling process, for 6 months, for the allowed repositories to update Jira with historical information such as pull requests, deployments, branches, builds, and commits. Once the initial backfilling process is complete, you will be able to view the backfilled date and status on the user interface. All branches will be backfilled, regardless of their creation date. However, pull requests, deployments, builds, and commits will only be backfilled for the last six months. If you wish to pull more historical data in Jira, you may continue the backfill process for older dates by selecting 'Continue backfill' from the action menu. If the historical data is substantial, we recommend backfilling your data in 6 month segments, and continuing the process until you've reached the desired backfilled date. 
+
+The historical data that meets the following criteria will be available in Jira:
+1. The backfilling process attempts to connect all branches that fulfill at least one of the following criteria:
+    - The branch name contains the issue key.
+    - The title of the latest pull request associated with the branch contains the issue key.
+    - The last commit message of the branch contains the issue key.
+2. All commits from the default branch will be backfilled. The commit message must contain the Jira issue key.
+3. Only the latest 50 commits from non-default branches will be backfilled.
+4. Unreachable commits (e.g. from deleted branches) will NOT be backfilled.
+5. All pull requests, regardless of their statuses, will be backfilled. The Jira issue key should be included either in 
+   the title of the pull request, in the description of the pull request or in the name of the source branch 
+   of the pull request.
+6. All the builds and deployments data will be backfilled that contain the issue keys. You can check how to include 
+   issue keys to the builds and deployments [here](#see-github-builds-and-deployments-in-jira).
+
+If an error occurs during the backfilling process, the app will prompt you to retry the backfilling for the failed repositories without having to restart the entire backfill process. However, this does not account for permission errors. You will need to resolve any permissions errors before retrying the backfill process.
 
 ## Migrate from the DVCS Connector
 Existing users of Jira's built-in DVCS connector that meet the [requirements](#requirements) should migrate to this integration. If you've not yet been prompted to do so, you can manually kick off the migration by:
@@ -197,6 +223,30 @@ Existing users of Jira's built-in DVCS connector that meet the [requirements](#r
 
 GitHub has the ability to limit who can communicate with your organization's GitHub API which we now fully support.
 To enable this feature or to debug any issues, please refer to our [GitHub IP Allow List documentation](./docs/ip-allowlist.md).
+
+### Known issues
+
+#### Connecting GitHub organizations with SSO
+
+If a GitHub organization is [protected with SAML](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-saml-single-sign-on-for-your-organization/about-identity-and-access-management-with-saml-single-sign-on),
+you might find its "Connect" button disabled. This may happen in a scenario
+when the user token (which GitHub for Jira app's UI is using) [does not have permissions to access the protected org](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/about-authentication-with-saml-single-sign-on#about-oauth-apps-github-apps-and-saml-sso),
+because it was issued and saved to the app's session when the user didn't have an active SAML session in GitHub
+in the browser.
+
+To workaround the problem, perform the following:
+- create an active SAML session by going to `https://github.com/organizations/<YOUR-ORG-NAME>/settings`
+    - that should initiate an auth process with your SSO identity provider
+- in the same browser window, go to GitHub for Jira app and find the disabled "Connect" button for `<YOUR-ORG-NAME>` GitHub org
+    - it must be located either on one of these pages
+        - `https://github.atlassian.com/github/configuration` for GitHub cloud, or
+        - `https://github.atlassian.com/github/<UUID>/configuration` for GitHub server enterprise
+ - insert `resetGithubToken=true` query parameter to the URL of the page in the browser and reload it
+    - `https://github.atlassian.com/github/configuration?resetGithubToken=true` for GitHub cloud, or
+    - `https://github.atlassian.com/github/<UUID>/configuration?ghRedirect=to&resetGithubToken=true` for GitHub server enterprise
+
+After doing that, the token will be re-issued by GitHub with all necessary permissions and saved in the app's session, 
+and "Connect" button should become enabled.
 
 ## Need help?
 Take a look through the troubleshooting steps in our [support guide](./SUPPORT.md).

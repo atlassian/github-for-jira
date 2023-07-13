@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Request, Response, Router, static as Static } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -10,22 +10,24 @@ import cookieParser from "cookie-parser";
 import { LogMiddleware } from "middleware/frontend-log-middleware";
 import { SessionGet } from "./session/session-get";
 import { cookieSessionMiddleware } from "middleware/cookiesession-middleware";
-import { ErrorRouter } from "./error-router";
+import { attachErrorHandler } from "./error-router";
 import { MaintenanceRouter } from "./maintenance/maintenance-router";
 import { PublicRouter } from "./public/public-router";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { GithubManifestGet } from "routes/github/manifest/github-manifest-get";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
-import { jirahostMiddleware } from "~/src/middleware/jirahost-middleware";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
+import { RestRouter } from "~/src/rest/rest-router";
+import path from "path";
 
 export const RootRouter = Router();
+
 
 // The request handler must be the first middleware on the app
 RootRouter.use(Sentry.Handlers.requestHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
-RootRouter.use(urlencoded({ extended: false }));
+RootRouter.use(urlencoded({ extended: true }));
 RootRouter.use(json({
 	limit: "30mb", //set limit according to github doc https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#webhook-payload-object-common-properties
 	verify: (req: Request, _: Response, buf) => {
@@ -33,13 +35,26 @@ RootRouter.use(json({
 	}
 }));
 
-RootRouter.use(cookieParser());
+const cookieParserMiddleware = cookieParser();
+RootRouter.use(cookieParserMiddleware);
 
 // Add pertinent information to logger for all subsequent routes
 RootRouter.use(LogMiddleware);
 
 // Static Assets
 RootRouter.use("/public", PublicRouter);
+
+/**
+ * For PROD
+ * This route is for the production version of `spa`
+ * We are simply associating `index.html` under the `dist` folder to the router `spa`
+ */
+RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/dist")));
+RootRouter.use([
+	"/spa/spa-assets", // For fetching the assets in Production build
+	"/spa-assets" // For fetching the assets in local development environment
+], Static(path.join(process.cwd(), "static/assets")));
+RootRouter.use("/rest", RestRouter);
 
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
@@ -50,6 +65,8 @@ RootRouter.get("/version", VersionGet);
 // as those are for apps logic, api SHOULD NOT rely on any cookie/session/jiraHost header etc.
 RootRouter.use("/api", ApiRouter);
 
+RootRouter.use("/microscope/dlq", MicroscopeDlqRouter);
+
 // Maintenance mode - needs to be before all other routes
 RootRouter.use(MaintenanceRouter);
 
@@ -58,25 +75,20 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
 
-// Saves the jiraHost cookie to the secure session if available
-RootRouter.use(jirahostMiddleware);
-
-// App Manifest flow route
-RootRouter.get("/github-manifest", GithubManifestGet);
-
-RootRouter.get("/create-branch-options", GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);
 
-// On base path, redirect to Github App Marketplace URL
-RootRouter.get("/", jiraSymmetricJwtMiddleware, async (req: Request, res: Response) => {
+// On base path, redirect to GitHub App Marketplace URL
+const GitHubAppMarketplaceRedirectGet = async (req: Request, res: Response) => {
 	const { jiraHost, gitHubAppId } = res.locals;
-	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId);
+	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "root_path" });
 	const { data: info } = await gitHubAppClient.getApp();
 
 	return res.redirect(info.external_url);
-});
+};
+RootRouter.get("/", jiraSymmetricJwtMiddleware, GitHubAppMarketplaceRedirectGet);
 
 // For when nothing gets triggered in the above routes, or an error occurs
-RootRouter.use(ErrorRouter);
+attachErrorHandler(RootRouter);

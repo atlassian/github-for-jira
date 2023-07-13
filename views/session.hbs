@@ -19,7 +19,6 @@
 {{> loading-screen
     title=title
 }}
-</body>
 <script
     src="/public/aui/aui-prototyping.js"
     integrity="sha512-DkENIkhNP5r+sfHUC5hhFAzApGNR5HTu1fzymBBhXZma4zytOUQh8qhz5xc3nSbSQfdYI6qdI281YwUNmubEMw=="
@@ -29,27 +28,20 @@
 ></script>
 <script nonce="{{nonce}}">
   $(function() {
-    if (window.jiraHost) {
+    if (window.jwt) {
       {{!--/*
             We cannot pass jwt as a query string parameter because of security considerations!
             (E.g. they can be stored in browser's session or hijacked.)
             More secure is to pass it using the cookies.
       */--}}
-      {{!--/*
-        Don't set jiraHost cookie on cleaning up NEW_JWT_VALIDATION flag - remove below line
-      */--}}
-      document.cookie = "jiraHost=" + window.jiraHost + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
       document.cookie = "jwt=" + window.jwt + "; path=/; max-age=" + 60 * 5 + "; samesite=none; secure";
     }
   });
 </script>
-{{#if loadAutoAppCreation}}
-      <script src="/public/js/github-redirect.js" nonce="{{nonce}}"></script>
-    {{else}}
-      <script nonce="{{nonce}}">
-        $(function() {
-          window.location = "{{{redirectUrl}}}";
-        });
-      </script>
-{{/if}}
+<script nonce="{{nonce}}">
+  $(function() {
+    window.location = "{{{redirectUrl}}}";
+  });
+</script>
+</body>
 </html>

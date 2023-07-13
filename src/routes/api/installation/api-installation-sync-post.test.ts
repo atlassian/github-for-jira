@@ -14,7 +14,7 @@ describe("ApiInstallationSyncPost", ()=>{
 				installationId: GHES_GITHUB_INSTALLATION_ID,
 				host: jiraHost,
 				gitHubAppId: GHES_GITHUB_APP_ID,
-				clientKey: "key"
+				hashedClientKey: "key"
 			});
 		});
 		it("should get subcription with gitHubAppid", async ()=>{
@@ -32,7 +32,7 @@ describe("ApiInstallationSyncPost", ()=>{
 			expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
 				gitHubInstallationId: GHES_GITHUB_INSTALLATION_ID,
 				gitHubAppId: GHES_GITHUB_APP_ID
-			}), expect.anything(), undefined);
+			}), expect.anything(), undefined, undefined, undefined, { "source": "api-installation-sync" });
 		});
 	});
 	const getReq = (opts: any = {}): any => {

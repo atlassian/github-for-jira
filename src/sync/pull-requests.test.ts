@@ -7,9 +7,13 @@ import pullRequestList from "fixtures/api/pull-request-list.json";
 import pullRequest from "fixtures/api/pull-request.json";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags } from "config/feature-flags";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
+import { RepoSyncState } from "models/reposyncstate";
+import { getPullRequestTask } from "./pull-request";
+import { createInstallationClient } from "~/src/util/get-github-client-config";
+import _ from "lodash";
 
 jest.mock("config/feature-flags");
 
@@ -18,6 +22,12 @@ describe("sync/pull-request", () => {
 
 	beforeEach(() => {
 		mockSystemTime(12345678);
+
+		when(numberFlag).calledWith(
+			NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
+			expect.anything(),
+			expect.anything()
+		).mockResolvedValue(0);
 	});
 
 
@@ -63,149 +73,50 @@ describe("sync/pull-request", () => {
 		}
 	];
 
-	const buildJiraPayload = (repoId: string) => {
-		return {
-			"preventTransitions": true,
-			"repositories":
-				[
-					{
-						"id": repoId,
-						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author": {
-										"avatar": "test-pull-request-author-avatar",
-										"name": "test-pull-request-author-login",
-										"email": "test-pull-request-author-login@noreply.user.github.com",
-										"url": "test-pull-request-author-url"
-									},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys": [
-										"KEY-15"
-									],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"reviewers": [
-										{
-											"avatar": "test-pull-request-reviewer-avatar",
-											"name": "test-pull-request-reviewer-login",
-											"email": "test-pull-request-reviewer-login@noreply.user.github.com",
-											"url": "https://github.com/reviewer",
-											"approvalStatus": "APPROVED"
-										}
-									],
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl": "https://github.com/integrations/test/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
-						"url": "test-repo-url",
-						"updateSequenceId": 12345678
-					}
-				],
-			"properties":
+	const buildJiraPayload = (repoId: string, times = 1) => {
+		const pr = {
+			"author": {
+				"avatar": "test-pull-request-author-avatar",
+				"name": "test-pull-request-author-login",
+				"email": "test-pull-request-author-login@noreply.user.github.com",
+				"url": "test-pull-request-author-url"
+			},
+			"commentCount": 10,
+			"destinationBranch": "devel",
+			"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
+			"displayId": "#51",
+			"id": 51,
+			"issueKeys": [
+				"KEY-15"
+			],
+			"lastUpdate": "2018-05-04T14:06:56Z",
+			"reviewers": [
 				{
-					"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+					"avatar": "test-pull-request-reviewer-avatar",
+					"name": "test-pull-request-reviewer-login",
+					"email": "test-pull-request-reviewer-login@email.test",
+					"url": "https://github.com/reviewer",
+					"approvalStatus": "APPROVED"
 				}
+			],
+			"sourceBranch": "use-the-force",
+			"sourceBranchUrl": "https://github.com/integrations/test/tree/use-the-force",
+			"status": "DECLINED",
+			"timestamp": "2018-05-04T14:06:56Z",
+			"title": "[KEY-15] Testing force pushes",
+			"url": "https://github.com/integrations/test/pull/51",
+			"updateSequenceId": 12345678
 		};
-	};
 
-	// Function can be removed with use-shared-pr-transform feature flag
-	const buildJiraPayloadOldCloud = (repoId: string) => {
 		return {
 			"preventTransitions": true,
+			operationType: "BACKFILL",
 			"repositories":
 				[
 					{
 						"id": repoId,
 						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author":
-										{
-											"avatar": "test-pull-request-author-avatar",
-											"name": "test-pull-request-author-login",
-											"email": "test-pull-request-author-login@noreply.user.github.com",
-											"url": "test-pull-request-author-url"
-										},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "test-repo-url/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys":
-										[
-											"TES-15"
-										],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl": "test-repo-url/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
-						"url": "test-repo-url",
-						"updateSequenceId": 12345678
-					}
-				],
-			"properties":
-				{
-					"installationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
-				}
-		};
-	};
-
-	// Function can be removed with use-shared-pr-transform feature flag
-	const buildJiraPayloadOld = (repoId: string) => {
-		return {
-			"preventTransitions": true,
-			"repositories":
-				[
-					{
-						"id": repoId,
-						"name": "test-repo-name",
-						"pullRequests":
-							[
-								{
-									"author":
-										{
-											"avatar":"https://avatars0.githubusercontent.com/u/173?v=4",
-											"name": "test-pull-request-author-login",
-											"email": "test-pull-request-author-login@noreply.user.github.com",
-											"url":"https://github.com/test-pull-request-author-login"
-										},
-									"commentCount": 10,
-									"destinationBranch": "devel",
-									"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
-									"displayId": "#51",
-									"id": 51,
-									"issueKeys":
-										[
-											"KEY-15"
-										],
-									"lastUpdate": "2018-05-04T14:06:56Z",
-									"reviewers":[],
-									"sourceBranch": "use-the-force",
-									"sourceBranchUrl":"https://github.com/integrations/test/tree/use-the-force",
-									"status": "DECLINED",
-									"timestamp": "2018-05-04T14:06:56Z",
-									"title": "[KEY-15] Testing force pushes",
-									"url": "https://github.com/integrations/test/pull/51",
-									"updateSequenceId": 12345678
-								}
-							],
+						"pullRequests": Array(times).fill(pr),
 						"url": "test-repo-url",
 						"updateSequenceId": 12345678
 					}
@@ -219,15 +130,16 @@ describe("sync/pull-request", () => {
 
 	describe("cloud", () => {
 
+		let repoSyncState: RepoSyncState;
+
+		const PRS_INITIAL_CURSOR = 21;
+
 		beforeEach(async () => {
-			await new DatabaseStateCreator()
+			repoSyncState = (await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForPrs()
-				.create();
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_SHARED_PR_TRANSFORM)
-				.mockResolvedValue(true);
+				.withPrsCustomCursor(String(PRS_INITIAL_CURSOR))
+				.create()).repoSyncState!;
 		});
 
 		describe.each([
@@ -235,21 +147,26 @@ describe("sync/pull-request", () => {
 			["Evernote Test", "TES-15"]
 		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-				pullRequestList[0].title = title;
-				pullRequestList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				const modifiedList = _.cloneDeep(pullRequestList);
+				modifiedList[0].title = title;
+				modifiedList[0].head.ref = head;
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 				githubNock
-					.get("/repos/integrations/test-repo-name/pulls")
-					.query(true)
-					.reply(200, pullRequestList)
+					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
+					.reply(200, modifiedList)
 					.get("/repos/integrations/test-repo-name/pulls/51")
 					.reply(200, pullRequest)
 					.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 					.reply(200, reviewsPayload)
+					.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+					.reply(200, { users: [], teams: [] })
+					.get("/users/test-pull-request-reviewer-login")
+					.reply(200, {
+						login: "test-pull-request-reviewer-login",
+						avatar_url: "test-pull-request-reviewer-avatar",
+						html_url: "test-pull-request-reviewer-url",
+						email: "test-pull-request-reviewer-login@email.test"
+					})
 					.get("/users/test-pull-request-author-login")
 					.reply(200, {
 						login: "test-pull-request-author-login",
@@ -265,12 +182,120 @@ describe("sync/pull-request", () => {
 
 				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1")).reply(200);
 
-
-				await expect(processInstallation()({
+				await expect(processInstallation(jest.fn())({
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 					jiraHost
 				}, sentry, getLogger("test"))).toResolve();
 			});
+		});
+
+		it("uses parallel fetching when FF is more than 1", async () => {
+			const modifiedList = _.cloneDeep(pullRequestList);
+			modifiedList[0].title = "TES-15";
+
+			when(numberFlag).calledWith(
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(2);
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
+
+			githubNock
+				.get("/repos/integrations/test-repo-name/pulls/51").times(2)
+				.reply(200, pullRequest)
+				.get("/repos/integrations/test-repo-name/pulls/51/reviews").times(2)
+				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers").times(2)
+				.reply(200, { users: [], teams: [] })
+				.get("/users/test-pull-request-reviewer-login").times(2)
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				})
+				.get("/users/test-pull-request-author-login").times(2)
+				.reply(200, {
+					login: "test-pull-request-author-login",
+					avatar_url: "test-pull-request-author-avatar",
+					html_url: "test-pull-request-author-url"
+				})
+				.get("/users/integrations").times(2)
+				.reply(200, {
+					login: "integrations",
+					avatar_url: "integrations-avatar",
+					html_url: "integrations-url"
+				});
+
+			const nockPage1 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
+				.reply(200, modifiedList);
+
+			const nockPage2 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=22&state=all&sort=created&direction=desc")
+				.reply(200, modifiedList);
+
+			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayload("1", 2)).reply(200);
+
+			await expect(processInstallation(jest.fn())({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage1.isDone()).toBeTruthy();
+			expect(nockPage2.isDone()).toBeTruthy();
+			expect(JSON.parse((await RepoSyncState.findByPk(repoSyncState!.id))?.pullCursor || "")).toStrictEqual({
+				pageNo: 23,
+				perPage: 20
+			});
+		});
+
+		it("processing of PRs with parallel fetching should stop when no more PRs from GitHub", async () => {
+			when(numberFlag).calledWith(
+				NumberFlags.NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL,
+				expect.anything(),
+				expect.anything()
+			).mockResolvedValue(2);
+
+			for (let i = 0; i < 2; i++) {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			}
+
+			const nockPage1 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=21&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			const nockPage2 = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=22&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			await expect(processInstallation(jest.fn())({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage1.isDone()).toBeTruthy();
+			expect(nockPage2.isDone()).toBeTruthy();
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
+		});
+
+		it("scales cursor if necessary", async () => {
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			repoSyncState.pullCursor = JSON.stringify({
+				perPage: 100, pageNo: 2
+			});
+			await repoSyncState.save();
+
+			const nockPage = githubNock
+				.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=6&state=all&sort=created&direction=desc")
+				.reply(200, []);
+
+			await expect(processInstallation(jest.fn())({
+				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+				jiraHost
+			}, sentry, getLogger("test"))).toResolve();
+			expect(nockPage.isDone()).toBeTruthy();
+			expect((await RepoSyncState.findByPk(repoSyncState!.id))?.pullStatus).toEqual("complete");
 		});
 
 		it("should not sync if nodes are empty", async () => {
@@ -283,7 +308,7 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
@@ -292,7 +317,7 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 			githubNock.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
 				.reply(200, pullRequestList);
@@ -300,12 +325,60 @@ describe("sync/pull-request", () => {
 			const interceptor = jiraNock.post(/.*/);
 			const scope = interceptor.reply(200);
 
-			await expect(processInstallation()({
+			await expect(processInstallation(jest.fn())({
 				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
 				jiraHost
 			}, sentry, getLogger("test"))).toResolve();
 			expect(scope).not.toBeDone();
 			removeInterceptor(interceptor);
+		});
+
+		it("should only use pull requests that are later than fromDate is supplied", async () => {
+
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			const mockPullRequestList = () => {
+				githubNock
+					.get("/repos/integrations/test-repo-name/pulls?per_page=20&page=1&state=all&sort=created&direction=desc")
+					.reply(200, [
+						{ ...pullRequest, title: "PR3", created_at: "2023-01-03T00:00:00Z" },
+						{ ...pullRequest, title: "PR2", created_at: "2023-01-02T00:00:00Z" },
+						{ ...pullRequest, title: "PR1", created_at: "2023-01-01T00:00:00Z" }
+					]);
+			};
+
+			mockPullRequestList();
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			expect(await getPullRequestTask(getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				20,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: "2023-01-01T01:02:03Z"
+				}
+			)).toEqual({
+				edges: expect.arrayContaining([expect.objectContaining({
+					title: "PR3",
+					created_at: "2023-01-03T00:00:00Z"
+				}), expect.objectContaining({
+					title: "PR2",
+					created_at: "2023-01-02T00:00:00Z"
+				})]),
+				jiraPayload: undefined
+			});
+
 		});
 
 	});
@@ -314,18 +387,6 @@ describe("sync/pull-request", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_SHARED_PR_TRANSFORM, expect.anything())
-				.mockResolvedValue(true);
-
 			const buildResult = await new DatabaseStateCreator()
 				.forServer()
 				.withActiveRepoSyncState()
@@ -335,21 +396,27 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-			pullRequestList[0].title = "[TES-15] Evernote Test";
-			pullRequestList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			const modifiedList = _.cloneDeep(pullRequestList);
+			modifiedList[0].title = "[TES-15] Evernote Test";
+			modifiedList[0].head.ref = "Evernote Test";
+			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
 			gheApiNock
 				.get("/repos/integrations/test-repo-name/pulls")
 				.query(true)
-				.reply(200, pullRequestList)
+				.reply(200, modifiedList)
 				.get("/repos/integrations/test-repo-name/pulls/51")
 				.reply(200, pullRequest)
 				.get("/repos/integrations/test-repo-name/pulls/51/reviews")
 				.reply(200, reviewsPayload)
+				.get("/repos/integrations/test-repo-name/pulls/51/requested_reviewers")
+				.reply(200, { users: [], teams: [] })
+				.get("/users/test-pull-request-reviewer-login")
+				.reply(200, {
+					login: "test-pull-request-reviewer-login",
+					avatar_url: "test-pull-request-reviewer-avatar",
+					html_url: "test-pull-request-reviewer-url",
+					email: "test-pull-request-reviewer-login@email.test"
+				})
 				.get("/users/test-pull-request-author-login")
 				.reply(200, {
 					login: "test-pull-request-author-login",
@@ -378,149 +445,68 @@ describe("sync/pull-request", () => {
 				}
 			};
 
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			await expect(processInstallation(jest.fn())(data, sentry, getLogger("test"))).toResolve();
 		});
 	});
 
-	// These tests can be removed with use-shared-pr-transform feature flag clean up
-	describe("cloud - false ff use-shared-pr-transform", () => {
+	describe("incremental backfill", () => {
 
+		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
-			await new DatabaseStateCreator()
+			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
-				.repoSyncStatePendingForPrs()
+				.repoSyncStatePendingForDeployments()
 				.create();
+			repoSyncState = dbState.repoSyncState!;
 		});
 
-		describe.each([
-			["[TES-15] Evernote Test", "use-the-force"],
-			["Evernote Test", "TES-15"]
-		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
-			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-				pullRequestList[0].title = title;
-				pullRequestList[0].head.ref = head;
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-				githubNock
-					.get("/repos/integrations/test-repo-name/pulls")
-					.query(true)
-					.reply(200, pullRequestList)
-					.get("/repos/integrations/test-repo-name/pulls/51")
-					.reply(200, pullRequest)
-					.get("/users/test-pull-request-author-login")
-					.reply(200, {
-						login: "test-pull-request-author-login",
-						avatar_url: "test-pull-request-author-avatar",
-						html_url: "test-pull-request-author-url"
-					});
+		it("should not miss pull request data when page contains older prs", async () => {
 
-				jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOldCloud("1")).reply(200);
-
-
-				await expect(processInstallation()({
-					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-					jiraHost
-				}, sentry, getLogger("test"))).toResolve();
-			});
-		});
-
-		it("should not sync if nodes are empty", async () => {
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
+			const twoPRs = [
+				_.cloneDeep(pullRequestList[0]),
+				_.cloneDeep(pullRequestList[0])
+			];
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			twoPRs[0].created_at = new Date().toISOString();
+			twoPRs[1].created_at = new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString();
+
 			githubNock
-				.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, []);
+				.get("/repos/integrations/test-repo-name/pulls?per_page=2&page=1&state=all&sort=created&direction=desc")
+				.reply(200, twoPRs);
 
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
-
-			await expect(processInstallation()({
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-				jiraHost
-			}, sentry, getLogger("test"))).toResolve();
-			expect(scope).not.toBeDone();
-			removeInterceptor(interceptor);
-		});
-
-		it("should not sync if nodes do not contain issue keys", async () => {
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			githubNock.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, pullRequestList);
-
-			const interceptor = jiraNock.post(/.*/);
-			const scope = interceptor.reply(200);
-
-			await expect(processInstallation()({
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-				jiraHost
-			}, sentry, getLogger("test"))).toResolve();
-			expect(scope).not.toBeDone();
-			removeInterceptor(interceptor);
-		});
-
-	});
-
-	// These tests can be removed with use-shared-pr-transform feature flag clean up
-	describe("server - false ff use-shared-pr-transform", () => {
-
-		let gitHubServerApp: GitHubServerApp;
-
-		beforeEach(async () => {
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.GHE_SERVER, expect.anything())
-				.mockResolvedValue(true);
-
-			when(jest.mocked(booleanFlag))
-				.calledWith(BooleanFlags.USE_REPO_ID_TRANSFORMER)
-				.mockResolvedValue(true);
-
-
-			const buildResult = await new DatabaseStateCreator()
-				.forServer()
-				.withActiveRepoSyncState()
-				.repoSyncStatePendingForPrs()
-				.create();
-			gitHubServerApp = buildResult.gitHubServerApp!;
-		});
-
-		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-			pullRequestList[0].title = "[TES-15] Evernote Test";
-			pullRequestList[0].head.ref = "Evernote Test";
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
-			gheApiNock
-				.get("/repos/integrations/test-repo-name/pulls")
-				.query(true)
-				.reply(200, pullRequestList)
-				.get("/repos/integrations/test-repo-name/pulls/51")
-				.reply(200, pullRequest)
-				.get("/users/integrations")
-				.reply(200, {
-					login: "integrations",
-					avatar_url: "integrations-avatar",
-					html_url: "integrations-url"
-				});
-
-			jiraNock.post("/rest/devinfo/0.10/bulk", buildJiraPayloadOld("6769746875626d79646f6d61696e636f6d-1")).reply(200);
-
-			const data: BackfillMessagePayload = {
-				installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
 				jiraHost,
-				gitHubAppConfig: {
-					uuid: gitHubServerApp.uuid,
-					gitHubAppId: gitHubServerApp.id,
-					appId: gitHubServerApp.appId,
-					clientId: gitHubServerApp.gitHubClientId,
-					gitHubBaseUrl: gitHubServerApp.gitHubBaseUrl,
-					gitHubApiUrl: gitHubServerApp.gitHubBaseUrl + "/v3/api"
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				2,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
 				}
-			};
-
-			await expect(processInstallation()(data, sentry, getLogger("test"))).toResolve();
+			);
+			expect(result).toEqual({
+				edges: [expect.objectContaining({
+					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
+				}), expect.objectContaining({
+					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
+				})],
+				jiraPayload: undefined
+			});
 		});
 	});
 });

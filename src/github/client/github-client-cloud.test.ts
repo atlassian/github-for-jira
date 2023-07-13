@@ -1,7 +1,7 @@
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "./github-installation-client";
 import { statsd }  from "config/statsd";
-import { BlockedIpError, GithubClientError, GithubClientTimeoutError, RateLimitingError } from "./github-client-errors";
+import { GithubClientBlockedIpError, GithubClientError, GithubClientTimeoutError, GithubClientRateLimitingError } from "./github-client-errors";
 import { getInstallationId } from "./installation-id";
 import nock from "nock";
 import { when } from "jest-when";
@@ -90,7 +90,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		const pullrequests = await client.getPullRequests(owner, repo, {
 			per_page: pageSize,
 			page
@@ -113,7 +113,7 @@ describe("GitHub Client", () => {
 			"installation token"
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		const commit = await client.getCommit(owner, repo, sha);
 
 		expect(commit).toBeTruthy();
@@ -127,7 +127,7 @@ describe("GitHub Client", () => {
 			method: "GET",
 			path,
 			status
-		}));
+		}), { jiraHost });
 	};
 
 	const verifyMetricStatus = (status: string) => {
@@ -135,7 +135,7 @@ describe("GitHub Client", () => {
 			client: "axios",
 			gitHubProduct: "cloud",
 			status
-		}));
+		}), { jiraHost });
 	};
 
 
@@ -150,7 +150,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -158,7 +158,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(4600);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
@@ -177,7 +177,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -185,7 +185,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
@@ -200,7 +200,7 @@ describe("GitHub Client", () => {
 			403, { message: "Org has an IP allow list enabled" }
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -208,8 +208,8 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(BlockedIpError);
-		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" });
+		expect(error).toBeInstanceOf(GithubClientBlockedIpError);
+		expect(statsdIncrementSpy).toBeCalledWith("app.server.error.blocked-by-github-allowlist", { gitHubProduct: "cloud" }, { jiraHost });
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "blockedIp");
 	});
 
@@ -225,7 +225,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -233,7 +233,7 @@ describe("GitHub Client", () => {
 			error = e;
 		}
 
-		expect(error).toBeInstanceOf(RateLimitingError);
+		expect(error).toBeInstanceOf(GithubClientRateLimitingError);
 		expect(error.rateLimitReset).toBe(2000);
 
 		verifyMetricsSent("/repos/{owner}/{repo}/pulls", "rateLimiting");
@@ -251,7 +251,7 @@ describe("GitHub Client", () => {
 			}
 		);
 		mockSystemTime(1000000);
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});
@@ -279,7 +279,7 @@ describe("GitHub Client", () => {
 			200, [{ number: 1 }]
 		);
 
-		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, getLogger("test"));
+		const client = new GitHubInstallationClient(getInstallationId(githubInstallationId), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
 		let error: any = undefined;
 		try {
 			await client.getPullRequests("owner", "repo", {});

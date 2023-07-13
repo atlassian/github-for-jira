@@ -2,21 +2,22 @@
 import supertest from "supertest";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
-import { getHashedKey } from "models/sequelize";
 import { getFrontendApp } from "~/src/app";
-import { getLogger } from "config/logger";
-import express, { Application } from "express";
-import { getSignedCookieHeader } from "test/utils/cookies";
+import { Application } from "express";
+import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
-import { getJiraClient } from "~/src/jira/client/jira-client";
+import { when } from "jest-when";
+import { stringFlag, StringFlags } from "config/feature-flags";
+
+const DEFAULT_SCOPES = "user,repo";
 
 jest.mock("config/feature-flags");
 
 describe("Github Configuration", () => {
 	let frontendApp: Application;
 	let sub: Subscription;
-	let client: any;
+	let installation: Installation;
 
 	const authenticatedUserResponse = { login: "test-user" };
 	const adminUserResponse = { login: "admin-user" };
@@ -29,7 +30,7 @@ describe("Github Configuration", () => {
 			jiraClientKey: "myClientKey"
 		});
 
-		await Installation.create({
+		installation = await Installation.create({
 			jiraHost,
 			clientKey: "abc123",
 			//TODO: why? Comment this out make test works?
@@ -38,42 +39,43 @@ describe("Github Configuration", () => {
 			encryptedSharedSecret: "ghi345"
 		});
 
-		frontendApp = express();
-		frontendApp.use((request, _, next) => {
-			request.log = getLogger("test");
-			next();
-		});
-		frontendApp.use(getFrontendApp());
-
-		client = await getJiraClient(jiraHost, 15, undefined, undefined);
+		frontendApp = getFrontendApp();
 	});
 
 	describe("Github Token Validation", () => {
-		it("should return redirect to github oauth flow for GET request if token is missing", async () =>
-			supertest(frontendApp)
+		it("should return redirect to github oauth flow for GET request if token is missing", async () => {
+			when(stringFlag)
+				.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+				.mockResolvedValue(DEFAULT_SCOPES);
+
+			return supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
 				.expect(res => {
 					expect(res.status).toBe(302);
 					expect(res.headers.location).toContain("github.com/login/oauth/authorize");
-				}));
+				});
+		});
 
 		it("should return redirect to github oauth flow for GET request if token is invalid", async () => {
 			githubNock
 				.get("/")
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(403);
+			when(stringFlag)
+				.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
+				.mockResolvedValue(DEFAULT_SCOPES);
 
 			return supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -89,7 +91,7 @@ describe("Github Configuration", () => {
 				.post("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost
 					})
 				)
@@ -105,7 +107,7 @@ describe("Github Configuration", () => {
 				.post("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -161,12 +163,6 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get(`/app`)
-				.reply(200, {
-					html_url: "https://github.com/apps/jira"
-				});
-
-			githubNock
 				.post("/graphql", { query: ViewerRepositoryCountQuery })
 				.query(true)
 				.reply(200, {
@@ -179,17 +175,11 @@ describe("Github Configuration", () => {
 					}
 				});
 
-			jiraNock
-				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "false" })
-				.reply(200, "OK");
-
-			await client.appProperties.create("false");
-
 			await supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token"
 					})
@@ -234,12 +224,6 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get("/app")
-				.reply(200, {
-					html_url: "https://github.com/apps/jira"
-				});
-
-			githubNock
 				.post("/graphql", { query: ViewerRepositoryCountQuery })
 				.query(true)
 				.reply(403, {
@@ -250,7 +234,7 @@ describe("Github Configuration", () => {
 				.get("/github/configuration")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						jiraHost,
 						githubToken: "token2"
 					})
@@ -266,23 +250,19 @@ describe("Github Configuration", () => {
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({ jiraHost })
+					generateSignedSessionCookieHeader({ jiraHost })
 				)
 				.expect(401);
 		});
 
 		it("should return a 401 if no Jira host present in session", async () => {
-			githubNock
-				.get("/")
-				.matchHeader("Authorization", /^(Bearer|token) .+$/i)
-				.reply(200);
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token"
 					})
 				)
@@ -313,7 +293,7 @@ describe("Github Configuration", () => {
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -349,7 +329,7 @@ describe("Github Configuration", () => {
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -368,7 +348,7 @@ describe("Github Configuration", () => {
 				.send({})
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
@@ -377,7 +357,6 @@ describe("Github Configuration", () => {
 		});
 
 		it("should return a 200 and install a Subscription", async () => {
-			const jiraHost = "test-jira-host";
 
 			// This is for github token validation check
 			githubNock
@@ -398,34 +377,30 @@ describe("Github Configuration", () => {
 				.reply(200, organizationAdminResponse);
 
 			jiraNock
-				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": "true" })
+				.put("/rest/atlassian-connect/latest/addons/com.github.integration.test-atlassian-instance/properties/is-configured", { "isConfigured": true })
 				.reply(200, "OK");
-
-			const jiraClientKey = "a-unique-client-key-" + new Date().getTime();
-			await client.appProperties.create("true");
 
 			await supertest(frontendApp)
 				.post("/github/configuration")
 				.send({
-					installationId: 1,
-					clientKey: jiraClientKey
+					installationId: 1
 				})
 				.type("form")
 				.set(
 					"Cookie",
-					getSignedCookieHeader({
+					generateSignedSessionCookieHeader({
 						githubToken: "test-github-token",
 						jiraHost
 					})
 				)
 				.expect(200);
 
-			const subInDB = await Subscription.getAllForClientKey(getHashedKey(jiraClientKey));
+			const subInDB = await Subscription.getAllForClientKey(installation.clientKey);
 			expect(subInDB.length).toBe(1);
 			expect(subInDB[0]).toEqual(expect.objectContaining({
 				gitHubInstallationId: 1,
-				jiraClientKey: getHashedKey(jiraClientKey),
-				plainClientKey: jiraClientKey
+				jiraClientKey: installation.clientKey,
+				plainClientKey: null
 			}));
 		});
 	});

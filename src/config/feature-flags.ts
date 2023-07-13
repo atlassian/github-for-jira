@@ -13,34 +13,42 @@ const launchdarklyClient = LaunchDarkly.init(envVars.LAUNCHDARKLY_KEY || "", {
 
 export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
-	ASSOCIATE_PR_TO_ISSUES_IN_BODY = "associate-pr-to-issues-in-body",
 	VERBOSE_LOGGING = "verbose-logging",
-	REGEX_FIX = "regex-fix",
-	USE_NEW_GITHUB_CLIENT_FOR_INSTALLATION_API = "use-new-github-client-for-installation-api",
-	RETRY_ALL_ERRORS = "retry-all-errors",
-	GHE_SERVER = "ghe_server",
-	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery",
-	TAG_BACKFILL_REQUESTS = "tag-backfill-requests",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	USE_REPO_ID_TRANSFORMER = "use-repo-id-transformer",
-	USE_OUTBOUND_PROXY_FOR_OUATH_ROUTER = "use-outbound-proxy-for-oauth-router",
-	SERVICE_ASSOCIATIONS_FOR_DEPLOYMENTS = "service-associations-for-deployments",
-	ISSUEKEY_REGEX_CHAR_LIMIT = "issuekey-regex-char-limit",
-	USE_SHARED_PR_TRANSFORM = "use-shared-pr-transform",
-	NEW_JWT_VALIDATION = "new-jwt-validation",
-	RELAX_GHE_URLS_CHECK = "relax-ghe-url-check"
+	REPO_CREATED_EVENT = "repo-created-event",
+	JIRA_ADMIN_CHECK = "jira-admin-check",
+	REMOVE_STALE_MESSAGES = "remove-stale-messages",
+	USE_NEW_PULL_ALGO = "use-new-pull-algo",
+	USE_DYNAMODB_FOR_DEPLOYMENT_WEBHOOK = "use-dynamodb-for-deployment-webhook",
+	USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL = "use-dynamodb-for-deployment-backfill",
+	LOG_CURLV_OUTPUT = "log-curlv-output",
+	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
+	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
+	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
+	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
+	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
+	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
+	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 }
 
 export enum StringFlags {
+	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	OUTBOUND_PROXY_SKIPLIST = "outbound-proxy-skiplist"
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
+	GHE_API_KEY = "ghe-encrypted-api-key"
 }
 
 export enum NumberFlags {
 	GITHUB_CLIENT_TIMEOUT = "github-client-timeout",
 	SYNC_MAIN_COMMIT_TIME_LIMIT = "sync-main-commit-time-limit",
-	SYNC_BRANCH_COMMIT_TIME_LIMIT = "sync-branch-commit-time-limit",
+	PREEMPTIVE_RATE_LIMIT_THRESHOLD = "preemptive-rate-limit-threshold",
+	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
+	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
+	BACKFILL_PAGE_SIZE = "backfill-page-size",
+	BACKFILL_DEPLOYMENT_EXTRA_PAGES = "backfill-deployment-extra-pages",
+	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
+	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
 
 const createLaunchdarklyUser = (key?: string): LDUser => {
@@ -81,17 +89,13 @@ export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, lis
 	launchdarklyClient.on(`update:${flag}`, listener);
 };
 
-export const isBlocked = async (installationId: number, logger: Logger): Promise<boolean> => {
+export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {
 	try {
-		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]");
+		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
 		return blockedInstallations.includes(installationId);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
 	}
-};
-
-export const shouldTagBackfillRequests = async (): Promise<boolean> => {
-	return booleanFlag(BooleanFlags.TAG_BACKFILL_REQUESTS);
 };

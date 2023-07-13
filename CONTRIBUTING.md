@@ -75,7 +75,7 @@ Once you've set up your GitHub app and cloned this repo, copy the file `.env.dev
 + `GITHUB_CLIENT_SECRET`: You'll need to generate a new one on your GitHub app page by hitting the `Generate a new client secret` button. Copy and paste the generated secret.
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing on. If you don't have one now, [please set the value of this variable from the steps mentioned here](#create-your-jira-instance).
-+ `INSTANCE_NAME`: Your Jira app name - will show as "GitHub for Jira (instance-name)"
++ `APP_KEY`: Your Jira app key - need to be unique for your development app
 
 Lastly, you need to replace the value of the follow variables in the global `.env` file:
 
@@ -88,12 +88,12 @@ The first time you run the app, simply run:
 ```
 yarn install # installs node modules
 docker-compose up # Spin up docker containers
+yarn start #Spin up web server and worker
 ```
 
-That's it.  Everything is ran in docker-compose, including redis, postgres, ngrok and the app (main and worker thread).
-If you want to debug, you can connect to the remote port of 9229 for the main thread and 9230 for the worker thread in docker.  Any changes to the code will restart the node server automatically.
+That's it.  Dependant services ran in docker-compose, including redis, postgres and ngrok. And now to run the app (main and worker thread), please run in local `yarn start`.
 For tests, run `yarn test`.
-If you want to run a different tunneling tool, run `docker-compose up app` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://app:8080`.
+If you want to run a different tunneling tool, run `docker-compose up redis postgres localstack cryptor` and `yarn start` instead as it will only bring up the app and its dependencies (redis & postgres).  You can then run you tunnelling tool to point to `http://localhost:8080`.
 
 ### Installing the App
 
@@ -131,7 +131,7 @@ That being said, here are the steps needed to create a Pull Request for us to re
 1. [Sign the CLA first!](#contributor-license-agreement)
 1. Fork the repository.
 1. Do your changes either on the main branch or create a new one.
-1. Make sure the tests pass on your machine with `yarn test` and the build works with `yarn run build`.  If you're adding new functionality, please add tests to reflect this.
+1. Make sure the tests pass on your machine with `yarn test` and the build works with `yarn run precommit`.  If you're adding new functionality, please add tests to reflect this.
 1. Commit and Push your changes - verify it passes all checks.
 1. Submit your pull request with a detailed message about what's changed.
 1. Wait for us to review and answer questions/make changes where requested.

@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { GithubAuthMiddleware, GithubOAuthRouter } from "./github-oauth-router";
+import {
+	GithubAuthMiddleware,
+	GithubOAuthCallbackGet, GithubOAuthLoginGet,
+	OAUTH_CALLBACK_SUBPATH
+} from "./github-oauth";
 import { csrfMiddleware } from "middleware/csrf-middleware";
 import { GithubSubscriptionRouter } from "./subscription/github-subscription-router";
 import { GithubSetupRouter } from "routes/github/setup/github-setup-router";
@@ -14,24 +18,32 @@ import { GithubCreateBranchRouter } from "routes/github/create-branch/github-cre
 import { GithubRepositoryRouter } from "routes/github/repository/github-repository-router";
 import { GithubBranchRouter } from "routes/github/branch/github-branch-router";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
-import { Errors } from "config/errors";
-import { NextFunction, Request, Response } from "express";
-
-// TODO - Once JWT is passed from Jira for create branch this midddleware is obsolete.
-const JiraHostFromQueryParamMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const jiraHost = req.query?.jiraHost as string;
-	if (!jiraHost) {
-		req.log.warn(Errors.MISSING_JIRA_HOST);
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return;
-	}
-	res.locals.jiraHost = jiraHost;
-	next();
-};
+import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-post";
+import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
+import GithubSubscriptionDeferredInstallRouter
+	from "./subscription-deferred-install/github-subscription-deferred-install-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
+
 GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
+
+// We want to restrict the tail of OAuth flow to the same scope as the starting point had (where GitHubOAuthMiddleware
+// fired), therefore we are not including neither jira*middlewares nor github*middlewares. GithubOAuthCallbackGet will
+// get all the data needed from session (which is a secure storage) to obtain the token and then redirect to the
+// original URL with all the further restrictions that are in place there.
+//
+// We don't want to artificially limit ourselves by including those middlewares, because there are scenarios when
+// OAuth flow was triggered outside of Jira admin scope (e.g. create-branch, or approve-connection).
+//
+// As a mental model, consider it as a logical continuation of the GitHubOAuthGet, where the state was temporarily serialized
+// and saved to a secure storage to fetch some data from GitHub asynchronosuly.
+//
+// This route could've been placed before :UUID parameter (because we are not using it, and shouldn't be using!
+// The mental model is that we are continuing GitHubOAuthGet from where it stopped, not adding anything outside),
+// however it is required here by historical reasons (initially we implemented it with :UUID, which means
+// our customers have some GitHub Enterprise apps that have callback URLs with UUID).
+subRouter.get(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
 
 // Webhook Route
 subRouter.post("/webhooks",
@@ -39,14 +51,21 @@ subRouter.post("/webhooks",
 	returnOnValidationError,
 	WebhookReceiverPost);
 
-// Create-branch is seperated above since it currently relies on query param to extract the jirahost
-subRouter.use("/create-branch", JiraHostFromQueryParamMiddleware, GithubServerAppMiddleware, GithubAuthMiddleware, csrfMiddleware, GithubCreateBranchRouter);
-
-// OAuth Routes
-subRouter.use(GithubOAuthRouter);
+// Is called by GitHub admin, not Jira admin, therefore sits before jiraSymmetricMiddleware
+subRouter.use("/subscription-deferred-install", GithubSubscriptionDeferredInstallRouter);
 
 subRouter.use(jiraSymmetricJwtMiddleware);
 subRouter.use(GithubServerAppMiddleware);
+
+subRouter.use("/create-branch", csrfMiddleware, GithubCreateBranchRouter);
+subRouter.use("/repository", csrfMiddleware, GithubRepositoryRouter);
+subRouter.use("/branch", csrfMiddleware, GithubBranchRouter);
+
+subRouter.use(jiraAdminPermissionsMiddleware); // This must stay after jiraSymmetricJwtMiddleware
+
+subRouter.get("/login",  GithubOAuthLoginGet);
+
+subRouter.post("/encrypt/header", GithubEncryptHeaderPost);
 
 // CSRF Protection Middleware for all following routes
 subRouter.use(csrfMiddleware);
@@ -62,8 +81,3 @@ subRouter.use("/configuration", GithubConfigurationRouter);
 
 // TODO: remove optional "s" once we change the frontend to use the proper delete method
 subRouter.use("/subscriptions?", GithubSubscriptionRouter);
-
-
-subRouter.use("/repository", GithubRepositoryRouter);
-
-subRouter.use("/branch", GithubBranchRouter);

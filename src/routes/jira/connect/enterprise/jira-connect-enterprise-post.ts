@@ -1,3 +1,4 @@
+import Logger from "bunyan";
 import { Request, Response } from "express";
 import { GitHubServerApp } from "models/github-server-app";
 import { validateUrl } from "utils/validate-url";
@@ -6,7 +7,11 @@ import { metricError } from "config/metric-names";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { createAnonymousClient } from "utils/get-github-client-config";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GithubClientError } from "~/src/github/client/github-client-errors";
+import { AxiosError, AxiosResponse } from "axios";
+import { isUniquelyGitHubServerHeader } from "utils/http-headers";
+import { GheConnectConfig, GheConnectConfigTempStorage } from "utils/ghe-connect-config-temp-storage";
+import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
 
 const GITHUB_CLOUD_HOSTS = ["github.com", "www.github.com"];
 
@@ -25,7 +30,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
 	}
-	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj);
+	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
@@ -33,6 +38,24 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
+};
+
+const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
+	if (!response) {
+		logger.info("No response, cannot conclude if coming from GHE or not");
+		return false;
+	}
+	return !!Object.keys(response.headers).find(isUniquelyGitHubServerHeader) ||
+		response.headers["server"] === "GitHub.com";
+};
+
+const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, installationId: number) => {
+	const connectConfigUuid = await (new GheConnectConfigTempStorage()).store(gheConnectConfig, installationId);
+	res.status(200).send({ success: true, connectConfigUuid, appExists: false });
+};
+
+const useExistingConfigAndRespond200 = async (res: Response, githubServerApp: GitHubServerApp) => {
+	res.status(200).send({ success: true, connectConfigUuid: githubServerApp.uuid, appExists: true });
 };
 
 export const JiraConnectEnterprisePost = async (
@@ -44,7 +67,10 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const { gheServerURL } = req.body;
+	const gheServerURL = req.body.gheServerURL?.trim();
+	const apiKeyHeaderName = req.body.apiKeyHeaderName?.trim();
+	const apiKeyValue = req.body.apiKeyValue?.trim();
+
 	const { id: installationId } = res.locals.installation;
 
 	const jiraHost = res.locals.jiraHost;
@@ -62,6 +88,13 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
+	const maybeApiKeyInputsError = validateApiKeyInputsAndReturnErrorIfAny(apiKeyHeaderName, apiKeyValue);
+	if (maybeApiKeyInputsError) {
+		req.log.warn({ apiKeyHeaderName, apiKeyValue }, maybeApiKeyInputsError);
+		res.sendStatus(400); // Let's not bother too much: the same validation happened in frontend
+		return;
+	}
+
 	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).hostname)) {
 		res.status(200).send({ success: false, errors: [ { code: ErrorResponseCode.CLOUD_HOST } ] });
 		req.log.info("The entered URL is GitHub cloud site, return error");
@@ -69,20 +102,53 @@ export const JiraConnectEnterprisePost = async (
 		return;
 	}
 
-	try {
-		const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
+	const gitHubServerApps = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(gheServerURL, installationId);
 
-		if (gitHubServerApps?.length) {
-			req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
-			res.status(200).send({ success: true, appExists: true });
+	const gitHubConnectConfig: GheConnectConfig = {
+		serverUrl: gheServerURL,
+		apiKeyHeaderName: apiKeyHeaderName || null,
+		encryptedApiKeyValue: apiKeyValue
+			? await GitHubServerApp.encrypt(jiraHost, apiKeyValue)
+			: null
+	};
+
+	if (gitHubServerApps?.length) {
+		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
+		await useExistingConfigAndRespond200(res, gitHubServerApps[0]);
+		return;
+	}
+
+	req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
+
+	try {
+		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
+			apiKeyHeaderName
+				? {
+					headerName: apiKeyHeaderName,
+					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
+				}
+				: undefined
+		);
+
+		// We want to simulate a production-like call, that's why call real endpoint with
+		// some fake Auth header
+		const response = await client.getPage(TIMEOUT_PERIOD_MS, "/api/v3/rate_limit", {
+			authorization: "Bearer ghs_fake0fake1fake2w1xVgkCPL2vk8L52AeEkv"
+		});
+
+		if (!isResponseFromGhe(req.log, response)) {
+			req.log.warn("Received OK response, but not GHE server");
+			res.status(200).send({
+				success: false, errors: [{
+					code: ErrorResponseCode.CANNOT_CONNECT,
+					reason: "Received OK, but the host is not GitHub Enterprise server"
+				}]
+			});
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
 			return;
 		}
 
-		req.log.debug(`No existing GitHub apps found for url: ${gheServerURL}. Making request to provided url.`);
-
-		const client = await createAnonymousClient(gheServerURL, jiraHost, req.log);
-		await client.getMainPage(TIMEOUT_PERIOD_MS);
-		res.status(200).send({ success: true, appExists: false });
+		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
 		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
@@ -90,28 +156,40 @@ export const JiraConnectEnterprisePost = async (
 			jiraHost: jiraHost
 		});
 	} catch (err) {
-		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
-		const codeOrStatus = "" + (err.code || err.response.status);
+		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
-		if (await booleanFlag(BooleanFlags.RELAX_GHE_URLS_CHECK, jiraHost)) {
-			req.log.info({ err, gheServerURL }, `Couldn't access GHE host, result of whether skip the check is ${!err.code && err.response?.status}`);
-			if (!err.code && err.response?.status) {
-				//err.code means there's error on the tcp/https connection,
-				//err.status means traffic reach signals, but server reject it.
-				//as long as there's no code and a status, means server returns something
-				//so the domain name is reachable, it is just it required some api tokens to be accessible
-				res.status(200).send({ success: true, appExists: false });
-				return;
-			}
+		req.log.info({ err }, `Error from GHE... but did we hit GHE?!`);
+		if (isResponseFromGhe(req.log, axiosError.response)) {
+			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
+			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
+			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				source: AnalyticsTrackSource.GitHubEnterprise,
+				jiraHost: jiraHost
+			});
+			return;
 		}
+
+		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status);
+		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
+
+		const reasons = [err.message];
+		reasons.push(axiosError.message || "");
+
+		reasons.push(
+			isInteger(codeOrStatus)
+				? `Received ${codeOrStatus} response.`
+				: codeOrStatus
+		);
 
 		res.status(200).send({
 			success: false, errors: [{
 				code: ErrorResponseCode.CANNOT_CONNECT,
-				reason:
-					isInteger(codeOrStatus)
-						? `received ${codeOrStatus} response`
-						: codeOrStatus
+				reason: reasons
+					.filter(item => !!item)
+					.map(reason =>
+						reason.trim().replace(/\.*$/, ""))
+					.join(". ")
 			}]
 		});
 		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, codeOrStatus);

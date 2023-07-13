@@ -1,5 +1,5 @@
 import { Installation } from "models/installation";
-import express, { Express, NextFunction, Request, Response } from "express";
+import express, { Express } from "express";
 import { RootRouter } from "routes/router";
 import supertest from "supertest";
 import { getLogger } from "config/logger";
@@ -20,19 +20,12 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		});
 
 		app = express();
-		app.use((req: Request, res: Response, next: NextFunction) => {
-			res.locals = { installation };
-			req.log = getLogger("test");
-			req.session = { jiraHost };
-			req.params = { uuid };
-			next();
-		});
 		app.use(RootRouter);
 
 		jwt = encodeSymmetric({
 			qsh: "context-qsh",
 			iss: "jira-client-key"
-		}, await installation.decrypt("encryptedSharedSecret"));
+		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	});
 
 	it("should return 202 when correct uuid and installation id are passed", async () => {
@@ -72,7 +65,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should use existing privateKey if new privateKey is not passed in as body", async () => {
 
-		let existingApp = await GitHubServerApp.install({
+		let existingApp: GitHubServerApp = await GitHubServerApp.install({
 			uuid,
 			appId: 1,
 			gitHubAppName: "my awesome app",
@@ -104,9 +97,9 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			.send(payload)
 			.expect(202);
 
-		existingApp = await GitHubServerApp.findByPk(existingApp.id);
+		existingApp =(await GitHubServerApp.findByPk(existingApp.id))!;
 
-		expect(await existingApp.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
+		expect(await existingApp?.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
 	});
 
 	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {
@@ -127,6 +120,8 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 			webhookSecret: "newSecret",
 			gitHubClientId: "Iv1.msdnf2893rwhdbf",
 			gitHubClientSecret: "secret",
+			apiKeyHeaderName: "myNewApiKey",
+			apiKeyValue: "myApiKey",
 			uuid,
 			jiraHost
 		};
@@ -142,9 +137,78 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
 
 		expect(restoredApp.gitHubAppName).toEqual("newName");
+		expect(restoredApp.apiKeyHeaderName).toEqual("myNewApiKey");
 		expect(await restoredApp.getDecryptedWebhookSecret(jiraHost)).toEqual("newSecret");
 		expect(await restoredApp.getDecryptedPrivateKey(jiraHost)).toEqual("privatekey");
 		expect(await restoredApp.getDecryptedGitHubClientSecret(jiraHost)).toEqual("secret");
+		expect(await restoredApp.getDecryptedApiKeyValue(jiraHost)).toEqual("myApiKey");
+	});
+
+	it.each(["set-cookie: blah", "foo:", ":foo"])("validates API key fields %s", async (apiKeyNameValue) => {
+		await GitHubServerApp.install({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id
+		}, jiraHost);
+
+		const payload ={
+			gitHubAppName: "newName",
+			webhookSecret: "newSecret",
+			gitHubClientId: "Iv1.msdnf2893rwhdbf",
+			gitHubClientSecret: "secret",
+			apiKeyHeaderName: apiKeyNameValue.split(":")[0].trim(),
+			apiKeyValue: apiKeyNameValue.split(":")[1].trim(),
+			uuid,
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(400);
+	});
+
+	it("should drop API key values when not provided", async () => {
+		await GitHubServerApp.install({
+			uuid,
+			appId: 1,
+			gitHubAppName: "my awesome app",
+			gitHubBaseUrl: "http://myinternalinstance.com",
+			gitHubClientId: "lvl.1n23j12389wndd",
+			gitHubClientSecret: "secret",
+			webhookSecret: "anothersecret",
+			privateKey: "privatekey",
+			installationId: installation.id,
+			apiKeyHeaderName: "myApiKey",
+			encryptedApiKeyValue: "encrypted:myApiKeyValue"
+		}, jiraHost);
+
+		const payload ={
+			uuid,
+			jiraHost
+		};
+
+		await supertest(app)
+			.put(`/jira/connect/enterprise/app/${uuid}`)
+			.query({
+				jwt
+			})
+			.send(payload)
+			.expect(202);
+
+		const restoredApp = (await GitHubServerApp.findForUuid(uuid))!;
+
+		expect(restoredApp.apiKeyHeaderName).toBeNull();
+		expect(restoredApp.encryptedApiKeyValue).toBeNull();
 	});
 
 	it("should return 404 when wrong uuid param is passed", async () => {

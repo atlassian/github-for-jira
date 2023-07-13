@@ -12,6 +12,7 @@ import { compact, isEmpty } from "lodash";
 import { GithubCommitFile, GitHubPushData } from "interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 
+const MAX_COMMIT_HISTORY = 10;
 // TODO: define better types for this file
 const mapFile = (
 	githubFile: GithubCommitFile,
@@ -91,7 +92,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	} = payload;
 
-	if (await isBlocked(gitHubInstallationId, rootLogger)) {
+	if (await isBlocked(jiraHost, gitHubInstallationId, rootLogger)) {
 		rootLogger.warn({ gitHubInstallationId }, "blocking processing of push message because installationId is on the blocklist");
 		return;
 	}
@@ -108,7 +109,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	});
 
-	log.info("Processing push");
+	log.info({ shas, shasCount: shas?.length }, "Processing push");
 
 	const gitHubAppId = payload.gitHubAppConfig?.gitHubAppId;
 
@@ -130,9 +131,14 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 			gitHubAppId,
 			log
 		);
+		if (!jiraClient) {
+			log.info("Halting further execution for push as JiraClient is empty for this installation");
+			return;
+		}
 
+		const recentShas = shas.slice(0, MAX_COMMIT_HISTORY);
 		const commits: JiraCommit[] = await Promise.all(
-			shas.map(async (sha): Promise<JiraCommit> => {
+			recentShas.map(async (sha): Promise<JiraCommit> => {
 				log.info("Calling GitHub to fetch commit info " + sha.id);
 				try {
 					const {
@@ -187,17 +193,17 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 
 		for (const chunk of chunks) {
 			const jiraPayload = {
-				... await transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
+				... transformRepositoryDevInfoBulk(repository, payload.gitHubAppConfig?.gitHubBaseUrl),
 				commits: chunk
 			};
 
 			log.info("Sending data to Jira");
 			try {
 				const jiraResponse = await jiraClient.devinfo.repository.update(jiraPayload);
-
 				webhookReceived && emitWebhookProcessedMetrics(
 					webhookReceived,
 					"push",
+					jiraHost,
 					log,
 					jiraResponse?.status,
 					gitHubAppId

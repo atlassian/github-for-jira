@@ -74,12 +74,15 @@ describe("Workflow Webhook", () => {
 				],
 			properties:
 				{
-					gitHubInstallationId: 1234
+					gitHubInstallationId: 1234,
+					repositoryId: 123
 				},
 			providerMetadata:
 				{
 					product: "GitHub Actions"
-				}
+				},
+			preventTransitions: false,
+			operationType: "NORMAL"
 		}).reply(200);
 
 		mockSystemTime(12345678);

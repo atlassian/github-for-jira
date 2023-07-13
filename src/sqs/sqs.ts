@@ -4,10 +4,10 @@ import { defaultLogLevel, getLogger } from "config/logger";
 import SQS, { ChangeMessageVisibilityRequest, DeleteMessageRequest, Message, ReceiveMessageResult, SendMessageRequest } from "aws-sdk/clients/sqs";
 import { v4 as uuidv4 } from "uuid";
 import { statsd } from "config/statsd";
-import { Tags } from "hot-shots";
 import { sqsQueueMetrics } from "config/metric-names";
-import { stringFlag, StringFlags } from "config/feature-flags";
-import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, SqsTimeoutError } from "~/src/sqs/sqs.types";
+import { ErrorHandler, ErrorHandlingResult, MessageHandler, QueueSettings, SQSContext, SQSMessageContext, BaseMessagePayload, SqsTimeoutError } from "~/src/sqs/sqs.types";
+import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { preemptiveRateLimitCheck } from "utils/preemptive-rate-limit";
 
 //Maximum SQS Delay according to SQS docs https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-delay-queues.html
 const MAX_MESSAGE_DELAY_SEC: number = 15 * 60;
@@ -17,6 +17,7 @@ const MAX_MESSAGE_VISIBILITY_TIMEOUT_SEC: number = 12 * 60 * 60 - 1;
 const DEFAULT_LONG_POLLING_INTERVAL = 4;
 const PROCESSING_DURATION_HISTOGRAM_BUCKETS = "10_100_500_1000_2000_3000_5000_10000_30000_60000";
 const EXTRA_VISIBILITY_TIMEOUT_DELAY = 2;
+const ONE_DAY_MILLI = 24 * 60 * 60 * 1000;
 
 const isNotAFailure = (errorHandlingResult: ErrorHandlingResult) => {
 	return !errorHandlingResult.isFailure;
@@ -31,7 +32,7 @@ const isNotRetryable = (errorHandlingResult: ErrorHandlingResult) => {
  *
  * Allows sending SQS messages, as well as listening to the queue messages.
  */
-export class SqsQueue<MessagePayload> {
+export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 	readonly queueUrl: string;
 	readonly queueName: string;
 	readonly queueRegion: string;
@@ -42,7 +43,7 @@ export class SqsQueue<MessagePayload> {
 	readonly messageHandler: MessageHandler<MessagePayload>;
 	readonly sqs: SQS;
 	readonly log: Logger;
-	readonly metricsTags: Tags;
+	readonly metricsTags: Record<string, string>;
 
 	/**
 	 * Context of the currently active listener, or the last active if the queue stopped
@@ -81,8 +82,9 @@ export class SqsQueue<MessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		logger.info(`Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
-		statsd.increment(sqsQueueMetrics.sent, this.metricsTags);
+		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		statsd.increment(sqsQueueMetrics.sent, this.metricsTags, { jiraHost: payload.jiraHost });
+		return sendMessageResult;
 	}
 
 	/**
@@ -142,7 +144,7 @@ export class SqsQueue<MessagePayload> {
 			return;
 		}
 
-		statsd.increment(sqsQueueMetrics.received, data.Messages.length, this.metricsTags);
+		statsd.incrementWithValue(sqsQueueMetrics.received, data.Messages.length, this.metricsTags, {});
 
 		listenerContext.log.trace("Processing messages batch");
 		await Promise.all(data.Messages.map(message => this.executeMessage(message, listenerContext)));
@@ -233,15 +235,47 @@ export class SqsQueue<MessagePayload> {
 		try {
 			await this.sqs.deleteMessage(deleteParams)
 				.promise();
-			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags);
+			statsd.increment(sqsQueueMetrics.deleted, this.metricsTags, { jiraHost: context.payload?.jiraHost });
 			context.log.debug("Successfully deleted message from queue");
 		} catch (err) {
 			context.log.warn({ err }, "Error deleting message from the queue");
 		}
 	}
 
+	public async deleteStaleMessages(message: Message, context: SQSMessageContext<MessagePayload>, jiraHost?: string): Promise<boolean> {
+		if (!await booleanFlag(BooleanFlags.REMOVE_STALE_MESSAGES, jiraHost)) {
+			return false;
+		}
+		const TARGETED_QUEUES = ["deployment"];
+		if (!message?.Body || !TARGETED_QUEUES.includes(this.queueName)) {
+			return false;
+		}
+
+		const messageBody = JSON.parse(message.Body);
+		const { webhookReceived } = messageBody;
+
+		if (Date.now() - webhookReceived > ONE_DAY_MILLI) {
+			try {
+				await this.deleteMessage(context);
+				context.log.warn(
+					{ deletedMessageId: message.MessageId },
+					`Deleted stale message from ${this.queueName} queue`
+				);
+				return true;
+			} catch (error) {
+				context.log.error(
+					{ error, deletedMessageId: message.MessageId },
+					`Failed to delete stale message from ${this.queueName} queue`
+				);
+				return false;
+			}
+		}
+
+		return false;
+	}
+
 	private async executeMessage(message: Message, listenerContext: SQSContext): Promise<void> {
-		const payload = message.Body ? JSON.parse(message.Body) : {};
+		const payload: MessagePayload = message.Body ? JSON.parse(message.Body) : {};
 
 		// Sets the log level depending on FF for the specific jira host
 		listenerContext.log.level(await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, payload?.jiraHost));
@@ -254,7 +288,11 @@ export class SqsQueue<MessagePayload> {
 			log: listenerContext.log.child({
 				messageId: message.MessageId,
 				executionId: uuidv4(),
-				queue: this.queueName
+				queue: this.queueName,
+				jiraHost: payload?.jiraHost,
+				installationId: payload?.installationId,
+				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
+				webhookId: payload?.webhookId
 			}),
 			receiveCount,
 			lastAttempt: receiveCount >= this.maxAttempts
@@ -264,6 +302,20 @@ export class SqsQueue<MessagePayload> {
 
 		try {
 			const messageProcessingStartTime = Date.now();
+			if (await this.deleteStaleMessages(message, context, payload?.jiraHost)) return;
+
+			const rateLimitCheckResult = await preemptiveRateLimitCheck(context, this);
+			if (rateLimitCheckResult.isExceedThreshold) {
+
+				// We have found out that the rate limit quota has been used and exceed the configured threshold.
+				// Next step is to postpone the processing.
+				// For rate limiting, we don't want to use the changeVisibilityTimeout as that will make msg lands in the DLQ and lost.
+				// Therefore, sending a new msg instead of keep polling GitHub until rate limit is raised.
+				const { MessageId } = await this.sendMessage({ ...payload, rateLimited: true }, rateLimitCheckResult.resetTimeInSeconds, context.log);
+				await this.deleteMessage(context);
+				context.log.warn({ newMessageId: MessageId, deletedMessageId: message.MessageId }, "Preemptive rate limit threshold exceeded, rescheduled new one and deleted the origin msg");
+				return;
+			}
 
 			// Change message visibility timeout to the max processing time
 			// plus EXTRA_VISIBILITY_TIMEOUT_DELAY to have some room for error handling in case of a timeout
@@ -276,7 +328,7 @@ export class SqsQueue<MessagePayload> {
 			await Promise.race([this.messageHandler(context), timeoutPromise]);
 
 			const messageProcessingDuration = Date.now() - messageProcessingStartTime;
-			this.sendProcessedMetrics(messageProcessingDuration);
+			this.sendProcessedMetrics(messageProcessingDuration, payload?.jiraHost);
 			await this.deleteMessage(context);
 		} catch (err) {
 			await this.handleSqsMessageExecutionError(err, context);
@@ -284,14 +336,13 @@ export class SqsQueue<MessagePayload> {
 	}
 
 	private async handleSqsMessageExecutionError(err, context: SQSMessageContext<MessagePayload>) {
-		const unsafeLogger = getLogger("message-error-handler-unsafe", { level: "warn", unsafe: true });
 		try {
-			unsafeLogger.warn({ err, context }, "Failed message");
+			context.log.warn({ err }, "Failed message");
 			const errorHandlingResult = await this.errorHandler(err, context);
 
 			if (errorHandlingResult.isFailure) {
 				context.log.error({ err }, "Error while executing SQS message");
-				statsd.increment(sqsQueueMetrics.failed, this.metricsTags);
+				statsd.increment(sqsQueueMetrics.failed, this.metricsTags, { jiraHost: context.payload?.jiraHost });
 			} else {
 				context.log.warn({ err }, "Expected exception while executing SQS message. Not an error, deleting the message.");
 			}
@@ -306,11 +357,10 @@ export class SqsQueue<MessagePayload> {
 				context.log.warn("Deleting the message because it has reached the maximum amount of retries");
 				await this.deleteMessage(context);
 			} else {
-				unsafeLogger.error({ errorHandlingResult, err, context }, "SQS message visibility timeout changed");
+				context.log.warn({ err }, "SQS message visibility timeout changed");
 				await this.changeVisibilityTimeoutIfNeeded(errorHandlingResult, context.message, context.log);
 			}
 		} catch (errorHandlingException) {
-			unsafeLogger.error({ err: errorHandlingException, originalError: err , context }, "Error while performing error handling on SQS message");
 			context.log.error({ err: errorHandlingException, originalError: err }, "Error while performing error handling on SQS message");
 		}
 	}
@@ -327,7 +377,7 @@ export class SqsQueue<MessagePayload> {
 		return context.receiveCount >= this.maxAttempts;
 	}
 
-	private async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
+	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
 			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
 			return;
@@ -355,14 +405,14 @@ export class SqsQueue<MessagePayload> {
 		}
 	}
 
-	private sendProcessedMetrics(messageProcessingDuration: number) {
-		statsd.increment(sqsQueueMetrics.completed, this.metricsTags);
+	private sendProcessedMetrics(messageProcessingDuration: number, jiraHost: string | undefined) {
+		statsd.increment(sqsQueueMetrics.completed, this.metricsTags, { jiraHost });
 		//Sending histogram metric twice hence it will produce different metrics, first call produces mean, min, max and precentiles metrics
-		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, this.metricsTags);
+		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, this.metricsTags, { jiraHost });
 		//the second call produces only histogram buckets metrics
 		statsd.histogram(sqsQueueMetrics.duration, messageProcessingDuration, {
 			...this.metricsTags,
 			gsd_histogram: PROCESSING_DURATION_HISTOGRAM_BUCKETS
-		});
+		}, { jiraHost });
 	}
 }

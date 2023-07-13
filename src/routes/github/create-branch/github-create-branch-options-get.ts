@@ -4,33 +4,25 @@ import { Subscription } from "~/src/models/subscription";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { envVars } from "config/env";
 
-// TODO - this entire route could be abstracted out into a genereic get instance route on github/instance
+// TODO - this entire route could be abstracted out into a generic get instance route on github/instance
 export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 
-	const { issueKey, tenantUrl } = req.query;
-	const jiraHostQuery = req.query.jiraHost as string;
-
-	if (!tenantUrl && !jiraHostQuery) {
-		req.log.warn({ req, res }, Errors.MISSING_JIRA_HOST);
-		res.status(400).send(Errors.MISSING_JIRA_HOST);
-		return next();
-	}
-
+	const { issueKey } = req.query;
 	if (!issueKey) {
 		return next(new Error(Errors.MISSING_ISSUE_KEY));
 	}
 
-	const jiraHost = getJiraHostFromTenantUrl(tenantUrl) || jiraHostQuery;
+	const jiraHost = res.locals.jiraHost;
 
 	// TODO move to middleware or shared for create-branch-get
 	const servers = await getGitHubServers(jiraHost);
 
 	if (!servers.hasCloudServer && !servers.gheServerInfos.length) {
-		const instance = process.env.INSTANCE_NAME;
 		res.render("no-configuration.hbs", {
 			nonce: res.locals.nonce,
-			configurationUrl: `${jiraHost}/plugins/servlet/ac/com.github.integration.${instance}/github-select-product-page`
+			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
 		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
@@ -42,16 +34,14 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	}
 
 	const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
-	const encodedJiraHost = encodeURIComponent(jiraHost);
 	// Only has cloud instance
-
 	if (servers.hasCloudServer && servers.gheServerInfos.length == 0) {
-		res.redirect(`/github/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		res.redirect(`/github/create-branch${url.search}`);
 		return;
 	}
 	// Only single GitHub Enterprise connected
 	if (!servers.hasCloudServer && servers.gheServerInfos.length == 1) {
-		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}&jiraHost=${encodedJiraHost}`);
+		res.redirect(`/github/${servers.gheServerInfos[0].uuid}/create-branch${url.search}`);
 		return;
 	}
 
@@ -65,14 +55,6 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName,
 		jiraHost
 	});
-};
-
-const getJiraHostFromTenantUrl = (jiraHostParam): string | undefined =>  {
-	if (!jiraHostParam) {
-		return undefined;
-	}
-	const siteName = jiraHostParam?.substring(0, jiraHostParam?.indexOf("."));
-	return `https://${siteName}.atlassian.net`;
 };
 
 const getGitHubServers = async (jiraHost: string) => {

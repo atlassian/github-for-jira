@@ -1,24 +1,186 @@
 import Logger, { createLogger, LogLevel, Serializers, Stream } from "bunyan";
-import { isArray, isString, merge, omit } from "lodash";
-import { SafeRawLogStream, UnsafeRawLogStream } from "utils/logger-utils";
+import { isArray, isString, merge, omit, mapKeys } from "lodash";
+import { SafeRawLogStream } from "utils/logger-utils";
+import { createHashWithSharedSecret } from "utils/encryption";
+import { canLogHeader } from "utils/http-headers";
+
+const REPO_URL_REGEX = /^(\/api\/v3)?\/repos\/([^/]+)\/([^/]+)\/(.*)$/;
+
+const maybeRemoveOrgAndRepo = (url: string) => {
+	if (url.match(REPO_URL_REGEX)) {
+		return url.replace(REPO_URL_REGEX, (_, maybeV3Prefix, org, repo, rest) => {
+			return [
+				maybeV3Prefix,
+				"repos",
+				createHashWithSharedSecret(decodeURIComponent(org)),
+				createHashWithSharedSecret(decodeURIComponent(repo)),
+				rest
+			].join("/");
+		});
+	}
+	return url;
+};
+
+const COMPARE_URL_REGEX = /^(.*)\/compare\/(.*)\.\.\.(.*)$/;
+
+const isCompareUrl = (url: string) => url.match(COMPARE_URL_REGEX);
+
+const removeBranchesFromCompareUrl = (url: string) =>
+	url.replace(COMPARE_URL_REGEX, (_, prefix, branch1, branch2) => {
+		return [
+			prefix,
+			"compare",
+			createHashWithSharedSecret(decodeURIComponent(branch1)) + "..." +
+			createHashWithSharedSecret(decodeURIComponent(branch2))
+		].join("/");
+	});
+
+const GIT_REF_URL_REGEX = /^(.*)\/git\/ref\/([^/]+)$/;
+
+const isGitRefUrl = (url: string) => url.match(GIT_REF_URL_REGEX);
+
+const removeGitRefFromUrl = (url: string) =>
+	url.replace(GIT_REF_URL_REGEX, (_, prefix, gitRef) =>
+		`${prefix}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
+	);
+
+const USERS_URL_REGEX = /^(\/api\/v3)?\/users\/([^/]+)$/;
+
+const isUsersUrl = (url: string) => url.match(USERS_URL_REGEX);
+
+const removeUserFromUrl = (url: string) =>
+	url.replace(USERS_URL_REGEX, (_, maybeV3Prefix, userName) =>
+		[
+			maybeV3Prefix,
+			"users",
+			createHashWithSharedSecret(decodeURIComponent(userName))
+		].join("/")
+	);
+
+const REST_DEVINFO_BRANCH_URL_REGEX = /^\/rest\/devinfo\/([^/]+)\/repository\/([^/]+)\/branch\/([^/?]+)\?_updateSequenceId=([0-9]+)$/;
+
+const isDevInfoBranchUrl = (url: string) => url.match(REST_DEVINFO_BRANCH_URL_REGEX);
+
+const removeBranchFromDevInfoUrl = (url: string) =>
+	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId) =>
+		[
+			"/rest/devinfo",
+			version,
+			"repository",
+			repoNo,
+			"branch",
+			`${createHashWithSharedSecret(decodeURIComponent(branchaName))}?_updateSequenceId=${updateSequenceId}`
+		].join("/")
+	);
+
+const SEARCH_URL_REGEX = /^\/search\/repositories\?q=([^&=]+)&order=updated$/;
+const CENSORED_SEARCH_URL = "/search/repositories?q=CENSORED&order=updated";
+
+const isSearchRepoUrl = (url: string) => url.match(SEARCH_URL_REGEX);
+
+const CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX = /^(.*)\/owners\/([^/]+)\/repos\/([^/]+)\/branches(.*)$/;
+const isCreateBranchPageBranchesUrl = (url: string) => url.match(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX);
+
+const JIRA_HOST_QUERY_PARAM_REGEX = /jiraHost=(https%3A%2F%2F[\w-]+\.atlassian\.net)/;
+
+const maybeCensorJiraHostInQueryParams = (url: string) => {
+	if (url.match(JIRA_HOST_QUERY_PARAM_REGEX)) {
+		return url.replace(JIRA_HOST_QUERY_PARAM_REGEX, (_, jiraHostEncoded) =>
+			`jiraHost=${createHashWithSharedSecret(decodeURIComponent(jiraHostEncoded))}`);
+	}
+	return url;
+};
+
+
+const removeOwnersAndReposFromUrl = (url: string) =>
+	url.replace(CREATE_BRANCH_PAGE_BRANCHES_URL_REGEX, (_, prefix, owners, repos, suffix) =>
+		[
+			prefix,
+			"owners",
+			createHashWithSharedSecret(decodeURIComponent(owners)),
+			"repos",
+			createHashWithSharedSecret(decodeURIComponent(repos)),
+			"branches"
+		].join("/") + suffix
+	);
 
 const censorUrl = (url) => {
 	if (!url) {
 		return url;
 	}
 	if (typeof url === "string") {
-		if (url.includes("/repos") && url.includes(".jira/config.yml")) {
-			return "CENSORED-PATH-TO-JIRA-CONFIG-YML";
+		if (!url.startsWith("/")) {
+			const censoredUrl = censorUrl("/" + url);
+			return censoredUrl.substr(1);
 		}
-		if (url.includes("/rest/devinfo/0.10/repository/") && url.includes("/branch/")) {
-			const splitUrl = url.split("/branch/", 2);
-			return `${splitUrl[0]}/branch/CENSORED`;
+
+		const censoredUrl =
+			maybeCensorJiraHostInQueryParams(
+				maybeRemoveOrgAndRepo(
+					url
+				));
+
+		if (isCompareUrl(censoredUrl)) {
+			return removeBranchesFromCompareUrl(censoredUrl);
+
+		} else if (isGitRefUrl(censoredUrl)) {
+			return removeGitRefFromUrl(censoredUrl);
+
+		} else if (isUsersUrl(censoredUrl)) {
+			return removeUserFromUrl(censoredUrl);
+
+		} else if (isDevInfoBranchUrl(censoredUrl)) {
+			return removeBranchFromDevInfoUrl(censoredUrl);
+
+		} else if (isSearchRepoUrl(censoredUrl)) {
+			return CENSORED_SEARCH_URL;
+
+		} else if (isCreateBranchPageBranchesUrl(censoredUrl)) {
+			return removeOwnersAndReposFromUrl(censoredUrl);
 		}
+
+		return censoredUrl;
 	}
 	return url;
 };
 
-const responseConfigSerializer = (config) => {
+const MSG_WITH_REPO_NAME_REGEX = /^(.*) Repository with the name '(.*)\/(.*)'.$/;
+
+const censorMessage = (msg) => {
+	if (!msg) {
+		return msg;
+	}
+	if (typeof msg === "string") {
+		if (msg.match(MSG_WITH_REPO_NAME_REGEX)) {
+			return msg.replace(MSG_WITH_REPO_NAME_REGEX, (_, prefix, orgName, repoName) => {
+				return [
+					prefix,
+					"Repository with the name",
+					`'${createHashWithSharedSecret(orgName)}/${createHashWithSharedSecret(repoName)}'.`
+				].join(" ");
+			});
+		}
+	}
+	return msg;
+};
+
+const headersSerializer = (headers) => {
+	if (!headers) {
+		return headers;
+	}
+
+	const ret = mapKeys(headers, (_, key) => key.toLowerCase());
+
+	for (const key in ret) {
+		if (!canLogHeader(key)) {
+			ret[key] = "CENSORED";
+		}
+	}
+
+	return ret;
+};
+
+const axiosConfigSerializer = (config) => {
 	if (!config) {
 		return config;
 	}
@@ -27,20 +189,20 @@ const responseConfigSerializer = (config) => {
 		method: config.method,
 		status: config.status,
 		statusText: config.statusText,
-		headers: config.headers
+		headers: headersSerializer(config.headers)
 	};
 };
 
-const responseSerializer = (res) => {
+const responseSerializer = (res, includeConfig = true, includeRequest = true) => {
 	if (!res) {
 		return res;
 	}
 	return {
 		status: res.status,
 		statusText: res.statusText,
-		headers: res.headers,
-		config: responseConfigSerializer(res.config),
-		request: requestSerializer(res.request)
+		headers: headersSerializer(res.headers),
+		...((includeConfig && res.config) ? { config: axiosConfigSerializer(res.config) } : { }),
+		...((includeRequest && res.request) ? { request: requestSerializer(res.request) } : { })
 	};
 };
 
@@ -48,10 +210,25 @@ const requestSerializer = (req) => req && ({
 	method: req.method,
 	url: censorUrl(req.originalUrl || req.url),
 	path: censorUrl(req.path),
-	headers: req.headers,
+	headers: headersSerializer(req.headers),
 	remoteAddress: req.socket?.remoteAddress,
 	remotePort: req.socket?.remotePort
 });
+
+const graphQlErrorsSerializer = (errors: Array<any>) => (
+	{
+		errors: errors.map(error => errorSerializer(error))
+	}
+);
+
+const sanitiseStackTrace = (stack: string) => {
+	const splitAndSanitised = stack.split("\n").map(line => line.trim()).filter(line => line.startsWith("at "));
+	if (splitAndSanitised.length > 10) {
+		return splitAndSanitised.splice(0, 10).join("\n") + "\n...";
+	} else {
+		return splitAndSanitised.join("\n");
+	}
+};
 
 const errorSerializer = (err) => {
 	if (!err) {
@@ -64,11 +241,43 @@ const errorSerializer = (err) => {
 		err = { message: err };
 	}
 
-	return {
+	const res = {
 		...err,
-		config: responseConfigSerializer(err.config),
-		response: responseSerializer(err.response),
-		request: requestSerializer(err.request)
+		... (err.cause && err.cause !== err ? { cause: errorSerializer(err.cause) } : { }),
+		message: censorMessage(err.message),
+		config: axiosConfigSerializer(err.config),
+		response: responseSerializer(err.response, false, !err.request),
+		request: requestSerializer(err.request),
+		... (err.errors && Array.isArray(err.errors) ? graphQlErrorsSerializer(err.errors) : { }),
+		... (err.task ? { task: taskSerializer(err.task) } : { }),
+		... (err.stack ? { stack: sanitiseStackTrace(err.stack.toString()) } : { })
+	};
+
+	delete res.toJSON;
+	if (err.response && err.request) {
+		delete res.config;
+	}
+
+	return res;
+};
+
+const taskSerializer = (task) => {
+	if (!task) {
+		return task;
+	}
+	const repository = task.repository ? {
+		fullName: createHashWithSharedSecret(task.repository.full_name),
+		id: task.repository.id,
+		name: createHashWithSharedSecret(task.repository.name),
+		owner: {
+			login: createHashWithSharedSecret(task.repository.owner?.login)
+		},
+		updatedAt: task.repository.updated_at
+	} : {};
+
+	return {
+		...task,
+		repository
 	};
 };
 
@@ -80,12 +289,6 @@ const loggerStreamSafe = (): Logger.Stream => ({
 	closeOnExit: false
 });
 
-const loggerStreamUnsafe = (): Logger.Stream => ({
-	type: "raw",
-	stream: new UnsafeRawLogStream(),
-	closeOnExit: false
-});
-
 interface LoggerOptions {
 	fields?: Record<string, unknown>;
 	streams?: Stream[];
@@ -94,25 +297,27 @@ interface LoggerOptions {
 	serializers?: Serializers;
 	src?: boolean;
 	filterHttpRequests?: boolean;
-	unsafe?: boolean;
 }
 
 export const getLogger = (name: string, options: LoggerOptions = {}): Logger => {
 	return createLogger(merge<Logger.LoggerOptions, LoggerOptions>({
 		name,
 		streams: [
-			loggerStreamSafe(),
-			loggerStreamUnsafe()
+			loggerStreamSafe()
 		],
 		level: defaultLogLevel,
 		serializers: {
 			err: errorSerializer,
 			error: errorSerializer,
-			config: responseConfigSerializer,
+			cause: errorSerializer,
+			config: axiosConfigSerializer,
 			res: responseSerializer,
 			response: responseSerializer,
 			req: requestSerializer,
-			request: requestSerializer
+			request: requestSerializer,
+			requestPath: censorUrl,
+			task: taskSerializer,
+			nextTask: taskSerializer
 		},
 		...options.fields
 	}, omit(options, "fields")));

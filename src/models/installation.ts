@@ -3,6 +3,7 @@ import { Subscription } from "./subscription";
 import { getHashedKey, sequelize } from "models/sequelize";
 import { EncryptedModel } from "models/encrypted-model";
 import { EncryptionSecretKeyEnum } from "utils/encryption-client";
+import { getLogger } from "config/logger";
 
 export class Installation extends EncryptedModel {
 	id: number;
@@ -83,7 +84,8 @@ export class Installation extends EncryptedModel {
 			await installation
 				.update({
 					encryptedSharedSecret: payload.sharedSecret,
-					jiraHost: payload.host
+					jiraHost: payload.host,
+					plainClientKey: payload.clientKey
 				})
 				.then(async (record) => {
 					const subscriptions = await Subscription.getAllForClientKey(
@@ -109,6 +111,10 @@ export class Installation extends EncryptedModel {
 		return await Subscription.getAllForClientKey(this.clientKey);
 	}
 }
+
+const LOGGER_HOOK_BEFORE_SAVE = getLogger("installation-hook-beforeSave");
+const LOGGER_HOOK_BEFORE_BULK_CREATE = getLogger("installation-hook-beforeBulkCreate");
+
 
 Installation.init({
 	id: {
@@ -137,12 +143,14 @@ Installation.init({
 	hooks: {
 		beforeSave: async (instance: Installation, opts) => {
 			if (!opts.fields) return;
-			await instance.encryptChangedSecretFields(opts.fields);
+			const optsFields = opts.fields.filter((field): field is string => typeof field === "string");
+			await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_SAVE);
 		},
 		beforeBulkCreate: async (instances: Installation[], opts) => {
 			for (const instance of instances) {
 				if (!opts.fields) return;
-				await instance.encryptChangedSecretFields(opts.fields);
+				const optsFields = opts.fields.filter((field): field is string => typeof field === "string");
+				await instance.encryptChangedSecretFields(optsFields, LOGGER_HOOK_BEFORE_BULK_CREATE);
 			}
 		}
 	},
