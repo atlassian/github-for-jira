@@ -11,6 +11,7 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
+import Error from "../../components/Error";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -26,7 +27,6 @@ type OrgDropdownType = {
 };
 
 const ConfigContainer = styled.div`
-	max-width: 580px;
 	margin: 0 auto;
 `;
 const GitHubOptionContainer = styled.div`
@@ -202,6 +202,7 @@ const ConfigSteps = () => {
 	return (
 		<Wrapper>
 			<SyncHeader />
+			<Error type="info" />
 			<ConfigContainer>
 				<CollapsibleStep
 					step="1"

@@ -13,6 +13,7 @@ const Container = styled.div<ContainerType>`
 	border-radius: ${token("space.050")};
 	padding: ${token("space.400")};
 	margin: ${token("space.400")} 0;
+	box-sizing: border-box;
 	background: ${props => props.isExpanded ? "transparent" : token("elevation.surface.sunken")};
 `;
 const Header = styled.div`
