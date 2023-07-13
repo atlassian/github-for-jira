@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -95,7 +95,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const getJiraHostUrls = useCallback(() => {
+	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
 			setHostUrl({
@@ -103,17 +103,18 @@ const ConfigSteps = () => {
 				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
-	}, []);
+	};
 
-	const getOrganizations = useCallback(async () => {
+	const getOrganizations = async () => {
 		const response = await OAuthManagerInstance.fetchOrgs();
 		setOrganizations(response?.orgs.map((org: any) => ({
 			label: org.account.login,
 			value: org.id,
 		})));
-	}, []);
+	};
 
 	useEffect(() => {
+		getJiraHostUrls();
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
@@ -130,8 +131,6 @@ const ConfigSteps = () => {
 		};
 		window.addEventListener("message", handler);
 		return () => {
-			getJiraHostUrls();
-			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
@@ -141,6 +140,7 @@ const ConfigSteps = () => {
 			if (status) {
 				setLoggedInUser(OAuthManagerInstance.getUserDetails().username);
 				setLoaderForLogin(false);
+				getOrganizations();
 			}
 		});
 	}, [isLoggedIn]);
