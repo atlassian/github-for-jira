@@ -37,6 +37,18 @@ const OauthManager = (): OAuthManagerType => {
 		}
 	}
 
+	async function connectOrg(orgId: string): Promise<boolean> {
+		if (!accessToken) return false;
+
+		try {
+			const response = await ApiRequest.token.connectOrganization(accessToken, orgId);
+			return response.status === 200;
+		} catch (e) {
+			console.error(e, "Failed to fetch organizations");
+			return false;
+		}
+	}
+
 	async function authenticateInGitHub() {
 		const res = await ApiRequest.githubAuth.generateOAuthUrl();
 		if (res.data.redirectUrl && res.data.state) {
@@ -85,6 +97,7 @@ const OauthManager = (): OAuthManagerType => {
 	return {
 		checkValidity,
 		fetchOrgs,
+		connectOrg,
 		authenticateInGitHub,
 		finishOAuthFlow,
 		getUserDetails,

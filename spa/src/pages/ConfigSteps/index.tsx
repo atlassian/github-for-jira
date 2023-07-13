@@ -81,6 +81,7 @@ const ConfigSteps = () => {
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 
+
 	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
@@ -174,9 +175,14 @@ const ConfigSteps = () => {
 		setLoggedInUser("");
 	};
 
-	const connectGitHubOrg = () => {
+	const connectGitHubOrg = async () => {
 		// TODO: API call to connect to an org
-		navigate("/spa/connected");
+		const connected = await OAuthManagerInstance.connectOrg("");
+		if (connected) {
+			navigate("/spa/connected");
+		} else {
+			console.error("Couldn't connect org: ", connected);
+		}
 	};
 
 	return (

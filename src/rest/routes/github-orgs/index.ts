@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import fetchGitHubOrganizations from "./service";
 import { OrganizationsResponse } from "rest-interfaces/oauth-types";
+import { GithubConfigurationPost } from "routes/github/configuration/github-configuration-post";
 
 export const GitHubOrgsRouter = Router({ mergeParams: true });
 
@@ -13,3 +14,5 @@ GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsRespon
 	});
 });
 
+
+GitHubOrgsRouter.post("/", GithubConfigurationPost);
