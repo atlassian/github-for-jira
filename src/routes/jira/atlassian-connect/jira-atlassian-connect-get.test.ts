@@ -113,13 +113,14 @@ describe("Atlassian Connect", () => {
 				actions: {
 					fetchContainers: {
 						templateUrl:
-							"https://test-github-app-instance.com/jira/security/workspaces/containers/search"
+							"https://test-github-app-instance.com/jira/security/workspaces/containers"
 					},
 					fetchWorkspaces: {
 						templateUrl: "https://test-github-app-instance.com/jira/security/workspaces"
 					},
 					searchContainers: {
-						templateUrl: ""
+						templateUrl:
+						"https://test-github-app-instance.com/jira/security/workspaces/containers/search"
 					}
 				},
 				documentationUrl: "https://docs.github.com/code-security",
