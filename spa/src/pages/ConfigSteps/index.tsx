@@ -21,8 +21,6 @@ type HostUrlType = {
 	gheServerUrl: string;
 }
 
-const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
-
 const ConfigContainer = styled.div`
 	max-width: 580px;
 	margin: 0 auto;
@@ -185,14 +183,8 @@ const ConfigSteps = () => {
 		navigate("/spa/connected");
 	};
 
-	const installNewOrg = () => {
-		const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
-		document.cookie = `is-spa=true; expires=${exp.toUTCString()}; path=/`;
-		console.log("------open new tab");
-		const winInstall = window.open("/github/configuration/app-installations", "_blank");
-		winInstall?.addEventListener("close", () => {
-			console.log("------new tab closed");
-			document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+	const installNewOrg = async () => {
+		await OAuthManagerInstance.installNewApp(() => {
 			getOrganizations();
 		});
 	}

@@ -12,3 +12,7 @@ export type UsersGetAuthenticatedResponse = {
 	email: string;
 	login: string;
 };
+
+export type GetGitHubAppsUrlResponse = {
+	appInstallationUrl: string;
+}
