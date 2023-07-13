@@ -3,18 +3,11 @@ import { Errors } from "config/errors";
 import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { RepoSyncState } from "models/reposyncstate";
+import { SecurityContainer } from "./jira-security-workspaces-containers.types";
 
 interface RepoUrlAndRepoId {
 	repoUrl: string,
 	id: number
-}
-
-export interface SecurityContainer {
-	id: string,
-	name: string,
-	url: string,
-	avatarUrl: string,
-	lastUpdatedDate: Date
 }
 
 export const DEFAULT_AVATAR = "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png;";

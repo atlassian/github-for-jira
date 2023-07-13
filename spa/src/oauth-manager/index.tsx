@@ -67,7 +67,7 @@ const OauthManager = (): OAuthManagerType => {
 		if (state !== prevState) return false;
 
 		const token = await ApiRequest.githubAuth.exchangeToken(code, state);
-		if (token.data.accessToken && token.data.refreshToken) {
+		if (token.data.accessToken) {
 			setTokens(token.data.accessToken, token.data.refreshToken);
 			return true;
 		}

@@ -177,8 +177,12 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraWorkspacesRepositoriesGet
 :POST ^/?(?=/|$)^/jira/?(?=/|$)^/workspaces/?(?=/|$)^/repositories/?(?=/|$)^/associate/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraWorkspacesRepositoriesAssociate
-:POST ^/?(?=/|$)^/jira/?(?=/|$)^/security/?(?=/|$)^/workspaces/containers/?(?=/|$)^/search/?$
+:POST ^/?(?=/|$)^/jira/?(?=/|$)^/security/?(?=/|$)^/workspaces/?(?=/|$)^/containers/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraSecurityWorkspacesContainersPost
+:GET ^/?(?=/|$)^/jira/?(?=/|$)^/security/?(?=/|$)^/workspaces/?(?=/|$)^/containers/search/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraSecurityWorkspacesContainersSearchGet
+:POST ^/?(?=/|$)^/jira/?(?=/|$)^/security/?(?=/|$)^/workspaces/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,JiraSecurityWorkspacesPost
 :GET ^/?(?=/|$)^/jira/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,csrf,jiraSymmetricJwtMiddleware,jiraAdminPermissionsMiddleware,JiraGet
 :GET ^/?(?=/|$)^/jira/?(?=/|$)^/configuration/?(?=/|$)^/?$
