@@ -16,6 +16,7 @@ export type UsersGetAuthenticatedResponse = {
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }
+
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }
