@@ -33,7 +33,7 @@ const OauthManager = (): OAuthManagerType => {
 			return response.data;
 		} catch (e) {
 			console.error(e, "Failed to fetch organizations");
-			return [];
+			return undefined;
 		}
 	}
 

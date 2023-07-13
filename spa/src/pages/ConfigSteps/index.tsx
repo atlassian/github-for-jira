@@ -115,10 +115,12 @@ const ConfigSteps = () => {
 
 	const getOrganizations = async () => {
 		const response = await OAuthManagerInstance.fetchOrgs();
-		setOrganizations(response?.orgs.map((org: any) => ({
-			label: org.account.login,
-			value: org.id,
-		})));
+		if (response) {
+			setOrganizations(response?.orgs.map((org: any) => ({
+				label: org.account.login,
+				value: org.id,
+			})));
+		}
 	};
 
 	useEffect(() => {
