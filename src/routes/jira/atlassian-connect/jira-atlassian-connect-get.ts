@@ -77,13 +77,13 @@ const jiraSecurityInfoProvider = {
 	documentationUrl: "https://docs.github.com/code-security",
 	actions: {
 		fetchContainers: {
-			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
+			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers`
 		},
 		fetchWorkspaces: {
 			templateUrl: `${envVars.APP_URL}/jira/security/workspaces`
 		},
 		searchContainers: {
-			templateUrl: ""
+			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
 		}
 	},
 	"name": {
@@ -94,6 +94,7 @@ const jiraSecurityInfoProvider = {
 
 export const getSecurityContainerActionUrls = [
 	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
+	jiraSecurityInfoProvider.actions.searchContainers.templateUrl,
 	jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl
 ];
 
