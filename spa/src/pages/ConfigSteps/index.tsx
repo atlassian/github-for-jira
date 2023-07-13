@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Button from "@atlaskit/button";
+import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
@@ -83,8 +83,11 @@ const ConfigSteps = () => {
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
+
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
+	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
+	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
 	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
@@ -181,12 +184,14 @@ const ConfigSteps = () => {
 
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
+			setLoaderForOrgConnection(true);
 			const connected = await OAuthManagerInstance.connectOrg(selectedOrg?.value);
 			if (connected) {
 				navigate("/spa/connected");
 			} else {
 				console.error("Couldn't connect org: ", connected);
 			}
+			setLoaderForOrgConnection(false);
 		}
 	};
 
@@ -278,10 +283,16 @@ const ConfigSteps = () => {
 							<SelectDropdown
 								options={organizations}
 								label="Select organization"
-								onChange={(value) => setSelectedOrg(value)}
+								onChange={(value) => {
+									setOrgConnectionDisabled(false);
+									setSelectedOrg(value);
+								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
-							<Button appearance="primary" onClick={connectGitHubOrg}>Connect GitHub organization</Button>
+							{
+								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+									<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+							}
 						</>
 					</CollapsibleStep>
 				}
