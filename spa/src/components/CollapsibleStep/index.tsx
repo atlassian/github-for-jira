@@ -8,7 +8,7 @@ type ContainerType = {
 }
 
 const Container = styled.div<ContainerType>`
-	min-width: 580px;
+	width: 100%;
 	border: ${token("space.025")} solid ${token("color.border")};
 	border-radius: ${token("space.050")};
 	padding: ${token("space.400")};

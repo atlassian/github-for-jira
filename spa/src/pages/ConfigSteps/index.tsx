@@ -28,6 +28,7 @@ type OrgDropdownType = {
 
 const ConfigContainer = styled.div`
 	margin: 0 auto;
+	width: 100%;
 `;
 const GitHubOptionContainer = styled.div`
 	display: flex;

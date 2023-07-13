@@ -27,7 +27,7 @@ const FlexWrapper = styled.div`
 const Section = styled.div`
 	background: ${token("elevation.surface.sunken")};
 	border-radius: 3px;
-	min-width: 300px;
+	width: 100%;
 	padding: ${token("space.200")} ${token("space.0")};
 `;
 const SectionImg = styled.img`

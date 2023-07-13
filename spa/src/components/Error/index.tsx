@@ -11,7 +11,7 @@ type ErrorWrapperType = {
 const ErrorWrapper = styled.div<ErrorWrapperType>`
 	display: flex;
 	justify-content: start;
-	min-width: 580px;
+	width: 100%;
 	box-sizing: border-box;
 	padding: ${token("space.200")};
 	margin: ${token("space.200")} auto;
