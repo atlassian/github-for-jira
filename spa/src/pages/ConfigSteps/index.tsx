@@ -147,7 +147,7 @@ const ConfigSteps = () => {
 				getOrganizations();
 			}
 		});
-	}, [isLoggedIn, loggedInUser]);
+	}, [isLoggedIn]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
