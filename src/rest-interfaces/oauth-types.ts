@@ -16,3 +16,21 @@ export type UsersGetAuthenticatedResponse = {
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
 }
+export type OrganizationsResponse = {
+	orgs: Array<GitHubInstallationType>;
+}
+
+export type GitHubInstallationType = {
+	account: GitHubInstallationAccountType;
+	app_id: number;
+	id: number;
+};
+
+type GitHubInstallationAccountType = {
+	avatar_url: string;
+	id: number;
+	login: string;
+	url: string;
+	site_admin?: boolean;
+	type?: string;
+};
