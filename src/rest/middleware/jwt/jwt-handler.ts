@@ -57,7 +57,5 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 		throw new Error("JWT Verification Failed, wrong qsh");
 	}
 
-	return {
-		installation
-	};
+	return { installation };
 };

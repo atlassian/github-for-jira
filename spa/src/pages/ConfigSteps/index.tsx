@@ -182,14 +182,13 @@ const ConfigSteps = () => {
 		setLoggedInUser("");
 	};
 
+	// TODO: Need to handle all the different error cases
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
 			setLoaderForOrgConnection(true);
 			const connected = await OAuthManagerInstance.connectOrg(selectedOrg?.value);
 			if (connected) {
 				navigate("/spa/connected");
-			} else {
-				console.error("Couldn't connect org: ", connected);
 			}
 			setLoaderForOrgConnection(false);
 		}

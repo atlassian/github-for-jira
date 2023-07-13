@@ -37,8 +37,8 @@ const OauthManager = (): OAuthManagerType => {
 		}
 	}
 
-	async function connectOrg(orgId: number): Promise<boolean> {
-		if (!accessToken) return false;
+	async function connectOrg(orgId: number) {
+		if (!accessToken) return;
 
 		try {
 			const response = await ApiRequest.token.connectOrganization(accessToken, orgId);

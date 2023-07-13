@@ -9,6 +9,7 @@ GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsRespon
 	const { githubToken, jiraHost, installation } = res.locals;
 	const organizations = await fetchGitHubOrganizations(githubToken, jiraHost, installation, req.log);
 
+	// TODO: Need to handle all the different error cases
 	res.status(200).send({
 		orgs: organizations
 	});
