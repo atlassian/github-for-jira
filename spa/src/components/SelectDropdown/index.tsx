@@ -30,12 +30,14 @@ const SelectDropdown = ({
 	label,
 	onChange,
 	placeholder = "",
+	isLoading = false,
 	icon,
 }: {
 	options: Array<LabelType>,
 	label: string,
 	onChange: (...args: any) => void,
 	placeholder?: string,
+	isLoading: boolean,
 	icon?: React.JSX.Element
 }) => {
 	return (<>
@@ -48,6 +50,7 @@ const SelectDropdown = ({
 				<Select
 					inputId="select-org"
 					className="single-select"
+					isLoading={isLoading}
 					classNamePrefix="react-select"
 					onChange={onChange}
 					options={options}

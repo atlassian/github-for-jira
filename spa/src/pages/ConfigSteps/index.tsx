@@ -86,6 +86,7 @@ const ConfigSteps = () => {
 
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
@@ -114,6 +115,7 @@ const ConfigSteps = () => {
 	};
 
 	const getOrganizations = async () => {
+		setLoaderForOrgFetching(true);
 		const response = await OAuthManagerInstance.fetchOrgs();
 		if (response) {
 			setOrganizations(response?.orgs.map((org: any) => ({
@@ -121,6 +123,7 @@ const ConfigSteps = () => {
 				value: org.id,
 			})));
 		}
+		setLoaderForOrgFetching(false);
 	};
 
 	useEffect(() => {
@@ -284,6 +287,7 @@ const ConfigSteps = () => {
 							<SelectDropdown
 								options={organizations}
 								label="Select organization"
+								isLoading={loaderForOrgFetching}
 								onChange={(value) => {
 									setOrgConnectionDisabled(false);
 									setSelectedOrg(value);
