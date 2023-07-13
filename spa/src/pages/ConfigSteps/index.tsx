@@ -19,7 +19,11 @@ type GitHubOptionType = {
 type HostUrlType = {
 	jiraHost: string;
 	gheServerUrl: string;
-}
+};
+type OrgDropdownType = {
+	label: string;
+	value: number;
+};
 
 const ConfigContainer = styled.div`
 	max-width: 580px;
@@ -80,7 +84,7 @@ const ConfigSteps = () => {
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
-
+	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
 
 	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
@@ -176,12 +180,13 @@ const ConfigSteps = () => {
 	};
 
 	const connectGitHubOrg = async () => {
-		// TODO: API call to connect to an org
-		const connected = await OAuthManagerInstance.connectOrg("");
-		if (connected) {
-			navigate("/spa/connected");
-		} else {
-			console.error("Couldn't connect org: ", connected);
+		if (selectedOrg?.value) {
+			const connected = await OAuthManagerInstance.connectOrg(selectedOrg?.value);
+			if (connected) {
+				navigate("/spa/connected");
+			} else {
+				console.error("Couldn't connect org: ", connected);
+			}
 		}
 	};
 
@@ -273,6 +278,7 @@ const ConfigSteps = () => {
 							<SelectDropdown
 								options={organizations}
 								label="Select organization"
+								onChange={(value) => setSelectedOrg(value)}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
 							<Button appearance="primary" onClick={connectGitHubOrg}>Connect GitHub organization</Button>

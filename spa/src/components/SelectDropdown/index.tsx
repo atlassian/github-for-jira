@@ -28,11 +28,13 @@ const SelectContainer = styled.div`
 const SelectDropdown = ({
 	options,
 	label,
+	onChange,
 	placeholder = "",
 	icon,
 }: {
 	options: Array<LabelType>,
 	label: string,
+	onChange: (...args: any) => void,
 	placeholder?: string,
 	icon?: React.JSX.Element
 }) => {
@@ -47,6 +49,7 @@ const SelectDropdown = ({
 					inputId="select-org"
 					className="single-select"
 					classNamePrefix="react-select"
+					onChange={onChange}
 					options={options}
 					placeholder={placeholder}
 				/>

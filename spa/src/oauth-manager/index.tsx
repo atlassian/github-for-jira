@@ -37,7 +37,7 @@ const OauthManager = (): OAuthManagerType => {
 		}
 	}
 
-	async function connectOrg(orgId: string): Promise<boolean> {
+	async function connectOrg(orgId: number): Promise<boolean> {
 		if (!accessToken) return false;
 
 		try {

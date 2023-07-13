@@ -10,7 +10,7 @@ const Token = {
 		const instance = await AxiosInstanceWithGHToken(token);
 		return instance.get("/rest/app/cloud/org");
 	},
-	connectOrganization: async (token: string, orgId: string): Promise<AxiosResponse<OrganizationsResponse>> => {
+	connectOrganization: async (token: string, orgId: number): Promise<AxiosResponse<OrganizationsResponse>> => {
 		const instance = await AxiosInstanceWithGHToken(token);
 		return instance.post("/rest/app/cloud/org", { installationId: orgId });
 	},
