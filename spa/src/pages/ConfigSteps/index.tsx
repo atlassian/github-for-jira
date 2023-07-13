@@ -202,7 +202,14 @@ const ConfigSteps = () => {
 	return (
 		<Wrapper>
 			<SyncHeader />
-			<Error type="info" />
+			<Error
+				type="error"
+				message="Something went wrong and we couldn’t connect to GitHub, try again."
+			/>
+			<Error
+				type="info"
+				message="Something went wrong and we couldn’t connect to GitHub, try again."
+			/>
 			<ConfigContainer>
 				<CollapsibleStep
 					step="1"
