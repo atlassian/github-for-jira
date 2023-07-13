@@ -56,7 +56,6 @@ export const finishOAuthFlow = async (
 	state: string,
 	log: Logger
 ): Promise<ExchangeTokenResponse | null> => {
-
 	if (!code) {
 		log.warn("No code provided!");
 		return null;
@@ -73,7 +72,6 @@ export const finishOAuthFlow = async (
 	}
 
 	try {
-
 		const redisState = await redis.get(state) || "";
 
 		if (!redisState) {
