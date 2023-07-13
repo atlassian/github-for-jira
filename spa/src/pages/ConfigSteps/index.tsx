@@ -184,7 +184,7 @@ const ConfigSteps = () => {
 	};
 
 	const installNewOrg = async () => {
-		await OAuthManagerInstance.installNewApp(() => {
+		await OAuthManagerInstance.installNewApp(getOrganizations)
 			getOrganizations();
 		});
 	}
