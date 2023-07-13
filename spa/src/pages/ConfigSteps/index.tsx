@@ -120,6 +120,7 @@ const ConfigSteps = () => {
 	};
 
 	useEffect(() => {
+		getJiraHostUrls();
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
@@ -134,7 +135,6 @@ const ConfigSteps = () => {
 		};
 		window.addEventListener("message", handler);
 		return () => {
-			getJiraHostUrls();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
