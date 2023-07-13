@@ -3,6 +3,8 @@ import { OAuthManagerType } from "../global";
 
 const STATE_KEY = "oauth-localStorage-state";
 
+const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
+
 const OauthManager = (): OAuthManagerType => {
 	let accessToken: string | undefined;
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -75,6 +77,23 @@ const OauthManager = (): OAuthManagerType => {
 		return false;
 	}
 
+	async function installNewApp(onFinish: () => void) {
+		const app = await ApiRequest.gitHubApp.getAppNewInstallationUrl();
+		const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
+		document.cookie = `is-spa=true; expires=${exp.toUTCString()}; path=/; SameSite=None; Secure`;
+		const winInstall = window.open(app.data.appInstallationUrl, "_blank");
+		const hdlWinInstall = setInterval(() => {
+			if (winInstall?.closed) {
+				try {
+					document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure";
+					onFinish();
+				} finally {
+					clearInterval(hdlWinInstall);
+				}
+			}
+		}, 1000);
+	}
+
 	function setTokens(at: string, rt: string) {
 		accessToken = at;
 		refreshToken = rt;
@@ -102,6 +121,7 @@ const OauthManager = (): OAuthManagerType => {
 		finishOAuthFlow,
 		getUserDetails,
 		clear,
+		installNewApp,
 	};
 };
 

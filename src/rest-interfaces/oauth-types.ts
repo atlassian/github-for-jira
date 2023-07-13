@@ -13,6 +13,10 @@ export type UsersGetAuthenticatedResponse = {
 	login: string;
 };
 
+export type GetGitHubAppsUrlResponse = {
+	appInstallationUrl: string;
+}
+
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
 }

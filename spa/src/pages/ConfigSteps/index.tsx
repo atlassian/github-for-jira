@@ -196,6 +196,12 @@ const ConfigSteps = () => {
 		}
 	};
 
+	const installNewOrg = async () => {
+		await OAuthManagerInstance.installNewApp(() => {
+			getOrganizations();
+		});
+	}
+
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -292,7 +298,10 @@ const ConfigSteps = () => {
 							/>
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+									<>
+										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
+									</>
 							}
 						</>
 					</CollapsibleStep>

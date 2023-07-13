@@ -24,4 +24,5 @@ export interface OAuthManagerType {
 	finishOAuthFlow: (code: string, state: string) => Promise<boolean>;
 	getUserDetails: () => { username: string | undefined, email: string | undefined };
 	clear: () => void;
+	installNewApp: (onFinish: () => void) => Promise<void>;
 }
