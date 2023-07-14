@@ -8,11 +8,12 @@ type ContainerType = {
 }
 
 const Container = styled.div<ContainerType>`
-	min-width: 580px;
+	width: 100%;
 	border: ${token("space.025")} solid ${token("color.border")};
 	border-radius: ${token("space.050")};
 	padding: ${token("space.400")};
 	margin: ${token("space.400")} 0;
+	box-sizing: border-box;
 	background: ${props => props.isExpanded ? "transparent" : token("elevation.surface.sunken")};
 `;
 const Header = styled.div`

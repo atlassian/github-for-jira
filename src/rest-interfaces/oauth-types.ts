@@ -35,3 +35,5 @@ type GitHubInstallationAccountType = {
 	site_admin?: boolean;
 	type?: string;
 };
+
+export type ErrorType = "warning" | "error";

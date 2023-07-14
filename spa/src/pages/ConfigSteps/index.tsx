@@ -11,6 +11,8 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
+import { ErrorType } from "../../rest-interfaces/oauth-types";
+import Error from "../../components/Error";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -24,10 +26,14 @@ type OrgDropdownType = {
 	label: string;
 	value: number;
 };
+type ErrorObjType = {
+	type: ErrorType,
+	message: React.JSX.Element | string;
+}
 
 const ConfigContainer = styled.div`
-	max-width: 580px;
 	margin: 0 auto;
+	width: 100%;
 `;
 const GitHubOptionContainer = styled.div`
 	display: flex;
@@ -72,6 +78,7 @@ const LoggedInContent = styled.div`
 	justify-content: start;
 	align-items: center;
 `;
+const ButtonContainer = LoggedInContent;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
@@ -86,6 +93,7 @@ const ConfigSteps = () => {
 
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
@@ -103,6 +111,8 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
+	const [error] = useState<ErrorObjType | undefined>(undefined);
+
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
@@ -114,6 +124,7 @@ const ConfigSteps = () => {
 	};
 
 	const getOrganizations = async () => {
+		setLoaderForOrgFetching(true);
 		const response = await OAuthManagerInstance.fetchOrgs();
 		if (response) {
 			setOrganizations(response?.orgs.map((org: any) => ({
@@ -121,6 +132,7 @@ const ConfigSteps = () => {
 				value: org.id,
 			})));
 		}
+		setLoaderForOrgFetching(false);
 	};
 
 	useEffect(() => {
@@ -200,11 +212,14 @@ const ConfigSteps = () => {
 		await OAuthManagerInstance.installNewApp(() => {
 			getOrganizations();
 		});
-	}
+	};
 
 	return (
 		<Wrapper>
 			<SyncHeader />
+			{
+				error && <Error type={error.type} message={error.message} />
+			}
 			<ConfigContainer>
 				<CollapsibleStep
 					step="1"
@@ -290,6 +305,7 @@ const ConfigSteps = () => {
 							<SelectDropdown
 								options={organizations}
 								label="Select organization"
+								isLoading={loaderForOrgFetching}
 								onChange={(value) => {
 									setOrgConnectionDisabled(false);
 									setSelectedOrg(value);
@@ -298,10 +314,10 @@ const ConfigSteps = () => {
 							/>
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<>
+									<ButtonContainer>
 										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
 										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
-									</>
+									</ButtonContainer>
 							}
 						</>
 					</CollapsibleStep>
