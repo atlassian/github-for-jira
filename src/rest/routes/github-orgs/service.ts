@@ -18,7 +18,7 @@ const fetchGitHubOrganizations = async (
 
 	/**
 	 * TODO: This only works for the Github cloud flow,
-	 * Get the value for `gitHubAppId` and `gitHubAppUui` for Enterprise flow
+	 * Get the value for `gitHubAppId` and `gitHubAppUuid` for Enterprise flow
  	 */
 	try {
 		const { data: { installations } } = await gitHubUserClient.getInstallations();

@@ -11,6 +11,7 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
+import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 
 type GitHubOptionType = {
@@ -25,6 +26,10 @@ type OrgDropdownType = {
 	label: string;
 	value: number;
 };
+type ErrorObjType = {
+	type: ErrorType,
+	message: React.JSX.Element | string;
+}
 
 const ConfigContainer = styled.div`
 	margin: 0 auto;
@@ -73,6 +78,7 @@ const LoggedInContent = styled.div`
 	justify-content: start;
 	align-items: center;
 `;
+const ButtonContainer = LoggedInContent;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
@@ -104,6 +110,8 @@ const ConfigSteps = () => {
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
+
+	const [error] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -204,19 +212,14 @@ const ConfigSteps = () => {
 		await OAuthManagerInstance.installNewApp(() => {
 			getOrganizations();
 		});
-	}
+	};
 
 	return (
 		<Wrapper>
 			<SyncHeader />
-			<Error
-				type="error"
-				message="Something went wrong and we couldn’t connect to GitHub, try again."
-			/>
-			<Error
-				type="info"
-				message="Something went wrong and we couldn’t connect to GitHub, try again."
-			/>
+			{
+				error && <Error type={error.type} message={error.message} />
+			}
 			<ConfigContainer>
 				<CollapsibleStep
 					step="1"
@@ -311,10 +314,10 @@ const ConfigSteps = () => {
 							/>
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<>
+									<ButtonContainer>
 										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
 										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
-									</>
+									</ButtonContainer>
 							}
 						</>
 					</CollapsibleStep>

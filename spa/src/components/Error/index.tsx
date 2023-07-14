@@ -16,11 +16,14 @@ const ErrorWrapper = styled.div<ErrorWrapperType>`
 	padding: ${token("space.200")};
 	margin: ${token("space.200")} auto;
 	text-align: left;
-	background: ${props => props.type === "info" ? token("color.background.warning") : token("color.background.danger") };
+	background: ${props => props.type === "warning" ? token("color.background.warning") : token("color.background.danger") };
 	border-radius: 3px;
 	align-items: center;
-	span {
+	div {
 		padding-left: ${token("space.100")};
+	}
+	span {
+		align-self: start;
 	}
 `;
 
@@ -29,17 +32,17 @@ const Error = ({
 	message,
 }: {
 	type: ErrorType,
-	message: string
+	message: React.JSX.Element | string
 }) => {
 
 
 	return (
 		<ErrorWrapper type={type}>
 			{
-				type === "info" ? <WarningIcon label="warning" size="small" /> :
-					<ErrorIcon label="warning" size="small" />
+				type === "warning" ? <WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" /> :
+					<ErrorIcon label="warning" primaryColor={token("color.background.danger.bold")} size="medium" />
 			}
-			<span>{message}</span>
+			<div>{message}</div>
 		</ErrorWrapper>
 	);
 };

@@ -36,4 +36,4 @@ type GitHubInstallationAccountType = {
 	type?: string;
 };
 
-export type ErrorType = "info" | "error";
+export type ErrorType = "warning" | "error";
