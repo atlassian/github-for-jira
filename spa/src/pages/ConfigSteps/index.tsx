@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import Button from "@atlaskit/button";
+import { useEffect, useState } from "react";
+import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
@@ -11,6 +11,8 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
+import { ErrorType } from "../../rest-interfaces/oauth-types";
+import Error from "../../components/Error";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -19,11 +21,19 @@ type GitHubOptionType = {
 type HostUrlType = {
 	jiraHost: string;
 	gheServerUrl: string;
+};
+type OrgDropdownType = {
+	label: string;
+	value: number;
+};
+type ErrorObjType = {
+	type: ErrorType,
+	message: React.JSX.Element | string;
 }
 
 const ConfigContainer = styled.div`
-	max-width: 580px;
 	margin: 0 auto;
+	width: 100%;
 `;
 const GitHubOptionContainer = styled.div`
 	display: flex;
@@ -68,6 +78,7 @@ const LoggedInContent = styled.div`
 	justify-content: start;
 	align-items: center;
 `;
+const ButtonContainer = LoggedInContent;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
@@ -79,7 +90,12 @@ const ConfigSteps = () => {
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
+
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
+	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
+	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
 	const [selectedOption, setSelectedOption] = useState(0);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
@@ -92,10 +108,12 @@ const ConfigSteps = () => {
 	const [expandStep2, setExpandStep2] = useState(isAuthenticated);
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
-	const [loggedInUser, setLoggedInUser] = useState<string>(username);
+	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const getJiraHostUrls = useCallback(() => {
+	const [error] = useState<ErrorObjType | undefined>(undefined);
+
+	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
 			setHostUrl({
@@ -103,27 +121,27 @@ const ConfigSteps = () => {
 				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
-	}, []);
+	};
 
-	const getOrganizations = useCallback(async () => {
-		// TODO: API call to fetch the list of orgs
-		setOrganizations([
-			{ label: "Adelaide", value: "adelaide" },
-			{ label: "Brisbane", value: "brisbane" },
-			{ label: "Canberra", value: "canberra" },
-			{ label: "Darwin", value: "darwin" },
-			{ label: "Hobart", value: "hobart" },
-			{ label: "Melbourne", value: "melbourne" },
-			{ label: "Perth", value: "perth" },
-			{ label: "Sydney", value: "sydney" },
-		]);
-	}, []);
+	const getOrganizations = async () => {
+		setLoaderForOrgFetching(true);
+		const response = await OAuthManagerInstance.fetchOrgs();
+		if (response) {
+			setOrganizations(response?.orgs.map((org: any) => ({
+				label: org.account.login,
+				value: org.id,
+			})));
+		}
+		setLoaderForOrgFetching(false);
+	};
 
 	useEffect(() => {
+		getJiraHostUrls();
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManagerInstance.finishOAuthFlow(event.data?.code, event.data?.state);
+				// TODO: add some visual input in case of errors
 				if (!success) return;
 			}
 			setIsLoggedIn(true);
@@ -131,11 +149,10 @@ const ConfigSteps = () => {
 			setExpandStep1(false);
 			setExpandStep2(true);
 			setCanViewContentForStep2(true);
+			await getOrganizations();
 		};
 		window.addEventListener("message", handler);
 		return () => {
-			getJiraHostUrls();
-			getOrganizations();
 			window.removeEventListener("message", handler);
 		};
 	}, []);
@@ -145,6 +162,7 @@ const ConfigSteps = () => {
 			if (status) {
 				setLoggedInUser(OAuthManagerInstance.getUserDetails().username);
 				setLoaderForLogin(false);
+				getOrganizations();
 			}
 		});
 	}, [isLoggedIn]);
@@ -178,14 +196,30 @@ const ConfigSteps = () => {
 		setLoggedInUser("");
 	};
 
-	const connectGitHubOrg = () => {
-		// TODO: API call to connect to an org
-		navigate("/spa/connected");
+	// TODO: Need to handle all the different error cases
+	const connectGitHubOrg = async () => {
+		if (selectedOrg?.value) {
+			setLoaderForOrgConnection(true);
+			const connected = await OAuthManagerInstance.connectOrg(selectedOrg?.value);
+			if (connected) {
+				navigate("/spa/connected");
+			}
+			setLoaderForOrgConnection(false);
+		}
+	};
+
+	const installNewOrg = async () => {
+		await OAuthManagerInstance.installNewApp(() => {
+			getOrganizations();
+		});
 	};
 
 	return (
 		<Wrapper>
 			<SyncHeader />
+			{
+				error && <Error type={error.type} message={error.message} />
+			}
 			<ConfigContainer>
 				<CollapsibleStep
 					step="1"
@@ -271,9 +305,20 @@ const ConfigSteps = () => {
 							<SelectDropdown
 								options={organizations}
 								label="Select organization"
+								isLoading={loaderForOrgFetching}
+								onChange={(value) => {
+									setOrgConnectionDisabled(false);
+									setSelectedOrg(value);
+								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
-							<Button appearance="primary" onClick={connectGitHubOrg}>Connect GitHub organization</Button>
+							{
+								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+									<ButtonContainer>
+										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
+									</ButtonContainer>
+							}
 						</>
 					</CollapsibleStep>
 				}
