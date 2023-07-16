@@ -72,7 +72,14 @@ export const finishOAuthFlow = async (
 	}
 
 	try {
+
 		const redisState = await redis.get(state) || "";
+
+		try {
+			await redis.unlink(state);
+		} catch (e) {
+			log.error({ err: e }, "Fail to unlink redis state on oauth callback");
+		}
 
 		if (!redisState) {
 			log.warn({ state }, "state is missing in redis in oauth exchange token");

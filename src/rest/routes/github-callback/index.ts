@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import sanitize from "sanitize-html";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
@@ -23,7 +24,7 @@ GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res:
 			<html>
 				<body></body>
 				<script>
-					window.opener.postMessage(${JSON.stringify({ code, state })}, window.origin);
+					window.opener.postMessage(${JSON.stringify({ code: sanitize(code), state: sanitize(state) })}, window.origin);
 					window.close();
 				</script>
 			</html>
