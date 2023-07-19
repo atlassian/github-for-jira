@@ -57,8 +57,8 @@ describe("GitHub Create Branch Options Get", () => {
 					githubToken: "random-token"
 				}))
 			.expect(res => {
-				expect(res.status).toBe(302);
-				expect(res.text).toBe("Found. Redirecting to /github/create-branch?issueKey=TEST-123");
+				expect(res.status).toBe(307);
+				expect(res.text).toBe("Temporary Redirect. Redirecting to /github/create-branch?issueKey=TEST-123");
 			});
 	});
 
@@ -89,8 +89,8 @@ describe("GitHub Create Branch Options Get", () => {
 					githubToken: "random-token"
 				}))
 			.expect(res => {
-				expect(res.status).toBe(302);
-				expect(res.text).toBe(`Found. Redirecting to /github/${uuid}/create-branch?issueKey=TEST-123`);
+				expect(res.status).toBe(307);
+				expect(res.text).toBe(`Temporary Redirect. Redirecting to /github/${uuid}/create-branch?issueKey=TEST-123`);
 			});
 	});
 

@@ -16,7 +16,6 @@ OAuthRouter.get("/redirectUrl", async function OAuthRedirectUrl(req: Request, re
 });
 
 OAuthRouter.post("/exchangeToken", async function OAuthExchangeToken(req: Request, res: Response<ExchangeTokenResponse | string>) {
-
 	try {
 		const code = req.body.code || "";
 		const state = req.body.state || "";

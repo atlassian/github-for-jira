@@ -14,8 +14,9 @@ export const JwtHandler = async (req: Request, res: Response, next: NextFunction
 	}
 
 	try {
-		const { jiraHost } = await verifySymmetricJwt(token, req.log);
-		res.locals.jiraHost = jiraHost;
+		const { installation } = await verifySymmetricJwt(token, req.log);
+		res.locals.installation = installation;
+		res.locals.jiraHost = installation.jiraHost;
 		next();
 
 	} catch (e) {
@@ -56,5 +57,5 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 		throw new Error("JWT Verification Failed, wrong qsh");
 	}
 
-	return { jiraHost: installation.jiraHost };
+	return { installation };
 };
