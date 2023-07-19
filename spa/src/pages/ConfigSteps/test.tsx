@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import ConfigSteps from "./index";
@@ -7,6 +7,7 @@ import ConfigSteps from "./index";
 const Authenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
+	fetchOrgs: jest.fn(),
 	setTokens: jest.fn(),
 	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
 	clear: jest.fn(),
@@ -14,6 +15,7 @@ const Authenticated = {
 const UnAuthenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(false)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
+	fetchOrgs: jest.fn(),
 	setTokens: jest.fn(),
 	getUserDetails: jest.fn().mockReturnValue({ username: "", email: ""}),
 	clear: jest.fn(),
@@ -51,8 +53,8 @@ test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authe
 		</BrowserRouter>
 	);
 
-	await userEvent.click(screen.getByText("GitHub Enterprise Server"));
-	await userEvent.click(screen.getByText("Authorize in GitHub"));
+	await act(() => userEvent.click(screen.getByText("GitHub Enterprise Server")));
+	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
 
 	expect(AP.getLocation).toHaveBeenCalled();
 });
@@ -64,8 +66,8 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 		</BrowserRouter>
 	);
 
-	await userEvent.click(screen.getByText("GitHub Cloud"));
-	await userEvent.click(screen.getByText("Authorize in GitHub"));
+	await act(() => userEvent.click(screen.getByText("GitHub Cloud")));
+	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
 
 	expect(OAuthManagerInstance.authenticateInGitHub).toHaveBeenCalled();
 });
@@ -94,10 +96,11 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 		</BrowserRouter>
 	);
 
-	await userEvent.click(screen.getByText("Log in and authorize"));
+	await act(() => userEvent.click(screen.getByText("Log in and authorize")));
 
 	expect(screen.queryByText("Change GitHub login")).toBeInTheDocument();
-	await userEvent.click(screen.getByText("Change GitHub login"));
+
+	await act(() => userEvent.click(screen.getByText("Change GitHub login")));
 
 	expect(window.open).toHaveBeenCalled();
 

@@ -36,7 +36,7 @@ const getConnectedStatus = (
 			account: installation.account
 		}));
 
-interface MergedInstallation extends InstallationWithAdmin {
+export interface MergedInstallation extends InstallationWithAdmin {
 	syncStatus?: string;
 }
 
@@ -48,7 +48,7 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 		...installation
 	})) : installationsWithAdmin;
 
-const installationConnectedStatus = async (
+export const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	log: Logger,
@@ -64,7 +64,7 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-const getInstallationsWithAdmin = async (
+export const getInstallationsWithAdmin = async (
 	installationIdPk: number,
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,

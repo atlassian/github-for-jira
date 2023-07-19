@@ -36,6 +36,21 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 };
 
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
+
+	if (req.cookies["is-spa"] === "true") {
+		res.clearCookie("is-spa");
+		res.status(200).send(`
+		  <html>
+				<body>
+					<script>
+							window.close();
+					</script>
+				</body>
+			</html>
+		`);
+		return;
+	}
+
 	const { jiraHost, gitHubAppId } = res.locals;
 	const githubInstallationId = Number(req.query.installation_id);
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "github-setup-get" });
