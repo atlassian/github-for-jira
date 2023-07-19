@@ -16,7 +16,10 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		jiraHost
 	} = res.locals;
 	const logger = getLogger("github-create-branch-get", {
-		fields: req.log?.fields
+		fields: {
+			...req.log?.fields,
+			jiraHost
+		}
 	});
 
 	if (!jiraHost) {

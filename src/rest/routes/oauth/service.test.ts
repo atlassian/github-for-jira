@@ -68,5 +68,22 @@ describe("Exchange token", () => {
 				refreshToken: "wert"
 			});
 		});
+		it("should remove state in redis after check", async () => {
+			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
+			const state = redirectUrl.state;
+			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
+				exchangeGitHubToken: async () => ({
+					accessToken: "abcd",
+					refreshToken: "wert"
+				})
+			} as any as GitHubAnonymousClient);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log);
+			expect(resp).toEqual({
+				accessToken: "abcd",
+				refreshToken: "wert"
+			});
+			const stateInRedis = await redis.get(state);
+			expect(stateInRedis).toBeNull();
+		});
 	});
 });

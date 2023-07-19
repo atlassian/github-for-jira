@@ -6,14 +6,25 @@ const getHeaders = (): Promise<string> => new Promise(resolve => {
 	});
 });
 
-const InternalAxiosInstance = axios.create({
+const AxiosInstanceWithJWT = axios.create({
 	timeout: 3000
 });
 
 // Adding the token in the headers through interceptors because it is an async value
-InternalAxiosInstance.interceptors.request.use(async (config) => {
+AxiosInstanceWithJWT.interceptors.request.use(async (config) => {
 	config.headers.Authorization = await getHeaders();
 	return config;
 });
 
-export default InternalAxiosInstance;
+const AxiosInstanceWithGHToken = async (gitHubToken: string) => axios.create({
+	timeout: 3000,
+	headers: {
+		"github-auth": gitHubToken,
+		Authorization: await getHeaders()
+	}
+});
+
+export {
+	AxiosInstanceWithJWT,
+	AxiosInstanceWithGHToken
+};
