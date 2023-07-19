@@ -53,6 +53,17 @@ export class JiraClient {
 		return await this.axios.delete(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`);
 	}
 
+	async linkedWorkspace(subscriptionId: number) {
+		const payload = {
+			"workspaceIds": [subscriptionId]
+		};
+		return await this.axios.post("/rest/security/1.0/linkedWorkspaces/bulk", payload);
+	}
+
+	async deleteWorkspace(subscriptionId: number) {
+		return await this.axios.delete(`/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=${subscriptionId}`);
+	}
+
 	async checkAdminPermissions(accountId: string) {
 		const payload = {
 			accountId,

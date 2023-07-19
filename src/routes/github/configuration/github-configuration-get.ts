@@ -36,7 +36,7 @@ const getConnectedStatus = (
 			account: installation.account
 		}));
 
-interface MergedInstallation extends InstallationWithAdmin {
+export interface MergedInstallation extends InstallationWithAdmin {
 	syncStatus?: string;
 }
 
@@ -48,7 +48,7 @@ const mergeByLogin = (installationsWithAdmin: InstallationWithAdmin[], connected
 		...installation
 	})) : installationsWithAdmin;
 
-const installationConnectedStatus = async (
+export const installationConnectedStatus = async (
 	jiraHost: string,
 	installationsWithAdmin: InstallationWithAdmin[],
 	log: Logger,
@@ -64,7 +64,7 @@ const installationConnectedStatus = async (
 	return mergeByLogin(installationsWithAdmin, connectedStatuses);
 };
 
-const getInstallationsWithAdmin = async (
+export const getInstallationsWithAdmin = async (
 	installationIdPk: number,
 	gitHubUserClient: GitHubUserClient,
 	log: Logger,
@@ -84,7 +84,8 @@ const getInstallationsWithAdmin = async (
 		});
 
 		// See if we can get the membership for this user
-		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for all orgs the user is a member of and cross reference with the installation org
+		// TODO: instead of calling each installation org to see if the current user is admin, you could just ask for
+		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
 			installation.account.login,

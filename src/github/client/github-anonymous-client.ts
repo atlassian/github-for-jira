@@ -16,7 +16,7 @@ export interface CreatedGitHubAppResponse {
  * A GitHub client without any authentication
  */
 export class GitHubAnonymousClient extends GitHubClient {
-	constructor(githubConfig: GitHubConfig, jiraHost: string, metrics: Metrics, logger: Logger) {
+	constructor(githubConfig: GitHubConfig, jiraHost: string | undefined, metrics: Metrics, logger: Logger) {
 		super(githubConfig, jiraHost, metrics, logger);
 	}
 

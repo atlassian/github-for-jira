@@ -6,8 +6,11 @@ import { getLogger } from "config/logger";
 import { findOrStartSync } from "~/src/sync/sync-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { envVars } from "config/env";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { when } from "jest-when";
 
 jest.mock("~/src/sync/sync-utils");
+jest.mock("~/src/config/feature-flags");
 
 describe("subscription-installation-service", () => {
 	let installation: Installation;
@@ -20,7 +23,7 @@ describe("subscription-installation-service", () => {
 	});
 
 	const mockGitHub = (config: {
-		isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean, gitHubInstallationId? : number
+		isGhe: boolean, is500Error: boolean, isInstalledInUserSpace?: boolean, isAdmin?: boolean, gitHubInstallationId?: number, fetchAvatar?: boolean
 	}) => {
 		const cloudOrGheNock = config.isGhe ? gheApiNock : githubNock;
 		const gitHubInstallationId = config.gitHubInstallationId || (subscription.gitHubInstallationId + 1);
@@ -40,6 +43,17 @@ describe("subscription-installation-service", () => {
 						login: "my-org"
 					},
 					target_type: config.isInstalledInUserSpace ? "User" : "org"
+				});
+		}
+
+		if (config.fetchAvatar === true) {
+			cloudOrGheNock
+				.get("/app/installations/" + gitHubInstallationId)
+				.matchHeader("Authorization", /^Bearer .+$/)
+				.reply(200, {
+					account: {
+						avatarUrl: "www.test.url.com"
+					}
 				});
 		}
 
@@ -114,9 +128,40 @@ describe("subscription-installation-service", () => {
 					isGhe: false,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: false,
 					isAdmin: true
 				});
 
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					undefined,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, undefined)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
+			});
+
+			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+				mockGitHub({
+					isGhe: false,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					fetchAvatar: true,
+					isAdmin: true
+				});
 				jiraNock
 					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
 					.reply(200);
@@ -202,6 +247,35 @@ describe("subscription-installation-service", () => {
 					isGhe: true,
 					is500Error: false,
 					isInstalledInUserSpace: false,
+					fetchAvatar: false,
+					isAdmin: true
+				});
+
+				jiraNock
+					.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+					.reply(200);
+				const result = await verifyAdminPermsAndFinishInstallation(
+					"myToken",
+					installation,
+					gitHubServerApp.id,
+					subscription.gitHubInstallationId + 1,
+					getLogger("test")
+				);
+				expect(result.error).not.toBeDefined();
+				expect(await Subscription.findOneForGitHubInstallationId(subscription.gitHubInstallationId + 1, gitHubServerApp.id)).toBeDefined();
+				expect(findOrStartSync).toBeCalledWith(expect.objectContaining({
+					gitHubInstallationId: subscription.gitHubInstallationId + 1
+				}), expect.anything(), "full", undefined, undefined, {
+					source: "initial-sync"
+				});
+			});
+			it("on success with ENABLE_GITHUB_SECURITY_IN_JIRA FF is on: creates a Db record, kicks off sync and updates isConfigured state", async () => {
+				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+				mockGitHub({
+					isGhe: true,
+					is500Error: false,
+					isInstalledInUserSpace: false,
+					fetchAvatar: true,
 					isAdmin: true
 				});
 

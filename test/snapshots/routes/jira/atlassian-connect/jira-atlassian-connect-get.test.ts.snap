@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Atlassian Connect Frontend Atlassian Connect should return correct connect app descriptor 1`] = `
+exports[`Atlassian Connect should return correct connect app descriptor 1`] = `
 Object {
   "apiMigrations": Object {
     "gdpr": false,
@@ -138,6 +138,19 @@ Object {
         },
         "url": "/jira/connect/enterprise/app/{ac.uuid}",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "spa-index-page",
+        "location": "none",
+        "name": Object {
+          "value": "GitHub for Jira SPA Index Page",
+        },
+        "url": "/spa",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
@@ -157,17 +170,8 @@ Object {
     },
     "jiraDevelopmentTool": Object {
       "actions": Object {
-        "associateRepository": Object {
-          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate",
-        },
         "createBranch": Object {
           "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
-        },
-        "searchConnectedWorkspaces": Object {
-          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/search",
-        },
-        "searchRepositories": Object {
-          "templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/search",
         },
       },
       "application": Object {

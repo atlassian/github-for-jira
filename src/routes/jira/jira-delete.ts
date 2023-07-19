@@ -1,21 +1,24 @@
-import { Subscription } from "models/subscription";
-import { getJiraClient } from "~/src/jira/client/jira-client";
-import { Request, Response } from "express";
-import { sendAnalytics } from "utils/analytics-client";
-import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
-import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import Logger from "bunyan";
 import { Errors } from "config/errors";
+import { Request, Response } from "express";
+import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { Subscription } from "models/subscription";
+import { sendAnalytics } from "utils/analytics-client";
+import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { getJiraClient } from "~/src/jira/client/jira-client";
+import { Installation } from "~/src/models/installation";
+import { JiraClient } from "~/src/models/jira-client";
 
 /**
  * Handle the when a user deletes an entry in the UI
  *
  */
 export const JiraDelete = async (req: Request, res: Response): Promise<void> => {
-	const { jiraHost } = res.locals;
+	const { jiraHost, installation } = res.locals;
 	// TODO: The params `installationId` needs to be replaced by `subscriptionId`
 	const gitHubInstallationId = Number(req.params.installationId) || Number(req.body.gitHubInstallationId);
 	const gitHubAppId = req.body.appId;
-
 	req.log.info({ gitHubInstallationId, gitHubAppId }, "Received Jira DELETE subscription request");
 
 	if (!jiraHost) {
@@ -47,7 +50,12 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 
 	const jiraClient = await getJiraClient(jiraHost, gitHubInstallationId, gitHubAppId, req.log);
-	await jiraClient.devinfo.installation.delete(gitHubInstallationId);
+	// jiraClient is null when jiraHost is an empty string which we know is defined above.
+	await jiraClient!.devinfo.installation.delete(gitHubInstallationId);
+	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+		await deleteSecurityWorkspaceLink(installation, subscription, req.log);
+		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace");
+	}
 	await subscription.destroy();
 
 	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
@@ -57,4 +65,21 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	});
 
 	res.sendStatus(204);
+};
+
+const deleteSecurityWorkspaceLink = async (
+	installation: Installation,
+	subscription: Subscription,
+	logger: Logger
+) => {
+
+	try {
+		logger.info("Fetching info about GitHub installation");
+
+		const jiraClient = await JiraClient.getNewClient(installation, logger);
+		await jiraClient.deleteWorkspace(subscription.id);
+	} catch (err) {
+		logger.warn({ err }, "Failed to delete security workspace from Jira");
+	}
+
 };
