@@ -152,7 +152,6 @@
 			"principals": [],
 			"allowed": true
 		},
-
 		{
 			"name": "Allow external users to disconnect github account",
 			"path": "/jira/configuration",
@@ -184,6 +183,14 @@
 			"mechanism": "group",
 			"principals": ["micros-sv--github-for-jira-dl-admins"],
 			"allowed": true
+		},
+		{
+			"name": "Block service team members to access Admin DELETE API endpoints",
+			"path": "/api/deleteInstallation/12345/https%3A%2F%2Fsome-jira-instance.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "group",
+			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"allowed": false
 		},
 		{
 			"name": "Allow micros manager-service to microscope endpoints",
