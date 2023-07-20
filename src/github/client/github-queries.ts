@@ -431,6 +431,7 @@ export type VulnerabilityAlertNode = {
     createdAt: string,
     fixedAt: string,
     dismissedAt: string,
+    autoDismissedAt: string,
     vulnerableManifestPath: string,
     securityAdvisory: {
       summary: string,
@@ -464,6 +465,7 @@ export const getDependabotAlerts = `query ($owner: String!, $repo: String!, $per
           createdAt
           fixedAt
           dismissedAt
+          autoDismissedAt
           vulnerableManifestPath
           securityAdvisory {
             summary

@@ -374,7 +374,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				per_page: perPage,
 				cursor
 			},
-			{ graphQuery: "getDeploymentsQuery" });
+			{ graphQuery: "getDependabotAlerts" });
 		return response?.data?.data;
 	}
 

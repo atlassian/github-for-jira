@@ -77,7 +77,7 @@ const transformDependabotAlerts = async (alerts: VulnerabilityAlertNode["node"][
 			url: `${alert.repository.url}/security/dependabot/${alert.number}`,
 			type: "sca",
 			introducedDate: alert.createdAt,
-			lastUpdated: alert.fixedAt || alert.dismissedAt || alert.createdAt,
+			lastUpdated: alert.fixedAt || alert.dismissedAt || alert.autoDismissedAt || alert.createdAt,
 			severity: {
 				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), logger)
 			},
