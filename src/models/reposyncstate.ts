@@ -34,17 +34,20 @@ export interface RepoSyncStateProperties {
 	pullStatus?: TaskStatus;
 	buildStatus?: TaskStatus;
 	deploymentStatus?: TaskStatus;
+	dependabotAlertStatus?: TaskStatus;
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	dependabotAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
 	buildFrom?: Date;
 	deploymentFrom?: Date;
+	dependabotAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -72,17 +75,20 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	pullStatus?: TaskStatus;
 	buildStatus?: TaskStatus;
 	deploymentStatus?: TaskStatus;
+	dependabotAlertStatus?: TaskStatus;
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	dependabotAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
 	buildFrom?: Date;
 	deploymentFrom?: Date;
+	dependabotAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -128,7 +134,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					branchStatus: "failed",
 					commitStatus: "failed",
 					buildStatus: "failed",
-					deploymentStatus: "failed"
+					deploymentStatus: "failed",
+					dependabotAlertStatus: "failed"
 				}
 			}
 		});
@@ -144,7 +151,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					branchStatus: "failed",
 					commitStatus: "failed",
 					buildStatus: "failed",
-					deploymentStatus: "failed"
+					deploymentStatus: "failed",
+					dependabotAlertStatus: "failed"
 				}
 			}
 		}));
@@ -351,7 +359,10 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			buildCursor: null,
 			deploymentStatus: null,
 			deploymentCursor: null,
-			commitFrom: null
+			commitFrom: null,
+			dependabotAlertStatus: null,
+			dependabotAlertCursor: null,
+			dependabotAlertFrom: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -398,17 +409,20 @@ RepoSyncState.init({
 	pullStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	buildStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	dependabotAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	branchCursor: STRING,
 	commitCursor: STRING,
 	issueCursor: STRING,
 	pullCursor: STRING,
 	buildCursor: STRING,
 	deploymentCursor: STRING,
+	dependabotAlertCursor: STRING,
 	commitFrom: DATE,
 	branchFrom: DATE,
 	pullFrom: DATE,
 	buildFrom: DATE,
 	deploymentFrom: DATE,
+	dependabotAlertFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,
