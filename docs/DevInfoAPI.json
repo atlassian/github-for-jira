@@ -434,7 +434,7 @@
           "type" : "string",
           "description" : "The status of the pull request. Priority applies between these states with preference given in the order OPEN, MERGED, DECLINED, UNKNOWN",
           "readOnly" : true,
-          "enum" : [ "OPEN", "MERGED", "DECLINED", "UNKNOWN" ]
+          "enum" : [ "OPEN", "DRAFT", "MERGED", "DECLINED", "UNKNOWN" ]
         },
         "title" : {
           "type" : "string",
