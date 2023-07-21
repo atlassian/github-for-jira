@@ -55,6 +55,7 @@ function getUserDetails() {
 }
 
 function clear() {
+	Api.token.clearGitHubToken();
 	username = undefined;
 	email = undefined;
 }
