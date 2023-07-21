@@ -51,7 +51,8 @@
         "/api/**"
       ],
       "methods": [
-        "*"
+        "GET",
+				"POST"
       ],
       "principals": {
         "staff": {
