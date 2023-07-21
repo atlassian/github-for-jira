@@ -244,8 +244,8 @@ describe("scheduler", () => {
 	it("should not filter by dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
 		configureRateLimit(10000, 10000);
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
-		await Promise.all(repoSyncStats.map((record) => {
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
 			record.dependabotAlertStatus = "pending";
 			return record.save();
 		}));
@@ -258,8 +258,8 @@ describe("scheduler", () => {
 	it("should not filter by dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		configureRateLimit(10000, 10000);
-		const repoSyncStats = await RepoSyncState.findAllFromSubscription(subscription);
-		await Promise.all(repoSyncStats.map((record) => {
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
 			record.dependabotAlertStatus = "pending";
 			return record.save();
 		}));

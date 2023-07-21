@@ -62,16 +62,21 @@ const areAllEdgesEarlierThanFromDate = (edges: VulnerabilityAlertNode[], fromDat
 	return edgeCountEarlierThanFromDate === edges.length;
 };
 
-const transformDependabotAlerts = async (alerts: VulnerabilityAlertNode["node"][], jiraHost: string, logger: Logger, gitHubAppId: number | undefined): Promise<JiraVulnerabilityBulkSubmitData> => {
+const transformDependabotAlerts = async (
+	alerts: VulnerabilityAlertNode["node"][],
+	jiraHost: string,
+	logger: Logger,
+	gitHubAppId: number | undefined
+): Promise<JiraVulnerabilityBulkSubmitData> => {
 
-	const githubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
+	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
 	const vulnerabilities = alerts.map((alert) => {
 		return {
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(alert.repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
+			id: `d-${transformRepositoryId(alert.repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
-			containerId: transformRepositoryId(alert.repository.id,  githubClientConfig.baseUrl),
+			containerId: transformRepositoryId(alert.repository.id, gitHubClientConfig.baseUrl),
 			displayName: alert.securityAdvisory.summary,
 			description: alert.securityAdvisory.description,
 			url: `${alert.repository.url}/security/dependabot/${alert.number}`,

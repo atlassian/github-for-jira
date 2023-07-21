@@ -415,7 +415,7 @@ export type getBranchesResponse = {
 	}
 };
 
-export type getDependabotAlertsResponse = {
+export type GetDependabotAlertsResponse = {
   repository: {
     vulnerabilityAlerts: {
       edges: VulnerabilityAlertNode[]
