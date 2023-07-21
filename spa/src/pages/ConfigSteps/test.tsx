@@ -26,8 +26,6 @@ const UnAuthenticated = {
 	clear: jest.fn(),
 };
 
-console.log("==============", { OAuthManager, AppManager, Authenticated, UnAuthenticated });
-
 // Mocking the global variable
 (global as any).AP = {
 	getLocation: jest.fn(),
@@ -38,16 +36,18 @@ console.log("==============", { OAuthManager, AppManager, Authenticated, UnAuthe
 };
 window.open = jest.fn();
 
-test("Connect GitHub Screen - Initial Loading of the page when not authenticated", () => {
+test("Connect GitHub Screen - Initial Loading of the page when not authenticated", async () => {
 
 	jest.mocked(OAuthManager).getUserDetails = UnAuthenticated.getUserDetails;
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 
-	render(
-		<BrowserRouter>
-			<ConfigSteps />
-		</BrowserRouter>
-	);
+	await act(async () => {
+		render(
+			<BrowserRouter>
+				<ConfigSteps />
+			</BrowserRouter>
+		);
+	});
 
 	expect(screen.queryByText("Connect Github to Jira")).toBeInTheDocument();
 	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
@@ -61,11 +61,13 @@ test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authe
 	jest.mocked(OAuthManager).getUserDetails = UnAuthenticated.getUserDetails;
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 
-	render(
-		<BrowserRouter>
-			<ConfigSteps />
-		</BrowserRouter>
-	);
+	await act(async () => {
+		render(
+			<BrowserRouter>
+				<ConfigSteps />
+			</BrowserRouter>
+		);
+	});
 
 	await act(() => userEvent.click(screen.getByText("GitHub Enterprise Server")));
 	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
@@ -79,11 +81,13 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 	jest.mocked(OAuthManager).authenticateInGitHub = UnAuthenticated.authenticateInGitHub;
 
-	render(
-		<BrowserRouter>
-			<ConfigSteps />
-		</BrowserRouter>
-	);
+	await act(async () => {
+		render(
+			<BrowserRouter>
+				<ConfigSteps />
+			</BrowserRouter>
+		);
+	});
 
 	await act(() => userEvent.click(screen.getByText("GitHub Cloud")));
 	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
@@ -91,17 +95,19 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
 });
 
-test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated", () => {
+test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated", async () => {
 
 	jest.mocked(OAuthManager).getUserDetails = Authenticated.getUserDetails;
 	jest.mocked(OAuthManager).checkValidity = Authenticated.checkValidity;
 	jest.mocked(AppManager).fetchOrgs = Authenticated.fetchOrgs;
 
-	render(
-		<BrowserRouter>
-			<ConfigSteps />
-		</BrowserRouter>
-	);
+	await act(async () => {
+		render(
+			<BrowserRouter>
+				<ConfigSteps />
+			</BrowserRouter>
+		);
+	});
 
 	expect(screen.queryByText("GitHub Cloud")).not.toBeInTheDocument();
 	expect(screen.queryByText("GitHub Enterprise Server")).not.toBeInTheDocument();
@@ -115,11 +121,13 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 	jest.mocked(OAuthManager).checkValidity = Authenticated.checkValidity;
 	jest.mocked(AppManager).fetchOrgs = Authenticated.fetchOrgs;
 
-	render(
-		<BrowserRouter>
-			<ConfigSteps />
-		</BrowserRouter>
-	);
+	await act(async () => {
+		render(
+			<BrowserRouter>
+				<ConfigSteps />
+			</BrowserRouter>
+		);
+	});
 
 	await act(() => userEvent.click(screen.getByText("Log in and authorize")));
 
