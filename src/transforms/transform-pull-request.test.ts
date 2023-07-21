@@ -195,7 +195,7 @@ describe("pull_request transform", () => {
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
 						"https://github.com/integrations/test/tree/use-the-force",
-					status: "OPEN",
+					status: "DRAFT",
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",

@@ -10,9 +10,11 @@ import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
 
-const mapStatus = (status: string, merged_at?: string) => {
+const mapStatus = (status: string, merged_at?: string, draft?:boolean) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
-	if (status.toLowerCase() === "open") return "OPEN";
+	if (status.toLowerCase() === "open")
+		if (draft) return "DRAFT";
+		else return "OPEN";
 	if (status.toLowerCase() === "closed" && merged_at) return "MERGED";
 	if (status.toLowerCase() === "closed" && !merged_at) return "DECLINED";
 	if (status.toLowerCase() === "declined") return "DECLINED";
@@ -98,7 +100,8 @@ export const transformPullRequestRest = async (
 		state,
 		merged_at,
 		title,
-		html_url
+		html_url,
+		draft
 	} = pullRequest;
 
 	const issueKeys = extractIssueKeysFromPrRest(pullRequest);
@@ -116,7 +119,7 @@ export const transformPullRequestRest = async (
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
-	const status = mapStatus(state, merged_at);
+	const status = mapStatus(state, merged_at, draft);
 
 	return {
 		...transformRepositoryDevInfoBulk(base.repo, gitHubInstallationClient.baseUrl),
@@ -147,7 +150,7 @@ export const transformPullRequestRest = async (
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
 const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
-	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
+	if (mapStatus(pullRequest.state, pullRequest.merged_at, pullRequest.draft) === "MERGED") {
 		return [];
 	}
 
@@ -187,7 +190,7 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 		return undefined;
 	}
 
-	const status = mapStatus(pullRequest.state, pullRequest.mergedAt);
+	const status = mapStatus(pullRequest.state, pullRequest.mergedAt, pullRequest.draft);
 
 	try {
 		return {
