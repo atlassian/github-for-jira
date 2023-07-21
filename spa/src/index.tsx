@@ -7,19 +7,12 @@ import {
 	Route,
 	Routes,
 } from "react-router-dom";
-import OauthManager from "./oauth-manager";
 import StartConnection from "./pages/StartConnection";
 import ConfigSteps from "./pages/ConfigSteps";
 import Connected from "./pages/Connected";
 
-/**
- * This is the global variable for handling Auth related methods
- */
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-globalThis.OAuthManagerInstance = OauthManager();
-
 const App = () => {
+
 	setGlobalTheme({
 		light: "light",
 		dark: "dark",

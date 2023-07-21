@@ -1,11 +1,15 @@
 import Token from "./token";
-import GitHubAuth from "./auth";
-import GitHubApps from "./apps";
+import Auth from "./auth";
+import App from "./apps";
+import Orgs from "./orgs";
+import GitHub from "./github";
 
 const ApiRequest = {
 	token: Token,
-	githubAuth: GitHubAuth,
-	gitHubApp: GitHubApps,
+	auth: Auth,
+	gitHub: GitHub,
+	app: App,
+	orgs: Orgs
 };
 
 export default ApiRequest;

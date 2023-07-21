@@ -13,6 +13,8 @@ import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
 import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
+import AppManager from "../../services/app-manager";
+import OAuthManager from "../../services/oauth-manager";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -85,7 +87,7 @@ const Paragraph = styled.div`
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
-	const { username, email } = OAuthManagerInstance.getUserDetails();
+	const { username, email } = OAuthManager.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
 	const originalUrl = window.location.origin;
@@ -125,7 +127,7 @@ const ConfigSteps = () => {
 
 	const getOrganizations = async () => {
 		setLoaderForOrgFetching(true);
-		const response = await OAuthManagerInstance.fetchOrgs();
+		const response = await AppManager.fetchOrgs();
 		if (response) {
 			setOrganizations(response?.orgs.map((org: any) => ({
 				label: org.account.login,
@@ -140,7 +142,7 @@ const ConfigSteps = () => {
 		const handler = async (event: any) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
-				const success = await OAuthManagerInstance.finishOAuthFlow(event.data?.code, event.data?.state);
+				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				// TODO: add some visual input in case of errors
 				if (!success) return;
 			}
@@ -158,9 +160,9 @@ const ConfigSteps = () => {
 	}, []);
 
 	useEffect(() => {
-		OAuthManagerInstance.checkValidity().then((status: boolean | undefined) => {
+		OAuthManager.checkValidity().then((status: boolean | undefined) => {
 			if (status) {
-				setLoggedInUser(OAuthManagerInstance.getUserDetails().username);
+				setLoggedInUser(OAuthManager.getUserDetails().username);
 				setLoaderForLogin(false);
 				getOrganizations();
 			}
@@ -171,7 +173,7 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
-				await OAuthManagerInstance.authenticateInGitHub();
+				await OAuthManager.authenticateInGitHub();
 				break;
 			}
 			case 2: {
@@ -186,7 +188,7 @@ const ConfigSteps = () => {
 
 	const logout = () => {
 		window.open("https://github.com/logout");
-		OAuthManagerInstance.clear();
+		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
 		setLoaderForLogin(false);
@@ -200,7 +202,7 @@ const ConfigSteps = () => {
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
 			setLoaderForOrgConnection(true);
-			const connected = await OAuthManagerInstance.connectOrg(selectedOrg?.value);
+			const connected = await AppManager.connectOrg(selectedOrg?.value);
 			if (connected) {
 				navigate("/spa/connected");
 			}
@@ -209,7 +211,7 @@ const ConfigSteps = () => {
 	};
 
 	const installNewOrg = async () => {
-		await OAuthManagerInstance.installNewApp(() => {
+		await AppManager.installNewApp(() => {
 			getOrganizations();
 		});
 	};
