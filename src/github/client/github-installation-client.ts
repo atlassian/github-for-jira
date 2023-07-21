@@ -364,7 +364,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getDependabotAlertsPage(owner: string, repoName: string, perPage = 1, cursor?: string): Promise<GetDependabotAlertsResponse> {
+	public async getDependabotAlertsPage(owner: string, repoName: string, perPage = 20, cursor?: string): Promise<GetDependabotAlertsResponse> {
 
 		const response = await this.graphql<GetDependabotAlertsResponse>(getDependabotAlerts,
 			await this.installationAuthenticationHeaders(),
