@@ -15,7 +15,6 @@ import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
-import { useDebounce } from "../../utils/debounce";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -123,9 +122,6 @@ const ConfigSteps = () => {
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
-	const [typedOrg, setTypedOrg] = useState<string>("");
-	const debouncedValue = useDebounce<string>(typedOrg + "", 500);
-
 	const noOrgsFound = () => <Button
 		appearance="link"
 		onClick={() => {
@@ -191,17 +187,6 @@ const ConfigSteps = () => {
 			}
 		});
 	}, [isLoggedIn]);
-
-	useEffect(() => {
-		if (debouncedValue.length) {
-			AppManager.searchOrg(debouncedValue).then((response) => {
-				if (response.length) {
-					// TODO: Add this to the list of organizations
-					console.log("Response ", response);
-				}
-			});
-		}
-	}, [debouncedValue]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
@@ -356,7 +341,6 @@ const ConfigSteps = () => {
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
-								onInputChange={(value) => setTypedOrg(value)}
 								onChange={(value) => {
 									setOrgConnectionDisabled(false);
 									setSelectedOrg(value);

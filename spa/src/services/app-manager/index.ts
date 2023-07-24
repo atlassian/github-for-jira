@@ -27,18 +27,6 @@ async function connectOrg(orgId: number): Promise<boolean> {
 	}
 }
 
-async function searchOrg(orgName: string): Promise<any> {
-	if (!Api.token.hasGitHubToken()) return false;
-
-	try {
-		const response = await Api.orgs.searchOrganization(orgName);
-		return response.data;
-	} catch (e) {
-		console.error(e, "Failed to fetch organizations");
-		return null;
-	}
-}
-
 async function installNewApp(onFinish: () => void): Promise<void> {
 	const app = await Api.app.getAppNewInstallationUrl();
 	const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
@@ -58,7 +46,6 @@ async function installNewApp(onFinish: () => void): Promise<void> {
 
 export default {
 	fetchOrgs,
-	searchOrg,
 	connectOrg,
 	installNewApp
 };

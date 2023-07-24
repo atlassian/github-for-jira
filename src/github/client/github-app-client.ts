@@ -71,10 +71,4 @@ export class GitHubAppClient extends GitHubClient {
 	public getInstallations = async (): Promise<AxiosResponse<Octokit.AppsGetInstallationResponse[]>> => {
 		return await this.axios.get<Octokit.AppsGetInstallationResponse[]>(`/app/installations`, {});
 	};
-
-	public async searchOrg(org: string): Promise<AxiosResponse<any>> {
-		return await this.axios.get(`/orgs/{org}`, {
-			urlParams: { org }
-		});
-	}
 }
