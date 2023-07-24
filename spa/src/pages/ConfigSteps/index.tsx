@@ -82,7 +82,11 @@ const LoggedInContent = styled.div`
 	justify-content: start;
 	align-items: center;
 `;
-const ButtonContainer = LoggedInContent;
+const ButtonContainer = styled.div`
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
