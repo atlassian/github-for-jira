@@ -20,7 +20,7 @@ const SyncLogo = styled.img`
 	padding: ${token("space.100")};
 `;
 const Title = styled.h2`
-	margin: ${token("space.400")} ${token("space.0")} ${token("space.0")};
+	margin: ${token("space.400")} ${token("space.0")} ${token("space.300")};
 `;
 
 const SyncHeader = () => (
