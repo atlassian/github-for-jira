@@ -219,9 +219,13 @@ const ConfigSteps = () => {
 	};
 
 	const installNewOrg = async () => {
-		await AppManager.installNewApp(() => {
-			getOrganizations();
-		});
+		try {
+			await AppManager.installNewApp(() => {
+				getOrganizations();
+			});
+		} catch (e) {
+			setError({type: "error", message: "Couldn't install new organization"});
+		}
 	};
 
 	return (
