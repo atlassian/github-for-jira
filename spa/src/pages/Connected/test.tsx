@@ -4,6 +4,7 @@ import Connected from "./index";
 import userEvent from "@testing-library/user-event";
 
 // Mocking the global variable
+/* eslint-disable @typescript-eslint/no-explicit-any*/
 (global as any).AP = {
 	navigator: {
 		go: jest.fn()

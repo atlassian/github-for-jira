@@ -9,6 +9,7 @@ import AppManager from "../../services/app-manager";
 jest.mock("../../services/oauth-manager");
 jest.mock("../../services/app-manager");
 
+/* eslint-disable react-refresh/only-export-components */
 const Authenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
@@ -17,6 +18,8 @@ const Authenticated = {
 	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
 	clear: jest.fn(),
 };
+
+/* eslint-disable react-refresh/only-export-components */
 const UnAuthenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(false)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
@@ -27,6 +30,7 @@ const UnAuthenticated = {
 };
 
 // Mocking the global variable
+/* eslint-disable @typescript-eslint/no-explicit-any*/
 (global as any).AP = {
 	getLocation: jest.fn(),
 	context: {

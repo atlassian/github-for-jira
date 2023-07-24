@@ -1,4 +1,6 @@
-import { OrganizationsResponse } from "./rest-interfaces/oauth-types.ts";
+//Need this line to make it a "module" file
+//https://stackoverflow.com/a/42257742
+export {};
 
 declare global {
 	const AP: AtlassianPlugin;

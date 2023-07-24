@@ -15,6 +15,7 @@ import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
+import analyticsClient from "../../analytics";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -86,6 +87,7 @@ const Paragraph = styled.div`
 `;
 
 const ConfigSteps = () => {
+
 	const navigate = useNavigate();
 	const { username, email } = OAuthManager.getUserDetails();
 	const isAuthenticated = !!(username && email);
@@ -129,9 +131,9 @@ const ConfigSteps = () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		if (response) {
-			setOrganizations(response?.orgs.map((org: any) => ({
+			setOrganizations(response?.orgs.map((org) => ({
 				label: org.account.login,
-				value: org.id,
+				value: String(org.id),
 			})));
 		}
 		setLoaderForOrgFetching(false);
@@ -139,7 +141,7 @@ const ConfigSteps = () => {
 
 	useEffect(() => {
 		getJiraHostUrls();
-		const handler = async (event: any) => {
+		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
@@ -157,7 +159,7 @@ const ConfigSteps = () => {
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-	}, []);
+	}, [ originalUrl ]);
 
 	useEffect(() => {
 		OAuthManager.checkValidity().then((status: boolean | undefined) => {
@@ -173,6 +175,7 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
+				analyticsClient.sendUIEvent("trigger-authorisation");
 				await OAuthManager.authenticateInGitHub();
 				break;
 			}
@@ -310,7 +313,12 @@ const ConfigSteps = () => {
 								isLoading={loaderForOrgFetching}
 								onChange={(value) => {
 									setOrgConnectionDisabled(false);
-									setSelectedOrg(value);
+									if(value) {
+										setSelectedOrg({
+											label: value.label,
+											value: parseInt(value.value)
+										});
+									}
 								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>

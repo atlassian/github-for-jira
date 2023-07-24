@@ -43,7 +43,7 @@
 		"db:dev": "run-s db:create:dev db:migrate:dev",
 		"db:test": "run-s db:create:test db:migrate:test",
 		"prepare": "husky install",
-		"precommit": "run-p lint build",
+		"precommit": "run-p lint",
 		"test:e2e": "yarn test:e2e:install && yarn test:e2e:start",
 		"test:e2e:headed": "yarn test:e2e --headed",
 		"test:e2e:install": "playwright install",
