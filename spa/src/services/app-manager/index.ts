@@ -4,7 +4,6 @@ import { OrganizationsResponse } from "../../rest-interfaces/oauth-types";
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
 async function fetchOrgs(): Promise<OrganizationsResponse> {
-
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
 	try {
@@ -17,7 +16,6 @@ async function fetchOrgs(): Promise<OrganizationsResponse> {
 }
 
 async function connectOrg(orgId: number): Promise<boolean> {
-
 	if (!Api.token.hasGitHubToken()) return false;
 
 	try {

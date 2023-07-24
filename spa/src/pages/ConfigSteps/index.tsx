@@ -113,7 +113,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const [error] = useState<ErrorObjType | undefined>(undefined);
+	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -173,7 +173,12 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
-				await OAuthManager.authenticateInGitHub();
+				try {
+					await OAuthManager.authenticateInGitHub();
+				} catch (e) {
+					setLoaderForLogin(false);
+					setError({ type: "error", message: "Couldn't login!"});
+				}
 				break;
 			}
 			case 2: {
@@ -279,13 +284,16 @@ const ConfigSteps = () => {
 									{(props) => <a {...props}>How do I check my GitHub product?</a>}
 								</Tooltip>
 							</TooltipContainer>
-							<Button
-								iconAfter={<OpenIcon label="open" size="medium"/>}
-								appearance="primary"
-								onClick={authorize}
-							>
-								Authorize in GitHub
-							</Button>
+							{
+								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+								<Button
+									iconAfter={<OpenIcon label="open" size="medium"/>}
+									appearance="primary"
+									onClick={authorize}
+								>
+									Authorize in GitHub
+								</Button>
+							}
 						</>
 					}
 				</CollapsibleStep>
