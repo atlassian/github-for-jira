@@ -15,6 +15,7 @@ try {
 	/*eslint-disable @typescript-eslint/no-var-requires*/
 	const imported = require("@atlassiansox/analytics-web-client");
 	if(imported) {
+		console.info("analytis loaded");
 		const client = new imported.AnalyticsWebClient(
 			{
 				env: imported.envType.DEV,
