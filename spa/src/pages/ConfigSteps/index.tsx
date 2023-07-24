@@ -143,8 +143,10 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				// TODO: add some visual input in case of errors
-				if (!success) return;
+				if (!success) {
+					setError({ type: "error", message: "Failed to finish authentication!"});
+					return;
+				}
 			}
 			setIsLoggedIn(true);
 			setCompletedStep1(true);
@@ -203,13 +205,14 @@ const ConfigSteps = () => {
 		setLoggedInUser("");
 	};
 
-	// TODO: Need to handle all the different error cases
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
 			setLoaderForOrgConnection(true);
 			const connected = await AppManager.connectOrg(selectedOrg?.value);
 			if (connected) {
 				navigate("/spa/connected");
+			} else {
+				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
 			}
 			setLoaderForOrgConnection(false);
 		}
