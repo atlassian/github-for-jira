@@ -21,7 +21,9 @@ import {
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
 	getPullRequests,
-	pullRequestQueryResponse
+	pullRequestQueryResponse,
+	getDependabotAlerts,
+	GetDependabotAlertsResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
@@ -360,6 +362,20 @@ export class GitHubInstallationClient extends GitHubClient {
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders(), undefined, { graphQuery: "ViewerRepositoryCountQuery" });
 		return response?.data?.data?.viewer?.repositories?.totalCount;
+	}
+
+	public async getDependabotAlertsPage(owner: string, repoName: string, perPage = 20, cursor?: string): Promise<GetDependabotAlertsResponse> {
+
+		const response = await this.graphql<GetDependabotAlertsResponse>(getDependabotAlerts,
+			await this.installationAuthenticationHeaders(),
+			{
+				owner,
+				repo: repoName,
+				per_page: perPage,
+				cursor
+			},
+			{ graphQuery: "getDependabotAlerts" });
+		return response?.data?.data;
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {
