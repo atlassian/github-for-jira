@@ -181,7 +181,7 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
-				analyticsClient.sendUIEvent("trigger-authorisation");
+				analyticsClient.sendUIEvent({ actionSubject: "authorizeButton", action: "clicked" });
 				await OAuthManager.authenticateInGitHub();
 				break;
 			}

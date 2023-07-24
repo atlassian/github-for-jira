@@ -1,7 +1,10 @@
-type UIEvent = "trigger-authorisation";
+export type UIEventOpts = {
+	actionSubject: string,
+	action: string
+};
 
 export type AnalyticClient = {
-	sendUIEvent: (event: UIEvent) => void
+	sendUIEvent: (event: UIEventOpts) => void
 };
 
 const analyticsClient: AnalyticClient = {
@@ -21,8 +24,11 @@ try {
 				useLegacyUrl: true // due to do not have stargate gateway setup for this product
 			}
 		);
-		analyticsClient.sendUIEvent = function () {
+		analyticsClient.sendUIEvent = function (opts: UIEventOpts) {
 			client.sendUIEvent({
+				actionSubject: opts.actionSubject,
+				action: opts.action,
+				source: "spa"
 			});
 		};
 	}
