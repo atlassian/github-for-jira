@@ -20,10 +20,14 @@ compose:
     links:
       - pgbouncer
       - cryptor
+      - tcs-sidecar
     depends_on:
       - cryptor
   cryptor:
     image: docker.atl-paas.net/sox/cryptor-sidecar-application
+    tag: 1.1-stable-release
+  tcs-sidecar:
+    image: docker.atl-paas.net/sox/tcs-sidecar-application
     tag: 1.1-stable-release
 
 computeClassification:
