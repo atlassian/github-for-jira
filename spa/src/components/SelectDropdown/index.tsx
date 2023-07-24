@@ -29,6 +29,7 @@ const SelectDropdown = ({
 	options,
 	label,
 	onChange,
+	noOptionsMessage,
 	onInputChange,
 	placeholder = "",
 	isLoading = false,
@@ -36,6 +37,7 @@ const SelectDropdown = ({
 }: {
 	options: Array<LabelType>,
 	label: string,
+	noOptionsMessage: (...args: any) => React.JSX.Element,
 	onChange: (...args: any) => void,
 	onInputChange: (...args: any) => void,
 	placeholder?: string,
@@ -51,6 +53,7 @@ const SelectDropdown = ({
 			<SelectContainer>
 				<Select
 					inputId="select-org"
+					noOptionsMessage={noOptionsMessage}
 					className="single-select"
 					isLoading={isLoading}
 					classNamePrefix="react-select"

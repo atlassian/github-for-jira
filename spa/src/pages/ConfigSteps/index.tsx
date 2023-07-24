@@ -92,6 +92,7 @@ const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
 
+
 const ConfigSteps = () => {
 	const navigate = useNavigate();
 	const { username, email } = OAuthManager.getUserDetails();
@@ -123,8 +124,17 @@ const ConfigSteps = () => {
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const [typedOrg, setTypedOrg] = useState<string>("");
-	const [noOrgFound, setNoOrgFound] = useState<boolean>(false);
 	const debouncedValue = useDebounce<string>(typedOrg + "", 500);
+
+	const noOrgsFound = () => <Button
+		appearance="link"
+		onClick={() => {
+			// 	TODO: add action for this
+			console.log("Clicked no orgs");
+		}}
+	>
+		Can't find an organization you're looking for?
+	</Button>;
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -188,11 +198,7 @@ const ConfigSteps = () => {
 				if (response.length) {
 					// TODO: Add this to the list of organizations
 					console.log("Response ", response);
-				} else {
-					setNoOrgFound(true);
 				}
-			}).catch(() => {
-				setNoOrgFound(true);
 			});
 		}
 	}, [debouncedValue]);
@@ -346,6 +352,7 @@ const ConfigSteps = () => {
 							</Paragraph>
 
 							<SelectDropdown
+								noOptionsMessage={noOrgsFound}
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
@@ -356,18 +363,6 @@ const ConfigSteps = () => {
 								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
-							{
-								noOrgFound &&
-								<Button
-									style={{ paddingLeft: 0 }}
-									appearance="link"
-									onClick={() => {
-										// 	TODO: add action for this
-									}}
-								>
-									Can't find an organization you're looking for?
-								</Button>
-							}
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 									<ButtonContainer>
