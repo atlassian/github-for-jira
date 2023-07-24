@@ -14,9 +14,9 @@ const analyticsClient: AnalyticClient = {
 try {
 	/*eslint-disable @typescript-eslint/no-var-requires*/
 	const imported = require("@atlassiansox/analytics-web-client");
-	if(imported) {
+	if(imported && imported.default) {
 		console.info("analytis loaded");
-		const client = new imported.AnalyticsWebClient(
+		const client = new imported.default(
 			{
 				env: imported.envType.DEV,
 				product: "github-for-jira",
