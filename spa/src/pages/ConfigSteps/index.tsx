@@ -35,21 +35,22 @@ type ErrorObjType = {
 }
 
 const ConfigContainer = styled.div`
-	margin: 0 auto;
-	width: 100%;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 364px;
 `;
 const GitHubOptionContainer = styled.div`
 	display: flex;
 	margin-bottom: ${token("space.200")};
 `;
 const TooltipContainer = styled.div`
-	margin-bottom: ${token("space.200")};
+	margin-bottom: ${token("space.400")};
 	a {
 		cursor: pointer;
 	}
 `;
 const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : token("color.background.neutral")};
+	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : "rgba(9, 30, 66, 0.04)"};
 	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
 	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
 	padding: ${token("space.100")} ${token("space.200")};
@@ -60,6 +61,7 @@ const GitHubOption = styled.div<GitHubOptionType>`
 	cursor: pointer;
 	:hover {
 		box-shadow: ${token("elevation.shadow.raised")};
+		background: rgba(9, 30, 66, 0.08);
 	}
 	img {
 		height: 18px;
@@ -82,7 +84,6 @@ const LoggedInContent = styled.div`
 	align-items: center;
 `;
 const ButtonContainer = styled.div`
-	margin-top: ${token("space.150")};
 	display: flex;
 	justify-content: space-between;
 	align-items: center;

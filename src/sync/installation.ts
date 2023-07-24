@@ -25,6 +25,7 @@ import { Task, TaskResultPayload, TaskProcessors, TaskType } from "./sync.types"
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 import { getNextTasks } from "~/src/sync/scheduler";
+import { getDependabotAlertTask } from "./dependabot-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -32,10 +33,11 @@ const tasks: TaskProcessors = {
 	branch: getBranchTask,
 	commit: getCommitTask,
 	build: getBuildTask,
-	deployment: getDeploymentTask
+	deployment: getDeploymentTask,
+	dependabotAlert: getDependabotAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -207,6 +209,11 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 			case "deployment":
 				await jiraClient.deployment.submit(jiraPayload, repositoryId, {
 					preventTransitions: true,
+					operationType: "BACKFILL"
+				});
+				break;
+			case "dependabotAlert":
+				await jiraClient.security.submitVulnerabilities(jiraPayload, {
 					operationType: "BACKFILL"
 				});
 				break;
