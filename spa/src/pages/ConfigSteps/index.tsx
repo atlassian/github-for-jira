@@ -122,16 +122,6 @@ const ConfigSteps = () => {
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
-	const noOrgsFound = () => <Button
-		appearance="link"
-		onClick={() => {
-			// 	TODO: add action for this
-			console.log("Clicked no orgs");
-		}}
-	>
-		Can't find an organization you're looking for?
-	</Button>;
-
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
@@ -337,7 +327,15 @@ const ConfigSteps = () => {
 							</Paragraph>
 
 							<SelectDropdown
-								noOptionsMessage={noOrgsFound}
+								noOptionsMessage={() => <Button
+									appearance="link"
+									onClick={() => {
+										// 	TODO: add action for this
+										console.log("Clicked no orgs");
+									}}
+								>
+									Can't find an organization you're looking for?
+								</Button>}
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
