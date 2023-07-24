@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { token } from "@atlaskit/tokens";
 import styled from "@emotion/styled";
-import CheckIcon from "@atlaskit/icon/glyph/check";
+import CheckCircleIcon from "@atlaskit/icon/glyph/check-circle";
 
 type ContainerType = {
 	isExpanded: boolean
@@ -9,10 +9,10 @@ type ContainerType = {
 
 const Container = styled.div<ContainerType>`
 	width: 100%;
-	border: ${token("space.025")} solid ${token("color.border")};
+	border: ${props => props.isExpanded ? `${token("space.025")} solid ${token("color.border")}` : "none"};
 	border-radius: ${token("space.050")};
 	padding: ${token("space.400")};
-	margin: ${token("space.400")} 0;
+	margin: 0 0 ${token("space.100")};
 	box-sizing: border-box;
 	background: ${props => props.isExpanded ? "transparent" : token("elevation.surface.sunken")};
 `;
@@ -25,6 +25,7 @@ const StepNumber = styled.span`
 	background: ${token("color.background.accent.gray.subtlest")};
 	height: ${token("space.400")};
 	width: ${token("space.400")};
+	font-weight: 600;
 	text-align: center;
 	border-radius: 50%;
 `;
@@ -35,10 +36,11 @@ const CompletedIcon = styled.span`
 	justify-content: end;
 	align-items: center;
 `;
-const StepTitle = styled.span`
+const StepTitle = styled.span<ContainerType>`
 	cursor: pointer;
 	font-weight: 600;
 	margin: 0 0 0 ${token("space.200")};
+	color: ${props => props.isExpanded ? token("color.text") : token("color.text.subtlest") }
 `;
 const Content = styled.div`
 	margin: ${token("space.200")} 0 0 ${token("space.600")};
@@ -77,11 +79,11 @@ const CollapsibleStep = ({
 				{
 					completed ? (
 						<CompletedIcon>
-							<CheckIcon label="completed" primaryColor={token("color.icon.success")} />
+							<CheckCircleIcon label="completed" primaryColor={token("color.icon.success")} />
 						</CompletedIcon>
 					) : <StepNumber>{step}</StepNumber>
 				}
-				<StepTitle onClick={clickedTitle}>{title}</StepTitle>
+				<StepTitle isExpanded={isExpanded} onClick={clickedTitle}>{title}</StepTitle>
 			</Header>
 			{
 				isExpanded && (
