@@ -39,7 +39,7 @@ export const getRedirectUrl = async (jiraHost: string, gheUUID: string | undefin
 		clientId = envVars.GITHUB_CLIENT_ID;
 	}
 
-	const scopes = [ "user", "repo" ];
+	const scopes = [ "user", "repo", "admin:org" ];
 	const callbackURI = `${envVars.APP_URL}${callbackPath}`;
 	const nonce = await generateNonce(jiraHost);
 

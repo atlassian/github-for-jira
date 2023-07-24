@@ -15,6 +15,7 @@ import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
+import { useDebounce } from "../../utils/debounce";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -81,6 +82,7 @@ const LoggedInContent = styled.div`
 	align-items: center;
 `;
 const ButtonContainer = styled.div`
+	margin-top: ${token("space.150")};
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -103,7 +105,7 @@ const ConfigSteps = () => {
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
-	const [selectedOption, setSelectedOption] = useState(0);
+	const [selectedOption, setSelectedOption] = useState(1);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
 
@@ -118,6 +120,10 @@ const ConfigSteps = () => {
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
+
+	const [typedOrg, setTypedOrg] = useState<string>("");
+	const [noOrgFound, setNoOrgFound] = useState<boolean>(false);
+	const debouncedValue = useDebounce<string>(typedOrg + "", 500);
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -174,6 +180,21 @@ const ConfigSteps = () => {
 			}
 		});
 	}, [isLoggedIn]);
+
+	useEffect(() => {
+		if (debouncedValue.length) {
+			AppManager.searchOrg(debouncedValue).then((response) => {
+				if (response.length) {
+					// TODO: Add this to the list of organizations
+					console.log("Response ", response);
+				} else {
+					setNoOrgFound(true);
+				}
+			}).catch(() => {
+				setNoOrgFound(true);
+			});
+		}
+	}, [debouncedValue]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
@@ -327,12 +348,25 @@ const ConfigSteps = () => {
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
+								onInputChange={(value) => setTypedOrg(value)}
 								onChange={(value) => {
 									setOrgConnectionDisabled(false);
 									setSelectedOrg(value);
 								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
+							{
+								noOrgFound &&
+								<Button
+									style={{ paddingLeft: 0 }}
+									appearance="link"
+									onClick={() => {
+										// 	TODO: add action for this
+									}}
+								>
+									Can't find an organization you're looking for?
+								</Button>
+							}
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 									<ButtonContainer>

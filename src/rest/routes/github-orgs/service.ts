@@ -1,11 +1,12 @@
 import Logger from "bunyan";
-import { createUserClient } from "utils/get-github-client-config";
+import { createAppClient, createUserClient } from "utils/get-github-client-config";
 import { Octokit } from "@octokit/rest";
 import {
 	getInstallationsWithAdmin,
 	installationConnectedStatus
 } from "routes/github/configuration/github-configuration-get";
 import { Installation } from "models/installation";
+import { AxiosResponse } from "axios";
 
 const fetchGitHubOrganizations = async (
 	githubToken: string,
@@ -42,11 +43,26 @@ const fetchGitHubOrganizations = async (
 			undefined
 		);
 
-		return  connectedInstallations.filter(installation => !installation.syncStatus);
+		return connectedInstallations.filter(installation => !installation.syncStatus);
 	} catch (e) {
 		log.error(e, "Failed to fetch the organizations");
 		return [];
 	}
 };
 
-export default fetchGitHubOrganizations;
+
+const searchGitHubOrganization = async (
+	orgName: string,
+	jiraHost: string,
+	log: Logger
+): Promise<AxiosResponse | null> => {
+	try {
+		const gitHubAppClient = await createAppClient(log, jiraHost, undefined, { trigger: "searchOrganization" });
+		return await gitHubAppClient.searchOrg(orgName);
+	} catch (e) {
+		log.error(e, "Failed to search the organizations");
+		return null;
+	}
+};
+
+export { fetchGitHubOrganizations, searchGitHubOrganization };

@@ -4,6 +4,7 @@ import SelectDropdown from "./index";
 test("Basic check for the select dropdown", async () => {
 	render(
 		<SelectDropdown
+			onInputChange={jest.fn()}
 			onChange={jest.fn()}
 			isLoading={false}
 			options={[

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import fetchGitHubOrganizations from "./service";
+import { fetchGitHubOrganizations, searchGitHubOrganization } from "./service";
 import { OrganizationsResponse } from "rest-interfaces/oauth-types";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 
@@ -13,6 +13,14 @@ GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsRespon
 	res.status(200).send({
 		orgs: organizations
 	});
+});
+
+GitHubOrgsRouter.get("/:orgName", async (req: Request, res: Response) => {
+	const { orgName } = req.params;
+	const { jiraHost } = res.locals;
+	const organization = await searchGitHubOrganization(orgName, jiraHost, req.log);
+
+	res.status(200).send({ organization });
 });
 
 

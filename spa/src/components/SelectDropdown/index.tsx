@@ -29,6 +29,7 @@ const SelectDropdown = ({
 	options,
 	label,
 	onChange,
+	onInputChange,
 	placeholder = "",
 	isLoading = false,
 	icon,
@@ -36,6 +37,7 @@ const SelectDropdown = ({
 	options: Array<LabelType>,
 	label: string,
 	onChange: (...args: any) => void,
+	onInputChange: (...args: any) => void,
 	placeholder?: string,
 	isLoading: boolean,
 	icon?: React.JSX.Element
@@ -52,6 +54,7 @@ const SelectDropdown = ({
 					className="single-select"
 					isLoading={isLoading}
 					classNamePrefix="react-select"
+					onInputChange={onInputChange}
 					onChange={onChange}
 					options={options}
 					placeholder={placeholder}
