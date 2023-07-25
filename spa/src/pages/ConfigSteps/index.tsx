@@ -141,7 +141,7 @@ const ConfigSteps = () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		if (response) {
-			setNoOrgsFound(response?.orgs.length == 0);
+			setNoOrgsFound(response?.orgs.length === 0);
 			setOrganizations(response?.orgs.map((org) => ({
 				label: org.account.login,
 				value: String(org.id),
