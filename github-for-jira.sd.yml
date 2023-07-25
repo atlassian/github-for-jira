@@ -47,6 +47,25 @@ httpRedirect: true
 
 cleanup: false
 
+serviceProxy:
+  enabled: true
+  ingress:
+    authentication:
+      enabled: true
+  egress:
+    dependencies:
+      - name: rollcall
+
+  plugins:
+    auth:
+      authentication:
+        plugins:
+          - type: asap
+          - type: slauthtoken
+      authorization:
+        plugins:
+          - type: poco
+
 lifecycleEvents:
   source: queue
   # Number of seconds between the termination message and when the instance is terminated.
@@ -308,26 +327,8 @@ workers:
                     - LogicalQueueName: 'deployment'
                 Period: 60
                 Stat: Maximum
-              Id: deploymentQueu
-
-serviceProxy:
-  enabled: true
-  ingress:
-    authentication:
-      enabled: true
-  egress:
-    dependencies:
-      - name: rollcall
-
-  plugins:
-    auth:
-      authentication:
-        plugins:
-          - type: asap
-          - type: slauthtoken
-      authorization:
-        plugins:
-          - type: poco
+              Id: deploymentQueueMessages
+              ReturnData: false
 
 environmentOverrides:
   ddev:
