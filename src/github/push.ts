@@ -33,7 +33,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	const jiraHost = jiraClient.baseURL;
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
 		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 		gitHubProduct,
