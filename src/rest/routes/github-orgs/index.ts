@@ -15,7 +15,6 @@ GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsRespon
 	});
 });
 
-
 GitHubOrgsRouter.post("/", async (req: Request, res: Response) => {
 	const { installation, githubToken, gitHubAppId  } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
