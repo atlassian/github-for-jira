@@ -92,6 +92,7 @@ const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
 
+
 const ConfigSteps = () => {
 
 	const navigate = useNavigate();
@@ -121,7 +122,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const [error] = useState<ErrorObjType | undefined>(undefined);
+	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -151,8 +152,10 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				// TODO: add some visual input in case of errors
-				if (!success) return;
+				if (!success) {
+					setError({ type: "error", message: "Failed to finish authentication!"});
+					return;
+				}
 			}
 			setIsLoggedIn(true);
 			setCompletedStep1(true);
@@ -181,8 +184,13 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
-				analyticsClient.sendUIEvent({ actionSubject: "authorizeButton", action: "clicked" });
-				await OAuthManager.authenticateInGitHub();
+				try {
+					analyticsClient.sendUIEvent({ actionSubject: "authorizeButton", action: "clicked" });
+					await OAuthManager.authenticateInGitHub();
+				} catch (e) {
+					setLoaderForLogin(false);
+					setError({ type: "error", message: "Couldn't login!"});
+				}
 				break;
 			}
 			case 2: {
@@ -207,22 +215,27 @@ const ConfigSteps = () => {
 		setLoggedInUser("");
 	};
 
-	// TODO: Need to handle all the different error cases
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
 			setLoaderForOrgConnection(true);
 			const connected = await AppManager.connectOrg(selectedOrg?.value);
 			if (connected) {
 				navigate("/spa/connected");
+			} else {
+				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
 			}
 			setLoaderForOrgConnection(false);
 		}
 	};
 
 	const installNewOrg = async () => {
-		await AppManager.installNewApp(() => {
-			getOrganizations();
-		});
+		try {
+			await AppManager.installNewApp(() => {
+				getOrganizations();
+			});
+		} catch (e) {
+			setError({type: "error", message: "Couldn't install new organization"});
+		}
 	};
 
 	return (
@@ -288,13 +301,16 @@ const ConfigSteps = () => {
 									{(props) => <a {...props}>How do I check my GitHub product?</a>}
 								</Tooltip>
 							</TooltipContainer>
-							<Button
-								iconAfter={<OpenIcon label="open" size="medium"/>}
-								appearance="primary"
-								onClick={authorize}
-							>
-								Authorize in GitHub
-							</Button>
+							{
+								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+								<Button
+									iconAfter={<OpenIcon label="open" size="medium"/>}
+									appearance="primary"
+									onClick={authorize}
+								>
+									Authorize in GitHub
+								</Button>
+							}
 						</>
 					}
 				</CollapsibleStep>
@@ -314,6 +330,15 @@ const ConfigSteps = () => {
 							</Paragraph>
 
 							<SelectDropdown
+								noOptionsMessage={() => <Button
+									appearance="link"
+									onClick={() => {
+										// 	TODO: add action for this
+										console.log("Clicked no orgs");
+									}}
+								>
+									Can't find an organization you're looking for?
+								</Button>}
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
