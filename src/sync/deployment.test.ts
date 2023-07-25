@@ -18,7 +18,7 @@ import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getDeploymentTask } from "./deployment";
 import { RepoSyncState } from "models/reposyncstate";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 
 jest.mock("config/feature-flags");
@@ -75,7 +75,6 @@ describe("sync/deployments", () => {
 
 			beforeEach(() => {
 				when(booleanFlag).calledWith(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost).mockResolvedValue(true);
-				when(numberFlag).calledWith(NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES, 1, jiraHost).mockResolvedValue(1);
 			});
 
 			it("should get the url from previous NON-INACTIVE status", async () => {
