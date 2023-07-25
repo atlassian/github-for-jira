@@ -330,15 +330,6 @@ const ConfigSteps = () => {
 							</Paragraph>
 
 							<SelectDropdown
-								noOptionsMessage={() => <Button
-									appearance="link"
-									onClick={() => {
-										// 	TODO: add action for this
-										console.log("Clicked no orgs");
-									}}
-								>
-									Can't find an organization you're looking for?
-								</Button>}
 								options={organizations}
 								label="Select organization"
 								isLoading={loaderForOrgFetching}
@@ -353,6 +344,15 @@ const ConfigSteps = () => {
 								}}
 								icon={<OfficeBuildingIcon label="org" size="medium" />}
 							/>
+							<TooltipContainer>
+								<Tooltip
+									component={InlineDialog}
+									position="right-end"
+									content="Don’t see the organization you want to connect in the list above? You will need the role of an owner in GitHub your organization to do so. Please contact your company’s GitHub owner."
+								>
+									{(props) => <a {...props}>Can't find an organization you're looking for?</a>}
+								</Tooltip>
+							</TooltipContainer>
 							{
 								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 									<ButtonContainer>
