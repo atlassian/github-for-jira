@@ -52,7 +52,7 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
-  plugins:
+		plugins:
     auth:
       logLevel: info
       authentication:
@@ -62,6 +62,11 @@ serviceProxy:
       authorization:
         plugins:
           - type: poco
+	egress:
+    dependencies:
+      - name: brahmos-wiremock
+
+
 
 lifecycleEvents:
   source: queue
@@ -771,3 +776,7 @@ environmentOverrides:
               expression: 'cron(0/10 * * * ? *)'
           dataType:
             - Atlassian/Configuration
+    serviceProxy:
+      egress:
+        dependencies:
+          - name: brahmos-wiremock

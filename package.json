@@ -168,10 +168,6 @@
 		"ts-node-dev": "^2.0.0",
 		"yaml-lint": "^1.2.4"
 	},
-	"optionalDependencies": {
-		"@atlassian/sqs-queue-dlq-service": "^2.1.0",
-		"@atlassiansox/analytics-node-client": "^3.1.1"
-	},
 	"volta": {
 		"node": "14.21.1",
 		"yarn": "1.22.18"
