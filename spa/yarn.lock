@@ -117,6 +117,15 @@
     react-uid "^2.2.0"
     tiny-invariant "^1.2.0"
 
+"@atlaskit/heading@^1.3.7":
+  version "1.3.7"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/heading/-/heading-1.3.7.tgz#2aaf199cc410cab6b363222cea2fa7450272aa45"
+  integrity sha512-PRLGK7FNo+twL+pFRfyaKRpk43bRUrzxVec0HjFyD2CmwSlQ8emY7S1qfbN8+hAvxeNnmDg3MiTlu42vXuPMSg==
+  dependencies:
+    "@atlaskit/tokens" "^1.11.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/icon@^21.12.0":
   version "21.12.5"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/icon/-/icon-21.12.5.tgz#834c967b0e62ceb6bb4951a36a50fda773a5f9ce"
