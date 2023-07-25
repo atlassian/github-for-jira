@@ -14,7 +14,7 @@ test("Basic check for the select dropdown", async () => {
 			]}
 			label="Dropdown label"
 			placeholder="Dropdown placeholder"
-			icon={<span data-testId="selectIconId">🎉</span>}
+			icon={<span data-testid="selectIconId">🎉</span>}
 		/>
 	);
 

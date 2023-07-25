@@ -36,8 +36,8 @@ const SelectDropdown = ({
 }: {
 	options: Array<LabelType>,
 	label: string,
-	noOptionsMessage: (...args: any) => React.JSX.Element,
-	onChange: (...args: any) => void,
+	noOptionsMessage: (obj: { inputValue: string; }) => React.JSX.Element,
+	onChange: (args: LabelType | null) => void,
 	placeholder?: string,
 	isLoading: boolean,
 	icon?: React.JSX.Element
