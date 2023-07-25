@@ -52,12 +52,9 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
-  egress:
-    dependencies:
-      - name: rollcall
-
   plugins:
     auth:
+      logLevel: info
       authentication:
         plugins:
           - type: asap
