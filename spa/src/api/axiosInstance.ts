@@ -25,18 +25,13 @@ let gitHubToken: string | undefined = undefined;
 
 const clearGitHubToken = () => {
 	gitHubToken = undefined;
-}
+};
 
 const setGitHubToken = (newToken: string) => {
 	gitHubToken = newToken;
-}
+};
 
-const hasGitHubToken = () => {
-	if (!!gitHubToken) {
-		return true;
-	}
-	return false;
-}
+const hasGitHubToken = () => !!gitHubToken;
 
 const axiosGitHub = axios.create({
 	timeout: 3000
