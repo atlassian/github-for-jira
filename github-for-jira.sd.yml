@@ -65,7 +65,6 @@ serviceProxy:
       authorization:
         plugins:
           - type: poco
-			logLevel: info
 
 lifecycleEvents:
   source: queue
@@ -167,8 +166,9 @@ resources:
       ReadWriteCapacityMode: ON_DEMAND
       TTLAttributeName: ExpiredAfter
       dataType:
+        - UGC/PrimaryIdentifier    # Sha of a commit that point to user's code
 
-caling:
+scaling:
   instance: t2.small
   min: 1
   max: 5
@@ -219,7 +219,7 @@ alarms:
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
 
 config:
-	  environmentVariables:
+  environmentVariables:
     NODE_ENV: production
     NODE_OPTIONS: "--no-deprecation"
     LOG_LEVEL: info
@@ -331,23 +331,446 @@ workers:
               Id: deploymentQueueMessages
               ReturnData: false
 
+
 environmentOverrides:
   ddev:
+#  Uncomment lines 140-149 if you want remote debugging in ddev
+#    loadBalancer:
+#      type: ELB # needed for remote debugging, default is "ALB"
+#    compose:
+#      microservice:
+#        ports:
+#          - 8080:8080
+#          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+#    links:
+#      remoteDebug: true
+    config:
+      environmentVariables:
+        APP_URL: https://github-for-jira.dev.services.atlassian.com
+        WEBHOOK_PROXY_URL: https://github-for-jira.dev.services.atlassian.com
+        APP_KEY: com.github.integration.development
+        NODE_OPTIONS: "--no-deprecation"
+        LOG_LEVEL: debug
+        SENTRY_ENVIRONMENT: ddev
+        APP_ID: '124403'
+        GITHUB_CLIENT_ID: Iv1.600bf90a20f1ab18
+        PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-private-key-ddev
+        GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-client-secret-ddev
+        WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-webhook-secrets-ddev
+        COOKIE_SESSION_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-admins/github-app-cookie-session-key-ddev
     scaling:
-      min: 2
-      max: 3
-      instance: m5.large
-  stg-west:
-    scaling:
+      instance: t2.small
       min: 1
-      max: 3
-      instance: t3.small
-    serviceProxy:
-      egress:
-        dependencies:
-          - name: rollcall
-  prod-east:
+      max: 1
+      metrics: *CpuMemScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: t2.small
+          min: 1
+          max: 5
+          metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.dev.atlassian.com
+          ip_whitelist:
+            - public
+          routes: &blackholeSpammingIPs
+            - match: # Blackhole IP that keeps spamming us
+                prefix: /
+                external_address_header_match:
+                  - 94.156.174.137
+              route:
+                cluster: blackhole # Deny by sending traffic to blackhole
+
+      - &cryptorGithubServerAppSecrets
+        name: github-server-app-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+
+      - &cryptorJiraInstanceSecrets
+        name: jira-instance-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
+    alarms:
+      overrides:
+        LatencyHigh: null
+        HealthyHostCount: null
+        UnHealthyHostCount: null
+        WebServerAlarmWhenLowCPUCredits: null
+        WebServerDiskSpaceUtilizationAlarmHigh: null
+        WebServerInstanceVolumeSpaceUtilizationAlarmHigh: null
+        WebServerMemoryAlarmHigh: null
+        WebServerServiceRespawnAlarm: null
+
+  staging:
+    config:
+      environmentVariables:
+        APP_URL: https://github.stg.atlassian.com
+        WEBHOOK_PROXY_URL: https://github.stg.atlassian.com
+        APP_KEY: com.github.integration.staging
+        LOG_LEVEL: debug
+        SENTRY_ENVIRONMENT: stg-west
+        APP_ID: '12645'
+        GITHUB_CLIENT_ID: Iv1.2d8e2a184a746aec
     scaling:
-      min: 2
-      max: 3
-      instance: m5.large
+      instance: c5.large
+      min: 1
+      max: 5
+      metrics: &CpuMemAlbScalingRules
+        complexScalingRule:
+          EvaluationPeriods: 1
+          Threshold:
+            Lower: 30
+            Upper: 80
+          Metrics:
+            - Expression: "MAX([(responseTime/5)*100, cpuUsage, memoryUsage])"
+              Id: "combinedCpuRamAndLatency"
+              Label: "Scaling based on CPU and Memory consumption or response time"
+            - MetricStat:
+                Metric:
+                  MetricName: CPUUtilization
+                  Namespace: AWS/EC2
+                Period: 300
+                Stat: Maximum
+              Id: cpuUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  MetricName: MemoryUtilization
+                  Namespace: System/Linux
+                Period: 300
+                Stat: Maximum
+              Id: memoryUsage
+              ReturnData: false
+            - MetricStat:
+                Metric:
+                  Dimensions:
+                    - Name: LoadBalancer
+                      Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+                    - Name: TargetGroup
+                      Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+                  MetricName: TargetResponseTime
+                  Namespace: AWS/ApplicationELB
+                Period: 300
+                Stat: Average
+              Id: responseTime
+              ReturnData: false
+    alarms:
+      overrides:
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
+    workers:
+      - name: Worker
+        scaling:
+          instance: t3.medium
+          min: 1
+          max: 5
+          metrics: *CpuMemAndQueuesScalingRules
+    resources:
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            # Adding read replica in staging as it's not enabled by default so we can read state
+            ReadReplica: true
+
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.stg.atlassian.com
+          ip_whitelist:
+            - public
+          routes: *blackholeSpammingIPs
+
+      - *cryptorGithubServerAppSecrets
+      - *cryptorJiraInstanceSecrets
+
+  prod:
+    config:
+      environmentVariables:
+        APP_URL:  https://github.atlassian.com
+        WEBHOOK_PROXY_URL:  https://github.atlassian.com
+        APP_KEY: com.github.integration.production
+        SENTRY_ENVIRONMENT: prod-west
+        APP_ID: '14320'
+        GITHUB_CLIENT_ID: Iv1.45aafbb099e1c1d7
+        PRIVATE_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-private-key
+        GITHUB_CLIENT_SECRET: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-client-secret
+        WEBHOOK_SECRETS: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-webhook-secrets
+        COOKIE_SESSION_KEY: vault://secret/data/builds/micros-sv--github-for-jira-dl-vault-compliant/github-app-cookie-session-key
+        CRYPTOR_SIDECAR_CLIENT_IDENTIFICATION_CHALLENGE: "D92A2D7364AC3057D2A90BA9512D8CA0"
+    scaling:
+      instance: c5.2xlarge
+      min: 5
+      max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+      metrics: *CpuMemAlbScalingRules
+    workers:
+      - name: Worker
+        scaling:
+          instance: c5.2xlarge
+          min: 5
+          max: 15 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE
+          metrics: *CpuMemAndQueuesScalingRules
+    alarms:
+      overrides:
+        LatencyHigh: null
+#TODO Uncomment when we stop doing hourly deployments
+#        ElbResponseTimeAlert:
+#          Namespace: AWS/ApplicationELB
+#          MetricName: TargetResponseTime
+#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+#          Dimensions:
+#            - Name: LoadBalancer
+#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+#            - Name: TargetGroup
+#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+#          Threshold: 5
+#          Priority: Low
+#          EvaluationPeriods: 5
+#          Period: 180
+#          ComparisonOperator: GreaterThanThreshold
+#          Statistic: Average
+    resources:
+      - type: redisx
+        name: cache
+        attributes:
+          size: 5000
+        alarms:
+          AlarmOnNumConnections:
+            MetricName: CurrConnections
+            Description: "The number of client connections is too high. Please follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1453195358/HOWTO+Investigate+Redis+Issues"
+            Threshold: 10000
+            EvaluationPeriods: 3
+            Period: 120
+            Priority: Low
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+            Unit: Count
+
+      - name: database
+        type: postgres-db
+        attributes:
+          connectionLimit: 675 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
+            # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
+
+      - name: rds
+        type: dedicated-rds
+        attributes:
+          parameters:
+            DBInstanceClass: db.r5.4xlarge
+            AllocatedStorage: 40 # GB
+            MaxAllocatedStorage: 100
+            ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
+                                 # together during the deploy)
+            TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
+
+      - name: deployment-history-cache
+        type: dynamo-db
+        attributes:
+          <<: *table-attributes
+
+      - type: globaledge
+        name: proxy
+        attributes:
+          default_vanity_dns: false
+          domain:
+            - github.atlassian.com
+          ip_whitelist:
+            - public
+          routes: *blackholeSpammingIPs
+
+      - type: sqs
+        name: backfill
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 3000 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 6
+            Period: 600
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for backfill dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
+            Threshold: 50
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: push
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for push queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for push dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
+            Threshold: 100
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: deployment
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for deployment queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for deployment dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
+            Threshold: 5000 # number is initially high until we start bringing numbers down
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
+
+      - type: sqs
+        name: branch
+        alarms:
+          AlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for branch queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
+            Threshold: 500 #~ Autoscaling Threshold x 2. So we'll be alerted if autoscaling failed to fix the piling messages
+            Priority: High
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "QueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanThreshold
+            Statistic: Maximum
+          DLQAlarmOnTooManyMessages:
+            MetricName: ApproximateNumberOfMessagesVisible
+            Namespace: AWS/SQS
+            Description: "Message count for branch dead letter queue too high! Please follow the runbook: https://hello.atlassian.net/wiki/spaces/OTFS/pages/2314414972/HOWTO+Analyse+and+Replay+the+DLQ"
+            Threshold: 1000 # number is initially high until we start bringing numbers down
+            Priority: Low
+            Dimensions:
+              - Name: QueueName
+                Value: { "Ref": "DLQueueName" }
+            EvaluationPeriods: 5
+            Period: 300
+            ComparisonOperator: GreaterThanOrEqualToThreshold
+            Statistic: Maximum
+
+      - name: github-server-app-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+      - name: jira-instance-secrets
+        type: cryptor
+        attributes:
+          parameters:
+            encryptingServices:
+              - github-for-jira
+            decryptingServices:
+              - github-for-jira
+      - type: lambda
+        name: auto-deployment-github-app
+        attributes:
+          runtime: nodejs14.x
+          prefetchMicrosEnvVars: true
+          artifact: "_sox/github-for-jira/auto-deployment-github-app-${BITBUCKET_BUILD_NUMBER}.zip"
+          handler: auto-deployment.handler
+          private: true
+          concurrentExecutions: 2
+          timeout: 60
+          scheduledRules:
+            - name: 'PipelinesExecutionForGH4J'
+              # Cron for running 10 minutes
+              expression: 'cron(0/10 * * * ? *)'
+          dataType:
+            - Atlassian/Configuration
