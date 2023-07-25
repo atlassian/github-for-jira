@@ -52,9 +52,12 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
+  egress:
+    dependencies:
+      - name: brahmos-wiremock
+
   plugins:
     auth:
-      logLevel: info
       authentication:
         plugins:
           - type: asap
@@ -62,6 +65,7 @@ serviceProxy:
       authorization:
         plugins:
           - type: poco
+			logLevel: info
 
 lifecycleEvents:
   source: queue
