@@ -33,7 +33,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
-		sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+		sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
 			jiraHost
 		});
@@ -61,7 +61,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		servers
 	});
 
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
+	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName,
 		jiraHost
 	});

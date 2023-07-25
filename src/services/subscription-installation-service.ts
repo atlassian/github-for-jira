@@ -118,7 +118,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				]
 			);
 
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 				jiraHost: installation.jiraHost,
@@ -130,7 +130,7 @@ export const verifyAdminPermsAndFinishInstallation =
 			return {};
 		} catch (err) {
 
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
 				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 				jiraHost: installation.jiraHost,
