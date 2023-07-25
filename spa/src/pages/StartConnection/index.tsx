@@ -107,7 +107,7 @@ const StartConnection = () => {
 					appearance="primary"
 					onClick={() => {
 						analyticsClient.sendUIEvent({ actionSubject: "startToConnect", action: "clicked" });
-						navigate("steps")
+						navigate("steps");
 					}}
 				>
 					Continue

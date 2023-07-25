@@ -36,4 +36,13 @@ type GitHubInstallationAccountType = {
 	type?: string;
 };
 
+export type JiraCloudIDResponse = {
+	cloudId: string;
+};
+
 export type ErrorType = "warning" | "error";
+
+export type ErrorResponse = {
+	errorType: ErrorType;
+	reason: string;
+};
