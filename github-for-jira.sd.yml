@@ -54,7 +54,7 @@ serviceProxy:
       enabled: true
   egress:
     dependencies:
-      - name: rollcall
+      - name: brahmos-wiremock
 
   plugins:
     auth:
