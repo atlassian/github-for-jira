@@ -2,6 +2,7 @@ import styled from "@emotion/styled";
 import { Wrapper } from "../../common/Wrapper";
 import { token } from "@atlaskit/tokens";
 import Button from "@atlaskit/button";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
@@ -35,7 +36,11 @@ const SectionImg = styled.img`
 `;
 
 const Connected = () => {
+
+	useEffectScreenEvent("SuccessfulConnectedScreen");
+
 	const navigateToBackfillPage = () => {
+		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 		AP.navigator.go(
 			"addonmodule",
 			{

@@ -1,41 +1,19 @@
-export type UIEventOpts = {
-	actionSubject: string,
-	action: string
-};
+import { AnalyticClient, ScreenNames } from "./types";
+import { useEffect } from "react";
 
-export type AnalyticClient = {
-	sendUIEvent: (event: UIEventOpts) => void
-};
+import { loadSoxAnalyticClient } from "./sox-analytics-client";
+import { noopAnalyticsClient } from "./noop-analytics-client";
 
-const analyticsClient: AnalyticClient = {
-	sendUIEvent: () => {}
-};
-
-try {
-	/*eslint-disable @typescript-eslint/no-var-requires*/
-	const imported = require("@atlassiansox/analytics-web-client");
-	if(imported && imported.default) {
-		console.info("analytis loaded");
-		const client = new imported.default(
-			{
-				env: imported.envType.DEV,
-				product: "github-for-jira",
-			},
-			{
-				useLegacyUrl: true // due to do not have stargate gateway setup for this product
-			}
-		);
-		analyticsClient.sendUIEvent = function (opts: UIEventOpts) {
-			client.sendUIEvent({
-				actionSubject: opts.actionSubject,
-				action: opts.action,
-				source: "spa"
-			});
-		};
-	}
-} catch (_) {
-	//do nothing, TODO: do proper logging?
-}
+const analyticsClient: AnalyticClient = loadSoxAnalyticClient() || noopAnalyticsClient;
 
 export default analyticsClient;
 
+export const useEffectScreenEvent = (name: ScreenNames) => {
+	useEffect(() => {
+		analyticsClient.sendScreenEvent({
+			name,
+			attributes: {
+			}
+		});
+	}, []);
+};

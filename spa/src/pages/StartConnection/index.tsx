@@ -8,6 +8,7 @@ import { token } from "@atlaskit/tokens";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -70,6 +71,9 @@ const InlineDialogContent = () => (
 
 const StartConnection = () => {
 	const navigate = useNavigate();
+
+	useEffectScreenEvent("StartConnectionEntryScreen");
+
 	return (
 		<Wrapper>
 			<SyncHeader/>
@@ -101,7 +105,10 @@ const StartConnection = () => {
 				<Button
 					iconAfter={<ArrowRightIcon label="continue" size="medium"/>}
 					appearance="primary"
-					onClick={() => navigate("steps")}
+					onClick={() => {
+						analyticsClient.sendUIEvent({ actionSubject: "startToConnect", action: "clicked" });
+						navigate("steps")
+					}}
 				>
 					Continue
 				</Button>
