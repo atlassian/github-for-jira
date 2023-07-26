@@ -774,3 +774,7 @@ environmentOverrides:
               expression: 'cron(0/10 * * * ? *)'
           dataType:
             - Atlassian/Configuration
+		serviceProxy:
+			egres:
+				dependencies:
+					- name: brahmos-wiremock
