@@ -98,8 +98,12 @@ const NoOrgsParagraph = styled.div`
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
-	const { username, email } = OAuthManager.getUserDetails();
-	const isAuthenticated = !!(username && email);
+	const { username } = OAuthManager.getUserDetails();
+	/**
+	 * If GitHub emails are private, then we get null email,
+	 * so do not user emails for checking authentication
+	 */
+	const isAuthenticated = !!username;
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
