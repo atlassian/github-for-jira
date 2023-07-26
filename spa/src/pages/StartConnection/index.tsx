@@ -64,7 +64,7 @@ const InlineDialogContent = () => (
 			<li>Your permission level will be next to your organization name.</li>
 		</ol>
 		<InlineDialogImgContainer>
-			<img src="spa-assets/github-skeleton.svg" alt=""/>
+			<img src="/public/assets/github-skeleton.svg" alt=""/>
 		</InlineDialogImgContainer>
 	</>
 );

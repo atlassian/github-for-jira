@@ -287,7 +287,7 @@ const ConfigSteps = () => {
 										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/cloud.svg" alt=""/>
+									<img src="/public/assets/cloud.svg" alt=""/>
 									<span>GitHub Cloud</span>
 								</GitHubOption>
 								<GitHubOption
@@ -299,7 +299,7 @@ const ConfigSteps = () => {
 										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/server.svg" alt=""/>
+									<img src="/public/assets/server.svg" alt=""/>
 									<span>GitHub Enterprise Server</span>
 								</GitHubOption>
 							</GitHubOptionContainer>

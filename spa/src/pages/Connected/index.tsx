@@ -52,7 +52,7 @@ const Connected = () => {
 	return (<Wrapper>
 		<ConnectedContainer>
 			<div>
-				<HeaderImg src="/spa-assets/jira-github-connection-success.svg" alt=""/>
+				<HeaderImg src="/public/assets/jira-github-connection-success.svg" alt=""/>
 				<Title>GitHub is connected!</Title>
 				<Paragraph>
 					Its' time to let everyone know that GitHub's ready to use in their<br />
@@ -64,7 +64,7 @@ const Connected = () => {
 				<h5>What's next?</h5>
 				<FlexWrapper>
 					<Section>
-						<SectionImg src="/spa-assets/github-integration.svg" alt=""/>
+						<SectionImg src="/public/assets/github-integration.svg" alt=""/>
 						<h4>Add issue keys in GitHub</h4>
 						<Paragraph>
 							Include issue keys in pull request<br/>
@@ -79,7 +79,7 @@ const Connected = () => {
 						</a>
 					</Section>
 					<Section>
-						<SectionImg src="/spa-assets/collaborate-in-jira.svg" alt=""/>
+						<SectionImg src="/public/assets/collaborate-in-jira.svg" alt=""/>
 						<h4>Collaborate in Jira</h4>
 						<Paragraph>
 							Your team's development work<br />

@@ -9,7 +9,7 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 		if(imported && imported.default) {
 			const client = new imported.default(
 				{
-					env: imported.envType.LOCAL,
+					env: SPA_APP_ENV,
 					product: "github-for-jira",
 				},
 				{
