@@ -22,8 +22,8 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	});
 
 	const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
-	logAdditionalData ? log.info("Handling error task", context.payload.installationId, cause) : log.info("Handling error task");
 	const installationId = context.payload.installationId;
+	logAdditionalData ? log.info("Handling error task", installationId, cause) : log.info("Handling error task");
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		logAdditionalData ? log.warn("InvalidPermissionError: marking the task as failed and continue with the next one", installationId)
