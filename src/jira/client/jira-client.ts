@@ -23,7 +23,6 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 500;
@@ -512,24 +511,14 @@ const batchedBulkUpdate = async (
 			}
 		};
 
-		const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
-		logAdditionalData ? logger.info({
-			issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger),
-			installationId
-		}, "Posting to Jira devinfo bulk update api")
-			: logger.info({
-				issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger)
-			}, "Posting to Jira devinfo bulk update api");
+		logger.info({
+			issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger)
+		}, "Posting to Jira devinfo bulk update api");
 		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
-		logAdditionalData ? logger.info({
+		logger.info({
 			responseStatus: response.status,
-			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger),
-			installationId
-		}, "Jira devinfo bulk update api returned")
-			: logger.info({
-				responseStatus: response.status,
-				unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)
-			}, "Jira devinfo bulk update api returned");
+			unknownIssueKeys: safeParseAndHashUnknownIssueKeysForLoggingPurpose(response.data, logger)
+		}, "Jira devinfo bulk update api returned");
 
 		return response;
 	});
