@@ -7,7 +7,7 @@ export const SpaRouter = Router();
 
 const rootPath = process.cwd();
 
-//Asset from within the new spa expereicen in /spa/build/static
+//Assets from within the new spa experience in /spa/build/static
 SpaRouter.use("/static", Static(path.join(rootPath, 'spa/build/static')));
 
 //Because it is Single Page App, for all routes to /spa/screen1 , /spa/screen1/step2 should render the spa index.html anyway
