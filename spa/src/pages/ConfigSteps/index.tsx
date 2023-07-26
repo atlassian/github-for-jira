@@ -91,10 +91,12 @@ const ButtonContainer = styled.div`
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
-
+const NoOrgsParagraph = styled.div`
+	color: ${token("color.text.subtle")};
+	margin-bottom: ${token("space.400")};
+`;
 
 const ConfigSteps = () => {
-
 	const navigate = useNavigate();
 
 	const { username, email } = OAuthManager.getUserDetails();
@@ -104,8 +106,9 @@ const ConfigSteps = () => {
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [noOrgsFound, setNoOrgsFound] = useState<boolean>(false);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
-	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(true);
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
@@ -139,6 +142,7 @@ const ConfigSteps = () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		if (response) {
+			setNoOrgsFound(response?.orgs.length === 0);
 			setOrganizations(response?.orgs.map((org) => ({
 				label: org.account.login,
 				value: String(org.id),
@@ -334,44 +338,60 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<>
-							<Paragraph>
-								Repositories from this organization will be available to all <br />
-								projects in <b>{hostUrl?.jiraHost}</b>.
-							</Paragraph>
+						{
+							loaderForOrgFetching ? <>
+								<Skeleton
+									width="100%"
+									height="24px"
+									borderRadius="5px"
+									isShimmering
+								/>
+							</> : (
+								noOrgsFound ?
+									<>
+										<NoOrgsParagraph>We couldn’t find any GitHub organizations that you’re an owner of.</NoOrgsParagraph>
+										<Button appearance="primary" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
+									</> :
+									<>
+										<Paragraph>
+											Repositories from this organization will be available to all <br />
+											projects in <b>{hostUrl?.jiraHost}</b>.
+										</Paragraph>
 
-							<SelectDropdown
-								noOptionsMessage={() => <Button
-									appearance="link"
-									onClick={() => {
-										// 	TODO: add action for this
-										console.log("Clicked no orgs");
-									}}
-								>
-									Can't find an organization you're looking for?
-								</Button>}
-								options={organizations}
-								label="Select organization"
-								isLoading={loaderForOrgFetching}
-								onChange={(value) => {
-									setOrgConnectionDisabled(false);
-									if(value) {
-										setSelectedOrg({
-											label: value.label,
-											value: parseInt(value.value)
-										});
-									}
-								}}
-								icon={<OfficeBuildingIcon label="org" size="medium" />}
-							/>
-							{
-								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<ButtonContainer>
-										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
-										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
-									</ButtonContainer>
-							}
-						</>
+										<SelectDropdown
+											options={organizations}
+											label="Select organization"
+											isLoading={loaderForOrgFetching}
+											onChange={(value) => {
+												setOrgConnectionDisabled(false);
+												if(value) {
+													setSelectedOrg({
+														label: value.label,
+														value: parseInt(value.value)
+													});
+												}
+											}}
+											icon={<OfficeBuildingIcon label="org" size="medium" />}
+										/>
+										<TooltipContainer>
+											<Tooltip
+												component={InlineDialog}
+												position="right-end"
+												content="Don’t see the organization you want to connect in the list above? You will need the role of an owner in GitHub your organization to do so. Please contact your company’s GitHub owner."
+											>
+												{(props) => <a {...props}>Can't find an organization you're looking for?</a>}
+											</Tooltip>
+										</TooltipContainer>
+										{
+											loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+												<ButtonContainer>
+													<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+													<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
+												</ButtonContainer>
+										}
+									</>
+							)
+						}
 					</CollapsibleStep>
 				}
 			</ConfigContainer>
