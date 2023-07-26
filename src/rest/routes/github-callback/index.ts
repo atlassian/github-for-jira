@@ -24,7 +24,7 @@ GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res:
 			<html>
 				<body></body>
 				<script>
-					window.opener.postMessage(${JSON.stringify({ code: sanitize(code), state: sanitize(state) })}, window.origin);
+					window.opener.postMessage(${JSON.stringify({ type: "oauth-callback", code: sanitize(code), state: sanitize(state) })}, window.origin);
 					window.close();
 				</script>
 			</html>
