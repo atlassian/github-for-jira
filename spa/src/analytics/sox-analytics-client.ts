@@ -10,7 +10,7 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 			const client = new imported.default(
 				{
 					env: SPA_APP_ENV,
-					product: "github-for-jira",
+					product: "gitHubForJira",
 				},
 				{
 					useLegacyUrl: true // due to do not have stargate gateway setup for this product
