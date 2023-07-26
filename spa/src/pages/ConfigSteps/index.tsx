@@ -15,7 +15,7 @@ import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
-import analyticsClient  from "../../analytics";
+import analyticsClient from "../../analytics";
 
 type GitHubOptionType = {
 	selectedOption: number;
