@@ -2,7 +2,7 @@ import { Express } from "express";
 import httpProxy from "http-proxy";
 import { isNodeDev } from "utils/is-node-env";
 
-const SPA_PATH = "/sspa";
+const SPA_PATH = "/spa";
 
 const proxy = httpProxy.createProxyServer({
 	target: {
