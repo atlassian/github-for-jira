@@ -15,6 +15,6 @@ export const useEffectScreenEvent = (name: ScreenNames) => {
 			attributes: {
 			}
 		});
-	}, []);
+	}, [ name ]);
 };
 
