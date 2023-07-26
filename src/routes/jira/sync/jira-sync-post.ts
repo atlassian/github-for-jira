@@ -38,7 +38,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate || subscription.backfillSince, targetTasks, { source });
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: true,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
@@ -49,7 +49,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		res.sendStatus(202);
 	} catch (error) {
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
 			success: false,
 			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
@@ -81,5 +81,5 @@ const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscrip
 		return { syncType: "full", targetTasks: undefined };
 	}
 
-	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment"] };
+	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"] };
 };
