@@ -77,7 +77,8 @@ export const updateTaskStatusAndContinue = async (
 	taskResultPayload: TaskResultPayload,
 	task: Task,
 	logger: Logger,
-	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>
+	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>,
+	jiraHost?: string
 ): Promise<void> => {
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
@@ -94,6 +95,27 @@ export const updateTaskStatusAndContinue = async (
 	const status = isComplete ? "complete" : "pending";
 
 	logger.info({ status }, "Updating job status");
+
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
+		edges?.forEach((edge) => {
+			if (edge?.node?.associatedPullRequests) {
+				const { name, associatedPullRequests } = edge.node;
+				logger.info({ name, associatedPullRequests }, "Sending branch data");
+			}
+
+			if (edge["workflow_runs"]) {
+				edge["workflow_runs"].forEach((workflow) => {
+					const { repository, event } = workflow;
+					logger.info({ repositoryName: repository.name, eventType: event }, "Workflow run event");
+				});
+			}
+
+			if (edge.state) {
+				const { state, title, number, locked, auto_merge } = edge.state;
+				logger.info({ state, title, number, locked, auto_merge }, "Sending PR data");
+			}
+		});
+	}
 
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
@@ -302,7 +324,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				taskPayload,
 				nextTask,
 				logger,
-				sendBackfillMessage
+				sendBackfillMessage,
+				jiraHost
 			);
 		} catch (err) {
 			logger.warn({ err }, "Error while executing the task, rethrowing");
@@ -454,16 +477,21 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				})
 			);
 
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+
 			switch (result) {
 				case DeduplicatorResult.E_OK:
-					logger.info("Job was executed by deduplicator");
+					logAdditionalData ? logger.info({ installationId }, "Job was executed by deduplicator")
+						: logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
-						nextMessageLogger!.info("Sending off a new message");
+						logAdditionalData ? nextMessageLogger!.info({ installationId }, "Sending off a new message")
+							: nextMessageLogger!.info("Sending off a new message");
 						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logger.warn("Possible duplicate job was detected, rescheduling");
+					logAdditionalData ? logger.info({ installationId }, "Possible duplicate job was detected, rescheduling")
+						: logger.info("Possible duplicate job was detected, rescheduling");
 					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
@@ -473,7 +501,8 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 						//doing nothing and return normally will endup delete the message.
 						break;
 					} else {
-						logger.warn("Duplicate job was detected, rescheduling");
+						logAdditionalData ? logger.info({ installationId }, "Duplicate job was detected, rescheduling")
+							: logger.info("Duplicate job was detected, rescheduling");
 						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
 						// Worker A - doing a long-running task
 						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
@@ -490,7 +519,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				}
 			}
 		} catch (err) {
-			logger.error({ err }, "Process installation failed.");
+			logger.error({ err, installationId }, "Process installation failed.");
 			throw err;
 		}
 	};

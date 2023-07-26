@@ -11,6 +11,7 @@ import { SQS } from "aws-sdk";
 import {
 	GithubClientInvalidPermissionsError, GithubClientNotFoundError, GithubClientRateLimitingError
 } from "~/src/github/client/github-client-errors";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logger) => Promise<SQS.SendMessageResult>, task: Task, cause: Error, context: SQSMessageContext<BackfillMessagePayload>, rootLogger: Logger
 ) => {
@@ -19,10 +20,16 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 		receiveCount: context.receiveCount,
 		lastAttempt: context.lastAttempt
 	});
-	log.info("Handling error task");
+
+	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, context.payload.installationId.toString());
+	const installationId = context.payload.installationId;
+	logAdditionalData ? log.info({ installationId, cause },"verbose logging - Handling error task")
+		: log.info("Handling error task");
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
-		log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
+		logAdditionalData
+			? log.warn({ installationId }, "verbose logging - InvalidPermissionError: marking the task as failed and continue with the next one")
+			: log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false
@@ -38,7 +45,8 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			log.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
 			await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
 		} else {
-			log.info("Rate limit was reset already. Scheduling next task");
+			logAdditionalData ? log.info({ installationId }, "verbose logging - Rate limit was reset already. Scheduling next task")
+				: log.info("Rate limit was reset already. Scheduling next task");
 			await sendSQSBackfillMessage(context.payload, 0, log);
 		}
 		return {
@@ -47,7 +55,8 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	}
 
 	if (cause instanceof GithubClientNotFoundError) {
-		log.info("Repo was deleted, marking the task as completed");
+		logAdditionalData ? log.info({ installationId }, "verbose logging - Repo was deleted, marking the task as completed")
+			: log.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
 			isFailure: false
@@ -56,7 +65,8 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
-		log.warn("That was the last attempt: marking the task as failed and continue with the next one");
+		logAdditionalData ? log.warn({ installationId }, "verbose logging - That was the last attempt: marking the task as failed and continue with the next one")
+			: log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
 		return {
 			isFailure: false
@@ -70,7 +80,9 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 	(sendSQSBackfillMessage) =>
 		async (err: Error, context: SQSMessageContext<BackfillMessagePayload>): Promise<ErrorHandlingResult> => {
 			const log = context.log.child({ err });
-			log.info("Handling error");
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, context.payload.installationId.toString());
+			logAdditionalData ? log.info({ installationId: context.payload.installationId, err }, "verbose logging - Handling error")
+				: log.info("Handling error");
 
 			if (err instanceof TaskError) {
 				return await handleTaskError(sendSQSBackfillMessage, err.task, err.cause, context, log);
