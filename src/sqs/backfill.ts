@@ -5,6 +5,7 @@ import { AxiosErrorEventDecorator } from "models/axios-error-event-decorator";
 import { SentryScopeProxy } from "models/sentry-scope-proxy";
 import { BackfillMessagePayload, MessageHandler, SQSMessageContext } from "./sqs.types";
 import { SQS } from "aws-sdk";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const backfillQueueMessageHandler =
 	(sendSQSBackfillMessage: (message: BackfillMessagePayload, delaySec: number, logger: Logger) => Promise<SQS.SendMessageResult>): MessageHandler<BackfillMessagePayload> =>
@@ -24,7 +25,10 @@ export const backfillQueueMessageHandler =
 				traceId: Date.now()
 			});
 
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
 			const backfillData = { ...context.payload };
+
+			logAdditionalData && context.log.info({ installationId }, "Backfilling for installationId");
 
 			if (!backfillData.startTime) {
 				backfillData.startTime = new Date().toISOString();
@@ -34,7 +38,8 @@ export const backfillQueueMessageHandler =
 				const processor = await processInstallation(sendSQSBackfillMessage);
 				await processor(backfillData, sentry, context.log);
 			} catch (err) {
-				context.log.warn({ err }, "processInstallation threw a error");
+				logAdditionalData ? context.log.warn({ err, installationId }, "processInstallation threw a error")
+					: context.log.warn({ err }, "processInstallation threw a error");
 
 				sentry.setExtra("job", {
 					id: context.message.MessageId,
