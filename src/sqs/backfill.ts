@@ -25,10 +25,10 @@ export const backfillQueueMessageHandler =
 				traceId: Date.now()
 			});
 
-			const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
 			const backfillData = { ...context.payload };
 
-			logAdditionalData && context.log.info("Backfilling for installationId: ", installationId);
+			logAdditionalData && context.log.info({ installationId }, "Backfilling for installationId");
 
 			if (!backfillData.startTime) {
 				backfillData.startTime = new Date().toISOString();
@@ -38,7 +38,7 @@ export const backfillQueueMessageHandler =
 				const processor = await processInstallation(sendSQSBackfillMessage);
 				await processor(backfillData, sentry, context.log);
 			} catch (err) {
-				logAdditionalData ? context.log.warn({ err }, "processInstallation threw a error", installationId)
+				logAdditionalData ? context.log.warn({ err, installationId }, "processInstallation threw a error")
 					: context.log.warn({ err }, "processInstallation threw a error");
 
 				sentry.setExtra("job", {

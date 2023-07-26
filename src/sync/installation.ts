@@ -93,7 +93,7 @@ export const updateTaskStatusAndContinue = async (
 
 	logger.info({ status }, "Updating job status");
 
-	if (await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost)) {
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 		edges?.forEach((edge) => {
 			if (edge?.node?.associatedPullRequests) {
 				const { name, associatedPullRequests } = edge.node;
@@ -468,20 +468,20 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				})
 			);
 
-			const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
 
 			switch (result) {
 				case DeduplicatorResult.E_OK:
-					logAdditionalData ? logger.info("Job was executed by deduplicator", installationId)
+					logAdditionalData ? logger.info({ installationId }, "Job was executed by deduplicator")
 						: logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
-						logAdditionalData ? nextMessageLogger!.info("Sending off a new message", installationId)
+						logAdditionalData ? nextMessageLogger!.info({ installationId }, "Sending off a new message")
 							: nextMessageLogger!.info("Sending off a new message");
 						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logAdditionalData ? logger.info("Possible duplicate job was detected, rescheduling", installationId)
+					logAdditionalData ? logger.info({ installationId }, "Possible duplicate job was detected, rescheduling")
 						: logger.info("Possible duplicate job was detected, rescheduling");
 					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
@@ -492,7 +492,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 						//doing nothing and return normally will endup delete the message.
 						break;
 					} else {
-						logAdditionalData ? logger.info("Duplicate job was detected, rescheduling", installationId)
+						logAdditionalData ? logger.info({ installationId }, "Duplicate job was detected, rescheduling")
 							: logger.info("Duplicate job was detected, rescheduling");
 						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
 						// Worker A - doing a long-running task
@@ -510,7 +510,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				}
 			}
 		} catch (err) {
-			logger.error({ err }, "Process installation failed.", installationId);
+			logger.error({ err, installationId }, "Process installation failed.");
 			throw err;
 		}
 	};

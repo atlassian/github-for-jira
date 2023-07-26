@@ -14,9 +14,10 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	Sentry.setExtra("Body", req.body);
 
-	const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
 
-	logAdditionalData ? req.log.info("Received sync request", gitHubInstallationId) : req.log.info("Received sync request");
+	logAdditionalData ? req.log.info({ gitHubInstallationId }, "verbose logging - Received sync request")
+		: req.log.info("Received sync request");
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId, gitHubAppId);

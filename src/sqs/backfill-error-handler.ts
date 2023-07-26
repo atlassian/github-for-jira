@@ -21,12 +21,14 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 		lastAttempt: context.lastAttempt
 	});
 
-	const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
 	const installationId = context.payload.installationId;
-	logAdditionalData ? log.info("Handling error task", installationId, cause) : log.info("Handling error task");
+	logAdditionalData ? log.info({ installationId, cause },"verbose logging - Handling error task")
+		: log.info("Handling error task");
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
-		logAdditionalData ? log.warn("InvalidPermissionError: marking the task as failed and continue with the next one", installationId)
+		logAdditionalData
+			? log.warn({ installationId },"verbose logging - InvalidPermissionError: marking the task as failed and continue with the next one")
 			: log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
 		return {
@@ -43,7 +45,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 			log.info({ delay: delayMs }, `Delaying job for ${delayMs}ms`);
 			await sendSQSBackfillMessage(context.payload, delayMs / 1000, log);
 		} else {
-			logAdditionalData ? log.info("Rate limit was reset already. Scheduling next task", installationId)
+			logAdditionalData ? log.info({ installationId }, "verbose logging - Rate limit was reset already. Scheduling next task")
 				: log.info("Rate limit was reset already. Scheduling next task");
 			await sendSQSBackfillMessage(context.payload, 0, log);
 		}
@@ -53,7 +55,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	}
 
 	if (cause instanceof GithubClientNotFoundError) {
-		logAdditionalData ? log.info("Repo was deleted, marking the task as completed", installationId)
+		logAdditionalData ? log.info({ installationId },"verbose logging - Repo was deleted, marking the task as completed")
 			: log.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
@@ -63,7 +65,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
-		logAdditionalData ? log.warn("That was the last attempt: marking the task as failed and continue with the next one", installationId)
+		logAdditionalData ? log.warn({ installationId },"verbose logging - That was the last attempt: marking the task as failed and continue with the next one")
 			: log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
 		return {
@@ -78,8 +80,8 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 	(sendSQSBackfillMessage) =>
 		async (err: Error, context: SQSMessageContext<BackfillMessagePayload>): Promise<ErrorHandlingResult> => {
 			const log = context.log.child({ err });
-			const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
-			logAdditionalData ? log.info({ installationId: context.payload.installationId, err }, "Handling error")
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+			logAdditionalData ? log.info({ installationId: context.payload.installationId, err }, "verbose logging - Handling error")
 				: log.info("Handling error");
 
 			if (err instanceof TaskError) {

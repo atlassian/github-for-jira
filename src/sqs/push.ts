@@ -12,8 +12,8 @@ export const pushQueueMessageHandler: MessageHandler<PushQueueMessagePayload> = 
 		gitHubInstallationId: installationId
 	});
 
-	if (await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost)) {
-		context.log.info("Handling push message from the SQS queue", installationId);
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
+		context.log.info({ installationId }, "verbose logging - Handling push message from the SQS queue");
 	} else {
 		context.log.info("Handling push message from the SQS queue");
 	}
