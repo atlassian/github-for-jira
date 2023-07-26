@@ -3,6 +3,7 @@ import { Wrapper } from "../../common/Wrapper";
 import { token } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
@@ -38,7 +39,11 @@ const SectionImg = styled.img`
 `;
 
 const Connected = () => {
+
+	useEffectScreenEvent("SuccessfulConnectedScreen");
+
 	const navigateToBackfillPage = () => {
+		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 		AP.navigator.go(
 			"addonmodule",
 			{
@@ -50,7 +55,7 @@ const Connected = () => {
 	return (<Wrapper>
 		<ConnectedContainer>
 			<div>
-				<HeaderImg src="/spa-assets/jira-github-connected.svg" alt=""/>
+				<HeaderImg src="/public/assets/jira-github-connected.svg" alt=""/>
 				<Title>GitHub is connected!</Title>
 				<Paragraph>
 					Its' time to let everyone know that GitHub's ready to use in their<br />
@@ -62,7 +67,7 @@ const Connected = () => {
 				<Heading level="h500">What's next?</Heading>
 				<FlexWrapper>
 					<Section>
-						<SectionImg src="/spa-assets/github-integration.svg" alt=""/>
+						<SectionImg src="/public/assets/github-integration.svg" alt=""/>
 						<Heading level="h400">Add issue keys in GitHub</Heading>
 						<Paragraph>
 							Include issue keys in pull request<br/>
@@ -77,7 +82,7 @@ const Connected = () => {
 						</a>
 					</Section>
 					<Section>
-						<SectionImg src="/spa-assets/collaborate-in-jira.svg" alt=""/>
+						<SectionImg src="/public/assets/collaborate-in-jira.svg" alt=""/>
 						<Heading level="h400">Collaborate in Jira</Heading>
 						<Paragraph>
 							Your team's development work<br />

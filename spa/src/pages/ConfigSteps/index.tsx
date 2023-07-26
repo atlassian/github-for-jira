@@ -98,6 +98,7 @@ const NoOrgsParagraph = styled.div`
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
+
 	const { username, email } = OAuthManager.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
@@ -156,6 +157,7 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: success ? "success" : "fail" });
 				if (!success) {
 					setError({ type: "error", message: "Failed to finish authentication!"});
 					return;
@@ -189,7 +191,7 @@ const ConfigSteps = () => {
 			case 1: {
 				setLoaderForLogin(true);
 				try {
-					analyticsClient.sendUIEvent({ actionSubject: "authorizeToGitHubCloud", action: "clicked" });
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
@@ -199,6 +201,7 @@ const ConfigSteps = () => {
 			}
 			case 2: {
 				if (hostUrl?.gheServerUrl) {
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
 					window.open(hostUrl?.gheServerUrl);
 				}
 				break;
@@ -217,12 +220,15 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
 			setLoaderForOrgConnection(true);
+			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(selectedOrg?.value);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail" });
 			if (connected) {
 				navigate("/spa/connected");
 			} else {
@@ -234,11 +240,14 @@ const ConfigSteps = () => {
 
 	const installNewOrg = async () => {
 		try {
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
 			await AppManager.installNewApp(() => {
+				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
 				getOrganizations();
 			});
 		} catch (e) {
 			setError({type: "error", message: "Couldn't install new organization"});
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
 
@@ -279,9 +288,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(true);
 										setSelectedOption(1);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/cloud.svg" alt=""/>
+									<img src="/public/assets/cloud.svg" alt=""/>
 									<span>GitHub Cloud</span>
 								</GitHubOption>
 								<GitHubOption
@@ -290,9 +300,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(false);
 										setSelectedOption(2);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/server.svg" alt=""/>
+									<img src="/public/assets/server.svg" alt=""/>
 									<span>GitHub Enterprise Server</span>
 								</GitHubOption>
 							</GitHubOptionContainer>

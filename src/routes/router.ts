@@ -1,4 +1,4 @@
-import { Request, Response, Router, static as Static } from "express";
+import { Request, Response, Router } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -18,7 +18,7 @@ import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
 import { RestRouter } from "~/src/rest/rest-router";
-import path from "path";
+import { SpaRouter } from "routes/spa/spa-router";
 
 export const RootRouter = Router();
 
@@ -44,16 +44,8 @@ RootRouter.use(LogMiddleware);
 // Static Assets
 RootRouter.use("/public", PublicRouter);
 
-/**
- * For PROD
- * This route is for the production version of `spa`
- * We are simply associating `index.html` under the `dist` folder to the router `spa`
- */
-RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/build")));
-RootRouter.use([
-	"/spa/spa-assets", // For fetching the assets in Production build
-	"/spa-assets" // For fetching the assets in local development environment
-], Static(path.join(process.cwd(), "static/assets")));
+RootRouter.use("/spa", SpaRouter);
+
 RootRouter.use("/rest", RestRouter);
 
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible

@@ -28,7 +28,6 @@
         "/public/**",
 				"/spa",
 				"/spa/**",
-				"/spa-assets/**",
 				"/rest/**",
         "/session",
         "/session/**",
