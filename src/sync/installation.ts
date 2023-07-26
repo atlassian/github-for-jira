@@ -475,7 +475,8 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 					logAdditionalData ? logger.info("Job was executed by deduplicator", installationId)
 						: logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
-						nextMessageLogger!.info("Sending off a new message", installationId);
+						logAdditionalData ? nextMessageLogger!.info("Sending off a new message", installationId)
+							: nextMessageLogger!.info("Sending off a new message");
 						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;

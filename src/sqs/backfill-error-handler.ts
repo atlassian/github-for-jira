@@ -79,7 +79,8 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 		async (err: Error, context: SQSMessageContext<BackfillMessagePayload>): Promise<ErrorHandlingResult> => {
 			const log = context.log.child({ err });
 			const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
-			logAdditionalData ? log.info("Handling error", context.payload.installationId) : log.info("Handling error");
+			logAdditionalData ? log.info({ installationId: context.payload.installationId, err }, "Handling error")
+				: log.info("Handling error");
 
 			if (err instanceof TaskError) {
 				return await handleTaskError(sendSQSBackfillMessage, err.task, err.cause, context, log);
