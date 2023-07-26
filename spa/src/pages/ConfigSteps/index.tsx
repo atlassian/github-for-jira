@@ -223,18 +223,27 @@ const ConfigSteps = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	const connectGitHubOrg = async () => {
-		if (selectedOrg?.value) {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+		try {
 			setLoaderForOrgConnection(true);
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
-			const connected = await AppManager.connectOrg(selectedOrg?.value);
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode: "manual" } });
+			const connected = await AppManager.connectOrg(gitHubInstallationId);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected) {
 				navigate("/spa/connected");
 			} else {
 				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
 			}
+		} catch (e) {
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+		} finally {
 			setLoaderForOrgConnection(false);
+		}
+	};
+
+	const connectGitHubOrg = async () => {
+		if (selectedOrg?.value) {
+			await doCreateConnection(selectedOrg.value, "manual");
 		}
 	};
 
@@ -245,15 +254,7 @@ const ConfigSteps = () => {
 				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
 				getOrganizations();
 				if(gitHubInstallationId) {
-					setLoaderForOrgConnection(true);
-					const connected = await AppManager.connectOrg(gitHubInstallationId);
-					analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode: "auto" } });
-					if (connected) {
-						navigate("/spa/connected");
-					} else {
-						setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
-					}
-					setLoaderForOrgConnection(false);
+					await doCreateConnection(gitHubInstallationId, "auto");
 				}
 			});
 		} catch (e) {
