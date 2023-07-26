@@ -23,7 +23,7 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 						client.setTenantInfo(imported.tenantType.CLOUD_ID, userContext.tenantId);
 						client.setUserInfo(imported.userType.ATLASSIAN_ACCOUNT, userContext.accountId);
 						client.setUIViewedAttributes({ clientKey: userContext.clientKey });
-						console.info("analytis loaded");
+						console.info("analytics loaded");
 					}
 				})
 				.catch((e) => { console.error("fail setting user context", e); });
