@@ -488,7 +488,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
 					if (await booleanFlag(BooleanFlags.DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT, jiraHost)) {
-						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it", installationId);
+						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it");
 						//doing nothing and return normally will endup delete the message.
 						break;
 					} else {

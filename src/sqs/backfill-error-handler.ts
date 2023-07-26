@@ -28,7 +28,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (cause instanceof GithubClientInvalidPermissionsError) {
 		logAdditionalData
-			? log.warn({ installationId },"verbose logging - InvalidPermissionError: marking the task as failed and continue with the next one")
+			? log.warn({ installationId }, "verbose logging - InvalidPermissionError: marking the task as failed and continue with the next one")
 			: log.warn("InvalidPermissionError: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, true, sendSQSBackfillMessage, log, cause);
 		return {
@@ -55,7 +55,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 	}
 
 	if (cause instanceof GithubClientNotFoundError) {
-		logAdditionalData ? log.info({ installationId },"verbose logging - Repo was deleted, marking the task as completed")
+		logAdditionalData ? log.info({ installationId }, "verbose logging - Repo was deleted, marking the task as completed")
 			: log.info("Repo was deleted, marking the task as completed");
 		await updateTaskStatusAndContinue(context.payload, { edges: [] }, task,  log, sendSQSBackfillMessage);
 		return {
@@ -65,7 +65,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 
 	if (context.lastAttempt) {
 		// Otherwise the sync will be "stuck", not something we want
-		logAdditionalData ? log.warn({ installationId },"verbose logging - That was the last attempt: marking the task as failed and continue with the next one")
+		logAdditionalData ? log.warn({ installationId }, "verbose logging - That was the last attempt: marking the task as failed and continue with the next one")
 			: log.warn("That was the last attempt: marking the task as failed and continue with the next one");
 		await markCurrentTaskAsFailedAndContinue(context.payload, task, false, sendSQSBackfillMessage, log, cause);
 		return {
