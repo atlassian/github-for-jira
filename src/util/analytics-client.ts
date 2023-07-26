@@ -15,7 +15,7 @@ export const sendAnalytics: {
 	(jiraHost: string, eventType: "ui" | "operational", attributes: Record<string, unknown>);
 } = (jiraHost: string, eventType: string, attributes: Record<string, unknown> = {}): void => {
 
-	logger.info({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
 		logger.warn("No analyticsClient or skipping sending analytics");
