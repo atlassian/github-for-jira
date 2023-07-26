@@ -5,6 +5,7 @@ import { findOrStartSync } from "~/src/sync/sync-utils";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { TaskType, SyncType } from "~/src/sync/sync.types";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const JiraSyncPost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	const { installationId: gitHubInstallationId, appId: gitHubAppId, syncType: syncTypeFromReq, source } = req.body;
@@ -13,7 +14,9 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 	const commitsFromDate = req.body.commitsFromDate ? new Date(req.body.commitsFromDate) : undefined;
 	Sentry.setExtra("Body", req.body);
 
-	req.log.info("Received sync request");
+	const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+
+	logAdditionalData ? req.log.info("Received sync request", gitHubInstallationId) : req.log.info("Received sync request");
 
 	try {
 		const subscription = await Subscription.getSingleInstallation(res.locals.installation.jiraHost, gitHubInstallationId, gitHubAppId);
@@ -69,7 +72,6 @@ type SyncTypeAndTargetTasks = {
 };
 
 const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
-
 	if (syncTypeFromReq === "full") {
 		return { syncType: "full", targetTasks: undefined };
 	}

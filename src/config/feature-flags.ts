@@ -29,6 +29,7 @@ export enum BooleanFlags {
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
+	TEMP_LOGS_FOR_DOS_TICKETS = "temp-logs-for-dos-tickets",
 }
 
 export enum StringFlags {

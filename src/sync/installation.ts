@@ -93,6 +93,27 @@ export const updateTaskStatusAndContinue = async (
 
 	logger.info({ status }, "Updating job status");
 
+	if (await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost)) {
+		edges?.forEach((edge) => {
+			if (edge?.node?.associatedPullRequests) {
+				const { name, associatedPullRequests } = edge.node;
+				logger.info({ name, associatedPullRequests }, "Sending branch data");
+			}
+
+			if (edge["workflow_runs"]) {
+				edge["workflow_runs"].forEach((workflow) => {
+					const { repository, event } = workflow;
+					logger.info({ repositoryName: repository.name, eventType: event }, "Workflow run event");
+				});
+			}
+
+			if (edge.state) {
+				const { state, title, number, locked, auto_merge } = edge.state;
+				logger.info({ state, title, number, locked, auto_merge }, "Sending PR data");
+			}
+		});
+	}
+
 	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
 
 	if (isComplete) {
@@ -447,26 +468,31 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				})
 			);
 
+			const logAdditionalData = await booleanFlag(BooleanFlags.TEMP_LOGS_FOR_DOS_TICKETS, jiraHost);
+
 			switch (result) {
 				case DeduplicatorResult.E_OK:
-					logger.info("Job was executed by deduplicator");
+					logAdditionalData ? logger.info("Job was executed by deduplicator", installationId)
+						: logger.info("Job was executed by deduplicator");
 					if (hasNextMessage) {
-						nextMessageLogger!.info("Sending off a new message");
+						nextMessageLogger!.info("Sending off a new message", installationId);
 						await sendBackfillMessage(nextMessage!, nextMessageDelaySecs!, nextMessageLogger!);
 					}
 					break;
 				case DeduplicatorResult.E_NOT_SURE_TRY_AGAIN_LATER: {
-					logger.warn("Possible duplicate job was detected, rescheduling");
+					logAdditionalData ? logger.info("Possible duplicate job was detected, rescheduling", installationId)
+						: logger.info("Possible duplicate job was detected, rescheduling");
 					await sendBackfillMessage(data, RETRY_DELAY_BASE_SEC, logger);
 					break;
 				}
 				case DeduplicatorResult.E_OTHER_WORKER_DOING_THIS_JOB: {
 					if (await booleanFlag(BooleanFlags.DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT, jiraHost)) {
-						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it");
+						logger.warn("Duplicate job was detected, ff [delete_message_on_backfill_when_others_working_on_it] is ON, so deleting the message instead of rescheduling it", installationId);
 						//doing nothing and return normally will endup delete the message.
 						break;
 					} else {
-						logger.warn("Duplicate job was detected, rescheduling");
+						logAdditionalData ? logger.info("Duplicate job was detected, rescheduling", installationId)
+							: logger.info("Duplicate job was detected, rescheduling");
 						// There could be one case where we might be losing the message even if we are sure that another worker is doing the work:
 						// Worker A - doing a long-running task
 						// Redis/SQS - reports that the task execution takes too long and sends it to another worker
@@ -483,7 +509,7 @@ export const processInstallation = (sendBackfillMessage: (message: BackfillMessa
 				}
 			}
 		} catch (err) {
-			logger.error({ err }, "Process installation failed.");
+			logger.error({ err }, "Process installation failed.", installationId);
 			throw err;
 		}
 	};
