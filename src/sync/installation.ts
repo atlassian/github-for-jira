@@ -75,7 +75,8 @@ export const updateTaskStatusAndContinue = async (
 	taskResultPayload: TaskResultPayload,
 	task: Task,
 	logger: Logger,
-	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>
+	sendBackfillMessage: (message, delaySecs, logger) => Promise<unknown>,
+	jiraHost?: string
 ): Promise<void> => {
 	// Get a fresh subscription instance
 	const subscription = await findSubscriptionForMessage(data);
@@ -316,7 +317,8 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 				taskPayload,
 				nextTask,
 				logger,
-				sendBackfillMessage
+				sendBackfillMessage,
+				jiraHost
 			);
 		} catch (err) {
 			logger.warn({ err }, "Error while executing the task, rethrowing");

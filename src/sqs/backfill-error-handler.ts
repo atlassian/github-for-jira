@@ -21,7 +21,7 @@ const handleTaskError = async (sendSQSBackfillMessage: (message, delaySec, logge
 		lastAttempt: context.lastAttempt
 	});
 
-	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+	const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, context.payload.installationId.toString());
 	const installationId = context.payload.installationId;
 	logAdditionalData ? log.info({ installationId, cause },"verbose logging - Handling error task")
 		: log.info("Handling error task");
@@ -80,7 +80,7 @@ export const backfillErrorHandler: (sendSQSBackfillMessage: (message, delaySec, 
 	(sendSQSBackfillMessage) =>
 		async (err: Error, context: SQSMessageContext<BackfillMessagePayload>): Promise<ErrorHandlingResult> => {
 			const log = context.log.child({ err });
-			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost);
+			const logAdditionalData = await booleanFlag(BooleanFlags.VERBOSE_LOGGING, context.payload.installationId.toString());
 			logAdditionalData ? log.info({ installationId: context.payload.installationId, err }, "verbose logging - Handling error")
 				: log.info("Handling error");
 
