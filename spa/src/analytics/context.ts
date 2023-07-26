@@ -1,4 +1,5 @@
 import Api from "../api";
+import { getJiraJWT } from "../utils";
 
 export type UserContext = {
 	tenantId: string;
@@ -10,9 +11,7 @@ export const getUserContext = async (): Promise<UserContext | undefined> => {
 
 	try {
 
-		const jwtToken: string = await new Promise((res) => {
-			AP.context.getToken((t: string) => { res(t); });
-		});
+		const jwtToken: string = await getJiraJWT();
 
 		const parsedClaim = JSON.parse(atob(jwtToken.split(".")[1]));
 
