@@ -82,7 +82,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 };
 
 const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		name,
 		source: AnalyticsTrackSource.CreateBranch,
 		jiraHost

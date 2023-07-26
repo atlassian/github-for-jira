@@ -49,7 +49,7 @@ RootRouter.use("/public", PublicRouter);
  * This route is for the production version of `spa`
  * We are simply associating `index.html` under the `dist` folder to the router `spa`
  */
-RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/dist")));
+RootRouter.use("/spa", Static(path.join(path.join(process.cwd()), "spa/build")));
 RootRouter.use([
 	"/spa/spa-assets", // For fetching the assets in Production build
 	"/spa-assets" // For fetching the assets in local development environment
