@@ -155,7 +155,7 @@ const ConfigSteps = () => {
 
 			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
 			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
-			const enabledOrgs = totalOrgs.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
 			setOrganizations([
 				{ options: enabledOrgs },
 				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
