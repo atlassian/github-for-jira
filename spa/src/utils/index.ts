@@ -3,4 +3,3 @@ export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 		resolve(token);
 	});
 });
-

@@ -18,7 +18,7 @@ export const modifyError = (error: AxiosError): ErrorObjType => {
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
 
-	// TODO: map backend errors in frontend
+	// TODO: map the remaining backend errors in frontend
 	if (message.includes("Blocked by GitHub allowlist")) {
 		return {
 			...warningObj,
