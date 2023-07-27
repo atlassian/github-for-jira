@@ -11,11 +11,12 @@ import OpenIcon from "@atlaskit/icon/glyph/open";
 import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
-import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
+import { AxiosError } from "axios";
+import { ErrorObjType, modifyError } from "../../utils";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -29,10 +30,6 @@ type OrgDropdownType = {
 	label: string;
 	value: number;
 };
-type ErrorObjType = {
-	type: ErrorType,
-	message: React.JSX.Element | string;
-}
 
 const ConfigContainer = styled.div`
   margin: 0 auto;
@@ -144,16 +141,16 @@ const ConfigSteps = () => {
 	const getOrganizations = async () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
-		if (response) {
+		setLoaderForOrgFetching(false);
+		if (response instanceof AxiosError) {
+			setError(modifyError(response));
+		} else {
 			setNoOrgsFound(response?.orgs.length === 0);
 			setOrganizations(response?.orgs.map((org) => ({
 				label: org.account.login,
 				value: String(org.id),
 			})));
-		} else {
-			setError({ type: "error", message: "Failed to fetch your organizations!"});
 		}
-		setLoaderForOrgFetching(false);
 	};
 
 	useEffect(() => {
@@ -161,11 +158,14 @@ const ConfigSteps = () => {
 		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: success ? "success" : "fail" });
-				if (!success) {
-					setError({ type: "error", message: "Failed to finish authentication!"});
+				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				setLoaderForLogin(false);
+				if (response instanceof AxiosError) {
+					setError(modifyError(response));
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
+				} else {
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
 			}
 			setIsLoggedIn(true);
@@ -182,8 +182,10 @@ const ConfigSteps = () => {
 	}, [ originalUrl ]);
 
 	useEffect(() => {
-		OAuthManager.checkValidity().then((status: boolean | undefined) => {
-			if (status) {
+		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
+			if (status instanceof AxiosError) {
+				setError(modifyError(status));
+			} else {
 				setLoggedInUser(OAuthManager.getUserDetails().username);
 				setLoaderForLogin(false);
 				getOrganizations();
@@ -200,7 +202,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError({ type: "error", message: "Couldn't login!"});
+					setError(modifyError(e as AxiosError));
 				}
 				break;
 			}
@@ -234,10 +236,10 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
-			if (connected) {
-				navigate("/spa/connected");
+			if (connected instanceof AxiosError) {
+				setError(modifyError(connected));
 			} else {
-				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
+				navigate("/spa/connected");
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
@@ -263,7 +265,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			setError({type: "error", message: "Couldn't install new organization"});
+			setError(modifyError(e as AxiosError));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
