@@ -1,20 +1,17 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import { JiraCloudIDResponse } from "rest-interfaces/oauth-types";
 import { JiraClient } from "models/jira-client";
+import errorWrapper from "express-async-handler";
 
 export const JiraCloudIDRouter = Router({ mergeParams: true });
 
-JiraCloudIDRouter.get("/", async function JiraCloudIDGet(req: Request, res: Response<JiraCloudIDResponse>, next: NextFunction) {
+JiraCloudIDRouter.get("/", errorWrapper(async function JiraCloudIDGet(req: Request, res: Response<JiraCloudIDResponse>) {
 
 	const { installation } = res.locals;
 
-	try {
-		const jiraClient = await JiraClient.getNewClient(installation, req.log);
-		const { cloudId } = await jiraClient.getCloudId();
-		res.status(200).json({ cloudId });
-	} catch (e) {
-		req.log.error({ err: e }, "Failed to fetch cloud id");
-		next(e);
-	}
-});
+	const jiraClient = await JiraClient.getNewClient(installation, req.log);
+	const { cloudId } = await jiraClient.getCloudId();
+	res.status(200).json({ cloudId });
+
+}));
 

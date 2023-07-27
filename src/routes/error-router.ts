@@ -45,13 +45,6 @@ export const attachErrorHandler = (router: Router) => {
 
 	// Error and Catch all route - Handle anything that's missing or has throw an error
 	const catchAllMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
-		/**
-		 * Avoid the existing Error handler method for the new route `/rest`
-		 * The errors for the new route is handled in `RestErrorHandler` middleware
-		 */
-		if (req.url.includes("/rest")) {
-			next(err);
-		}
 		const errorReference = uuidv4();
 
 		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend");

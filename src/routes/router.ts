@@ -19,7 +19,6 @@ import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
 import { RestRouter } from "~/src/rest/rest-router";
 import { SpaRouter } from "routes/spa/spa-router";
-import RestErrorHandler from "~/src/rest/middleware/error";
 
 export const RootRouter = Router();
 
@@ -85,5 +84,3 @@ RootRouter.get("/", jiraSymmetricJwtMiddleware, GitHubAppMarketplaceRedirectGet)
 
 // For when nothing gets triggered in the above routes, or an error occurs
 attachErrorHandler(RootRouter);
-
-RootRouter.use(RestErrorHandler);
