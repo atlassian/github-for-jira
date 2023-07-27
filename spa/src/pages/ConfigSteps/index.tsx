@@ -150,6 +150,8 @@ const ConfigSteps = () => {
 				label: org.account.login,
 				value: String(org.id),
 			})));
+		} else {
+			setError({ type: "error", message: "Failed to fetch your organizations!"});
 		}
 		setLoaderForOrgFetching(false);
 	};

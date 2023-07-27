@@ -3,7 +3,7 @@ import { OrganizationsResponse } from "../../rest-interfaces/oauth-types";
 
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
-async function fetchOrgs(): Promise<OrganizationsResponse> {
+async function fetchOrgs(): Promise<OrganizationsResponse | undefined> {
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
 	try {
@@ -11,7 +11,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse> {
 		return response.data;
 	} catch (e) {
 		console.error(e, "Failed to fetch organizations");
-		return { orgs: [] };
+		return undefined;
 	}
 }
 
