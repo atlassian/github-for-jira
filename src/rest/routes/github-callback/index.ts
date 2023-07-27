@@ -1,11 +1,11 @@
 import { Router, Request, Response } from "express";
 import sanitize from "sanitize-html";
-import errorWrapper from "express-async-handler";
+import { errorWrapper } from "../../helper";
 import { InvalidArgumentError } from "config/errors";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
-GitHubCallbackRoute.get("/", errorWrapper(async function GitHubCallbackGet(req: Request, res: Response<string>) {
+GitHubCallbackRoute.get("/", errorWrapper("GitHubCallbackGet", async function GitHubCallbackGet(req: Request, res: Response<string>) {
 
 	const code = String(req.query.code || "");
 	const state = String(req.query.state || "");

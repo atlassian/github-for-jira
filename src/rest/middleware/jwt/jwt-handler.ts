@@ -2,12 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import Logger from "bunyan";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { Installation } from "models/installation";
-import errorWrapper from "express-async-handler";
+import { errorWrapper } from "../../helper";
 import { InvalidTokenError } from "config/errors";
 
 const INVALID_SECRET = "some-invalid-secret";
 
-export const JwtHandler = errorWrapper(async (req: Request, res: Response, next: NextFunction) => {
+export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response, next: NextFunction) => {
 
 	const token = req.headers["authorization"];
 
@@ -27,6 +27,9 @@ export const JwtHandler = errorWrapper(async (req: Request, res: Response, next:
 	}
 
 });
+
+//
+Object.defineProperty(JwtHandler, "name", { get: () => "JwtHandler" });
 
 const verifySymmetricJwt = async (token: string, logger: Logger) => {
 	const algorithm = getAlgorithm(token);

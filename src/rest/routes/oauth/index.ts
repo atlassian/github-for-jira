@@ -1,12 +1,12 @@
 import { Router, Request, Response } from "express";
 import { getRedirectUrl, finishOAuthFlow } from "./service";
 import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces";
-import errorWrapper from "express-async-handler";
+import { errorWrapper } from "../../helper";
 import { InvalidArgumentError } from "config/errors";
 
 export const OAuthRouter = Router({ mergeParams: true });
 
-OAuthRouter.get("/redirectUrl", errorWrapper(async function OAuthRedirectUrl(req: Request, res: Response<GetRedirectUrlResponse>) {
+OAuthRouter.get("/redirectUrl", errorWrapper("OAuthRedirectUrl", async function OAuthRedirectUrl(req: Request, res: Response<GetRedirectUrlResponse>) {
 
 	const cloudOrUUID = req.params.cloudOrUUID;
 	const { jiraHost } = res.locals;
@@ -15,7 +15,7 @@ OAuthRouter.get("/redirectUrl", errorWrapper(async function OAuthRedirectUrl(req
 	res.status(200).json(await getRedirectUrl(jiraHost, gheUUID));
 }));
 
-OAuthRouter.post("/exchangeToken", errorWrapper(async function OAuthExchangeToken(req: Request, res: Response<ExchangeTokenResponse>) {
+OAuthRouter.post("/exchangeToken", errorWrapper("OAuthExchangeToken", async function OAuthExchangeToken(req: Request, res: Response<ExchangeTokenResponse>) {
 
 	const code = req.body.code || "";
 	const state = req.body.state || "";

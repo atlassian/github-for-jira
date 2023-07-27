@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import errorWrapper from "express-async-handler";
+import { errorWrapper } from "../../helper";
 import { InvalidTokenError } from "config/errors";
 
-export const GitHubTokenHandler = errorWrapper(async (req: Request, res: Response, next: NextFunction) => {
+export const GitHubTokenHandler = errorWrapper("GitHubTokenHandler", async (req: Request, res: Response, next: NextFunction) => {
 
 	const token = req.headers["github-auth"];
 

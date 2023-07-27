@@ -1,11 +1,11 @@
 import { Router, Request, Response } from "express";
 import { JiraCloudIDResponse } from "rest-interfaces";
 import { JiraClient } from "models/jira-client";
-import errorWrapper from "express-async-handler";
+import { errorWrapper } from "../../helper";
 
 export const JiraCloudIDRouter = Router({ mergeParams: true });
 
-JiraCloudIDRouter.get("/", errorWrapper(async function JiraCloudIDGet(req: Request, res: Response<JiraCloudIDResponse>) {
+JiraCloudIDRouter.get("/", errorWrapper("JiraCloudIDGet", async function JiraCloudIDGet(req: Request, res: Response<JiraCloudIDResponse>) {
 
 	const { installation } = res.locals;
 
