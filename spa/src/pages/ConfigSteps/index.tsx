@@ -158,8 +158,9 @@ const ConfigSteps = () => {
 		getJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
-			if (event.data?.code) {
+			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: success ? "success" : "fail" });
 				if (!success) {
 					setError({ type: "error", message: "Failed to finish authentication!"});
 					return;
@@ -193,7 +194,7 @@ const ConfigSteps = () => {
 			case 1: {
 				setLoaderForLogin(true);
 				try {
-					analyticsClient.sendUIEvent({ actionSubject: "authorizeToGitHubCloud", action: "clicked" });
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
@@ -203,6 +204,7 @@ const ConfigSteps = () => {
 			}
 			case 2: {
 				if (hostUrl?.gheServerUrl) {
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
 					window.open(hostUrl?.gheServerUrl);
 				}
 				break;
@@ -221,28 +223,46 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	const connectGitHubOrg = async () => {
-		if (selectedOrg?.value) {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+		try {
 			setLoaderForOrgConnection(true);
-			const connected = await AppManager.connectOrg(selectedOrg?.value);
+			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
+			const connected = await AppManager.connectOrg(gitHubInstallationId);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected) {
 				navigate("/spa/connected");
 			} else {
 				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
 			}
+		} catch (e) {
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+		} finally {
 			setLoaderForOrgConnection(false);
+		}
+	};
+
+	const connectGitHubOrg = async () => {
+		if (selectedOrg?.value) {
+			await doCreateConnection(selectedOrg.value, "manual");
 		}
 	};
 
 	const installNewOrg = async () => {
 		try {
-			await AppManager.installNewApp(() => {
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
+			await AppManager.installNewApp(async (gitHubInstallationId: number | undefined) => {
+				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
 				getOrganizations();
+				if(gitHubInstallationId) {
+					await doCreateConnection(gitHubInstallationId, "auto");
+				}
 			});
 		} catch (e) {
 			setError({type: "error", message: "Couldn't install new organization"});
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
 
@@ -283,9 +303,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(true);
 										setSelectedOption(1);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/cloud.svg" alt=""/>
+									<img src="/public/assets/cloud.svg" alt=""/>
 									<span>GitHub Cloud</span>
 								</GitHubOption>
 								<GitHubOption
@@ -294,9 +315,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(false);
 										setSelectedOption(2);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/server.svg" alt=""/>
+									<img src="/public/assets/server.svg" alt=""/>
 									<span>GitHub Enterprise Server</span>
 								</GitHubOption>
 							</GitHubOptionContainer>

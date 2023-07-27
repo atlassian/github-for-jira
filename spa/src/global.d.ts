@@ -4,6 +4,7 @@ export {};
 
 declare global {
 	const AP: AtlassianPlugin;
+	const SPA_APP_ENV: "" | "local" | "dev" | "staging" | "prod";
 }
 
 interface AtlassianPlugin {

@@ -28,7 +28,7 @@ describe("rest oauth router", () => {
 					.expect("content-type", "text/html; charset=utf-8");
 
 				expect(resp.text).toEqual(expect.stringContaining(
-					`window.opener.postMessage({"code":"abcd","state":"qwer"}`
+					`window.opener.postMessage({"type":"oauth-callback","code":"abcd","state":"qwer"}`
 				));
 
 			});
