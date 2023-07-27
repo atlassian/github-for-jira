@@ -37,7 +37,7 @@ GitHubOrgsRouter.post("/", async (req: Request, res: Response, next: NextFunctio
 	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, req.log);
 	if (result.error) {
 		next({ status: 400, message: result.error });
+	} else {
+		res.sendStatus(200);
 	}
-
-	res.sendStatus(200);
 });
