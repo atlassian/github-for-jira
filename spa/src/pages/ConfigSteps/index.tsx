@@ -8,7 +8,7 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
-import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
+import SelectDropdown, { LabelType, OrgOptionsType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
 import Error from "../../components/Error";
@@ -105,7 +105,7 @@ const ConfigSteps = () => {
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 
-	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [organizations, setOrganizations] = useState<Array<OrgOptionsType>>([]);
 	const [noOrgsFound, setNoOrgsFound] = useState<boolean>(false);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
 	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(true);
@@ -146,10 +146,21 @@ const ConfigSteps = () => {
 			setError(modifyError(response));
 		} else {
 			setNoOrgsFound(response?.orgs.length === 0);
-			setOrganizations(response?.orgs.map((org) => ({
+			const totalOrgs = response?.orgs.map(org => ({
 				label: org.account.login,
 				value: String(org.id),
-			})));
+				requiresSsoLogin: org.requiresSsoLogin,
+				isIPBlocked: org.isIPBlocked
+			}));
+
+			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
+			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
+			const enabledOrgs = totalOrgs.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
+			setOrganizations([
+				{ options: enabledOrgs },
+				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
+				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
+			]);
 		}
 	};
 
@@ -214,6 +225,26 @@ const ConfigSteps = () => {
 				break;
 			}
 			default:
+		}
+	};
+
+	const onChangingOrg = (value: LabelType | null) => {
+		if (value) {
+			if(value?.requiresSsoLogin) {
+				setError(modifyError({ message: "SSO Login required"} as AxiosError));
+				setOrgConnectionDisabled(true);
+			}
+			else if (value?.isIPBlocked) {
+				setError(modifyError({ message: "Blocked by GitHub allowlist"} as AxiosError));
+				setOrgConnectionDisabled(true);
+			} else {
+				setSelectedOrg({
+					label: value.label,
+					value: parseInt(value.value)
+				});
+				setOrgConnectionDisabled(false);
+				setError(undefined);
+			}
 		}
 	};
 
@@ -381,15 +412,7 @@ const ConfigSteps = () => {
 											options={organizations}
 											label="Select organization"
 											isLoading={loaderForOrgFetching}
-											onChange={(value) => {
-												setOrgConnectionDisabled(false);
-												if(value) {
-													setSelectedOrg({
-														label: value.label,
-														value: parseInt(value.value)
-													});
-												}
-											}}
+											onChange={onChangingOrg}
 											icon={<OfficeBuildingIcon label="org" size="medium" />}
 										/>
 										<TooltipContainer>
