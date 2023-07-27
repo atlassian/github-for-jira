@@ -10,11 +10,10 @@ export type ErrorObjType = {
 	message: string | React.JSX.Element;
 }
 
-const Paragraph = styled.p`
-	color: ${token("color.text.subtle")};
-`;
-
 export const modifyError = (error: AxiosError): ErrorObjType => {
+	const Paragraph = styled.p`
+		color: ${token("color.text.subtle")};
+	`;
 	const message = (error?.response?.data || error.message) as string;
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
