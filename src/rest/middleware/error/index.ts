@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ApiError, ErrorCode } from "rest-interfaces";
+import { ApiError } from "rest-interfaces";
 import { RestApiError } from "config/errors";
 import * as GH from "~/src/github/client/github-client-errors";
 
@@ -10,7 +10,6 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 
 	if (err instanceof RestApiError) {
 		res.status(err.httpStatus).json({
-			httpStatus: err.httpStatus,
 			errorCode: err.errorCode,
 			message: err.message
 		});
@@ -18,13 +17,14 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 	}
 
 	if (err instanceof GH.GithubClientError) {
-		const mapped = mapGitHubError(err);
-		res.status(mapped.httpStatus).json(mapped);
+		res.status(err.status || 500).json({
+			errorCode: err.uiErrorCode,
+			message: err.message
+		});
 		return;
 	}
 
 	res.status(500).json({
-		httpStatus: 500,
 		message: "Unknown Error",
 		errorCode: "UNKNOWN"
 	});
@@ -40,44 +40,5 @@ const logErrorOrWarning = (err: any, req: Request) => {
 	} else {
 		req.log.warn({ err }, "Error happen during rest api");
 	}
-
-};
-
-const mapGitHubError = (err: GH.GithubClientError): ApiError => {
-
-	let httpStatus: number;
-	let errorCode: ErrorCode;
-
-	if (err instanceof GH.GithubClientTimeoutError) {
-		httpStatus = 500;
-		errorCode = "TIMEOUT";
-	} else if (err instanceof GH.GithubClientRateLimitingError) {
-		httpStatus = 400;
-		errorCode = "RATELIMIT";
-	} else if (err instanceof GH.GithubClientBlockedIpError) {
-		httpStatus = 400;
-		errorCode = "IP_BLOCKED";
-	} else if (err instanceof GH.GithubClientSSOLoginError) {
-		httpStatus = 400;
-		errorCode = "SSO_LOGIN";
-	} else if (err instanceof GH.GithubClientInvalidPermissionsError) {
-		httpStatus = 401;
-		errorCode = "INSUFFICIENT_PERMISSION";
-	} else if (err instanceof GH.GithubClientNotFoundError) {
-		httpStatus = 404;
-		errorCode = "RESOURCE_NOT_FOUND";
-	} else if (err instanceof GH.GithubClientGraphQLError) {
-		httpStatus = 500;
-		errorCode = "UNKNOWN"; //For generic graphql errorCode, nothing we can do for the UI so set it unknown
-	} else {
-		httpStatus = 500;
-		errorCode = "UNKNOWN";
-	}
-
-	return {
-		httpStatus,
-		errorCode,
-		message: err.message
-	};
 
 };

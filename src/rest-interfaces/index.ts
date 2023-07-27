@@ -45,7 +45,6 @@ export type JiraCloudIDResponse = {
 export type ErrorType = "warning" | "error";
 
 export type ApiError = {
-	httpStatus: number;
 	message: string;
 	errorCode: ErrorCode;
 }

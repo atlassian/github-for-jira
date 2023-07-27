@@ -70,6 +70,7 @@ export const instrumentRequest = (metricName, host, jiraHost: string | undefined
 		if (!response) {
 			return;
 		}
+
 		const gitHubProduct = getCloudOrServerFromHost(host);
 		return sendResponseMetrics(metricName, gitHubProduct, jiraHost, response, undefined, extraTags);
 	};
