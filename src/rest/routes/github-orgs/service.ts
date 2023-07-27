@@ -20,33 +20,28 @@ const fetchGitHubOrganizations = async (
 	 * TODO: This only works for the Github cloud flow,
 	 * Get the value for `gitHubAppId` and `gitHubAppUuid` for Enterprise flow
  	 */
-	try {
-		const { data: { installations } } = await gitHubUserClient.getInstallations();
-		const installationsWithAdmin = await getInstallationsWithAdmin(
-			installation.id,
-			gitHubUserClient,
-			log,
-			login,
-			installations,
-			jiraHost,
-			undefined,
-			undefined
-		);
+	const { data: { installations } } = await gitHubUserClient.getInstallations();
+	const installationsWithAdmin = await getInstallationsWithAdmin(
+		installation.id,
+		gitHubUserClient,
+		log,
+		login,
+		installations,
+		jiraHost,
+		undefined,
+		undefined
+	);
 
-		log.debug(`Received user's installations with admin status from GitHub`);
+	log.debug(`Received user's installations with admin status from GitHub`);
 
-		const connectedInstallations = await installationConnectedStatus(
-			jiraHost,
-			installationsWithAdmin,
-			log,
-			undefined
-		);
+	const connectedInstallations = await installationConnectedStatus(
+		jiraHost,
+		installationsWithAdmin,
+		log,
+		undefined
+	);
 
-		return  connectedInstallations.filter(installation => !installation.syncStatus);
-	} catch (e) {
-		log.error(e, "Failed to fetch the organizations");
-		throw e;
-	}
+	return  connectedInstallations.filter(installation => !installation.syncStatus);
 };
 
 export default fetchGitHubOrganizations;
