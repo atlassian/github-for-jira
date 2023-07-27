@@ -26,7 +26,7 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 	res.status(500).json({
 		httpStatus: 500,
 		message: "Unknown Error",
-		errorCode: ErrorCode.UNKNOWN
+		errorCode: "UNKNOWN"
 	});
 
 };
@@ -50,28 +50,28 @@ const mapGitHubError = (err: GH.GithubClientError): ApiError => {
 
 	if (err instanceof GH.GithubClientTimeoutError) {
 		httpStatus = 500;
-		errorCode = ErrorCode.TIMEOUT;
+		errorCode = "TIMEOUT";
 	} else if (err instanceof GH.GithubClientRateLimitingError) {
 		httpStatus = 400;
-		errorCode = ErrorCode.RATELIMIT;
+		errorCode = "RATELIMIT";
 	} else if (err instanceof GH.GithubClientBlockedIpError) {
 		httpStatus = 400;
-		errorCode = ErrorCode.IP_BLOCKED;
+		errorCode = "IP_BLOCKED";
 	} else if (err instanceof GH.GithubClientSSOLoginError) {
 		httpStatus = 400;
-		errorCode = ErrorCode.SSO_LOGIN;
+		errorCode = "SSO_LOGIN";
 	} else if (err instanceof GH.GithubClientInvalidPermissionsError) {
 		httpStatus = 401;
-		errorCode = ErrorCode.INSUFFICIENT_PERMISSION;
+		errorCode = "INSUFFICIENT_PERMISSION";
 	} else if (err instanceof GH.GithubClientNotFoundError) {
 		httpStatus = 404;
-		errorCode = ErrorCode.RESOURCE_NOT_FOUND;
+		errorCode = "RESOURCE_NOT_FOUND";
 	} else if (err instanceof GH.GithubClientGraphQLError) {
 		httpStatus = 500;
-		errorCode = ErrorCode.UNKNOWN; //For generic graphql errorCode, nothing we can do for the UI so set it unknown
+		errorCode = "UNKNOWN"; //For generic graphql errorCode, nothing we can do for the UI so set it unknown
 	} else {
 		httpStatus = 500;
-		errorCode = ErrorCode.UNKNOWN;
+		errorCode = "UNKNOWN";
 	}
 
 	return {

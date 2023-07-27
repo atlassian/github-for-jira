@@ -36,19 +36,19 @@ export class RestApiError extends Error implements ApiError {
 
 export class InvalidArgumentError extends RestApiError {
 	constructor(msg: string) {
-		super(400, ErrorCode.INVALID_OR_MISSING_ARG, msg);
+		super(400, "INVALID_OR_MISSING_ARG", msg);
 	}
 }
 
 export class InvalidTokenError extends RestApiError {
 	constructor(msg: string) {
-		super(401, ErrorCode.INVALID_TOKEN, msg);
+		super(401, "INVALID_TOKEN", msg);
 	}
 }
 
 export class InsufficientPermissionError extends RestApiError {
 	constructor(msg: string) {
-		super(401, ErrorCode.INVALID_TOKEN, msg);
+		super(401, "INVALID_TOKEN", msg);
 	}
 }
 

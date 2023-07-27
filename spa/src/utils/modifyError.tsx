@@ -1,10 +1,9 @@
 import { AxiosError } from "axios";
-import { ErrorType } from "rest-interfaces";
+import { ErrorType, ApiError, ErrorCode } from "rest-interfaces";
 import React from "react";
 import Heading from "@atlaskit/heading";
 import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
-import { ApiError, ErrorCode } from "rest-interfaces";
 
 export type ErrorObjType = {
 	type: ErrorType,
@@ -24,10 +23,10 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError): ErrorObj
 	`;
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
-	const errorCode = (error instanceof AxiosError ? error?.response?.data?.errorCode : ErrorCode.UNKNOWN) || ErrorCode.UNKNOWN;
+	const errorCode: ErrorCode = (error instanceof AxiosError ? error?.response?.data?.errorCode : "UNKNOWN") || "UNKNOWN";
 
 	// TODO: map backend errors in frontend
-	if (errorCode === ErrorCode.IP_BLOCKED) {
+	if (errorCode === "IP_BLOCKED") {
 		return {
 			...warningObj,
 			message: <>
@@ -41,20 +40,20 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError): ErrorObj
 				<a target="_blank" href="https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md">Learn how to add GitHub for Jira to your IP allowlist</a>
 			</>
 		};
-	} else if (errorCode === ErrorCode.TIMEOUT) {
+	} else if (errorCode === "TIMEOUT") {
 		return { ...errorObj, message: "Request timeout" }; //TODO: Better message
-	} else if (errorCode === ErrorCode.RATELIMIT) {
+	} else if (errorCode === "RATELIMIT") {
 		return { ...errorObj, message: "GitHub rate limiting" }; //TODO: Better message
-	} else if (errorCode === ErrorCode.SSO_LOGIN) {
+	} else if (errorCode === "SSO_LOGIN") {
 		return { ...errorObj, message: "GitHub SSO login required" }; //TODO: Better message
-	} else if (errorCode === ErrorCode.RESOURCE_NOT_FOUND) {
+	} else if (errorCode === "RESOURCE_NOT_FOUND") {
 		//This should not happen in normal flow, nothing user can do, hence generic message
 		return { ...errorObj, message: GENERIC_MESSAGE };
-	} else if (errorCode === ErrorCode.INVALID_TOKEN) {
+	} else if (errorCode === "INVALID_TOKEN") {
 		return { ...errorObj, message: "The GitHub token seems invalid, please re-authorise and try again." }; //TODO: Better message
-	} else if (errorCode === ErrorCode.INSUFFICIENT_PERMISSION) {
+	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
 		return { ...errorObj, message: "You dont' have enough permission for the operation." };
-	} else if (errorCode === ErrorCode.INVALID_OR_MISSING_ARG) {
+	} else if (errorCode === "INVALID_OR_MISSING_ARG") {
 		//This should not happen in normal flow, nothing user can do, hence generic message
 		return { ...errorObj, message: GENERIC_MESSAGE };
 	} else {

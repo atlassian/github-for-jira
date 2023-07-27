@@ -50,14 +50,15 @@ export type ApiError = {
 	errorCode: ErrorCode;
 }
 
-export enum ErrorCode {
-	INVALID_OR_MISSING_ARG = "invalid-or-missing-arg",
-	INVALID_TOKEN = "invalid-token",
-	INSUFFICIENT_PERMISSION = "insufficient-permission",
-	RATELIMIT = "ratelimit",
-	TIMEOUT = "timeout",
-	IP_BLOCKED = "blocked",
-	SSO_LOGIN = "sso-login",
-	RESOURCE_NOT_FOUND = "not-found",
-	UNKNOWN = "unknown",
-}
+//DO NOT USE ENUM as webpack can't handler anything none "type"
+//ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
+export type ErrorCode =
+	| "INVALID_OR_MISSING_ARG"
+	| "INVALID_TOKEN"
+	| "INSUFFICIENT_PERMISSION"
+	| "RATELIMIT"
+	| "TIMEOUT"
+	| "IP_BLOCKED"
+	| "SSO_LOGIN"
+	| "RESOURCE_NOT_FOUND"
+	| "UNKNOWN";
