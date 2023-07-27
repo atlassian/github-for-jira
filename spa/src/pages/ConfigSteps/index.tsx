@@ -16,7 +16,7 @@ import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
-import { ErrorObjType, modifyError } from "../../utils";
+import { ErrorObjType, modifyError } from "../../utils/modifyError";
 
 type GitHubOptionType = {
 	selectedOption: number;

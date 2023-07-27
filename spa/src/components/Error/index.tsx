@@ -20,7 +20,7 @@ const ErrorWrapper = styled.div<ErrorWrapperType>`
 	border-radius: 3px;
 	align-items: center;
 	div {
-		padding-left: ${token("space.100")};
+		padding-left: ${token("space.200")};
 	}
 	span {
 		align-self: start;
