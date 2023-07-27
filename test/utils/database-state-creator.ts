@@ -24,6 +24,7 @@ export class DatabaseStateCreator {
 	private pendingForCommits: boolean;
 	private pendingForBuilds: boolean;
 	private pendingForDeployments: boolean;
+	private pendingForDependabotAlerts: boolean;
 
 	private buildsCustomCursor: string | undefined;
 	private prsCustomCursor: string | undefined;
@@ -77,6 +78,11 @@ export class DatabaseStateCreator {
 
 	public repoSyncStatePendingForBranches() {
 		this.pendingForBranches = true;
+		return this;
+	}
+
+	public repoSyncStatePendingForDependabotAlerts() {
+		this.pendingForDependabotAlerts = true;
 		return this;
 	}
 
@@ -136,6 +142,7 @@ export class DatabaseStateCreator {
 			pullStatus: this.pendingForPrs ? "pending" : "complete",
 			buildStatus: this.pendingForBuilds ? "pending" : "complete",
 			deploymentStatus: this.pendingForDeployments ? "pending" : "complete",
+			dependabotAlertStatus: this.pendingForDependabotAlerts ? "pending" : "complete",
 			... (this.buildsCustomCursor ? { buildCursor: this.buildsCustomCursor } : { }),
 			... (this.prsCustomCursor ? { pullCursor: this.prsCustomCursor } : { }),
 			updatedAt: new Date(),

@@ -39,6 +39,10 @@ export class JiraClient {
 		}
 	}
 
+	async getCloudId(): Promise<{ cloudId: string }> {
+		return (await this.axios.get("_edge/tenant_info")).data;
+	}
+
 	async appPropertiesCreate(isConfiguredState: boolean) {
 		return await this.axios.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
 			"isConfigured": isConfiguredState

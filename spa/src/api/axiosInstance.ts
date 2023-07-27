@@ -1,17 +1,12 @@
 import axios from "axios";
-
-const getHeaders = (): Promise<string> => new Promise(resolve => {
-	AP.context.getToken((token: string) => {
-		resolve(token);
-	});
-});
+import { getJiraJWT } from "../utils";
 
 const axiosRest = axios.create({
 	timeout: 3000
 });
 // Adding the token in the headers through interceptors because it is an async value
 axiosRest.interceptors.request.use(async (config) => {
-	config.headers.Authorization = await getHeaders();
+	config.headers.Authorization = await getJiraJWT();
 	return config;
 });
 
@@ -25,18 +20,13 @@ let gitHubToken: string | undefined = undefined;
 
 const clearGitHubToken = () => {
 	gitHubToken = undefined;
-}
+};
 
 const setGitHubToken = (newToken: string) => {
 	gitHubToken = newToken;
-}
+};
 
-const hasGitHubToken = () => {
-	if (!!gitHubToken) {
-		return true;
-	}
-	return false;
-}
+const hasGitHubToken = () => !!gitHubToken;
 
 const axiosGitHub = axios.create({
 	timeout: 3000
@@ -50,7 +40,7 @@ const axiosRestWithGitHubToken = axios.create({
 	timeout: 3000
 });
 axiosRestWithGitHubToken.interceptors.request.use(async (config) => {
-	config.headers.Authorization = await getHeaders();
+	config.headers.Authorization = await getJiraJWT();
 	config.headers["github-auth"] = gitHubToken;
 	return config;
 });

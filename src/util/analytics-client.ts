@@ -10,12 +10,12 @@ const logger = getLogger("analytics");
 let analyticsNodeClient;
 
 export const sendAnalytics: {
-	(eventType: "screen", attributes: { name: string } & Record<string, unknown>);
-	(eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
-	(eventType: "ui" | "operational", attributes: Record<string, unknown>);
-} = (eventType: string, attributes: Record<string, unknown> = {}): void => {
+	(jiraHost: string, eventType: "screen", attributes: { name: string } & Record<string, unknown>);
+	(jiraHost: string, eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
+	(jiraHost: string, eventType: "ui" | "operational", attributes: Record<string, unknown>);
+} = (jiraHost: string, eventType: string, attributes: Record<string, unknown> = {}): void => {
 
-	logger.debug(analyticsClient ? "Found analytics client." : `No analytics client found.`);
+	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
 	if (!analyticsClient || !isNodeProd()) {
 		logger.warn("No analyticsClient or skipping sending analytics");

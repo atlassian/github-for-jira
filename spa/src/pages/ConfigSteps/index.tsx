@@ -15,6 +15,7 @@ import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
+import analyticsClient from "../../analytics";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -34,21 +35,22 @@ type ErrorObjType = {
 }
 
 const ConfigContainer = styled.div`
-	margin: 0 auto;
-	width: 100%;
+  margin: 0 auto;
+  width: 100%;
+  min-height: 364px;
 `;
 const GitHubOptionContainer = styled.div`
 	display: flex;
 	margin-bottom: ${token("space.200")};
 `;
 const TooltipContainer = styled.div`
-	margin-bottom: ${token("space.200")};
+	margin-bottom: ${token("space.400")};
 	a {
 		cursor: pointer;
 	}
 `;
 const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : token("color.background.neutral")};
+	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : "rgba(9, 30, 66, 0.04)"};
 	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
 	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
 	padding: ${token("space.100")} ${token("space.200")};
@@ -59,6 +61,7 @@ const GitHubOption = styled.div<GitHubOptionType>`
 	cursor: pointer;
 	:hover {
 		box-shadow: ${token("elevation.shadow.raised")};
+		background: rgba(9, 30, 66, 0.08);
 	}
 	img {
 		height: 18px;
@@ -80,13 +83,22 @@ const LoggedInContent = styled.div`
 	justify-content: start;
 	align-items: center;
 `;
-const ButtonContainer = LoggedInContent;
+const ButtonContainer = styled.div`
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+`;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
+`;
+const NoOrgsParagraph = styled.div`
+	color: ${token("color.text.subtle")};
+	margin-bottom: ${token("space.400")};
 `;
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
+
 	const { username, email } = OAuthManager.getUserDetails();
 	const isAuthenticated = !!(username && email);
 
@@ -94,12 +106,13 @@ const ConfigSteps = () => {
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 
 	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [noOrgsFound, setNoOrgsFound] = useState<boolean>(false);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
-	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(true);
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
-	const [selectedOption, setSelectedOption] = useState(0);
+	const [selectedOption, setSelectedOption] = useState(1);
 	const [completedStep1, setCompletedStep1] = useState(isAuthenticated);
 	const [completedStep2] = useState(false);
 
@@ -113,7 +126,7 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
-	const [error] = useState<ErrorObjType | undefined>(undefined);
+	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
@@ -129,9 +142,10 @@ const ConfigSteps = () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		if (response) {
-			setOrganizations(response?.orgs.map((org: any) => ({
+			setNoOrgsFound(response?.orgs.length === 0);
+			setOrganizations(response?.orgs.map((org) => ({
 				label: org.account.login,
-				value: org.id,
+				value: String(org.id),
 			})));
 		}
 		setLoaderForOrgFetching(false);
@@ -139,12 +153,15 @@ const ConfigSteps = () => {
 
 	useEffect(() => {
 		getJiraHostUrls();
-		const handler = async (event: any) => {
+		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
-			if (event.data?.code) {
+			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				// TODO: add some visual input in case of errors
-				if (!success) return;
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: success ? "success" : "fail" });
+				if (!success) {
+					setError({ type: "error", message: "Failed to finish authentication!"});
+					return;
+				}
 			}
 			setIsLoggedIn(true);
 			setCompletedStep1(true);
@@ -157,7 +174,7 @@ const ConfigSteps = () => {
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-	}, []);
+	}, [ originalUrl ]);
 
 	useEffect(() => {
 		OAuthManager.checkValidity().then((status: boolean | undefined) => {
@@ -173,11 +190,18 @@ const ConfigSteps = () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
-				await OAuthManager.authenticateInGitHub();
+				try {
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
+					await OAuthManager.authenticateInGitHub();
+				} catch (e) {
+					setLoaderForLogin(false);
+					setError({ type: "error", message: "Couldn't login!"});
+				}
 				break;
 			}
 			case 2: {
 				if (hostUrl?.gheServerUrl) {
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
 					window.open(hostUrl?.gheServerUrl);
 				}
 				break;
@@ -196,24 +220,47 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	// TODO: Need to handle all the different error cases
-	const connectGitHubOrg = async () => {
-		if (selectedOrg?.value) {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+		try {
 			setLoaderForOrgConnection(true);
-			const connected = await AppManager.connectOrg(selectedOrg?.value);
+			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
+			const connected = await AppManager.connectOrg(gitHubInstallationId);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected) {
 				navigate("/spa/connected");
+			} else {
+				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
 			}
+		} catch (e) {
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+		} finally {
 			setLoaderForOrgConnection(false);
 		}
 	};
 
+	const connectGitHubOrg = async () => {
+		if (selectedOrg?.value) {
+			await doCreateConnection(selectedOrg.value, "manual");
+		}
+	};
+
 	const installNewOrg = async () => {
-		await AppManager.installNewApp(() => {
-			getOrganizations();
-		});
+		try {
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
+			await AppManager.installNewApp(async (gitHubInstallationId: number | undefined) => {
+				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
+				getOrganizations();
+				if(gitHubInstallationId) {
+					await doCreateConnection(gitHubInstallationId, "auto");
+				}
+			});
+		} catch (e) {
+			setError({type: "error", message: "Couldn't install new organization"});
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
+		}
 	};
 
 	return (
@@ -253,9 +300,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(true);
 										setSelectedOption(1);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/cloud.svg" alt=""/>
+									<img src="/public/assets/cloud.svg" alt=""/>
 									<span>GitHub Cloud</span>
 								</GitHubOption>
 								<GitHubOption
@@ -264,9 +312,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(false);
 										setSelectedOption(2);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/server.svg" alt=""/>
+									<img src="/public/assets/server.svg" alt=""/>
 									<span>GitHub Enterprise Server</span>
 								</GitHubOption>
 							</GitHubOptionContainer>
@@ -279,13 +328,16 @@ const ConfigSteps = () => {
 									{(props) => <a {...props}>How do I check my GitHub product?</a>}
 								</Tooltip>
 							</TooltipContainer>
-							<Button
-								iconAfter={<OpenIcon label="open" size="medium"/>}
-								appearance="primary"
-								onClick={authorize}
-							>
-								Authorize in GitHub
-							</Button>
+							{
+								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+								<Button
+									iconAfter={<OpenIcon label="open" size="medium"/>}
+									appearance="primary"
+									onClick={authorize}
+								>
+									Authorize in GitHub
+								</Button>
+							}
 						</>
 					}
 				</CollapsibleStep>
@@ -298,30 +350,60 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<>
-							<Paragraph>
-								Repositories from this organization will be available to all <br />
-								projects in <b>{hostUrl?.jiraHost}</b>.
-							</Paragraph>
+						{
+							loaderForOrgFetching ? <>
+								<Skeleton
+									width="100%"
+									height="24px"
+									borderRadius="5px"
+									isShimmering
+								/>
+							</> : (
+								noOrgsFound ?
+									<>
+										<NoOrgsParagraph>We couldn’t find any GitHub organizations that you’re an owner of.</NoOrgsParagraph>
+										<Button appearance="primary" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
+									</> :
+									<>
+										<Paragraph>
+											Repositories from this organization will be available to all <br />
+											projects in <b>{hostUrl?.jiraHost}</b>.
+										</Paragraph>
 
-							<SelectDropdown
-								options={organizations}
-								label="Select organization"
-								isLoading={loaderForOrgFetching}
-								onChange={(value) => {
-									setOrgConnectionDisabled(false);
-									setSelectedOrg(value);
-								}}
-								icon={<OfficeBuildingIcon label="org" size="medium" />}
-							/>
-							{
-								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<ButtonContainer>
-										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
-										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
-									</ButtonContainer>
-							}
-						</>
+										<SelectDropdown
+											options={organizations}
+											label="Select organization"
+											isLoading={loaderForOrgFetching}
+											onChange={(value) => {
+												setOrgConnectionDisabled(false);
+												if(value) {
+													setSelectedOrg({
+														label: value.label,
+														value: parseInt(value.value)
+													});
+												}
+											}}
+											icon={<OfficeBuildingIcon label="org" size="medium" />}
+										/>
+										<TooltipContainer>
+											<Tooltip
+												component={InlineDialog}
+												position="right-end"
+												content="Don’t see the organization you want to connect in the list above? You will need the role of an owner in GitHub your organization to do so. Please contact your company’s GitHub owner."
+											>
+												{(props) => <a {...props}>Can't find an organization you're looking for?</a>}
+											</Tooltip>
+										</TooltipContainer>
+										{
+											loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+												<ButtonContainer>
+													<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+													<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
+												</ButtonContainer>
+										}
+									</>
+							)
+						}
 					</CollapsibleStep>
 				}
 			</ConfigContainer>

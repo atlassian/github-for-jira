@@ -1,17 +1,18 @@
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import PersonCircleIcon from "@atlaskit/icon/glyph/person-circle";
-import UnlockIcon from "@atlaskit/icon/glyph/unlock";
+import UserAvatarCircleIcon from "@atlaskit/icon/glyph/user-avatar-circle";
+import UnlockFilledIcon from "@atlaskit/icon/glyph/unlock-filled";
 import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
+import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
-	margin: ${token("space.300")};
+	margin: 0 0 ${token("space.300")};
 	text-align: center;
 `;
 const ListContainer = styled.div`
@@ -36,12 +37,12 @@ const InlineDialogLink = styled.a`
 	cursor: pointer;
 `;
 const InlineDialogDiv = styled.div`
-	padding-left: ${token("space.150")};
+	padding: ${token("space.200")} 0 0 ${token("space.150")};
 `;
 const InlineDialogImgContainer = styled.div`
 	height: 180px;
 	text-align: center;
-	padding-bottom: ${token("space.150")};
+	padding: ${token("space.200")} 0;
 `;
 const InlineDialog = styled(TooltipPrimitive)`
 	background: white;
@@ -63,13 +64,16 @@ const InlineDialogContent = () => (
 			<li>Your permission level will be next to your organization name.</li>
 		</ol>
 		<InlineDialogImgContainer>
-			<img src="spa-assets/github-skeleton.svg" alt=""/>
+			<img src="/public/assets/github-skeleton.svg" alt=""/>
 		</InlineDialogImgContainer>
 	</>
 );
 
 const StartConnection = () => {
 	const navigate = useNavigate();
+
+	useEffectScreenEvent("StartConnectionEntryScreen");
+
 	return (
 		<Wrapper>
 			<SyncHeader/>
@@ -77,13 +81,13 @@ const StartConnection = () => {
 			<ListContainer>
 				<ListItem>
 					<Logo>
-						<PersonCircleIcon label="github-account" size="small"/>
+						<UserAvatarCircleIcon label="github-account" size="small"/>
 					</Logo>
 					<span>A GitHub account</span>
 				</ListItem>
 				<ListItem>
 					<Logo>
-						<UnlockIcon label="owner-permission" size="small"/>
+						<UnlockFilledIcon label="owner-permission" size="small"/>
 					</Logo>
 					<div>
 						<span>Owner permission for a GitHub organization</span><br/>
@@ -101,7 +105,10 @@ const StartConnection = () => {
 				<Button
 					iconAfter={<ArrowRightIcon label="continue" size="medium"/>}
 					appearance="primary"
-					onClick={() => navigate("steps")}
+					onClick={() => {
+						analyticsClient.sendUIEvent({ actionSubject: "startToConnect", action: "clicked" });
+						navigate("steps");
+					}}
 				>
 					Continue
 				</Button>

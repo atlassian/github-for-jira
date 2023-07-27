@@ -3,7 +3,7 @@ import { expand } from "dotenv-expand";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv } from "utils/is-node-env";
-import { EnvironmentEnum } from "interfaces/common";
+import { EnvironmentEnum, MicrosEnvTypeEnum } from "interfaces/common";
 import { envCheck } from "utils/env-utils";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
@@ -90,6 +90,7 @@ envCheck(
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
+	MICROS_ENVTYPE: MicrosEnvTypeEnum | undefined,
 	MICROS_SERVICE_VERSION?: string;
 	MICROS_GROUP: string;
 	SQS_BACKFILL_QUEUE_URL: string;
