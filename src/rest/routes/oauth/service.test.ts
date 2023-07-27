@@ -38,8 +38,9 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", "", log, jest.fn);
-			expect(resp).toBeNull();
+			const next = jest.fn();
+			await finishOAuthFlow(jiraHost, undefined, "random-code", "", log, next);
+			expect(next).toHaveBeenCalledWith({ status: 400, message: "No state provided" });
 		});
 		it("should return null if the jira host in state is not the same", async () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
@@ -50,8 +51,9 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log, jest.fn);
-			expect(resp).toBeNull();
+			const next = jest.fn();
+			await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log, next);
+			expect(next).toHaveBeenCalledWith({ status: 500, message: "Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token" });
 		});
 		it("should return correct result if the jira host in state is the same", async () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
