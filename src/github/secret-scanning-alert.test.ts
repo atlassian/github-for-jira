@@ -1,4 +1,3 @@
-import { dependabotAlertWebhookHandler } from "./dependabot-alert";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { getLogger } from "config/logger";
 import { envVars } from "config/env";
@@ -12,7 +11,8 @@ import {
 	JiraVulnerabilityStatusEnum
 } from "../interfaces/jira";
 import { JiraClient } from "../jira/client/jira-client";
-import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { secretScanningAlertWebhookHandler } from "./secret-scanning-alert";
+import { emitWebhookProcessedMetrics } from "../util/webhook-utils";
 
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -20,15 +20,11 @@ const GHES_GITHUB_UUID = "xxx-xxx-xxx-xxx";
 const GHES_GITHUB_APP_APP_ID = 1;
 const GHES_GITHUB_APP_CLIENT_ID = "client-id";
 const ID_1 = "1";
-const DEPENDABOT_ALERT = "dependabot_alert";
+const SECRET_SCANNING_ALERT = "secret_scanning_alert";
 const TEST_LOG = "test";
 const CREATED = "created";
-const OPEN = "open";
-const HIGH = JiraVulnerabilitySeverityEnum.HIGH;
-const PATH_TO_MANIFEST = "path/to/manifest";
-const SAMPLE_SECURITY_ADVISORY_SUMMARY = "Sample security advisory summary";
-const SAMPLE_SECURITY_ADVISORY_DESCRIPTION =
-	"Sample security advisory description";
+const CRITICAL = JiraVulnerabilitySeverityEnum.CRITICAL;
+
 const SAMPLE_SECURITY_URL =
 	"https://github.com/user/repo/security/advisories/123";
 const JIRA_VULNERABILITY_STATUS_ENUM_OPEN = JiraVulnerabilityStatusEnum.OPEN;
@@ -37,7 +33,7 @@ const SAMPLE_SECURITY_UPDATED_DATE = "2022-01-02T00:00:00Z";
 const WEBHOOK_RECIEVED_ISO = 1688951387;
 jest.mock("utils/webhook-utils");
 
-describe("DependabotAlertWebhookHandler", () => {
+describe("SecretScanningAlertWebhookHandler", () => {
 	const RealDate = Date.now;
 
 	beforeAll(() => {
@@ -54,8 +50,8 @@ describe("DependabotAlertWebhookHandler", () => {
 			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
 		} as unknown as JiraClient;
 	});
-	it("should call jira client with tarnsformed vulnerability", async () => {
-		await dependabotAlertWebhookHandler(
+	it("should call jira client with transformed vulnerability", async () => {
+		await secretScanningAlertWebhookHandler(
 			getWebhookContext({ cloud: true }),
 			jiraClient,
 			undefined,
@@ -66,7 +62,7 @@ describe("DependabotAlertWebhookHandler", () => {
 		);
 	});
 	it("should call the webhook logger", async () => {
-		await dependabotAlertWebhookHandler(
+		await secretScanningAlertWebhookHandler(
 			getWebhookContext({ cloud: true }),
 			jiraClient,
 			undefined,
@@ -74,7 +70,7 @@ describe("DependabotAlertWebhookHandler", () => {
 		);
 		expect(emitWebhookProcessedMetrics).toBeCalledWith(
 			WEBHOOK_RECIEVED_ISO,
-			"dependabot_alert",
+			"secret_scanning_alert",
 			jiraHost,
 			expect.any(Object),
 			200,
@@ -86,33 +82,20 @@ describe("DependabotAlertWebhookHandler", () => {
 	const getWebhookContext = <T>({ cloud }: { cloud: boolean }): WebhookContext<T> => {
 		return {
 			id: ID_1,
-			name: DEPENDABOT_ALERT,
+			name: SECRET_SCANNING_ALERT,
 			log: getLogger(TEST_LOG),
+			action: CREATED,
 			payload: {
-				action: CREATED,
 				alert: {
 					number: 123,
-					security_advisory: {
-						summary: SAMPLE_SECURITY_ADVISORY_SUMMARY,
-						description: SAMPLE_SECURITY_ADVISORY_DESCRIPTION,
-						identifiers: [],
-						references: []
-					},
 					html_url: SAMPLE_SECURITY_URL,
 					created_at: SAMPLE_SECURITY_CREATED_DATE,
 					updated_at: SAMPLE_SECURITY_UPDATED_DATE,
-					security_vulnerability: {
-						severity: HIGH
-					},
-					dependency: {
-						manifest_path: PATH_TO_MANIFEST
-					},
-					state: OPEN
+					secret_type: "personal_access_token"
 				},
 				repository: {
 					id: 456
-				},
-				ref: "TEST-1"
+				}
 			} as unknown as T,
 			gitHubAppConfig: cloud
 				? {
@@ -142,19 +125,19 @@ describe("DependabotAlertWebhookHandler", () => {
 					id: "d-456-123",
 					updateSequenceNumber: Date.now(),
 					containerId: "456",
-					displayName: SAMPLE_SECURITY_ADVISORY_SUMMARY,
-					description: SAMPLE_SECURITY_ADVISORY_DESCRIPTION,
+					displayName: "personal_access_token secret exposed",
+					description: "Secret scanning alert",
 					url: SAMPLE_SECURITY_URL,
 					type: "sca",
 					introducedDate: SAMPLE_SECURITY_CREATED_DATE,
 					lastUpdated: SAMPLE_SECURITY_UPDATED_DATE,
 					severity: {
-						level: HIGH
+						level: CRITICAL
 					},
 					identifiers: [],
 					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
 					additionalInfo: {
-						content: PATH_TO_MANIFEST
+						content: "personal_access_token"
 					}
 				}
 			]

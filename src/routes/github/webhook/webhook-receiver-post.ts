@@ -21,6 +21,7 @@ import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { Subscription } from "~/src/models/subscription";
 import { extraLoggerInfo } from "./webhook-logging-extra";
+import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -135,11 +136,16 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
-			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, undefined);
+			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, context.gitHubAppConfig.gitHubAppId);
 			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
 				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
 			}
 			break;
+		case "secret_scanning_alert":
+			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, context.gitHubAppConfig.gitHubAppId);
+			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
+				await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
+			}
 	}
 };
 
