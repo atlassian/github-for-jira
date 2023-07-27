@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import errorWrapper from "express-async-handler";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { GetGitHubAppsUrlResponse } from "rest-interfaces/oauth-types";
+import { GetGitHubAppsUrlResponse } from "rest-interfaces";
 
 export const GitHubAppsRoute = Router({ mergeParams: true });
 

@@ -43,3 +43,21 @@ export type JiraCloudIDResponse = {
 };
 
 export type ErrorType = "warning" | "error";
+
+export type ApiError = {
+	httpStatus: number;
+	message: string;
+	errorCode: ErrorCode;
+}
+
+export enum ErrorCode {
+	INVALID_OR_MISSING_ARG = "invalid-or-missing-arg",
+	INVALID_TOKEN = "invalid-token",
+	INSUFFICIENT_PERMISSION = "insufficient-permission",
+	RATELIMIT = "ratelimit",
+	TIMEOUT = "timeout",
+	IP_BLOCKED = "blocked",
+	SSO_LOGIN = "sso-login",
+	RESOURCE_NOT_FOUND = "not-found",
+	UNKNOWN = "unknown",
+}

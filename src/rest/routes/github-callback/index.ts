@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import sanitize from "sanitize-html";
 import errorWrapper from "express-async-handler";
-import { UIDisplayableError } from "config/errors";
+import { InvalidArgumentError } from "config/errors";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
@@ -12,12 +12,12 @@ GitHubCallbackRoute.get("/", errorWrapper(async function GitHubCallbackGet(req: 
 
 	if (!code) {
 		req.log.warn("Missing code in query");
-		throw new UIDisplayableError(400, "Missing code in query");
+		throw new InvalidArgumentError("Missing code in query");
 	}
 
 	if (!state) {
 		req.log.warn("Missing state in query");
-		throw new UIDisplayableError(400, "Missing state in query");
+		throw new InvalidArgumentError("Missing state in query");
 	}
 
 	/**

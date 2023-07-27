@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { JiraCloudIDResponse } from "rest-interfaces/oauth-types";
+import { JiraCloudIDResponse } from "rest-interfaces";
 import { JiraClient } from "models/jira-client";
 import errorWrapper from "express-async-handler";
 

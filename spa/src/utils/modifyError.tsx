@@ -1,25 +1,33 @@
 import { AxiosError } from "axios";
-import { ErrorType } from "../../../src/rest-interfaces/oauth-types";
+import { ErrorType } from "rest-interfaces";
 import React from "react";
 import Heading from "@atlaskit/heading";
 import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
+import { ApiError, ErrorCode } from "rest-interfaces";
 
 export type ErrorObjType = {
 	type: ErrorType,
 	message: string | React.JSX.Element;
 }
 
-export const modifyError = (error: AxiosError): ErrorObjType => {
+type SimpleError = {
+	message: string;
+}
+
+const GENERIC_MESSAGE = "Something went wrong, please try again later.";
+
+export const modifyError = (error: AxiosError<ApiError> | SimpleError): ErrorObjType => {
+
 	const Paragraph = styled.p`
 		color: ${token("color.text.subtle")};
 	`;
-	const message = (error?.response?.data || error.message) as string;
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
+	const errorCode = (error instanceof AxiosError ? error?.response?.data?.errorCode : ErrorCode.UNKNOWN) || ErrorCode.UNKNOWN;
 
 	// TODO: map backend errors in frontend
-	if (message.includes("Blocked by GitHub allowlist")) {
+	if (errorCode === ErrorCode.IP_BLOCKED) {
 		return {
 			...warningObj,
 			message: <>
@@ -33,13 +41,23 @@ export const modifyError = (error: AxiosError): ErrorObjType => {
 				<a target="_blank" href="https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md">Learn how to add GitHub for Jira to your IP allowlist</a>
 			</>
 		};
-	} else if (message.includes("Rate limiting error")) {
-		return { ...errorObj, message: "GitHub rate limiting" };
-	} else if (message.includes("SSO Login required")) {
-		return { ...errorObj, message: "GitHub SSO login required" };
-	} else if (message.includes("Resource not accessible by integration")) {
-		return { ...errorObj, message: "Forbidden" };
+	} else if (errorCode === ErrorCode.TIMEOUT) {
+		return { ...errorObj, message: "Request timeout" }; //TODO: Better message
+	} else if (errorCode === ErrorCode.RATELIMIT) {
+		return { ...errorObj, message: "GitHub rate limiting" }; //TODO: Better message
+	} else if (errorCode === ErrorCode.SSO_LOGIN) {
+		return { ...errorObj, message: "GitHub SSO login required" }; //TODO: Better message
+	} else if (errorCode === ErrorCode.RESOURCE_NOT_FOUND) {
+		//This should not happen in normal flow, nothing user can do, hence generic message
+		return { ...errorObj, message: GENERIC_MESSAGE };
+	} else if (errorCode === ErrorCode.INVALID_TOKEN) {
+		return { ...errorObj, message: "The GitHub token seems invalid, please re-authorise and try again." }; //TODO: Better message
+	} else if (errorCode === ErrorCode.INSUFFICIENT_PERMISSION) {
+		return { ...errorObj, message: "You dont' have enough permission for the operation." };
+	} else if (errorCode === ErrorCode.INVALID_OR_MISSING_ARG) {
+		//This should not happen in normal flow, nothing user can do, hence generic message
+		return { ...errorObj, message: GENERIC_MESSAGE };
 	} else {
-		return { ...errorObj, message: "Something went wrong and we couldn’t connect to GitHub, try again." };
+		return { ...errorObj, message: GENERIC_MESSAGE };
 	}
 };

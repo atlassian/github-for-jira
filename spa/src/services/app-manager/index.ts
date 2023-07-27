@@ -1,5 +1,5 @@
 import Api from "../../api";
-import { OrganizationsResponse } from "../../rest-interfaces/oauth-types";
+import { OrganizationsResponse } from "rest-interfaces";
 import { AxiosError } from "axios";
 
 

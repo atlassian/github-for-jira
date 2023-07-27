@@ -5,7 +5,7 @@ import {
 	installationConnectedStatus
 } from "routes/github/configuration/github-configuration-get";
 import { Installation } from "models/installation";
-import { GitHubInstallationType } from "rest-interfaces/oauth-types";
+import { GitHubInstallationType } from "rest-interfaces";
 
 const fetchGitHubOrganizations = async (
 	githubToken: string,
@@ -41,7 +41,7 @@ const fetchGitHubOrganizations = async (
 		undefined
 	);
 
-	return  connectedInstallations.filter(installation => !installation.syncStatus);
+	return connectedInstallations.filter(installation => !installation.syncStatus);
 };
 
 export default fetchGitHubOrganizations;

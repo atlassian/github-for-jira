@@ -1,3 +1,5 @@
+import { ApiError, ErrorCode } from "rest-interfaces";
+
 export enum Errors {
 	MISSING_JIRA_HOST = "Jira Host url is missing",
 	MISSING_GITHUB_TOKEN = "GitHub Auth token is missing",
@@ -21,3 +23,32 @@ export class UIDisplayableError extends Error {
 		this.httpStatus = httpStatus;
 	}
 }
+
+export class RestApiError extends Error implements ApiError {
+	httpStatus: number;
+	errorCode: ErrorCode;
+	constructor(httpStatus: number, errorCode: ErrorCode, msg: string) {
+		super(msg);
+		this.httpStatus = httpStatus;
+		this.errorCode = errorCode;
+	}
+}
+
+export class InvalidArgumentError extends RestApiError {
+	constructor(msg: string) {
+		super(400, ErrorCode.INVALID_OR_MISSING_ARG, msg);
+	}
+}
+
+export class InvalidTokenError extends RestApiError {
+	constructor(msg: string) {
+		super(401, ErrorCode.INVALID_TOKEN, msg);
+	}
+}
+
+export class InsufficientPermissionError extends RestApiError {
+	constructor(msg: string) {
+		super(401, ErrorCode.INVALID_TOKEN, msg);
+	}
+}
+

@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
 import { getRedirectUrl, finishOAuthFlow } from "./service";
-import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces/oauth-types";
+import { GetRedirectUrlResponse, ExchangeTokenResponse  } from "rest-interfaces";
 import errorWrapper from "express-async-handler";
-import { UIDisplayableError } from "config/errors";
+import { InvalidArgumentError } from "config/errors";
 
 export const OAuthRouter = Router({ mergeParams: true });
 
@@ -24,7 +24,12 @@ OAuthRouter.post("/exchangeToken", errorWrapper(async function OAuthExchangeToke
 
 	if (!code) {
 		req.log.warn("Missing code in query");
-		throw new UIDisplayableError(401, "Missing code in query");
+		throw new InvalidArgumentError("Missing code in query");
+	}
+
+	if (!state) {
+		req.log.warn("Missing state in query");
+		throw new InvalidArgumentError("Missing state in query");
 	}
 
 	const data = await finishOAuthFlow(jiraHost, undefined, code, state, req.log);

@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import ErrorIcon from "@atlaskit/icon/glyph/error";
-import { ErrorType } from "../../rest-interfaces/oauth-types";
+import { ErrorType } from "rest-interfaces";
 
 type ErrorWrapperType = {
 	type: ErrorType
