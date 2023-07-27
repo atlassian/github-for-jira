@@ -27,16 +27,29 @@ async function connectOrg(orgId: number): Promise<boolean> {
 	}
 }
 
-async function installNewApp(onFinish: () => void): Promise<void> {
+async function installNewApp(onFinish: (gitHubInstallationId: number | undefined) => void): Promise<void> {
 	const app = await Api.app.getAppNewInstallationUrl();
 	const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
 	document.cookie = `is-spa=true; expires=${exp.toUTCString()}; path=/; SameSite=None; Secure`;
+
+	const handler = async (event: MessageEvent) => {
+		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
+			const id = parseInt(event.data?.gitHubInstallationId);
+			onFinish(isNaN(id) ? undefined : id);
+		}
+	};
+	window.addEventListener("message", handler);
+
 	const winInstall = window.open(app.data.appInstallationUrl, "_blank");
+
+	//Still need bellow interval for window close
+	//As user might not finish the app install flow, there'no gurantee that above message
+	//event will happened.
 	const hdlWinInstall = setInterval(() => {
 		if (winInstall?.closed) {
 			try {
 				document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure";
-				onFinish();
+				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
 			} finally {
 				clearInterval(hdlWinInstall);
 			}
