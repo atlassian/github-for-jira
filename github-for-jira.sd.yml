@@ -334,10 +334,6 @@ workers:
 
 environmentOverrides:
   ddev:
-    serviceProxy:
-      egress:
-        dependencies:
-          - name: brahmos-wiremock
     #  Uncomment lines 140-149 if you want remote debugging in ddev
     #    loadBalancer:
     #      type: ELB # needed for remote debugging, default is "ALB"
@@ -533,6 +529,10 @@ environmentOverrides:
       - *cryptorJiraInstanceSecrets
 
   prod:
+    serviceProxy:
+      egress:
+        dependencies:
+          - name: brahmos-wiremock
     config:
       environmentVariables:
         APP_URL:  https://github.atlassian.com
