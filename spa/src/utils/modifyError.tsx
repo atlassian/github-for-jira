@@ -13,6 +13,7 @@ export type ErrorObjType = {
 const Paragraph = styled.p`
 	color: ${token("color.text.subtle")};
 `;
+
 export const modifyError = (error: AxiosError): ErrorObjType => {
 	const message = (error?.response?.data || error.message) as string;
 	const errorObj = { type: "error" as ErrorType };
@@ -30,7 +31,7 @@ export const modifyError = (error: AxiosError): ErrorObjType => {
 					your allowlist.
 				</Paragraph>
 				<br />
-				<a href="">Learn how to add GitHub for Jira to your IP allowlist</a>
+				<a target="_blank" href="https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md">Learn how to add GitHub for Jira to your IP allowlist</a>
 			</>
 		};
 	} else if (message.includes("Rate limiting error")) {
