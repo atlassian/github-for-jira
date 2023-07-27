@@ -1,46 +1,42 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import fetchGitHubOrganizations from "./service";
 import { OrganizationsResponse } from "rest-interfaces/oauth-types";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 
 export const GitHubOrgsRouter = Router({ mergeParams: true });
 
-GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsResponse>) => {
+GitHubOrgsRouter.get("/", async (req: Request, res: Response<OrganizationsResponse>, next: NextFunction) => {
 	const { githubToken, jiraHost, installation } = res.locals;
-	const organizations = await fetchGitHubOrganizations(githubToken, jiraHost, installation, req.log);
-
-	// TODO: Need to handle all the different error cases
-	res.status(200).send({
-		orgs: organizations
-	});
+	try {
+		const organizations = await fetchGitHubOrganizations(githubToken, jiraHost, installation, req.log, next);
+		if (organizations) {
+			res.status(200).send({
+				orgs: organizations
+			});
+		}
+	} catch (e) {
+		req.log.error({ err: e }, "Failed to fetch the organizations");
+		next(e);
+	}
 });
 
-GitHubOrgsRouter.post("/", async (req: Request, res: Response) => {
+GitHubOrgsRouter.post("/", async (req: Request, res: Response, next: NextFunction) => {
 	const { installation, githubToken, gitHubAppId  } = res.locals;
 	const gitHubInstallationId = Number(req.body.installationId);
 
 	if (!githubToken) {
 		req.log.warn("GitHub token wasn't found");
-		res.sendStatus(401);
-		return;
+		next({ status: 401, message: "Missing code in query" });
 	}
 
 	if (!gitHubInstallationId) {
 		req.log.warn("gitHubInstallationId wasn't found");
-		res.status(400)
-			.json({
-				err: "An Installation ID must be provided to link an installation."
-			});
-		return;
+		next({ status: 400, message: "Missing installation ID" });
 	}
 
 	const result = await verifyAdminPermsAndFinishInstallation(githubToken, installation, gitHubAppId, gitHubInstallationId, req.log);
 	if (result.error) {
-		res.status(401)
-			.json({
-				err: result.error
-			});
-		return;
+		next({ status: 400, message: result.error });
 	}
 
 	res.sendStatus(200);

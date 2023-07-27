@@ -1,3 +1,4 @@
+import { NextFunction } from "express";
 import crypto  from "crypto";
 import Logger from "bunyan";
 import IORedis from "ioredis";
@@ -54,43 +55,44 @@ export const finishOAuthFlow = async (
 	gheUUID: string | undefined,
 	code: string,
 	state: string,
-	log: Logger
-): Promise<ExchangeTokenResponse | null> => {
+	log: Logger,
+	next: NextFunction
+): Promise<ExchangeTokenResponse | void> => {
 	if (!code) {
 		log.warn("No code provided!");
-		return null;
+		next({ status: 400, message: "No code provided" });
 	}
 
 	if (!state) {
 		log.warn("State is empty");
-		return null;
+		next({ status: 400, message: "No state provided" });
 	}
 
 	if (gheUUID) {
 		log.warn("GHE not supported yet in rest oauth");
-		return null;
+		next({ status: 400, message: "GHE not supported yet in rest oauth" });
 	}
 
 	try {
-
 		const redisState = await redis.get(state) || "";
 
 		try {
 			await redis.unlink(state);
 		} catch (e) {
-			log.error({ err: e }, "Fail to unlink redis state on oauth callback");
+			log.error({ err: e }, "Failed to unlink redis state on oauth callback");
+			next({ status: 500, message: "Failed to unlink redis state on oauth callback" });
 		}
 
 		if (!redisState) {
 			log.warn({ state }, "state is missing in redis in oauth exchange token");
-			return null;
+			next({ status: 500, message: "Missing state in redis in oauth exchange token" });
 		}
 
 		const parsedState = JSON.parse(redisState);
 
 		if (jiraHost !== parsedState.jiraHost) {
 			log.warn("Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token");
-			return null;
+			next({ status: 500, message: "Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token" });
 		}
 
 		const githubClient = await createAnonymousClientByGitHubAppId(
@@ -114,6 +116,6 @@ export const finishOAuthFlow = async (
 
 	} catch (error) {
 		log.warn({ error }, "Failed to acquire Github token...");
-		return null;
+		next(error);
 	}
 };

@@ -1,9 +1,9 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import sanitize from "sanitize-html";
 
 export const GitHubCallbackRoute = Router({ mergeParams: true });
 
-GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res: Response<string>) {
+GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res: Response<string>, next: NextFunction) {
 
 	try {
 
@@ -12,7 +12,7 @@ GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res:
 
 		if (!code) {
 			req.log.warn("Missing code in query");
-			res.status(400).send("Missing code in queryFail acquire access token");
+			next({ message: "Missing code in query" });
 		}
 
 		/**
@@ -31,8 +31,9 @@ GitHubCallbackRoute.get("/", async function GitHubCallbackGet(req: Request, res:
 		`);
 
 	} catch (error) {
-		req.log.error({ err: error }, "Error parsing callback from github");
-		res.status(500).send("Error handling github oauth callback");
+		req.log.error({ err: error }, "Failed to parse callback from GitHub");
+		error.message = "Failed to parse callback from GitHub";
+		next(error);
 	}
 });
 

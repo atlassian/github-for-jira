@@ -41,8 +41,3 @@ export type JiraCloudIDResponse = {
 };
 
 export type ErrorType = "warning" | "error";
-
-export type ErrorResponse = {
-	errorType: ErrorType;
-	reason: string;
-};

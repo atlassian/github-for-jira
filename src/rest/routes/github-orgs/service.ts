@@ -1,3 +1,4 @@
+import { NextFunction } from "express";
 import Logger from "bunyan";
 import { createUserClient } from "utils/get-github-client-config";
 import { Octokit } from "@octokit/rest";
@@ -11,8 +12,9 @@ const fetchGitHubOrganizations = async (
 	githubToken: string,
 	jiraHost: string,
 	installation: Installation,
-	log: Logger
-): Promise<Array<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem>> => {
+	log: Logger,
+	next: NextFunction
+): Promise<Array<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem> | void> => {
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "getOrganizations" }, log, undefined);
 	const { data: { login } } = await gitHubUserClient.getUser();
 
@@ -45,7 +47,7 @@ const fetchGitHubOrganizations = async (
 		return  connectedInstallations.filter(installation => !installation.syncStatus);
 	} catch (e) {
 		log.error(e, "Failed to fetch the organizations");
-		return [];
+		next(e);
 	}
 };
 
