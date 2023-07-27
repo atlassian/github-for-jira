@@ -1,12 +1,12 @@
 import { NextFunction } from "express";
 import Logger from "bunyan";
 import { createUserClient } from "utils/get-github-client-config";
-import { Octokit } from "@octokit/rest";
 import {
 	getInstallationsWithAdmin,
 	installationConnectedStatus
 } from "routes/github/configuration/github-configuration-get";
 import { Installation } from "models/installation";
+import { GitHubInstallationType } from "rest-interfaces/oauth-types";
 
 const fetchGitHubOrganizations = async (
 	githubToken: string,
@@ -14,7 +14,7 @@ const fetchGitHubOrganizations = async (
 	installation: Installation,
 	log: Logger,
 	next: NextFunction
-): Promise<Array<Octokit.AppsListInstallationsForAuthenticatedUserResponseInstallationsItem> | void> => {
+): Promise<Array<GitHubInstallationType> | void> => {
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "getOrganizations" }, log, undefined);
 	const { data: { login } } = await gitHubUserClient.getUser();
 

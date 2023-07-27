@@ -38,7 +38,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", "", log);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", "", log, jest.fn);
 			expect(resp).toBeNull();
 		});
 		it("should return null if the jira host in state is not the same", async () => {
@@ -50,7 +50,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log);
+			const resp = await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log, jest.fn);
 			expect(resp).toBeNull();
 		});
 		it("should return correct result if the jira host in state is the same", async () => {
@@ -62,7 +62,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log, jest.fn);
 			expect(resp).toEqual({
 				accessToken: "abcd",
 				refreshToken: "wert"
@@ -77,7 +77,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log, jest.fn);
 			expect(resp).toEqual({
 				accessToken: "abcd",
 				refreshToken: "wert"

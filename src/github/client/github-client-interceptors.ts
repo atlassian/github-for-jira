@@ -70,6 +70,11 @@ export const instrumentRequest = (metricName, host, jiraHost: string | undefined
 		if (!response) {
 			return;
 		}
+		// const mappedError = new GithubClientRateLimitingError(response);
+		// const mappedError = new GithubClientBlockedIpError(response);
+		// const mappedError = new GithubClientSSOLoginError(response);
+		// const mappedError = new GithubClientNotFoundError(response);
+		// return Promise.reject(mappedError);
 
 		const gitHubProduct = getCloudOrServerFromHost(host);
 		return sendResponseMetrics(metricName, gitHubProduct, jiraHost, response, undefined, extraTags);
