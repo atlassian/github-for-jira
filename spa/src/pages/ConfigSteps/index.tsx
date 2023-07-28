@@ -248,7 +248,7 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		window.open("https://github.com/logout");
+		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
