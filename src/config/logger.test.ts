@@ -237,6 +237,7 @@ describe("logger behaviour", () => {
 						name: "GraphQLError",
 						response: { }
 					},
+					uiErrorCode: "UNKNOWN",
 					errors: [
 						{
 							locations: [
