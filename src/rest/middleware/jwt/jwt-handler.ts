@@ -2,15 +2,17 @@ import { Request, Response, NextFunction } from "express";
 import Logger from "bunyan";
 import { decodeSymmetric, getAlgorithm } from "atlassian-jwt";
 import { Installation } from "models/installation";
+import { errorWrapper } from "../../helper";
+import { InvalidTokenError } from "config/errors";
 
 const INVALID_SECRET = "some-invalid-secret";
 
-export const JwtHandler = async (req: Request, res: Response, next: NextFunction) => {
+export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response, next: NextFunction) => {
+
 	const token = req.headers["authorization"];
 
 	if (!token) {
-		res.status(401).send("Unauthorised");
-		return;
+		throw new InvalidTokenError("Unauthorised");
 	}
 
 	try {
@@ -21,11 +23,10 @@ export const JwtHandler = async (req: Request, res: Response, next: NextFunction
 
 	} catch (e) {
 		req.log.warn({ err: e }, "Failed to verify JWT token");
-		res.status(401).send("Unauthorised");
-		return;
+		throw new InvalidTokenError("Unauthorised");
 	}
 
-};
+});
 
 const verifySymmetricJwt = async (token: string, logger: Logger) => {
 	const algorithm = getAlgorithm(token);

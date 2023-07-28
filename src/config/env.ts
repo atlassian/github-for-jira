@@ -120,6 +120,7 @@ export interface EnvVars {
 	TUNNEL_SUBDOMAIN?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
+	SENTRY_SPA_DSN?: string,
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;

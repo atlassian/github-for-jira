@@ -13,6 +13,7 @@ module.exports = {
     "react-refresh/only-export-components": "warn",
     "semi": [ 2, "always" ],
     "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "quotes": [
       "error",
       "double",

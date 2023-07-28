@@ -11,6 +11,7 @@ const testSharedSecret = "test-secret";
 const githubToken = "test-github-token";
 
 describe("Github token handler", () => {
+
 	let app: Application;
 
 	const createApp = () => {
@@ -24,6 +25,9 @@ describe("Github token handler", () => {
 		app.use(GitHubTokenHandler);
 		app.get("/test", (_req, res) => {
 			res.send(JSON.stringify(res.locals));
+		});
+		app.use((err, _req, res, _next) => {
+			res.status(err.httpStatus || err.status).send(err.message);
 		});
 		return app;
 	};
@@ -72,7 +76,7 @@ describe("Github token handler", () => {
 		const res = await sendRequestWithToken(token, undefined);
 
 		expect(res.status).toEqual(401);
-		expect(res.text).toEqual("No github token passed!");
+		expect(res.text).toEqual("Github token invalid");
 	});
 
 	it("should set res.locals when JWT and github token are both available", async () => {

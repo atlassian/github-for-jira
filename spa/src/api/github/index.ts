@@ -1,4 +1,4 @@
-import { UsersGetAuthenticatedResponse } from "../../rest-interfaces/oauth-types";
+import { UsersGetAuthenticatedResponse } from "rest-interfaces";
 import { axiosGitHub } from "../axiosInstance";
 
 export default {

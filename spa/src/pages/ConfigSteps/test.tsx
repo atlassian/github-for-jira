@@ -13,7 +13,7 @@ jest.mock("../../services/app-manager");
 const Authenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
-	fetchOrgs: jest.fn(),
+	fetchOrgs: jest.fn().mockReturnValue({ orgs: []}),
 	setTokens: jest.fn(),
 	getUserDetails: jest.fn().mockReturnValue({ username: "kay", email: "kay"}),
 	clear: jest.fn(),
@@ -23,7 +23,7 @@ const Authenticated = {
 const UnAuthenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(false)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
-	fetchOrgs: jest.fn(),
+	fetchOrgs: jest.fn().mockReturnValue({ orgs: []}),
 	setTokens: jest.fn(),
 	getUserDetails: jest.fn().mockReturnValue({ username: "", email: ""}),
 	clear: jest.fn(),
