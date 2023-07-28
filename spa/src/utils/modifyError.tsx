@@ -36,7 +36,7 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWit
 		errorCode = "UNKNOWN";
 	}
 
-	// TODO: map backend errors in frontend
+	// TODO: map all of the remaining backend errors in frontend
 	if (errorCode === "IP_BLOCKED") {
 		return {
 			...warningObj,
@@ -62,11 +62,7 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWit
 				<Heading level="h500">SSO Login required</Heading>
 				<Paragraph>
 					You cannot connect to this organization because you are not currently logged in through your SSO in GitHub. <br />
-					Please follow the following steps:
-					<ol>
-						<li>Please log in through SSO in GitHub.</li>
-						<li>Then click this link to reset your token.</li>
-					</ol>
+					Please log in through SSO in GitHub.
 				</Paragraph>
 			</>
 		};
@@ -76,7 +72,7 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWit
 	} else if (errorCode === "INVALID_TOKEN") {
 		return { ...errorObj, message: "The GitHub token seems invalid, please re-authorise and try again." }; //TODO: Better message
 	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
-		return { ...errorObj, message: "You dont' have enough permission for the operation." };
+		return { ...errorObj, message: "You don't have enough permission for the operation." };
 	} else if (errorCode === "INVALID_OR_MISSING_ARG") {
 		//This should not happen in normal flow, nothing user can do, hence generic message
 		return { ...errorObj, message: GENERIC_MESSAGE };
