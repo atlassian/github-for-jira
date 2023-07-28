@@ -48,7 +48,7 @@ export class InvalidTokenError extends RestApiError {
 
 export class InsufficientPermissionError extends RestApiError {
 	constructor(msg: string) {
-		super(401, "INVALID_TOKEN", msg);
+		super(401, "INSUFFICIENT_PERMISSION", msg);
 	}
 }
 

@@ -28,9 +28,6 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 
 });
 
-//
-Object.defineProperty(JwtHandler, "name", { get: () => "JwtHandler" });
-
 const verifySymmetricJwt = async (token: string, logger: Logger) => {
 	const algorithm = getAlgorithm(token);
 
