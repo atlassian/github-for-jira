@@ -61,8 +61,7 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWit
 			message: <>
 				<Heading level="h500">SSO Login required</Heading>
 				<Paragraph>
-					You cannot connect to this organization because you are not currently logged in through your SSO in GitHub. <br />
-					Please log in through SSO in GitHub.
+					You cannot connect to this organization because you are not currently logged in through your SSO in GitHub. Please log in through SSO in GitHub.
 				</Paragraph>
 			</>
 		};
