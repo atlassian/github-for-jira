@@ -9,6 +9,8 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
@@ -70,8 +72,12 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 	}));
 };
 
-export const extractIssueKeysFromPrRest = (pullRequest: Octokit.PullsListResponseItem) => {
+export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListResponseItem, jiraHost?: string) => {
 	const { title: prTitle, head, body } = pullRequest;
+	const logger = getLogger("extractIssueKeysFromPrRest");
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
+		logger.info({ prTitle }, `verbose logging: prTitle`);
+	}
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
 
@@ -84,7 +90,8 @@ export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
 	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
-	log?: Logger
+	log?: Logger,
+	jiraHost?: string
 ) =>
 {
 	const {
@@ -101,7 +108,7 @@ export const transformPullRequestRest = async (
 		html_url
 	} = pullRequest;
 
-	const issueKeys = extractIssueKeysFromPrRest(pullRequest);
+	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {

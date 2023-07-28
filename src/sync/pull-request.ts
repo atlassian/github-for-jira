@@ -193,7 +193,7 @@ const getPullRequestTaskRest = async (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPrRest(pull))) {
+				if (isEmpty(await extractIssueKeysFromPrRest(pull, jiraHost))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");
@@ -203,7 +203,7 @@ const getPullRequestTaskRest = async (
 				const prDetails = prResponse?.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger);
+				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger, jiraHost);
 				return data?.pullRequests[0];
 
 			})
