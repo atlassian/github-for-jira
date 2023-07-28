@@ -15,7 +15,7 @@ import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosResponse } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
 
 type GitHubOptionType = {
@@ -229,13 +229,16 @@ const ConfigSteps = () => {
 	};
 
 	const onChangingOrg = (value: LabelType | null) => {
-		if (value) {
-			if(value?.requiresSsoLogin) {
-				setError(modifyError({ message: "SSO Login required"} as AxiosError));
+		if(value) {
+			if (value?.isIPBlocked) {
+				setError(modifyError(new AxiosError(undefined,undefined,undefined,undefined, {
+					data: { errorCode: "IP_BLOCKED" }
+				} as AxiosResponse)));
 				setOrgConnectionDisabled(true);
-			}
-			else if (value?.isIPBlocked) {
-				setError(modifyError({ message: "Blocked by GitHub allowlist"} as AxiosError));
+			} else if(value?.requiresSsoLogin) {
+				setError(modifyError(new AxiosError(undefined,undefined,undefined,undefined, {
+					data: { errorCode: "SSO_LOGIN" }
+				} as AxiosResponse)));
 				setOrgConnectionDisabled(true);
 			} else {
 				setSelectedOrg({

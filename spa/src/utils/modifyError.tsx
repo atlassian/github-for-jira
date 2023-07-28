@@ -45,7 +45,20 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError): ErrorObj
 	} else if (errorCode === "RATELIMIT") {
 		return { ...errorObj, message: "GitHub rate limiting" }; //TODO: Better message
 	} else if (errorCode === "SSO_LOGIN") {
-		return { ...errorObj, message: "GitHub SSO login required" }; //TODO: Better message
+		return {
+			...warningObj,
+			message: <>
+				<Heading level="h500">SSO Login required</Heading>
+				<Paragraph>
+					You cannot connect to this organization because you are not currently logged in through your SSO in GitHub. <br />
+					Please follow the following steps:
+					<ol>
+						<li>Please log in through SSO in GitHub.</li>
+						<li>Then click this link to reset your token.</li>
+					</ol>
+				</Paragraph>
+			</>
+		};
 	} else if (errorCode === "RESOURCE_NOT_FOUND") {
 		//This should not happen in normal flow, nothing user can do, hence generic message
 		return { ...errorObj, message: GENERIC_MESSAGE };
