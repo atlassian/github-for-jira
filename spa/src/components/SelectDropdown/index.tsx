@@ -4,9 +4,16 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import React from "react";
 
+export type OrgOptionsType = {
+	label?: string;
+	options: Array<LabelType>
+};
+
 export type LabelType = {
 	label: string;
 	value: string;
+	requiresSsoLogin?: boolean;
+	isIPBlocked?: boolean;
 };
 
 const SelectDropdownContainer = styled.div`
@@ -33,7 +40,7 @@ const SelectDropdown = ({
 	isLoading = false,
 	icon,
 }: {
-	options: Array<LabelType>,
+	options: Array<OrgOptionsType>,
 	label: string,
 	onChange: (args: LabelType | null) => void,
 	placeholder?: string,

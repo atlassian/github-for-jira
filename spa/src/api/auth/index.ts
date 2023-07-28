@@ -1,4 +1,4 @@
-import { GetRedirectUrlResponse, ExchangeTokenResponse } from "../../rest-interfaces/oauth-types";
+import { GetRedirectUrlResponse, ExchangeTokenResponse } from "rest-interfaces";
 import { axiosRest } from "../axiosInstance";
 
 export default {

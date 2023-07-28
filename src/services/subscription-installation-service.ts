@@ -55,6 +55,7 @@ const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: 
 
 export interface ResultObject {
 	error?: string;
+	errorCode?: "NOT_ADMIN"
 }
 
 export const verifyAdminPermsAndFinishInstallation =
@@ -76,7 +77,8 @@ export const verifyAdminPermsAndFinishInstallation =
 			if (!await hasAdminAccess(githubToken, installation.jiraHost, gitHubInstallationId, log, gitHubServerAppIdPk)) {
 				log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
 				return {
-					error: "`User is not an admin of the installation"
+					error: "`User is not an admin of the installation",
+					errorCode: "NOT_ADMIN"
 				};
 			}
 
