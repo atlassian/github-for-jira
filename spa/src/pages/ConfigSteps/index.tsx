@@ -8,14 +8,15 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
-import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
+import SelectDropdown, { LabelType, OrgOptionsType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
-import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
+import { AxiosError } from "axios";
+import { ErrorObjType, modifyError } from "../../utils/modifyError";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -29,10 +30,6 @@ type OrgDropdownType = {
 	label: string;
 	value: number;
 };
-type ErrorObjType = {
-	type: ErrorType,
-	message: React.JSX.Element | string;
-}
 
 const ConfigContainer = styled.div`
   margin: 0 auto;
@@ -98,14 +95,17 @@ const NoOrgsParagraph = styled.div`
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
-
-	const { username, email } = OAuthManager.getUserDetails();
-	const isAuthenticated = !!(username && email);
+	const { username } = OAuthManager.getUserDetails();
+	/**
+	 * If GitHub emails are private, then we get null email,
+	 * so do not user emails for checking authentication
+	 */
+	const isAuthenticated = !!username;
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 
-	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [organizations, setOrganizations] = useState<Array<OrgOptionsType>>([]);
 	const [noOrgsFound, setNoOrgsFound] = useState<boolean>(false);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
 	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(true);
@@ -141,14 +141,27 @@ const ConfigSteps = () => {
 	const getOrganizations = async () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
-		if (response) {
+		setLoaderForOrgFetching(false);
+		if (response instanceof AxiosError) {
+			setError(modifyError(response));
+		} else {
 			setNoOrgsFound(response?.orgs.length === 0);
-			setOrganizations(response?.orgs.map((org) => ({
+			const totalOrgs = response?.orgs.map(org => ({
 				label: org.account.login,
 				value: String(org.id),
-			})));
+				requiresSsoLogin: org.requiresSsoLogin,
+				isIPBlocked: org.isIPBlocked
+			}));
+
+			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
+			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
+			setOrganizations([
+				{ options: enabledOrgs },
+				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
+				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
+			]);
 		}
-		setLoaderForOrgFetching(false);
 	};
 
 	useEffect(() => {
@@ -156,11 +169,14 @@ const ConfigSteps = () => {
 		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: success ? "success" : "fail" });
-				if (!success) {
-					setError({ type: "error", message: "Failed to finish authentication!"});
+				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				setLoaderForLogin(false);
+				if (response instanceof AxiosError) {
+					setError(modifyError(response));
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
+				} else {
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
 			}
 			setIsLoggedIn(true);
@@ -177,8 +193,10 @@ const ConfigSteps = () => {
 	}, [ originalUrl ]);
 
 	useEffect(() => {
-		OAuthManager.checkValidity().then((status: boolean | undefined) => {
-			if (status) {
+		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
+			if (status instanceof AxiosError) {
+				setError(modifyError(status));
+			} else {
 				setLoggedInUser(OAuthManager.getUserDetails().username);
 				setLoaderForLogin(false);
 				getOrganizations();
@@ -195,7 +213,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError({ type: "error", message: "Couldn't login!"});
+					setError(modifyError(e as AxiosError));
 				}
 				break;
 			}
@@ -207,6 +225,26 @@ const ConfigSteps = () => {
 				break;
 			}
 			default:
+		}
+	};
+
+	const onChangingOrg = (value: LabelType | null) => {
+		if (value) {
+			if(value?.requiresSsoLogin) {
+				setError(modifyError({ message: "SSO Login required"} as AxiosError));
+				setOrgConnectionDisabled(true);
+			}
+			else if (value?.isIPBlocked) {
+				setError(modifyError({ message: "Blocked by GitHub allowlist"} as AxiosError));
+				setOrgConnectionDisabled(true);
+			} else {
+				setSelectedOrg({
+					label: value.label,
+					value: parseInt(value.value)
+				});
+				setOrgConnectionDisabled(false);
+				setError(undefined);
+			}
 		}
 	};
 
@@ -229,10 +267,10 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
-			if (connected) {
-				navigate("/spa/connected");
+			if (connected instanceof AxiosError) {
+				setError(modifyError(connected));
 			} else {
-				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
+				navigate("/spa/connected");
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
@@ -258,7 +296,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			setError({type: "error", message: "Couldn't install new organization"});
+			setError(modifyError(e as AxiosError));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
@@ -374,15 +412,7 @@ const ConfigSteps = () => {
 											options={organizations}
 											label="Select organization"
 											isLoading={loaderForOrgFetching}
-											onChange={(value) => {
-												setOrgConnectionDisabled(false);
-												if(value) {
-													setSelectedOrg({
-														label: value.label,
-														value: parseInt(value.value)
-													});
-												}
-											}}
+											onChange={onChangingOrg}
 											icon={<OfficeBuildingIcon label="org" size="medium" />}
 										/>
 										<TooltipContainer>

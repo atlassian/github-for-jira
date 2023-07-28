@@ -24,6 +24,8 @@ export type OrganizationsResponse = {
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
 	app_id: number;
+	requiresSsoLogin: boolean;
+	isIPBlocked: boolean;
 	id: number;
 };
 
@@ -42,7 +44,20 @@ export type JiraCloudIDResponse = {
 
 export type ErrorType = "warning" | "error";
 
-export type ErrorResponse = {
-	errorType: ErrorType;
-	reason: string;
-};
+export type ApiError = {
+	message: string;
+	errorCode: ErrorCode;
+}
+
+//DO NOT USE ENUM as webpack can't handler anything none "type"
+//ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
+export type ErrorCode =
+	| "INVALID_OR_MISSING_ARG"
+	| "INVALID_TOKEN"
+	| "INSUFFICIENT_PERMISSION"
+	| "RATELIMIT"
+	| "TIMEOUT"
+	| "IP_BLOCKED"
+	| "SSO_LOGIN"
+	| "RESOURCE_NOT_FOUND"
+	| "UNKNOWN";

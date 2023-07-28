@@ -1,10 +1,11 @@
 import { Router, Request, Response } from "express";
+import { errorWrapper } from "../../helper";
 import { createAppClient } from "~/src/util/get-github-client-config";
-import { GetGitHubAppsUrlResponse } from "rest-interfaces/oauth-types";
+import { GetGitHubAppsUrlResponse } from "rest-interfaces";
 
 export const GitHubAppsRoute = Router({ mergeParams: true });
 
-GitHubAppsRoute.get("/new", async function GetGitHubAppsUrl(req: Request, res: Response<GetGitHubAppsUrlResponse>) {
+GitHubAppsRoute.get("/new", errorWrapper("GetGitHubAppsUrl", async function GetGitHubAppsUrl(req: Request, res: Response<GetGitHubAppsUrlResponse>) {
 	const { jiraHost } = res.locals;
 	const log = req.log.child({ jiraHost });
 	const gitHubAppClient = await createAppClient(log, jiraHost, undefined, { trigger: "github-apps-url-get" });
@@ -13,4 +14,4 @@ GitHubAppsRoute.get("/new", async function GetGitHubAppsUrl(req: Request, res: R
 	res.status(200).json({
 		appInstallationUrl
 	});
-});
+}));

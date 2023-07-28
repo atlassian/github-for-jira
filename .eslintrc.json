@@ -37,7 +37,7 @@
 	"rules": {
 		"@typescript-eslint/explicit-module-boundary-types": "off",
 		"@typescript-eslint/no-var-requires": "error",
-		"@typescript-eslint/no-unused-vars": "error",
+		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
 		"no-unused-vars": "off",
 		"no-console": "error",
 		"quotes": [

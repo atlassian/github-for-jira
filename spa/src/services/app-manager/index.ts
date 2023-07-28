@@ -1,21 +1,22 @@
 import Api from "../../api";
-import { OrganizationsResponse } from "../../rest-interfaces/oauth-types";
+import { OrganizationsResponse } from "rest-interfaces";
+import { AxiosError } from "axios";
+
 
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
-async function fetchOrgs(): Promise<OrganizationsResponse> {
+async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
 	try {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
 	} catch (e) {
-		console.error(e, "Failed to fetch organizations");
-		return { orgs: [] };
+		return e as AxiosError;
 	}
 }
 
-async function connectOrg(orgId: number): Promise<boolean> {
+async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return false;
 
 	try {
@@ -23,7 +24,7 @@ async function connectOrg(orgId: number): Promise<boolean> {
 		return response.status === 200;
 	} catch (e) {
 		console.error(e, "Failed to fetch organizations");
-		return false;
+		return e as AxiosError;
 	}
 }
 
@@ -42,9 +43,9 @@ async function installNewApp(onFinish: (gitHubInstallationId: number | undefined
 
 	const winInstall = window.open(app.data.appInstallationUrl, "_blank");
 
-	//Still need bellow interval for window close
-	//As user might not finish the app install flow, there'no gurantee that above message
-	//event will happened.
+	// Still need below interval for window close
+	// As user might not finish the app install flow, there's no guarantee that above message
+	// event will happen.
 	const hdlWinInstall = setInterval(() => {
 		if (winInstall?.closed) {
 			try {
