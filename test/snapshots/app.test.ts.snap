@@ -24,9 +24,9 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/jira/cloudid/?(?=/|$)^/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,JiraCloudIDGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/org/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,<anonymous>
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,GitHubOrgsFetchOrgs
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/org/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,<anonymous>
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,GitHubOrgsConnectJira
 :GET ^/?(?=/|$)^/?(?=/|$)^/deepcheck/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,DeepcheckGet
 :GET ^/?(?=/|$)^/?(?=/|$)^/healthcheck/?$

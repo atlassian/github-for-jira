@@ -1,4 +1,4 @@
-import { OrganizationsResponse } from "../../rest-interfaces/oauth-types";
+import { OrganizationsResponse } from "rest-interfaces";
 import { axiosRestWithGitHubToken } from "../axiosInstance";
 
 export default {

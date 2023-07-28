@@ -1,4 +1,4 @@
-import { GetGitHubAppsUrlResponse, JiraCloudIDResponse } from "../../rest-interfaces/oauth-types";
+import { GetGitHubAppsUrlResponse, JiraCloudIDResponse } from "rest-interfaces";
 import { axiosRest } from "../axiosInstance";
 
 export default {

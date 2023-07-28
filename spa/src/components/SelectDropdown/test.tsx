@@ -7,9 +7,14 @@ test("Basic check for the select dropdown", async () => {
 			onChange={jest.fn()}
 			isLoading={false}
 			options={[
-				{ label: "First", value: "1" },
-				{ label: "Second", value: "2" },
-				{ label: "Third", value: "3" },
+				{
+					label: "Label",
+					options: [
+						{ label: "First", value: "1" },
+						{ label: "Second", value: "2" },
+						{ label: "Third", value: "3" },
+					]
+				}
 			]}
 			label="Dropdown label"
 			placeholder="Dropdown placeholder"
