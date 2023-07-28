@@ -41,7 +41,7 @@ async function installNewApp(onFinish: (gitHubInstallationId: number | undefined
 	};
 	window.addEventListener("message", handler);
 
-	const winInstall = window.open(app.data.appInstallationUrl, "_blank");
+	const winInstall = window.open(app.data.appInstallationUrl, "_blank", "popup,width=1024,height=760");
 
 	// Still need below interval for window close
 	// As user might not finish the app install flow, there's no guarantee that above message
