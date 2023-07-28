@@ -49,7 +49,7 @@ export const returnOnValidationError = async (
 		res.status(422).json({ errors: errors.array() });
 
 		if (await booleanFlag(BooleanFlags.EARLY_EXIT_ON_VALIDATION_FAILED)) {
-			(req.log || getLogger("requestValidator")).warn({ errors: errors.array() }, "Fail on validator request, skip with 422");
+			(req.log || getLogger("requestValidator")).warn({ errors: errors.array(), paramUuid: req.params?.uuid }, "Fail on validator request, skip with 422");
 			return;
 		}
 
