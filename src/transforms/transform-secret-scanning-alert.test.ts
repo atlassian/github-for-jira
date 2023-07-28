@@ -88,7 +88,7 @@ describe("transformSecretScanningAlert", () => {
 					"level": "critical"
 				},
 				"status": "open",
-				"type": "sca",
+				"type": "sast",
 				"updateSequenceNumber":  Date.now(),
 				"url": "https://sample/123",
 				"additionalInfo": {

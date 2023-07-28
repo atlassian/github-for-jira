@@ -20,14 +20,14 @@ export const transformSecretScanningAlert = async (context: WebhookContext<Secre
 			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
 			description:  "Secret scanning alert",
 			url: alert.html_url,
-			type: "sca",
+			type: "sast",
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at || alert.created_at,
 			severity: {
 				level: JiraVulnerabilitySeverityEnum.CRITICAL
 			},
 			identifiers: [],
-			status: transformGitHubStateToJiraStatus(context.action, context.log),
+			status: transformGitHubStateToJiraStatus(alert.state || context.action, context.log),
 			additionalInfo: {
 				content: alert.secret_type
 			}

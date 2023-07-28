@@ -18,8 +18,6 @@ import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-aler
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
-import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
-import { Subscription } from "~/src/models/subscription";
 import { extraLoggerInfo } from "./webhook-logging-extra";
 import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
 
@@ -94,7 +92,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "review_requested"];
-	let subscriptions;
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -136,16 +133,10 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
-			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, context.gitHubAppConfig.gitHubAppId);
-			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
-				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
-			}
+			await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
 			break;
 		case "secret_scanning_alert":
-			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, context.gitHubAppConfig.gitHubAppId);
-			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
-				await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
-			}
+			await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
 	}
 };
 

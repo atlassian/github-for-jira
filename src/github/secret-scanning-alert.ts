@@ -4,8 +4,12 @@ import { JiraClient } from "../jira/client/jira-client";
 import { InstallationLite, SecretScanningAlert, SecretScanningAlertCreatedEvent, SecretScanningAlertResolvedEvent, SecretScanningAlertRevokedEvent, Repository, Organization } from "@octokit/webhooks-types";
 import { transformSecretScanningAlert } from "../transforms/transform-secret-scanning-alert";
 import { User } from "@sentry/node";
+import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 
 export const secretScanningAlertWebhookHandler = async (context: WebhookContext<SecretScanningAlertEvent>, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraClient.baseURL)) {
+		return;
+	}
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL

@@ -13,6 +13,8 @@ import {
 import { JiraClient } from "../jira/client/jira-client";
 import { secretScanningAlertWebhookHandler } from "./secret-scanning-alert";
 import { emitWebhookProcessedMetrics } from "../util/webhook-utils";
+import { when } from "jest-when";
+import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -32,6 +34,7 @@ const SAMPLE_SECURITY_CREATED_DATE = "2022-01-01T00:00:00Z";
 const SAMPLE_SECURITY_UPDATED_DATE = "2022-01-02T00:00:00Z";
 const WEBHOOK_RECIEVED_ISO = 1688951387;
 jest.mock("utils/webhook-utils");
+jest.mock("config/feature-flags");
 
 describe("SecretScanningAlertWebhookHandler", () => {
 	const RealDate = Date.now;
@@ -49,6 +52,7 @@ describe("SecretScanningAlertWebhookHandler", () => {
 			baseURL: jiraHost,
 			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
 		} as unknown as JiraClient;
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 	});
 	it("should call jira client with transformed vulnerability", async () => {
 		await secretScanningAlertWebhookHandler(
@@ -76,6 +80,16 @@ describe("SecretScanningAlertWebhookHandler", () => {
 			200,
 			undefined
 		);
+	});
+	it("should not call jira client with transformed vulnerability if FF is OFF", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
+		await secretScanningAlertWebhookHandler(
+			getWebhookContext({ cloud: true }),
+			jiraClient,
+			undefined,
+			GITHUB_INSTALLATION_ID
+		);
+		expect(jiraClient.security.submitVulnerabilities).toBeCalledTimes(0);
 	});
 
 
@@ -128,7 +142,7 @@ describe("SecretScanningAlertWebhookHandler", () => {
 					displayName: "personal_access_token secret exposed",
 					description: "Secret scanning alert",
 					url: SAMPLE_SECURITY_URL,
-					type: "sca",
+					type: "sast",
 					introducedDate: SAMPLE_SECURITY_CREATED_DATE,
 					lastUpdated: SAMPLE_SECURITY_UPDATED_DATE,
 					severity: {
