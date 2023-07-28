@@ -5,6 +5,7 @@ import { getRedisInfo } from "config/redis-info";
 import { getLogger } from "config/logger";
 import { createAnonymousClientByGitHubAppId } from "utils/get-github-client-config";
 import { GitHubAnonymousClient } from "~/src/github/client/github-anonymous-client";
+import { InvalidArgumentError } from "config/errors";
 
 jest.mock("utils/get-github-client-config");
 
@@ -31,18 +32,18 @@ describe("getRedirectUrl", () => {
 
 describe("Exchange token", () => {
 	describe("cloud", () => {
-		it("should return null if state is empty", async () => {
+		it("should throw error state is empty", async () => {
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
 				exchangeGitHubToken: async () => ({
 					accessToken: "abcd",
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const next = jest.fn();
-			await finishOAuthFlow(jiraHost, undefined, "random-code", "", log, next);
-			expect(next).toHaveBeenCalledWith({ status: 400, message: "No state provided" });
+			await expect(async () => {
+				await finishOAuthFlow(jiraHost, undefined, "random-code", "", log);
+			}).rejects.toThrowError(InvalidArgumentError);
 		});
-		it("should return null if the jira host in state is not the same", async () => {
+		it("should throw error if the jira host in state is not the same", async () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
 			const state = redirectUrl.state;
 			jest.mocked(createAnonymousClientByGitHubAppId).mockResolvedValue({
@@ -51,9 +52,9 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const next = jest.fn();
-			await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log, next);
-			expect(next).toHaveBeenCalledWith({ status: 500, message: "Parsed redis state jiraHost doesn't match the jiraHost provided in jwt token" });
+			await expect(async () => {
+				await finishOAuthFlow(jiraHost + "-another", undefined, "random-code", state, log);
+			}).rejects.toThrowError(InvalidArgumentError);
 		});
 		it("should return correct result if the jira host in state is the same", async () => {
 			const redirectUrl = await getRedirectUrl(jiraHost, undefined);
@@ -64,7 +65,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log, jest.fn);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log);
 			expect(resp).toEqual({
 				accessToken: "abcd",
 				refreshToken: "wert"
@@ -79,7 +80,7 @@ describe("Exchange token", () => {
 					refreshToken: "wert"
 				})
 			} as any as GitHubAnonymousClient);
-			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log, jest.fn);
+			const resp = await finishOAuthFlow(jiraHost, undefined, "random-code", state, log);
 			expect(resp).toEqual({
 				accessToken: "abcd",
 				refreshToken: "wert"

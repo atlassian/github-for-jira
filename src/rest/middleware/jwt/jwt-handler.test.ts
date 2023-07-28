@@ -108,6 +108,9 @@ describe("jwt handler", () => {
 		app.get("/test", (_req, res) => {
 			res.send(JSON.stringify(res.locals));
 		});
+		app.use((err, _req, res, _next) => {
+			res.status(err.httpStatus || err.status).send(err.message);
+		});
 		return app;
 	};
 
