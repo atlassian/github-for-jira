@@ -1,8 +1,10 @@
 import axios from "axios";
 import { getJiraJWT } from "../utils";
 
+const TEN_SECONDS_IN_MS = 10_000;
+
 const axiosRest = axios.create({
-	timeout: 3000
+	timeout: TEN_SECONDS_IN_MS
 });
 // Adding the token in the headers through interceptors because it is an async value
 axiosRest.interceptors.request.use(async (config) => {
@@ -29,7 +31,7 @@ const setGitHubToken = (newToken: string) => {
 const hasGitHubToken = () => !!gitHubToken;
 
 const axiosGitHub = axios.create({
-	timeout: 3000
+	timeout: TEN_SECONDS_IN_MS
 });
 axiosGitHub.interceptors.request.use(async (config) => {
 	config.headers["Authorization"] = `Bearer ${gitHubToken}`;
@@ -37,7 +39,7 @@ axiosGitHub.interceptors.request.use(async (config) => {
 });
 
 const axiosRestWithGitHubToken = axios.create({
-	timeout: 3000
+	timeout: TEN_SECONDS_IN_MS
 });
 axiosRestWithGitHubToken.interceptors.request.use(async (config) => {
 	config.headers.Authorization = await getJiraJWT();
