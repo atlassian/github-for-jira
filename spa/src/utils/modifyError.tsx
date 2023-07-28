@@ -14,16 +14,27 @@ type SimpleError = {
 	message: string;
 }
 
+type ErrorWithErrorCode = {
+	errorCode: ErrorCode
+};
+
 const GENERIC_MESSAGE = "Something went wrong, please try again later.";
 
-export const modifyError = (error: AxiosError<ApiError> | SimpleError): ErrorObjType => {
+export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode): ErrorObjType => {
 
 	const Paragraph = styled.p`
 		color: ${token("color.text.subtle")};
 	`;
 	const errorObj = { type: "error" as ErrorType };
 	const warningObj = { type: "warning" as ErrorType };
-	const errorCode: ErrorCode = (error instanceof AxiosError ? error?.response?.data?.errorCode : "UNKNOWN") || "UNKNOWN";
+	let errorCode: ErrorCode = "UNKNOWN";
+	if (error instanceof AxiosError) {
+		errorCode = error?.response?.data?.errorCode || "UNKNOWN";
+	} else if ((error as ErrorWithErrorCode).errorCode) {
+		errorCode = (error as ErrorWithErrorCode).errorCode;
+	} else {
+		errorCode = "UNKNOWN";
+	}
 
 	// TODO: map backend errors in frontend
 	if (errorCode === "IP_BLOCKED") {
