@@ -25,7 +25,7 @@ async function authenticateInGitHub(): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		window.localStorage.setItem(STATE_KEY, res.data.state);
-		window.open(res.data.redirectUrl);
+		window.open(res.data.redirectUrl, "_blank", "popup,width=400,height=600");
 	}
 }
 

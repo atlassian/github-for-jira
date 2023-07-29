@@ -229,13 +229,12 @@ const ConfigSteps = () => {
 	};
 
 	const onChangingOrg = (value: LabelType | null) => {
-		if (value) {
-			if(value?.requiresSsoLogin) {
-				setError(modifyError({ message: "SSO Login required"} as AxiosError));
+		if(value) {
+			if (value?.isIPBlocked) {
+				setError(modifyError({ errorCode: "IP_BLOCKED" }));
 				setOrgConnectionDisabled(true);
-			}
-			else if (value?.isIPBlocked) {
-				setError(modifyError({ message: "Blocked by GitHub allowlist"} as AxiosError));
+			} else if(value?.requiresSsoLogin) {
+				setError(modifyError({ errorCode: "SSO_LOGIN" }));
 				setOrgConnectionDisabled(true);
 			} else {
 				setSelectedOrg({
@@ -249,7 +248,7 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		window.open("https://github.com/logout");
+		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
