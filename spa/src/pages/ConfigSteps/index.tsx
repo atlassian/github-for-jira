@@ -143,7 +143,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			setError(modifyError(response));
+			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 		} else {
 			setNoOrgsFound(response?.orgs.length === 0);
 			const totalOrgs = response?.orgs.map(org => ({
@@ -157,10 +157,10 @@ const ConfigSteps = () => {
 			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
 			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
 			const orgsLackAdmin = totalOrgs?.filter(org => !org.isAdmin);
-			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked && !orgsLackAdmin);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin);
 			setOrganizations([
 				{ options: enabledOrgs },
-				//{ label: "Lack Admin Permission", options: orgsLackAdmin },
+				{ label: "Lack Admin Permission", options: orgsLackAdmin },
 				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
 				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
 			]);
@@ -175,7 +175,7 @@ const ConfigSteps = () => {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					setError(modifyError(response));
+					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
@@ -198,7 +198,7 @@ const ConfigSteps = () => {
 	useEffect(() => {
 		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
 			if (status instanceof AxiosError) {
-				setError(modifyError(status));
+				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				setLoggedInUser(OAuthManager.getUserDetails().username);
 				setLoaderForLogin(false);
@@ -216,7 +216,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError(modifyError(e as AxiosError));
+					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 				}
 				break;
 			}
@@ -234,7 +234,7 @@ const ConfigSteps = () => {
 	const onChangingOrg = (value: LabelType | null) => {
 		if(value) {
 			if (value?.isIPBlocked) {
-				setError(modifyError({ errorCode: "IP_BLOCKED" }));
+				setError(modifyError({ errorCode: "IP_BLOCKED" }, { orgLogin: value.label }, { onClearGitHubToken: clearGitHubToken }));
 				setOrgConnectionDisabled(true);
 			} else if(value?.requiresSsoLogin) {
 				setError(modifyError({ errorCode: "SSO_LOGIN" }, { orgLogin: value.label}, { onClearGitHubToken: clearGitHubToken }));
@@ -261,6 +261,7 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		setError(undefined);
 	};
 
 	const logout = () => {
@@ -276,7 +277,7 @@ const ConfigSteps = () => {
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected instanceof AxiosError) {
-				setError(modifyError(connected));
+				setError(modifyError(connected, { }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -304,7 +305,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			setError(modifyError(e as AxiosError));
+			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};

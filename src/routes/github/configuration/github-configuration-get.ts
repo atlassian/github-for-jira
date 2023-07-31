@@ -117,7 +117,7 @@ export const getInstallationsWithAdmin = async (
 		return {
 			...installation,
 			numberOfRepos,
-			isAdmin: false,
+			isAdmin,
 			requiresSsoLogin: errors.some(err=>err instanceof GithubClientSSOLoginError),
 			isIPBlocked: errors.some(err=>err instanceof GithubClientBlockedIpError),
 			deferredInstallUrl
