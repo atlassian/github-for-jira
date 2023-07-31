@@ -3,8 +3,12 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformDependabotAlert } from "~/src/transforms/transform-dependabot-alert";
 import { JiraClient } from "../jira/client/jira-client";
 import { DependabotAlertEvent } from "@octokit/webhooks-types";
+import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 
 export const dependabotAlertWebhookHandler = async (context: WebhookContext<DependabotAlertEvent>, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraClient.baseURL)) {
+		return;
+	}
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
