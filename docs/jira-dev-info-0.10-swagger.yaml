@@ -773,6 +773,7 @@ definitions:
           readOnly: true
           enum:
           - "OPEN"
+          - "DRAFT"
           - "MERGED"
           - "DECLINED"
           - "UNKNOWN"

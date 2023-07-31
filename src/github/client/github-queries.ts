@@ -77,6 +77,7 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
+  draft: boolean;
 	baseRef?: {
 		name: string;
 		repository: {
@@ -184,6 +185,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					title
 					body
 					url
+          draft
 					baseRef {
 						name
 						repository {
