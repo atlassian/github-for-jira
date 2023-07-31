@@ -150,14 +150,17 @@ const ConfigSteps = () => {
 				label: org.account.login,
 				value: String(org.id),
 				requiresSsoLogin: org.requiresSsoLogin,
-				isIPBlocked: org.isIPBlocked
+				isIPBlocked: org.isIPBlocked,
+				isAdmin: org.isAdmin
 			}));
 
 			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
 			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
-			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
+			const orgsLackAdmin = totalOrgs?.filter(org => !org.isAdmin);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked && !orgsLackAdmin);
 			setOrganizations([
 				{ options: enabledOrgs },
+				//{ label: "Lack Admin Permission", options: orgsLackAdmin },
 				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
 				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
 			]);
@@ -236,7 +239,9 @@ const ConfigSteps = () => {
 			} else if(value?.requiresSsoLogin) {
 				setError(modifyError({ errorCode: "SSO_LOGIN" }, { orgLogin: value.label}, { onClearGitHubToken: clearGitHubToken }));
 				setOrgConnectionDisabled(true);
-			} else {
+			} else if (!value?.isAdmin) {
+				setOrgConnectionDisabled(true);
+			}else {
 				setSelectedOrg({
 					label: value.label,
 					value: parseInt(value.value)
