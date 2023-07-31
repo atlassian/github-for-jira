@@ -82,7 +82,7 @@ describe("sync/pull-request", () => {
 			},
 			"commentCount": 10,
 			"destinationBranch": "devel",
-			"destinationBranchUrl": "https://github.com/integrations/test/tree/devel",
+			"destinationBranchUrl": "https://github.com/integrations/test-repo-name/tree/devel",
 			"displayId": "#51",
 			"id": 51,
 			"issueKeys": [
@@ -169,15 +169,8 @@ describe("sync/pull-request", () => {
 												},
 												updatedAt: "2018-05-04T14:06:56Z",
 												title,
-												baseRef: {
-													name: "devel",
-													repository: {
-														name: "test",
-														owner: {
-															login: "integrations"
-														}
-													}
-												},
+												baseRefName: "devel",
+												headRefName: head,
 												headRef: {
 													name: head,
 													repository: {

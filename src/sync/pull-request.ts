@@ -119,7 +119,7 @@ const getPullRequestTaskGraphQL = async (
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
 
 	const pullRequests = response.repository?.pullRequests?.edges
-		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
+		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
