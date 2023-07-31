@@ -170,6 +170,16 @@
     "@emotion/react" "^11.7.1"
     bind-event-listener "^2.1.1"
 
+"@atlaskit/page-header@^10.4.4":
+  version "10.4.4"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/page-header/-/page-header-10.4.4.tgz#356a93d98e9bae1677d504b0195897160117a7f9"
+  integrity sha512-25yXYQdCDdPHVuz309HurUnNmkzy2GCvRnr19HOF14sM/2bA6SRXOTXxjXsVQ3V88pG+m0TiUnqcYBg1gwAGiw==
+  dependencies:
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.5.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/platform-feature-flags@^0.2.0":
   version "0.2.4"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/platform-feature-flags/-/platform-feature-flags-0.2.4.tgz#198740b2f3c135cbee023efd96c8009f726d914a"

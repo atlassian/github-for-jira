@@ -47,7 +47,7 @@ const Connected = () => {
 		AP.navigator.go(
 			"addonmodule",
 			{
-				moduleKey: "github-post-install-page"
+				moduleKey: "gh-addon-admin"
 			}
 		);
 	};
