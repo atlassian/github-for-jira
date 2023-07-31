@@ -178,13 +178,13 @@ const ConfigSteps = () => {
 				} else {
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
+				setIsLoggedIn(true);
+				setCompletedStep1(true);
+				setExpandStep1(false);
+				setExpandStep2(true);
+				setCanViewContentForStep2(true);
+				await getOrganizations();
 			}
-			setIsLoggedIn(true);
-			setCompletedStep1(true);
-			setExpandStep1(false);
-			setExpandStep2(true);
-			setCanViewContentForStep2(true);
-			await getOrganizations();
 		};
 		window.addEventListener("message", handler);
 		return () => {
@@ -234,7 +234,7 @@ const ConfigSteps = () => {
 				setError(modifyError({ errorCode: "IP_BLOCKED" }));
 				setOrgConnectionDisabled(true);
 			} else if(value?.requiresSsoLogin) {
-				setError(modifyError({ errorCode: "SSO_LOGIN" }));
+				setError(modifyError({ errorCode: "SSO_LOGIN" }, { orgLogin: value.label}, { onClearGitHubToken: clearGitHubToken }));
 				setOrgConnectionDisabled(true);
 			} else {
 				setSelectedOrg({
@@ -247,8 +247,7 @@ const ConfigSteps = () => {
 		}
 	};
 
-	const logout = () => {
-		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+	const clearGitHubToken = () => {
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
@@ -257,6 +256,11 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+	};
+
+	const logout = () => {
+		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
