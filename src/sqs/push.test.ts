@@ -30,7 +30,7 @@ const updateInstallationId = (payload: GitHubPushData): GitHubPushData  => {
 
 jest.mock("config/feature-flags");
 
-const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
+const createJiraPayloadNoUsername = (transformedRepoId: string) => {
 	return {
 		preventTransitions: false,
 		operationType: "NORMAL",
@@ -38,7 +38,7 @@ const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
 			{
 				name: "example/test-repo-name",
 				url: "test-repo-url",
-				id: transofmedRepoId,
+				id: transformedRepoId,
 				commits: [
 					{
 						hash: "commit-no-username",

@@ -28,6 +28,7 @@
       "full_name": "example/test-repo-name",
       "html_url": "test-repo-url",
       "owner": {
+        "name": "test-repo-owner",
         "login": "test-repo-owner"
       }
     },
