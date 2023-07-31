@@ -8,6 +8,7 @@ import { Subscription } from "models/subscription";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 
 jest.mock("../transforms/push");
+jest.mock("./client/github-installation-client");
 
 const GHES_GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -62,7 +63,10 @@ describe("PushWebhookHandler", ()=>{
 			},
 			webhookId: "aaa-bbb-ccc",
 			webhookReceived: Date.now(),
-			repository: {} as GitHubRepository, //force it as not required in test
+			repository: {
+				owner: { name: "test-org" },
+				name: "test-repo"
+			} as GitHubRepository, //force it as not required in test
 			commits: [{
 				id: "commit-1",
 				message: "ARC-1 some commit message",
@@ -94,4 +98,3 @@ describe("PushWebhookHandler", ()=>{
 		});
 	};
 });
-
