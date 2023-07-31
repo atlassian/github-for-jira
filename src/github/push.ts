@@ -9,14 +9,6 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "../util/get-cloud-or-server";
 import { createInstallationClient } from "utils/get-github-client-config";
-// import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
-//
-// const JENKINSFILE = "Jenkinsfile";
-//
-// const checkForJenkinsfileInGitHubRepo = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string): Promise<boolean> => {
-// 	const contents = await gitHubInstallationClient.getRepositoryFile(owner, repo, JENKINSFILE);
-// 	return !!contents;
-// };
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const webhookReceived = getCurrentTime();
