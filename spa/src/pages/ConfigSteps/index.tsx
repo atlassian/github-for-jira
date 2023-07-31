@@ -167,6 +167,7 @@ const ConfigSteps = () => {
 		}
 	};
 
+	/*eslint-disable react-hooks/exhaustive-deps*/
 	useEffect(() => {
 		getJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
@@ -195,6 +196,7 @@ const ConfigSteps = () => {
 		};
 	}, [ originalUrl ]);
 
+	/*eslint-disable react-hooks/exhaustive-deps*/
 	useEffect(() => {
 		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
 			if (status instanceof AxiosError) {
@@ -205,7 +207,7 @@ const ConfigSteps = () => {
 				getOrganizations();
 			}
 		});
-	}, [isLoggedIn]);
+	}, [ isLoggedIn ]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
