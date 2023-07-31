@@ -125,12 +125,19 @@ const getPullRequestTaskGraphQL = async (
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
 	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
 
+	emitStats(jiraHost, startTime, "GRAPHQL");
+
+	if (pullRequests.length === 0) {
+		return {
+			edges: response.repository?.pullRequests?.edges || [],
+			jiraPayload: undefined
+		};
+	}
+
 	const jiraPayload = {
 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 		pullRequests
 	};
-
-	emitStats(jiraHost, startTime, "GRAPHQL");
 
 	return {
 		edges: response.repository?.pullRequests?.edges || [],
