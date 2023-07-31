@@ -60,6 +60,7 @@ export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWit
 	} else if (errorCode === "RATELIMIT") {
 		return { ...errorObj, message: "GitHub rate limit exceeded. Please try again later." }; //TODO: Better message
 	} else if (errorCode === "SSO_LOGIN") {
+		//TODO: Shall we merge these two steps into one and clear token during the redirect to SSO?
 		return {
 			...warningObj,
 			message: <>
