@@ -9,11 +9,17 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "../util/get-cloud-or-server";
 import { createInstallationClient } from "utils/get-github-client-config";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+
+const JENKINSFILE = "Jenkinsfile";
+
+const checkForJenkinsfileInGitHubRepo = async (gitHubInstallationClient: GitHubInstallationClient, owner: string, repo: string): Promise<boolean> => {
+	const contents = await gitHubInstallationClient.getRepositoryFile(owner, repo, JENKINSFILE);
+	return !!contents;
+};
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
 	const webhookReceived = getCurrentTime();
-
-	context.log.info("IN HERE????");
 
 	// Copy the shape of the context object for processing
 	// but filter out any commits that don't have issue keys
@@ -53,9 +59,9 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 			([...acc, ...commit.added, ...commit.modified, ...commit.removed]), []);
 		// TODO: this call must be updated to support GitHub Server events
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "webhook", subTrigger: "push" }, context.log, gitHubAppId);
-		// const { name, owner } = context.payload.repository;
-		// const hasJenkinsfile = await checkForJenkinsfileInGitHubRepo(gitHubInstallationClient, owner.name, name);
-		// hasJenkinsfile && context.log.info({ jiraHost }, "Has Jenkinsfile");
+		const { name, owner } = context.payload.repository;
+		const hasJenkinsfile = await checkForJenkinsfileInGitHubRepo(gitHubInstallationClient, owner.name, name);
+		hasJenkinsfile && context.log.info({ jiraHost }, "Has Jenkinsfile");
 		await updateRepoConfig(subscription, payload.repository.id, gitHubInstallationClient, context.log, modifiedFiles);
 	} else {
 		context.log.warn("could not load user config because subscription does not exist");
