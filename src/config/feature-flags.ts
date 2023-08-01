@@ -77,7 +77,6 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 
 // Include jiraHost for any FF that needs to be rolled out in stages
 export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> => {
-	if (flag === BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE) return true;
 	// Always use the default value as false to prevent issues
 	return await getLaunchDarklyValue(flag, false, key);
 };
