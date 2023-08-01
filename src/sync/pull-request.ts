@@ -125,12 +125,19 @@ const getPullRequestTaskGraphQL = async (
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
 	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
 
+	emitStats(jiraHost, startTime, "GRAPHQL");
+
+	if (pullRequests.length === 0) {
+		return {
+			edges: response.repository?.pullRequests?.edges || [],
+			jiraPayload: undefined
+		};
+	}
+
 	const jiraPayload = {
 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 		pullRequests
 	};
-
-	emitStats(jiraHost, startTime, "GRAPHQL");
 
 	return {
 		edges: response.repository?.pullRequests?.edges || [],
@@ -193,7 +200,7 @@ const getPullRequestTaskRest = async (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPrRest(pull))) {
+				if (isEmpty(await extractIssueKeysFromPrRest(pull, jiraHost))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");
@@ -203,7 +210,7 @@ const getPullRequestTaskRest = async (
 				const prDetails = prResponse?.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger);
+				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger, jiraHost);
 				return data?.pullRequests[0];
 
 			})

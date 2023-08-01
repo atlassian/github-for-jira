@@ -13,6 +13,8 @@ import {
 } from "../interfaces/jira";
 import { JiraClient } from "../jira/client/jira-client";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
+import { BooleanFlags, booleanFlag } from "../config/feature-flags";
+import { when } from "jest-when";
 
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -36,8 +38,10 @@ const SAMPLE_SECURITY_CREATED_DATE = "2022-01-01T00:00:00Z";
 const SAMPLE_SECURITY_UPDATED_DATE = "2022-01-02T00:00:00Z";
 const WEBHOOK_RECIEVED_ISO = 1688951387;
 jest.mock("utils/webhook-utils");
+jest.mock("config/feature-flags");
 
-describe("BranchhWebhookHandler", () => {
+
+describe("DependabotAlertWebhookHandler", () => {
 	const RealDate = Date.now;
 
 	beforeAll(() => {
@@ -53,8 +57,9 @@ describe("BranchhWebhookHandler", () => {
 			baseURL: jiraHost,
 			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
 		} as unknown as JiraClient;
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 	});
-	it("should call jira client with tarnsformed vulnerability", async () => {
+	it("should call jira client with transformed vulnerability", async () => {
 		await dependabotAlertWebhookHandler(
 			getWebhookContext({ cloud: true }),
 			jiraClient,
@@ -82,6 +87,16 @@ describe("BranchhWebhookHandler", () => {
 		);
 	});
 
+	it("should not call jira client with transformed vulnerability if FF is OFF", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
+		await dependabotAlertWebhookHandler(
+			getWebhookContext({ cloud: true }),
+			jiraClient,
+			undefined,
+			GITHUB_INSTALLATION_ID
+		);
+		expect(jiraClient.security.submitVulnerabilities).toBeCalledTimes(0);
+	});
 
 	const getWebhookContext = <T>({ cloud }: { cloud: boolean }): WebhookContext<T> => {
 		return {

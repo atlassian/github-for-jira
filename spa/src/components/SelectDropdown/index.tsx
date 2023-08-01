@@ -4,9 +4,17 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import React from "react";
 
+export type OrgOptionsType = {
+	label?: string;
+	options: Array<LabelType>
+};
+
 export type LabelType = {
 	label: string;
 	value: string;
+	requiresSsoLogin?: boolean;
+	isIPBlocked?: boolean;
+	isAdmin?: boolean;
 };
 
 const SelectDropdownContainer = styled.div`
@@ -29,15 +37,13 @@ const SelectDropdown = ({
 	options,
 	label,
 	onChange,
-	noOptionsMessage,
 	placeholder = "",
 	isLoading = false,
 	icon,
 }: {
-	options: Array<LabelType>,
+	options: Array<OrgOptionsType>,
 	label: string,
-	noOptionsMessage: (...args: any) => React.JSX.Element,
-	onChange: (...args: any) => void,
+	onChange: (args: LabelType | null) => void,
 	placeholder?: string,
 	isLoading: boolean,
 	icon?: React.JSX.Element
@@ -51,7 +57,6 @@ const SelectDropdown = ({
 			<SelectContainer>
 				<Select
 					inputId="select-org"
-					noOptionsMessage={noOptionsMessage}
 					className="single-select"
 					isLoading={isLoading}
 					classNamePrefix="react-select"

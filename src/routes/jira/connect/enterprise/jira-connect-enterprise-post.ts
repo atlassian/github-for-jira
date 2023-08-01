@@ -32,7 +32,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	}
 	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
-	sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
 		source: AnalyticsTrackSource.CreateBranch,
 		jiraHost,
@@ -150,7 +150,7 @@ export const JiraConnectEnterprisePost = async (
 
 		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise,
 			jiraHost: jiraHost
@@ -162,7 +162,7 @@ export const JiraConnectEnterprisePost = async (
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
+			sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise,
 				jiraHost: jiraHost

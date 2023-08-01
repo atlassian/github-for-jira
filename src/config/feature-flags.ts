@@ -29,6 +29,7 @@ export enum BooleanFlags {
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
+	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
 }
 
 export enum StringFlags {
@@ -74,9 +75,10 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> =>
+export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> => {
 	// Always use the default value as false to prevent issues
-	await getLaunchDarklyValue(flag, false, key);
+	return await getLaunchDarklyValue(flag, false, key);
+};
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);

@@ -1,12 +1,12 @@
 import Api from "../../api";
+import { AxiosError } from "axios";
 
 const STATE_KEY = "oauth-localStorage-state";
 
 let username: string | undefined;
 let email: string | undefined;
 
-async function checkValidity(): Promise<boolean> {
-
+async function checkValidity(): Promise<boolean | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return false;
 
 	try {
@@ -17,7 +17,7 @@ async function checkValidity(): Promise<boolean> {
 		return res.status === 200;
 	}catch (e) {
 		console.error(e, "Failed to check validity");
-		return false;
+		return e as AxiosError;
 	}
 }
 
@@ -25,26 +25,28 @@ async function authenticateInGitHub(): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		window.localStorage.setItem(STATE_KEY, res.data.state);
-		window.open(res.data.redirectUrl);
+		window.open(res.data.redirectUrl, "_blank", "popup,width=400,height=600");
 	}
 }
 
-async function finishOAuthFlow(code: string, state: string): Promise<boolean> {
-
-	if (!code) return false;
-	if (!state) return false;
+async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
+	if (!code && !state) return false;
 
 	const prevState = window.localStorage.getItem(STATE_KEY);
 	window.localStorage.removeItem(STATE_KEY);
 	if (state !== prevState) return false;
 
-	const token = await Api.auth.exchangeToken(code, state);
-	if (token.data.accessToken) {
-		Api.token.setGitHubToken(token.data.accessToken);
-		return true;
+	try {
+		const token = await Api.auth.exchangeToken(code, state);
+		if (token.data.accessToken) {
+			Api.token.setGitHubToken(token.data.accessToken);
+			return true;
+		} else {
+			return false;
+		}
+	} catch (e) {
+		return e as AxiosError;
 	}
-
-	return false;
 }
 
 function getUserDetails() {
@@ -65,6 +67,6 @@ export default {
 	authenticateInGitHub,
 	finishOAuthFlow,
 	getUserDetails,
-	clear,
+	clear
 };
 

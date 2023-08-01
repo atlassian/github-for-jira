@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -8,13 +8,15 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
-import SelectDropdown, { LabelType } from "../../components/SelectDropdown";
+import SelectDropdown, { LabelType, OrgOptionsType } from "../../components/SelectDropdown";
 import OfficeBuildingIcon from "@atlaskit/icon/glyph/office-building";
 import { useNavigate } from "react-router-dom";
-import { ErrorType } from "../../rest-interfaces/oauth-types";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
+import analyticsClient from "../../analytics";
+import { AxiosError } from "axios";
+import { ErrorObjType, modifyError } from "../../utils/modifyError";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -22,16 +24,11 @@ type GitHubOptionType = {
 };
 type HostUrlType = {
 	jiraHost: string;
-	gheServerUrl: string;
 };
 type OrgDropdownType = {
 	label: string;
 	value: number;
 };
-type ErrorObjType = {
-	type: ErrorType,
-	message: React.JSX.Element | string;
-}
 
 const ConfigContainer = styled.div`
   margin: 0 auto;
@@ -90,19 +87,27 @@ const ButtonContainer = styled.div`
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 `;
-
+const NoOrgsParagraph = styled.div`
+	color: ${token("color.text.subtle")};
+	margin-bottom: ${token("space.400")};
+`;
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
-	const { username, email } = OAuthManager.getUserDetails();
-	const isAuthenticated = !!(username && email);
+	const { username } = OAuthManager.getUserDetails();
+	/**
+	 * If GitHub emails are private, then we get null email,
+	 * so do not user emails for checking authentication
+	 */
+	const isAuthenticated = !!username;
 
 	const originalUrl = window.location.origin;
 	const [hostUrl, setHostUrl] = useState<HostUrlType | undefined>(undefined);
 
-	const [organizations, setOrganizations] = useState<Array<LabelType>>([]);
+	const [organizations, setOrganizations] = useState<Array<OrgOptionsType>>([]);
+	const [noOrgsFound, setNoOrgsFound] = useState<boolean>(false);
 	const [selectedOrg, setSelectedOrg] = useState<OrgDropdownType | undefined>(undefined);
-	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(false);
+	const [loaderForOrgFetching, setLoaderForOrgFetching] = useState(true);
 	const [loaderForOrgConnection, setLoaderForOrgConnection] = useState(false);
 	const [orgConnectionDisabled, setOrgConnectionDisabled] = useState(true);
 
@@ -127,81 +132,125 @@ const ConfigSteps = () => {
 			const locationUrl = new URL(location);
 			setHostUrl({
 				jiraHost: locationUrl.origin,
-				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
 	};
 
-	const getOrganizations = async () => {
+	const getOrganizations = useCallback(async () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
-		if (response) {
-			setOrganizations(response?.orgs.map((org: any) => ({
-				label: org.account.login,
-				value: org.id,
-			})));
-		}
 		setLoaderForOrgFetching(false);
-	};
+		if (response instanceof AxiosError) {
+			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+		} else {
+			setNoOrgsFound(response?.orgs.length === 0);
+			const totalOrgs = response?.orgs.map(org => ({
+				label: org.account.login,
+				value: String(org.id),
+				requiresSsoLogin: org.requiresSsoLogin,
+				isIPBlocked: org.isIPBlocked,
+				isAdmin: org.isAdmin
+			}));
+
+			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
+			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
+			const orgsLackAdmin = totalOrgs?.filter(org => !org.isAdmin);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin);
+			setOrganizations([
+				{ options: enabledOrgs },
+				{ label: "Lack Admin Permission", options: orgsLackAdmin },
+				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
+				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
+			]);
+		}
+	}, []);
 
 	useEffect(() => {
 		getJiraHostUrls();
-		const handler = async (event: any) => {
+		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
-			if (event.data?.code) {
-				const success = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				if (!success) {
-					setError({ type: "error", message: "Failed to finish authentication!"});
+			if (event.data?.type === "oauth-callback" && event.data?.code) {
+				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				setLoaderForLogin(false);
+				if (response instanceof AxiosError) {
+					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
+				} else {
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
+				setIsLoggedIn(true);
+				setCompletedStep1(true);
+				setExpandStep1(false);
+				setExpandStep2(true);
+				setCanViewContentForStep2(true);
+				await getOrganizations();
 			}
-			setIsLoggedIn(true);
-			setCompletedStep1(true);
-			setExpandStep1(false);
-			setExpandStep2(true);
-			setCanViewContentForStep2(true);
-			await getOrganizations();
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-	}, []);
+	}, [ originalUrl, getOrganizations ]);
 
 	useEffect(() => {
-		OAuthManager.checkValidity().then((status: boolean | undefined) => {
-			if (status) {
-				setLoggedInUser(OAuthManager.getUserDetails().username);
-				setLoaderForLogin(false);
-				getOrganizations();
+		const recheckValidity = async () => {
+			const status: boolean | AxiosError = await OAuthManager.checkValidity();
+			if (status instanceof AxiosError) {
+				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				return;
 			}
-		});
-	}, [isLoggedIn]);
+			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
+			await getOrganizations();
+		};
+		recheckValidity();
+	}, [ isLoggedIn, getOrganizations ]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
 			case 1: {
 				setLoaderForLogin(true);
 				try {
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError({ type: "error", message: "Couldn't login!"});
+					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 				}
 				break;
 			}
 			case 2: {
-				if (hostUrl?.gheServerUrl) {
-					window.open(hostUrl?.gheServerUrl);
-				}
+				analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
+				AP.navigator.go( "addonmodule", { moduleKey: "github-server-url-page" });
 				break;
 			}
 			default:
 		}
 	};
 
-	const logout = () => {
-		window.open("https://github.com/logout");
+	const onChangingOrg = (value: LabelType | null) => {
+		if(value) {
+			if (value?.isIPBlocked) {
+				setError(modifyError({ errorCode: "IP_BLOCKED" }, { orgLogin: value.label }, { onClearGitHubToken: clearGitHubToken }));
+				setOrgConnectionDisabled(true);
+			} else if(value?.requiresSsoLogin) {
+				setError(modifyError({ errorCode: "SSO_LOGIN" }, { orgLogin: value.label}, { onClearGitHubToken: clearGitHubToken }));
+				setOrgConnectionDisabled(true);
+			} else if (!value?.isAdmin) {
+				setOrgConnectionDisabled(true);
+			}else {
+				setSelectedOrg({
+					label: value.label,
+					value: parseInt(value.value)
+				});
+				setOrgConnectionDisabled(false);
+				setError(undefined);
+			}
+		}
+	};
+
+	const clearGitHubToken = () => {
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
@@ -210,28 +259,52 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		setError(undefined);
+	};
+
+	const logout = () => {
+		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+		clearGitHubToken();
+		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
+	};
+
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+		try {
+			setLoaderForOrgConnection(true);
+			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
+			const connected = await AppManager.connectOrg(gitHubInstallationId);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
+			if (connected instanceof AxiosError) {
+				setError(modifyError(connected, { }, { onClearGitHubToken: clearGitHubToken }));
+			} else {
+				navigate("/spa/connected");
+			}
+		} catch (e) {
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+		} finally {
+			setLoaderForOrgConnection(false);
+		}
 	};
 
 	const connectGitHubOrg = async () => {
 		if (selectedOrg?.value) {
-			setLoaderForOrgConnection(true);
-			const connected = await AppManager.connectOrg(selectedOrg?.value);
-			if (connected) {
-				navigate("/spa/connected");
-			} else {
-				setError({ type: "error", message: "Something went wrong and we couldn’t connect to GitHub, try again." });
-			}
-			setLoaderForOrgConnection(false);
+			await doCreateConnection(selectedOrg.value, "manual");
 		}
 	};
 
 	const installNewOrg = async () => {
 		try {
-			await AppManager.installNewApp(() => {
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
+			await AppManager.installNewApp(async (gitHubInstallationId: number | undefined) => {
+				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
 				getOrganizations();
+				if(gitHubInstallationId) {
+					await doCreateConnection(gitHubInstallationId, "auto");
+				}
 			});
 		} catch (e) {
-			setError({type: "error", message: "Couldn't install new organization"});
+			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
 
@@ -272,9 +345,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(true);
 										setSelectedOption(1);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/cloud.svg" alt=""/>
+									<img src="/public/assets/cloud.svg" alt=""/>
 									<span>GitHub Cloud</span>
 								</GitHubOption>
 								<GitHubOption
@@ -283,9 +357,10 @@ const ConfigSteps = () => {
 									onClick={() => {
 										setShowStep2(false);
 										setSelectedOption(2);
+										analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
 									}}
 								>
-									<img src="/spa-assets/server.svg" alt=""/>
+									<img src="/public/assets/server.svg" alt=""/>
 									<span>GitHub Enterprise Server</span>
 								</GitHubOption>
 							</GitHubOptionContainer>
@@ -302,6 +377,7 @@ const ConfigSteps = () => {
 								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 								<Button
 									iconAfter={<OpenIcon label="open" size="medium"/>}
+									aria-label="Authorize in GitHub"
 									appearance="primary"
 									onClick={authorize}
 								>
@@ -320,39 +396,52 @@ const ConfigSteps = () => {
 						expanded={expandStep2}
 						completed={completedStep2}
 					>
-						<>
-							<Paragraph>
-								Repositories from this organization will be available to all <br />
-								projects in <b>{hostUrl?.jiraHost}</b>.
-							</Paragraph>
+						{
+							loaderForOrgFetching ? <>
+								<Skeleton
+									width="100%"
+									height="24px"
+									borderRadius="5px"
+									isShimmering
+								/>
+							</> : (
+								noOrgsFound ?
+									<>
+										<NoOrgsParagraph>We couldn’t find any GitHub organizations that you’re an owner of.</NoOrgsParagraph>
+										<Button appearance="primary" aria-label="Install new Org" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
+									</> :
+									<>
+										<Paragraph>
+											Repositories from this organization will be available to all <br />
+											projects in <b>{hostUrl?.jiraHost}</b>.
+										</Paragraph>
 
-							<SelectDropdown
-								noOptionsMessage={() => <Button
-									appearance="link"
-									onClick={() => {
-										// 	TODO: add action for this
-										console.log("Clicked no orgs");
-									}}
-								>
-									Can't find an organization you're looking for?
-								</Button>}
-								options={organizations}
-								label="Select organization"
-								isLoading={loaderForOrgFetching}
-								onChange={(value) => {
-									setOrgConnectionDisabled(false);
-									setSelectedOrg(value);
-								}}
-								icon={<OfficeBuildingIcon label="org" size="medium" />}
-							/>
-							{
-								loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-									<ButtonContainer>
-										<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
-										<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
-									</ButtonContainer>
-							}
-						</>
+										<SelectDropdown
+											options={organizations}
+											label="Select organization"
+											isLoading={loaderForOrgFetching}
+											onChange={onChangingOrg}
+											icon={<OfficeBuildingIcon label="org" size="medium" />}
+										/>
+										<TooltipContainer>
+											<Tooltip
+												component={InlineDialog}
+												position="right-end"
+												content="Don’t see the organization you want to connect in the list above? You will need the role of an owner in GitHub your organization to do so. Please contact your company’s GitHub owner."
+											>
+												{(props) => <a {...props}>Can't find an organization you're looking for?</a>}
+											</Tooltip>
+										</TooltipContainer>
+										{
+											loaderForOrgConnection ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+												<ButtonContainer>
+													<Button appearance="primary" onClick={connectGitHubOrg} isDisabled={orgConnectionDisabled}>Connect GitHub organization</Button>
+													<Button appearance="subtle" onClick={installNewOrg}>Install to another GitHub organization</Button>
+												</ButtonContainer>
+										}
+									</>
+							)
+						}
 					</CollapsibleStep>
 				}
 			</ConfigContainer>

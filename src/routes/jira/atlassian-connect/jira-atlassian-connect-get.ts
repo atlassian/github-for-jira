@@ -264,6 +264,11 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
 	const isGitHubSecurityInJiraEnabled = await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost);
 
+	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
+	if (useNewSPAExperience) {
+		modules.postInstallPage.url = "/spa?from=postInstallPage";
+	}
+
 	res.status(200).json({
 		apiMigrations: {
 			gdpr: false,
