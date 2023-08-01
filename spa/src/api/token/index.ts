@@ -1,8 +1,7 @@
-import { clearGitHubToken, setGitHubToken, hasGitHubToken, getLastTokenGeneratedTime } from "../axiosInstance";
+import { clearGitHubToken, setGitHubToken, hasGitHubToken } from "../axiosInstance";
 
 export default {
 	hasGitHubToken,
 	clearGitHubToken,
 	setGitHubToken,
-	getLastTokenGeneratedTime,
 };

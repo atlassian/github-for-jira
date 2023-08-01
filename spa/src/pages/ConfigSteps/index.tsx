@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -138,9 +138,7 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const lastTokenGeneratedTime = OAuthManager.getLastTokenGeneratedTime();
 	const getOrganizations = useCallback(async () => {
-		console.log("fetch orgs", { lastTokenGeneratedTime });
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
@@ -167,7 +165,7 @@ const ConfigSteps = () => {
 				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
 			]);
 		}
-	}, [ lastTokenGeneratedTime ]);
+	}, []);
 
 	useEffect(() => {
 		getJiraHostUrls();
