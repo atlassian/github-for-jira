@@ -19,21 +19,16 @@ axiosRest.interceptors.request.use(async (config) => {
  * Only write operation is allowed
  */
 let gitHubToken: string | undefined = undefined;
-let lastTokenGeneratedTime: number | undefined = undefined;
 
 const clearGitHubToken = () => {
 	gitHubToken = undefined;
-	lastTokenGeneratedTime = new Date().getTime();
 };
 
 const setGitHubToken = (newToken: string) => {
 	gitHubToken = newToken;
-	lastTokenGeneratedTime = new Date().getTime();
 };
 
 const hasGitHubToken = () => !!gitHubToken;
-
-const getLastTokenGeneratedTime = () => lastTokenGeneratedTime;
 
 const axiosGitHub = axios.create({
 	timeout: TEN_SECONDS_IN_MS
@@ -59,5 +54,4 @@ export {
 	clearGitHubToken,
 	setGitHubToken,
 	hasGitHubToken,
-	getLastTokenGeneratedTime,
 };

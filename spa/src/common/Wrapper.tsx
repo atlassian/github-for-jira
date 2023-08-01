@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import styled from "@emotion/styled";
 import Button from "@atlaskit/button";
-import ArrowLeftIcon from "@atlaskit/icon/glyph/arrow-left";
+import HomeIcon from "@atlaskit/icon/glyph/home";
 import analyticsClient from "../analytics";
 
 const navHeight = 56;
@@ -27,7 +27,7 @@ export const Wrapper = (attr: {
 }) => {
 	return <WrapperOutterStyled>
 			<Button
-				iconBefore={<ArrowLeftIcon label="Back to home" size="medium" />}
+				iconBefore={<HomeIcon label="Back to home" size="medium" />}
 				appearance="subtle"
 				onClick={ navigateToHomePage }
 			>
