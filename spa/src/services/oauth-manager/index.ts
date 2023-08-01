@@ -56,6 +56,10 @@ function getUserDetails() {
 	};
 }
 
+function getLastTokenGeneratedTime() {
+	return Api.token.getLastTokenGeneratedTime();
+}
+
 function clear() {
 	Api.token.clearGitHubToken();
 	username = undefined;
@@ -68,5 +72,6 @@ export default {
 	finishOAuthFlow,
 	getUserDetails,
 	clear,
+	getLastTokenGeneratedTime,
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -138,7 +138,9 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const getOrganizations = async () => {
+	const lastTokenGeneratedTime = OAuthManager.getLastTokenGeneratedTime();
+	const getOrganizations = useCallback(async () => {
+		console.log("fetch orgs", { lastTokenGeneratedTime });
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
@@ -165,7 +167,7 @@ const ConfigSteps = () => {
 				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
 			]);
 		}
-	};
+	}, [ lastTokenGeneratedTime ]);
 
 	useEffect(() => {
 		getJiraHostUrls();
@@ -193,19 +195,21 @@ const ConfigSteps = () => {
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-	}, [ originalUrl ]);
+	}, [ originalUrl, getOrganizations ]);
 
 	useEffect(() => {
-		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
+		const recheckValidity = async () => {
+			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
 				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
-			} else {
-				setLoggedInUser(OAuthManager.getUserDetails().username);
-				setLoaderForLogin(false);
-				getOrganizations();
+				return;
 			}
-		});
-	}, [isLoggedIn]);
+			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
+			await getOrganizations();
+		};
+		recheckValidity();
+	}, [ isLoggedIn, getOrganizations ]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
