@@ -5,7 +5,7 @@
   "homepage": "/spa",
   "scripts": {
     "dev": "BROWSER=none WDS_SOCKET_HOST=localhost WDS_SOCKET_PORT=3000 react-app-rewired start",
-    "build": "CI=true tsc && react-app-rewired build",
+    "build": "CI=true yarn tsc && yarn react-app-rewired build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "jest"
   },
