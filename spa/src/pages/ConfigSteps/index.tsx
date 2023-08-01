@@ -24,7 +24,6 @@ type GitHubOptionType = {
 };
 type HostUrlType = {
 	jiraHost: string;
-	gheServerUrl: string;
 };
 type OrgDropdownType = {
 	label: string;
@@ -133,7 +132,6 @@ const ConfigSteps = () => {
 			const locationUrl = new URL(location);
 			setHostUrl({
 				jiraHost: locationUrl.origin,
-				gheServerUrl: locationUrl?.href.replace("/spa-index-page", "/github-server-url-page")
 			});
 		});
 	};
@@ -223,10 +221,8 @@ const ConfigSteps = () => {
 				break;
 			}
 			case 2: {
-				if (hostUrl?.gheServerUrl) {
-					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
-					window.open(hostUrl?.gheServerUrl);
-				}
+				analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
+				AP.navigator.go( "addonmodule", { moduleKey: "github-server-url-page" });
 				break;
 			}
 			default:
@@ -381,6 +377,7 @@ const ConfigSteps = () => {
 								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 								<Button
 									iconAfter={<OpenIcon label="open" size="medium"/>}
+									aria-label="Authorize in GitHub"
 									appearance="primary"
 									onClick={authorize}
 								>
@@ -411,7 +408,7 @@ const ConfigSteps = () => {
 								noOrgsFound ?
 									<>
 										<NoOrgsParagraph>We couldn’t find any GitHub organizations that you’re an owner of.</NoOrgsParagraph>
-										<Button appearance="primary" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
+										<Button appearance="primary" aria-label="Install new Org" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
 									</> :
 									<>
 										<Paragraph>

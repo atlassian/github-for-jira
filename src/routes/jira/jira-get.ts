@@ -12,6 +12,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface FailedConnection {
 	id: number;
@@ -160,6 +161,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
+	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
@@ -167,6 +169,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
+		useNewSPAExperience,
 		APP_URL: process.env.APP_URL,
 		csrfToken: req.csrfToken(),
 		nonce

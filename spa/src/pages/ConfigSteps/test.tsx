@@ -36,6 +36,10 @@ const UnAuthenticated = {
 	context: {
 		getContext: jest.fn(),
 		getToken: jest.fn()
+	},
+	navigator: {
+		go: jest.fn(),
+		reload: jest.fn()
 	}
 };
 window.open = jest.fn();
@@ -57,7 +61,7 @@ test("Connect GitHub Screen - Initial Loading of the page when not authenticated
 	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
 	expect(screen.queryByText("GitHub Enterprise Server")).toBeInTheDocument();
 	expect(screen.queryByText("Connect your GitHub organization to Jira")).toBeInTheDocument();
-	expect(screen.queryByRole("button")).toHaveTextContent("Authorize in GitHub");
+	expect(screen.queryByRole("button", { name: "Authorize in GitHub" })).toHaveTextContent("Authorize in GitHub");
 });
 
 test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authenticated", async () => {

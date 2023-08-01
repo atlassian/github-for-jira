@@ -3,7 +3,8 @@ type UIEventActionSubject =
 	| "authorizeTypeGitHubCloud" | "authorizeTypeGitHubEnt"
   | "startOAuthAuthorisation" | "switchGitHubAccount"
 	| "connectOrganisation" | "installToNewOrganisation"
-	| "checkBackfillStatus";
+	| "checkBackfillStatus"
+	| "dropExperienceViaBackButton";
 
 export type UIEventOpts = {
 	actionSubject: UIEventActionSubject,
