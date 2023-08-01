@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/no-explicit-any */
 import { processInstallation } from "./installation";
-import { removeInterceptor } from "nock";
+import nock, { removeInterceptor } from "nock";
 import { getLogger } from "config/logger";
 import { Hub } from "@sentry/types/dist/hub";
-import pullRequestList from "fixtures/api/pull-request-list.json";
-// import pullRequest from "fixtures/api/pull-request.json";
 import { GitHubServerApp } from "models/github-server-app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
@@ -13,7 +11,6 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { RepoSyncState } from "models/reposyncstate";
 import { getPullRequestTask } from "./pull-request";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
-import _ from "lodash";
 
 jest.mock("config/feature-flags");
 
@@ -28,48 +25,6 @@ describe("sync/pull-request", () => {
 			jiraHost
 		).mockResolvedValue(true);
 	});
-
-	// const reviewsPayload = [
-	// 	{
-	// 		id: 80,
-	// 		node_id: "MDE3OlB1bGxSZXF1ZXN0UmV2aWV3ODA=",
-	// 		user: {
-	// 			login: "test-pull-request-reviewer-login",
-	// 			id: 1,
-	// 			node_id: "MDQ6VXNlcjE=",
-	// 			avatar_url: "test-pull-request-reviewer-avatar",
-	// 			gravatar_id: "",
-	// 			url: "https://api.github.com/users/reviewer",
-	// 			html_url: "https://github.com/reviewer",
-	// 			followers_url: "https://api.github.com/users/reviewer/followers",
-	// 			following_url: "https://api.github.com/users/reviewer/following{/other_user}",
-	// 			gists_url: "https://api.github.com/users/reviewer/gists{/gist_id}",
-	// 			starred_url: "https://api.github.com/users/reviewer/starred{/owner}{/repo}",
-	// 			subscriptions_url: "https://api.github.com/users/reviewer/subscriptions",
-	// 			organizations_url: "https://api.github.com/users/reviewer/orgs",
-	// 			repos_url: "https://api.github.com/users/reviewer/repos",
-	// 			events_url: "https://api.github.com/users/reviewer/events{/privacy}",
-	// 			received_events_url: "https://api.github.com/users/reviewer/received_events",
-	// 			type: "User",
-	// 			site_admin: false
-	// 		},
-	// 		body: "Here is the body for the review.",
-	// 		state: "APPROVED",
-	// 		html_url: "https://github.com/integrations/test-repo-name/pull/1#pullrequestreview-80",
-	// 		pull_request_url: "https://api.github.com/repos/integrations/test-repo-name/pulls/1",
-	// 		_links: {
-	// 			html: {
-	// 				href: "https://github.com/integrations/test-repo-name/pull/1#pullrequestreview-80"
-	// 			},
-	// 			pull_request: {
-	// 				href: "https://api.github.com/repos/integrations/test-repo-name/pulls/1"
-	// 			}
-	// 		},
-	// 		submitted_at: "2019-11-17T17:43:43Z",
-	// 		commit_id: "ecdd80bb57125d7ba9641ffaa4d7d2c19d3f3091",
-	// 		author_association: "COLLABORATOR"
-	// 	}
-	// ];
 
 	const buildJiraPayload = (repoId: string, _times = 1) => {
 		const pr = {
@@ -120,13 +75,6 @@ describe("sync/pull-request", () => {
 			"repositories":
 				[
 					pr
-					// {
-					// 	"id": repoId,
-					// 	"name": "test-repo-name",
-					// 	"pullRequests": Array(times).fill(pr),
-					// 	"url": "test-repo-url",
-					// 	"updateSequenceId": 12345678
-					// }
 				],
 			"properties":
 				{
@@ -135,7 +83,7 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	describe.skip("cloud", () => {
+	describe("cloud", () => {
 
 		const PRS_INITIAL_CURSOR = 21;
 
@@ -154,7 +102,6 @@ describe("sync/pull-request", () => {
 		});
 
 		describe.each([
-			// ["[TES-15] Evernote Test", "use-the-force"]
 			["[TES-15] Evernote Test" , "use-the-force"]
 		])("PR Title: %p, PR Head Ref: %p", (title, head) => {
 			it("should sync to Jira when Pull Request Nodes have jira references", async () => {
@@ -338,7 +285,7 @@ describe("sync/pull-request", () => {
 		});
 	});
 
-	describe.skip("server", () => {
+	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
@@ -357,13 +304,9 @@ describe("sync/pull-request", () => {
 		});
 
 		it("should sync to Jira when Pull Request Nodes have jira references", async () => {
-			// const modifiedList = _.cloneDeep(pullRequestList);
-			// modifiedList[0].title = "[TES-15] Evernote Test";
-			// modifiedList[0].head.ref = "Evernote Test";
-			// gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID).persist();
-			gheApiNock
-				.post("/graphqlzzzz")
+			nock(global.gheUrl)
+				.post("/api/graphql")
 				.query(true)
 				.reply(200, {
 					data: {
@@ -396,7 +339,7 @@ describe("sync/pull-request", () => {
 												}
 											},
 											headRef: {
-												name: "Evernote Test",
+												name: "use-the-force",
 												repository: {
 													name: "test",
 													owner: {
@@ -446,12 +389,15 @@ describe("sync/pull-request", () => {
 		});
 	});
 
-
-	// TODO create pullRequestList with graphqql response then reuse this as is, prety easy
-	describe.skip("incremental backfill", () => {
+	describe("incremental backfill", () => {
 
 		let repoSyncState: RepoSyncState;
 		beforeEach(async () => {
+			when(booleanFlag).calledWith(
+				BooleanFlags.USE_NEW_PULL_ALGO,
+				jiraHost
+			).mockResolvedValue(true);
+
 			const dbState = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDeployments()
@@ -459,23 +405,83 @@ describe("sync/pull-request", () => {
 			repoSyncState = dbState.repoSyncState!;
 		});
 
-		it("should not miss pull request data when page contains older prs", async () => {
+		const pullRequestNode = (createdAt = "2018-05-04T14:06:56Z") => {
+			return {
+				state: "DECLINED",
+				number: 51,
+				url: "https://github.com/integrations/test/pull/51",
+				author: {
+					login: "test-pull-request-author-login",
+					email: "test-pull-request-author-login@noreply.user.github.com",
+					url: "test-pull-request-author-url",
+					avatarUrl: "test-pull-request-author-avatar"
+				},
+				comments: {
+					totalCount: 10
+				},
+				updatedAt: "2018-05-04T14:06:56Z",
+				createdAt,
+				title: "no issue Evernote Test",
+				baseRef: {
+					name: "devel",
+					repository: {
+						name: "test",
+						owner: {
+							login: "integrations"
+						}
+					}
+				},
+				headRef: {
+					name: "Evernote Test",
+					repository: {
+						name: "test",
+						owner: {
+							login: "integrations"
+						}
+					}
+				},
+				body: "",
+				reviews: {
+					nodes: [
+						{
+							submittedAt: "0",
+							state: "APPROVED",
+							author: {
 
-			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+							}
+						}
+					]
+				}
+			};
+		};
 
-			const twoPRs = [
-				_.cloneDeep(pullRequestList[0]),
-				_.cloneDeep(pullRequestList[0])
-			];
+		it("should fetch PRS within the target date range", async () => {
 
 			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
 			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
-			twoPRs[0].created_at = new Date().toISOString();
-			twoPRs[1].created_at = new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString();
 
+			const pullRequestNodeA = pullRequestNode(new Date().toISOString());
+			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString());
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
-				.get("/repos/integrations/test-repo-name/pulls?per_page=2&page=1&state=all&sort=created&direction=desc")
-				.reply(200, twoPRs);
+				.post("/graphql")
+				.query(true)
+				.reply(200, {
+					data: {
+						repository: {
+							pullRequests: {
+								edges: [
+									{
+										node: pullRequestNodeA
+									},
+									{
+										node: pullRequestNodeB
+									}
+								]
+							}
+						}
+					}
+				});
 
 			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 			const result = await getPullRequestTask(
@@ -498,14 +504,8 @@ describe("sync/pull-request", () => {
 					commitsFromDate: new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString()
 				}
 			);
-			expect(result).toEqual({
-				edges: [expect.objectContaining({
-					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
-				}), expect.objectContaining({
-					cursor: JSON.stringify({ perPage: 2, pageNo: 2 })
-				})],
-				jiraPayload: undefined
-			});
+
+			expect(result.edges?.length).toEqual(2);
 		});
 	});
 });
