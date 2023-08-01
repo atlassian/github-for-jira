@@ -20,7 +20,11 @@ type ErrorWithErrorCode = {
 
 const GENERIC_MESSAGE = "Something went wrong, please try again later.";
 
-export const modifyError = (error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode, context: {
+export const modifyError = (
+  error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode, 
+  context: { orgsLogin?: string; },
+  callbacks: { ... }
+}
 	orgLogin?: string;
 }, callbacks: {
 	onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void
