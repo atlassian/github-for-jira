@@ -379,6 +379,7 @@ const ConfigSteps = () => {
 								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 								<Button
 									iconAfter={<OpenIcon label="open" size="medium"/>}
+									aria-label="Authorize in GitHub"
 									appearance="primary"
 									onClick={authorize}
 								>
@@ -409,7 +410,7 @@ const ConfigSteps = () => {
 								noOrgsFound ?
 									<>
 										<NoOrgsParagraph>We couldn’t find any GitHub organizations that you’re an owner of.</NoOrgsParagraph>
-										<Button appearance="primary" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
+										<Button appearance="primary" aria-label="Install new Org" onClick={installNewOrg}>Try installing to your GitHub organization</Button>
 									</> :
 									<>
 										<Paragraph>
