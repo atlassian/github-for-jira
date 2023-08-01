@@ -71,7 +71,6 @@ export default {
 	authenticateInGitHub,
 	finishOAuthFlow,
 	getUserDetails,
-	clear,
-	getLastTokenGeneratedTime,
+	clear
 };
 
