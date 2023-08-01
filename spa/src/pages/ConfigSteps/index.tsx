@@ -165,7 +165,6 @@ const ConfigSteps = () => {
 		}
 	}, []);
 
-	/*eslint-disable react-hooks/exhaustive-deps*/
 	useEffect(() => {
 		getJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
@@ -194,7 +193,6 @@ const ConfigSteps = () => {
 		};
 	}, [ originalUrl, getOrganizations ]);
 
-	/*eslint-disable react-hooks/exhaustive-deps*/
 	useEffect(() => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
