@@ -26,6 +26,7 @@ export type GitHubInstallationType = {
 	app_id: number;
 	requiresSsoLogin: boolean;
 	isIPBlocked: boolean;
+	isAdmin: boolean;
 	id: number;
 };
 

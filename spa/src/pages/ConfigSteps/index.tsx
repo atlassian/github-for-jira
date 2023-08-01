@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -138,31 +138,34 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const getOrganizations = async () => {
+	const getOrganizations = useCallback(async () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			setError(modifyError(response));
+			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 		} else {
 			setNoOrgsFound(response?.orgs.length === 0);
 			const totalOrgs = response?.orgs.map(org => ({
 				label: org.account.login,
 				value: String(org.id),
 				requiresSsoLogin: org.requiresSsoLogin,
-				isIPBlocked: org.isIPBlocked
+				isIPBlocked: org.isIPBlocked,
+				isAdmin: org.isAdmin
 			}));
 
 			const orgsWithSSOLogin = totalOrgs?.filter(org => org.requiresSsoLogin);
 			const orgsWithBlockedIp = totalOrgs?.filter(org => org.isIPBlocked);
-			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked);
+			const orgsLackAdmin = totalOrgs?.filter(org => !org.isAdmin);
+			const enabledOrgs = totalOrgs?.filter(org => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin);
 			setOrganizations([
 				{ options: enabledOrgs },
+				{ label: "Lack Admin Permission", options: orgsLackAdmin },
 				{ label: "Requires SSO Login", options: orgsWithSSOLogin },
 				{ label: "GitHub IP Blocked", options: orgsWithBlockedIp },
 			]);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		getJiraHostUrls();
@@ -172,37 +175,39 @@ const ConfigSteps = () => {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					setError(modifyError(response));
+					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
+				setIsLoggedIn(true);
+				setCompletedStep1(true);
+				setExpandStep1(false);
+				setExpandStep2(true);
+				setCanViewContentForStep2(true);
+				await getOrganizations();
 			}
-			setIsLoggedIn(true);
-			setCompletedStep1(true);
-			setExpandStep1(false);
-			setExpandStep2(true);
-			setCanViewContentForStep2(true);
-			await getOrganizations();
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-	}, [ originalUrl ]);
+	}, [ originalUrl, getOrganizations ]);
 
 	useEffect(() => {
-		OAuthManager.checkValidity().then((status: boolean | AxiosError) => {
+		const recheckValidity = async () => {
+			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				setError(modifyError(status));
-			} else {
-				setLoggedInUser(OAuthManager.getUserDetails().username);
-				setLoaderForLogin(false);
-				getOrganizations();
+				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				return;
 			}
-		});
-	}, [isLoggedIn]);
+			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
+			await getOrganizations();
+		};
+		recheckValidity();
+	}, [ isLoggedIn, getOrganizations ]);
 
 	const authorize = async () => {
 		switch (selectedOption) {
@@ -213,7 +218,7 @@ const ConfigSteps = () => {
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError(modifyError(e as AxiosError));
+					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 				}
 				break;
 			}
@@ -231,12 +236,14 @@ const ConfigSteps = () => {
 	const onChangingOrg = (value: LabelType | null) => {
 		if(value) {
 			if (value?.isIPBlocked) {
-				setError(modifyError({ errorCode: "IP_BLOCKED" }));
+				setError(modifyError({ errorCode: "IP_BLOCKED" }, { orgLogin: value.label }, { onClearGitHubToken: clearGitHubToken }));
 				setOrgConnectionDisabled(true);
 			} else if(value?.requiresSsoLogin) {
-				setError(modifyError({ errorCode: "SSO_LOGIN" }));
+				setError(modifyError({ errorCode: "SSO_LOGIN" }, { orgLogin: value.label}, { onClearGitHubToken: clearGitHubToken }));
 				setOrgConnectionDisabled(true);
-			} else {
+			} else if (!value?.isAdmin) {
+				setOrgConnectionDisabled(true);
+			}else {
 				setSelectedOrg({
 					label: value.label,
 					value: parseInt(value.value)
@@ -247,8 +254,7 @@ const ConfigSteps = () => {
 		}
 	};
 
-	const logout = () => {
-		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+	const clearGitHubToken = () => {
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
@@ -257,6 +263,12 @@ const ConfigSteps = () => {
 		setExpandStep1(true);
 		setExpandStep2(false);
 		setLoggedInUser("");
+		setError(undefined);
+	};
+
+	const logout = () => {
+		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
@@ -267,7 +279,7 @@ const ConfigSteps = () => {
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected instanceof AxiosError) {
-				setError(modifyError(connected));
+				setError(modifyError(connected, { }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -295,7 +307,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			setError(modifyError(e as AxiosError));
+			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 		}
 	};
