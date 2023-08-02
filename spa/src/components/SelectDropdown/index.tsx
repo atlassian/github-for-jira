@@ -14,6 +14,7 @@ export type LabelType = {
 	value: string;
 	requiresSsoLogin?: boolean;
 	isIPBlocked?: boolean;
+	isAdmin?: boolean;
 };
 
 const SelectDropdownContainer = styled.div`

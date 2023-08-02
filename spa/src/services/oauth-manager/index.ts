@@ -67,6 +67,6 @@ export default {
 	authenticateInGitHub,
 	finishOAuthFlow,
 	getUserDetails,
-	clear,
+	clear
 };
 

@@ -44,12 +44,7 @@ const Connected = () => {
 
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
-		AP.navigator.go(
-			"addonmodule",
-			{
-				moduleKey: "github-post-install-page"
-			}
-		);
+		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
 	};
 
 	return (<Wrapper>

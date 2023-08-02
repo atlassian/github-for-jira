@@ -105,6 +105,7 @@ const StartConnection = () => {
 				<Button
 					iconAfter={<ArrowRightIcon label="continue" size="medium"/>}
 					appearance="primary"
+					aria-label="continue"
 					onClick={() => {
 						analyticsClient.sendUIEvent({ actionSubject: "startToConnect", action: "clicked" });
 						navigate("steps");
