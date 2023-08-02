@@ -69,10 +69,20 @@ const InlineDialogContent = () => (
 	</>
 );
 
+const getAnalyticsSourceFrom = (): string => {
+	try {
+		const url = new URL(window.location.href);
+		return url.searchParams.get("from") || "";
+	} catch (_e) {
+		//do nothing
+		return "";
+	}
+};
+
 const StartConnection = () => {
 	const navigate = useNavigate();
 
-	useEffectScreenEvent("StartConnectionEntryScreen");
+	useEffectScreenEvent("StartConnectionEntryScreen", { from: getAnalyticsSourceFrom() });
 
 	return (
 		<Wrapper>

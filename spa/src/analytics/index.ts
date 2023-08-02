@@ -8,12 +8,11 @@ const analyticsClient: AnalyticClient = loadSoxAnalyticClient() || noopAnalytics
 
 export default analyticsClient;
 
-export const useEffectScreenEvent = (name: ScreenNames) => {
+export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<string, string | number>) => {
 	useEffect(() => {
 		analyticsClient.sendScreenEvent({
 			name,
-			attributes: {
-			}
+			attributes
 		});
 	}, [ name ]);
 };
