@@ -79,10 +79,12 @@ const getAnalyticsSourceFrom = (): string => {
 	}
 };
 
+const screenAnalyticsAttributes = { from: getAnalyticsSourceFrom() };
+
 const StartConnection = () => {
 	const navigate = useNavigate();
 
-	useEffectScreenEvent("StartConnectionEntryScreen", { from: getAnalyticsSourceFrom() });
+	useEffectScreenEvent("StartConnectionEntryScreen", screenAnalyticsAttributes);
 
 	return (
 		<Wrapper>

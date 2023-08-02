@@ -9,13 +9,18 @@ const analyticsClient: AnalyticClient = loadSoxAnalyticClient() || noopAnalytics
 export default analyticsClient;
 
 export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<string, string | number>) => {
+
+	//stringify so that in the useEffect dependency array it is comparing real content, instead of object instance refence.
+	//Otherwise it may cause unnecessary fireing to the analytics backend when attribute object instance changed, skewing our analytics dashboard
+	const jsonStrAttr = JSON.stringify(attributes || {});
+
 	useEffect(() => {
 		analyticsClient.sendScreenEvent({
 			name,
 			attributes: {
-				...attributes
+				...JSON.parse(jsonStrAttr)
 			}
 		});
-	}, [ name ]);
+	}, [ name, jsonStrAttr]);
 };
 
