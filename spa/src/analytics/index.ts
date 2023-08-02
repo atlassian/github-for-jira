@@ -12,7 +12,9 @@ export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<stri
 	useEffect(() => {
 		analyticsClient.sendScreenEvent({
 			name,
-			attributes
+			attributes: {
+				...attributes
+			}
 		});
 	}, [ name ]);
 };
