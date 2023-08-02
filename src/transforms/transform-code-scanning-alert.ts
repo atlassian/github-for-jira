@@ -1,10 +1,18 @@
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { JiraRemoteLinkBulkSubmitData, JiraRemoteLinkStatusAppearance } from "interfaces/jira";
+import {
+	JiraRemoteLinkBulkSubmitData,
+	JiraRemoteLinkStatusAppearance,
+	JiraVulnerabilityBulkSubmitData
+} from "interfaces/jira";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { createInstallationClient } from "../util/get-github-client-config";
 import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
+import {
+	transformGitHubSeverityToJiraSeverity,
+	transformGitHubStateToJiraStatus
+} from "~/src/transforms/util/github-security-alerts";
 
 const MAX_STRING_LENGTH = 255;
 
@@ -98,6 +106,42 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 				associationType: "issueKeys",
 				values: issueKeys
 			}]
+		}]
+	};
+};
+
+export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | undefined> => {
+	const { alert, repository } = context.payload;
+
+
+	const metrics = {
+		trigger: "webhook",
+		subTrigger: "code_scanning_alert"
+	};
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
+
+	const handleUnmapped = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
+
+	return {
+		vulnerabilities: [{
+			schemaVersion: "1.0",
+			id: `d-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
+			updateSequenceNumber: Date.now(),
+			containerId: transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl),
+			displayName: alert.rule.name,
+			description: alert.rule.full_description || alert.rule.description,
+			url: alert.html_url,
+			type: "sast",
+			introducedDate: alert.created_at,
+			lastUpdated: alert.dismissed_at || alert.fixed_at || alert.updated_at || alert.created_at,
+			severity: {
+				level: transformGitHubSeverityToJiraSeverity(alert.rule.security_severity_level, handleUnmapped)
+			},
+			identifiers: [],
+			status: transformGitHubStateToJiraStatus(alert.state, handleUnmapped),
+			additionalInfo: {
+				content: alert.tool.name
+			}
 		}]
 	};
 };
