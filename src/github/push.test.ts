@@ -6,8 +6,11 @@ import { enqueuePush } from "../transforms/push";
 import { envVars } from "config/env";
 import { Subscription } from "models/subscription";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
+import { createInstallationClient } from "utils/get-github-client-config";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 
 jest.mock("../transforms/push");
+jest.mock("utils/get-github-client-config");
 
 const GHES_GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -19,6 +22,7 @@ describe("PushWebhookHandler", ()=>{
 	let jiraClient: any;
 	let util: any;
 	let subscription: Subscription;
+	let mockedInstllationClient: jest.Mock<GitHubInstallationClient>;
 	beforeEach(() => {
 		jiraClient = { baseURL: jiraHost };
 		util = null;
@@ -27,6 +31,10 @@ describe("PushWebhookHandler", ()=>{
 			jiraHost: jiraHost,
 			jiraClientKey: "client-key"
 		});
+		mockedInstllationClient = {
+			getRepositoryFile: jest.fn()
+		} as any;
+		jest.mocked(createInstallationClient).mockResolvedValue(mockedInstllationClient as any as GitHubInstallationClient);
 	});
 	describe("GitHub Cloud", ()=>{
 		it("should be called with cloud GitHubAppConfig", async ()=>{
@@ -62,7 +70,10 @@ describe("PushWebhookHandler", ()=>{
 			},
 			webhookId: "aaa-bbb-ccc",
 			webhookReceived: Date.now(),
-			repository: {} as GitHubRepository, //force it as not required in test
+			repository: {
+				owner: { name: "test-org" },
+				name: "test-repo"
+			} as GitHubRepository, //force it as not required in test
 			commits: [{
 				id: "commit-1",
 				message: "ARC-1 some commit message",
@@ -94,4 +105,3 @@ describe("PushWebhookHandler", ()=>{
 		});
 	};
 });
-
