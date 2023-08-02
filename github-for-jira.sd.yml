@@ -72,6 +72,8 @@ lifecycleEvents:
   timeout: 30
 
 resources:
+  - type: slauth-gateway # needed for "atlas slauth curl" calls, see https://hello.atlassian.net/wiki/spaces/MICROS/pages/1463433257/Network+Segmentation+for+Micros+EC2+compute#Add-a-slauth-gateway-resource
+    name: ingress
   - type: redisx
     name: cache
     attributes:
