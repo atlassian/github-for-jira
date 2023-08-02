@@ -183,7 +183,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
 		jiraHost,
-		useNewSPAExperience,
+		pageExperience: useNewSPAExperience ? "spa" : "",
 		connectedOrgCountCloudCount: successfulCloudConnections.length,
 		connectedOrgCountServerCount: successfulServerConnections,
 		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,
