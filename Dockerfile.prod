@@ -1,4 +1,4 @@
-FROM node:14.21-alpine3.16 as build
+FROM node:18-alpine3.18 as build
 
 # adding python for node-gyp
 RUN apk add g++ make python3
@@ -21,7 +21,7 @@ RUN yarn list
 # Building TypeScript files
 RUN yarn run build:release
 
-FROM node:14.21-alpine3.16
+FROM node:18-alpine3.18 as build
 
 # adding to solve vuln
 RUN apk add --update --upgrade busybox
