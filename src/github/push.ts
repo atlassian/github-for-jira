@@ -60,7 +60,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		// TODO: this call must be updated to support GitHub Server events
 		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "webhook", subTrigger: "push" }, context.log, gitHubAppId);
 		const { name, owner } = context.payload.repository;
-		const hasJenkinsfile = await checkForJenkinsfileInGitHubRepo(gitHubInstallationClient, owner.name, name);
+		const hasJenkinsfile = await checkForJenkinsfileInGitHubRepo(gitHubInstallationClient, owner.login, name);
 		hasJenkinsfile && context.log.info({ jiraHost }, "Has Jenkinsfile");
 		await updateRepoConfig(subscription, payload.repository.id, gitHubInstallationClient, context.log, modifiedFiles);
 	} else {

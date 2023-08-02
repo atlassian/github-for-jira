@@ -510,6 +510,8 @@ describe("Push Webhook", () => {
 			});
 
 			it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
+
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 				githubNock
