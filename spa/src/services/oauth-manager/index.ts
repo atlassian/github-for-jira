@@ -1,5 +1,6 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
+import { popup } from "../../utils";
 
 const STATE_KEY = "oauth-localStorage-state";
 
@@ -25,7 +26,7 @@ async function authenticateInGitHub(): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		window.localStorage.setItem(STATE_KEY, res.data.state);
-		window.open(res.data.redirectUrl, "_blank", "popup,width=400,height=600");
+		popup(res.data.redirectUrl, { width: 400, height: 600 });
 	}
 }
 

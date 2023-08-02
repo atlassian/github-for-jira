@@ -17,6 +17,7 @@ import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
+import { popup } from "../../utils";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -123,7 +124,6 @@ const ConfigSteps = () => {
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
-	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
@@ -171,7 +171,6 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
 					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
@@ -201,7 +200,6 @@ const ConfigSteps = () => {
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
-			setLoaderForLogin(false);
 			await getOrganizations();
 		};
 		recheckValidity();
@@ -210,12 +208,10 @@ const ConfigSteps = () => {
 	const authorize = async () => {
 		switch (selectedOption) {
 			case 1: {
-				setLoaderForLogin(true);
 				try {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
-					setLoaderForLogin(false);
 					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 				}
 				break;
@@ -254,7 +250,6 @@ const ConfigSteps = () => {
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
-		setLoaderForLogin(false);
 		setCanViewContentForStep2(false);
 		setExpandStep1(true);
 		setExpandStep2(false);
@@ -263,7 +258,8 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+
+		popup("https://github.com/logout", { width: 400, height: 600 });
 		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
@@ -325,14 +321,7 @@ const ConfigSteps = () => {
 					{
 						isLoggedIn ? <>
 							{
-								loaderForLogin ? <>
-									<Skeleton
-										width="100%"
-										height="24px"
-										borderRadius="5px"
-										isShimmering
-									/>
-								</> : <LoggedInContent>
+								<LoggedInContent>
 									<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
 									<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
 								</LoggedInContent>
@@ -373,17 +362,14 @@ const ConfigSteps = () => {
 									{(props) => <a {...props}>How do I check my GitHub product?</a>}
 								</Tooltip>
 							</TooltipContainer>
-							{
-								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-								<Button
-									iconAfter={<OpenIcon label="open" size="medium"/>}
-									aria-label="Authorize in GitHub"
-									appearance="primary"
-									onClick={authorize}
-								>
-									Authorize in GitHub
-								</Button>
-							}
+							<Button
+								iconAfter={<OpenIcon label="open" size="medium"/>}
+								aria-label="Authorize in GitHub"
+								appearance="primary"
+								onClick={authorize}
+							>
+								Authorize in GitHub
+							</Button>
 						</>
 					}
 				</CollapsibleStep>
