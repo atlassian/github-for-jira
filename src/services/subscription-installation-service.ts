@@ -107,8 +107,12 @@ export const verifyAdminPermsAndFinishInstallation =
 			log.info({ subscriptionId: subscription.id }, "Subscription was created");
 
 			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
-				await submitSecurityWorkspaceToLink(installation, subscription, log);
-				log.info({ subscriptionId: subscription.id }, "Linked security workspace");
+				try {
+					await submitSecurityWorkspaceToLink(installation, subscription, log);
+					log.info({ subscriptionId: subscription.id }, "Linked security workspace");
+				} catch (err) {
+					log.warn({ err }, "Failed to submit security workspace to Jira");
+				}
 			}
 
 			await Promise.all(
@@ -146,18 +150,11 @@ export const verifyAdminPermsAndFinishInstallation =
 		}
 	};
 
-const submitSecurityWorkspaceToLink = async (
+export const submitSecurityWorkspaceToLink = async (
 	installation: Installation,
 	subscription: Subscription,
 	logger: Logger
 ) => {
-
-	try {
-		const jiraClient = await JiraClient.getNewClient(installation, logger);
-		await jiraClient.linkedWorkspace(subscription.id);
-
-	} catch (err) {
-		logger.warn({ err }, "Failed to submit security workspace to Jira");
-	}
-
+	const jiraClient = await JiraClient.getNewClient(installation, logger);
+	return await jiraClient.linkedWorkspace(subscription.id);
 };
