@@ -10,6 +10,7 @@ export function popup (url: string, opts: { width: number, height: number }) {
 
 //https://stackoverflow.com/a/4682246
 function popup_params(width: number, height: number) {
+	try {
     const a = typeof window.screenX != "undefined" ? window.screenX : window.screenLeft;
     const i = typeof window.screenY != "undefined" ? window.screenY : window.screenTop;
     const g = typeof window.outerWidth!="undefined" ? window.outerWidth : document.documentElement.clientWidth;
@@ -18,4 +19,7 @@ function popup_params(width: number, height: number) {
     const left = h + ((g - width) / 2);
     const top = i + ((f-height) / 2.5);
     return "width=" + width + ",height=" + height + ",left=" + left + ",top=" + top + ",scrollbars=1";
+	} catch (_e) {
+		return "";
+	}
 }
