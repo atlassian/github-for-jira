@@ -1,5 +1,5 @@
 import Api from "../api";
-import { getJiraJWT } from "../utils";
+import { getJiraJWT, reportError } from "../utils";
 
 export type UserContext = {
 	tenantId: string;
@@ -26,7 +26,7 @@ export const getUserContext = async (): Promise<UserContext | undefined> => {
 		};
 
 	} catch (e) {
-		console.error("fail fetching user context", e);
+		reportError(e);
 		return undefined;
 	}
 

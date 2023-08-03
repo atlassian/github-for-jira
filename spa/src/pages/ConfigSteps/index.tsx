@@ -17,7 +17,7 @@ import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
-import { popup } from "../../utils";
+import { popup, reportError } from "../../utils";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -218,6 +218,7 @@ const ConfigSteps = () => {
 				} catch (e) {
 					setLoaderForLogin(false);
 					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
+					reportError(e);
 				}
 				break;
 			}
@@ -283,6 +284,7 @@ const ConfigSteps = () => {
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+			reportError(e);
 		} finally {
 			setLoaderForOrgConnection(false);
 		}
@@ -307,6 +309,7 @@ const ConfigSteps = () => {
 		} catch (e) {
 			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
+			reportError(e);
 		}
 	};
 
