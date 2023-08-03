@@ -10,14 +10,13 @@ export function popup (url: string, opts: { width: number, height: number }) {
 	return window.open(url, "_blank", `popup,${popup_params(opts.width, opts.height)}`);
 }
 
-export function reportError(err: Error) {
+export function reportError(err: unknown) {
 	try {
 		Sentry.captureException(err);
 	} catch (_) {
 		//donothing
 	}
 }
-
 
 //https://stackoverflow.com/a/4682246
 function popup_params(width: number, height: number) {
@@ -32,6 +31,7 @@ function popup_params(width: number, height: number) {
     return "width=" + width + ",height=" + height + ",left=" + left + ",top=" + top + ",scrollbars=1";
 	} catch (e) {
 		reportError(e);
+		return "";
 	}
 }
 
