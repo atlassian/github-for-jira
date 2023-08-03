@@ -124,6 +124,7 @@ const ConfigSteps = () => {
 
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
+	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
@@ -171,6 +172,7 @@ const ConfigSteps = () => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
 					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
@@ -200,6 +202,7 @@ const ConfigSteps = () => {
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
 			await getOrganizations();
 		};
 		recheckValidity();
@@ -208,11 +211,13 @@ const ConfigSteps = () => {
 	const authorize = async () => {
 		switch (selectedOption) {
 			case 1: {
+				setLoaderForLogin(true);
 				try {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
 					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
+					setLoaderForLogin(false);
 				}
 				break;
 			}
@@ -250,6 +255,7 @@ const ConfigSteps = () => {
 		OAuthManager.clear();
 		setIsLoggedIn(false);
 		setCompletedStep1(false);
+		setLoaderForLogin(false);
 		setCanViewContentForStep2(false);
 		setExpandStep1(true);
 		setExpandStep2(false);
@@ -321,7 +327,14 @@ const ConfigSteps = () => {
 					{
 						isLoggedIn ? <>
 							{
-								<LoggedInContent>
+								loaderForLogin ? <>
+										<Skeleton
+											width="100%"
+											height="24px"
+											borderRadius="5px"
+											isShimmering
+										/>
+									</> : <LoggedInContent>
 									<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
 									<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
 								</LoggedInContent>
@@ -362,14 +375,17 @@ const ConfigSteps = () => {
 									{(props) => <a {...props}>How do I check my GitHub product?</a>}
 								</Tooltip>
 							</TooltipContainer>
-							<Button
-								iconAfter={<OpenIcon label="open" size="medium"/>}
-								aria-label="Authorize in GitHub"
-								appearance="primary"
-								onClick={authorize}
-							>
-								Authorize in GitHub
-							</Button>
+							{
+								loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+								<Button
+									iconAfter={<OpenIcon label="open" size="medium"/>}
+									aria-label="Authorize in GitHub"
+									appearance="primary"
+									onClick={authorize}
+								>
+									Authorize in GitHub
+								</Button>
+							}
 						</>
 					}
 				</CollapsibleStep>
