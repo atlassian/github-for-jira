@@ -110,7 +110,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	};
 };
 
-export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | undefined> => {
+export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
 	const { alert, repository } = context.payload;
 
 
@@ -125,7 +125,7 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
+			id: `c-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl),
 			displayName: alert.rule.name,

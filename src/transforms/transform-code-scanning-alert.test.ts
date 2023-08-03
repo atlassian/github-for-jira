@@ -185,7 +185,7 @@ describe("code_scanning_alert transform", () => {
 			  "containerId": "119484675",
 			  "description": "Hard-coding credentials in source code may enable an attacker to gain unauthorized access.",
 			  "displayName": "js/hardcoded-credentials",
-			  "id": "d-119484675-2",
+			  "id": "c-119484675-2",
 			  "identifiers": Array [],
 			  "introducedDate": "2023-08-01T00:25:22Z",
 			  "lastUpdated": "2023-08-01T00:25:22Z",
