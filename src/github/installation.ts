@@ -22,6 +22,7 @@ export const installationWebhookHandler = async (
 	}
 	const {
 		action,
+		log: logger,
 		payload: {
 			installation: {
 				permissions
@@ -33,11 +34,6 @@ export const installationWebhookHandler = async (
 	} = context;
 
 	const jiraHost = jiraClient.baseURL;
-
-	const logger = context.log.child({
-		gitHubInstallationId,
-		jiraHost
-	});
 
 	const installation = await Installation.getForHost(jiraHost);
 	if (!installation) {
@@ -92,9 +88,7 @@ const hasSecurityPermissions = (permissions: InstallationEvent["installation"]["
 
 const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
 	try {
-		if (subscription) {
-			await subscription.update({ isSecurityPermissionsAccepted: true });
-		}
+		await subscription.update({ isSecurityPermissionsAccepted: true });
 	} catch (err) {
 		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
 	}
