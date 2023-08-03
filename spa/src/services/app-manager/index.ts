@@ -1,7 +1,7 @@
 import Api from "../../api";
 import { OrganizationsResponse } from "rest-interfaces";
 import { AxiosError } from "axios";
-import { popup } from "../../utils";
+import { popup, reportError } from "../../utils";
 
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
@@ -12,6 +12,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
 	} catch (e) {
+		reportError(e);
 		return e as AxiosError;
 	}
 }
@@ -23,7 +24,7 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 		const response = await Api.orgs.connectOrganization(orgId);
 		return response.status === 200;
 	} catch (e) {
-		console.error(e, "Failed to fetch organizations");
+		reportError(e);
 		return e as AxiosError;
 	}
 }
@@ -51,6 +52,8 @@ async function installNewApp(onFinish: (gitHubInstallationId: number | undefined
 			try {
 				document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure";
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
+			} catch (e) {
+				reportError(e);
 			} finally {
 				clearInterval(hdlWinInstall);
 			}

@@ -1,6 +1,6 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
-import { popup } from "../../utils";
+import { popup, reportError } from "../../utils";
 
 const STATE_KEY = "oauth-localStorage-state";
 
@@ -16,8 +16,8 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 		email = res.data.email;
 
 		return res.status === 200;
-	}catch (e) {
-		console.error(e, "Failed to check validity");
+	} catch (e) {
+		reportError(e);
 		return e as AxiosError;
 	}
 }
@@ -46,6 +46,7 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			return false;
 		}
 	} catch (e) {
+		reportError(e);
 		return e as AxiosError;
 	}
 }

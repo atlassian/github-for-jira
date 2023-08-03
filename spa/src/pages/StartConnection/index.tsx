@@ -9,6 +9,7 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
+import { reportError } from "../../utils";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -73,8 +74,8 @@ const getAnalyticsSourceFrom = (): string => {
 	try {
 		const url = new URL(window.location.href);
 		return url.searchParams.get("from") || "";
-	} catch (_e) {
-		//do nothing
+	} catch (e) {
+		reportError(e);
 		return "";
 	}
 };
