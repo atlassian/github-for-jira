@@ -7,6 +7,10 @@ import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const codeScanningAlertWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+	await Promise.all([handleRemoteLinks(context, jiraClient, gitHubInstallationId), handleSecurityVulnerability(context, jiraClient, gitHubInstallationId)]);
+};
+
+export const handleRemoteLinks = async (context: WebhookContext, jiraClient, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
@@ -15,7 +19,7 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 	const jiraPayload = await transformCodeScanningAlert(context, gitHubInstallationId, jiraClient.baseUrl);
 
 	if (!jiraPayload) {
-		context.log.info({ noop: "no_jira_payload_code_scanning_alert" }, "Halting further execution for code scanning alert since jiraPayload is empty");
+		context.log.info({ noop: "no_jira_payload_code_scanning_alert" }, "Halting further execution for code scanning alert since remote link payload is empty");
 		return;
 	}
 
@@ -34,7 +38,7 @@ export const codeScanningAlertWebhookHandler = async (context: WebhookContext, j
 	);
 };
 
-export const codeScanningAlertSecurityWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
+export const handleSecurityVulnerability = async (context: WebhookContext, jiraClient, gitHubInstallationId: number): Promise<void> => {
 	context.log = context.log.child({
 		gitHubInstallationId,
 		jiraHost: jiraClient.baseURL
@@ -47,7 +51,7 @@ export const codeScanningAlertSecurityWebhookHandler = async (context: WebhookCo
 	const jiraPayload = await transformCodeScanningAlertToJiraSecurity(context, gitHubInstallationId, jiraClient.baseURL);
 
 	if (!jiraPayload) {
-		context.log.info({ noop: "no_jira_security_payload_code_scanning_alert" }, "Halting further execution for code scanning alert since jiraPayload is empty");
+		context.log.info({ noop: "no_jira_security_payload_code_scanning_alert" }, "Halting further execution for code scanning alert since security payload is empty");
 		return;
 	}
 

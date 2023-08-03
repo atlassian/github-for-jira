@@ -58,7 +58,7 @@ const transformStatusToAppearance = (status: string, context: WebhookContext): J
 	}
 };
 
-export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkBulkSubmitData | undefined> => {
+export const transformCodeScanningAlert = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraRemoteLinkBulkSubmitData | null> => {
 	const { action, alert, ref, repository } = context.payload;
 
 	const metrics = {
@@ -71,7 +71,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	const entityTitles: string[] = [];
 	if (action === "closed_by_user" || action === "reopened_by_user") {
 		if (!alert.instances?.length) {
-			return undefined;
+			return null;
 		}
 		// These are manual operations done by users and are not associated to a specific Issue.
 		// The webhook contains ALL instances of this alert, so we need to grab the ref from each instance.
@@ -85,7 +85,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 
 	const issueKeys = entityTitles.flatMap((entityTitle) => jiraIssueKeyParser(entityTitle) ?? []);
 	if (!issueKeys.length) {
-		return undefined;
+		return null;
 	}
 
 	return {
@@ -110,9 +110,13 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	};
 };
 
-export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
+export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | null> => {
 	const { alert, repository } = context.payload;
 
+	if (!alert.most_recent_instance?.ref?.startsWith("refs/heads")) {
+		context.log.info("Skipping code scanning alert detected on a pull request.");
+		return null;
+	}
 
 	const metrics = {
 		trigger: "webhook",

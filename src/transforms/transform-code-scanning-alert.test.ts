@@ -4,6 +4,7 @@ import {
 } from "./transform-code-scanning-alert";
 import codeScanningPayload from "./../../test/fixtures/api/code-scanning-alert.json";
 import codeScanningCreatedPayload from "./../../test/fixtures/api/code-scanning-alert-created.json";
+import codeScanningCreatedPrPayload from "./../../test/fixtures/api/code-scanning-alert-created-pr.json";
 import codeScanningFixedPayload from "./../../test/fixtures/api/code-scanning-alert-fixed.json";
 import codeScanningClosedByUserPayload from "./../../test/fixtures/api/code-scanning-alert-closed-by-user.json";
 import { getLogger } from "config/logger";
@@ -244,6 +245,15 @@ describe("code_scanning_alert transform", () => {
 			expect(result?.vulnerabilities[0].lastUpdated).toBe(
 				codeScanningClosedByUserPayload.alert.dismissed_at
 			);
+		});
+
+		it("skip transforming code scanning alerts created from pull requests", async () => {
+			const result = await transformCodeScanningAlertToJiraSecurity(
+				buildContext(codeScanningCreatedPrPayload),
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(result).toBe(null);
 		});
 	});
 });

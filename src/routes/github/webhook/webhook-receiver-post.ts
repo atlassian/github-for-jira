@@ -15,7 +15,6 @@ import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
 import {
-	codeScanningAlertSecurityWebhookHandler,
 	codeScanningAlertWebhookHandler
 } from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
@@ -135,7 +134,6 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "code_scanning_alert":
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
-			await GithubWebhookMiddleware(codeScanningAlertSecurityWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
 			await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
