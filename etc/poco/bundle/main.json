@@ -4,7 +4,7 @@
       "description": "Open version and healthcheck endpoints",
       "paths": [
         "/version",
-        "/healthcheck",
+        "/healthcheck/*",
         "/deepcheck"
       ],
       "methods": [
