@@ -30,7 +30,7 @@ const updateInstallationId = (payload: GitHubPushData): GitHubPushData  => {
 
 jest.mock("config/feature-flags");
 
-const createJiraPayloadNoUsername = (transformedRepoId: string) => {
+const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
 	return {
 		preventTransitions: false,
 		operationType: "NORMAL",
@@ -38,7 +38,7 @@ const createJiraPayloadNoUsername = (transformedRepoId: string) => {
 			{
 				name: "example/test-repo-name",
 				url: "test-repo-url",
-				id: transformedRepoId,
+				id: transofmedRepoId,
 				commits: [
 					{
 						hash: "commit-no-username",
@@ -510,8 +510,6 @@ describe("Push Webhook", () => {
 			});
 
 			it("should send bulk update event to Jira when push webhook received through sqs queue", async () => {
-
-				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 
 				githubNock

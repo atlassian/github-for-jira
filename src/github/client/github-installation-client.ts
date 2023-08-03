@@ -481,7 +481,7 @@ export class GitHubInstallationClient extends GitHubClient {
 	 * Get a file at a given path from a repository.
 	 * Returns null if the file does not exist.
 	 */
-	public async getRepositoryFile (owner: string, repo: string, path: string): Promise<string | undefined> {
+	public async getRepositoryFile(owner: string, repo: string, path: string): Promise<string | undefined> {
 		try {
 			// can't pass the path as a path param, because "/"s would be url encoded
 			const response = await this.get<ReposGetContentsResponse>(`/repos/{owner}/{repo}/contents/${path}`, {}, {
