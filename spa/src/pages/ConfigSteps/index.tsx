@@ -216,8 +216,8 @@ const ConfigSteps = () => {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
 					await OAuthManager.authenticateInGitHub();
 				} catch (e) {
-					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 					setLoaderForLogin(false);
+					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 				}
 				break;
 			}
