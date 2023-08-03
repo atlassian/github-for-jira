@@ -1,5 +1,6 @@
 import { AnalyticClient, UIEventOpts, ScreenEventOpts, TrackEventOpts } from "./types";
 import { getUserContext, UserContext } from "./context";
+import { reportError } from "../utils";
 
 export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 
@@ -26,7 +27,9 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 						console.info("analytics loaded");
 					}
 				})
-				.catch((e) => { console.error("fail setting user context", e); });
+				.catch((e) => {
+					reportError(e);
+				});
 
 			return {
 				sendScreenEvent: function(opts: ScreenEventOpts) {
@@ -60,8 +63,7 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 			};
 		}
 	} catch (e) {
-		//do nothing, TODO: do proper logging?
-		console.error("fail initialize sox analytics client", e);
+		reportError(e);
 		return undefined;
 	}
 
