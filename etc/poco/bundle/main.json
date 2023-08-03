@@ -8,7 +8,7 @@
         "/deepcheck"
       ],
       "methods": [
-        "GET"
+        "GET", "POST"
       ],
       "principals": {
         "open": {
