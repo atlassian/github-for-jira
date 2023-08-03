@@ -52,6 +52,8 @@ async function installNewApp(onFinish: (gitHubInstallationId: number | undefined
 			try {
 				document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure";
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
+			} catch (e) {
+				reportError(e);
 			} finally {
 				clearInterval(hdlWinInstall);
 			}

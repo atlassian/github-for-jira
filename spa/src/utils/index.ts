@@ -14,7 +14,7 @@ export function reportError(err: unknown) {
 	try {
 		Sentry.captureException(err);
 	} catch (_) {
-		//donothing
+		//do nothing
 	}
 }
 
