@@ -328,13 +328,13 @@ const ConfigSteps = () => {
 						isLoggedIn ? <>
 							{
 								loaderForLogin ? <>
-										<Skeleton
-											width="100%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>
-									</> : <LoggedInContent>
+									<Skeleton
+										width="100%"
+										height="24px"
+										borderRadius="5px"
+										isShimmering
+									/>
+								</> : <LoggedInContent>
 									<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
 									<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
 								</LoggedInContent>
