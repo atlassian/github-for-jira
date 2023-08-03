@@ -17,6 +17,7 @@ import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
+import { popup } from "../../utils";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -263,7 +264,8 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		window.open("https://github.com/logout", "_blank", "popup,width=400,height=600");
+
+		popup("https://github.com/logout", { width: 400, height: 600 });
 		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
