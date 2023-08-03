@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { DeepcheckGet } from "./deepcheck-get";
-import { HealthcheckGet } from "./healthcheck-get";
+import { HealthcheckGetPost } from "./healthcheck-get-post";
 
 export const HealthcheckRouter = Router();
 
@@ -14,4 +14,6 @@ HealthcheckRouter.get("/deepcheck", DeepcheckGet);
 /**
  * healthcheck endpoint to check that the app started properly
  */
-HealthcheckRouter.get("/healthcheck", HealthcheckGet);
+HealthcheckRouter.get("/healthcheck", HealthcheckGetPost);
+// To troubleshoot connectivity between GHEs and the app
+HealthcheckRouter.post("/healthcheck/:uuid", HealthcheckGetPost);
