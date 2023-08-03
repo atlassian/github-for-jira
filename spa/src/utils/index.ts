@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/react";
+
 export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 	return AP.context.getToken((token: string) => {
 		resolve(token);
@@ -7,6 +9,15 @@ export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 export function popup (url: string, opts: { width: number, height: number }) {
 	return window.open(url, "_blank", `popup,${popup_params(opts.width, opts.height)}`);
 }
+
+export function reportError(err: Error) {
+	try {
+		Sentry.captureException(err);
+	} catch (_) {
+		//donothing
+	}
+}
+
 
 //https://stackoverflow.com/a/4682246
 function popup_params(width: number, height: number) {
@@ -19,7 +30,8 @@ function popup_params(width: number, height: number) {
     const left = h + ((g - width) / 2);
     const top = i + ((f-height) / 2.5);
     return "width=" + width + ",height=" + height + ",left=" + left + ",top=" + top + ",scrollbars=1";
-	} catch (_e) {
-		return "";
+	} catch (e) {
+		reportError(e);
 	}
 }
+

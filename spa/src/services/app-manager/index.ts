@@ -1,7 +1,7 @@
 import Api from "../../api";
 import { OrganizationsResponse } from "rest-interfaces";
 import { AxiosError } from "axios";
-import { popup } from "../../utils";
+import { popup, reportError } from "../../utils";
 
 const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
 
@@ -12,6 +12,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
 	} catch (e) {
+		reportError(e);
 		return e as AxiosError;
 	}
 }
@@ -23,7 +24,7 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 		const response = await Api.orgs.connectOrganization(orgId);
 		return response.status === 200;
 	} catch (e) {
-		console.error(e, "Failed to fetch organizations");
+		reportError(e);
 		return e as AxiosError;
 	}
 }
