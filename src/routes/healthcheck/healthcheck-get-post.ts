@@ -3,9 +3,12 @@ import { getLogger } from "config/logger";
 import { EncryptionClient } from "utils/encryption-client";
 
 const logger = getLogger("healthcheck");
-export const HealthcheckGet = async (_: Request, res: Response): Promise<void> => {
+export const HealthcheckGetPost = async (req: Request, res: Response): Promise<void> => {
 
 	try {
+		if (req.params["uuid"]) {
+			logger.info({ uuid: req.params["uuid"] }, "healthcheck call from GHEs");
+		}
 		await EncryptionClient.healthcheck();
 		await EncryptionClient.deepcheck();
 	} catch (err) {
