@@ -18,6 +18,12 @@ describe("Healthcheck Router", () => {
 			.expect(200);
 	});
 
+	it("should POST /healthcheck/:uuid", async () => {
+		await supertest(app)
+			.post	(`/healthcheck/blah`)
+			.expect(200);
+	});
+
 	it("should GET /deepcheck", async () => {
 		await supertest(app)
 			.get(`/deepcheck`)
