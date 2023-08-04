@@ -55,7 +55,7 @@ export const installationWebhookHandler = async (
 			await setSecurityPermissionAccepted(subscription, logger);
 
 			jiraResponse = await submitSecurityWorkspaceToLink(installation, subscription, logger);
-			logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
+			logger.info({ subscriptionId: subscription.id }, "Linked security workspace via backfill");
 		}
 
 		const webhookReceived = context.webhookReceived;
@@ -69,7 +69,7 @@ export const installationWebhookHandler = async (
 		);
 
 	} catch (err) {
-		logger.warn({ err }, "Failed to submit security workspace to Jira");
+		logger.warn({ err }, "Failed to submit security workspace to Jira via backfill");
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
 			new Date(webhookReceived).getTime(),
