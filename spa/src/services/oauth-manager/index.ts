@@ -22,11 +22,19 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 	}
 }
 
-async function authenticateInGitHub(): Promise<void> {
+async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		window.localStorage.setItem(STATE_KEY, res.data.state);
-		popup(res.data.redirectUrl, { width: 400, height: 600 });
+		const win = popup(res.data.redirectUrl, { width: 400, height: 600 });
+		if (win) {
+			const winCloseCheckHandler = setInterval(() => {
+				if (win.closed) {
+					clearInterval(winCloseCheckHandler);
+					try { onWinClosed(); } catch (e) { reportError(e); }
+				}
+			}, 1000);
+		}
 	}
 }
 
