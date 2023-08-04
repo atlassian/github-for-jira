@@ -197,31 +197,24 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 
 	const status = mapStatus(pullRequest.state, pullRequest.mergedAt);
 
-	try {
-		return {
-			author: getJiraAuthor(pullRequest.author),
-			commentCount: pullRequest.comments.totalCount || 0,
-			destinationBranch: pullRequest.baseRefName,
-			destinationBranchUrl: `https://github.com/${repository.owner.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
-			displayId: `#${pullRequest.number}`,
-			id: pullRequest.number,
-			issueKeys,
-			lastUpdate: pullRequest.updatedAt,
-			reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
-			sourceBranch: pullRequest.headRefName,
-			...(pullRequest.headRef?.repository
-				? { sourceBranchUrl: `https://github.com/${pullRequest.headRef.repository.owner.login}/${pullRequest.headRef.repository.name}/tree/${pullRequest.headRef.name}` }
-				: { }
-			),
-			status: status,
-			timestamp: pullRequest.updatedAt,
-			title: pullRequest.title,
-			url: pullRequest.url,
-			updateSequenceId: Date.now()
-		};
-	} catch (err) {
-		throw new Error(err);
-	}
+	return {
+		author: getJiraAuthor(pullRequest.author),
+		commentCount: pullRequest.comments.totalCount || 0,
+		destinationBranch: pullRequest.baseRef?.name || "",
+		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+		displayId: `#${pullRequest.number}`,
+		id: pullRequest.number,
+		issueKeys,
+		lastUpdate: pullRequest.updatedAt,
+		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
+		sourceBranch: pullRequest.headRef?.name || "",
+		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+		status: status,
+		timestamp: pullRequest.updatedAt,
+		title: pullRequest.title,
+		url: pullRequest.url,
+		updateSequenceId: Date.now()
+	};
 };
 
 const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {

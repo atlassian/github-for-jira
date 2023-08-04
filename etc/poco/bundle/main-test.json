@@ -16,6 +16,14 @@
       "principals": [],
       "allowed": true
     },
+		{
+			"name": "allow request with no asap to retrieve healthcheck via POST for GHE",
+			"path": "/healthcheck/my-uuid",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
     {
       "name": "allow request with no asap to retrieve deepcheck",
       "path": "/deepcheck",

@@ -9,6 +9,7 @@ import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
+import { reportError } from "../../utils";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -69,10 +70,22 @@ const InlineDialogContent = () => (
 	</>
 );
 
+const getAnalyticsSourceFrom = (): string => {
+	try {
+		const url = new URL(window.location.href);
+		return url.searchParams.get("from") || "";
+	} catch (e) {
+		reportError(e);
+		return "";
+	}
+};
+
+const screenAnalyticsAttributes = { from: getAnalyticsSourceFrom() };
+
 const StartConnection = () => {
 	const navigate = useNavigate();
 
-	useEffectScreenEvent("StartConnectionEntryScreen");
+	useEffectScreenEvent("StartConnectionEntryScreen", screenAnalyticsAttributes);
 
 	return (
 		<Wrapper>
@@ -105,6 +118,7 @@ const StartConnection = () => {
 				<Button
 					iconAfter={<ArrowRightIcon label="continue" size="medium"/>}
 					appearance="primary"
+					aria-label="continue"
 					onClick={() => {
 						analyticsClient.sendUIEvent({ actionSubject: "startToConnect", action: "clicked" });
 						navigate("steps");

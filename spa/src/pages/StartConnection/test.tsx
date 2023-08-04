@@ -15,9 +15,9 @@ test("Entry Config Screen", async () => {
 	expect(screen.getByText("Before you start, you'll need:")).toBeTruthy();
 	expect(screen.getByText("A GitHub account")).toBeTruthy();
 	expect(screen.getByText("Owner permission for a GitHub organization")).toBeTruthy();
-	expect(screen.getByRole("button")).toHaveTextContent("Continue");
+	expect(screen.getByRole("button", { name: "continue" })).toHaveTextContent("Continue");
 	expect(window.location.pathname).toBe("/");
 
-	await userEvent.click(screen.getByRole("button"));
+	await userEvent.click(screen.getByRole("button", { name: "continue" }));
 	expect(window.location.pathname).toBe("/steps");
 });

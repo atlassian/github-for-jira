@@ -33,7 +33,6 @@ export interface DeploymentsResult {
 	rejectedDeployments?: any[];
 }
 
-
 export interface JiraClient {
 	baseURL: string;
 	issues: {
@@ -514,6 +513,7 @@ const batchedBulkUpdate = async (
 		logger.info({
 			issueKeys: extractAndHashIssueKeysForLoggingPurpose(commitChunk, logger)
 		}, "Posting to Jira devinfo bulk update api");
+
 		const response = await instance.post("/rest/devinfo/0.10/bulk", body);
 		logger.info({
 			responseStatus: response.status,

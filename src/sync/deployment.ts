@@ -6,8 +6,10 @@ import { getDeploymentsResponse, DeploymentQueryNode } from "../github/client/gi
 import Logger from "bunyan";
 import { transformDeployment } from "../transforms/transform-deployment";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
+
+const EXTRA_PAGE_COUNT = 1;
 
 type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] };
 const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitHubInstallationClient, repository: Repository, logger: Logger, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
@@ -21,10 +23,9 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 	const extraDeployments: DeploymentQueryNode["node"][] = [];
 	if (edges.length > 0 && await booleanFlag(BooleanFlags.USE_DYNAMODB_FOR_DEPLOYMENT_BACKFILL, jiraHost)) {
 
-		const extraPagesCount = await numberFlag(NumberFlags.BACKFILL_DEPLOYMENT_EXTRA_PAGES, 1, jiraHost);
 		let lastEdges = edges;
 
-		for (let i = 0; i < extraPagesCount && lastEdges.length > 0; i++) {
+		for (let i = 0; i < EXTRA_PAGE_COUNT && lastEdges.length > 0; i++) {
 			try {
 				extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, lastEdges[lastEdges.length - 1].cursor);
 				const extraDeploymentsEdges = extraDeploymentResponse.repository.deployments.edges || [];
