@@ -188,7 +188,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
 	if (isEmpty(issueKeys)) {
-		log?.info({
+		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
 		}, "Ignoring pullrequest since it has no issue keys");
@@ -200,15 +200,21 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 	return {
 		author: getJiraAuthor(pullRequest.author),
 		commentCount: pullRequest.comments.totalCount || 0,
-		destinationBranch: pullRequest.baseRef?.name || "",
-		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+		destinationBranch: pullRequest.baseRefName || "",
+		destinationBranchUrl: `https://github.com/${repository.owner?.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
 		displayId: `#${pullRequest.number}`,
 		id: pullRequest.number,
 		issueKeys,
 		lastUpdate: pullRequest.updatedAt,
 		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
-		sourceBranch: pullRequest.headRef?.name || "",
-		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+		sourceBranch: pullRequest.headRefName,
+		...(
+			pullRequest.headRef
+				? {
+					sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`
+				}
+				: {}
+		),
 		status: status,
 		timestamp: pullRequest.updatedAt,
 		title: pullRequest.title,
