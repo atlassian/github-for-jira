@@ -214,7 +214,9 @@ const ConfigSteps = () => {
 				setLoaderForLogin(true);
 				try {
 					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
-					await OAuthManager.authenticateInGitHub();
+					await OAuthManager.authenticateInGitHub(() => {
+						setLoaderForLogin(false);
+					});
 				} catch (e) {
 					setLoaderForLogin(false);
 					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
