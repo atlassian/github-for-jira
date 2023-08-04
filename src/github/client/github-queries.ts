@@ -170,10 +170,10 @@ export type pullRequestQueryResponse = {
 	};
 };
 
-export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
+export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
 
-		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor, filterBy: { since: $commitSince }) {
+		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
       edges {
       	cursor
 				node {
