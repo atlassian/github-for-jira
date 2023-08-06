@@ -83,7 +83,7 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	describe.skip("cloud", () => {
+	describe("cloud", () => {
 
 		const PRS_INITIAL_CURSOR = 21;
 
@@ -287,7 +287,7 @@ describe("sync/pull-request", () => {
 		});
 	});
 
-	describe.skip("server", () => {
+	describe("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
