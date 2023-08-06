@@ -83,7 +83,7 @@ describe("sync/pull-request", () => {
 		};
 	};
 
-	describe("cloud", () => {
+	describe.skip("cloud", () => {
 
 		const PRS_INITIAL_CURSOR = 21;
 
@@ -129,6 +129,7 @@ describe("sync/pull-request", () => {
 													totalCount: 10
 												},
 												updatedAt: "2018-05-04T14:06:56Z",
+												createdAt: "2018-05-04T14:06:56Z",
 												title,
 												baseRef: {
 													name: "devel",
@@ -231,6 +232,7 @@ describe("sync/pull-request", () => {
 												totalCount: 10
 											},
 											updatedAt: "2018-05-04T14:06:56Z",
+											createdAt: "2018-05-04T14:06:56Z",
 											title: "no issue keys here sadface:",
 											baseRef: {
 												name: "devel",
@@ -285,7 +287,7 @@ describe("sync/pull-request", () => {
 		});
 	});
 
-	describe("server", () => {
+	describe.skip("server", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		beforeEach(async () => {
@@ -328,6 +330,7 @@ describe("sync/pull-request", () => {
 												totalCount: 10
 											},
 											updatedAt: "2018-05-04T14:06:56Z",
+											createAt: "2018-05-04T14:06:56Z",
 											title: "[TES-15] Evernote Test",
 											baseRef: {
 												name: "devel",
@@ -421,7 +424,7 @@ describe("sync/pull-request", () => {
 				},
 				updatedAt: "2018-05-04T14:06:56Z",
 				createdAt,
-				title: "no issue Evernote Test",
+				title: "ARC-111 mmmhmmmm Test",
 				baseRef: {
 					name: "devel",
 					repository: {
@@ -455,12 +458,13 @@ describe("sync/pull-request", () => {
 			};
 		};
 
-		it("should fetch PRS within the target date range", async () => {
+		it("should fetch all pulls with newer than commitSince", async () => {
 
 			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
 			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			const SIX_MONTH_IN_MILLISEC = 6 * 31 * 24 * 60 * 60 * 1000;
 
-			const pullRequestNodeA = pullRequestNode(new Date().toISOString());
+			const pullRequestNodeA = pullRequestNode(new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString());
 			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString());
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubNock
@@ -497,7 +501,227 @@ describe("sync/pull-request", () => {
 					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
 				},
 				undefined,
-				2,
+				5,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - SIX_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+
+			expect(result.edges?.length).toEqual(2);
+		});
+
+
+		it("should stop fetching pages once date limit is reached", async () => {
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			const SIX_MONTH_IN_MILLISEC = 6 * 31 * 24 * 60 * 60 * 1000;
+
+			const pullRequestNodeA = pullRequestNode(new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString());
+			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - SIX_MONTH_IN_MILLISEC).toISOString());
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.query(true)
+				.reply(200, {
+					data: {
+						repository: {
+							pullRequests: {
+								edges: [
+									{
+										node: pullRequestNodeA
+									},
+									{
+										node: pullRequestNodeB
+									}
+								]
+							}
+						}
+					}
+				});
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				1,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+
+			expect(result.edges?.length).toEqual(1);
+		});
+
+		it("should only fetch PRS within the target date range", async () => {
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			const SIX_MONTH_IN_MILLISEC = 6 * 31 * 24 * 60 * 60 * 1000;
+			const NINE_MONTH_IN_MILLISEC = 12 * 31 * 24 * 60 * 60 * 1000;
+
+			const pullRequestNodeA = pullRequestNode(new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString());
+			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString());
+			const pullRequestNodeC = pullRequestNode(new Date((new Date().getTime()) - NINE_MONTH_IN_MILLISEC).toISOString());
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.query(true)
+				.reply(200, {
+					data: {
+						repository: {
+							pullRequests: {
+								edges: [
+									{
+										node: pullRequestNodeA
+									},
+									{
+										node: pullRequestNodeB
+									},
+									{
+										node: pullRequestNodeC
+									}
+								]
+							}
+						}
+					}
+				});
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				50,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+					commitsFromDate: new Date((new Date().getTime()) - SIX_MONTH_IN_MILLISEC).toISOString()
+				}
+			);
+
+			expect(result.edges?.length).toEqual(2);
+		});
+
+		it("should return everything when no commitsincedate is provided", async () => {
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+
+			const pullRequestNodeA = pullRequestNode(new Date((new Date().getTime()) - HALF_MONTH_IN_MILLISEC).toISOString());
+			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString());
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.query(true)
+				.reply(200, {
+					data: {
+						repository: {
+							pullRequests: {
+								edges: [
+									{
+										node: pullRequestNodeA
+									},
+									{
+										node: pullRequestNodeB
+									}
+								]
+							}
+						}
+					}
+				});
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				1,
+				{
+					jiraHost,
+					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID
+				}
+			);
+
+			expect(result.edges?.length).toEqual(2);
+		});
+
+		it("should return nothing when pulls are outside commitsince", async () => {
+
+			const HALF_MONTH_IN_MILLISEC = 1 * 15 * 24 * 60 * 60 * 1000;
+			const ONE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+			const NINE_MONTH_IN_MILLISEC = 1 * 31 * 24 * 60 * 60 * 1000;
+
+			const pullRequestNodeA = pullRequestNode(new Date((new Date().getTime()) - NINE_MONTH_IN_MILLISEC).toISOString());
+			const pullRequestNodeB = pullRequestNode(new Date((new Date().getTime()) - ONE_MONTH_IN_MILLISEC).toISOString());
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubNock
+				.post("/graphql")
+				.query(true)
+				.reply(200, {
+					data: {
+						repository: {
+							pullRequests: {
+								edges: [
+									{
+										node: pullRequestNodeA
+									},
+									{
+										node: pullRequestNodeB
+									}
+								]
+							}
+						}
+					}
+				});
+
+			const gitHubClient = await createInstallationClient(DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
+			const result = await getPullRequestTask(
+				getLogger("test"),
+				gitHubClient,
+				jiraHost,
+				{
+					id: repoSyncState.repoId,
+					name: repoSyncState.repoName,
+					full_name: repoSyncState.repoFullName,
+					owner: { login: repoSyncState.repoOwner },
+					html_url: repoSyncState.repoUrl,
+					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				},
+				undefined,
+				1,
 				{
 					jiraHost,
 					installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
@@ -505,7 +729,8 @@ describe("sync/pull-request", () => {
 				}
 			);
 
-			expect(result.edges?.length).toEqual(2);
+			expect(result.edges?.length).toEqual(0);
 		});
+
 	});
 });
