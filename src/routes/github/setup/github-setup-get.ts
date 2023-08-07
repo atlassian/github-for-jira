@@ -4,6 +4,7 @@ import { getJiraAppUrl, getJiraMarketplaceUrl, isGitHubCloudApp, jiraSiteExists 
 import { Installation } from "models/installation";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import { createAppClient } from "~/src/util/get-github-client-config";
+import sanitize from "sanitize-html";
 
 /*
 	Handles redirects for both the installation flow from Jira and
@@ -38,6 +39,22 @@ const getInstallationData = async (githubAppClient: GitHubAppClient, githubInsta
 export const GithubSetupGet = async (req: Request, res: Response): Promise<void> => {
 
 	const githubInstallationId = Number(req.query.installation_id);
+
+	if (req.cookies["is-spa"] === "true") {
+		res.clearCookie("is-spa");
+		const sanitizedGitHubInstallationId = sanitize(String(githubInstallationId));
+		res.status(200).send(`
+		  <html>
+				<body>
+					<script>
+							window.opener.postMessage(${JSON.stringify({ type: "install-callback", gitHubInstallationId: sanitizedGitHubInstallationId })}, window.origin);
+							window.close();
+					</script>
+				</body>
+			</html>
+		`);
+		return;
+	}
 
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "github-setup-get" });

@@ -33,6 +33,7 @@ describe("Github Setup", () => {
 		});
 
 		it("should return error when missing 'installation_id' from query", async () => {
+			githubAppTokenNock();
 			await supertest(frontendApp)
 				.get("/github/setup")
 				.set(

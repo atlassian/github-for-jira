@@ -310,7 +310,7 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
-					alert("App requested");
+					//TODO: proper UI to handle it
 				}
 			});
 		} catch (e) {
