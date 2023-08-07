@@ -148,7 +148,10 @@ describe("SecretScanningAlertWebhookHandler", () => {
 					severity: {
 						level: CRITICAL
 					},
-					identifiers: [],
+					identifiers: [{
+						"displayName": "personal_access_token",
+						"url":SAMPLE_SECURITY_URL
+					}],
 					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
 					additionalInfo: {
 						content: "personal_access_token"
