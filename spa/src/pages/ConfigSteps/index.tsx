@@ -208,11 +208,16 @@ const ConfigSteps = () => {
 	const installNewOrg = async () => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
-			await AppManager.installNewApp(async (gitHubInstallationId: number | undefined) => {
-				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
-				getOrganizations(false);
-				if(gitHubInstallationId) {
-					await doCreateConnection(gitHubInstallationId, "auto");
+			await AppManager.installNewApp({
+				onFinish: async (gitHubInstallationId: number | undefined) => {
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
+					getOrganizations(false);
+					if(gitHubInstallationId) {
+						await doCreateConnection(gitHubInstallationId, "auto");
+					}
+				},
+				onRequested: async (_setupAction: string) => {
+					//TODO: proper UI to handle it
 				}
 			});
 		} catch (e) {
