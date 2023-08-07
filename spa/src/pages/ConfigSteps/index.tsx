@@ -200,8 +200,6 @@ const ConfigSteps = () => {
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
 			reportError(e);
-		} finally {
-			setLoaderForOrgClicked(false);
 		}
 	};
 
@@ -292,6 +290,10 @@ const ConfigSteps = () => {
 													Repositories from this organization will be available to all<br />
 													projects in <b>{hostUrl?.jiraHost}</b>.
 												</Paragraph>
+												{
+													organizations.length === 0 &&
+													<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
+												}
 
 												{
 													organizations.map(org =>
@@ -331,7 +333,7 @@ const ConfigSteps = () => {
 								</>
 							</Step>
 							<LoggedInContent>
-								<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+								<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
 								<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
 							</LoggedInContent>
 						</>
@@ -375,7 +377,7 @@ const ConfigSteps = () => {
 										loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 											<Button
 												iconAfter={<OpenIcon label="open" size="medium"/>}
-												aria-label="Authorize in GitHub"
+												aria-label="Get started"
 												appearance="primary"
 												onClick={authorize}
 											>
