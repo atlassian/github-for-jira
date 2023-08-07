@@ -120,6 +120,7 @@ const ConfigSteps = () => {
 
 	const [clickedOrg, setClickedOrg] = useState<number>(0);
 	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
+
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
@@ -138,7 +139,7 @@ const ConfigSteps = () => {
 		if (response instanceof AxiosError) {
 			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 		} else {
-			console.log("we4 got it", response.orgs);
+			// TODO: redirect the users to the install new org page when no orgs
 			if (response.orgs.length > 0) {
 				setOrganizations(response.orgs);
 			} else {
@@ -182,9 +183,7 @@ const ConfigSteps = () => {
 			setLoaderForLogin(false);
 			await getOrganizations();
 		};
-		if (isLoggedIn) {
-			recheckValidity();
-		}
+		isLoggedIn && recheckValidity();
 	}, [ isLoggedIn, getOrganizations ]);
 
 	const authorize = async () => {
