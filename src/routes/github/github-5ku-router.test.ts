@@ -28,6 +28,11 @@ describe("Github Setup 5ku redirector", () => {
 				.expect("location", "/rest/app/cloud/github-requested?setup_action=request");
 		});
 
+		it("should continue to next route if no spa exp set", async () => {
+			await supertest(frontendApp).get("/github/setup?setup_action=request")
+				.expect(401); // coz it goes to next route, which expect an jira jwt token in session cookie
+		});
+
 	});
 
 });
