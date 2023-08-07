@@ -32,6 +32,32 @@ describe("rest oauth router", () => {
 				));
 
 			});
+			describe("org installation success", () => {
+				it("should notify for org installed", async () => {
+
+					const resp = await supertest(app)
+						.get(`/rest/app/cloud/github-installed?installation_id=12345`)
+						.expect("content-type", "text/html; charset=utf-8");
+
+					expect(resp.text).toEqual(expect.stringContaining(
+						`window.opener.postMessage({"type":"install-callback","gitHubInstallationId":"12345"}`
+					));
+
+				});
+			});
+			describe("org installation requested", () => {
+				it("should notify for org installation requested", async () => {
+
+					const resp = await supertest(app)
+						.get(`/rest/app/cloud/github-requested?setup_action=request`)
+						.expect("content-type", "text/html; charset=utf-8");
+
+					expect(resp.text).toEqual(expect.stringContaining(
+						`window.opener.postMessage({"type":"install-requested","setupAction":"request"}`
+					));
+
+				});
+			});
 		});
 	});
 });
