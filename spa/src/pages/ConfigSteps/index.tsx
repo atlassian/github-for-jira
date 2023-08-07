@@ -310,7 +310,14 @@ const ConfigSteps = () => {
 												<HorizontalDividerSkippingPaddings />
 												<NoOrgsParagraph>Can't find an organization you're looking for?</NoOrgsParagraph>
 												<LoggedInContent>
-													<Button appearance="primary" aria-label="Install new Org" onClick={installNewOrg}>Install Jira in a new organization</Button>
+													<Button
+														isDisabled={loaderForOrgClicked}
+														appearance="primary"
+														aria-label="Install new Org"
+														onClick={installNewOrg}
+													>
+														Install Jira in a new organization
+													</Button>
 												</LoggedInContent>
 											</>
 									}
