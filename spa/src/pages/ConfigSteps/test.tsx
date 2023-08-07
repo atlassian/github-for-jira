@@ -9,7 +9,7 @@ import AppManager from "../../services/app-manager";
 jest.mock("../../services/oauth-manager");
 jest.mock("../../services/app-manager");
 jest.mock("react-router-dom", () => ({
-	...jest.requireActual("react-router-dom") as any,
+	...jest.requireActual("react-router-dom"),
 	useNavigate: () => jest.fn(),
 }));
 
