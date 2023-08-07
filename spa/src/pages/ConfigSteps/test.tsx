@@ -61,7 +61,7 @@ test("Connect GitHub Screen - Initial Loading of the page when not authenticated
 	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
 	expect(screen.queryByText("GitHub Enterprise Server")).toBeInTheDocument();
 	expect(screen.queryByText("Connect your GitHub organization to Jira")).toBeInTheDocument();
-	expect(screen.queryByRole("button", { name: "Authorize in GitHub" })).toHaveTextContent("Authorize in GitHub");
+	expect(screen.queryByRole("button", { name: "Get started" })).toHaveTextContent("Get started");
 });
 
 test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authenticated", async () => {
@@ -78,7 +78,7 @@ test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authe
 	});
 
 	await act(() => userEvent.click(screen.getByText("GitHub Enterprise Server")));
-	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
+	await act(() => userEvent.click(screen.getByText("Get started")));
 
 	expect(AP.getLocation).toHaveBeenCalled();
 });
@@ -98,7 +98,7 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 	});
 
 	await act(() => userEvent.click(screen.getByText("GitHub Cloud")));
-	await act(() => userEvent.click(screen.getByText("Authorize in GitHub")));
+	await act(() => userEvent.click(screen.getByText("Get started")));
 
 	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
 });
@@ -119,8 +119,8 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated"
 
 	expect(screen.queryByText("GitHub Cloud")).not.toBeInTheDocument();
 	expect(screen.queryByText("GitHub Enterprise Server")).not.toBeInTheDocument();
-	expect(screen.queryByText("Authorize in GitHub")).not.toBeInTheDocument();
-	expect(screen.queryByText("Log in and authorize")).toBeInTheDocument();
+	expect(screen.queryByText("Get started")).not.toBeInTheDocument();
+	expect(screen.queryByText("Select your GitHub product")).toBeInTheDocument();
 });
 
 test("Connect GitHub Screen - Changing GitHub login when authenticated", async () => {
@@ -137,7 +137,7 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 		);
 	});
 
-	await act(() => userEvent.click(screen.getByText("Log in and authorize")));
+	await act(() => userEvent.click(screen.getByText("Select your GitHub product")));
 
 	expect(screen.queryByText("Change GitHub login")).toBeInTheDocument();
 
@@ -147,6 +147,6 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 
 	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
 	expect(screen.queryByText("GitHub Enterprise Server")).toBeInTheDocument();
-	expect(screen.queryByText("Authorize in GitHub")).toBeInTheDocument();
+	expect(screen.queryByText("Get started")).toBeInTheDocument();
 });
 
