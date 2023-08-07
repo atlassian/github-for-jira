@@ -51,6 +51,11 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
 		filterHttpRequests: true
 	});
+
+	for (const key in req.headers) {
+		req.log.info(`Request header: ${key}: ${req.headers[key]}`);
+	}
+
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
 			req.log.fields = merge(req.log.fields, fields);
