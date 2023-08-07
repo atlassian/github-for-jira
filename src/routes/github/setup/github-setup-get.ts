@@ -56,6 +56,11 @@ export const GithubSetupGet = async (req: Request, res: Response): Promise<void>
 		return;
 	}
 
+	if (!githubInstallationId) {
+		res.status(422).send(`Missing installation_id`);
+		return;
+	}
+
 	const { jiraHost, gitHubAppId } = res.locals;
 	const gitHubAppClient = await createAppClient(req.log, jiraHost, gitHubAppId, { trigger: "github-setup-get" });
 	const { githubInstallation, info } = await getInstallationData(gitHubAppClient, githubInstallationId, req.log);
