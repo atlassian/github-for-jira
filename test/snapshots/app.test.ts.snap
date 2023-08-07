@@ -13,8 +13,6 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
 :* ^/?(?=/|$)^/spa/?(?=/|$)^/static/?(?=/|$)
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,serveStatic
-:GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-callback/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,GitHubCallbackGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/redirectUrl/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,OAuthRedirectUrl
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/exchangeToken/?$
@@ -107,6 +105,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,jiraSymmetricJwtMiddleware,GithubCreateBranchOptionsGet
 :GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/callback/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,GithubOAuthCallbackGet
+:GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/setup/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,GitHub5KURedirectHandler
 :POST ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/webhooks/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,_cookieSession,middleware,returnOnValidationError,WebhookReceiverPost
 :GET ^/?(?=/|$)^/github/?(?=/|$)^(?:/([0-9a-fA-F]{8}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{4}b-[0-9a-fA-F]{12}))?/?(?=/|$)^/subscription-deferred-install/?(?=/|$)^/request/(?:([^/]+?))/?(?=/|$)^/?$
