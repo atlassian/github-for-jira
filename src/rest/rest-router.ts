@@ -18,9 +18,9 @@ const subRouter = Router({ mergeParams: true });
  */
 RestRouter.use("/app/:cloudOrUUID", subRouter);
 
-subRouter.use("/github-callback", OAuthCallbackHandler);
-subRouter.use("/github-installed", OrgsInstalledHandler);
-subRouter.use("/github-requested", OrgsInstallRequestedHandler);
+subRouter.get("/github-callback", OAuthCallbackHandler);
+subRouter.get("/github-installed", OrgsInstalledHandler);
+subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
 subRouter.use(JwtHandler);
 
