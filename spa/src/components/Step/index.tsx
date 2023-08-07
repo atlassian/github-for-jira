@@ -21,7 +21,7 @@ const StepTitle = styled.div`
 	margin: 0 0 ${token("space.100")};
 `;
 
-const CollapsibleStep = ({
+const Step = ({
 	title,
 	children,
 }: {
@@ -40,4 +40,4 @@ const CollapsibleStep = ({
 	);
 };
 
-export default CollapsibleStep;
+export default Step;

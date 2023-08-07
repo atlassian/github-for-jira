@@ -3,7 +3,7 @@ import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
-import CollapsibleStep from "../../components/CollapsibleStep";
+import Step from "../../components/Step";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
@@ -97,11 +97,6 @@ const NoOrgsParagraph = styled.div`
 	margin: ${token("space.200")} 0;
 	text-align: center;
 `;
-const EmptyOrgsParagraph = styled.div`
-	color: ${token("color.text.subtle")};
-	margin: ${token("space.200")} 0;
-	text-align: center;
-`;
 
 const ConfigSteps = () => {
 	const navigate = useNavigate();
@@ -123,6 +118,8 @@ const ConfigSteps = () => {
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
 
+	const [clickedOrg, setClickedOrg] = useState<number>(0);
+	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
 	const getJiraHostUrls = () => {
@@ -141,7 +138,12 @@ const ConfigSteps = () => {
 		if (response instanceof AxiosError) {
 			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 		} else {
-			setOrganizations(response.orgs);
+			console.log("we4 got it", response.orgs);
+			if (response.orgs.length > 0) {
+				setOrganizations(response.orgs);
+			} else {
+				installNewOrg();
+			}
 		}
 	}, []);
 
@@ -180,7 +182,9 @@ const ConfigSteps = () => {
 			setLoaderForLogin(false);
 			await getOrganizations();
 		};
-		recheckValidity();
+		if (isLoggedIn) {
+			recheckValidity();
+		}
 	}, [ isLoggedIn, getOrganizations ]);
 
 	const authorize = async () => {
@@ -235,6 +239,8 @@ const ConfigSteps = () => {
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
 			reportError(e);
+		} finally {
+			setLoaderForOrgClicked(false);
 		}
 	};
 
@@ -265,7 +271,7 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ?
 						<>
-							<CollapsibleStep title="Connect your GitHub organization to Jira">
+							<Step title="Connect your GitHub organization to Jira">
 								<>
 									{
 										loaderForOrgFetching ?
@@ -277,17 +283,30 @@ const ConfigSteps = () => {
 											/> :
 											<>
 												<Paragraph>
-													Repositories from this organization will be available to all <br />
+													Repositories from this organization will be available to all<br />
 													projects in <b>{hostUrl?.jiraHost}</b>.
 												</Paragraph>
 
 												{
-													organizations.length > 0 ? organizations.map(org =>
-														<OrgsContainer>
+													organizations.map(org =>
+														<OrgsContainer key={org.id}>
 															<span>{org.account.login}</span>
-															<Button onClick={() => doCreateConnection(org.id, "manual")}>Connect</Button>
+															{
+																loaderForOrgClicked && clickedOrg === org.id ?
+																	<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
+																	<Button
+																		isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
+																		onClick={() => {
+																			setLoaderForOrgClicked(true);
+																			setClickedOrg(org.id);
+																			doCreateConnection(org.id, "manual");
+																		}}
+																	>
+																		Connect
+																	</Button>
+															}
 														</OrgsContainer>
-													) : <EmptyOrgsParagraph>Oop, couldn't find any organization!</EmptyOrgsParagraph>
+													)
 												}
 												<HorizontalDividerSkippingPaddings />
 												<NoOrgsParagraph>Can't find an organization you're looking for?</NoOrgsParagraph>
@@ -297,14 +316,14 @@ const ConfigSteps = () => {
 											</>
 									}
 								</>
-							</CollapsibleStep>
+							</Step>
 							<LoggedInContent>
 								<div>Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
 								<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
 							</LoggedInContent>
 						</>
 						:
-						<CollapsibleStep title="Select your GitHub product">
+						<Step title="Select your GitHub product">
 							<>
 								<GitHubOptionContainer>
 										<GitHubOption
@@ -351,7 +370,7 @@ const ConfigSteps = () => {
 											</Button>
 									}
 								</>
-						</CollapsibleStep>
+						</Step>
 				}
 			</ConfigContainer>
 		</Wrapper>
