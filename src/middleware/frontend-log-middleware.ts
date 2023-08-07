@@ -52,17 +52,15 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		filterHttpRequests: true
 	});
 
-	for (const key in req.headers) {
-		req.log.info(`Request header: ${key}: ${req.headers[key]}`);
-	}
-
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
 			req.log.fields = merge(req.log.fields, fields);
 		}
 	};
 
-	req.addLogFields({ id: newUUID() });
+	req.addLogFields({
+		id: req.headers["atl-traceid"] || newUUID()
+	});
 
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE))) {
