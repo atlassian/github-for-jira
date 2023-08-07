@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { JwtHandler } from "./middleware/jwt/jwt-handler";
 import { OAuthRouter } from "./routes/oauth";
-import { GitHubCallbackRoute } from "./routes/github-callback";
+import { OAuthCallbackHandler, OrgsInstalledHandler, OrgsInstallRequestedHandler } from "./routes/github-callback";
 import { GitHubOrgsRouter } from "./routes/github-orgs";
 import { GitHubTokenHandler } from "./middleware/jwt/github-token";
 import { GitHubAppsRoute } from "./routes/github-apps";
@@ -18,7 +18,9 @@ const subRouter = Router({ mergeParams: true });
  */
 RestRouter.use("/app/:cloudOrUUID", subRouter);
 
-subRouter.use("/github-callback", GitHubCallbackRoute);
+subRouter.get("/github-callback", OAuthCallbackHandler);
+subRouter.get("/github-installed", OrgsInstalledHandler);
+subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
 subRouter.use(JwtHandler);
 
