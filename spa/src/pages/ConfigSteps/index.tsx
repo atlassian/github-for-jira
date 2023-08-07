@@ -132,19 +132,19 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const getOrganizations = useCallback(async () => {
+	const getOrganizations = useCallback(async (autoRedirectToInstall = true) => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
 			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 		} else {
-			// TODO: redirect the users to the install new org page when no orgs
-			if (response.orgs.length > 0) {
-				setOrganizations(response.orgs);
-			} else {
-				installNewOrg();
-			}
+			setOrganizations(response.orgs);
+			/**
+			 * If there are no orgs and auto-redirect is not disabled,
+			 * then redirect them to the Install New Org screen
+			 */
+			autoRedirectToInstall && response.orgs.length === 0 && installNewOrg();
 		}
 	}, []);
 
@@ -248,7 +248,7 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
 			await AppManager.installNewApp(async (gitHubInstallationId: number | undefined) => {
 				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
-				getOrganizations();
+				getOrganizations(false);
 				if(gitHubInstallationId) {
 					await doCreateConnection(gitHubInstallationId, "auto");
 				}
