@@ -301,18 +301,18 @@ const ConfigSteps = () => {
 	const installNewOrg = async () => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
-			await AppManager.installNewApp(
-				async (gitHubInstallationId: number | undefined) => {
+			await AppManager.installNewApp({
+				onFinish: async (gitHubInstallationId: number | undefined) => {
 					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
 					getOrganizations();
 					if(gitHubInstallationId) {
 						await doCreateConnection(gitHubInstallationId, "auto");
 					}
 				},
-				async (_setupAction: string) => {
+				onRequested: async (_setupAction: string) => {
 					alert("App requested");
 				}
-			);
+			});
 		} catch (e) {
 			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
