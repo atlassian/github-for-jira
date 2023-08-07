@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
@@ -132,7 +132,7 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const getOrganizations = useCallback(async (autoRedirectToInstall = true) => {
+	const getOrganizations = async (autoRedirectToInstall = true) => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
@@ -146,45 +146,7 @@ const ConfigSteps = () => {
 			 */
 			autoRedirectToInstall && response.orgs.length === 0 && installNewOrg();
 		}
-	}, []);
-
-	useEffect(() => {
-		getJiraHostUrls();
-		const handler = async (event: MessageEvent) => {
-			if (event.origin !== originalUrl) return;
-			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
-				setLoaderForLogin(false);
-				if (response instanceof AxiosError) {
-					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
-					return;
-				} else {
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
-				}
-				setIsLoggedIn(true);
-				await getOrganizations();
-			}
-		};
-		window.addEventListener("message", handler);
-		return () => {
-			window.removeEventListener("message", handler);
-		};
-	}, [ originalUrl, getOrganizations ]);
-
-	useEffect(() => {
-		const recheckValidity = async () => {
-			const status: boolean | AxiosError = await OAuthManager.checkValidity();
-			if (status instanceof AxiosError) {
-				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
-				return;
-			}
-			setLoggedInUser(OAuthManager.getUserDetails().username);
-			setLoaderForLogin(false);
-			await getOrganizations();
-		};
-		isLoggedIn && recheckValidity();
-	}, [ isLoggedIn, getOrganizations ]);
+	};
 
 	const authorize = async () => {
 		switch (selectedOption) {
@@ -259,6 +221,46 @@ const ConfigSteps = () => {
 			reportError(e);
 		}
 	};
+
+	useEffect(() => {
+		getJiraHostUrls();
+		const handler = async (event: MessageEvent) => {
+			if (event.origin !== originalUrl) return;
+			if (event.data?.type === "oauth-callback" && event.data?.code) {
+				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				setLoaderForLogin(false);
+				if (response instanceof AxiosError) {
+					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
+					return;
+				} else {
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
+				}
+				setIsLoggedIn(true);
+				await getOrganizations();
+			}
+		};
+		window.addEventListener("message", handler);
+		return () => {
+			window.removeEventListener("message", handler);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ originalUrl ]);
+
+	useEffect(() => {
+		const recheckValidity = async () => {
+			const status: boolean | AxiosError = await OAuthManager.checkValidity();
+			if (status instanceof AxiosError) {
+				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				return;
+			}
+			setLoggedInUser(OAuthManager.getUserDetails().username);
+			setLoaderForLogin(false);
+			await getOrganizations();
+		};
+		isLoggedIn && recheckValidity();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ isLoggedIn ]);
 
 	return (
 		<Wrapper>
