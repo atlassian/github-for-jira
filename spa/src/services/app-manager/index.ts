@@ -29,7 +29,10 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 	}
 }
 
-async function installNewApp(onFinish: (gitHubInstallationId: number | undefined) => void): Promise<void> {
+async function installNewApp(
+	onFinish: (gitHubInstallationId: number | undefined) => void,
+	onRequested: (setupAction: string) => void
+): Promise<void> {
 	const app = await Api.app.getAppNewInstallationUrl();
 	const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
 	document.cookie = `is-spa=true; expires=${exp.toUTCString()}; path=/; SameSite=None; Secure`;
@@ -38,6 +41,10 @@ async function installNewApp(onFinish: (gitHubInstallationId: number | undefined
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
 			const id = parseInt(event.data?.gitHubInstallationId);
 			onFinish(isNaN(id) ? undefined : id);
+		}
+		if (event.data?.type === "install-requested" && event.data?.setupAction) {
+			const setupAction = event.data?.setupAction;
+			onRequested(setupAction);
 		}
 	};
 	window.addEventListener("message", handler);
