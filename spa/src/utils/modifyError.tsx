@@ -55,6 +55,8 @@ export const modifyError = (
 				<a target="_blank" href="https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md">Learn how to add GitHub for Jira to your IP allowlist</a>
 			</>
 		};
+	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
+		return { ...errorObj, message: `You are not Admin of the target org ${context.orgLogin || ""}. Please make sure you are admin of the org and try again.` }; //TODO: Better message
 	} else if (errorCode === "TIMEOUT") {
 		return { ...errorObj, message: "Request timeout. Please try again later." }; //TODO: Better message
 	} else if (errorCode === "RATELIMIT") {

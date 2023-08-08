@@ -182,18 +182,18 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		popup("https://github.com/logout", { width: 400, height: 600 });
+		popup("https://github.com/logout");
 		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected instanceof AxiosError) {
-				setError(modifyError(connected, { }, { onClearGitHubToken: clearGitHubToken }));
+				setError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -240,14 +240,12 @@ const ConfigSteps = () => {
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
 				setIsLoggedIn(true);
-				await getOrganizations();
 			}
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ originalUrl ]);
 
 	useEffect(() => {
@@ -304,10 +302,14 @@ const ConfigSteps = () => {
 																	<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
 																	<Button
 																		isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																		onClick={() => {
+																		onClick={async () => {
 																			setLoaderForOrgClicked(true);
 																			setClickedOrg(org.id);
-																			doCreateConnection(org.id, "manual");
+																			try {
+																				await doCreateConnection(org.id, "manual", org.account?.login);
+																			} finally {
+																				setLoaderForOrgClicked(false);
+																			}
 																		}}
 																	>
 																		Connect
