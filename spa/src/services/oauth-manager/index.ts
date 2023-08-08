@@ -26,7 +26,7 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
 		window.localStorage.setItem(STATE_KEY, res.data.state);
-		const win = popup(res.data.redirectUrl, { width: 400, height: 600 });
+		const win = popup(res.data.redirectUrl);
 		if (win) {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {

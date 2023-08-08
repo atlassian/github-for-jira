@@ -182,7 +182,7 @@ const ConfigSteps = () => {
 	};
 
 	const logout = () => {
-		popup("https://github.com/logout", { width: 400, height: 600 });
+		popup("https://github.com/logout");
 		clearGitHubToken();
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
