@@ -120,7 +120,10 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	jest.mocked(OAuthManager).checkValidity = Authenticated.checkValidity;
 	jest.mocked(AppManager).fetchOrgs = Authenticated.fetchOrgs;
 	jest.mocked(AppManager).installNewApp = Authenticated.installNewApp;
-	jest.mocked(AppManager).connectOrg = Authenticated.connectOrg;
+	jest.mocked(AppManager).connectOrg = jest.fn().mockImplementation(async () => {
+		//do not return, so that to assert on the loading icon
+		return new Promise(_ => {});
+	});
 
 	await act(async () => {
 		render(
