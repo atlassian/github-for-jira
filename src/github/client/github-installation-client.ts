@@ -95,12 +95,11 @@ export class GitHubInstallationClient extends GitHubClient {
 			pullNumber
 		});
 	}
-	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
+	public async getPullRequestPage(owner: string, repo: string, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
 		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
 			owner,
 			repo,
 			per_page,
-			commitSince: commitSince?.toISOString(),
 			cursor
 		}, { graphQuery: "getPullRequests" });
 		return response.data.data;
