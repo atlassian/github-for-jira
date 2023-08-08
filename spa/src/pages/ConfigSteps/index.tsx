@@ -240,14 +240,12 @@ const ConfigSteps = () => {
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
 				}
 				setIsLoggedIn(true);
-				await getOrganizations();
 			}
 		};
 		window.addEventListener("message", handler);
 		return () => {
 			window.removeEventListener("message", handler);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ originalUrl ]);
 
 	useEffect(() => {
