@@ -304,11 +304,11 @@ const ConfigSteps = () => {
 																	<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
 																	<Button
 																		isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																		onClick={() => {
+																		onClick={async () => {
 																			setLoaderForOrgClicked(true);
 																			setClickedOrg(org.id);
 																			try {
-																				doCreateConnection(org.id, "manual", org.account?.login);
+																				await doCreateConnection(org.id, "manual", org.account?.login);
 																			} finally {
 																				setLoaderForOrgClicked(false);
 																			}
