@@ -7,8 +7,10 @@ import { submitSecurityWorkspaceToLink } from "../services/subscription-installa
 import { Installation } from "../models/installation";
 import { emitWebhookProcessedMetrics } from "../util/webhook-utils";
 import Logger from "bunyan";
+import { findOrStartSync } from "../sync/sync-utils";
 
 const SECURITY_PERMISSIONS = ["secret_scanning_alerts", "security_events", "vulnerability_alerts"];
+const SECURITY_EVENTS = ["secret_scanning_alert", "code_scanning_alert", "dependabot_alert"];
 
 export const installationWebhookHandler = async (
 	context: WebhookContext<InstallationEvent>,
@@ -25,7 +27,8 @@ export const installationWebhookHandler = async (
 		log: logger,
 		payload: {
 			installation: {
-				permissions
+				permissions,
+				events
 			}
 		},
 		gitHubAppConfig: {
@@ -48,14 +51,17 @@ export const installationWebhookHandler = async (
 	let jiraResponse;
 
 	try {
-		if (action === "created" && hasSecurityPermissions(permissions)) {
+		if (action === "created" && hasSecurityPermissionsAndEvents(permissions, events)) {
 			return await setSecurityPermissionAccepted(subscription, logger);
 
-		} else if (action === "new_permissions_accepted" && hasSecurityPermissions(permissions) && !subscription.isSecurityPermissionsAccepted) {
-			await setSecurityPermissionAccepted(subscription, logger);
-
+		} else if (action === "new_permissions_accepted" && hasSecurityPermissionsAndEvents(permissions, events) && !subscription.isSecurityPermissionsAccepted) {
 			jiraResponse = await submitSecurityWorkspaceToLink(installation, subscription, logger);
 			logger.info({ subscriptionId: subscription.id }, "Linked security workspace via backfill");
+
+			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert"], { source: "webhook-security-permissions-accepted" });
+			logger.info({ subscriptionId: subscription.id }, "Triggered security backfill successfully");
+
+			await setSecurityPermissionAccepted(subscription, logger);
 		}
 
 		const webhookReceived = context.webhookReceived;
@@ -69,7 +75,7 @@ export const installationWebhookHandler = async (
 		);
 
 	} catch (err) {
-		logger.warn({ err }, "Failed to submit security workspace to Jira via backfill");
+		logger.warn({ err }, "Failed to submit security workspace to Jira or trigger backfill via backfill");
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
 			new Date(webhookReceived).getTime(),
@@ -82,8 +88,9 @@ export const installationWebhookHandler = async (
 	}
 };
 
-const hasSecurityPermissions = (permissions: InstallationEvent["installation"]["permissions"]) => {
-	return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in permissions);
+const hasSecurityPermissionsAndEvents = (permissions: InstallationEvent["installation"]["permissions"], events: InstallationEvent["installation"]["events"]) => {
+	return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in permissions) &&
+		SECURITY_EVENTS.every((securityEvent: any) => events.includes(securityEvent));
 };
 
 const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
