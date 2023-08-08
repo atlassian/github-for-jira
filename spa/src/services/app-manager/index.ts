@@ -49,7 +49,7 @@ async function installNewApp(callbacks: {
 	};
 	window.addEventListener("message", handler);
 
-	const winInstall = popup(app.data.appInstallationUrl, { width: 1024, height: 760 });
+	const winInstall = popup(app.data.appInstallationUrl);
 
 	// Still need below interval for window close
 	// As user might not finish the app install flow, there's no guarantee that above message
