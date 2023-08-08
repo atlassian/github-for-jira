@@ -36,7 +36,7 @@ describe("rest oauth router", () => {
 					.set("authorization", `${getToken()}`);
 
 				expect(resp.body).toEqual({
-					appInstallationUrl: "https://github.com/apps/jira/installations/new"
+					appInstallationUrl: "https://github.com/apps/jira/installations/new?state=spa"
 				});
 
 			});

@@ -3,8 +3,6 @@ import { OrganizationsResponse } from "rest-interfaces";
 import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 
-const FIFTEEN_MINUTES_IN_MS = 15 * 60 * 1000;
-
 async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
@@ -34,8 +32,6 @@ async function installNewApp(callbacks: {
 	onRequested: (setupAction: string) => void
 }): Promise<void> {
 	const app = await Api.app.getAppNewInstallationUrl();
-	const exp = new Date(new Date().getTime() + FIFTEEN_MINUTES_IN_MS);
-	document.cookie = `is-spa=true; expires=${exp.toUTCString()}; path=/; SameSite=None; Secure`;
 
 	const handler = async (event: MessageEvent) => {
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
@@ -57,7 +53,6 @@ async function installNewApp(callbacks: {
 	const hdlWinInstall = setInterval(() => {
 		if (winInstall?.closed) {
 			try {
-				document.cookie = "is-spa=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure";
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
 			} catch (e) {
 				reportError(e);

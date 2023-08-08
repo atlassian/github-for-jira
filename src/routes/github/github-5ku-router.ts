@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import sanitize from "sanitize-html";
 
 export const GitHub5KURedirectHandler = (req: Request, res: Response, next: NextFunction) => {
-	if (req.cookies["is-spa"] === "true") {
-		res.clearCookie("is-spa");
+	if (req.query["state"] === "spa") {
 		const sanitizedGitHubInstallationId = sanitize(String(req.query.installation_id || ""));
 		const sanitizedSetupAction = sanitize(String(req.query.setup_action || ""));
 		if (sanitizedGitHubInstallationId) {
