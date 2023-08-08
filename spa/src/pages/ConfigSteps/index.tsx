@@ -187,13 +187,13 @@ const ConfigSteps = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual") => {
+	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
 			if (connected instanceof AxiosError) {
-				setError(modifyError(connected, { }, { onClearGitHubToken: clearGitHubToken }));
+				setError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -307,7 +307,11 @@ const ConfigSteps = () => {
 																		onClick={() => {
 																			setLoaderForOrgClicked(true);
 																			setClickedOrg(org.id);
-																			doCreateConnection(org.id, "manual");
+																			try {
+																				doCreateConnection(org.id, "manual", org.account?.login);
+																			} finally {
+																				setLoaderForOrgClicked(false);
+																			}
 																		}}
 																	>
 																		Connect
