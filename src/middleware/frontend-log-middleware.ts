@@ -51,13 +51,16 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
 		filterHttpRequests: true
 	});
+
 	req.addLogFields = (fields: Record<string, unknown>): void => {
 		if (req.log) {
 			req.log.fields = merge(req.log.fields, fields);
 		}
 	};
 
-	req.addLogFields({ id: newUUID() });
+	req.addLogFields({
+		id: req.headers["atl-traceid"] || newUUID()
+	});
 
 	res.once("finish", async () => {
 		if ((res.statusCode < 200 || res.statusCode >= 500) && !(res.statusCode === 503 && await booleanFlag(BooleanFlags.MAINTENANCE_MODE))) {

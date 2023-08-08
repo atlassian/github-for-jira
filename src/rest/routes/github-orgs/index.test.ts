@@ -66,7 +66,7 @@ describe("Test cases for GitHub Org Route", () => {
 				.reply(200, { login: "test-user" });
 
 			githubNock
-				.get("/user/installations")
+				.get("/user/installations?per_page=100")
 				.reply(200, {
 					installations: sampleInstallations
 				});
