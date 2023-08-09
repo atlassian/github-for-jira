@@ -308,7 +308,8 @@ describe("Subscription", () => {
 					installationId: GITHUB_INSTALLATION_ID,
 					host: "http://normal-cloud.atlassian.net",
 					gitHubAppId: undefined,
-					hashedClientKey: "cloud_client_key"
+					hashedClientKey: "cloud_client_key",
+					avatarUrl: "https://some-another-avatar-url"
 				});
 				expect(cloudSub.id).toBe(cloudSub2.id);
 				expect((await Subscription.findAll()).length).toBe(1);
