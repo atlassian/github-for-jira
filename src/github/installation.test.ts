@@ -10,10 +10,12 @@ import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 import { submitSecurityWorkspaceToLink } from "../services/subscription-installation-service";
 import { GitHubServerApp } from "../models/github-server-app";
 import { v4 as uuid } from "uuid";
+import { findOrStartSync } from "../sync/sync-utils";
 
 jest.mock("utils/webhook-utils");
 jest.mock("config/feature-flags");
 jest.mock("services/subscription-installation-service");
+jest.mock("../sync/sync-utils");
 
 const GITHUB_INSTALLATION_ID = 1234;
 const GHES_GITHUB_APP_ID = 111;
@@ -96,13 +98,26 @@ describe("InstallationWebhookHandler", () => {
 
 		});
 
-		it("should submit workspace to link for new_permissions_accepted action", async () => {
+		it("should not set security permissions accepted field if the payload doesn't contain security events", async () => {
+			const webhookContext = getWebhookContext({ cloud: true });
+			webhookContext.payload.installation.events = [];
+			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
+			const subscription = await Subscription.findOneForGitHubInstallationId(GITHUB_INSTALLATION_ID, undefined);
+			expect(subscription?.isSecurityPermissionsAccepted).toBeFalsy();
+
+		});
+
+		it("should submit workspace to link and trigger security backfill for new_permissions_accepted action", async () => {
 			const webhookContext = getWebhookContext({ cloud: true });
 			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
 			const subscription = await Subscription.findOneForGitHubInstallationId(GITHUB_INSTALLATION_ID, undefined);
 			const installation = await Installation.getForHost(jiraHost);
 			expect(submitSecurityWorkspaceToLink).toBeCalledTimes(1);
 			expect(submitSecurityWorkspaceToLink).toBeCalledWith(installation, subscription, expect.anything());
+			expect(findOrStartSync).toBeCalledTimes(1);
+			expect(findOrStartSync).toBeCalledWith(
+				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert"], { "source": "webhook-security-permissions-accepted" }
+			);
 
 		});
 
@@ -141,7 +156,7 @@ describe("InstallationWebhookHandler", () => {
 				privateKey: "private-key",
 				webhookSecret: "webhook-secret"
 			}, jiraHost);
-			ghesGitHubAppId =  gitHubServerApp.id;
+			ghesGitHubAppId = gitHubServerApp.id;
 			await Subscription.create({
 				gitHubInstallationId: GITHUB_INSTALLATION_ID,
 				jiraHost,
@@ -217,7 +232,8 @@ describe("InstallationWebhookHandler", () => {
 					"security_events": "read",
 					"vulnerability_alerts": "read",
 					"secret_scanning_alerts": "read"
-				}
+				},
+				"events": ["secret_scanning_alert", "code_scanning_alert", "dependabot_alert"]
 			}
 		};
 	};
