@@ -273,16 +273,34 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ?
 						<>
-							<Step title="Connect your GitHub organization to Jira">
-								<>
-									{
-										loaderForOrgFetching ?
+							{
+								loaderForOrgFetching ?
+									<>
+										<Step
+											title={<Skeleton
+												width="60%"
+												height="24px"
+												borderRadius="5px"
+												isShimmering
+											/>}
+										>
 											<Skeleton
 												width="100%"
 												height="24px"
 												borderRadius="5px"
 												isShimmering
-											/> :
+											/>
+										</Step>
+										<LoggedInContent>
+											<Skeleton
+												width="60%"
+												height="24px"
+												borderRadius="5px"
+												isShimmering
+											/>
+										</LoggedInContent>
+									</> : <>
+										<Step title="Connect your GitHub organization to Jira">
 											<>
 												<Paragraph>
 													Repositories from this organization will be available to all<br />
@@ -292,7 +310,6 @@ const ConfigSteps = () => {
 													organizations.length === 0 &&
 													<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
 												}
-
 												{
 													organizations.map(org =>
 														<OrgsContainer key={org.id}>
@@ -331,13 +348,13 @@ const ConfigSteps = () => {
 													</Button>
 												</LoggedInContent>
 											</>
-									}
-								</>
-							</Step>
-							<LoggedInContent>
-								<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-								<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-							</LoggedInContent>
+										</Step>
+										<LoggedInContent>
+												<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+												<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
+										</LoggedInContent>
+									</>
+							}
 						</>
 						:
 						<Step title="Select your GitHub product">
