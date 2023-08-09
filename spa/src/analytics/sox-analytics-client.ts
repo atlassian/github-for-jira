@@ -63,7 +63,6 @@ export const loadSoxAnalyticClient = function(): AnalyticClient | undefined {
 			};
 		}
 	} catch (e) {
-		console.log('^^^^^^^^', { e });
 		reportError(e);
 		return undefined;
 	}
