@@ -27,13 +27,23 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 	}
 }
 
+let lastOpenWin: WindowProxy | null = null;
 async function installNewApp(callbacks: {
 	onFinish: (gitHubInstallationId: number | undefined) => void,
 	onRequested: (setupAction: string) => void
 }): Promise<void> {
+
 	const app = await Api.app.getAppNewInstallationUrl();
 
+	if(lastOpenWin) {
+		//do nothing, as there's already an win opened.
+		return;
+	}
+
+	const winInstall = lastOpenWin = popup(app.data.appInstallationUrl);
+
 	const handler = async (event: MessageEvent) => {
+		lastOpenWin = null;
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
 			const id = parseInt(event.data?.gitHubInstallationId);
 			callbacks.onFinish(isNaN(id) ? undefined : id);
@@ -45,14 +55,13 @@ async function installNewApp(callbacks: {
 	};
 	window.addEventListener("message", handler);
 
-	const winInstall = popup(app.data.appInstallationUrl);
-
 	// Still need below interval for window close
 	// As user might not finish the app install flow, there's no guarantee that above message
 	// event will happen.
 	const hdlWinInstall = setInterval(() => {
 		if (winInstall?.closed) {
 			try {
+				lastOpenWin = null;
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
 			} catch (e) {
 				reportError(e);
