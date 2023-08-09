@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
+import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
@@ -70,6 +71,16 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
+const AddOrganizationContainer = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: start;
+	padding-top: ${token("space.150")};
+	div {
+		margin-left: ${token("space.150")};
+		color: ${token("color.text.subtle")};
+	}
+`;
 const LoggedInContent = styled.div`
 	display: flex;
 	align-items: center;
@@ -77,16 +88,17 @@ const LoggedInContent = styled.div`
 	margin: 0 auto;
 `;
 const OrgsContainer = styled.div`
+	max-height: 250px;
+	overflow-y: auto;
+	padding-right: 80px;
+	margin-right: -80px;
+`;
+const OrgDiv = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
-`;
-const HorizontalDividerSkippingPaddings = styled.div`
-	border-top: ${token("space.025")} solid ${token("color.border")};
-	height: 1px;
-	margin: 0 -80px; // Using negative margin here to avoid the paddings
 `;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
@@ -310,43 +322,42 @@ const ConfigSteps = () => {
 													organizations.length === 0 &&
 													<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
 												}
-												{
-													organizations.map(org =>
-														<OrgsContainer key={org.id}>
-															<span>{org.account.login}</span>
-															{
-																loaderForOrgClicked && clickedOrg === org.id ?
-																	<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-																	<Button
-																		isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																		onClick={async () => {
-																			setLoaderForOrgClicked(true);
-																			setClickedOrg(org.id);
-																			try {
-																				await doCreateConnection(org.id, "manual", org.account?.login);
-																			} finally {
-																				setLoaderForOrgClicked(false);
-																			}
-																		}}
-																	>
-																		Connect
-																	</Button>
-															}
-														</OrgsContainer>
-													)
-												}
-												<HorizontalDividerSkippingPaddings />
-												<NoOrgsParagraph>Can't find an organization you're looking for?</NoOrgsParagraph>
-												<LoggedInContent>
+												<OrgsContainer>
+													{
+														organizations.map(org =>
+															<OrgDiv key={org.id}>
+																<span>{org.account.login}</span>
+																{
+																	loaderForOrgClicked && clickedOrg === org.id ?
+																		<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
+																		<Button
+																			isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
+																			onClick={async () => {
+																				setLoaderForOrgClicked(true);
+																				setClickedOrg(org.id);
+																				try {
+																					await doCreateConnection(org.id, "manual", org.account?.login);
+																				} finally {
+																					setLoaderForOrgClicked(false);
+																				}
+																			}}
+																		>
+																			Connect
+																		</Button>
+																}
+															</OrgDiv>
+														)
+													}
+												</OrgsContainer>
+												<AddOrganizationContainer>
 													<Button
+														iconBefore={<AddIcon label="add new org" size="medium"/>}
 														isDisabled={loaderForOrgClicked}
-														appearance="primary"
 														aria-label="Install new Org"
 														onClick={installNewOrg}
-													>
-														Install Jira in a new organization
-													</Button>
-												</LoggedInContent>
+													/>
+													<div>Add an organization</div>
+												</AddOrganizationContainer>
 											</>
 										</Step>
 										<LoggedInContent>
