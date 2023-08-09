@@ -78,7 +78,7 @@ const AddOrganizationContainer = styled.div`
 	padding-top: ${token("space.150")};
 	div {
 		margin-left: ${token("space.150")};
-		color: ${token("color.text.subtle")};
+		color: ${token("color.text")};
 	}
 `;
 const LoggedInContent = styled.div`
