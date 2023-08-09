@@ -153,19 +153,16 @@ const ConfigSteps = () => {
 		});
 	};
 
-	const getOrganizations = async (autoRedirectToInstall = true) => {
+	const getOrganizations = async () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
 			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
-			/**
-			 * If there are no orgs and auto-redirect is not disabled,
-			 * then redirect them to the Install New Org screen
-			 */
-			autoRedirectToInstall && response.orgs.length === 0 && installNewOrg();
+			return { success: true, orgs: response.orgs };
 		}
 	};
 
@@ -224,13 +221,13 @@ const ConfigSteps = () => {
 		}
 	};
 
-	const installNewOrg = async () => {
+	const installNewOrg = async (mode: "auto" | "manual") => {
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked" });
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked", attributes: { mode } });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" });
-					getOrganizations(false);
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success", attributes: { mode } });
+					getOrganizations();
 					if(gitHubInstallationId) {
 						await doCreateConnection(gitHubInstallationId, "auto");
 					}
@@ -278,7 +275,15 @@ const ConfigSteps = () => {
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
 			setLoaderForLogin(false);
-			await getOrganizations();
+			setOrganizations([]);
+			if (status === true) {
+				const result = await getOrganizations();
+				if (result.success && result.orgs.length === 0) {
+					if (result.orgs.length === 0) {
+						await installNewOrg("auto");
+					}
+				}
+			}
 		};
 		isLoggedIn && recheckValidity();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -363,9 +368,9 @@ const ConfigSteps = () => {
 														iconBefore={<AddIcon label="add new org" size="medium"/>}
 														isDisabled={loaderForOrgClicked}
 														aria-label="Install new Org"
-														onClick={installNewOrg}
+														onClick={() => installNewOrg("manual")}
 													/>
-													<div onClick={() => !loaderForOrgClicked && installNewOrg()}>
+													<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
 														Add an organization
 													</div>
 												</AddOrganizationContainer>
