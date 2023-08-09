@@ -246,7 +246,6 @@ const ConfigSteps = () => {
 	}, [ originalUrl ]);
 
 	useEffect(() => {
-		console.log("---------- effect fire ------------", { isLoggedIn });
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
@@ -257,9 +256,6 @@ const ConfigSteps = () => {
 			setLoaderForLogin(false);
 			setOrganizations([]);
 			if (status === true) {
-				console.log("========== start loading orgs ===========");
-				console.log("========== start loading orgs ===========", { isLoggedIn });
-				console.log("========== start loading orgs ===========");
 				const result = await getOrganizations();
 				if (result.success) {
 					if (result.orgs.length === 0) {
