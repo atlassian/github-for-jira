@@ -25,7 +25,7 @@ const Step = ({
 	title,
 	children,
 }: {
-	title: string,
+	title: string | JSX.Element,
 	children: JSX.Element,
 }) => {
 	return (
