@@ -76,9 +76,18 @@ const AddOrganizationContainer = styled.div`
 	align-items: center;
 	justify-content: start;
 	padding-top: ${token("space.150")};
+	button:has( + div:hover) {
+		background: ${token("color.background.neutral.hovered")};
+	}
+	button:has( + div:active) {
+		background: ${token("color.background.neutral.pressed")};
+	}
 	div {
 		margin-left: ${token("space.150")};
 		color: ${token("color.text")};
+		:hover {
+			cursor: pointer;
+		}
 	}
 `;
 const LoggedInContent = styled.div`
@@ -356,7 +365,9 @@ const ConfigSteps = () => {
 														aria-label="Install new Org"
 														onClick={installNewOrg}
 													/>
-													<div>Add an organization</div>
+													<div onClick={() => !loaderForOrgClicked && installNewOrg()}>
+														Add an organization
+													</div>
 												</AddOrganizationContainer>
 											</>
 										</Step>
