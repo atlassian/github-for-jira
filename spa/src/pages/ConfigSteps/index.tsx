@@ -257,7 +257,7 @@ const ConfigSteps = () => {
 			setOrganizations([]);
 			if (status === true) {
 				const result = await getOrganizations();
-				if (result.success) {
+				if (result.success && result.orgs.length === 0) {
 					if (result.orgs.length === 0) {
 						await installNewOrg("auto");
 					}
