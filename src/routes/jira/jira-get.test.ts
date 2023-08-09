@@ -10,6 +10,8 @@ import express from "express";
 import supertest from "supertest";
 import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
@@ -304,5 +306,16 @@ describe.each([
 			.then(response => {
 				expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
 			});
+	});
+
+	describe("5ku new experience", () => {
+		it("should redirect to new spa entry page on empty state", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)
+				.mockResolvedValue(true);
+			await supertest(frontendApp)
+				.get(url)
+				.expect(302)
+				.expect("location", "/spa?from=homepage");
+		});
 	});
 });
