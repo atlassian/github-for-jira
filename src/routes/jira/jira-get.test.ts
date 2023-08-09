@@ -309,13 +309,23 @@ describe.each([
 	});
 
 	describe("5ku new experience", () => {
-		it("should redirect to new spa entry page on empty state", async () => {
+		it("should redirect to new spa entry page on empty state if ff on", async () => {
 			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)
 				.mockResolvedValue(true);
 			await supertest(frontendApp)
 				.get(url)
 				.expect(302)
 				.expect("location", "/spa?from=homepage");
+		});
+		it("should show existing page on empty state if ff off", async () => {
+			when(booleanFlag).calledWith(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost)
+				.mockResolvedValue(false);
+			await supertest(frontendApp)
+				.get(url)
+				.expect(200)
+				.then(response => {
+					expect(response.text).toContain("<h1 class=\"jiraConfiguration__header__title\">GitHub configuration</h1>");
+				});
 		});
 	});
 });
