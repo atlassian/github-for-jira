@@ -75,7 +75,8 @@ const transformDependabotAlerts = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmapped = (state) => logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`);
+	const handleUnmappedState = (state) => logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`);
+	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity}`);
 
 	const vulnerabilities = alerts.map((alert) => {
 		return {
@@ -90,10 +91,10 @@ const transformDependabotAlerts = async (
 			introducedDate: alert.createdAt,
 			lastUpdated: alert.fixedAt || alert.dismissedAt || alert.autoDismissedAt || alert.createdAt,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), handleUnmapped)
+				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.securityAdvisory.identifiers, alert.securityAdvisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmapped),
+			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
 				content: alert.vulnerableManifestPath
 			}

@@ -34,7 +34,8 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 
 	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
 
-	const handleUnmapped = (state) => context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
+	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
+	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from dependabot_alert webhook: ${severity}`);
 
 	return {
 		vulnerabilities: [{
@@ -49,10 +50,10 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at || alert.created_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity, handleUnmapped)
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity, handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state, handleUnmapped),
+			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
 				content: alert.dependency.manifest_path
 			}

@@ -7,11 +7,11 @@ import codeScanningCreatedPayload from "./../../test/fixtures/api/code-scanning-
 import codeScanningCreatedPrPayload from "./../../test/fixtures/api/code-scanning-alert-created-pr.json";
 import codeScanningFixedPayload from "./../../test/fixtures/api/code-scanning-alert-fixed.json";
 import codeScanningClosedByUserPayload from "./../../test/fixtures/api/code-scanning-alert-closed-by-user.json";
-import { getLogger } from "config/logger";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { JiraVulnerabilityStatusEnum } from "interfaces/jira";
+import Logger from "bunyan";
 
 const buildContext = (
 	payload,
@@ -29,7 +29,7 @@ const buildContext = (
 			gitHubApiUrl: "https://api.github.com",
 			uuid: undefined
 		},
-		log: getLogger("foo")
+		log: { info: jest.fn() } as unknown as Logger
 	});
 };
 
@@ -254,6 +254,44 @@ describe("code_scanning_alert transform", () => {
 				jiraHost
 			);
 			expect(result).toBe(null);
+		});
+
+		it("should log unmapped state", async () => {
+			const payload = {
+				...codeScanningCreatedPayload,
+				alert: { ...codeScanningCreatedPayload.alert, state: "unmapped_state" }
+			};
+			const context = buildContext(payload);
+			await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(context.log.info).toHaveBeenCalledWith(
+				"Received unmapped state from code_scanning_alert webhook: unmapped_state"
+			);
+		});
+
+		it("should log unmapped severity", async () => {
+			const payload = {
+				...codeScanningCreatedPayload,
+				alert: {
+					...codeScanningCreatedPayload.alert,
+					rule: {
+						...codeScanningCreatedPayload.alert.rule,
+						security_severity_level: "unmapped_severity"
+					}
+				}
+			};
+			const context = buildContext(payload);
+			await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(context.log.info).toHaveBeenCalledWith(
+				"Received unmapped severity from code_scanning_alert webhook: unmapped_severity"
+			);
 		});
 	});
 });

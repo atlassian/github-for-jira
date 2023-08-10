@@ -124,7 +124,8 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 	};
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
 
-	const handleUnmapped = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
+	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
+	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity}`);
 
 	return {
 		vulnerabilities: [{
@@ -139,10 +140,10 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			introducedDate: alert.created_at,
 			lastUpdated: alert.dismissed_at || alert.fixed_at || alert.updated_at || alert.created_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.rule.security_severity_level, handleUnmapped)
+				level: transformGitHubSeverityToJiraSeverity(alert.rule.security_severity_level, handleUnmappedSeverity)
 			},
 			identifiers: [],
-			status: transformGitHubStateToJiraStatus(alert.state, handleUnmapped),
+			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
 				content: alert.tool.name
 			}

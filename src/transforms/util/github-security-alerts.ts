@@ -2,8 +2,8 @@ import { JiraVulnerabilitySeverityEnum, JiraVulnerabilityStatusEnum } from "inte
 
 // From GitHub: Severity can be one of: low, medium or moderate, high, critical
 // To Jira: Status can be one of: low, medium, high, critical, unknown.
-export const transformGitHubSeverityToJiraSeverity = (state: string, onUnmapped: (state: string) => void): JiraVulnerabilitySeverityEnum => {
-	switch (state) {
+export const transformGitHubSeverityToJiraSeverity = (severity: string, onUnmapped: (severity: string) => void): JiraVulnerabilitySeverityEnum => {
+	switch (severity) {
 		case "low":
 			return JiraVulnerabilitySeverityEnum.LOW;
 		case "medium":
@@ -14,7 +14,7 @@ export const transformGitHubSeverityToJiraSeverity = (state: string, onUnmapped:
 		case "critical":
 			return JiraVulnerabilitySeverityEnum.CRITICAL;
 		default:
-			onUnmapped(state);
+			onUnmapped(severity);
 			return JiraVulnerabilitySeverityEnum.UNKNOWN;
 	}
 };
