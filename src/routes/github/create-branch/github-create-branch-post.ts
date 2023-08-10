@@ -47,7 +47,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
-		const subscription = await Subscription.findForRepoOwner(owner, jiraHost);
+		const subscription = await Subscription.findForRepoOwner(owner, jiraHost, !!gitHubAppConfig.gitHubAppId);
 
 		if (!subscription) {
 			logger.error(Errors.MISSING_SUBSCRIPTION);

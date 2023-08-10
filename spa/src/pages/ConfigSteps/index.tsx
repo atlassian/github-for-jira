@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
+import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
@@ -70,6 +71,25 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
+const AddOrganizationContainer = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: start;
+	padding-top: ${token("space.150")};
+	button:has( + div:hover) {
+		background: ${token("color.background.neutral.hovered")};
+	}
+	button:has( + div:active) {
+		background: ${token("color.background.neutral.pressed")};
+	}
+	div {
+		margin-left: ${token("space.150")};
+		color: ${token("color.text")};
+		:hover {
+			cursor: pointer;
+		}
+	}
+`;
 const LoggedInContent = styled.div`
 	display: flex;
 	align-items: center;
@@ -77,16 +97,17 @@ const LoggedInContent = styled.div`
 	margin: 0 auto;
 `;
 const OrgsContainer = styled.div`
+	max-height: 250px;
+	overflow-y: auto;
+	padding-right: 80px;
+	margin-right: -80px;
+`;
+const OrgDiv = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
-`;
-const HorizontalDividerSkippingPaddings = styled.div`
-	border-top: ${token("space.025")} solid ${token("color.border")};
-	height: 1px;
-	margin: 0 -80px; // Using negative margin here to avoid the paddings
 `;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
@@ -278,16 +299,34 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ?
 						<>
-							<Step title="Connect your GitHub organization to Jira">
-								<>
-									{
-										loaderForOrgFetching ?
+							{
+								loaderForOrgFetching ?
+									<>
+										<Step
+											title={<Skeleton
+												width="60%"
+												height="24px"
+												borderRadius="5px"
+												isShimmering
+											/>}
+										>
 											<Skeleton
 												width="100%"
 												height="24px"
 												borderRadius="5px"
 												isShimmering
-											/> :
+											/>
+										</Step>
+										<LoggedInContent>
+											<Skeleton
+												width="60%"
+												height="24px"
+												borderRadius="5px"
+												isShimmering
+											/>
+										</LoggedInContent>
+									</> : <>
+										<Step title="Connect your GitHub organization to Jira">
 											<>
 												<Paragraph>
 													Repositories from this organization will be available to all<br />
@@ -297,52 +336,52 @@ const ConfigSteps = () => {
 													organizations.length === 0 &&
 													<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
 												}
-
-												{
-													organizations.map(org =>
-														<OrgsContainer key={org.id}>
-															<span>{org.account.login}</span>
-															{
-																loaderForOrgClicked && clickedOrg === org.id ?
-																	<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-																	<Button
-																		isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																		onClick={async () => {
-																			setLoaderForOrgClicked(true);
-																			setClickedOrg(org.id);
-																			try {
-																				await doCreateConnection(org.id, "manual", org.account?.login);
-																			} finally {
-																				setLoaderForOrgClicked(false);
-																			}
-																		}}
-																	>
-																		Connect
-																	</Button>
-															}
-														</OrgsContainer>
-													)
-												}
-												<HorizontalDividerSkippingPaddings />
-												<NoOrgsParagraph>Can't find an organization you're looking for?</NoOrgsParagraph>
-												<LoggedInContent>
+												<OrgsContainer>
+													{
+														organizations.map(org =>
+															<OrgDiv key={org.id}>
+																<span>{org.account.login}</span>
+																{
+																	loaderForOrgClicked && clickedOrg === org.id ?
+																		<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
+																		<Button
+																			isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
+																			onClick={async () => {
+																				setLoaderForOrgClicked(true);
+																				setClickedOrg(org.id);
+																				try {
+																					await doCreateConnection(org.id, "manual", org.account?.login);
+																				} finally {
+																					setLoaderForOrgClicked(false);
+																				}
+																			}}
+																		>
+																			Connect
+																		</Button>
+																}
+															</OrgDiv>
+														)
+													}
+												</OrgsContainer>
+												<AddOrganizationContainer>
 													<Button
+														iconBefore={<AddIcon label="add new org" size="medium"/>}
 														isDisabled={loaderForOrgClicked}
-														appearance="primary"
 														aria-label="Install new Org"
 														onClick={() => installNewOrg("manual")}
-													>
-														Install Jira in a new organization
-													</Button>
-												</LoggedInContent>
+													/>
+													<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
+														Add an organization
+													</div>
+												</AddOrganizationContainer>
 											</>
-									}
-								</>
-							</Step>
-							<LoggedInContent>
-								<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-								<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-							</LoggedInContent>
+										</Step>
+										<LoggedInContent>
+												<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+												<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
+										</LoggedInContent>
+									</>
+							}
 						</>
 						:
 						<Step title="Select your GitHub product">

@@ -21,7 +21,7 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 		return;
 	}
 
-	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost);
+	const subscription = await Subscription.findForRepoNameAndOwner(repo, owner, jiraHost, !!gitHubAppConfig.gitHubAppId);
 	if (!subscription) {
 		logger.error(Errors.MISSING_SUBSCRIPTION);
 		res.sendStatus(400);
