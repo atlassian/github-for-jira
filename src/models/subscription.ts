@@ -25,7 +25,7 @@ export interface Repository {
 	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
-const gitHubAppIdCondition = (isServer: boolean): string => {
+export const gitHubAppIdCondition = (isServer: boolean): string => {
 	return isServer ? "AND s.\"gitHubAppId\" IS NOT NULL" : "AND s.\"gitHubAppId\" IS NULL";
 };
 
@@ -165,7 +165,7 @@ export class Subscription extends Model {
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
 			"AND rss.\"repoName\" = :repoName " +
-			"AND rss.\"repoOwner\" = :repoOwner" +
+			"AND rss.\"repoOwner\" = :repoOwner " +
 			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoName, repoOwner },
@@ -181,7 +181,7 @@ export class Subscription extends Model {
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
-			"AND rss.\"repoOwner\" = :repoOwner" +
+			"AND rss.\"repoOwner\" = :repoOwner " +
 			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoOwner },
