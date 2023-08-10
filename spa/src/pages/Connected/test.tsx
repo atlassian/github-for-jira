@@ -11,12 +11,12 @@ import userEvent from "@testing-library/user-event";
 	}
 };
 
-jest.mock("../../analytics/proxy-analytics-client", () => {
+jest.mock("../../analytics/analytics-proxy-client", () => {
 	return {
-		proxyAnalyticsClient: () => ({
+		analyticsProxyClient: {
 			sendScreenEvent: jest.fn(),
 			sendUIEvent: jest.fn()
-		})
+		}
 	};
 });
 

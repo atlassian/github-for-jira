@@ -15,8 +15,6 @@ interface AnalyticsTrackUiPayload {
 	eventAttributes?: Record<string, unknown>;
 }
 
-// AUTO-GENERATED BELOW, RE-GENERATE IF CHANGED
-// Prompt: ChatGPT, generate isAnalyticsTrackUiPayload and isAnalyticsScreenPayload for these TypeScript classes using arrow functions, double quotes and "unknown" type
 const isRecord = (obj: unknown): obj is Record<string, unknown> =>
 	typeof obj === "object" && obj !== null;
 
@@ -41,14 +39,13 @@ const isAnalyticsTrackUiPayload = (obj: unknown): obj is AnalyticsTrackUiPayload
 	(obj.eventType === "ui" || obj.eventType === "track") &&
 	isTrackUiEventProps(obj.eventProperties) &&
 	(obj.eventAttributes === undefined || isRecord(obj.eventAttributes));
-// AUTO-GENERATED ABOVE, RE-GENERATE IF CHANGED (thanks, ChatGPT+++)
 
 export const AnalyticsProxyHandler = errorWrapper("AnalyticsProxyHandler", async function AnalyticsProxyPost(req: Request, res: Response<string>) {
 	if (isAnalyticsScreenPayload(req.body)) {
 		await sendAnalytics(res.locals.jiraHost, "screen", req.body.eventProperties, req.body.eventAttributes || {}, res.locals.accountId);
 		res.sendStatus(202);
 
-		// Have to break into two identical IFs because Typescript is not smart enough to parse a single one
+		// Had to break into two identical IFs because Typescript is not smart enough to parse a single one
 	} else if (isAnalyticsTrackUiPayload(req.body)) {
 		await sendAnalytics(res.locals.jiraHost, req.body.eventType, req.body.eventProperties, req.body.eventAttributes || {}, res.locals.accountId);
 

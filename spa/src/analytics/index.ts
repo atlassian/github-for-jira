@@ -1,9 +1,9 @@
 import { AnalyticClient, ScreenNames } from "./types";
 import { useEffect } from "react";
 
-import { proxyAnalyticsClient } from "./proxy-analytics-client";
+import { analyticsProxyClient } from "./analytics-proxy-client";
 
-const analyticsClient: AnalyticClient = proxyAnalyticsClient();
+const analyticsClient: AnalyticClient = analyticsProxyClient;
 
 export default analyticsClient;
 
