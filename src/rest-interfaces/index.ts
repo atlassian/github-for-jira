@@ -1,4 +1,4 @@
-import { ScreenEventProps, TrackOpUiEventProps } from "utils/analytics-client";
+import { ScreenEventProps, TrackOpUiEventProps } from "../util/analytics-client";
 
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
