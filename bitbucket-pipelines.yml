@@ -1,0 +1,20 @@
+image: atlassian/default-image:3
+
+pipelines:
+  branches:
+    ght-test-branch:
+      - step:
+          name: 'Build and Test'
+          script:
+            - echo "Your build and test goes here..."
+      - step:
+          name: 'Deployment to Staging'
+          deployment: staging
+          script:
+            - echo "Your deployment to staging script goes here..."
+      - step:
+          name: 'Deployment to Production'
+          deployment: production
+          trigger: 'manual'
+          script:
+            - echo "Your deployment to production script goes here..."
