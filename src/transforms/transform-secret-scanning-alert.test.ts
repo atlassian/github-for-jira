@@ -56,6 +56,7 @@ describe("transformSecretScanningAlert", () => {
 	it.each([
 		["created", JiraVulnerabilityStatusEnum.OPEN],
 		["reopened", JiraVulnerabilityStatusEnum.OPEN],
+		["open", JiraVulnerabilityStatusEnum.OPEN],
 		["resolved", JiraVulnerabilityStatusEnum.CLOSED],
 		["revoked", JiraVulnerabilityStatusEnum.CLOSED],
 		["unmapped_state", JiraVulnerabilityStatusEnum.UNKNOWN]

@@ -81,5 +81,5 @@ const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscrip
 		return { syncType: "full", targetTasks: undefined };
 	}
 
-	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"] };
+	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"] };
 };

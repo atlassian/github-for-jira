@@ -132,7 +132,7 @@ describe("sync", () => {
 					installationId: installationIdForServer,
 					jiraHost,
 					commitsFromDate: commitsFromDate.toISOString(),
-					targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"],
+					targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"],
 					gitHubAppConfig: expect.objectContaining({ gitHubAppId: gitHubServerApp.id, uuid: gitHubServerApp.uuid })
 				}), expect.anything(), expect.anything());
 			});

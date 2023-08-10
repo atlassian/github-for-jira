@@ -75,7 +75,7 @@ export const installationWebhookHandler = async (
 		);
 
 	} catch (err) {
-		logger.warn({ err }, "Failed to submit security workspace to Jira or trigger backfill via backfill");
+		logger.warn({ err }, "Failed to submit security workspace to Jira or trigger backfill");
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
 			new Date(webhookReceived).getTime(),

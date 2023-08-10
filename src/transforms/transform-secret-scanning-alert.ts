@@ -49,6 +49,7 @@ export const transformGitHubStateToJiraStatus = (state: string | undefined, logg
 	switch (state) {
 		case "created":
 		case "reopened":
+		case "open":
 			return JiraVulnerabilityStatusEnum.OPEN;
 		case "resolved":
 		case "revoked":
