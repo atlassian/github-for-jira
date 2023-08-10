@@ -7,7 +7,7 @@ import { GitHubTokenHandler } from "./middleware/jwt/github-token";
 import { GitHubAppsRoute } from "./routes/github-apps";
 import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
-import { AnalyticsHandler } from "~/src/rest/routes/analytics";
+import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -27,7 +27,7 @@ subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 //  have done authentication only)?
 subRouter.use(JwtHandler);
 
-subRouter.post("/analytics", AnalyticsHandler);
+subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
 
 subRouter.use("/oauth", OAuthRouter);
 

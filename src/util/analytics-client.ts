@@ -12,11 +12,11 @@ const logger = getLogger("analytics");
 
 let analyticsNodeClient;
 
-interface ScreenEventProps {
+export interface ScreenEventProps {
 	name: string;
 }
 
-interface TrackOpUiEventProps {
+export interface TrackOpUiEventProps {
 	action: string;
 	actionSubject: string;
 	source: string;
