@@ -82,7 +82,7 @@ export class GitHubUserClient extends GitHubClient {
 	};
 
 	public async getInstallations(): Promise<AxiosResponse<Octokit.AppsListInstallationsForAuthenticatedUserResponse>> {
-		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations");
+		return await this.get<Octokit.AppsListInstallationsForAuthenticatedUserResponse>("/user/installations?per_page=100");
 	}
 
 	public async getReference(owner: string, repo: string, branch: string): Promise<AxiosResponse<Octokit.GitGetRefResponse>> {

@@ -20,6 +20,7 @@ import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/cli
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { extraLoggerInfo } from "./webhook-logging-extra";
 import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
+import { installationWebhookHandler } from "~/src/github/installation";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -137,6 +138,12 @@ const webhookRouter = async (context: WebhookContext) => {
 			break;
 		case "secret_scanning_alert":
 			await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
+			break;
+		case "installation":
+			if (context.action === "created" || context.action === "new_permissions_accepted") {
+				await GithubWebhookMiddleware(installationWebhookHandler)(context);
+			}
+			break;
 	}
 };
 
@@ -164,7 +171,7 @@ const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array
 		 * If we ever need to rotate the webhook secrets for Enterprise Customers,
 		 * we can add it in the array: ` [ webhookSecret ]`
 		 */
-		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
+		return { webhookSecrets: [webhookSecret], gitHubServerApp };
 	}
 
 	return {

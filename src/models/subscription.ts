@@ -47,6 +47,7 @@ export class Subscription extends Model {
 	repositoryStatus?: TaskStatus;
 	gitHubAppId: number | undefined;
 	avatarUrl: string | undefined;
+	isSecurityPermissionsAccepted: boolean;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -281,7 +282,8 @@ Subscription.init({
 	avatarUrl: {
 		type: DataTypes.STRING,
 		allowNull: true
-	}
+	},
+	isSecurityPermissionsAccepted: DataTypes.BOOLEAN
 }, { sequelize });
 
 export interface SubscriptionPayload {

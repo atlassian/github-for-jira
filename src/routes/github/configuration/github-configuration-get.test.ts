@@ -42,7 +42,7 @@ describe("github-configuration-get", () => {
 			githubUserTokenNock(subscription.gitHubInstallationId);
 
 			githubNock
-				.get(`/user/installations`)
+				.get(`/user/installations?per_page=100`)
 				.reply(200, {
 					installations: [{
 						id: subscription.gitHubInstallationId,
@@ -112,7 +112,7 @@ describe("github-configuration-get", () => {
 			gheUserTokenNock(subscription.gitHubInstallationId);
 
 			gheApiNock
-				.get(`/user/installations`)
+				.get(`/user/installations?per_page=100`)
 				.reply(200, {
 					installations: [{
 						id: subscription.gitHubInstallationId,

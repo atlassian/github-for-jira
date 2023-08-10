@@ -145,7 +145,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get(`/user/installations`)
+				.get(`/user/installations?per_page=100`)
 				.reply(200, {
 					installations: [{
 						id: sub.gitHubInstallationId,
@@ -206,7 +206,7 @@ describe("Github Configuration", () => {
 				});
 
 			githubNock
-				.get("/user/installations")
+				.get("/user/installations?per_page=100")
 				.reply(200, {
 					installations: [{
 						id: sub.gitHubInstallationId,
