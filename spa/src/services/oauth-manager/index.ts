@@ -2,10 +2,10 @@ import Api from "../../api";
 import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 
-const STATE_KEY = "oauth-localStorage-state";
-
 let username: string | undefined;
 let email: string | undefined;
+
+let oauthState: string | undefined;
 
 async function checkValidity(): Promise<boolean | AxiosError> {
 	if (!Api.token.hasGitHubToken()) return false;
@@ -25,8 +25,8 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	const res = await Api.auth.generateOAuthUrl();
 	if (res.data.redirectUrl && res.data.state) {
-		window.localStorage.setItem(STATE_KEY, res.data.state);
-		const win = popup(res.data.redirectUrl, { width: 400, height: 600 });
+		oauthState = res.data.state;
+		const win = popup(res.data.redirectUrl);
 		if (win) {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {
@@ -39,10 +39,12 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 }
 
 async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
+
 	if (!code && !state) return false;
 
-	const prevState = window.localStorage.getItem(STATE_KEY);
-	window.localStorage.removeItem(STATE_KEY);
+	const prevState = oauthState;
+	oauthState = undefined;
+
 	if (state !== prevState) return false;
 
 	try {

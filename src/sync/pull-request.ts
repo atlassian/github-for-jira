@@ -114,11 +114,14 @@ const getPullRequestTaskGraphQL = async (
 
 	logger.info({ startTime }, "Backfill task started");
 
-	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const createdSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 
-	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
+	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, perPage, cursor);
 
-	const pullRequests = response.repository?.pullRequests?.edges
+	const filteredByCreatedSince = response.repository?.pullRequests?.edges
+		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
+
+	const pullRequests = filteredByCreatedSince
 		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
@@ -129,7 +132,7 @@ const getPullRequestTaskGraphQL = async (
 
 	if (pullRequests.length === 0) {
 		return {
-			edges: response.repository?.pullRequests?.edges || [],
+			edges: filteredByCreatedSince || [],
 			jiraPayload: undefined
 		};
 	}
@@ -140,7 +143,7 @@ const getPullRequestTaskGraphQL = async (
 	};
 
 	return {
-		edges: response.repository?.pullRequests?.edges || [],
+		edges: filteredByCreatedSince || [],
 		jiraPayload
 	};
 

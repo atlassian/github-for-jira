@@ -74,6 +74,7 @@ export type pullRequestNode = {
 	state: string;
 	mergedAt?: string;
 	updatedAt: string;
+	createdAt: string;
 	title: string;
 	body: string;
 	url: string;
@@ -163,6 +164,7 @@ export type pullRequestQueryResponse = {
 	repository: {
 		pullRequests: {
 			edges: {
+				createdAt: string;
 			cursor: string,
 			node: pullRequestNode;
 			}[]
@@ -170,10 +172,10 @@ export type pullRequestQueryResponse = {
 	};
 };
 
-export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
+export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
 
-		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor, filterBy: { since: $commitSince }) {
+		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
       edges {
       	cursor
 				node {
@@ -181,6 +183,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					id
 					state
 					mergedAt
+					createdAt
 					updatedAt
 					title
 					body
