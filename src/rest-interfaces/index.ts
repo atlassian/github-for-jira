@@ -1,3 +1,5 @@
+import { ScreenEventProps, TrackOpUiEventProps } from "utils/analytics-client";
+
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
 	state: string;
@@ -62,3 +64,15 @@ export type ErrorCode =
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
 	| "UNKNOWN";
+
+export type AnalyticsScreenPayload = {
+	eventType: "screen";
+	eventProperties: ScreenEventProps & Record<string, unknown>;
+	eventAttributes?: Record<string, unknown>;
+}
+
+export type AnalyticsTrackUiPayload = {
+	eventType: "ui" | "track";
+	eventProperties: TrackOpUiEventProps & Record<string, unknown>;
+	eventAttributes?: Record<string, unknown>;
+}
