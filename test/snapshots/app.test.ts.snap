@@ -19,6 +19,8 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OrgsInstalledHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-requested/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OrgsInstallRequestedHandler
+:POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/analytics/?$
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,ScreenAnalyticsHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/redirectUrl/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,OAuthRedirectUrl
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/exchangeToken/?$
