@@ -244,11 +244,6 @@ const ConfigSteps = () => {
 		}
 	};
 
-	const LoggedInInfo = () => <LoggedInContent>
-		<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-		<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-	</LoggedInContent>;
-
 	useEffect(() => {
 		getJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
@@ -389,7 +384,10 @@ const ConfigSteps = () => {
 												</>
 											</Step>
 									}
-									<LoggedInInfo />
+									<LoggedInContent>
+										<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+										<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
+									</LoggedInContent>
 								</>
 						}
 					</>
