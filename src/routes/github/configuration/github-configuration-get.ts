@@ -165,7 +165,9 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, `Request for type ${gitHubProduct}`);
 
 	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName,
+		name: AnalyticsScreenEventsEnum.ConnectAnOrgScreenEventName
+	},
+	{
 		jiraHost,
 		gitHubProduct
 	});

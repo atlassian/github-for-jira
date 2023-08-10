@@ -61,8 +61,10 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		await tempStorage.delete(uuid, res.locals.installation.id);
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: true
 		});
@@ -78,8 +80,10 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		 */
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: false
 		});

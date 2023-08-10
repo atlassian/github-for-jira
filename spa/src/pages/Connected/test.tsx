@@ -11,6 +11,15 @@ import userEvent from "@testing-library/user-event";
 	}
 };
 
+jest.mock("../../analytics/analytics-proxy-client", () => {
+	return {
+		analyticsProxyClient: {
+			sendScreenEvent: jest.fn(),
+			sendUIEvent: jest.fn()
+		}
+	};
+});
+
 test("Basic check for the Connected Page", async () => {
 	render(
 		<BrowserRouter>

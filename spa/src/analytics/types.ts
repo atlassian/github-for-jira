@@ -6,10 +6,9 @@ type UIEventActionSubject =
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton";
 
-export type UIEventOpts = {
+export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
-	action: "clicked",
-	attributes?: Record<string, string | number>
+	action: "clicked"
 };
 
 export type ScreenNames =
@@ -23,20 +22,18 @@ type TrackEventActionSubject =
   | "organisationConnectResponse"
 	| "installNewOrgInGithubResponse";
 
-export type TrackEventOpts = {
+export type TrackEventProps = {
 	actionSubject: TrackEventActionSubject,
-	action: "success" | "fail",
-	attributes?: Record<string, string | number>
+	action: "success" | "fail"
 };
 
-export type ScreenEventOpts = {
-	name: ScreenNames,
-	attributes?: Record<string, string | number>
+export type ScreenEventProps = {
+	name: ScreenNames
 };
 
 export type AnalyticClient = {
-	sendScreenEvent: (event: ScreenEventOpts) => void;
-	sendUIEvent: (event: UIEventOpts) => void;
-	sendTrackEvent: (event: TrackEventOpts) => void;
+	sendScreenEvent: (eventProps: ScreenEventProps, attributes?: Record<string, unknown>) => void;
+	sendUIEvent: (eventProps: UIEventProps, attributes?: Record<string, unknown>) => void;
+	sendTrackEvent: (eventProps: TrackEventProps, attributes?: Record<string, unknown>) => void;
 };
 

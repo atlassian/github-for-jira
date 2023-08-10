@@ -34,8 +34,10 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
 	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-		name: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
-		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+		action: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
+		actionSubject: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
+		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+	}, {
 		gitHubProduct,
 		jiraHost,
 		totalCommitCount: context.payload?.commits?.length || 0,
