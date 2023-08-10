@@ -1,7 +1,18 @@
 import { errorWrapper } from "~/src/rest/helper";
 import { Request, Response } from "express";
-import { ScreenEventProps, sendAnalytics, TrackOpUiEventProps } from "utils/analytics-client";
-import { AnalyticsScreenPayload, AnalyticsTrackUiPayload } from "rest-interfaces";
+import { ScreenEventProps, sendAnalytics, TrackOpUiEventProps } from "~/src/util/analytics-client";
+
+type AnalyticsScreenPayload = {
+	eventType: "screen";
+	eventProperties: ScreenEventProps & Record<string, unknown>;
+	eventAttributes?: Record<string, unknown>;
+}
+
+type AnalyticsTrackUiPayload = {
+	eventType: "ui" | "track";
+	eventProperties: TrackOpUiEventProps & Record<string, unknown>;
+	eventAttributes?: Record<string, unknown>;
+}
 
 const isRecord = (obj: unknown): obj is Record<string, unknown> =>
 	typeof obj === "object" && obj !== null;
