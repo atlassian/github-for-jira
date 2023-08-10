@@ -182,8 +182,8 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	expect(screen.queryByText("org-3")).not.toBeInTheDocument();
 
 	// Testing the click on the Install button
-	expect(screen.queryByText("Install Jira in a new organization")).toBeInTheDocument();
-	await act(async() => { await userEvent.click(screen.getByText("Install Jira in a new organization")); });
+	expect(screen.queryByText("Add an organization")).toBeInTheDocument();
+	await act(async() => { await userEvent.click(screen.getByText("Add an organization")); });
 	expect(AppManager.installNewApp).toBeCalled();
 });
 
