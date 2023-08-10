@@ -150,7 +150,7 @@ const ConfigSteps = () => {
 			case 1: {
 				setLoaderForLogin(true);
 				try {
-					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "cloud" } });
+					analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked"}, { type: "cloud" });
 					await OAuthManager.authenticateInGitHub(() => {
 						setLoaderForLogin(false);
 					});
@@ -162,7 +162,7 @@ const ConfigSteps = () => {
 				break;
 			}
 			case 2: {
-				analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked", attributes: { type: "ghe" } });
+				analyticsClient.sendUIEvent({ actionSubject: "startOAuthAuthorisation", action: "clicked" }, { type: "ghe" });
 				AP.navigator.go( "addonmodule", { moduleKey: "github-server-url-page" });
 				break;
 			}
@@ -188,24 +188,24 @@ const ConfigSteps = () => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail", attributes: { mode } });
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
 				setError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
 		} catch (e) {
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail", attributes: { mode } });
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
 			reportError(e);
 		}
 	};
 
 	const installNewOrg = async (mode: "auto" | "manual") => {
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked", attributes: { mode } });
+			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success", attributes: { mode } });
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success"}, { mode });
 					getOrganizations();
 					if(gitHubInstallationId) {
 						await doCreateConnection(gitHubInstallationId, "auto");

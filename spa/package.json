@@ -58,7 +58,5 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5.0.2"
   },
-  "optionalDependencies": {
-    "@atlassiansox/analytics-web-client": "^4.15.0"
-  }
+  "optionalDependencies": {}
 }

@@ -48,7 +48,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		});
 
 		sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
+		}, {
 			jiraHost
 		});
 		return;
@@ -74,7 +75,8 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 	req.log.debug(`Github Create Branch Page rendered page`);
 
 	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName,
+		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName
+	}, {
 		jiraHost
 	});
 };

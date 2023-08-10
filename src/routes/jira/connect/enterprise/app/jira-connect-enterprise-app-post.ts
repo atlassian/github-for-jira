@@ -60,8 +60,10 @@ export const JiraConnectEnterpriseAppPost = async (
 		await new GheConnectConfigTempStorage().delete(uuid, installation.id);
 
 		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			withApiKey: !!apiKeyValue,
 			success: true
 		});
@@ -72,8 +74,10 @@ export const JiraConnectEnterpriseAppPost = async (
 	} catch (err) {
 
 		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			withApiKey: !!apiKeyValue,
 			success: false
 		});

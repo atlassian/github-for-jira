@@ -4,6 +4,15 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import StartConnection from "./index";
 
+jest.mock("../../analytics/proxy-analytics-client", () => {
+	return {
+		proxyAnalyticsClient: () => ({
+			sendScreenEvent: jest.fn(),
+			sendUIEvent: jest.fn()
+		})
+	};
+});
+
 test("Entry Config Screen", async () => {
 	render(
 		<BrowserRouter>

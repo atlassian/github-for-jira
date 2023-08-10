@@ -1,85 +1,140 @@
-import { getLogger 	} from "config/logger";
-import { omit } from "lodash";
-import { isNodeProd } from "utils/is-node-env";
+import { getLogger } from "config/logger";
+import { isNodeTest } from "utils/is-node-env";
 import { optionalRequire } from "optional-require";
 import { envVars } from "config/env";
+import { createHashWithoutSharedSecret } from "utils/encryption";
+import _, { omit } from "lodash";
+import { MicrosEnvTypeEnum } from "interfaces/common";
+import { isTestJiraHost } from "config/jira-test-site-check";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
 
 let analyticsNodeClient;
 
+interface ScreenEventProps {
+	name: string;
+}
+
+interface TrackOpUiEventProps {
+	action: string;
+	actionSubject: string;
+	source: string;
+}
+
+const calculateClientEnv = () => {
+	switch (envVars.MICROS_ENVTYPE) {
+		case MicrosEnvTypeEnum.dev:
+			return "dev";
+		case MicrosEnvTypeEnum.staging:
+			return "stg";
+		case MicrosEnvTypeEnum.prod:
+			return "prod";
+	}
+	return "dev";
+};
+
+/**
+ *
+ * @param jiraHost
+ * @param eventType
+ * @param eventProps - even though it requires only a few fields leaving the rest as a loose Record, in fact all the properties
+ * 										 are well-defined and rigid. See the sample payloads here: https://bitbucket.org/atlassian/analytics-node-client/src/master/
+ * @param unsafeAttributes - free-form attributes, will be included as "attributes" property into the properties of the event
+ */
 export const sendAnalytics: {
-	(jiraHost: string, eventType: "screen", attributes: { name: string } & Record<string, unknown>);
-	(jiraHost: string, eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
-	(jiraHost: string, eventType: "ui" | "operational", attributes: Record<string, unknown>);
-} = (jiraHost: string, eventType: string, attributes: Record<string, unknown> = {}): void => {
+	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
+	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
+} = (jiraHost: string, eventType: string, eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): void => {
 
 	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
-	if (!analyticsClient || !isNodeProd()) {
-		logger.warn("No analyticsClient or skipping sending analytics");
+	if (!analyticsClient) {
+		logger.warn("No analyticsClient available");
+		return;
+	}
+
+	if (isNodeTest()) {
+		logger.warn("Analytics is disabled in tests");
+		return;
+	}
+
+	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
+		logger.warn("Skip analytics for test jira in prod");
 		return;
 	}
 
 	if (!analyticsNodeClient){
 		// Values defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
 		analyticsNodeClient = analyticsClient({
-			env: "prod", // This needs to be "prod" as we're using prod Jira instances.
+			env: calculateClientEnv(),
 			product: "gitHubForJira"
 		});
 	}
 
-	const baseAttributes = {
-		userId: "anonymousId",
+	const baseEventProps = {
+		userId: accountId || "anonymousId",
 		userIdType: "atlassianAccount",
 		tenantIdType: "cloudId",
-		tenantId: "NONE"
+		tenantId: "NONE" // TODO: determine from jiraHost
 	};
+
+	const attributes = _.cloneDeep(unsafeAttributes);
+	if (attributes.jiraHost && (typeof attributes.jiraHost === "string")) {
+		attributes.jiraHost = createHashWithoutSharedSecret(attributes.jiraHost);
+	}
 
 	attributes.appKey = envVars.APP_KEY;
 
 	logger.debug({ eventType }, "Sending analytics");
 
-	const name = attributes.name || "";
 	switch (eventType) {
-		case "screen":
-			sendEvent(eventType, name, analyticsNodeClient.sendScreenEvent({
-				...baseAttributes,
-				name: attributes.name,
+		case "screen": {
+			const screenEventProps = eventProps as ScreenEventProps;
+			sendEvent(eventType, screenEventProps.name, analyticsNodeClient.sendScreenEvent({
+				...baseEventProps,
+				// Unfortunately, "Screen event" is the only one that requires "name" outside of event props.
+				// Let's encapsulate this knowledge here; for the outside know "name" shall be the property of the event!
+				// (Otherwise it is getting extremely confusing, let's keep confusion in one place only.)
+				name: screenEventProps.name,
 				screenEvent: {
 					platform: "web",
-					attributes: omit(attributes, "name")
+					...omit(screenEventProps, "name"),
+					attributes
 				}
 			}));
-			break;
-		case "ui":
-			sendEvent(eventType, name, analyticsNodeClient.sendUIEvent({
-				...baseAttributes,
+			break; }
+		case "ui": {
+			const uiEventProps = eventProps as TrackOpUiEventProps;
+			sendEvent(eventType, uiEventProps.action + " " + uiEventProps.actionSubject, analyticsNodeClient.sendUIEvent({
+				...baseEventProps,
 				uiEvent: {
+					...uiEventProps,
 					attributes
 				}
 			}));
+		}
 			break;
-		case "track":
-			sendEvent(eventType, name, analyticsNodeClient.sendTrackEvent({
-				...baseAttributes,
+		case "track": {
+			const trackEventProps = eventProps as TrackOpUiEventProps;
+			sendEvent(eventType, trackEventProps.action + " " + trackEventProps.actionSubject, analyticsNodeClient.sendTrackEvent({
+				...baseEventProps,
 				trackEvent: {
-					source: attributes.source,
-					action: attributes.action || attributes.name,
-					actionSubject: attributes.actionSubject || attributes.name,
+					...trackEventProps,
 					attributes
 				}
 			}));
-			break;
-		case "operational":
-			sendEvent(eventType, name, analyticsNodeClient.sendOperationalEvent({
-				...baseAttributes,
+			break; }
+		case "operational": {
+			const opEventProps = eventProps as TrackOpUiEventProps;
+			sendEvent(eventType, opEventProps.action + " " + opEventProps.actionSubject, analyticsNodeClient.sendOperationalEvent({
+				...baseEventProps,
 				operationalEvent: {
+					...opEventProps,
 					attributes
 				}
 			}));
-			break;
+			break; }
 		default:
 			logger.warn(`Cannot sendAnalytics: unknown eventType`);
 			break;
