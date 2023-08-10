@@ -21,7 +21,8 @@ export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<stri
 		}
 		analyticsClient.sendScreenEvent({
 			name
-		}, attributes);
+		// To make lint happy, otherwise (if attributes) are used it complains that it is not in the list of dependencies
+		}, JSON.parse(attributesSerialized));
 
 		lastSent = name + attributesSerialized;
 
