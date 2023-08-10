@@ -141,6 +141,7 @@ const ConfigSteps = () => {
 
 	const [clickedOrg, setClickedOrg] = useState<number>(0);
 	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
+	const [hasRequestedOrgsInstallation, setHasRequestedOrgsInstallation] = useState<boolean>(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
@@ -233,7 +234,7 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
-					//TODO: proper UI to handle it
+					setHasRequestedOrgsInstallation(true);
 				}
 			});
 		} catch (e) {
@@ -242,6 +243,11 @@ const ConfigSteps = () => {
 			reportError(e);
 		}
 	};
+
+	const LoggedInInfo = () => <LoggedInContent>
+		<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
+		<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
+	</LoggedInContent>;
 
 	useEffect(() => {
 		getJiraHostUrls();
@@ -297,142 +303,147 @@ const ConfigSteps = () => {
 			}
 			<ConfigContainer>
 				{
-					isLoggedIn ?
-						<>
-							{
-								loaderForOrgFetching ?
-									<>
-										<Step
-											title={<Skeleton
-												width="60%"
-												height="24px"
-												borderRadius="5px"
-												isShimmering
-											/>}
-										>
-											<Skeleton
-												width="100%"
-												height="24px"
-												borderRadius="5px"
-												isShimmering
-											/>
-										</Step>
-										<LoggedInContent>
-											<Skeleton
-												width="60%"
-												height="24px"
-												borderRadius="5px"
-												isShimmering
-											/>
-										</LoggedInContent>
-									</> : <>
-										<Step title="Connect your GitHub organization to Jira">
-											<>
-												<Paragraph>
-													Repositories from this organization will be available to all<br />
-													projects in <b>{hostUrl?.jiraHost}</b>.
-												</Paragraph>
-												{
-													organizations.length === 0 &&
-													<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
-												}
-												<OrgsContainer>
-													{
-														organizations.map(org =>
-															<OrgDiv key={org.id}>
-																<span>{org.account.login}</span>
-																{
-																	loaderForOrgClicked && clickedOrg === org.id ?
-																		<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-																		<Button
-																			isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																			onClick={async () => {
-																				setLoaderForOrgClicked(true);
-																				setClickedOrg(org.id);
-																				try {
-																					await doCreateConnection(org.id, "manual", org.account?.login);
-																				} finally {
-																					setLoaderForOrgClicked(false);
-																				}
-																			}}
-																		>
-																			Connect
-																		</Button>
-																}
-															</OrgDiv>
-														)
-													}
-												</OrgsContainer>
-												<AddOrganizationContainer>
-													<Button
-														iconBefore={<AddIcon label="add new org" size="medium"/>}
-														isDisabled={loaderForOrgClicked}
-														aria-label="Install new Org"
-														onClick={() => installNewOrg("manual")}
-													/>
-													<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
-														Add an organization
-													</div>
-												</AddOrganizationContainer>
-											</>
-										</Step>
-										<LoggedInContent>
-												<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-												<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-										</LoggedInContent>
-									</>
-							}
-						</>
-						:
-						<Step title="Select your GitHub product">
-							<>
-								<GitHubOptionContainer>
-										<GitHubOption
-											optionKey={1}
-											selectedOption={selectedOption}
-											onClick={() => {
-												setSelectedOption(1);
-												analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
-											}}
-										>
-											<img src="/public/assets/cloud.svg" alt=""/>
-											<span>GitHub Cloud</span>
-										</GitHubOption>
-										<GitHubOption
-											optionKey={2}
-											selectedOption={selectedOption}
-											onClick={() => {
-												setSelectedOption(2);
-												analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
-											}}
-										>
-											<img src="/public/assets/server.svg" alt=""/>
-											<span>GitHub Enterprise Server</span>
-										</GitHubOption>
-									</GitHubOptionContainer>
-									<TooltipContainer>
-										<Tooltip
-											component={InlineDialog}
-											position="right-end"
-											content="If the URL of your GitHub organization contains the domain name “github.com”, select GitHub Cloud. Otherwise, select GitHub Enterprise Server."
-										>
-											{(props) => <a {...props}>How do I check my GitHub product?</a>}
-										</Tooltip>
-									</TooltipContainer>
+					isLoggedIn ? <>
+						{
+							loaderForOrgFetching ?
+								<>
+									<Step
+										title={<Skeleton
+											width="60%"
+											height="24px"
+											borderRadius="5px"
+											isShimmering
+										/>}
+									>
+										<Skeleton
+											width="100%"
+											height="24px"
+											borderRadius="5px"
+											isShimmering
+										/>
+									</Step>
+									<LoggedInContent>
+										<Skeleton
+											width="60%"
+											height="24px"
+											borderRadius="5px"
+											isShimmering
+										/>
+									</LoggedInContent>
+								</> : <>
 									{
-										loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
-											<Button
-												iconAfter={<OpenIcon label="open" size="medium"/>}
-												aria-label="Get started"
-												appearance="primary"
-												onClick={authorize}
-											>
-												Get started
-											</Button>
+										hasRequestedOrgsInstallation ? <Step title="Request sent">
+											<Paragraph>
+												A request is sent to your GitHub organization owner. Once your<br/>
+												request is granted, come back to complete the configuration.
+											</Paragraph>
+										</Step> :
+										<Step title="Connect your GitHub organization to Jira">
+												<>
+													<Paragraph>
+														Repositories from this organization will be available to all<br />
+														projects in <b>{hostUrl?.jiraHost}</b>.
+													</Paragraph>
+													{
+														organizations.length === 0 &&
+														<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
+													}
+													<OrgsContainer>
+														{
+															organizations.map(org =>
+																<OrgDiv key={org.id}>
+																	<span>{org.account.login}</span>
+																	{
+																		loaderForOrgClicked && clickedOrg === org.id ?
+																			<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
+																			<Button
+																				isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
+																				onClick={async () => {
+																					setLoaderForOrgClicked(true);
+																					setClickedOrg(org.id);
+																					try {
+																						await doCreateConnection(org.id, "manual", org.account?.login);
+																					} finally {
+																						setLoaderForOrgClicked(false);
+																					}
+																				}}
+																			>
+																				Connect
+																			</Button>
+																	}
+																</OrgDiv>
+															)
+														}
+													</OrgsContainer>
+													<AddOrganizationContainer>
+														<Button
+															iconBefore={<AddIcon label="add new org" size="medium"/>}
+															isDisabled={loaderForOrgClicked}
+															aria-label="Install new Org"
+															onClick={() => installNewOrg("manual")}
+														/>
+														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
+															Add an organization
+														</div>
+													</AddOrganizationContainer>
+												</>
+											</Step>
 									}
+									<LoggedInInfo />
 								</>
-						</Step>
+						}
+					</>
+					: <Step title="Select your GitHub product">
+						<>
+							<GitHubOptionContainer>
+									<GitHubOption
+										optionKey={1}
+										selectedOption={selectedOption}
+										onClick={() => {
+											setSelectedOption(1);
+											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubCloud", action: "clicked" });
+										}}
+									>
+										<img src="/public/assets/cloud.svg" alt=""/>
+										<span>GitHub Cloud</span>
+									</GitHubOption>
+									<GitHubOption
+										optionKey={2}
+										selectedOption={selectedOption}
+										onClick={() => {
+											setSelectedOption(2);
+											analyticsClient.sendUIEvent({ actionSubject: "authorizeTypeGitHubEnt", action: "clicked" });
+										}}
+									>
+										<img src="/public/assets/server.svg" alt=""/>
+										<span>GitHub Enterprise Server</span>
+									</GitHubOption>
+								</GitHubOptionContainer>
+								<TooltipContainer>
+									<Tooltip
+										component={InlineDialog}
+										position="right-end"
+										content="If the URL of your GitHub organization contains the domain name “github.com”, select GitHub Cloud. Otherwise, select GitHub Enterprise Server."
+									>
+										{(props) => <a {...props}>How do I check my GitHub product?</a>}
+									</Tooltip>
+								</TooltipContainer>
+								{
+									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
+										<Button
+											iconAfter={<OpenIcon label="open" size="medium"/>}
+											aria-label="Get started"
+											appearance="primary"
+											onClick={authorize}
+										>
+											Get started
+										</Button>
+								}
+							</>
+					</Step>
 				}
+
+
 			</ConfigContainer>
 		</Wrapper>
 	);
