@@ -5,18 +5,21 @@ import { InsufficientPermissionError, InvalidTokenError } from "config/errors";
 import { errorWrapper } from "../../helper";
 
 const ADMIN_PERMISSION = "ADMINISTER";
-export const jiraAdminEnforceMiddleware = errorWrapper("jiraAdminEnforceMiddleware", async (req: Request, res: Response, next: NextFunction): Promise<void | Response>  => {
-	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK))) {
+export const JiraAdminEnforceMiddleware = errorWrapper("jiraAdminEnforceMiddleware", async (req: Request, res: Response, next: NextFunction): Promise<void | Response>  => {
+
+	const { userAccountId, installation, jiraHost } = res.locals;
+
+	if (!(await booleanFlag(BooleanFlags.JIRA_ADMIN_CHECK, jiraHost))) {
 		return next();
 	}
 
-	const { userAccountId, installation } = res.locals;
 
 	if (!userAccountId) {
 		throw new InvalidTokenError("Missing userAccountId");
 	}
 
 	const jiraClient = await JiraClient.getNewClient(installation, req.log);
+
 	const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 
 	const isAdmin = permissions.data.globalPermissions.includes(ADMIN_PERMISSION);

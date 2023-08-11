@@ -7,6 +7,7 @@ import { GitHubTokenHandler } from "./middleware/jwt/github-token";
 import { GitHubAppsRoute } from "./routes/github-apps";
 import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
+import { JiraAdminEnforceMiddleware } from "./middleware/jira-admin/jira-admin-check";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -23,6 +24,7 @@ subRouter.get("/github-installed", OrgsInstalledHandler);
 subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
 subRouter.use(JwtHandler);
+subRouter.use(JiraAdminEnforceMiddleware);
 
 subRouter.use("/oauth", OAuthRouter);
 

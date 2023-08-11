@@ -16,8 +16,9 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 	}
 
 	try {
-		const { installation } = await verifySymmetricJwt(token, req.log);
+		const { installation, userAccountId } = await verifySymmetricJwt(token, req.log);
 		res.locals.installation = installation;
+		res.locals.userAccountId = userAccountId;
 		res.locals.jiraHost = installation.jiraHost;
 		next();
 
@@ -58,5 +59,7 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 		throw new Error("JWT Verification Failed, wrong qsh");
 	}
 
-	return { installation };
+	const userAccountId = claims.sub;
+
+	return { installation, userAccountId };
 };

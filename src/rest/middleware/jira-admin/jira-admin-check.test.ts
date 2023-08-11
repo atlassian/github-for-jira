@@ -1,19 +1,18 @@
 import { encodeSymmetric } from "atlassian-jwt";
-import express, { Application } from "express";
+import { Application } from "express";
 import supertest from "supertest";
 import { Installation } from "models/installation";
-import { jiraAdminEnforceMiddleware } from "./jira-admin-check";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { JiraClient } from "models/jira-client";
-import { RestRouter } from "~/src/rest/rest-router";
+import { getFrontendApp } from "~/src/app";
 
 jest.mock("config/feature-flags");
 jest.mock("models/jira-client");
 
 const testSharedSecret = "test-secret";
 
-describe("jwt handler", () => {
+describe("Jira Admin Check", () => {
 
 	let app: Application;
 	let installation: Installation;
@@ -22,11 +21,11 @@ describe("jwt handler", () => {
 
 	beforeEach(async () => {
 
-		when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
+		when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK, jiraHost).mockResolvedValue(true);
 
-		app = createApp();
+		app = getFrontendApp();
 
-		await Installation.install({
+		installation = await Installation.install({
 			clientKey: "jira-client-key",
 			host: jiraHost,
 			sharedSecret: testSharedSecret
@@ -34,73 +33,73 @@ describe("jwt handler", () => {
 
 	});
 
+	const mockPermission = (permissions: string[]) => {
+		when(JiraClient.getNewClient).calledWith(expect.anything(), expect.anything())
+			.mockImplementation((reqInst: Installation) => {
+				if (reqInst.id === installation.id) {
+					return {
+						checkAdminPermissions: jest.fn((userAccountId) => {
+							if (userAccountId === USER_ACC_ID) {
+								return { data: { globalPermissions: permissions } };
+							} else {
+								return { data: { globalPermissions: ["ADMINISTER", "OTHER_ROLE"] } };
+							}
+						})
+					} as any;
+				} else {
+					throw new Error("Wrong installation " + reqInst);
+				}
+			});
+
+	};
+
 	it("should fail if is not admin", async () => {
 
-		when(JiraClient.getNewClient).calledWith(installation, expect.anything())
-			.mockResolvedValue({
-				checkAdminPermissions: jest.fn((userAccountId) => {
-					if (userAccountId === USER_ACC_ID) {
-						return { data: { globalPermissions: [ "OTHER_ROLE" ] } };
-					} else {
-						return { data: { globalPermissions: [ "ADMINISTER", "OTHER_ROLE" ] } };
-					}
-				})
-			} as any);
+		mockPermission([ "OTHER_ROLE" ]);
 
-		const token = getToken();
-		const res = await sendRequestWithToken(token);
+		const res = await sendRequestWithToken();
 
-		expect(res.status).toEqual(200);
+		expect(res.status).toEqual(401);
+		expect(JSON.parse(res.text)).toEqual(expect.objectContaining({
+			errorCode: "INSUFFICIENT_PERMISSION",
+			message: expect.stringContaining("Forbidden")
+		}));
 
 	});
 
 	it("should pass request if is admin", async () => {
 
-		when(JiraClient.getNewClient).calledWith(installation, expect.anything())
-			.mockResolvedValue({
-				checkAdminPermissions: jest.fn((userAccountId) => {
-					if (userAccountId === USER_ACC_ID) {
-						return { data: { globalPermissions: [ "ADMINISTER", "OTHER_ROLE" ] } };
-					} else {
-						return { data: { globalPermissions: [ "OTHER_ROLE" ] } };
-					}
-				})
-			} as any);
+		mockPermission([ "ADMINISTER", "OTHER_ROLE" ]);
 
-		const token = getToken();
-		const res = await sendRequestWithToken(token);
+		const res = await sendRequestWithToken();
 
 		expect(res.status).toEqual(200);
+		expect(JSON.parse(res.text)).toEqual({
+			redirectUrl: expect.stringContaining("oauth/authorize"),
+			state: expect.anything()
+		});
 
 	});
 
-	const createApp = () => {
-		const app = express();
-		app.use("", jiraAdminEnforceMiddleware);
-		RestRouter.get("/test", (_req, res) => {
-			res.send(JSON.stringify(res.locals));
-		});
-		return app;
+	const sendRequestWithToken = async () => {
+		return await supertest(app)
+			.get(`/rest/app/cloud/oauth/redirectUrl`)
+			.set("Authorization", getToken())
+			.send();
 	};
 
 	const getToken = ({
 		secret = testSharedSecret,
 		iss = "jira-client-key",
+		sub = USER_ACC_ID,
 		exp = Date.now() / 1000 + 10000,
 		qsh = "context-qsh" } = {}): any => {
 		return encodeSymmetric({
 			qsh,
 			iss,
+			sub,
 			exp
 		}, secret);
-	};
-
-	const sendRequestWithToken = async (token: string | undefined) => {
-		let request = supertest(app).get(`/rest/app/cloud/test`);
-		if (token) {
-			request = request.set("Authorization", token);
-		}
-		return await request.send();
 	};
 
 });
