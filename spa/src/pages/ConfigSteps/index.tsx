@@ -5,10 +5,9 @@ import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
+import LoggedinInfo  from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
-import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
-import OpenIcon from "@atlaskit/icon/glyph/open";
 import { useNavigate } from "react-router-dom";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
@@ -16,8 +15,10 @@ import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
-import { popup, reportError } from "../../utils";
+import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
+import OrganizationsList from "../ConfigSteps/OrgsContainer";
+import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -90,25 +91,6 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const LoggedInContent = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin: 0 auto;
-`;
-const OrgsContainer = styled.div`
-	max-height: 250px;
-	overflow-y: auto;
-	padding-right: 80px;
-	margin-right: -80px;
-`;
-const OrgDiv = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: ${token("space.150")} 0;
-	margin-bottom: ${token("space.100")};
-`;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
@@ -138,10 +120,7 @@ const ConfigSteps = () => {
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
-
-	const [clickedOrg, setClickedOrg] = useState<number>(0);
 	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
-	const [hasRequestedOrgsInstallation, setHasRequestedOrgsInstallation] = useState<boolean>(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
@@ -194,16 +173,14 @@ const ConfigSteps = () => {
 
 	const clearGitHubToken = () => {
 		OAuthManager.clear();
+		clearLogin();
+	};
+
+	const clearLogin = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
 		setError(undefined);
-	};
-
-	const logout = () => {
-		popup("https://github.com/logout");
-		clearGitHubToken();
-		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
@@ -234,7 +211,7 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
-					setHasRequestedOrgsInstallation(true);
+					navigate("/spa/installationRequested");
 				}
 			});
 		} catch (e) {
@@ -265,6 +242,7 @@ const ConfigSteps = () => {
 		return () => {
 			window.removeEventListener("message", handler);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ originalUrl ]);
 
 	useEffect(() => {
@@ -300,94 +278,39 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ? <>
 						{
-							loaderForOrgFetching ?
-								<>
-									<Step
-										title={<Skeleton
-											width="60%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>}
-									>
-										<Skeleton
-											width="100%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>
-									</Step>
-									<LoggedInContent>
-										<Skeleton
-											width="60%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>
-									</LoggedInContent>
-								</> : <>
-									{
-										hasRequestedOrgsInstallation ? <Step title="Request sent">
-											<Paragraph>
-												A request is sent to your GitHub organization owner. Once your<br/>
-												request is granted, come back to complete the configuration.
-											</Paragraph>
-										</Step> :
-										<Step title="Connect your GitHub organization to Jira">
+							loaderForOrgFetching ? <SkeletonForLoading /> : <>
+									<Step title="Select a GitHub organization">
 												<>
 													<Paragraph>
-														Repositories from this organization will be available to all<br />
-														projects in <b>{hostUrl?.jiraHost}</b>.
+														This organization's repositories will be available to all projects<br />
+														in <b>{hostUrl?.jiraHost}</b>.
 													</Paragraph>
 													{
-														organizations.length === 0 &&
-														<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
+														organizations.length === 0 ? <NoOrgsParagraph>No organizations found!</NoOrgsParagraph> :
+															<OrganizationsList
+																organizations={organizations}
+																loaderForOrgClicked={loaderForOrgClicked}
+																setLoaderForOrgClicked={setLoaderForOrgClicked}
+																clearGitHubToken={clearGitHubToken}
+																connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													}
-													<OrgsContainer>
-														{
-															organizations.map(org =>
-																<OrgDiv key={org.id}>
-																	<span>{org.account.login}</span>
-																	{
-																		loaderForOrgClicked && clickedOrg === org.id ?
-																			<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-																			<Button
-																				isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																				onClick={async () => {
-																					setLoaderForOrgClicked(true);
-																					setClickedOrg(org.id);
-																					try {
-																						await doCreateConnection(org.id, "manual", org.account?.login);
-																					} finally {
-																						setLoaderForOrgClicked(false);
-																					}
-																				}}
-																			>
-																				Connect
-																			</Button>
-																	}
-																</OrgDiv>
-															)
-														}
-													</OrgsContainer>
 													<AddOrganizationContainer>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
 															isDisabled={loaderForOrgClicked}
-															aria-label="Install new Org"
+															aria-label="Install organization"
 															onClick={() => installNewOrg("manual")}
 														/>
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
-															Add an organization
+															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
 													</AddOrganizationContainer>
 												</>
 											</Step>
-									}
-									<LoggedInContent>
-										<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-										<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-									</LoggedInContent>
+									<LoggedinInfo
+										username={loggedInUser || ""}
+										logout={clearLogin}
+									/>
 								</>
 						}
 					</>
@@ -429,19 +352,16 @@ const ConfigSteps = () => {
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
-											iconAfter={<OpenIcon label="open" size="medium"/>}
-											aria-label="Get started"
+											aria-label="Next"
 											appearance="primary"
 											onClick={authorize}
 										>
-											Get started
+											Next
 										</Button>
 								}
 							</>
 					</Step>
 				}
-
-
 			</ConfigContainer>
 		</Wrapper>
 	);
