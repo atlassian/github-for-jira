@@ -20,19 +20,19 @@ exports[`app getFrontendApp please review routes and update snapshot when adding
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/github-requested/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,OrgsInstallRequestedHandler
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/analytics-proxy/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,AnalyticsProxyHandler
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,AnalyticsProxyHandler
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/redirectUrl/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,OAuthRedirectUrl
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,OAuthRedirectUrl
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/oauth/?(?=/|$)^/exchangeToken/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,OAuthExchangeToken
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,OAuthExchangeToken
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/installation/?(?=/|$)^/new/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GetGitHubAppsUrl
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GetGitHubAppsUrl
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/jira/cloudid/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,JiraCloudIDGet
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,JiraCloudIDGet
 :GET ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/org/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,GitHubOrgsFetchOrgs
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GitHubTokenHandler,GitHubOrgsFetchOrgs
 :POST ^/?(?=/|$)^/rest/?(?=/|$)^/app/(?:([^/]+?))/?(?=/|$)^/org/?(?=/|$)^/?$
-	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,GitHubTokenHandler,GitHubOrgsConnectJira
+	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,JwtHandler,jiraAdminEnforceMiddleware,GitHubTokenHandler,GitHubOrgsConnectJira
 :GET ^/?(?=/|$)^/?(?=/|$)^/deepcheck/?$
 	query,expressInit,elapsedTimeMetrics,sentryRequestMiddleware,urlencodedParser,jsonParser,cookieParser,LogMiddleware,DeepcheckGet
 :GET ^/?(?=/|$)^/?(?=/|$)^/healthcheck/?$
