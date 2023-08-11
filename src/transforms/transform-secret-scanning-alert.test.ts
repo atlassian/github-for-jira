@@ -80,7 +80,7 @@ describe("transformSecretScanningAlert", () => {
 				"containerId": "1",
 				"description": "Secret scanning alert",
 				"displayName": "personal_access_token secret exposed",
-				"id": "d-1-123",
+				"id": "s-1-123",
 				"identifiers": [{
 					"displayName": "personal_access_token",
 					"url": "https://sample/123"
@@ -94,10 +94,7 @@ describe("transformSecretScanningAlert", () => {
 				"status": "open",
 				"type": "sast",
 				"updateSequenceNumber": Date.now(),
-				"url": "https://sample/123",
-				"additionalInfo": {
-					"content": "personal_access_token"
-				}
+				"url": "https://sample/123"
 			}
 		]);
 	});

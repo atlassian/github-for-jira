@@ -86,7 +86,7 @@ const transformSecretScanningAlert = async (
 	const vulnerabilities = alerts.map((alert) => {
 		return {
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
+			id: `s-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
@@ -102,10 +102,7 @@ const transformSecretScanningAlert = async (
 				displayName: alert.secret_type,
 				url: alert.html_url
 			}],
-			status: transformGitHubStateToJiraStatus(alert.state, logger),
-			additionalInfo: {
-				content: alert.secret_type
-			}
+			status: transformGitHubStateToJiraStatus(alert.state, logger)
 		};
 	});
 	return { vulnerabilities };

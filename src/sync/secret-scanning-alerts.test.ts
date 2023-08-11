@@ -162,7 +162,7 @@ const expectedResponseCloudServer = () => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
-			"id": "d-1-12",
+			"id": "s-1-12",
 			"updateSequenceNumber": 12345678,
 			"containerId": "1",
 			"displayName": "GitHub Personal Access Token",
@@ -180,10 +180,7 @@ const expectedResponseCloudServer = () => ({
 					"url": "https://github.com/test-owner/sample-repo/security/secret-scanning/12"
 				}
 			],
-			"status": "open",
-			"additionalInfo": {
-				"content": "github_personal_access_token"
-			}
+			"status": "open"
 		}
 
 	],
@@ -197,7 +194,7 @@ const expectedResponseGHEServer = () => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
-			"id": "d-6769746875626d79646f6d61696e636f6d-1-12",
+			"id": "s-6769746875626d79646f6d61696e636f6d-1-12",
 			"updateSequenceNumber": 12345678,
 			"containerId": "6769746875626d79646f6d61696e636f6d-1",
 			"displayName": "GitHub Personal Access Token",
@@ -215,10 +212,7 @@ const expectedResponseGHEServer = () => ({
 					"url": "https://github.com/test-owner/sample-repo/security/secret-scanning/12"
 				}
 			],
-			"status": "open",
-			"additionalInfo": {
-				"content": "github_personal_access_token"
-			}
+			"status": "open"
 		}
 	],
 	"properties": {
