@@ -1,4 +1,4 @@
-import { LoggedinInfo } from "../../common/LoggedinInfo";
+import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
 import SyncHeader from "../../components/SyncHeader";

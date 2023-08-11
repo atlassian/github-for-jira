@@ -5,9 +5,8 @@ import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
-import { LoggedInContent, LoggedinInfo }  from "../../common/LoggedinInfo";
+import LoggedinInfo  from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
-import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
 import OpenIcon from "@atlaskit/icon/glyph/open";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +19,7 @@ import { ErrorObjType, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
+import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -269,32 +269,6 @@ const ConfigSteps = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
-	const SkeletonForLoading = () => <>
-		<Step
-			title={<Skeleton
-				width="60%"
-				height="24px"
-				borderRadius="5px"
-				isShimmering
-			/>}
-		>
-			<Skeleton
-				width="100%"
-				height="24px"
-				borderRadius="5px"
-				isShimmering
-			/>
-		</Step>
-		<LoggedInContent>
-			<Skeleton
-				width="60%"
-				height="24px"
-				borderRadius="5px"
-				isShimmering
-			/>
-		</LoggedInContent>
-	</>;
-
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -390,8 +364,6 @@ const ConfigSteps = () => {
 							</>
 					</Step>
 				}
-
-
 			</ConfigContainer>
 		</Wrapper>
 	);
