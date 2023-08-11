@@ -25,7 +25,7 @@ const InstallationRequested = () => {
 			<Step title="Request sent">
 				<>
 					<Paragraph>
-						Once the owner of this organization has installed Jira, you (or<br />
+						Once the owner of this organization has installed Jira, you (or <br />
 						another Jira admin) can come back here and finish the set up.
 					</Paragraph>
 					<Button
