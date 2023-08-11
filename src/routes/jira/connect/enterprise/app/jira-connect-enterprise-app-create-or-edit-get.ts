@@ -69,7 +69,8 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 		}
 
 		sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-			name: AnalyticsScreenEventsEnum.CreateOrEditGitHubServerAppScreenEventName,
+			name: AnalyticsScreenEventsEnum.CreateOrEditGitHubServerAppScreenEventName
+		}, {
 			isNew
 		});
 

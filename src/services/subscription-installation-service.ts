@@ -125,8 +125,10 @@ export const verifyAdminPermsAndFinishInstallation =
 			);
 
 			sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+				action: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+			}, {
 				jiraHost: installation.jiraHost,
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: true,
@@ -137,8 +139,10 @@ export const verifyAdminPermsAndFinishInstallation =
 		} catch (err) {
 
 			sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+				action: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+			}, {
 				jiraHost: installation.jiraHost,
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: false,

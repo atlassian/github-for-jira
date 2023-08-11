@@ -58,7 +58,8 @@ export const JiraConnectEnterpriseAppsGet = async (
 
 const sendScreenAnalytics = ({ jiraHost, isNew, gheServers, name }) => {
 	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-		name,
+		name
+	}, {
 		createNew: isNew,
 		existingServerAppsCount: gheServers?.length || 0
 	});
