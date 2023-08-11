@@ -94,6 +94,7 @@ describe("jwt handler", () => {
 
 		expect(res.status).toEqual(200);
 		expect(JSON.parse(res.text).jiraHost).toEqual(jiraHost);
+		expect(JSON.parse(res.text).accountId).toEqual("myAccount");
 
 	});
 
@@ -118,11 +119,13 @@ describe("jwt handler", () => {
 		secret = testSharedSecret,
 		iss = "jira-client-key",
 		exp = Date.now() / 1000 + 10000,
-		qsh = "context-qsh" } = {}): any => {
+		qsh = "context-qsh",
+		sub = "myAccount" } = {}): any => {
 		return encodeSymmetric({
 			qsh,
 			iss,
-			exp
+			exp,
+			sub
 		}, secret);
 	};
 

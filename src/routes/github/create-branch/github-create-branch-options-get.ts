@@ -34,7 +34,8 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		});
 
 		sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName,
+			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
+		}, {
 			jiraHost
 		});
 
@@ -62,7 +63,8 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 	});
 
 	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName,
+		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName
+	}, {
 		jiraHost
 	});
 };

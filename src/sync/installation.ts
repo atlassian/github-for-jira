@@ -205,11 +205,11 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
 		}, { jiraHost: subscription.jiraHost });
 		sendAnalytics(subscription.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			...data.metricTags,
-			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
-			source: data.metricTags?.source || "worker",
 			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
 			action: "complete",
+			source: data.metricTags?.source || "worker"
+		}, {
+			...data.metricTags,
 			gitHubProduct,
 			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),
 			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,

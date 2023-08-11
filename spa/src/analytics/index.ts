@@ -1,26 +1,35 @@
 import { AnalyticClient, ScreenNames } from "./types";
 import { useEffect } from "react";
 
-import { loadSoxAnalyticClient } from "./sox-analytics-client";
-import { noopAnalyticsClient } from "./noop-analytics-client";
+import { analyticsProxyClient } from "./analytics-proxy-client";
 
-const analyticsClient: AnalyticClient = loadSoxAnalyticClient() || noopAnalyticsClient;
+const analyticsClient: AnalyticClient = analyticsProxyClient;
 
 export default analyticsClient;
 
-export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<string, string | number>) => {
+let lastSent = "";
 
-	//stringify so that in the useEffect dependency array it is comparing real content, instead of object instance refence.
-	//Otherwise it may cause unnecessary fireing to the analytics backend when attribute object instance changed, skewing our analytics dashboard
-	const jsonStrAttr = JSON.stringify(attributes || {});
+export const useEffectScreenEvent = (name: ScreenNames, attributes?: Record<string, unknown>) => {
+	// TODO: add better serialization because JSON.stringify() does not guarantee the ordering of the elements, which
+	// 			means theoretically it could output different strings for the same object
+	const attributesSerialized = JSON.stringify(attributes || {});
 
 	useEffect(() => {
+		// TODO: for some reason it may fire several events for the same event. Please fix!
+		if (lastSent === name + attributesSerialized) {
+			return;
+		}
 		analyticsClient.sendScreenEvent({
-			name,
-			attributes: {
-				...JSON.parse(jsonStrAttr)
-			}
-		});
-	}, [ name, jsonStrAttr]);
+			name
+		// To make lint happy, otherwise (if attributes) are used it complains that it is not in the list of dependencies
+		}, JSON.parse(attributesSerialized));
+
+		lastSent = name + attributesSerialized;
+
+		// Use serialized attributes to make useEffect() compare real content instead of references to an object.
+		// Otherwise, it may fire unnecessary events when the reference is changed but not the content,
+		// thus skewing the dashboards.
+	}, [ name, attributesSerialized ]);
+
 };
 

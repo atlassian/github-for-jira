@@ -7,6 +7,7 @@ import { GitHubTokenHandler } from "./middleware/jwt/github-token";
 import { GitHubAppsRoute } from "./routes/github-apps";
 import { JiraCloudIDRouter } from "./routes/jira";
 import { RestErrorHandler } from "./middleware/error";
+import { AnalyticsProxyHandler } from "./routes/analytics-proxy";
 
 export const RestRouter = Router({ mergeParams: true });
 
@@ -22,7 +23,11 @@ subRouter.get("/github-callback", OAuthCallbackHandler);
 subRouter.get("/github-installed", OrgsInstalledHandler);
 subRouter.get("/github-requested", OrgsInstallRequestedHandler);
 
+// TODO: what about Jira admin validation (a.k.a. authorization, we
+//  have done authentication only)?
 subRouter.use(JwtHandler);
+
+subRouter.post("/analytics-proxy", AnalyticsProxyHandler);
 
 subRouter.use("/oauth", OAuthRouter);
 
