@@ -5,6 +5,7 @@ import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
+import { LoggedInContent, LoggedinInfo }  from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import Skeleton from "@atlaskit/skeleton";
 import { token } from "@atlaskit/tokens";
@@ -16,7 +17,7 @@ import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
-import { popup, reportError } from "../../utils";
+import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 
 type GitHubOptionType = {
@@ -90,12 +91,6 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const LoggedInContent = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	margin: 0 auto;
-`;
 const OrgsContainer = styled.div`
 	max-height: 250px;
 	overflow-y: auto;
@@ -141,7 +136,6 @@ const ConfigSteps = () => {
 
 	const [clickedOrg, setClickedOrg] = useState<number>(0);
 	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
-	const [hasRequestedOrgsInstallation, setHasRequestedOrgsInstallation] = useState<boolean>(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
@@ -194,16 +188,14 @@ const ConfigSteps = () => {
 
 	const clearGitHubToken = () => {
 		OAuthManager.clear();
+		clearLogin();
+	};
+
+	const clearLogin = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
 		setError(undefined);
-	};
-
-	const logout = () => {
-		popup("https://github.com/logout");
-		clearGitHubToken();
-		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
@@ -234,7 +226,7 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
-					setHasRequestedOrgsInstallation(true);
+					navigate("/spa/installationRequested");
 				}
 			});
 		} catch (e) {
@@ -290,6 +282,32 @@ const ConfigSteps = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ isLoggedIn ]);
 
+	const SkeletonForLoading = () => <>
+		<Step
+			title={<Skeleton
+				width="60%"
+				height="24px"
+				borderRadius="5px"
+				isShimmering
+			/>}
+		>
+			<Skeleton
+				width="100%"
+				height="24px"
+				borderRadius="5px"
+				isShimmering
+			/>
+		</Step>
+		<LoggedInContent>
+			<Skeleton
+				width="60%"
+				height="24px"
+				borderRadius="5px"
+				isShimmering
+			/>
+		</LoggedInContent>
+	</>;
+
 	return (
 		<Wrapper>
 			<SyncHeader />
@@ -300,40 +318,8 @@ const ConfigSteps = () => {
 				{
 					isLoggedIn ? <>
 						{
-							loaderForOrgFetching ?
-								<>
-									<Step
-										title={<Skeleton
-											width="60%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>}
-									>
-										<Skeleton
-											width="100%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>
-									</Step>
-									<LoggedInContent>
-										<Skeleton
-											width="60%"
-											height="24px"
-											borderRadius="5px"
-											isShimmering
-										/>
-									</LoggedInContent>
-								</> : <>
-									{
-										hasRequestedOrgsInstallation ? <Step title="Request sent">
-											<Paragraph>
-												A request is sent to your GitHub organization owner. Once your<br/>
-												request is granted, come back to complete the configuration.
-											</Paragraph>
-										</Step> :
-										<Step title="Connect your GitHub organization to Jira">
+							loaderForOrgFetching ? <SkeletonForLoading /> : <>
+									<Step title="Connect your GitHub organization to Jira">
 												<>
 													<Paragraph>
 														Repositories from this organization will be available to all<br />
@@ -383,11 +369,10 @@ const ConfigSteps = () => {
 													</AddOrganizationContainer>
 												</>
 											</Step>
-									}
-									<LoggedInContent>
-										<div data-testid="logged-in-as">Logged in as <b>{loggedInUser}</b>.&nbsp;</div>
-										<Button style={{ paddingLeft: 0 }} appearance="link" onClick={logout}>Change GitHub login</Button>
-									</LoggedInContent>
+									<LoggedinInfo
+										username={loggedInUser || ""}
+										logout={clearLogin}
+									/>
 								</>
 						}
 					</>
