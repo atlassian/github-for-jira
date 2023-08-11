@@ -17,7 +17,7 @@ jest.mock("react-router-dom", () => ({
 const Authenticated = {
 	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
-	fetchOrgs: jest.fn().mockReturnValue({ orgs: [ { account: { login: "org-1" }, id: 1 }, { account: { login: "org-2" }, id: 2 }, { account: { login: "org-3" }, id: 3  } ]}),
+	fetchOrgs: jest.fn().mockReturnValue({ orgs: [ { account: { login: "org-1" }, id: 1, isAdmin: true }, { account: { login: "org-2" }, id: 2, isAdmin: true }, { account: { login: "org-3" }, id: 3, isAdmin: true  } ]}),
 	installNewApp: jest.fn(),
 	connectOrg: jest.fn(),
 	setTokens: jest.fn(),
@@ -59,6 +59,15 @@ const UnAuthenticated = {
 };
 window.open = jest.fn();
 
+// String values
+const CONNECT_GITHUB_TO_JIRA = "Connect Github to Jira";
+const GITHUB_CLOUD = "GitHub Cloud";
+const GITHUB_ENTERPRISE = "GitHub Enterprise Server";
+const SELECT_GH_PRODUCT = "Select your GitHub product";
+const SELECT_GH_PRODUCT_CTA = "Next";
+const SELECT_GH_TEXT = "Select a GitHub organization";
+const NO_ORGS_INSTALL_ORG_CTA = "Select an organization in GitHub";
+
 test("Connect GitHub Screen - Initial Loading of the page when not authenticated", async () => {
 	jest.mocked(OAuthManager).getUserDetails = UnAuthenticated.getUserDetails;
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
@@ -71,11 +80,11 @@ test("Connect GitHub Screen - Initial Loading of the page when not authenticated
 		);
 	});
 
-	expect(screen.queryByText("Connect Github to Jira")).toBeInTheDocument();
-	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
-	expect(screen.queryByText("GitHub Enterprise Server")).toBeInTheDocument();
-	expect(screen.queryByText("Select your GitHub product")).toBeInTheDocument();
-	expect(screen.queryByRole("button", { name: "Get started" })).toHaveTextContent("Get started");
+	expect(screen.queryByText(CONNECT_GITHUB_TO_JIRA)).toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_CLOUD)).toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_ENTERPRISE)).toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT)).toBeInTheDocument();
+	expect(screen.queryByRole("button", { name: SELECT_GH_PRODUCT_CTA })).toHaveTextContent(SELECT_GH_PRODUCT_CTA);
 });
 
 test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authenticated", async () => {
@@ -90,8 +99,8 @@ test("Connect GitHub Screen - Checking the GitHub Enterprise flow when not authe
 		);
 	});
 
-	await act(() => userEvent.click(screen.getByText("GitHub Enterprise Server")));
-	await act(() => userEvent.click(screen.getByText("Get started")));
+	await act(() => userEvent.click(screen.getByText(GITHUB_ENTERPRISE)));
+	await act(() => userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA)));
 
 	expect(AP.getLocation).toHaveBeenCalled();
 });
@@ -109,8 +118,8 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when not authentica
 		);
 	});
 
-	await act(() => userEvent.click(screen.getByText("GitHub Cloud")));
-	await act(() => userEvent.click(screen.getByText("Get started")));
+	await act(() => userEvent.click(screen.getByText(GITHUB_CLOUD)));
+	await act(() => userEvent.click(screen.getByText(SELECT_GH_PRODUCT_CTA)));
 
 	expect(OAuthManager.authenticateInGitHub).toHaveBeenCalled();
 });
@@ -133,13 +142,13 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 		);
 	});
 
-	expect(screen.queryByText("GitHub Cloud")).not.toBeInTheDocument();
-	expect(screen.queryByText("GitHub Enterprise Server")).not.toBeInTheDocument();
-	expect(screen.queryByText("Get started")).not.toBeInTheDocument();
-	expect(screen.queryByText("Select your GitHub product")).not.toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_CLOUD)).not.toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_ENTERPRISE)).not.toBeInTheDocument();
+	expect(screen.queryByText("Next ")).not.toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT)).not.toBeInTheDocument();
 
 	// Checking if all the orgs are being displayed
-	expect(screen.queryByText("Connect your GitHub organization to Jira")).toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_TEXT)).toBeInTheDocument();
 	expect(screen.queryByText("org-1")).toBeInTheDocument();
 	expect(screen.queryByText("org-2")).toBeInTheDocument();
 	expect(screen.queryByText("org-3")).toBeInTheDocument();
@@ -153,7 +162,7 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 	expect(await screen.findAllByRole("button", { name: "Connect" })).toHaveLength(2);
 	expect(screen.getAllByRole("button", { name: "Connect" })[0]).toBeDisabled();
 	expect(screen.getAllByRole("button", { name: "Connect" })[1]).toBeDisabled();
-	expect(screen.getByLabelText("Install new Org")).toBeDisabled();
+	expect(screen.getByLabelText("Install organization")).toBeDisabled();
 	expect(AppManager.connectOrg).toBeCalled();
 });
 
@@ -170,20 +179,20 @@ test("Connect GitHub Screen - Checking the GitHub Cloud flow when authenticated 
 		);
 	});
 
-	expect(screen.queryByText("GitHub Cloud")).not.toBeInTheDocument();
-	expect(screen.queryByText("GitHub Enterprise Server")).not.toBeInTheDocument();
-	expect(screen.queryByText("Get started")).not.toBeInTheDocument();
-	expect(screen.queryByText("Select your GitHub product")).not.toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_CLOUD)).not.toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_ENTERPRISE)).not.toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT_CTA)).not.toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT)).not.toBeInTheDocument();
 
 	// Checking to see no orgs are being displayed
-	expect(screen.queryByText("Connect your GitHub organization to Jira")).toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_TEXT)).toBeInTheDocument();
 	expect(screen.queryByText("org-1")).not.toBeInTheDocument();
 	expect(screen.queryByText("org-2")).not.toBeInTheDocument();
 	expect(screen.queryByText("org-3")).not.toBeInTheDocument();
 
 	// Testing the click on the Install button
-	expect(screen.queryByText("Add an organization")).toBeInTheDocument();
-	await act(async() => { await userEvent.click(screen.getByText("Add an organization")); });
+	expect(screen.queryByText(NO_ORGS_INSTALL_ORG_CTA)).toBeInTheDocument();
+	await act(async() => { await userEvent.click(screen.getByText(NO_ORGS_INSTALL_ORG_CTA)); });
 	expect(AppManager.installNewApp).toBeCalled();
 });
 
@@ -206,8 +215,8 @@ test("Connect GitHub Screen - Changing GitHub login when authenticated", async (
 	await act(() => userEvent.click(screen.getByText("Change GitHub login")));
 	expect(window.open).toHaveBeenCalled();
 
-	expect(screen.queryByText("GitHub Cloud")).toBeInTheDocument();
-	expect(screen.queryByText("GitHub Enterprise Server")).toBeInTheDocument();
-	expect(screen.queryByText("Get started")).toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_CLOUD)).toBeInTheDocument();
+	expect(screen.queryByText(GITHUB_ENTERPRISE)).toBeInTheDocument();
+	expect(screen.queryByText(SELECT_GH_PRODUCT_CTA)).toBeInTheDocument();
 });
 
