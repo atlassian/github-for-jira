@@ -4,6 +4,7 @@ import { token } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
+import { useNavigate } from "react-router-dom";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
@@ -15,9 +16,16 @@ const HeaderImg = styled.img`
 const Title = styled.h2`
 	margin: ${token("space.400")} ${token("space.0")} ${token("space.0")};
 `;
+const TopContent = styled.div`
+	color: ${token("color.text.subtle")};
+	margin: ${token("space.300")} ${token("space.0")} ${token("space.100")};
+`;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 	margin: ${token("space.300")} ${token("space.0")};
+`;
+const ButtonContainer = styled.div`
+	margin: ${token("space.0")} ${token("space.0")} ${token("space.300")} ${token("space.0")};
 `;
 const FlexWrapper = styled.div`
 	padding: ${token("space.300")} ${token("space.0")} ${token("space.0")};
@@ -39,9 +47,9 @@ const SectionImg = styled.img`
 `;
 
 const Connected = () => {
-
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
+	const navigate = useNavigate();
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
@@ -52,11 +60,20 @@ const Connected = () => {
 			<div>
 				<HeaderImg src="/public/assets/jira-github-connected.svg" alt=""/>
 				<Title>GitHub is connected!</Title>
-				<Paragraph>
+				<TopContent>
 					Its' time to let everyone know that GitHub's ready to use in their<br />
 					project. For development work to appear in Jira, your team<br />
-					needs to link their work using issue keys.
-				</Paragraph>
+					needs to link their work using issue keys.<br />
+				</TopContent>
+				<ButtonContainer>
+					<Button
+						style={{ paddingLeft: 0 }}
+						appearance="link"
+						onClick={ () => navigate("/spa/steps")}
+					>
+						Add another organization
+					</Button>
+				</ButtonContainer>
 			</div>
 			<div>
 				<Heading level="h500">What's next?</Heading>
