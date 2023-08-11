@@ -6,16 +6,21 @@ import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import { popup } from "../../../utils";
 
+type OrgDivType = {
+	key: number;
+	hasError: boolean;
+};
+
 const OrgsWrapper = styled.div`
 	max-height: 250px;
 	overflow-y: auto;
 	padding-right: 80px;
 	margin-right: -80px;
 `;
-const OrgDiv = styled.div`
+const OrgDiv = styled.div<OrgDivType>`
 	display: flex;
 	justify-content: space-between;
-	align-items: start;
+	align-items: ${props => props.hasError ? "start" : "center"};
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
 `;
@@ -93,7 +98,7 @@ const OrganizationsList = ({
 		<OrgsWrapper>
 			{
 				organizations.map(org =>
-					<OrgDiv key={org.id}>
+					<OrgDiv key={org.id} hasError={!canConnect(org)}>
 						{
 							canConnect(org) ? <>
 								<OrgName>{org.account.login}</OrgName>
