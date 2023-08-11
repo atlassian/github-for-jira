@@ -28,7 +28,7 @@ export const handleRemoteLinks = async (context: WebhookContext, jiraClient, git
 	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
-		webhookReceived,
+		new Date(webhookReceived).getTime(),
 		"code_scanning_alert",
 		jiraClient.baseURL,
 		context.log,
@@ -60,7 +60,7 @@ export const handleSecurityVulnerability = async (context: WebhookContext, jiraC
 
 	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
-		webhookReceived,
+		new Date(webhookReceived).getTime(),
 		"code_scanning_alert_security",
 		jiraClient.baseURL,
 		context.log,
