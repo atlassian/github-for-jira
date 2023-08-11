@@ -19,6 +19,7 @@ import { AxiosError } from "axios";
 import { ErrorObjType, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
+import OrganizationsList from "../ConfigSteps/OrgsContainer";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -91,19 +92,6 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const OrgsContainer = styled.div`
-	max-height: 250px;
-	overflow-y: auto;
-	padding-right: 80px;
-	margin-right: -80px;
-`;
-const OrgDiv = styled.div`
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	padding: ${token("space.150")} 0;
-	margin-bottom: ${token("space.100")};
-`;
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
@@ -133,8 +121,6 @@ const ConfigSteps = () => {
 	const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated);
 	const [loggedInUser, setLoggedInUser] = useState<string | undefined>(username);
 	const [loaderForLogin, setLoaderForLogin] = useState(false);
-
-	const [clickedOrg, setClickedOrg] = useState<number>(0);
 	const [loaderForOrgClicked, setLoaderForOrgClicked] = useState<boolean>(false);
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
@@ -330,33 +316,11 @@ const ConfigSteps = () => {
 														organizations.length === 0 &&
 														<NoOrgsParagraph>No organizations found!</NoOrgsParagraph>
 													}
-													<OrgsContainer>
-														{
-															organizations.map(org =>
-																<OrgDiv key={org.id}>
-																	<span>{org.account.login}</span>
-																	{
-																		loaderForOrgClicked && clickedOrg === org.id ?
-																			<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
-																			<Button
-																				isDisabled={loaderForOrgClicked && clickedOrg !== org.id}
-																				onClick={async () => {
-																					setLoaderForOrgClicked(true);
-																					setClickedOrg(org.id);
-																					try {
-																						await doCreateConnection(org.id, "manual", org.account?.login);
-																					} finally {
-																						setLoaderForOrgClicked(false);
-																					}
-																				}}
-																			>
-																				Connect
-																			</Button>
-																	}
-																</OrgDiv>
-															)
-														}
-													</OrgsContainer>
+													<OrganizationsList
+														organizations={organizations}
+														loaderForOrgClicked={loaderForOrgClicked}
+														setLoaderForOrgClicked={setLoaderForOrgClicked}
+														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<AddOrganizationContainer>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
