@@ -257,6 +257,7 @@ const ConfigSteps = () => {
 		return () => {
 			window.removeEventListener("message", handler);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ originalUrl ]);
 
 	useEffect(() => {
