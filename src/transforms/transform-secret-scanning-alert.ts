@@ -2,15 +2,19 @@ import {
 	JiraVulnerabilityBulkSubmitData, JiraVulnerabilitySeverityEnum, JiraVulnerabilityStatusEnum
 } from "interfaces/jira";
 import { getGitHubClientConfigFromAppId } from "utils/get-github-client-config";
-import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { SecretScanningAlertEvent } from "../github/secret-scanning-alert";
 import Logger from "bunyan";
+import { Repository } from "@octokit/webhooks-types";
+import { SecretScanningAlertResponseItem } from "../github/client/secret-scanning-alert.types";
 
-export const transformSecretScanningAlert = async (context: WebhookContext<SecretScanningAlertEvent>, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
-	const { alert, repository } = context.payload;
+export const transformSecretScanningAlert = async (
+	alert: SecretScanningAlertResponseItem,
+	repository: Repository, jiraHost: string,
+	gitHubAppId: number | undefined,
+	logger: Logger
+): Promise<JiraVulnerabilityBulkSubmitData> => {
 
-	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
+	const githubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
@@ -30,7 +34,7 @@ export const transformSecretScanningAlert = async (context: WebhookContext<Secre
 				displayName: alert.secret_type,
 				url: alert.html_url
 			}],
-			status: transformGitHubStateToJiraStatus(alert.state || context.action, context.log)
+			status: transformGitHubStateToJiraStatus(alert.state, logger)
 		}]
 	};
 };
@@ -44,12 +48,9 @@ export const transformGitHubStateToJiraStatus = (state: string | undefined, logg
 		return JiraVulnerabilityStatusEnum.UNKNOWN;
 	}
 	switch (state) {
-		case "created":
-		case "reopened":
 		case "open":
 			return JiraVulnerabilityStatusEnum.OPEN;
 		case "resolved":
-		case "revoked":
 			return JiraVulnerabilityStatusEnum.CLOSED;
 		default:
 			logger.info(`Received unmapped state from secret_scanning_alert webhook: ${state}`);
