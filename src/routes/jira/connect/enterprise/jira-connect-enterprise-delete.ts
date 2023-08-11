@@ -16,8 +16,10 @@ export const JiraConnectEnterpriseDelete = async (
 		await GitHubServerApp.uninstallServer(req.body.serverUrl, installation.id);
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true
 		});
 
@@ -26,8 +28,10 @@ export const JiraConnectEnterpriseDelete = async (
 	} catch (error) {
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false
 		});
 

@@ -38,8 +38,10 @@ export const JiraConnectEnterpriseAppPut = async (
 		}, jiraHost);
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true
 		});
 
@@ -48,8 +50,10 @@ export const JiraConnectEnterpriseAppPut = async (
 	} catch (error) {
 
 		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false
 		});
 

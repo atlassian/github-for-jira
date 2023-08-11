@@ -16,6 +16,15 @@ jest.mock("react-router-dom", () => ({
 	useNavigate: () => navigate
 }));
 
+jest.mock("../../analytics/analytics-proxy-client", () => {
+	return {
+		analyticsProxyClient: {
+			sendScreenEvent: jest.fn(),
+			sendUIEvent: jest.fn()
+		}
+	};
+});
+
 test("Basic check for the Connected Page", async () => {
 	render(
 		<BrowserRouter>
