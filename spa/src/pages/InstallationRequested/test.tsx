@@ -5,11 +5,11 @@ import InstallationRequested from "./index";
 import OAuthManager from "../../services/oauth-manager";
 
 const navigate = jest.fn();
-jest.mock("../../services/oauth-manager");
 jest.mock("react-router-dom", () => ({
 	...jest.requireActual("react-router-dom"),
-	useNavigate: () =>  navigate
+	useNavigate: () => navigate
 }));
+jest.mock("../../services/oauth-manager");
 window.open = jest.fn();
 
 test("Basic check for the Connected Page", async () => {
