@@ -4,6 +4,7 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
+import { popup } from "../../../utils";
 
 const OrgsWrapper = styled.div`
 	max-height: 250px;
@@ -14,28 +15,78 @@ const OrgsWrapper = styled.div`
 const OrgDiv = styled.div`
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
+	align-items: start;
 	padding: ${token("space.150")} 0;
 	margin-bottom: ${token("space.100")};
+`;
+const OrgName = styled.span`
+	color: ${token("color.text")};
+	font-weight: 590;
+`;
+const Paragraph = styled.div`
+	color: ${token("color.text.subtle")};
+`;
+const IconWrapper = styled.div`
+	padding-top: ${token("space.150")};
+`;
+const StyledLink = styled.a`
+	cursor: pointer;
 `;
 
 const OrganizationsList = ({
 	organizations,
 	loaderForOrgClicked,
 	setLoaderForOrgClicked,
+	clearGitHubToken,
 	connectingOrg,
 }: {
 	organizations: Array<GitHubInstallationType>;
 	// Passing down the states and methods from the parent component
 	loaderForOrgClicked: boolean;
 	setLoaderForOrgClicked: (args: boolean) => void;
+	clearGitHubToken: () => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
 	const [clickedOrg, setClickedOrg] = useState<GitHubInstallationType | undefined>(undefined);
 	const canConnect = (org: GitHubInstallationType) => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
+	// TODO: Automate the login after clearing the GitHub Token
 	const errorMessage = (org: GitHubInstallationType) => {
-		return "THis is the message " + org.account.login;
+		if (org.requiresSsoLogin) {
+			// TODO: Update this to support GHE
+			const accessUrl = `https://github.com/organizations/${org.account.login}/settings/profile`;
+
+			return <>
+				<Paragraph>
+					Make sure you can <StyledLink onClick={() => popup(accessUrl)}>access this organization</StyledLink>.
+				</Paragraph>
+				<Paragraph>
+					After confirming, please <StyledLink onClick={clearGitHubToken}>reset the token</StyledLink>.
+				</Paragraph>
+			</>;
+		}
+
+		if (org.isIPBlocked) {
+			return <>
+				<Paragraph>
+					Can't connect, blocked by your IP allow list.
+				</Paragraph>
+				<Button
+					style={{ paddingLeft: 0 }}
+					appearance="link"
+				>
+					Learn how to fix this error
+				</Button>
+			</>;
+		}
+
+		if (!org.isAdmin) {
+			return <>
+				<Paragraph>
+					Can't connect, you're not an organization owner.<br />Ask an owner to complete this step.
+				</Paragraph>
+			</>;
+		}
 	};
 
 	return (
@@ -45,7 +96,7 @@ const OrganizationsList = ({
 					<OrgDiv key={org.id}>
 						{
 							canConnect(org) ? <>
-								<span>{org.account.login}</span>
+								<OrgName>{org.account.login}</OrgName>
 								{
 									loaderForOrgClicked && clickedOrg?.id === org.id ?
 										<LoadingButton style={{width: 80}} isLoading>Loading button</LoadingButton> :
@@ -67,10 +118,12 @@ const OrganizationsList = ({
 								}
 							</> : <>
 								<div>
-									<span>{org.account.login}</span>
+									<OrgName>{org.account.login}</OrgName>
 									<div>{errorMessage(org)}</div>
 								</div>
-								<WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" />
+								<IconWrapper>
+									<WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" />
+								</IconWrapper>
 							</>
 						}
 					</OrgDiv>

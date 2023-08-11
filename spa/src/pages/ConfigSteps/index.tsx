@@ -8,7 +8,6 @@ import Step from "../../components/Step";
 import LoggedinInfo  from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
-import OpenIcon from "@atlaskit/icon/glyph/open";
 import { useNavigate } from "react-router-dom";
 import Error from "../../components/Error";
 import AppManager from "../../services/app-manager";
@@ -280,11 +279,11 @@ const ConfigSteps = () => {
 					isLoggedIn ? <>
 						{
 							loaderForOrgFetching ? <SkeletonForLoading /> : <>
-									<Step title="Connect your GitHub organization to Jira">
+									<Step title="Select a GitHub Organization">
 												<>
 													<Paragraph>
-														Repositories from this organization will be available to all<br />
-														projects in <b>{hostUrl?.jiraHost}</b>.
+														This organization's repositories will be available to all projects<br />
+														in <b>{hostUrl?.jiraHost}</b>.
 													</Paragraph>
 													{
 														organizations.length === 0 ? <NoOrgsParagraph>No organizations found!</NoOrgsParagraph> :
@@ -292,6 +291,7 @@ const ConfigSteps = () => {
 																organizations={organizations}
 																loaderForOrgClicked={loaderForOrgClicked}
 																setLoaderForOrgClicked={setLoaderForOrgClicked}
+																clearGitHubToken={clearGitHubToken}
 																connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													}
 													<AddOrganizationContainer>
@@ -302,7 +302,7 @@ const ConfigSteps = () => {
 															onClick={() => installNewOrg("manual")}
 														/>
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
-															Add an organization
+															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
 													</AddOrganizationContainer>
 												</>
@@ -352,12 +352,11 @@ const ConfigSteps = () => {
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
-											iconAfter={<OpenIcon label="open" size="medium"/>}
 											aria-label="Get started"
 											appearance="primary"
 											onClick={authorize}
 										>
-											Get started
+											Next
 										</Button>
 								}
 							</>

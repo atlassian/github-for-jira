@@ -61,15 +61,14 @@ const Connected = () => {
 				<HeaderImg src="/public/assets/jira-github-connected.svg" alt=""/>
 				<Title>GitHub is connected!</Title>
 				<TopContent>
-					Its' time to let everyone know that GitHub's ready to use in their<br />
-					project. For development work to appear in Jira, your team<br />
-					needs to link their work using issue keys.<br />
+					Its' time to let everyone know that GitHub's ready to use and your<br />
+					team can use issue keys to link work to Jira.<br />
 				</TopContent>
 				<ButtonContainer>
 					<Button
 						style={{ paddingLeft: 0 }}
 						appearance="link"
-						onClick={ () => navigate("/spa/steps")}
+						onClick={() => navigate("/spa/steps")}
 					>
 						Add another organization
 					</Button>
@@ -111,10 +110,16 @@ const Connected = () => {
 				</FlexWrapper>
 			</div>
 			<Paragraph>
-				We're backfilling your organization's repositories into Jira (this<br />
+				We're backfilling your organization's repositories into Jira (this <br/>
 				can take a while, depending on how many repositories you<br />
-				have).<br/>
-				<Button style={{ paddingLeft: 0 }} appearance="link" onClick={navigateToBackfillPage}>Check your backfill status</Button>
+				have).
+				<Button
+					style={{ paddingLeft: 0, height: 14, lineHeight: "14px", display: "inline-flex" }}
+					appearance="link"
+					onClick={navigateToBackfillPage}
+				>
+					Check your backfill status
+				</Button>
 			</Paragraph>
 		</ConnectedContainer>
 	</Wrapper>);
