@@ -279,7 +279,7 @@ const ConfigSteps = () => {
 					isLoggedIn ? <>
 						{
 							loaderForOrgFetching ? <SkeletonForLoading /> : <>
-									<Step title="Select a GitHub Organization">
+									<Step title="Select a GitHub organization">
 												<>
 													<Paragraph>
 														This organization's repositories will be available to all projects<br />
@@ -298,7 +298,7 @@ const ConfigSteps = () => {
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
 															isDisabled={loaderForOrgClicked}
-															aria-label="Install new Org"
+															aria-label="Install organization"
 															onClick={() => installNewOrg("manual")}
 														/>
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
@@ -352,7 +352,7 @@ const ConfigSteps = () => {
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
-											aria-label="Get started"
+											aria-label="Next"
 											appearance="primary"
 											onClick={authorize}
 										>
