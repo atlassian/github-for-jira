@@ -79,6 +79,7 @@ const OrganizationsList = ({
 				<Button
 					style={{ paddingLeft: 0 }}
 					appearance="link"
+					onClick={() => popup("https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md")}
 				>
 					Learn how to fix this error
 				</Button>
