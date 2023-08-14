@@ -1,3 +1,4 @@
+import AWS from "aws-sdk";
 import { NextFunction, Request, Response, Router } from "express";
 import { body, param } from "express-validator";
 import rateLimit from "express-rate-limit";
@@ -24,6 +25,8 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
+import { envVars } from "config/env";
+import { SendMessageRequest } from "aws-sdk/clients/sqs";
 export const ApiRouter = Router();
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
@@ -142,6 +145,27 @@ const cryptorDebugEndpoint = async (_req: Request, resp: Response) => {
 	}
 };
 ApiRouter.use("/cryptor", cryptorDebugEndpoint);
+
+// Temp code, TODO: :killwithfire:
+const analyticsQueueConnectivityTest = async (req: Request, resp: Response) => {
+	req.log.info("starting connectivity test");
+	const sqs = new AWS.SQS({ apiVersion: "2012-11-05", region: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION });
+	const params: SendMessageRequest = {
+		MessageBody: JSON.stringify({ hello: "world" }),
+		QueueUrl: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_URL,
+		DelaySeconds: 0
+	};
+	try {
+		const sendMessageResult = await sqs.sendMessage(params)
+			.promise();
+		req.log.info({ sendMessageResult }, "connectivity test succeeded!");
+		resp.sendStatus(200);
+	} catch (err) {
+		req.log.error({ err }, "connectivity test failed!");
+	}
+};
+ApiRouter.use("/analytics-queue-connectivity-test", analyticsQueueConnectivityTest);
+
 ApiRouter.use("/db-migration", DBMigrationsRouter);
 ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
 ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);

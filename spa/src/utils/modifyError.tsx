@@ -18,7 +18,7 @@ type ErrorWithErrorCode = {
 	errorCode: ErrorCode
 };
 
-const GENERIC_MESSAGE = "Something went wrong, please try again later.";
+const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHub, try again.";
 
 export const modifyError = (
   error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
