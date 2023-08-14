@@ -7,7 +7,7 @@ import _, { omit } from "lodash";
 import { MicrosEnvTypeEnum } from "interfaces/common";
 import { isTestJiraHost } from "config/jira-test-site-check";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import AWS from "aws-sdk";
+import { SQS } from "aws-sdk";
 import { SendMessageRequest } from "aws-sdk/clients/sqs";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
@@ -66,7 +66,7 @@ export const sendAnalyticsWithSqs = async (
 			eventAttributes: attributes
 		}
 	};
-	const sqs = new AWS.SQS({ apiVersion: "2012-11-05", region: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION });
+	const sqs = new SQS({ apiVersion: "2012-11-05", region: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION });
 	const params: SendMessageRequest = {
 		MessageBody: JSON.stringify(payload),
 		QueueUrl: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_URL,
@@ -75,7 +75,7 @@ export const sendAnalyticsWithSqs = async (
 	try {
 		const sendMessageResult = await sqs.sendMessage(params)
 			.promise();
-		logger.info({ sendMessageResult }, "Publishing an analytic event to SQS");
+		logger.debug({ sendMessageResult }, "Published an analytic event to SQS");
 	} catch (err) {
 		logger.error({ err }, "Cannot publish the event to SQS");
 	}
