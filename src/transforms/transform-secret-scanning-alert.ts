@@ -14,7 +14,7 @@ export const transformSecretScanningAlert = async (context: WebhookContext<Secre
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
+			id: `s-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
 			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
@@ -30,10 +30,7 @@ export const transformSecretScanningAlert = async (context: WebhookContext<Secre
 				displayName: alert.secret_type,
 				url: alert.html_url
 			}],
-			status: transformGitHubStateToJiraStatus(alert.state || context.action, context.log),
-			additionalInfo: {
-				content: alert.secret_type
-			}
+			status: transformGitHubStateToJiraStatus(alert.state || context.action, context.log)
 		}]
 	};
 };
@@ -49,6 +46,7 @@ export const transformGitHubStateToJiraStatus = (state: string | undefined, logg
 	switch (state) {
 		case "created":
 		case "reopened":
+		case "open":
 			return JiraVulnerabilityStatusEnum.OPEN;
 		case "resolved":
 		case "revoked":

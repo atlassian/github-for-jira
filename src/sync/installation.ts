@@ -26,6 +26,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 import { getNextTasks } from "~/src/sync/scheduler";
 import { getDependabotAlertTask } from "./dependabot-alerts";
+import { getSecretScanningAlertTask } from "./secret-scanning-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -34,10 +35,11 @@ const tasks: TaskProcessors = {
 	commit: getCommitTask,
 	build: getBuildTask,
 	deployment: getDeploymentTask,
-	dependabotAlert: getDependabotAlertTask
+	dependabotAlert: getDependabotAlertTask,
+	secretScanningAlert: getSecretScanningAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -235,9 +237,11 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 				});
 				break;
 			case "dependabotAlert":
+			case "secretScanningAlert":{
 				await jiraClient.security.submitVulnerabilities(jiraPayload, {
 					operationType: "BACKFILL"
 				});
+			}
 				break;
 			default:
 				await jiraClient.devinfo.repository.update(jiraPayload, {
