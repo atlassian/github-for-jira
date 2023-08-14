@@ -5,6 +5,7 @@ import { token } from "@atlaskit/tokens";
 import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import { popup } from "../../../utils";
+import OauthManager from "../../../services/oauth-manager";
 
 type OrgDivType = {
 	key: number;
@@ -42,20 +43,28 @@ const OrganizationsList = ({
 	organizations,
 	loaderForOrgClicked,
 	setLoaderForOrgClicked,
-	clearGitHubToken,
+	resetCallback,
 	connectingOrg,
 }: {
 	organizations: Array<GitHubInstallationType>;
 	// Passing down the states and methods from the parent component
 	loaderForOrgClicked: boolean;
 	setLoaderForOrgClicked: (args: boolean) => void;
-	clearGitHubToken: () => void;
+	resetCallback: (args: boolean) => void;
 	connectingOrg: (org: GitHubInstallationType) => void;
 }) => {
 	const [clickedOrg, setClickedOrg] = useState<GitHubInstallationType | undefined>(undefined);
 	const canConnect = (org: GitHubInstallationType) => !org.requiresSsoLogin && !org.isIPBlocked && org.isAdmin;
 
-	// TODO: Automate the login after clearing the GitHub Token
+	// This method clears the tokens and then re-authenticates
+	const resetToken = async () => {
+		await OauthManager.clear();
+		// This resets the token validity check in the parent component and resets the UI
+		resetCallback(false);
+		// Restart the whole auth flow
+		await OauthManager.authenticateInGitHub(() => {});
+	};
+
 	const errorMessage = (org: GitHubInstallationType) => {
 		if (org.requiresSsoLogin) {
 			// TODO: Update this to support GHE
@@ -66,7 +75,7 @@ const OrganizationsList = ({
 					Make sure you can <StyledLink onClick={() => popup(accessUrl)}>access this organization</StyledLink>.
 				</Paragraph>
 				<Paragraph>
-					After confirming, please <StyledLink onClick={clearGitHubToken}>reset the token</StyledLink>.
+					After confirming, please <StyledLink onClick={resetToken}>click here to reset</StyledLink>.
 				</Paragraph>
 			</>;
 		}
