@@ -7,6 +7,7 @@ import {
 import StartConnection from "./pages/StartConnection";
 import ConfigSteps from "./pages/ConfigSteps";
 import Connected from "./pages/Connected";
+import InstallationRequested from "./pages/InstallationRequested";
 
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
@@ -32,6 +33,7 @@ const App = () => {
 					<Route index element={<StartConnection/>}/>
 					<Route path="steps" element={<ConfigSteps/>}/>
 					<Route path="connected" element={<Connected />}/>
+					<Route path="installationRequested" element={<InstallationRequested />}/>
 				</Route>
 			</SentryRoutes>
 		</BrowserRouter>
