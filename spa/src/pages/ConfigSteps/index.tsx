@@ -5,7 +5,7 @@ import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
-import LoggedinInfo  from "../../common/LoggedinInfo";
+import LoggedinInfo from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
-import { ErrorObjType, modifyError } from "../../utils/modifyError";
+import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
@@ -27,6 +27,10 @@ type GitHubOptionType = {
 type HostUrlType = {
 	jiraHost: string;
 };
+type ErrorMessageCounterType = {
+	message: string | React.JSX.Element;
+	count: number;
+}
 
 const ConfigContainer = styled.div`
   margin: 0 auto;
@@ -101,6 +105,13 @@ const NoOrgsParagraph = styled.div`
 	text-align: center;
 `;
 
+// Used for counting messages
+const errorMessageCounter: ErrorMessageCounterType = {
+	message: "",
+	count: 0
+};
+const ERROR_THRESHOLD = 3;
+
 const ConfigSteps = () => {
 	const navigate = useNavigate();
 	const { username } = OAuthManager.getUserDetails();
@@ -124,6 +135,23 @@ const ConfigSteps = () => {
 
 	const [error, setError] = useState<ErrorObjType | undefined>(undefined);
 
+	const showError = (args: ErrorObjType | undefined) => {
+		if (args) {
+			if (args.message !== errorMessageCounter.message) { // Reset the counter if the error message is different
+				errorMessageCounter.message = args.message;
+				errorMessageCounter.count = 1;
+			} else {
+				if (errorMessageCounter.count >= ERROR_THRESHOLD) {
+					args.message = GENERIC_MESSAGE_WITH_LINK;
+				} else {
+					errorMessageCounter.message = args.message;
+					errorMessageCounter.count++;
+				}
+			}
+		}
+		setError(args);
+	};
+
 	const getJiraHostUrls = () => {
 		AP.getLocation((location: string) => {
 			const locationUrl = new URL(location);
@@ -138,7 +166,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
@@ -157,7 +185,7 @@ const ConfigSteps = () => {
 					});
 				} catch (e) {
 					setLoaderForLogin(false);
-					setError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
+					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
 					reportError(e);
 				}
 				break;
@@ -180,7 +208,7 @@ const ConfigSteps = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
 		setLoggedInUser("");
-		setError(undefined);
+		showError(undefined);
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
@@ -189,7 +217,7 @@ const ConfigSteps = () => {
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
-				setError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
+				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -215,7 +243,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			setError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
+			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
 			reportError(e);
 		}
@@ -229,7 +257,7 @@ const ConfigSteps = () => {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					setError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
@@ -249,7 +277,7 @@ const ConfigSteps = () => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				setError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);
