@@ -30,6 +30,7 @@ export enum BooleanFlags {
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
+	SEND_ANALYTICS_TO_SQS = "send-analytics-to-sqs"
 }
 
 export enum StringFlags {

@@ -204,7 +204,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			gitHubProduct,
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
 		}, { jiraHost: subscription.jiraHost });
-		sendAnalytics(subscription.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(subscription.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
 			action: "complete",
 			source: data.metricTags?.source || "worker"

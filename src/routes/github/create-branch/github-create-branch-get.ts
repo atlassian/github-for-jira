@@ -47,7 +47,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			configurationUrl: `${jiraHost}/plugins/servlet/ac/${envVars.APP_KEY}/github-select-product-page`
 		});
 
-		sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
 		}, {
 			jiraHost
@@ -74,7 +74,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 
 	req.log.debug(`Github Create Branch Page rendered page`);
 
-	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName
 	}, {
 		jiraHost

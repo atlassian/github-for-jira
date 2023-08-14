@@ -6,6 +6,9 @@ import { createHashWithoutSharedSecret } from "utils/encryption";
 import _, { omit } from "lodash";
 import { MicrosEnvTypeEnum } from "interfaces/common";
 import { isTestJiraHost } from "config/jira-test-site-check";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { SQS } from "aws-sdk";
+import { SendMessageRequest } from "aws-sdk/clients/sqs";
 
 const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
@@ -34,6 +37,50 @@ const calculateClientEnv = () => {
 	return "dev";
 };
 
+interface SQSEventPayload {
+	accountId?: string;
+	eventType: "screen" | "ui" | "operational" | "track";
+	eventProps: ScreenEventProps | TrackOpUiEventProps;
+	eventAttributes?: Record<string, unknown>;
+}
+
+export interface SQSAnalyticsMessagePayload {
+	jiraHost: string;
+	eventPayload: SQSEventPayload;
+}
+
+export const sendAnalyticsWithSqs = async (
+	jiraHost: string,
+	eventType: "screen" | "ui" | "operational" | "track",
+	eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>,
+	attributes: Record<string, unknown> = {},
+	accountId?: string
+): Promise<void> => {
+
+	const payload: SQSAnalyticsMessagePayload = {
+		jiraHost,
+		eventPayload: {
+			accountId,
+			eventType,
+			eventProps,
+			eventAttributes: attributes
+		}
+	};
+	const sqs = new SQS({ apiVersion: "2012-11-05", region: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION });
+	const params: SendMessageRequest = {
+		MessageBody: JSON.stringify(payload),
+		QueueUrl: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_URL,
+		DelaySeconds: 0
+	};
+	try {
+		const sendMessageResult = await sqs.sendMessage(params)
+			.promise();
+		logger.debug({ sendMessageResult }, "Published an analytic event to SQS");
+	} catch (err) {
+		logger.error({ err }, "Cannot publish the event to SQS");
+	}
+};
+
 /**
  *
  * @param jiraHost
@@ -45,7 +92,24 @@ const calculateClientEnv = () => {
 export const sendAnalytics: {
 	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
 	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
-} = (jiraHost: string, eventType: string, eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): void => {
+} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): Promise<void> => {
+
+	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
+		logger.warn("Skip analytics for test jira in prod");
+		return;
+	}
+
+	const attributes = _.cloneDeep(unsafeAttributes);
+	if (attributes.jiraHost && (typeof attributes.jiraHost === "string")) {
+		attributes.jiraHost = createHashWithoutSharedSecret(attributes.jiraHost);
+	}
+
+	attributes.appKey = envVars.APP_KEY;
+
+	if (await booleanFlag(BooleanFlags.SEND_ANALYTICS_TO_SQS, jiraHost)) {
+		await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
+		return;
+	}
 
 	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
 
@@ -56,11 +120,6 @@ export const sendAnalytics: {
 
 	if (isNodeTest()) {
 		logger.warn("Analytics is disabled in tests");
-		return;
-	}
-
-	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
-		logger.warn("Skip analytics for test jira in prod");
 		return;
 	}
 
@@ -78,13 +137,6 @@ export const sendAnalytics: {
 		tenantIdType: "cloudId",
 		tenantId: "NONE" // TODO: determine from jiraHost
 	};
-
-	const attributes = _.cloneDeep(unsafeAttributes);
-	if (attributes.jiraHost && (typeof attributes.jiraHost === "string")) {
-		attributes.jiraHost = createHashWithoutSharedSecret(attributes.jiraHost);
-	}
-
-	attributes.appKey = envVars.APP_KEY;
 
 	logger.debug({ eventType }, "Sending analytics");
 
