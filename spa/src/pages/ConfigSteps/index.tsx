@@ -291,7 +291,7 @@ const ConfigSteps = () => {
 																organizations={organizations}
 																loaderForOrgClicked={loaderForOrgClicked}
 																setLoaderForOrgClicked={setLoaderForOrgClicked}
-																clearGitHubToken={clearGitHubToken}
+																resetCallback={setIsLoggedIn}
 																connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													}
 													<AddOrganizationContainer>
