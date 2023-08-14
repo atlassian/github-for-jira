@@ -181,7 +181,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
-	sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
 		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName
 	}, {
 		jiraHost,
