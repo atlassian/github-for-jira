@@ -20,6 +20,11 @@ type ErrorWithErrorCode = {
 
 const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHub, try again.";
 
+export const GENERIC_MESSAGE_WITH_LINK = <>
+	<p>Something went wrong and we couldn’t connect to GitHub, try again.</p>
+	<p><a href="https://support.atlassian.com/" target="_blank">Contact Support</a></p>
+</>;
+
 export const modifyError = (
   error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
   context: { orgLogin?: string; },
@@ -62,7 +67,6 @@ export const modifyError = (
 	} else if (errorCode === "RATELIMIT") {
 		return { ...errorObj, message: "GitHub rate limit exceeded. Please try again later." }; //TODO: Better message
 	} else if (errorCode === "SSO_LOGIN") {
-		//TODO: Shall we merge these two steps into one and clear token during the redirect to SSO?
 		return {
 			...warningObj,
 			message: <>
