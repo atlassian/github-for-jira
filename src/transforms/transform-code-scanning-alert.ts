@@ -110,6 +110,26 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	};
 };
 
+const transformRuleTagsToIdentifiers = (tags: string[] | null) => {
+	if (!tags) {
+		return null;
+	}
+	// CWE tags from GitHub take the format 'external/cwe/cwe-259'
+	const cwePrefix = "external/cwe/cwe-";
+	const identifiers = tags.filter(tag => tag.startsWith(cwePrefix)).map(tag => {
+		// Remove starting 0s as GitHub can provide 'cwe-079'
+		const cweId = tag.split(cwePrefix)[1].replace(/^0+/, "");
+		return {
+			displayName: `CWE-${cweId}`,
+			url: `https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=${cweId}`
+		};
+	});
+	if (!identifiers.length) {
+		return null;
+	}
+	return identifiers;
+};
+
 export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | null> => {
 	const { alert, repository } = context.payload;
 
@@ -127,6 +147,8 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
 	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity}`);
 
+	const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
+
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
@@ -142,7 +164,7 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 			severity: {
 				level: transformGitHubSeverityToJiraSeverity(alert.rule.security_severity_level, handleUnmappedSeverity)
 			},
-			identifiers: [],
+			...(identifiers ? { identifiers } : null),
 			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
 				content: alert.tool.name

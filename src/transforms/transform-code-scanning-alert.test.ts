@@ -7,6 +7,7 @@ import codeScanningCreatedPayload from "./../../test/fixtures/api/code-scanning-
 import codeScanningCreatedPrPayload from "./../../test/fixtures/api/code-scanning-alert-created-pr.json";
 import codeScanningFixedPayload from "./../../test/fixtures/api/code-scanning-alert-fixed.json";
 import codeScanningClosedByUserPayload from "./../../test/fixtures/api/code-scanning-alert-closed-by-user.json";
+import codeScanningCreatedJsXssPayload from "./../../test/fixtures/api/code-scanning-alert-created-js-xss.json";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
@@ -187,7 +188,20 @@ describe("code_scanning_alert transform", () => {
 			  "description": "Hard-coding credentials in source code may enable an attacker to gain unauthorized access.",
 			  "displayName": "js/hardcoded-credentials",
 			  "id": "c-119484675-2",
-			  "identifiers": Array [],
+			  "identifiers": Array [
+			    Object {
+			      "displayName": "CWE-259",
+			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259",
+			    },
+			    Object {
+			      "displayName": "CWE-321",
+			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321",
+			    },
+			    Object {
+			      "displayName": "CWE-798",
+			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798",
+			    },
+			  ],
 			  "introducedDate": "2023-08-01T00:25:22Z",
 			  "lastUpdated": "2023-08-01T00:25:22Z",
 			  "schemaVersion": "1.0",
@@ -292,6 +306,88 @@ describe("code_scanning_alert transform", () => {
 			expect(context.log.info).toHaveBeenCalledWith(
 				"Received unmapped severity from code_scanning_alert webhook: unmapped_severity"
 			);
+		});
+
+		it("set identifiers when alert rule tags contains CWEs", async () => {
+			const payload = codeScanningCreatedJsXssPayload;
+			const context = buildContext(payload);
+			const result = await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(result?.vulnerabilities[0].identifiers).toMatchInlineSnapshot(`
+			Array [
+			  Object {
+			    "displayName": "CWE-79",
+			    "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=79",
+			  },
+			  Object {
+			    "displayName": "CWE-116",
+			    "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=116",
+			  },
+			]
+		`);
+		});
+
+		it("omit identifiers when alert rule tags is null", async () => {
+			const payload = {
+				...codeScanningCreatedJsXssPayload,
+				alert: {
+					...codeScanningCreatedJsXssPayload.alert,
+					rule: {
+						...codeScanningCreatedJsXssPayload.alert.rule,
+						tags: null
+					}
+				}
+			};
+			const context = buildContext(payload);
+			const result = await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(result?.vulnerabilities[0].identifiers).toBe(undefined);
+		});
+
+		it("omit identifiers when alert rule tags is empty", async () => {
+			const payload = {
+				...codeScanningCreatedJsXssPayload,
+				alert: {
+					...codeScanningCreatedJsXssPayload.alert,
+					rule: {
+						...codeScanningCreatedJsXssPayload.alert.rule,
+						tags: []
+					}
+				}
+			};
+			const context = buildContext(payload);
+			const result = await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(result?.vulnerabilities[0].identifiers).toBe(undefined);
+		});
+
+		it("omit identifiers when alert rule tags have no CWEs", async () => {
+			const payload = {
+				...codeScanningCreatedJsXssPayload,
+				alert: {
+					...codeScanningCreatedJsXssPayload.alert,
+					rule: {
+						...codeScanningCreatedJsXssPayload.alert.rule,
+						tags: ["security"]
+					}
+				}
+			};
+			const context = buildContext(payload);
+			const result = await transformCodeScanningAlertToJiraSecurity(
+				context,
+				gitHubInstallationId,
+				jiraHost
+			);
+			expect(result?.vulnerabilities[0].identifiers).toBe(undefined);
 		});
 	});
 });

@@ -32,7 +32,7 @@
       "version": "2.14.1"
     },
     "most_recent_instance": {
-      "ref": "refs/pull/7/head",
+      "ref": "refs/heads/master",
       "analysis_key": "dynamic/github-code-scanning/codeql:analyze",
       "environment": "{\"language\":\"javascript\"}",
       "category": "/language:javascript",
@@ -54,7 +54,7 @@
     },
     "instances_url": "https://api.github.com/repos/auzwang/sequelize-playground/code-scanning/alerts/6/instances"
   },
-  "ref": "refs/pull/7/head",
+  "ref": "refs/heads/master",
   "commit_oid": "1c2633613c2d1b7a20f4c8760275105e30d0db0e",
   "repository": {
     "id": 119484675,
