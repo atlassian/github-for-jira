@@ -75,7 +75,7 @@ const OrganizationsList = ({
 					Make sure you can <StyledLink onClick={() => popup(accessUrl)}>access this organization</StyledLink>.
 				</Paragraph>
 				<Paragraph>
-					After confirming, please <StyledLink onClick={resetToken}>reset the token</StyledLink>.
+					After confirming, please <StyledLink onClick={resetToken}>click here to reset</StyledLink>.
 				</Paragraph>
 			</>;
 		}
