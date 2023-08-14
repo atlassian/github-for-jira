@@ -56,6 +56,7 @@ describe("transformSecretScanningAlert", () => {
 	it.each([
 		["created", JiraVulnerabilityStatusEnum.OPEN],
 		["reopened", JiraVulnerabilityStatusEnum.OPEN],
+		["open", JiraVulnerabilityStatusEnum.OPEN],
 		["resolved", JiraVulnerabilityStatusEnum.CLOSED],
 		["revoked", JiraVulnerabilityStatusEnum.CLOSED],
 		["unmapped_state", JiraVulnerabilityStatusEnum.UNKNOWN]
@@ -79,8 +80,11 @@ describe("transformSecretScanningAlert", () => {
 				"containerId": "1",
 				"description": "Secret scanning alert",
 				"displayName": "personal_access_token secret exposed",
-				"id": "d-1-123",
-				"identifiers": [],
+				"id": "s-1-123",
+				"identifiers": [{
+					"displayName": "personal_access_token",
+					"url": "https://sample/123"
+				}],
 				"introducedDate": "2022-01-01T00:00:00Z",
 				"lastUpdated": "2022-01-01T00:00:00Z",
 				"schemaVersion": "1.0",
@@ -89,11 +93,8 @@ describe("transformSecretScanningAlert", () => {
 				},
 				"status": "open",
 				"type": "sast",
-				"updateSequenceNumber":  Date.now(),
-				"url": "https://sample/123",
-				"additionalInfo": {
-					"content": "personal_access_token"
-				}
+				"updateSequenceNumber": Date.now(),
+				"url": "https://sample/123"
 			}
 		]);
 	});

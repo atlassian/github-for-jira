@@ -29,6 +29,7 @@ import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
 	CreateReferenceBody,
 	GetPullRequestParams,
+	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse
 } from "./github-client.types";
@@ -38,6 +39,7 @@ import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client
 import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
+import { SecretScanningAlertResponseItem } from "./secret-scanning-alert.types";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
@@ -74,6 +76,13 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.gitHubServerAppId = gshaId;
 	}
 
+
+	public async getSecretScanningAlerts(owner: string, repo: string, secretScanningAlertRequestParams: GetSecretScanningAlertRequestParams): Promise<AxiosResponse<SecretScanningAlertResponseItem[]>> {
+		return await this.get<SecretScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/secret-scanning/alerts`, secretScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
 	/**
 	 * Lists pull requests for the given repository.
 	 */
@@ -95,12 +104,11 @@ export class GitHubInstallationClient extends GitHubClient {
 			pullNumber
 		});
 	}
-	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
+	public async getPullRequestPage(owner: string, repo: string, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
 		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
 			owner,
 			repo,
 			per_page,
-			commitSince: commitSince?.toISOString(),
 			cursor
 		}, { graphQuery: "getPullRequests" });
 		return response.data.data;

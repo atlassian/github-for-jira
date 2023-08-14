@@ -47,7 +47,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	}
 
 	try {
-		const subscription = await Subscription.findForRepoOwner(owner, jiraHost);
+		const subscription = await Subscription.findForRepoOwner(owner, jiraHost, !!gitHubAppConfig.gitHubAppId);
 
 		if (!subscription) {
 			logger.error(Errors.MISSING_SUBSCRIPTION);
@@ -83,8 +83,10 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 
 const sendTrackEventAnalytics = (name: string, jiraHost: string) => {
 	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-		name,
-		source: AnalyticsTrackSource.CreateBranch,
+		action: name,
+		actionSubject: name,
+		source: AnalyticsTrackSource.CreateBranch
+	}, {
 		jiraHost
 	});
 };

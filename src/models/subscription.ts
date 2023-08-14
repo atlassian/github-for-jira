@@ -25,6 +25,10 @@ export interface Repository {
 	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
+export const gitHubAppIdCondition = (isServer: boolean): string => {
+	return isServer ? "AND s.\"gitHubAppId\" IS NOT NULL" : "AND s.\"gitHubAppId\" IS NULL";
+};
+
 export class Subscription extends Model {
 	id: number;
 	gitHubInstallationId: number;
@@ -43,6 +47,7 @@ export class Subscription extends Model {
 	repositoryStatus?: TaskStatus;
 	gitHubAppId: number | undefined;
 	avatarUrl: string | undefined;
+	isSecurityPermissionsAccepted: boolean;
 
 	static async getAllForHost(jiraHost: string, gitHubAppId?: number): Promise<Subscription[]> {
 		return this.findAll({
@@ -151,14 +156,17 @@ export class Subscription extends Model {
 		});
 	}
 
-	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+
+
+	static async findForRepoNameAndOwner(repoName: string, repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
 			"AND rss.\"repoName\" = :repoName " +
-			"AND rss.\"repoOwner\" = :repoOwner",
+			"AND rss.\"repoOwner\" = :repoOwner " +
+			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoName, repoOwner },
 				type: QueryTypes.SELECT
@@ -167,13 +175,14 @@ export class Subscription extends Model {
 		return results[0] as Subscription;
 	}
 
-	static async findForRepoOwner(repoOwner: string, jiraHost: string): Promise<Subscription | null> {
+	static async findForRepoOwner(repoOwner: string, jiraHost: string, isServer: boolean): Promise<Subscription | null> {
 		const results = await this.sequelize!.query(
 			"SELECT * " +
 			"FROM \"Subscriptions\" s " +
 			"LEFT JOIN \"RepoSyncStates\" rss on s.\"id\" = rss.\"subscriptionId\" " +
 			"WHERE s.\"jiraHost\" = :jiraHost " +
-			"AND rss.\"repoOwner\" = :repoOwner",
+			"AND rss.\"repoOwner\" = :repoOwner " +
+			gitHubAppIdCondition(isServer),
 			{
 				replacements: { jiraHost, repoOwner },
 				type: QueryTypes.SELECT
@@ -273,7 +282,8 @@ Subscription.init({
 	avatarUrl: {
 		type: DataTypes.STRING,
 		allowNull: true
-	}
+	},
+	isSecurityPermissionsAccepted: DataTypes.BOOLEAN
 }, { sequelize });
 
 export interface SubscriptionPayload {

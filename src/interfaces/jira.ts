@@ -210,7 +210,7 @@ export interface JiraVulnerability {
 	severity: JiraVulnerabilitySeverity;
 	identifiers: JiraVulnerabilityIdentifier[];
 	status: JiraVulnerabilityStatusEnum;
-	additionalInfo: JiraVulnerabilityAdditionalInfo;
+	additionalInfo?: JiraVulnerabilityAdditionalInfo;
 }
 
 export interface JiraVulnerabilitySeverity {

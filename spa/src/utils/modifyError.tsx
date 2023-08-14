@@ -18,7 +18,12 @@ type ErrorWithErrorCode = {
 	errorCode: ErrorCode
 };
 
-const GENERIC_MESSAGE = "Something went wrong, please try again later.";
+const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHub, try again.";
+
+export const GENERIC_MESSAGE_WITH_LINK = <>
+	<p>Something went wrong and we couldn’t connect to GitHub, try again.</p>
+	<p><a href="https://support.atlassian.com/" target="_blank">Contact Support</a></p>
+</>;
 
 export const modifyError = (
   error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
@@ -55,12 +60,13 @@ export const modifyError = (
 				<a target="_blank" href="https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md">Learn how to add GitHub for Jira to your IP allowlist</a>
 			</>
 		};
+	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
+		return { ...errorObj, message: `You are not Admin of the target org ${context.orgLogin || ""}. Please make sure you are admin of the org and try again.` }; //TODO: Better message
 	} else if (errorCode === "TIMEOUT") {
 		return { ...errorObj, message: "Request timeout. Please try again later." }; //TODO: Better message
 	} else if (errorCode === "RATELIMIT") {
 		return { ...errorObj, message: "GitHub rate limit exceeded. Please try again later." }; //TODO: Better message
 	} else if (errorCode === "SSO_LOGIN") {
-		//TODO: Shall we merge these two steps into one and clear token during the redirect to SSO?
 		return {
 			...warningObj,
 			message: <>

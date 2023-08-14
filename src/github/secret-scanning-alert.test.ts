@@ -136,7 +136,7 @@ describe("SecretScanningAlertWebhookHandler", () => {
 			vulnerabilities: [
 				{
 					schemaVersion: "1.0",
-					id: "d-456-123",
+					id: "s-456-123",
 					updateSequenceNumber: Date.now(),
 					containerId: "456",
 					displayName: "personal_access_token secret exposed",
@@ -148,11 +148,11 @@ describe("SecretScanningAlertWebhookHandler", () => {
 					severity: {
 						level: CRITICAL
 					},
-					identifiers: [],
-					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
-					additionalInfo: {
-						content: "personal_access_token"
-					}
+					identifiers: [{
+						"displayName": "personal_access_token",
+						"url":SAMPLE_SECURITY_URL
+					}],
+					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN
 				}
 			]
 		};

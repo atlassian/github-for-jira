@@ -26,6 +26,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common";
 import { getNextTasks } from "~/src/sync/scheduler";
 import { getDependabotAlertTask } from "./dependabot-alerts";
+import { getSecretScanningAlertTask } from "./secret-scanning-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -34,10 +35,11 @@ const tasks: TaskProcessors = {
 	commit: getCommitTask,
 	build: getBuildTask,
 	deployment: getDeploymentTask,
-	dependabotAlert: getDependabotAlertTask
+	dependabotAlert: getDependabotAlertTask,
+	secretScanningAlert: getSecretScanningAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -203,11 +205,11 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			repos: repoCountToBucket(subscription.totalNumberOfRepos)
 		}, { jiraHost: subscription.jiraHost });
 		sendAnalytics(subscription.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			...data.metricTags,
-			name: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
-			source: data.metricTags?.source || "worker",
 			actionSubject: AnalyticsTrackEventsEnum.BackfullSyncOperationEventName,
 			action: "complete",
+			source: data.metricTags?.source || "worker"
+		}, {
+			...data.metricTags,
 			gitHubProduct,
 			durationInMinute: Math.ceil(timeDiff / (60 * 1000)),
 			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,
@@ -235,9 +237,11 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 				});
 				break;
 			case "dependabotAlert":
+			case "secretScanningAlert":{
 				await jiraClient.security.submitVulnerabilities(jiraPayload, {
 					operationType: "BACKFILL"
 				});
+			}
 				break;
 			default:
 				await jiraClient.devinfo.repository.update(jiraPayload, {
