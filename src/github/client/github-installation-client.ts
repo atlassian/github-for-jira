@@ -83,6 +83,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			repo
 		});
 	}
+
+	public async getSecretScanningAlert(alertNumber: number, owner: string, repo: string): Promise<AxiosResponse<SecretScanningAlertResponseItem>> {
+		return await this.get<SecretScanningAlertResponseItem>(`/repos/{owner}/{repo}/secret-scanning/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
 	/**
 	 * Lists pull requests for the given repository.
 	 */
