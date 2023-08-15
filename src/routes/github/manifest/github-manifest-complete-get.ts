@@ -60,7 +60,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 
 		await tempStorage.delete(uuid, res.locals.installation.id);
 
-		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise
@@ -79,7 +79,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		 * And the rest of the queryParameters are simply forwarded to the new `retryUrl`
 		 */
 
-		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.AutoCreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise

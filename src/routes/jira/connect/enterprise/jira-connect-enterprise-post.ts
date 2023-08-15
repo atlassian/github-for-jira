@@ -152,7 +152,7 @@ export const JiraConnectEnterprisePost = async (
 
 		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
-		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise
@@ -166,7 +166,7 @@ export const JiraConnectEnterprisePost = async (
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
-			sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+			await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 				action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
 				source: AnalyticsTrackSource.GitHubEnterprise

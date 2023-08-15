@@ -59,7 +59,7 @@ export const JiraConnectEnterpriseAppPost = async (
 
 		await new GheConnectConfigTempStorage().delete(uuid, installation.id);
 
-		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise
@@ -73,7 +73,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		req.log.debug("Jira Connect Enterprise App added successfully.");
 	} catch (err) {
 
-		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.CreateGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise
