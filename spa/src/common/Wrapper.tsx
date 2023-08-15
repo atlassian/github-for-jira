@@ -19,7 +19,10 @@ const WrapperCenterStyled = styled.div`
 
 const navigateToHomePage = () => {
 	analyticsClient.sendUIEvent({ actionSubject: "dropExperienceViaBackButton", action: "clicked" });
-	AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+	AP.getLocation((location: string) => {
+		const locationUrl = new URL(location);
+		AP.navigator.go( "site", { absoluteUrl: `${locationUrl.origin}/plugins/servlet/upm` });
+	});
 };
 
 export const Wrapper = (attr: {
