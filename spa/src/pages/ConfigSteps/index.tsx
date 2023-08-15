@@ -99,11 +99,6 @@ const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
 `;
-const NoOrgsParagraph = styled.div`
-	color: ${token("color.text.subtle")};
-	margin: ${token("space.200")} 0;
-	text-align: center;
-`;
 
 // Used for counting messages
 const errorMessageCounter: ErrorMessageCounterType = {
@@ -313,15 +308,12 @@ const ConfigSteps = () => {
 														This organization's repositories will be available to all projects<br />
 														in <b>{hostUrl?.jiraHost}</b>.
 													</Paragraph>
-													{
-														organizations.length === 0 ? <NoOrgsParagraph>No organizations found!</NoOrgsParagraph> :
-															<OrganizationsList
-																organizations={organizations}
-																loaderForOrgClicked={loaderForOrgClicked}
-																setLoaderForOrgClicked={setLoaderForOrgClicked}
-																resetCallback={setIsLoggedIn}
-																connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
-													}
+													<OrganizationsList
+														organizations={organizations}
+														loaderForOrgClicked={loaderForOrgClicked}
+														setLoaderForOrgClicked={setLoaderForOrgClicked}
+														resetCallback={setIsLoggedIn}
+														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
 													<AddOrganizationContainer>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
