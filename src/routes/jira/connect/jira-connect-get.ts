@@ -10,7 +10,7 @@ export const JiraConnectGet = async (
 	try {
 		req.log.info("Received Jira Connect page request");
 
-		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.ScreenEvent, {
 			name: AnalyticsScreenEventsEnum.SelectGitHubProductEventName
 		}, {
 			jiraHost: res.locals.jiraHost
