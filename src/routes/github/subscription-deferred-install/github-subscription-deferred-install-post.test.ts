@@ -9,7 +9,7 @@ import {
 } from "services/subscription-deferred-install-service";
 import { Subscription } from "models/subscription";
 import supertest from "supertest";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
@@ -37,7 +37,6 @@ describe("github-subscription-deferred-install-post", () => {
 		};
 
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, installation.jiraHost).mockResolvedValue(true);
-		when(stringFlag).calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), expect.anything()).mockResolvedValue("user,repo");
 	});
 
 	describe("cloud", () => {
