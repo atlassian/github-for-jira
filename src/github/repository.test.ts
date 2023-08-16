@@ -1,5 +1,3 @@
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { deleteRepositoryWebhookHandler, createRepositoryWebhookHandler } from "~/src/github/repository";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
