@@ -22,7 +22,7 @@ const GENERIC_MESSAGE = "Something went wrong and we couldn’t connect to GitHu
 
 export const GENERIC_MESSAGE_WITH_LINK = <>
 	<p>Something went wrong and we couldn’t connect to GitHub, try again.</p>
-	<p><a href="https://support.atlassian.com/" target="_blank">Contact Support</a></p>
+	<p><a href="https://support.atlassian.com/contact/" target="_blank">Contact Support</a></p>
 </>;
 
 export const modifyError = (

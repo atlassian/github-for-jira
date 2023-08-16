@@ -5,9 +5,13 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData } from "../interfaces/jira";
-import { mapVulnIdentifiers, transformGitHubSeverityToJiraSeverity, transformGitHubStateToJiraStatus } from "../transforms/transform-dependabot-alert";
+import { mapVulnIdentifiers } from "../transforms/transform-dependabot-alert";
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
 import { DependabotAlertResponseItem, SortDirection } from "../github/client/github-client.types";
+import {
+	transformGitHubSeverityToJiraSeverity,
+	transformGitHubStateToJiraStatus
+} from "~/src/transforms/util/github-security-alerts";
 
 export const getDependabotAlertTask = async (
 	parentLogger: Logger,
@@ -82,6 +86,9 @@ const transformDependabotAlerts = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
+	const handleUnmappedState = (state) => logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`);
+	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity}`);
+
 	const vulnerabilities = alerts.map((alert) => {
 		return {
 			schemaVersion: "1.0",
@@ -95,10 +102,10 @@ const transformDependabotAlerts = async (
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability?.severity?.toLowerCase(), logger)
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability?.severity?.toLowerCase(), handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), logger),
+			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
 				content: alert.dependency.manifest_path
 			}
