@@ -2,11 +2,12 @@ import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
-import { VulnerabilityAlertNode } from "../github/client/github-queries";
 import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData } from "../interfaces/jira";
 import { mapVulnIdentifiers, transformGitHubSeverityToJiraSeverity, transformGitHubStateToJiraStatus } from "../transforms/transform-dependabot-alert";
+import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
+import { DependabotAlertResponseItem, SortDirection } from "../github/client/github-client.types";
 
 export const getDependabotAlertTask = async (
 	parentLogger: Logger,
@@ -21,13 +22,17 @@ export const getDependabotAlertTask = async (
 	const startTime = Date.now();
 
 	logger.info({ startTime }, "Dependabot Alerts task started");
-
-	const result = await gitHubClient.getDependabotAlertsPage(repository.owner.login, repository.name, perPage, cursor as string);
-
 	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const edges = result.repository.vulnerabilityAlerts.edges || [];
-	const vulnerabilityAlerts = edges?.map(({ node: item }) => item) || [];
-	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
+	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
+
+	const { data: dependabotAlerts } = await gitHubClient.getDependabotAlerts(repository.owner.login, repository.name, {
+		per_page: smartCursor.perPage,
+		page: smartCursor.pageNo,
+		sort: "created",
+		direction: SortDirection.DES
+	});
+
+	if (!dependabotAlerts?.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
@@ -35,35 +40,41 @@ export const getDependabotAlertTask = async (
 		};
 	}
 
-	if (!vulnerabilityAlerts?.length) {
+	if (areAllBuildsEarlierThanFromDate(dependabotAlerts, fromDate)) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
-			edges,
+			edges: [],
 			jiraPayload: undefined
 		};
 	}
 
-	const jiraPayload = await transformDependabotAlerts(vulnerabilityAlerts, messagePayload.jiraHost, parentLogger, messagePayload.gitHubAppConfig?.gitHubAppId);
+	logger.info(`Found ${dependabotAlerts.length} dependabot alerts`);
+	const nextPageCursorStr = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
+	const edgesWithCursor = [{ dependabotAlerts, cursor: nextPageCursorStr }];
+
+	const jiraPayload = await transformDependabotAlerts(dependabotAlerts, repository, messagePayload.jiraHost, parentLogger, messagePayload.gitHubAppConfig?.gitHubAppId);
 
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Dependabot Alerts task complete");
 	return {
-		edges,
+		edges: edgesWithCursor,
 		jiraPayload
 	};
 
 };
 
-const areAllEdgesEarlierThanFromDate = (edges: VulnerabilityAlertNode[], fromDate: Date | undefined) => {
-	if (!fromDate) return false;
-	const edgeCountEarlierThanFromDate = edges.filter(edge => {
-		const edgeCreatedAt = new Date(edge.node.createdAt);
-		return edgeCreatedAt.getTime() < fromDate.getTime();
-	}).length;
-	return edgeCountEarlierThanFromDate === edges.length;
-};
+const areAllBuildsEarlierThanFromDate = (alerts: DependabotAlertResponseItem[], fromDate: Date | undefined): boolean => {
 
+	if (!fromDate) return false;
+
+	return alerts.every(alert => {
+		const createdAt = new Date(alert.created_at);
+		return createdAt.getTime() < fromDate.getTime();
+	});
+
+};
 const transformDependabotAlerts = async (
-	alerts: VulnerabilityAlertNode["node"][],
+	alerts: DependabotAlertResponseItem[],
+	repository: Repository,
 	jiraHost: string,
 	logger: Logger,
 	gitHubAppId: number | undefined
@@ -74,22 +85,22 @@ const transformDependabotAlerts = async (
 	const vulnerabilities = alerts.map((alert) => {
 		return {
 			schemaVersion: "1.0",
-			id: `d-${transformRepositoryId(alert.repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
+			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
-			containerId: transformRepositoryId(alert.repository.id, gitHubClientConfig.baseUrl),
-			displayName: alert.securityAdvisory.summary,
-			description: alert.securityAdvisory.description,
-			url: `${alert.repository.url}/security/dependabot/${alert.number}`,
+			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
+			displayName: alert.security_advisory.summary,
+			description: alert.security_advisory.description,
+			url: alert.html_url,
 			type: "sca",
-			introducedDate: alert.createdAt,
-			lastUpdated: alert.fixedAt || alert.dismissedAt || alert.autoDismissedAt || alert.createdAt,
+			introducedDate: alert.created_at,
+			lastUpdated: alert.updated_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), logger)
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability?.severity?.toLowerCase(), logger)
 			},
-			identifiers: mapVulnIdentifiers(alert.securityAdvisory.identifiers, alert.securityAdvisory.references),
+			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
 			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), logger),
 			additionalInfo: {
-				content: alert.vulnerableManifestPath
+				content: alert.dependency.manifest_path
 			}
 		};
 	});
