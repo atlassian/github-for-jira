@@ -40,7 +40,6 @@ const WEBHOOK_RECIEVED_ISO = 1688951387;
 jest.mock("utils/webhook-utils");
 jest.mock("config/feature-flags");
 
-
 describe("DependabotAlertWebhookHandler", () => {
 	const RealDate = Date.now;
 
