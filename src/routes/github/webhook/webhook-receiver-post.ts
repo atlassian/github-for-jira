@@ -14,7 +14,9 @@ import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/gi
 import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
-import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
+import {
+	codeScanningAlertWebhookHandler
+} from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";

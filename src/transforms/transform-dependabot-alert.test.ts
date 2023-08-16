@@ -11,7 +11,7 @@ import {
 } from "~/src/github/client/github-client-constants";
 
 
-const getContext = (state): WebhookContext => ({
+const getContext = (state, severity = "high"): WebhookContext => ({
 	id: "1",
 	name: "dependabot_alert",
 	payload: {
@@ -23,7 +23,7 @@ const getContext = (state): WebhookContext => ({
 				references: [{ url: "https://example.com/CVE-123" }]
 			},
 			security_vulnerability: {
-				severity: "high"
+				severity
 			},
 			dependency: {
 				manifest_path: "path/to/manifest"
@@ -69,6 +69,12 @@ describe("transformDependabotAlert", () => {
 		const context = getContext("unmapped_state");
 		await transformDependabotAlert(context, jiraHost);
 		expect(context.log.info).toHaveBeenCalledWith("Received unmapped state from dependabot_alert webhook: unmapped_state");
+	});
+
+	it("should log unmapped severity", async () => {
+		const context = getContext("open", "unmapped_severity");
+		await transformDependabotAlert(context, jiraHost);
+		expect(context.log.info).toHaveBeenCalledWith("Received unmapped severity from dependabot_alert webhook: unmapped_severity");
 	});
 
 	it("should correctly map vulnerability identifiers", async () => {

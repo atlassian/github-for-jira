@@ -76,6 +76,7 @@ Once you've set up your GitHub app and cloned this repo, copy the file `.env.dev
 + `PRIVATE_KEY_PATH`: You'll also need to generate a new private key on your GitHub app page, download it, move it to the source root of this repo, and set `PRIVATE_KEY_PATH=<your-private-key-name>.pem`
 + `ATLASSIAN_URL`: The URL for the Jira instance you're testing on. If you don't have one now, [please set the value of this variable from the steps mentioned here](#create-your-jira-instance).
 + `APP_KEY`: Your Jira app key - need to be unique for your development app
++ `WEBHOOK_SECRETS`: `["development"]` as previously set up in the GitHub app page.
 
 Lastly, you need to replace the value of the follow variables in the global `.env` file:
 

@@ -6,7 +6,11 @@ import { VulnerabilityAlertNode } from "../github/client/github-queries";
 import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData } from "../interfaces/jira";
-import { mapVulnIdentifiers, transformGitHubSeverityToJiraSeverity, transformGitHubStateToJiraStatus } from "../transforms/transform-dependabot-alert";
+import { mapVulnIdentifiers } from "../transforms/transform-dependabot-alert";
+import {
+	transformGitHubSeverityToJiraSeverity,
+	transformGitHubStateToJiraStatus
+} from "~/src/transforms/util/github-security-alerts";
 
 export const getDependabotAlertTask = async (
 	parentLogger: Logger,
@@ -71,6 +75,9 @@ const transformDependabotAlerts = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
+	const handleUnmappedState = (state) => logger.info(`Received unmapped state from dependabot_alerts sync: ${state}`);
+	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity}`);
+
 	const vulnerabilities = alerts.map((alert) => {
 		return {
 			schemaVersion: "1.0",
@@ -84,10 +91,10 @@ const transformDependabotAlerts = async (
 			introducedDate: alert.createdAt,
 			lastUpdated: alert.fixedAt || alert.dismissedAt || alert.autoDismissedAt || alert.createdAt,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), logger)
+				level: transformGitHubSeverityToJiraSeverity(alert.securityVulnerability?.severity?.toLowerCase(), handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.securityAdvisory.identifiers, alert.securityAdvisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), logger),
+			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
 				content: alert.vulnerableManifestPath
 			}
