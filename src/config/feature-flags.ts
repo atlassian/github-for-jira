@@ -33,11 +33,9 @@ export enum BooleanFlags {
 }
 
 export enum StringFlags {
-	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
-	GHE_API_KEY = "ghe-encrypted-api-key"
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt"
 }
 
 export enum NumberFlags {
