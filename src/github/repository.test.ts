@@ -80,10 +80,6 @@ describe("createdRepositoryWebhookHandler", () => {
 
 	beforeEach(async () => {
 
-		when(booleanFlag).calledWith(
-			BooleanFlags.REPO_CREATED_EVENT
-		).mockResolvedValue(true);
-
 		subscription = await Subscription.create({
 			id: 123,
 			gitHubInstallationId: 123,

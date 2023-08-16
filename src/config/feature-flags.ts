@@ -15,7 +15,6 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	USE_NEW_PULL_ALGO = "use-new-pull-algo",
