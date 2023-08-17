@@ -1,19 +1,13 @@
 import { getLogger } from "config/logger";
-import { isNodeTest } from "utils/is-node-env";
-import { optionalRequire } from "optional-require";
 import { envVars } from "config/env";
 import { createHashWithoutSharedSecret } from "utils/encryption";
-import _, { omit } from "lodash";
+import _ from "lodash";
 import { MicrosEnvTypeEnum } from "interfaces/common";
 import { isTestJiraHost } from "config/jira-test-site-check";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { SQS } from "aws-sdk";
 import { SendMessageRequest } from "aws-sdk/clients/sqs";
 
-const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
-
-let analyticsNodeClient;
 
 export interface ScreenEventProps {
 	name: string;
@@ -24,18 +18,6 @@ export interface TrackOpUiEventProps {
 	actionSubject: string;
 	source: string;
 }
-
-const calculateClientEnv = () => {
-	switch (envVars.MICROS_ENVTYPE) {
-		case MicrosEnvTypeEnum.dev:
-			return "dev";
-		case MicrosEnvTypeEnum.staging:
-			return "stg";
-		case MicrosEnvTypeEnum.prod:
-			return "prod";
-	}
-	return "dev";
-};
 
 interface SQSEventPayload {
 	accountId?: string;
@@ -106,95 +88,5 @@ export const sendAnalytics: {
 
 	attributes.appKey = envVars.APP_KEY;
 
-	if (await booleanFlag(BooleanFlags.SEND_ANALYTICS_TO_SQS, jiraHost)) {
-		await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
-		return;
-	}
-
-	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
-
-	if (!analyticsClient) {
-		logger.warn("No analyticsClient available");
-		return;
-	}
-
-	if (isNodeTest()) {
-		logger.warn("Analytics is disabled in tests");
-		return;
-	}
-
-	if (!analyticsNodeClient){
-		// Values defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
-		analyticsNodeClient = analyticsClient({
-			env: calculateClientEnv(),
-			product: "gitHubForJira"
-		});
-	}
-
-	const baseEventProps = {
-		userId: accountId || "anonymousId",
-		userIdType: "atlassianAccount",
-		tenantIdType: "cloudId",
-		tenantId: "NONE" // TODO: determine from jiraHost
-	};
-
-	logger.debug({ eventType }, "Sending analytics");
-
-	switch (eventType) {
-		case "screen": {
-			const screenEventProps = eventProps as ScreenEventProps;
-			sendEvent(eventType, screenEventProps.name, analyticsNodeClient.sendScreenEvent({
-				...baseEventProps,
-				// Unfortunately, "Screen event" is the only one that requires "name" outside of event props.
-				// Let's encapsulate this knowledge here; for the outside know "name" shall be the property of the event!
-				// (Otherwise it is getting extremely confusing, let's keep confusion in one place only.)
-				name: screenEventProps.name,
-				screenEvent: {
-					platform: "web",
-					...omit(screenEventProps, "name"),
-					attributes
-				}
-			}));
-			break; }
-		case "ui": {
-			const uiEventProps = eventProps as TrackOpUiEventProps;
-			sendEvent(eventType, uiEventProps.action + " " + uiEventProps.actionSubject, analyticsNodeClient.sendUIEvent({
-				...baseEventProps,
-				uiEvent: {
-					...uiEventProps,
-					attributes
-				}
-			}));
-		}
-			break;
-		case "track": {
-			const trackEventProps = eventProps as TrackOpUiEventProps;
-			sendEvent(eventType, trackEventProps.action + " " + trackEventProps.actionSubject, analyticsNodeClient.sendTrackEvent({
-				...baseEventProps,
-				trackEvent: {
-					...trackEventProps,
-					attributes
-				}
-			}));
-			break; }
-		case "operational": {
-			const opEventProps = eventProps as TrackOpUiEventProps;
-			sendEvent(eventType, opEventProps.action + " " + opEventProps.actionSubject, analyticsNodeClient.sendOperationalEvent({
-				...baseEventProps,
-				operationalEvent: {
-					...opEventProps,
-					attributes
-				}
-			}));
-			break; }
-		default:
-			logger.warn(`Cannot sendAnalytics: unknown eventType`);
-			break;
-	}
-};
-
-const sendEvent = (eventType: string, name: unknown, promise: Promise<unknown>) => {
-	promise.catch((error) => {
-		logger.warn(`Cannot sendAnalytics event ${eventType} - ${name}, error: ${error}`);
-	});
+	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
 };
