@@ -1,9 +1,5 @@
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { when } from "jest-when";
 import { ScreenEventProps, sendAnalytics } from "utils/analytics-client";
 import { SQS } from "aws-sdk";
-
-jest.mock("config/feature-flags");
 
 jest.mock("aws-sdk");
 
@@ -11,7 +7,6 @@ describe("analytics-client", () => {
 	let oldMicrosEnvType: string | undefined;
 
 	beforeEach(() => {
-		when(booleanFlag).calledWith(BooleanFlags.SEND_ANALYTICS_TO_SQS, jiraHost).mockResolvedValue(true);
 		oldMicrosEnvType = process.env.MICROS_ENVTYPE;
 		process.env.MICROS_ENVTYPE = "prod";
 
@@ -67,6 +62,6 @@ describe("analytics-client", () => {
 
 	it("does not send analytics for test instances", async () => {
 		await sendAnalytics("https://site-1.some-test.atlassian.net", "screen", {} as unknown as ScreenEventProps & Record<string, unknown>, {});
-		expect(booleanFlag).not.toHaveBeenCalled();
+		expect(SQS).not.toHaveBeenCalled();
 	});
 });
