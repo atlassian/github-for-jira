@@ -23,6 +23,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 500;
@@ -109,6 +110,16 @@ export const getJiraClient = async (
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
 	}
+
+	let subscription;
+	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+		subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+		if (!subscription) {
+			logger.warn("Cannot initialize Jira Client, Subscription doesn't exist.");
+			return undefined;
+		}
+	}
+
 	const instance = getAxiosInstance(
 		installation.jiraHost,
 		await installation.decrypt("encryptedSharedSecret", logger),
@@ -448,7 +459,8 @@ export const getJiraClient = async (
 				const payload = {
 					vulnerabilities: data.vulnerabilities,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						workspaceId: subscription?.id
 					},
 					operationType: options?.operationType || "NORMAL"
 				};

@@ -171,7 +171,7 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 	}
 
 	let tasks = getTargetTasks(targetTasks);
-	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscription.jiraHost)) {
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscription.jiraHost) || !subscription.isSecurityPermissionsAccepted) {
 		tasks =  without(tasks, "dependabotAlert", "secretScanningAlert");
 	}
 
