@@ -37,9 +37,11 @@ export const JiraConnectEnterpriseAppPut = async (
 				: null
 		}, jiraHost);
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true
 		});
 
@@ -47,9 +49,11 @@ export const JiraConnectEnterpriseAppPut = async (
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
 	} catch (error) {
 
-		sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false
 		});
 

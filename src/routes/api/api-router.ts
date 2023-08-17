@@ -142,6 +142,7 @@ const cryptorDebugEndpoint = async (_req: Request, resp: Response) => {
 	}
 };
 ApiRouter.use("/cryptor", cryptorDebugEndpoint);
+
 ApiRouter.use("/db-migration", DBMigrationsRouter);
 ApiRouter.post("/recover-client-key", RecoverClientKeyPost);
 ApiRouter.post("/re-encrypt-ghes-app", ReEncryptGitHubServerAppKeysPost);

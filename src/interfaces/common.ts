@@ -5,6 +5,12 @@ export enum EnvironmentEnum {
 	e2e = "e2e",
 }
 
+export enum MicrosEnvTypeEnum {
+	dev = "dev",
+	staging = "staging",
+	prod = "prod",
+}
+
 export enum BooleanEnum {
 	true = "true",
 	false = "false",

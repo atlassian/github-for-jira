@@ -6,7 +6,7 @@ import { Subscription } from "models/subscription";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { Application } from "express";
 import { getFrontendApp } from "~/src/app";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { envVars } from "config/env";
 import { GitHubServerApp } from "models/github-server-app";
@@ -25,7 +25,6 @@ describe("github-configuration-get", () => {
 		app = getFrontendApp();
 
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_SUBSCRIPTION_DEFERRED_INSTALL, installation.jiraHost).mockResolvedValue(true);
-		when(stringFlag).calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), expect.anything()).mockResolvedValue("user,repo");
 	});
 
 	describe("cloud", () => {
@@ -42,7 +41,7 @@ describe("github-configuration-get", () => {
 			githubUserTokenNock(subscription.gitHubInstallationId);
 
 			githubNock
-				.get(`/user/installations`)
+				.get(`/user/installations?per_page=100`)
 				.reply(200, {
 					installations: [{
 						id: subscription.gitHubInstallationId,
@@ -112,7 +111,7 @@ describe("github-configuration-get", () => {
 			gheUserTokenNock(subscription.gitHubInstallationId);
 
 			gheApiNock
-				.get(`/user/installations`)
+				.get(`/user/installations?per_page=100`)
 				.reply(200, {
 					installations: [{
 						id: subscription.gitHubInstallationId,

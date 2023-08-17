@@ -20,15 +20,15 @@ const SyncLogo = styled.img`
 	padding: ${token("space.100")};
 `;
 const Title = styled.h2`
-	margin: ${token("space.400")} ${token("space.0")} ${token("space.0")};
+	margin: ${token("space.400")} ${token("space.0")} ${token("space.300")};
 `;
 
 const SyncHeader = () => (
 	<HeaderWrapper>
 		<LogoContainer>
-			<Logo className="logo" src="/spa-assets/jira-logo.svg" alt=""/>
-			<SyncLogo className="sync-logo" src="/spa-assets/sync.svg" alt=""/>
-			<Logo className="logo" src="/spa-assets/github-logo.svg" alt=""/>
+			<Logo className="logo" src="/public/assets/jira-logo.svg" alt=""/>
+			<SyncLogo className="sync-logo" src="/public/assets/sync.svg" alt=""/>
+			<Logo className="logo" src="/public/assets/github-logo.svg" alt=""/>
 		</LogoContainer>
 		<Title>Connect Github to Jira</Title>
 	</HeaderWrapper>

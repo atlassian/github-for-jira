@@ -22,6 +22,7 @@ import { GithubEncryptHeaderPost } from "routes/github/github-encrypt-header-pos
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import GithubSubscriptionDeferredInstallRouter
 	from "./subscription-deferred-install/github-subscription-deferred-install-router";
+import { GitHub5KURedirectHandler } from "./github-5ku-router";
 
 export const GithubRouter = Router();
 const subRouter = Router({ mergeParams: true });
@@ -44,6 +45,9 @@ GithubRouter.use(`/:uuid(${UUID_REGEX})?`, subRouter);
 // however it is required here by historical reasons (initially we implemented it with :UUID, which means
 // our customers have some GitHub Enterprise apps that have callback URLs with UUID).
 subRouter.get(OAUTH_CALLBACK_SUBPATH, GithubOAuthCallbackGet);
+
+//TODO: Remove this. This is only needed during the new 5KU experiment. Once proper implemented, it should be removed.
+subRouter.get("/setup", GitHub5KURedirectHandler);
 
 // Webhook Route
 subRouter.post("/webhooks",

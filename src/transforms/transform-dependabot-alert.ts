@@ -1,51 +1,18 @@
 import {
 	JiraVulnerabilityBulkSubmitData,
-	JiraVulnerabilityIdentifier,
-	JiraVulnerabilitySeverityEnum,
-	JiraVulnerabilityStatusEnum
+	JiraVulnerabilityIdentifier
 } from "interfaces/jira";
 import { getGitHubClientConfigFromAppId } from "utils/get-github-client-config";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { GitHubVulnIdentifier, GitHubVulnReference } from "interfaces/github";
 import { DependabotAlertEvent } from "@octokit/webhooks-types";
+import {
+	transformGitHubSeverityToJiraSeverity,
+	transformGitHubStateToJiraStatus
+} from "~/src/transforms/util/github-security-alerts";
 
-// From GitHub: Status can be one of: open, fixed, dismissed, auto_dismissed
-// To Jira: Status can be one of: : open, closed, ignored, unknown
-const transformGitHubStateToJiraStatus = (state: string, context: WebhookContext): JiraVulnerabilityStatusEnum => {
-	switch (state) {
-		case "open":
-			return JiraVulnerabilityStatusEnum.OPEN;
-		case "fixed":
-			return JiraVulnerabilityStatusEnum.CLOSED;
-		case "dismissed":
-			return JiraVulnerabilityStatusEnum.IGNORED;
-		case "auto_dismissed":
-			return JiraVulnerabilityStatusEnum.IGNORED;
-		default:
-			context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
-			return JiraVulnerabilityStatusEnum.UNKNOWN;
-	}
-};
-// From GitHub: Severity can be one of: low, medium, high, critical
-// To Jira: Status can be one of: low, medium, high, critical, unknown.
-const transformGitHubSeverityToJiraSeverity = (state: string, context: WebhookContext): JiraVulnerabilitySeverityEnum => {
-	switch (state) {
-		case "low":
-			return JiraVulnerabilitySeverityEnum.LOW;
-		case "medium":
-			return JiraVulnerabilitySeverityEnum.MEDIUM;
-		case "high":
-			return JiraVulnerabilitySeverityEnum.HIGH;
-		case "critical":
-			return JiraVulnerabilitySeverityEnum.CRITICAL;
-		default:
-			context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
-			return JiraVulnerabilitySeverityEnum.UNKNOWN;
-	}
-};
-
-const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: GitHubVulnReference[]): JiraVulnerabilityIdentifier[] => {
+export const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], references: GitHubVulnReference[]): JiraVulnerabilityIdentifier[] => {
 	const mappedIdentifiers: JiraVulnerabilityIdentifier[] = [];
 
 	identifiers.forEach((identifier) => {
@@ -66,12 +33,16 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 	const { alert, repository } = context.payload;
 
 	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
+
+	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
+	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from dependabot_alert webhook: ${severity}`);
+
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
 			id: `d-${transformRepositoryId(repository.id, githubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
-			containerId: transformRepositoryId(repository.id),
+			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
 			displayName: alert.security_advisory.summary,
 			description: alert.security_advisory.description,
 			url: alert.html_url,
@@ -79,10 +50,10 @@ export const transformDependabotAlert = async (context: WebhookContext<Dependabo
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at || alert.created_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity, context)
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity, handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state, context),
+			status: transformGitHubStateToJiraStatus(alert.state, handleUnmappedState),
 			additionalInfo: {
 				content: alert.dependency.manifest_path
 			}

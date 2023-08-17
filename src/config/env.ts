@@ -3,7 +3,7 @@ import { expand } from "dotenv-expand";
 import path from "path";
 import { LogLevelString } from "bunyan";
 import { getNodeEnv } from "utils/is-node-env";
-import { EnvironmentEnum } from "interfaces/common";
+import { EnvironmentEnum, MicrosEnvTypeEnum } from "interfaces/common";
 import { envCheck } from "utils/env-utils";
 
 const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
@@ -77,6 +77,8 @@ envCheck(
 	"SQS_DEPLOYMENT_QUEUE_REGION",
 	"SQS_BRANCH_QUEUE_URL",
 	"SQS_BRANCH_QUEUE_REGION",
+	"SQS_INCOMINGANALYTICEVENTS_QUEUE_URL",
+	"SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION",
 	"DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_REGION",
 	"DYNAMO_DEPLOYMENT_HISTORY_CACHE_TABLE_NAME",
 	"MICROS_AWS_REGION",
@@ -90,6 +92,7 @@ envCheck(
 export interface EnvVars {
 	NODE_ENV: EnvironmentEnum,
 	MICROS_ENV: EnvironmentEnum;
+	MICROS_ENVTYPE: MicrosEnvTypeEnum | undefined,
 	MICROS_SERVICE_VERSION?: string;
 	MICROS_GROUP: string;
 	SQS_BACKFILL_QUEUE_URL: string;
@@ -100,6 +103,8 @@ export interface EnvVars {
 	SQS_DEPLOYMENT_QUEUE_REGION: string;
 	SQS_BRANCH_QUEUE_URL: string;
 	SQS_BRANCH_QUEUE_REGION: string;
+	SQS_INCOMINGANALYTICEVENTS_QUEUE_URL: string;
+	SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION: string;
 
 	APP_ID: string;
 	APP_URL: string;
@@ -119,6 +124,7 @@ export interface EnvVars {
 	TUNNEL_SUBDOMAIN?: string;
 	LOG_LEVEL?: LogLevelString;
 	SENTRY_DSN?: string,
+	SENTRY_SPA_DSN?: string,
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;

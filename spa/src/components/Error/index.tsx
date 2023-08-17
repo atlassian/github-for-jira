@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import ErrorIcon from "@atlaskit/icon/glyph/error";
-import { ErrorType } from "../../rest-interfaces/oauth-types";
+import { ErrorType } from "rest-interfaces";
 
 type ErrorWrapperType = {
 	type: ErrorType
@@ -20,7 +20,7 @@ const ErrorWrapper = styled.div<ErrorWrapperType>`
 	border-radius: 3px;
 	align-items: center;
 	div {
-		padding-left: ${token("space.100")};
+		padding-left: ${token("space.200")};
 	}
 	span {
 		align-self: start;

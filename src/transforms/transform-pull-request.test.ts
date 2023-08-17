@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { transformPullRequestRest } from "./transform-pull-request";
+import { transformPullRequest, transformPullRequestRest } from "./transform-pull-request";
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
@@ -8,8 +8,9 @@ import { GitHubInstallationClient } from "~/src/github/client/github-installatio
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
 import _ from "lodash";
+import { createLogger } from "bunyan";
 
-describe("pull_request transform", () => {
+describe("pull_request transform REST", () => {
 	const gitHubInstallationId = 100403908;
 	let client: GitHubInstallationClient;
 
@@ -433,6 +434,243 @@ describe("pull_request transform", () => {
 		}));
 
 		expect({ secondReviewStatus: data?.pullRequests[0].reviewers[1] }).toEqual(expect.objectContaining({
+			secondReviewStatus: expect.objectContaining({
+				approvalStatus: "APPROVED"
+			})
+		}));
+	});
+
+});
+
+
+describe("pull_request transform GraphQL", () => {
+	const logger = createLogger({ name: "test", foo: 123 });
+
+	beforeEach(() => {
+		mockSystemTime(12345678);
+	});
+
+	const createReview = (state = "APPROVED", email = "test-pull-request-reviewer-login@email.test") => {
+		return {
+			nodes: [
+				{
+					submittedAt: "0",
+					state,
+					author: {
+						login: "test-pull-request-reviewer-login",
+						avatarUrl: "test-pull-request-reviewer-avatar",
+						email,
+						url: "https://github.com/reviewer"
+					}
+				}
+			]
+		};
+	};
+
+	const createMultipleReviews = () => {
+		return {
+			nodes: [
+				{
+					submittedAt: "0",
+					state: "UNAPPROVED",
+					author: {
+						login: "meanReviewer",
+						avatarUrl: "test-pull-request-reviewer-avatar7",
+						email: "meanReviewer@nice.com",
+						url: "https://github.com/meanReviewer"
+					}
+				},
+				{
+					submittedAt: "2",
+					state: "APPROVED",
+					author: {
+						login: "niceReviewer",
+						avatarUrl: "test-pull-request-reviewer-avatar",
+						email: "niceReviewer@nice.com",
+						url: "https://github.com/niceReviewer"
+					}
+				}
+			]
+		};
+	};
+
+	const createPullPayload = (title = "fake title", state = "MERGED") => {
+		return {
+			state,
+			number: 51,
+			url: "https://github.com/integrations/test/pull/51",
+			author: {
+				login: "test-pull-request-author-login",
+				email: "test-pull-request-author-login@noreply.user.github.com",
+				url: "test-pull-request-author-url",
+				avatarUrl: "test-pull-request-author-avatar"
+			},
+			comments: {
+				totalCount: 10
+			},
+			updatedAt: "2018-05-04T14:06:56Z",
+			title,
+			baseRef: {
+				name: "devel",
+				repository: {
+					name: "test",
+					owner: {
+						login: "integrations"
+					}
+				}
+			},
+			headRef: {
+				name: "Evernote Test",
+				repository: {
+					name: "test",
+					owner: {
+						login: "integrations"
+					}
+				}
+			},
+			body: "",
+			reviews: createReview()
+		};
+	};
+
+	it("should transform deleted author and reviewers without exploding", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title), author: {} };
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		payload.reviews.nodes[0].author = {};
+
+		const { updatedAt } = payload;
+
+		const data = transformPullRequest(jiraHost, payload as any, logger);
+
+		expect(data).toMatchObject({
+			author: {
+				avatar: "https://github.com/ghost.png",
+				name: "Deleted User",
+				email: "deleted@noreply.user.github.com",
+				url: "https://github.com/ghost"
+			},
+			destinationBranch: "devel",
+			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+			displayId: "#51",
+			id: 51,
+			issueKeys: ["TES-123"],
+			lastUpdate: updatedAt,
+			reviewers: [
+				{
+					avatar: "https://github.com/ghost.png",
+					name: "Deleted User",
+					email: "deleted@noreply.user.github.com",
+					url: "https://github.com/ghost",
+					approvalStatus: "APPROVED"
+				}
+			],
+			sourceBranch: "Evernote Test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			status: "MERGED",
+			timestamp: updatedAt,
+			title,
+			url: "https://github.com/integrations/test/pull/51",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("maps empty state to UNAPPROVED", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title) };
+		payload.reviews = createReview("");
+
+		const { updatedAt } = payload;
+
+		const data = await transformPullRequest(jiraHost, payload as any, logger);
+
+		expect(data).toStrictEqual({
+			author: {
+				avatar: "test-pull-request-author-avatar",
+				email: "test-pull-request-author-login@noreply.user.github.com",
+				name: "test-pull-request-author-login",
+				url: "test-pull-request-author-url"
+			},
+			commentCount: 10,
+			destinationBranch: "devel",
+			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+			displayId: "#51",
+			id: 51,
+			issueKeys: ["TES-123"],
+			lastUpdate: updatedAt,
+			reviewers: [
+				{
+					avatar: "test-pull-request-reviewer-avatar",
+					email: "test-pull-request-reviewer-login@email.test",
+					name: "test-pull-request-reviewer-login",
+					url: "https://github.com/reviewer",
+					approvalStatus: "UNAPPROVED"
+				}
+			],
+			sourceBranch: "Evernote Test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			status: "MERGED",
+			timestamp: updatedAt,
+			title,
+			url: "https://github.com/integrations/test/pull/51",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should resolve reviewer's email", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title), author: {} };
+		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
+
+		const data = await transformPullRequest(jiraHost, payload as any, logger);
+		const { updatedAt } = payload;
+
+		expect(data).toMatchObject({
+			author: {
+				avatar: "https://github.com/ghost.png",
+				name: "Deleted User",
+				url: "https://github.com/ghost"
+			},
+			destinationBranch: "devel",
+			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+			displayId: "#51",
+			id: 51,
+			issueKeys: ["TES-123"],
+			lastUpdate: updatedAt,
+			reviewers: [
+				{
+					avatar: "test-pull-request-reviewer-avatar",
+					email: "cool-email@emails.com",
+					name: "test-pull-request-reviewer-login",
+					url: "https://github.com/reviewer",
+					approvalStatus: "APPROVED"
+				}
+			],
+			sourceBranch: "Evernote Test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			status: "MERGED",
+			timestamp: updatedAt,
+			title,
+			url: "https://github.com/integrations/test/pull/51",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("should send the correct review state for multiple reviewers", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title), author: {} };
+		payload.reviews = createMultipleReviews();
+
+		const data = await transformPullRequest(jiraHost, payload as any, logger);
+
+		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
+			firstReviewStatus: expect.objectContaining({
+				approvalStatus: "UNAPPROVED"
+			})
+		}));
+
+		expect({ secondReviewStatus: data?.reviewers[1] }).toEqual(expect.objectContaining({
 			secondReviewStatus: expect.objectContaining({
 				approvalStatus: "APPROVED"
 			})

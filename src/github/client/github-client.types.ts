@@ -30,6 +30,13 @@ export type GetPullRequestParams = {
 	page?: number;
 }
 
+export type GetSecretScanningAlertRequestParams = {
+	sort?: string;
+	direction?: string;
+	per_page?: number;
+	page?: number;
+}
+
 export type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
 	errors?: GraphQLError[];

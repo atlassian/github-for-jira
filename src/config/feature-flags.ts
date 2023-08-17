@@ -15,7 +15,6 @@ export enum BooleanFlags {
 	MAINTENANCE_MODE = "maintenance-mode",
 	VERBOSE_LOGGING = "verbose-logging",
 	SEND_PR_COMMENTS_TO_JIRA = "send-pr-comments-to-jira_zy5ib",
-	REPO_CREATED_EVENT = "repo-created-event",
 	JIRA_ADMIN_CHECK = "jira-admin-check",
 	REMOVE_STALE_MESSAGES = "remove-stale-messages",
 	USE_NEW_PULL_ALGO = "use-new-pull-algo",
@@ -30,14 +29,13 @@ export enum BooleanFlags {
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
+	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect"
 }
 
 export enum StringFlags {
-	GITHUB_SCOPES = "github-scopes",
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
-	GHE_API_KEY = "ghe-encrypted-api-key"
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt"
 }
 
 export enum NumberFlags {
@@ -47,7 +45,6 @@ export enum NumberFlags {
 	NUMBER_OF_PR_PAGES_TO_FETCH_IN_PARALLEL = "number-of-pr-pages-to-fetch-in-parallel",
 	NUMBER_OF_BUILD_PAGES_TO_FETCH_IN_PARALLEL = "number-of-build-to-fetch-in-parallel",
 	BACKFILL_PAGE_SIZE = "backfill-page-size",
-	BACKFILL_DEPLOYMENT_EXTRA_PAGES = "backfill-deployment-extra-pages",
 	BACKFILL_MAX_SUBTASKS = "backfill-max-subtasks",
 	INSTALLATION_TOKEN_CACHE_MAX_SIZE = "installation-token-cache-max-size"
 }
@@ -76,9 +73,10 @@ const getLaunchDarklyValue = async <T = boolean | string | number>(flag: Boolean
 };
 
 // Include jiraHost for any FF that needs to be rolled out in stages
-export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> =>
+export const booleanFlag = async (flag: BooleanFlags, key?: string): Promise<boolean> => {
 	// Always use the default value as false to prevent issues
-	await getLaunchDarklyValue(flag, false, key);
+	return await getLaunchDarklyValue(flag, false, key);
+};
 
 export const stringFlag = async <T = string>(flag: StringFlags, defaultValue: T, key?: string): Promise<T> =>
 	await getLaunchDarklyValue<T>(flag, defaultValue, key);

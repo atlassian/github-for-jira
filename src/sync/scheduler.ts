@@ -4,8 +4,9 @@ import { RepoSyncState } from "models/reposyncstate";
 import { getTargetTasks } from "~/src/sync/installation";
 import { createInstallationClient } from "utils/get-github-client-config";
 import Logger from "bunyan";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, numberFlag, NumberFlags } from "config/feature-flags";
 import { Op } from "sequelize";
+import { without } from "lodash";
 
 const getCursorKey = (type: TaskType) => `${type}Cursor`;
 const getStatusKey = (type: TaskType) => `${type}Status`;
@@ -169,7 +170,10 @@ export const getNextTasks = async (subscription: Subscription, targetTasks: Task
 		};
 	}
 
-	const tasks = getTargetTasks(targetTasks);
+	let tasks = getTargetTasks(targetTasks);
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscription.jiraHost)) {
+		tasks =  without(tasks, "dependabotAlert", "secretScanningAlert");
+	}
 
 	const nSubTasks = await estimateNumberOfSubtasks(subscription, logger);
 	if (nSubTasks > 0) {

@@ -1,11 +1,7 @@
-import { GetRedirectUrlResponse, ExchangeTokenResponse } from "../../rest-interfaces/oauth-types";
-import { AxiosInstanceWithJWT } from "../axiosInstance";
-import { AxiosResponse } from "axios";
+import { GetRedirectUrlResponse, ExchangeTokenResponse } from "rest-interfaces";
+import { axiosRest } from "../axiosInstance";
 
-const GitHubAuth = {
-	generateOAuthUrl: (): Promise<AxiosResponse<GetRedirectUrlResponse>> => AxiosInstanceWithJWT.get("/rest/app/cloud/oauth/redirectUrl"),
-	exchangeToken: (code: string, state: string): Promise<AxiosResponse<ExchangeTokenResponse>> =>
-		AxiosInstanceWithJWT.post<ExchangeTokenResponse>("/rest/app/cloud/oauth/exchangeToken", { code, state })
+export default {
+	generateOAuthUrl: () => axiosRest.get<GetRedirectUrlResponse>("/rest/app/cloud/oauth/redirectUrl"),
+	exchangeToken: (code: string, state: string) => axiosRest.post<ExchangeTokenResponse>("/rest/app/cloud/oauth/exchangeToken", { code, state }),
 };
-
-export default GitHubAuth;

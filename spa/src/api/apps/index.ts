@@ -1,9 +1,8 @@
-import { GetGitHubAppsUrlResponse } from "../../rest-interfaces/oauth-types";
-import { AxiosInstanceWithJWT } from "../axiosInstance";
-import { AxiosResponse } from "axios";
+import { GetGitHubAppsUrlResponse, JiraCloudIDResponse } from "rest-interfaces";
+import { axiosRest } from "../axiosInstance";
 
-const GitHubApps = {
-	getAppNewInstallationUrl: (): Promise<AxiosResponse<GetGitHubAppsUrlResponse>> => AxiosInstanceWithJWT.get("/rest/app/cloud/installation/new"),
+export default {
+	getAppNewInstallationUrl: () => axiosRest.get<GetGitHubAppsUrlResponse>("/rest/app/cloud/installation/new"),
+	getJiraCloudId: () => axiosRest.get<JiraCloudIDResponse>("/rest/app/cloud/jira/cloudid"),
 };
 
-export default GitHubApps;

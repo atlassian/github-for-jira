@@ -74,6 +74,7 @@ export type pullRequestNode = {
 	state: string;
 	mergedAt?: string;
 	updatedAt: string;
+	createdAt: string;
 	title: string;
 	body: string;
 	url: string;
@@ -163,6 +164,7 @@ export type pullRequestQueryResponse = {
 	repository: {
 		pullRequests: {
 			edges: {
+				createdAt: string;
 			cursor: string,
 			node: pullRequestNode;
 			}[]
@@ -172,6 +174,7 @@ export type pullRequestQueryResponse = {
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
+
 		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
       edges {
       	cursor
@@ -180,6 +183,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					id
 					state
 					mergedAt
+					createdAt
 					updatedAt
 					title
 					body
@@ -414,6 +418,82 @@ export type getBranchesResponse = {
 		}
 	}
 };
+
+export type GetDependabotAlertsResponse = {
+  repository: {
+    vulnerabilityAlerts: {
+      edges: VulnerabilityAlertNode[]
+    }
+  }
+};
+
+export type VulnerabilityAlertNode = {
+  cursor: string,
+  node: {
+    number: number,
+    state: string,
+    createdAt: string,
+    fixedAt: string,
+    dismissedAt: string,
+    autoDismissedAt: string,
+    vulnerableManifestPath: string,
+    securityAdvisory: {
+      summary: string,
+      description: string,
+      identifiers: {
+        type: string,
+        value: string
+      }[],
+      references: {
+        url: string,
+      }[],
+    },
+    repository: {
+      id: number,
+      url: string
+    },
+    securityVulnerability: {
+      severity: string,
+    }
+  }
+};
+
+export const getDependabotAlerts = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
+  repository(owner: $owner, name: $repo) {
+    vulnerabilityAlerts(first: $per_page, after: $cursor,) {
+      edges {
+        cursor
+        node {
+          number
+          state
+          createdAt
+          fixedAt
+          dismissedAt
+          autoDismissedAt
+          vulnerableManifestPath
+          securityAdvisory {
+            summary
+            description
+            identifiers {
+              type
+              value
+            }
+            references {
+              url
+            }
+          }
+          repository {
+            id: databaseId
+            url
+          }
+          securityVulnerability {
+            severity
+          }
+        }
+      }
+    }
+  }
+}`;
 
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {

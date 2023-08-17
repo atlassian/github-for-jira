@@ -1,8 +1,11 @@
-import { OrganizationsResponse } from "./rest-interfaces/oauth-types.ts";
+//Need this line to make it a "module" file
+//https://stackoverflow.com/a/42257742
+export {};
 
 declare global {
-	let OAuthManagerInstance: OAuthManagerType;
 	const AP: AtlassianPlugin;
+	const SPA_APP_ENV: "" | "local" | "dev" | "staging" | "prod";
+	const SENTRY_SPA_DSN: string | undefined;
 }
 
 interface AtlassianPlugin {
@@ -16,13 +19,3 @@ interface AtlassianPlugin {
 	}
 }
 
-export interface OAuthManagerType {
-	checkValidity: () => Promise<boolean | undefined>;
-	fetchOrgs: () => Promise<OrganizationsResponse | undefined>;
-	connectOrg: (orgId: number) => Promise<boolean | undefined>;
-	authenticateInGitHub: () => Promise<void>;
-	finishOAuthFlow: (code: string, state: string) => Promise<boolean>;
-	getUserDetails: () => { username: string | undefined, email: string | undefined };
-	clear: () => void;
-	installNewApp: (onFinish: () => void) => Promise<void>;
-}

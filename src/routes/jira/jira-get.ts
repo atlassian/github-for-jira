@@ -12,7 +12,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
-import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface FailedConnection {
 	id: number;
@@ -162,6 +162,12 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
 
+	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
+	if (useNewSPAExperience && !hasConnections) {
+		res.redirect("/spa?from=homepage");
+		return;
+	}
+
 	res.render("jira-configuration.hbs", {
 		host: jiraHost,
 		gheServers: groupedGheServers,
@@ -169,6 +175,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
 		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
 		hasConnections,
+		useNewSPAExperience,
 		APP_URL: process.env.APP_URL,
 		enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
 		csrfToken: req.csrfToken(),
@@ -180,9 +187,11 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
-	sendAnalytics(AnalyticsEventTypes.ScreenEvent, {
-		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName,
+	await sendAnalytics(jiraHost, AnalyticsEventTypes.ScreenEvent, {
+		name: AnalyticsScreenEventsEnum.GitHubConfigScreenEventName
+	}, {
 		jiraHost,
+		pageExperience: useNewSPAExperience ? "spa" : "",
 		connectedOrgCountCloudCount: successfulCloudConnections.length,
 		connectedOrgCountServerCount: successfulServerConnections,
 		totalOrgCount: successfulCloudConnections.length + successfulServerConnections,

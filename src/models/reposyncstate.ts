@@ -34,17 +34,23 @@ export interface RepoSyncStateProperties {
 	pullStatus?: TaskStatus;
 	buildStatus?: TaskStatus;
 	deploymentStatus?: TaskStatus;
+	dependabotAlertStatus?: TaskStatus;
+	secretScanningAlertStatus?: TaskStatus,
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	dependabotAlertCursor?: string;
+	secretScanningAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
 	buildFrom?: Date;
 	deploymentFrom?: Date;
+	dependabotAlertFrom?: Date;
+	secretScanningAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -72,17 +78,23 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	pullStatus?: TaskStatus;
 	buildStatus?: TaskStatus;
 	deploymentStatus?: TaskStatus;
+	dependabotAlertStatus?: TaskStatus;
+	secretScanningAlertStatus?: TaskStatus;
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
 	pullCursor?: string;
 	buildCursor?: string;
 	deploymentCursor?: string;
+	dependabotAlertCursor?: string;
+	secretScanningAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
 	buildFrom?: Date;
 	deploymentFrom?: Date;
+	dependabotAlertFrom?: Date;
+	secretScanningAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -128,7 +140,9 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					branchStatus: "failed",
 					commitStatus: "failed",
 					buildStatus: "failed",
-					deploymentStatus: "failed"
+					deploymentStatus: "failed",
+					dependabotAlertStatus: "failed",
+					secretScanningAlertStatus: "failed"
 				}
 			}
 		});
@@ -144,7 +158,9 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					branchStatus: "failed",
 					commitStatus: "failed",
 					buildStatus: "failed",
-					deploymentStatus: "failed"
+					deploymentStatus: "failed",
+					dependabotAlertStatus: "failed",
+					secretScanningAlertStatus: "failed"
 				}
 			}
 		}));
@@ -351,7 +367,13 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			buildCursor: null,
 			deploymentStatus: null,
 			deploymentCursor: null,
-			commitFrom: null
+			commitFrom: null,
+			dependabotAlertStatus: null,
+			dependabotAlertCursor: null,
+			dependabotAlertFrom: null,
+			secretScanningAlertFrom: null,
+			secretScanningAlertStatus: null,
+			secretScanningAlertCursor: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -398,17 +420,23 @@ RepoSyncState.init({
 	pullStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	buildStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	dependabotAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	secretScanningAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	branchCursor: STRING,
 	commitCursor: STRING,
 	issueCursor: STRING,
 	pullCursor: STRING,
 	buildCursor: STRING,
 	deploymentCursor: STRING,
+	dependabotAlertCursor: STRING,
+	secretScanningAlertCursor: STRING,
 	commitFrom: DATE,
 	branchFrom: DATE,
 	pullFrom: DATE,
 	buildFrom: DATE,
 	deploymentFrom: DATE,
+	dependabotAlertFrom: DATE,
+	secretScanningAlertFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,

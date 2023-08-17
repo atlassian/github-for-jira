@@ -1,4 +1,4 @@
-import { Subscription } from "models/subscription";
+import { gitHubAppIdCondition, Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";
 
 const GITHUB_INSTALLATION_ID = 123;
@@ -239,18 +239,18 @@ describe("Subscription", () => {
 		});
 		describe("findForRepoNameAndOwner", () => {
 			it("should fetch the subscription for the given repo name and owner", async () => {
-				const repo0Sub = await Subscription.findForRepoNameAndOwner("repo-0", "atlassian", jiraHost);
-				const repo00Sub = await Subscription.findForRepoNameAndOwner("repo-0-0", "atlassian", jiraHost);
-				const repo1Sub = await Subscription.findForRepoNameAndOwner("repo-1", "atlassian", jiraHost);
-				const repo2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian", jiraHost);
+				const repo0Sub = await Subscription.findForRepoNameAndOwner("repo-0", "atlassian", jiraHost, false);
+				const repo00Sub = await Subscription.findForRepoNameAndOwner("repo-0-0", "atlassian", jiraHost, false);
+				const repo1Sub = await Subscription.findForRepoNameAndOwner("repo-1", "atlassian", jiraHost, true);
+				const repo2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian", jiraHost, true);
 				expect(repo0Sub?.jiraClientKey).toBe("myClientKey");
 				expect(repo00Sub?.jiraClientKey).toBe("myClientKey");
 				expect(repo1Sub?.jiraClientKey).toBe("myClientKey_ghe_1");
 				expect(repo2Sub?.jiraClientKey).toBe("myClientKey_ghe_2");
 			});
 			it("should return undefined for unknown given repo name and owner", async () => {
-				const repoRandomSub = await Subscription.findForRepoNameAndOwner("repo-unknown", "atlassian", jiraHost);
-				const repoRandom2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian2", jiraHost);
+				const repoRandomSub = await Subscription.findForRepoNameAndOwner("repo-unknown", "atlassian", jiraHost, false);
+				const repoRandom2Sub = await Subscription.findForRepoNameAndOwner("repo-2", "atlassian2", jiraHost, true);
 				expect(repoRandomSub?.jiraClientKey).toBe(undefined);
 				expect(repoRandom2Sub?.jiraClientKey).toBe(undefined);
 			});
@@ -368,4 +368,14 @@ describe("Subscription", () => {
 	describe.skip("syncStatusCounts", () => {
 		// TODO: add tests
 	});
+
+	describe("gitHubAppIdCondition", () => {
+		it("should return server condition have gitHubAppId", async () => {
+			expect(gitHubAppIdCondition(true)).toBe("AND s.\"gitHubAppId\" IS NOT NULL");
+		});
+		it("should return cloud condition have null gitHubAppId", async () => {
+			expect(gitHubAppIdCondition(false)).toBe("AND s.\"gitHubAppId\" IS NULL");
+		});
+	});
+
 });

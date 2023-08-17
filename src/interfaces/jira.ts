@@ -208,9 +208,9 @@ export interface JiraVulnerability {
 	introducedDate: string;
 	lastUpdated: string;
 	severity: JiraVulnerabilitySeverity;
-	identifiers: JiraVulnerabilityIdentifier[];
+	identifiers?: JiraVulnerabilityIdentifier[];
 	status: JiraVulnerabilityStatusEnum;
-	additionalInfo: JiraVulnerabilityAdditionalInfo;
+	additionalInfo?: JiraVulnerabilityAdditionalInfo;
 }
 
 export interface JiraVulnerabilitySeverity {

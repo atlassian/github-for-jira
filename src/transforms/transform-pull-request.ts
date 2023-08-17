@@ -9,6 +9,8 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
@@ -70,8 +72,12 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 	}));
 };
 
-export const extractIssueKeysFromPrRest = (pullRequest: Octokit.PullsListResponseItem) => {
+export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListResponseItem, jiraHost?: string) => {
 	const { title: prTitle, head, body } = pullRequest;
+	const logger = getLogger("extractIssueKeysFromPrRest");
+	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
+		logger.info({ prTitle }, `verbose logging: prTitle`);
+	}
 	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
 };
 
@@ -84,7 +90,8 @@ export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
 	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
-	log?: Logger
+	log?: Logger,
+	jiraHost?: string
 ) =>
 {
 	const {
@@ -101,7 +108,7 @@ export const transformPullRequestRest = async (
 		html_url
 	} = pullRequest;
 
-	const issueKeys = extractIssueKeysFromPrRest(pullRequest);
+	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
 	if (isEmpty(issueKeys) || !head?.repo) {
@@ -112,7 +119,7 @@ export const transformPullRequestRest = async (
 		return undefined;
 	}
 
-	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
+	const branches = await getBranchesRest(gitHubInstallationClient, pullRequest, issueKeys);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
@@ -146,7 +153,7 @@ export const transformPullRequestRest = async (
 
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
+const getBranchesRest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
 	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
@@ -178,7 +185,6 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 
 export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
-
 	if (isEmpty(issueKeys) || !pullRequest.headRef?.repository) {
 		log?.info({
 			pullRequestNumber: pullRequest.number,
@@ -189,28 +195,24 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 
 	const status = mapStatus(pullRequest.state, pullRequest.mergedAt);
 
-	try {
-		return {
-			author: getJiraAuthor(pullRequest.author),
-			commentCount: pullRequest.comments.totalCount || 0,
-			destinationBranch: pullRequest.baseRef?.name || "",
-			destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
-			displayId: `#${pullRequest.number}`,
-			id: pullRequest.number,
-			issueKeys,
-			lastUpdate: pullRequest.updatedAt,
-			reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
-			sourceBranch: pullRequest.headRef?.name || "",
-			sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
-			status: status,
-			timestamp: pullRequest.updatedAt,
-			title: pullRequest.title,
-			url: pullRequest.url,
-			updateSequenceId: Date.now()
-		};
-	} catch (err) {
-		throw new Error();
-	}
+	return {
+		author: getJiraAuthor(pullRequest.author),
+		commentCount: pullRequest.comments.totalCount || 0,
+		destinationBranch: pullRequest.baseRef?.name || "",
+		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+		displayId: `#${pullRequest.number}`,
+		id: pullRequest.number,
+		issueKeys,
+		lastUpdate: pullRequest.updatedAt,
+		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
+		sourceBranch: pullRequest.headRef?.name || "",
+		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+		status: status,
+		timestamp: pullRequest.updatedAt,
+		title: pullRequest.title,
+		url: pullRequest.url,
+		updateSequenceId: Date.now()
+	};
 };
 
 const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewRequests: pullRequestNode["reviewRequests"]["nodes"] = []): JiraReview[] => {

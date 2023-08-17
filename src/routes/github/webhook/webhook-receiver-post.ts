@@ -14,13 +14,15 @@ import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/gi
 import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
-import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
+import {
+	codeScanningAlertWebhookHandler
+} from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
-import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
-import { Subscription } from "~/src/models/subscription";
 import { extraLoggerInfo } from "./webhook-logging-extra";
+import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
+import { installationWebhookHandler } from "~/src/github/installation";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -93,7 +95,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "review_requested"];
-	let subscriptions;
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
@@ -135,9 +136,14 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(codeScanningAlertWebhookHandler)(context);
 			break;
 		case "dependabot_alert":
-			subscriptions = await Subscription.findOneForGitHubInstallationId(context.payload.installation.id, undefined);
-			if (subscriptions && await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, subscriptions.jiraHost)) {
-				await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
+			await GithubWebhookMiddleware(dependabotAlertWebhookHandler)(context);
+			break;
+		case "secret_scanning_alert":
+			await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
+			break;
+		case "installation":
+			if (context.action === "created" || context.action === "new_permissions_accepted") {
+				await GithubWebhookMiddleware(installationWebhookHandler)(context);
 			}
 			break;
 	}
@@ -167,7 +173,7 @@ const getWebhookSecrets = async (uuid?: string): Promise<{ webhookSecrets: Array
 		 * If we ever need to rotate the webhook secrets for Enterprise Customers,
 		 * we can add it in the array: ` [ webhookSecret ]`
 		 */
-		return { webhookSecrets: [ webhookSecret ], gitHubServerApp };
+		return { webhookSecrets: [webhookSecret], gitHubServerApp };
 	}
 
 	return {

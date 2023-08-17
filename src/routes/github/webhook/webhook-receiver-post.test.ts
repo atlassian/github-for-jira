@@ -14,8 +14,9 @@ import { envVars } from "config/env";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { Subscription } from "~/src/models/subscription";
-import { DependabotAlertEvent, Schema } from "@octokit/webhooks-types";
-import { booleanFlag } from "~/src/config/feature-flags";
+import { DependabotAlertEvent, InstallationEvent, Schema, SecretScanningAlertEvent } from "@octokit/webhooks-types";
+import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
+import { installationWebhookHandler } from "~/src/github/installation";
 
 jest.mock("~/src/middleware/github-webhook-middleware");
 jest.mock("~/src/config/feature-flags");
@@ -308,20 +309,10 @@ describe("webhook-receiver-post", () => {
 			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
 	});
-	it("should not call dependabot handler when ENABLE_GITHUB_SECURITY_IN_JIRA is disabled", async () => {
-		req = createGHESReqForEvent("dependabot_alert", "", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as DependabotAlertEvent);
-		const spy = jest.fn();
-		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		jest.mocked(booleanFlag).mockReturnValue(Promise.resolve(false));
-		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
-		await WebhookReceiverPost(injectRawBodyToReq(req), res);
-		expect(GithubWebhookMiddleware).not.toBeCalledWith(dependabotAlertWebhookHandler);
-	});
 	it("should call dependabot handler", async () => {
 		req = createGHESReqForEvent("dependabot_alert", "", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as DependabotAlertEvent);
 		const spy = jest.fn();
 		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
-		jest.mocked(booleanFlag).mockReturnValue(Promise.resolve(true));
 		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
 		await WebhookReceiverPost(injectRawBodyToReq(req), res);
 		expect(GithubWebhookMiddleware).toBeCalledWith(dependabotAlertWebhookHandler);
@@ -330,6 +321,46 @@ describe("webhook-receiver-post", () => {
 			name: "dependabot_alert",
 			gitHubAppConfig: gitHubAppConfigForGHES()
 		}));
+	});
+	it("should call secret scanning handler", async () => {
+		req = createGHESReqForEvent("secret_scanning_alert", "", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as SecretScanningAlertEvent);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).toBeCalledWith(secretScanningAlertWebhookHandler);
+		expect(spy).toBeCalledWith(expect.objectContaining({
+			id: "100",
+			name: "secret_scanning_alert",
+			gitHubAppConfig: gitHubAppConfigForGHES()
+		}));
+	});
+	describe.each(
+		["created", "new_permissions_accepted"]
+	)("should call installation handler", (action) => {
+		it(`${action} action`, async() => {
+			req = createGHESReqForEvent("installation", action, EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as InstallationEvent);
+			const spy = jest.fn();
+			jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+			jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
+			await WebhookReceiverPost(injectRawBodyToReq(req), res);
+			expect(GithubWebhookMiddleware).toBeCalledWith(installationWebhookHandler);
+			expect(spy).toBeCalledWith(expect.objectContaining({
+				id: "100",
+				name: "installation",
+				gitHubAppConfig: gitHubAppConfigForGHES()
+			}));
+		});
+
+	});
+
+	it("should not call installation handler for other than created/new_permissions_accepted action", async () => {
+		req = createGHESReqForEvent("installation", "suspend", EXIST_GHES_UUID, { installation: { id: 123 } } as unknown as InstallationEvent);
+		const spy = jest.fn();
+		jest.mocked(GithubWebhookMiddleware).mockImplementation(() => spy);
+		jest.mocked(Subscription.findOneForGitHubInstallationId).mockReturnValue(Promise.resolve({ jiraHost: "https://test-instnace.atlassian.net" } as unknown as Subscription));
+		await WebhookReceiverPost(injectRawBodyToReq(req), res);
+		expect(GithubWebhookMiddleware).toBeCalledTimes(0);
 	});
 
 });
