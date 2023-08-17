@@ -170,8 +170,7 @@
 		"yaml-lint": "^1.2.4"
 	},
 	"optionalDependencies": {
-		"@atlassian/sqs-queue-dlq-service": "^2.1.0",
-		"@atlassiansox/analytics-node-client": "^3.1.1"
+		"@atlassian/sqs-queue-dlq-service": "^2.1.1"
 	},
 	"volta": {
 		"node": "14.21.1",
