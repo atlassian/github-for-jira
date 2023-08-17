@@ -116,7 +116,7 @@ describe("InstallationWebhookHandler", () => {
 			expect(submitSecurityWorkspaceToLink).toBeCalledWith(installation, subscription, expect.anything());
 			expect(findOrStartSync).toBeCalledTimes(1);
 			expect(findOrStartSync).toBeCalledWith(
-				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert"], { "source": "webhook-security-permissions-accepted" }
+				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert", "secretScanningAlert"], { "source": "webhook-security-permissions-accepted" }
 			);
 
 		});

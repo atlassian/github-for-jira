@@ -7,10 +7,7 @@ import { Application } from "express";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
 import { ViewerRepositoryCountQuery } from "~/src/github/client/github-queries";
 import installationResponse from "fixtures/jira-configuration/single-installation.json";
-import { when } from "jest-when";
-import { stringFlag, StringFlags } from "config/feature-flags";
 
-const DEFAULT_SCOPES = "user,repo";
 
 jest.mock("config/feature-flags");
 
@@ -44,10 +41,6 @@ describe("Github Configuration", () => {
 
 	describe("Github Token Validation", () => {
 		it("should return redirect to github oauth flow for GET request if token is missing", async () => {
-			when(stringFlag)
-				.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
-				.mockResolvedValue(DEFAULT_SCOPES);
-
 			return supertest(frontendApp)
 				.get("/github/configuration")
 				.set(
@@ -67,10 +60,6 @@ describe("Github Configuration", () => {
 				.get("/")
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(403);
-			when(stringFlag)
-				.calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), jiraHost)
-				.mockResolvedValue(DEFAULT_SCOPES);
-
 			return supertest(frontendApp)
 				.get("/github/configuration")
 				.set(

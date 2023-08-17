@@ -58,7 +58,7 @@ export const installationWebhookHandler = async (
 			jiraResponse = await submitSecurityWorkspaceToLink(installation, subscription, logger);
 			logger.info({ subscriptionId: subscription.id }, "Linked security workspace via backfill");
 
-			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert"], { source: "webhook-security-permissions-accepted" });
+			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert", "secretScanningAlert"], { source: "webhook-security-permissions-accepted" });
 			logger.info({ subscriptionId: subscription.id }, "Triggered security backfill successfully");
 
 			await setSecurityPermissionAccepted(subscription, logger);

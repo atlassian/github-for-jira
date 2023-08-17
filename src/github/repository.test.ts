@@ -1,5 +1,3 @@
-import { when } from "jest-when";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { deleteRepositoryWebhookHandler, createRepositoryWebhookHandler } from "~/src/github/repository";
 import { WebhookContext } from "routes/github/webhook/webhook-context";
 import pullRequestRemoveKeys from "fixtures/pull-request-remove-keys.json";
@@ -79,10 +77,6 @@ describe("createdRepositoryWebhookHandler", () => {
 	let repoOne;
 
 	beforeEach(async () => {
-
-		when(booleanFlag).calledWith(
-			BooleanFlags.REPO_CREATED_EVENT
-		).mockResolvedValue(true);
 
 		subscription = await Subscription.create({
 			id: 123,

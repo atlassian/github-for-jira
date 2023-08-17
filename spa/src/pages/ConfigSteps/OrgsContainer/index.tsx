@@ -35,6 +35,9 @@ const Paragraph = styled.div`
 const IconWrapper = styled.div`
 	padding-top: ${token("space.150")};
 `;
+const BulletSeparator = styled.span`
+	padding: 0 ${token("space.100")};
+`;
 const StyledLink = styled.a`
 	cursor: pointer;
 `;
@@ -72,10 +75,13 @@ const OrganizationsList = ({
 
 			return <>
 				<Paragraph>
-					Make sure you can <StyledLink onClick={() => popup(accessUrl)}>access this organization</StyledLink>.
+					Can't connect, single sign-on(SSO) required.
 				</Paragraph>
 				<Paragraph>
-					After confirming, please <StyledLink onClick={resetToken}>click here to reset</StyledLink>.
+					1. <StyledLink onClick={() => popup(accessUrl)}>Log into GitHub with SSO</StyledLink>.
+				</Paragraph>
+				<Paragraph>
+					2. <StyledLink onClick={resetToken}>Retry connection in Jira</StyledLink> (once logged in).
 				</Paragraph>
 			</>;
 		}
@@ -86,12 +92,14 @@ const OrganizationsList = ({
 					Can't connect, blocked by your IP allow list.
 				</Paragraph>
 				<Button
-					style={{ paddingLeft: 0 }}
+					style={{ paddingLeft: 0, paddingRight: 0 }}
 					appearance="link"
 					onClick={() => popup("https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md")}
 				>
-					Learn how to fix this error
+					How to update allowlist
 				</Button>
+				<BulletSeparator>&#8226;</BulletSeparator>
+				<StyledLink onClick={resetToken}>Retry</StyledLink>
 			</>;
 		}
 
