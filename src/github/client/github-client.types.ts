@@ -66,3 +66,51 @@ export type CreateReferenceBody = {
 	ref: string,
 	sha: string
 }
+
+export type GetDependabotAlertRequestParams = {
+	sort?: string;
+	direction?: string;
+	per_page?: number;
+	page?: number;
+}
+
+
+export type DependabotAlertResponseItem = {
+	number: number,
+	created_at: string,
+	updated_at: string,
+	dismissed_at?: string,
+	auto_dismissed_at?: string,
+	fixed_at?: string,
+	url: string,
+	html_url: string,
+	state: "auto_dismissed" | "dismissed" | "fixed" | "open",
+	security_advisory: {
+		summary: string,
+		description: string,
+		identifiers: { type: string, value: string }[],
+		references: { url: string }[]
+	},
+	security_vulnerability: {
+		severity: string
+	},
+	dependency: {
+		scope: string,
+		manifest_path: string
+	}
+}
+
+export type SecretScanningAlertResponseItem = {
+    number: number,
+    created_at: string,
+    updated_at?: string,
+    url: string,
+    html_url: string,
+    locations_url: string,
+    state: "open" | "resolved",
+    resolution?: string,
+    resolved_at?: string,
+    resolution_comment?: string,
+    secret_type: string,
+    secret_type_display_name: string
+  }

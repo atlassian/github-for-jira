@@ -21,17 +21,18 @@ import {
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
 	getPullRequests,
-	pullRequestQueryResponse,
-	getDependabotAlerts,
-	GetDependabotAlertsResponse
+	pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
 	CreateReferenceBody,
+	DependabotAlertResponseItem,
+	GetDependabotAlertRequestParams,
 	GetPullRequestParams,
 	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
-	ReposGetContentsResponse
+	ReposGetContentsResponse,
+	SecretScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -39,7 +40,6 @@ import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client
 import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
-import { SecretScanningAlertResponseItem } from "./secret-scanning-alert.types";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
@@ -379,18 +379,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getDependabotAlertsPage(owner: string, repoName: string, perPage = 20, cursor?: string): Promise<GetDependabotAlertsResponse> {
-
-		const response = await this.graphql<GetDependabotAlertsResponse>(getDependabotAlerts,
-			await this.installationAuthenticationHeaders(),
-			{
-				owner,
-				repo: repoName,
-				per_page: perPage,
-				cursor
-			},
-			{ graphQuery: "getDependabotAlerts" });
-		return response?.data?.data;
+	public async getDependabotAlerts(owner: string, repo: string, dependabotAlertRequestParams: GetDependabotAlertRequestParams): Promise<AxiosResponse<DependabotAlertResponseItem[]>> {
+		return await this.get<DependabotAlertResponseItem[]>(`/repos/{owner}/{repo}/dependabot/alerts`, dependabotAlertRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {

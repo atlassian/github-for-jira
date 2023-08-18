@@ -5,7 +5,7 @@ import { getGitHubClientConfigFromAppId } from "utils/get-github-client-config";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import Logger from "bunyan";
 import { Repository } from "@octokit/webhooks-types";
-import { SecretScanningAlertResponseItem } from "../github/client/secret-scanning-alert.types";
+import { SecretScanningAlertResponseItem } from "../github/client/github-client.types";
 
 export const transformSecretScanningAlert = async (
 	alert: SecretScanningAlertResponseItem,
