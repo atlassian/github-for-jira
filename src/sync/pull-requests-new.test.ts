@@ -60,7 +60,7 @@ describe("sync/pull-request", () => {
 						}
 					],
 					"sourceBranch": "use-the-force",
-					"sourceBranchUrl": "https://github.com/integrations/use-the-force/tree/use-the-force",
+					"sourceBranchUrl": "https://github.com/integrations/sweet-repo/tree/use-the-force",
 					"status": "DECLINED",
 					"timestamp": "2018-05-04T14:06:56Z",
 					"title": "[TES-15] Evernote Test",
@@ -146,7 +146,7 @@ describe("sync/pull-request", () => {
 												headRef: {
 													name: head,
 													repository: {
-														name: "use-the-force",
+														name: "sweet-repo",
 														owner: {
 															login: "integrations"
 														}
@@ -335,6 +335,7 @@ describe("sync/pull-request", () => {
 											updatedAt: "2018-05-04T14:06:56Z",
 											createAt: "2018-05-04T14:06:56Z",
 											title: "[TES-15] Evernote Test",
+											baseRefName: "devel",
 											baseRef: {
 												name: "devel",
 												repository: {
@@ -344,10 +345,11 @@ describe("sync/pull-request", () => {
 													}
 												}
 											},
+											headRefName: "use-the-force",
 											headRef: {
 												name: "use-the-force",
 												repository: {
-													name: "test",
+													name: "sweet-repo",
 													owner: {
 														login: "integrations"
 													}
