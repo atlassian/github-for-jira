@@ -78,16 +78,8 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
-	baseRef?: {
-		name: string;
-		repository: {
-			url: string;
-			name: string;
-			owner: {
-				login: string;
-			};
-		};
-	};
+	headRefName: string; // is defined even if the ref was deleted
+	baseRefName: string; // is defined even if the ref was deleted
 	headRef?: {
 		id: string;
 		name: string;
@@ -188,15 +180,8 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					title
 					body
 					url
-					baseRef {
-						name
-						repository {
-							name
-							owner {
-								login
-							}
-						}
-					}
+					baseRefName,
+					headRefName,
 					headRef {
 						id
 						name

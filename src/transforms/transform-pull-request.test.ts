@@ -494,6 +494,17 @@ describe("pull_request transform GraphQL", () => {
 		};
 	};
 
+	const REPO_OBJ = {
+		id: 12321,
+		full_name: "myOrg/integrations",
+		html_url: "https://github.com/myOrg/integrations",
+		updated_at: new Date().toString(),
+		name: "test",
+		owner: {
+			login: "integrations"
+		}
+	};
+
 	const createPullPayload = (title = "fake title", state = "MERGED") => {
 		return {
 			state,
@@ -510,17 +521,10 @@ describe("pull_request transform GraphQL", () => {
 			},
 			updatedAt: "2018-05-04T14:06:56Z",
 			title,
-			baseRef: {
-				name: "devel",
-				repository: {
-					name: "test",
-					owner: {
-						login: "integrations"
-					}
-				}
-			},
+			baseRefName: "devel",
+			headRefName: "evernote-test",
 			headRef: {
-				name: "Evernote Test",
+				name: "evernote-test",
 				repository: {
 					name: "test",
 					owner: {
@@ -533,16 +537,24 @@ describe("pull_request transform GraphQL", () => {
 		};
 	};
 
-	it("should transform deleted author and reviewers without exploding", async () => {
+	it("should transform deleted author and reviewers and headRef without exploding", async () => {
 		const title = "[TES-123] Branch payload Test";
-		const payload = { ...createPullPayload(title), author: {} };
+		const payload = _.cloneDeep(createPullPayload(title));
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		payload.reviews.nodes[0].author = {};
 
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		delete payload.headRef;
+
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		delete payload.author;
+
 		const { updatedAt } = payload;
 
-		const data = transformPullRequest(jiraHost, payload as any, logger);
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
 
 		expect(data).toMatchObject({
 			author: {
@@ -566,8 +578,7 @@ describe("pull_request transform GraphQL", () => {
 					approvalStatus: "APPROVED"
 				}
 			],
-			sourceBranch: "Evernote Test",
-			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			sourceBranch: "evernote-test",
 			status: "MERGED",
 			timestamp: updatedAt,
 			title,
@@ -583,7 +594,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -608,8 +619,8 @@ describe("pull_request transform GraphQL", () => {
 					approvalStatus: "UNAPPROVED"
 				}
 			],
-			sourceBranch: "Evernote Test",
-			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			sourceBranch: "evernote-test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/evernote-test",
 			status: "MERGED",
 			timestamp: updatedAt,
 			title,
@@ -623,7 +634,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
 
-		const data = await transformPullRequest(jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
 		const { updatedAt } = payload;
 
 		expect(data).toMatchObject({
@@ -647,8 +658,8 @@ describe("pull_request transform GraphQL", () => {
 					approvalStatus: "APPROVED"
 				}
 			],
-			sourceBranch: "Evernote Test",
-			sourceBranchUrl: "https://github.com/integrations/test/tree/Evernote Test",
+			sourceBranch: "evernote-test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/evernote-test",
 			status: "MERGED",
 			timestamp: updatedAt,
 			title,
@@ -662,7 +673,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createMultipleReviews();
 
-		const data = await transformPullRequest(jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
 
 		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({

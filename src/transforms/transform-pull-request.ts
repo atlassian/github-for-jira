@@ -11,6 +11,7 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 import { pullRequestNode } from "~/src/github/client/github-queries";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { getLogger } from "config/logger";
+import { Repository } from "models/subscription";
 
 const mapStatus = (status: string, merged_at?: string) => {
 	if (status.toLowerCase() === "merged") return "MERGED";
@@ -119,7 +120,7 @@ export const transformPullRequestRest = async (
 		return undefined;
 	}
 
-	const branches = await getBranchesRest(gitHubInstallationClient, pullRequest, issueKeys);
+	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
 	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
@@ -153,7 +154,7 @@ export const transformPullRequestRest = async (
 
 // Do not send the branch on the payload when the Pull Request Merged event is called.
 // Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
-const getBranchesRest = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
+const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
 	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
 		return [];
 	}
@@ -183,13 +184,14 @@ const getBranchesRest = async (gitHubInstallationClient: GitHubInstallationClien
 	];
 };
 
-export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
-	if (isEmpty(issueKeys) || !pullRequest.headRef?.repository) {
-		log?.info({
+
+	if (isEmpty(issueKeys)) {
+		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
-		}, "Ignoring pullrequest since it has no issue keys or repo");
+		}, "Ignoring pullrequest since it has no issue keys");
 		return undefined;
 	}
 
@@ -198,15 +200,21 @@ export const transformPullRequest = (_jiraHost: string, pullRequest: pullRequest
 	return {
 		author: getJiraAuthor(pullRequest.author),
 		commentCount: pullRequest.comments.totalCount || 0,
-		destinationBranch: pullRequest.baseRef?.name || "",
-		destinationBranchUrl: `https://github.com/${pullRequest.baseRef?.repository?.owner?.login}/${pullRequest.baseRef?.repository?.name}/tree/${pullRequest.baseRef?.name}`,
+		destinationBranch: pullRequest.baseRefName || "",
+		destinationBranchUrl: `https://github.com/${repository.owner?.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
 		displayId: `#${pullRequest.number}`,
 		id: pullRequest.number,
 		issueKeys,
 		lastUpdate: pullRequest.updatedAt,
 		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
-		sourceBranch: pullRequest.headRef?.name || "",
-		sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`,
+		sourceBranch: pullRequest.headRefName,
+		...(
+			pullRequest.headRef
+				? {
+					sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`
+				}
+				: {}
+		),
 		status: status,
 		timestamp: pullRequest.updatedAt,
 		title: pullRequest.title,
