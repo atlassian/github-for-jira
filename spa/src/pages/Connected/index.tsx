@@ -61,7 +61,7 @@ const Connected = () => {
 				<HeaderImg src="/public/assets/jira-github-connected.svg" alt=""/>
 				<Title>GitHub is connected!</Title>
 				<TopContent>
-					Its' time to let everyone know that GitHub's ready to use and your<br />
+					It's time to let everyone know that GitHub's ready to use and your<br />
 					team can use issue keys to link work to Jira.<br />
 				</TopContent>
 				<ButtonContainer>
@@ -119,7 +119,7 @@ const Connected = () => {
 					onClick={navigateToBackfillPage}
 				>
 					Check your backfill status
-				</Button>
+				</Button>.
 			</Paragraph>
 		</ConnectedContainer>
 	</Wrapper>);
