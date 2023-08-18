@@ -208,7 +208,7 @@ const ConfigSteps = () => {
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
-			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" });
+			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
@@ -239,7 +239,7 @@ const ConfigSteps = () => {
 			});
 		} catch (e) {
 			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
-			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" });
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode });
 			reportError(e);
 		}
 	};
