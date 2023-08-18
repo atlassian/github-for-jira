@@ -6,8 +6,7 @@ import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData, JiraVulnerabilitySeverityEnum } from "../interfaces/jira";
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
-import { SortDirection } from "../github/client/github-client.types";
-import { SecretScanningAlertResponseItem } from "../github/client/secret-scanning-alert.types";
+import { SecretScanningAlertResponseItem, SortDirection } from "../github/client/github-client.types";
 import { transformGitHubStateToJiraStatus } from "../transforms/transform-secret-scanning-alert";
 
 export const getSecretScanningAlertTask = async (
