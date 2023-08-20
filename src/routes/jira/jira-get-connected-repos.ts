@@ -54,7 +54,7 @@ export const JiraGetConnectedRepos = async (
 				[Op.and]: [
 					{
 						repoName: {
-							[Op.like]: `%${repoName}%`
+							[Op.iLike]: `%${repoName}%`
 						}
 					},
 					{
@@ -72,7 +72,7 @@ export const JiraGetConnectedRepos = async (
 				[Op.and]: [
 					{
 						repoName: {
-							[Op.like]: `%${repoName}%`
+							[Op.iLike]: `%${repoName}%`
 						}
 					},
 					{
