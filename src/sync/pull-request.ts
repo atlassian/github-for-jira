@@ -122,7 +122,7 @@ const getPullRequestTaskGraphQL = async (
 		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
 
 	const pullRequests = filteredByCreatedSince
-		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
+		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
