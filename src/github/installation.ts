@@ -9,8 +9,8 @@ import { emitWebhookProcessedMetrics } from "../util/webhook-utils";
 import Logger from "bunyan";
 import { findOrStartSync } from "../sync/sync-utils";
 
-const SECURITY_PERMISSIONS = ["secret_scanning_alerts", "security_events", "vulnerability_alerts"];
-const SECURITY_EVENTS = ["secret_scanning_alert", "code_scanning_alert", "dependabot_alert"];
+export const SECURITY_PERMISSIONS = ["secret_scanning_alerts", "security_events", "vulnerability_alerts"];
+export const SECURITY_EVENTS = ["secret_scanning_alert", "code_scanning_alert", "dependabot_alert"];
 
 export const installationWebhookHandler = async (
 	context: WebhookContext<InstallationEvent>,
@@ -51,17 +51,14 @@ export const installationWebhookHandler = async (
 	let jiraResponse;
 
 	try {
-		if (action === "created" && hasSecurityPermissionsAndEvents(permissions, events)) {
-			return await setSecurityPermissionAccepted(subscription, logger);
-
-		} else if (action === "new_permissions_accepted" && hasSecurityPermissionsAndEvents(permissions, events) && !subscription.isSecurityPermissionsAccepted) {
+		if (action === "new_permissions_accepted" && hasSecurityPermissionsAndEvents(permissions, events) && !subscription.isSecurityPermissionsAccepted) {
 			jiraResponse = await submitSecurityWorkspaceToLink(installation, subscription, logger);
 			logger.info({ subscriptionId: subscription.id }, "Linked security workspace via backfill");
 
+			await setSecurityPermissionAccepted(subscription, logger);
+
 			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert", "secretScanningAlert"], { source: "webhook-security-permissions-accepted" });
 			logger.info({ subscriptionId: subscription.id }, "Triggered security backfill successfully");
-
-			await setSecurityPermissionAccepted(subscription, logger);
 		}
 
 		const webhookReceived = context.webhookReceived;
