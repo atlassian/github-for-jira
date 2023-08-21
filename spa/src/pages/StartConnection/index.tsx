@@ -90,7 +90,7 @@ const StartConnection = () => {
 	return (
 		<Wrapper>
 			<SyncHeader/>
-			<BeforeText>Before you start, you'll need:</BeforeText>
+			<BeforeText>Before you start, you should have:</BeforeText>
 			<ListContainer>
 				<ListItem>
 					<Logo>

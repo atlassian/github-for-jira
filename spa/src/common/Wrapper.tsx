@@ -21,7 +21,7 @@ const navigateToHomePage = () => {
 	analyticsClient.sendUIEvent({ actionSubject: "dropExperienceViaBackButton", action: "clicked" });
 	AP.getLocation((location: string) => {
 		const locationUrl = new URL(location);
-		AP.navigator.go( "site", { absoluteUrl: `${locationUrl.origin}/plugins/servlet/upm` });
+		AP.navigator.go( "site", { absoluteUrl: `${locationUrl.origin}/jira/marketplace/discover/app/com.github.integration.production` });
 	});
 };
 
