@@ -7,7 +7,13 @@ export const getJiraJWT = (): Promise<string> => new Promise(resolve => {
 });
 
 export function popup (url: string) {
-	return window.open(url, "_blank");
+	const openedPopup = window.open(url, "_blank");
+	if (!openedPopup || openedPopup.closed || typeof openedPopup.closed === "undefined") {
+		// TODO: Meaningful UI when browser pop-up is blocked
+		console.log("Popup is blocked");
+		return null;
+	}
+	return openedPopup;
 }
 
 export function reportError(err: unknown) {
