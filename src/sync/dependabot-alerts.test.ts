@@ -8,6 +8,7 @@ import { waitUntil } from "~/test/utils/wait-until";
 import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 import { when } from "jest-when";
 import { GitHubServerApp } from "../models/github-server-app";
+import { Subscription } from "../models/subscription";
 
 
 jest.mock("config/feature-flags");
@@ -15,6 +16,7 @@ describe("sync/dependabot-alerts", () => {
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+	let subscription;
 
 
 	describe("cloud", () => {
@@ -37,11 +39,12 @@ describe("sync/dependabot-alerts", () => {
 		};
 		beforeEach(async () => {
 
-			await new DatabaseStateCreator()
+			const builderResult = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
-
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 		});
@@ -53,7 +56,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseCloudServer()
+					expectedResponseCloudServer(subscription)
 				)
 				.reply(200);
 
@@ -109,8 +112,10 @@ describe("sync/dependabot-alerts", () => {
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
 
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 			gitHubServerApp = builderResult.gitHubServerApp!;
@@ -135,7 +140,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseGHEServer()
+					expectedResponseGHEServer(subscription)
 				)
 				.reply(200);
 
@@ -170,7 +175,7 @@ describe("sync/dependabot-alerts", () => {
 });
 
 
-const expectedResponseCloudServer = () => ({
+const expectedResponseCloudServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -230,12 +235,13 @@ const expectedResponseCloudServer = () => ({
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });
 
-const expectedResponseGHEServer = () => ({
+const expectedResponseGHEServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -295,7 +301,8 @@ const expectedResponseGHEServer = () => ({
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });
