@@ -106,7 +106,7 @@ const OrganizationsList = ({
 		if (!org.isAdmin) {
 			return <>
 				<Paragraph>
-					Can't connect, you're not an organization owner.<br />Ask an owner to complete this step.
+					Can't connect, you're not the organization owner.<br />Ask an owner to complete this step.
 				</Paragraph>
 			</>;
 		}
