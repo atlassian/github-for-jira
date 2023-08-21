@@ -1,5 +1,5 @@
 $(document).ready(() => {
-	// to get the focus back on seach bar after comp reload
+	// to get the focus back on search bar after comp reload
 	$('#repo-search').focus();
 	const params = new URLSearchParams(window.location.search.substring(1));
 	const repoSearch = params.get("repoName");
@@ -27,7 +27,7 @@ $(document).ready(() => {
 	$('#repo-search').on('input', function() {
 		// re-render the original list after clearing the search bar
 		if($(this).val().length === 0) {
-			loadRepos(1)
+			loadRepos(1);
 		}
 		// search bar is using de-bouncing
 		clearTimeout(repoSearchTimeoutId);
