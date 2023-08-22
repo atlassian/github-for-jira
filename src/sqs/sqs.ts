@@ -298,7 +298,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				lastAttempt
 			}),
 			receiveCount,
-			lastAttempt: receiveCount >= this.maxAttempts
+			lastAttempt
 		};
 
 		context.log.info(`SQS message received. Receive count: ${receiveCount}`);
