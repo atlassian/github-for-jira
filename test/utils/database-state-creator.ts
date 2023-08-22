@@ -26,6 +26,7 @@ export class DatabaseStateCreator {
 	private pendingForDeployments: boolean;
 	private pendingForDependabotAlerts: boolean;
 	private pendingForSecretScanningAlerts: boolean;
+	private securityPermissionsAccepted: boolean;
 
 	private buildsCustomCursor: string | undefined;
 	private prsCustomCursor: string | undefined;
@@ -87,6 +88,11 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
+	public withSecurityPermissionsAccepted() {
+		this.securityPermissionsAccepted = true;
+		return this;
+	}
+
 	public repoSyncStatePendingForSecretScanningAlerts() {
 		this.pendingForSecretScanningAlerts = true;
 		return this;
@@ -128,7 +134,8 @@ export class DatabaseStateCreator {
 			jiraHost,
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",
-			gitHubAppId: gitHubServerApp?.id
+			gitHubAppId: gitHubServerApp?.id,
+			isSecurityPermissionsAccepted: this.securityPermissionsAccepted
 		});
 
 		const repoSyncState = this.withActiveRepoSyncStateFlag ? await RepoSyncState.create({

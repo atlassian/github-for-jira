@@ -8,6 +8,7 @@ import { waitUntil } from "~/test/utils/wait-until";
 import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 import { when } from "jest-when";
 import { GitHubServerApp } from "../models/github-server-app";
+import { Subscription } from "../models/subscription";
 
 
 jest.mock("config/feature-flags");
@@ -15,6 +16,7 @@ describe("sync/secret-scanning-alerts", () => {
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+	let subscription;
 
 
 	describe("cloud", () => {
@@ -32,10 +34,12 @@ describe("sync/secret-scanning-alerts", () => {
 		};
 		beforeEach(async () => {
 
-			await new DatabaseStateCreator()
+			const builderResult = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForSecretScanningAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
+			subscription = builderResult.subscription;
 
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
@@ -48,7 +52,7 @@ describe("sync/secret-scanning-alerts", () => {
 				.reply(200, secretScanningAlerts);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			jiraNock
-				.post("/rest/security/1.0/bulk", expectedResponseCloudServer())
+				.post("/rest/security/1.0/bulk", expectedResponseCloudServer(subscription))
 				.reply(200);
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -98,7 +102,9 @@ describe("sync/secret-scanning-alerts", () => {
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForSecretScanningAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
+			subscription = builderResult.subscription;
 
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
@@ -124,7 +130,7 @@ describe("sync/secret-scanning-alerts", () => {
 				.get("/api/v3/repos/integrations/test-repo-name/secret-scanning/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, secretScanningAlerts);
 			jiraNock
-				.post("/rest/security/1.0/bulk", expectedResponseGHEServer())
+				.post("/rest/security/1.0/bulk", expectedResponseGHEServer(subscription))
 				.reply(200);
 
 			await expect(processInstallation(mockBackfillQueueSendMessage)(data, sentry, getLogger("test"))).toResolve();
@@ -158,7 +164,7 @@ describe("sync/secret-scanning-alerts", () => {
 });
 
 
-const expectedResponseCloudServer = () => ({
+const expectedResponseCloudServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -185,12 +191,13 @@ const expectedResponseCloudServer = () => ({
 
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });
 
-const expectedResponseGHEServer = () => ({
+const expectedResponseGHEServer = (subscription: Subscription) => ({
 	"vulnerabilities": [
 		{
 			"schemaVersion": "1.0",
@@ -216,7 +223,8 @@ const expectedResponseGHEServer = () => ({
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });

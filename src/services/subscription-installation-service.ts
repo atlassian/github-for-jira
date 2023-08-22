@@ -11,6 +11,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { JiraClient } from "~/src/models/jira-client";
+import { SECURITY_EVENTS, SECURITY_PERMISSIONS } from "../github/installation";
 
 export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean> => {
 	const metrics = {
@@ -108,8 +109,14 @@ export const verifyAdminPermsAndFinishInstallation =
 
 			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
 				try {
-					await submitSecurityWorkspaceToLink(installation, subscription, log);
-					log.info({ subscriptionId: subscription.id }, "Linked security workspace");
+					if (subscription.isSecurityPermissionsAccepted) {
+						await submitSecurityWorkspaceToLink(installation, subscription, log);
+					} else if (await hasSecurityPermissionsAndEvents(installation, gitHubServerAppIdPk, log, metrics)) {
+						await Promise.allSettled([
+							await setSecurityPermissionAccepted(subscription, log),
+							await submitSecurityWorkspaceToLink(installation, subscription, log)
+						]);
+					}
 				} catch (err) {
 					log.warn({ err }, "Failed to submit security workspace to Jira");
 				}
@@ -160,5 +167,27 @@ export const submitSecurityWorkspaceToLink = async (
 	logger: Logger
 ) => {
 	const jiraClient = await JiraClient.getNewClient(installation, logger);
-	return await jiraClient.linkedWorkspace(subscription.id);
+	await jiraClient.linkedWorkspace(subscription.id);
+	logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
+};
+
+const hasSecurityPermissionsAndEvents = async (installation: Installation, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
+	try {
+		const gitHubAppClient = await createAppClient(logger, installation.jiraHost, gitHubServerAppId, metrics);
+		const { data: ghApp } = await gitHubAppClient.getApp();
+		return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in ghApp.permissions) &&
+			SECURITY_EVENTS.every((securityEvent) => ghApp.events.includes(securityEvent));
+	} catch (err) {
+		logger.warn({ err }, "Failed to fetch GitHub app details for evaluating security permissions and events");
+		throw err;
+	}
+};
+
+const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
+	try {
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+	} catch (err) {
+		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
+		throw err;
+	}
 };
