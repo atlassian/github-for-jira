@@ -83,6 +83,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					undefined,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -100,6 +101,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					undefined,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -118,6 +120,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					undefined,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -141,6 +144,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					undefined,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 
@@ -171,6 +175,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					undefined,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 
@@ -202,6 +207,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					gitHubServerApp.id,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -219,6 +225,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					gitHubServerApp.id,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -237,6 +244,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					gitHubServerApp.id,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).toBeDefined();
@@ -259,6 +267,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					gitHubServerApp.id,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).not.toBeDefined();
@@ -287,6 +296,7 @@ describe("subscription-installation-service", () => {
 					installation,
 					gitHubServerApp.id,
 					subscription.gitHubInstallationId + 1,
+					false,
 					getLogger("test")
 				);
 				expect(result.error).not.toBeDefined();
