@@ -27,6 +27,7 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common
 import { getNextTasks } from "~/src/sync/scheduler";
 import { getDependabotAlertTask } from "./dependabot-alerts";
 import { getSecretScanningAlertTask } from "./secret-scanning-alerts";
+import { getCodeScanningAlertTask } from "~/src/sync/code-scanning-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -36,10 +37,11 @@ const tasks: TaskProcessors = {
 	build: getBuildTask,
 	deployment: getDeploymentTask,
 	dependabotAlert: getDependabotAlertTask,
-	secretScanningAlert: getSecretScanningAlertTask
+	secretScanningAlert: getSecretScanningAlertTask,
+	codeScanningAlert: getCodeScanningAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -237,7 +239,8 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 				});
 				break;
 			case "dependabotAlert":
-			case "secretScanningAlert":{
+			case "secretScanningAlert":
+			case "codeScanningAlert": {
 				await jiraClient.security.submitVulnerabilities(jiraPayload, {
 					operationType: "BACKFILL"
 				});

@@ -25,7 +25,7 @@ import {
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
-	CreateReferenceBody,
+	CreateReferenceBody, GetCodeScanningAlertRequestParams,
 	DependabotAlertResponseItem,
 	GetDependabotAlertRequestParams,
 	GetPullRequestParams,
@@ -40,6 +40,8 @@ import { GithubClientError, GithubClientGraphQLError } from "~/src/github/client
 import { cloneDeep } from "lodash";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
+import { SecretScanningAlertResponseItem } from "./secret-scanning-alert.types";
+import { CodeScanningAlertResponseItem } from "~/src/github/client/code-scanning-alert.types";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
@@ -91,6 +93,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			alertNumber
 		});
 	}
+
+	public async getCodeScanningAlerts(owner: string, repo: string, codeScanningAlertRequestParams: GetCodeScanningAlertRequestParams): Promise<AxiosResponse<CodeScanningAlertResponseItem[]>> {
+		return await this.get<CodeScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts`, codeScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */

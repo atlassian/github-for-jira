@@ -37,6 +37,15 @@ export type GetSecretScanningAlertRequestParams = {
 	page?: number;
 }
 
+export type GetCodeScanningAlertRequestParams = {
+	sort?: string;
+	direction?: string;
+	per_page?: number;
+	page?: number;
+	state?: "open" | "closed" | "dismissed" | "fixed";
+	severity?: "critical" | "high" | "medium" | "low" | "warning" | "note" | "error"
+}
+
 export type GraphQlQueryResponse<ResponseData> = {
 	data: ResponseData;
 	errors?: GraphQLError[];
