@@ -53,8 +53,8 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	// jiraClient is null when jiraHost is an empty string which we know is defined above.
 	await jiraClient!.devinfo.installation.delete(gitHubInstallationId);
 	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
-		await deleteSecurityWorkspaceLink(installation, subscription, req.log);
-		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace");
+		await deleteSecurityWorkspaceLinkAndVulns(installation, subscription, req.log);
+		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");
 	}
 	await subscription.destroy();
 
@@ -69,7 +69,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	res.sendStatus(204);
 };
 
-const deleteSecurityWorkspaceLink = async (
+const deleteSecurityWorkspaceLinkAndVulns = async (
 	installation: Installation,
 	subscription: Subscription,
 	logger: Logger
@@ -79,9 +79,12 @@ const deleteSecurityWorkspaceLink = async (
 		logger.info("Fetching info about GitHub installation");
 
 		const jiraClient = await JiraClient.getNewClient(installation, logger);
-		await jiraClient.deleteWorkspace(subscription.id);
+		await Promise.allSettled([
+			jiraClient.deleteWorkspace(subscription.id),
+			jiraClient.deleteVulnerabilities(subscription.id)
+		]);
 	} catch (err) {
-		logger.warn({ err }, "Failed to delete security workspace from Jira");
+		logger.warn({ err }, "Failed to delete security workspace or vulnerabilities from Jira");
 	}
 
 };

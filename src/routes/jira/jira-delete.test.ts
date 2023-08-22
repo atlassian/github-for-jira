@@ -90,6 +90,10 @@ describe("DELETE /jira/configuration", () => {
 			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+subscription.id)
 			.reply(202);
 
+		jiraNock
+			.delete("/rest/security/1.0/bulkByProperties?workspaceId="+subscription.id)
+			.reply(202);
+
 
 		// TODO: use supertest for this
 		const req = {

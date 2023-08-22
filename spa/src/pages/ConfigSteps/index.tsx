@@ -48,9 +48,9 @@ const TooltipContainer = styled.div`
 	}
 `;
 const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : "rgba(9, 30, 66, 0.04)"};
+	background: ${props => props.optionKey === props.selectedOption ? token("color.background.selected") : token("color.background.accent.gray.subtlest")};
 	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
-	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
+	color: ${props => props.optionKey === props.selectedOption ? token("color.text.selected") : token("color.text")};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
