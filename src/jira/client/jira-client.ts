@@ -101,7 +101,7 @@ export const getJiraClient = async (
 	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
-): Promise<JiraClient| void> => {
+): Promise<JiraClient | void> => {
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
@@ -465,12 +465,22 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 				logger.info("Sending vulnerabilities payload to jira.");
-				return await instance.post("/rest/security/1.0/bulk", payload);
+				const response = await instance.post("/rest/security/1.0/bulk", payload);
+				handleSubmitVulnerabilitiesResponse(response, logger);
+				return response;
 			}
 		}
 	};
 
 	return client;
+};
+
+const handleSubmitVulnerabilitiesResponse = (response: AxiosResponse, logger: Logger) => {
+	const rejectedEntities = response.data?.rejectedEntities;
+	if (rejectedEntities?.length > 0) {
+		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length} vulnerabilities`);
+	}
+
 };
 
 const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {
