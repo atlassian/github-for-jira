@@ -8,7 +8,6 @@ export const JiraGetSyncededRepos = async (
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
-
 	try {
 		const subscriptionId = Number(req.params.subscriptionId);
 		const page = Number(req.query.page || 1);
@@ -43,41 +42,45 @@ export const JiraGetSyncededRepos = async (
 			};
 		}
 
-		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.iLike]: `%${repoName}%`
-						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
-			}
-		});
+		// const reposCount = await RepoSyncState.countSubscriptionRepos(
+		// 	subscription,
+		// 	{
+		// 		where: {
+		// 			[Op.and]: [
+		// 				{
+		// 					repoName: {
+		// 						[Op.iLike]: `%${repoName}%`
+		// 					}
+		// 				},
+		// 				{
+		// 					...syncStatusCondition
+		// 				}
+		// 			]
+		// 		}
+		// 	}
+		// );
 
 		const offset = page == 1 ? 0 : (page - 1) * pageSize;
 
-		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.iLike]: `%${repoName}%`
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(
+			subscription,
+			{
+				where: {
+					[Op.and]: [
+						{
+							repoName: {
+								[Op.iLike]: `%${repoName}%`
+							}
+						},
+						{
+							...syncStatusCondition
 						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
-			},
-			limit: pageSize,
-			offset
-		});
+					]
+				},
+				limit: pageSize,
+				offset
+			}
+		);
 		const repos = repoSyncStates.map((repoSyncState) => {
 			return {
 				name: repoSyncState.repoFullName,
@@ -90,35 +93,40 @@ export const JiraGetSyncededRepos = async (
 				failedCode: repoSyncState.failedCode
 			};
 		});
-		const completedRepos = repos.filter(repo => ["complete","failed"].includes(repo.syncStatus)).length;
+		const completedRepos = repos.filter((repo) =>
+			["complete", "failed"].includes(repo.syncStatus)
+		).length;
 
 		res.status(200).send({
 			completedRepos,
 			subscriptionId,
-			reposCount,
-			syncCompleted: completedRepos === reposCount
+			reposCount: 0,
+			syncCompleted: completedRepos === 0
 		});
-
 	} catch (error) {
 		return next(new Error(`Failed to render connected repos: ${error}`));
 	}
 };
 
-
-
 const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
-
-	const statuses = [repoSyncState?.branchStatus, repoSyncState?.commitStatus, repoSyncState?.pullStatus, repoSyncState?.buildStatus, repoSyncState?.deploymentStatus];
+	const statuses = [
+		repoSyncState?.branchStatus,
+		repoSyncState?.commitStatus,
+		repoSyncState?.pullStatus,
+		repoSyncState?.buildStatus,
+		repoSyncState?.deploymentStatus
+	];
 	if (statuses.includes("pending")) {
 		return "pending";
 	}
 	if (statuses.includes("failed")) {
 		return "failed";
 	}
-	const completeStatusesCount = statuses.filter((status) => status == "complete").length;
+	const completeStatusesCount = statuses.filter(
+		(status) => status == "complete"
+	).length;
 	if (completeStatusesCount === statuses.length) {
 		return "complete";
 	}
 	return "pending";
 };
-
