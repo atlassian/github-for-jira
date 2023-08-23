@@ -4,8 +4,8 @@ import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
 import { useState } from "react";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
-import { popup } from "../../../utils";
 import OauthManager from "../../../services/oauth-manager";
+import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../../../components/Error/KnownErrors";
 
 type OrgDivType = {
 	key: number;
@@ -29,18 +29,10 @@ const OrgName = styled.span`
 	color: ${token("color.text")};
 	font-weight: 590;
 `;
-const Paragraph = styled.div`
-	color: ${token("color.text.subtle")};
-`;
 const IconWrapper = styled.div`
 	padding-top: ${token("space.150")};
 `;
-const BulletSeparator = styled.span`
-	padding: 0 ${token("space.100")};
-`;
-const StyledLink = styled.a`
-	cursor: pointer;
-`;
+
 
 const OrganizationsList = ({
 	organizations,
@@ -73,42 +65,15 @@ const OrganizationsList = ({
 			// TODO: Update this to support GHE
 			const accessUrl = `https://github.com/organizations/${org.account.login}/settings/profile`;
 
-			return <>
-				<Paragraph>
-					Can't connect, single sign-on(SSO) required.
-				</Paragraph>
-				<Paragraph>
-					1. <StyledLink onClick={() => popup(accessUrl)}>Log into GitHub with SSO</StyledLink>.
-				</Paragraph>
-				<Paragraph>
-					2. <StyledLink onClick={resetToken}>Retry connection in Jira</StyledLink> (once logged in).
-				</Paragraph>
-			</>;
+			return <ErrorForSSO resetCallback={resetToken} accessUrl={accessUrl} />;
 		}
 
 		if (org.isIPBlocked) {
-			return <>
-				<Paragraph>
-					Can't connect, blocked by your IP allow list.
-				</Paragraph>
-				<Button
-					style={{ paddingLeft: 0, paddingRight: 0 }}
-					appearance="link"
-					onClick={() => popup("https://github.com/atlassian/github-for-jira/blob/main/docs/ip-allowlist.md")}
-				>
-					How to update allowlist
-				</Button>
-				<BulletSeparator>&#8226;</BulletSeparator>
-				<StyledLink onClick={resetToken}>Retry</StyledLink>
-			</>;
+			return <ErrorForIPBlocked resetCallback={resetToken} />;
 		}
 
 		if (!org.isAdmin) {
-			return <>
-				<Paragraph>
-					Can't connect, you're not the organization owner.<br />Ask an owner to complete this step.
-				</Paragraph>
-			</>;
+			return <ErrorForNonAdmins />;
 		}
 	};
 

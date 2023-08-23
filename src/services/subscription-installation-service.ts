@@ -65,6 +65,7 @@ export const verifyAdminPermsAndFinishInstallation =
 		installation: Installation,
 		gitHubServerAppIdPk: number | undefined,
 		gitHubInstallationId: number,
+		useNewSPAExperience: boolean,
 		parentLogger: Logger
 	): Promise<ResultObject> => {
 
@@ -137,6 +138,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
 			}, {
 				jiraHost: installation.jiraHost,
+				pageExperience: useNewSPAExperience ? "spa" : "",
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: true,
 				gitHubProduct
@@ -151,6 +153,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
 			}, {
 				jiraHost: installation.jiraHost,
+				pageExperience: useNewSPAExperience ? "spa" : "",
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: false,
 				gitHubProduct

@@ -19,12 +19,12 @@ const ErrorWrapper = styled.div<ErrorWrapperType>`
 	background: ${props => props.type === "warning" ? token("color.background.warning") : token("color.background.danger") };
 	border-radius: 3px;
 	align-items: center;
-	div {
-		padding-left: ${token("space.200")};
-	}
 	span {
 		align-self: start;
 	}
+`;
+const ErrorContent = styled.div`
+	padding-left: ${token("space.200")};
 `;
 
 const Error = ({
@@ -42,7 +42,7 @@ const Error = ({
 				type === "warning" ? <WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" /> :
 					<ErrorIcon label="warning" primaryColor={token("color.background.danger.bold")} size="medium" />
 			}
-			<div>{message}</div>
+			<ErrorContent>{message}</ErrorContent>
 		</ErrorWrapper>
 	);
 };
