@@ -10,6 +10,8 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { JiraGetConnectedRepos } from "~/src/routes/jira/jira-get-connected-repos";
+import { JiraGetSyncededRepos } from "~/src/routes/jira/jira-get-synced-repos";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
 import { JiraSecurityWorkspacesRouter } from "routes/jira/security/workspaces/jira-security-workspaces-router";
@@ -36,6 +38,10 @@ JiraRouter.use("/workspaces", jiraSymmetricJwtMiddleware, JiraWorkspacesRouter);
 JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRouter);
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
+
+JiraRouter.get("/repoCount/:subscriptionId", JiraGetSyncededRepos);
+
+JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, jiraSymmetricJwtMiddleware, JiraGetConnectedRepos);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`
