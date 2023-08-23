@@ -2,7 +2,7 @@ import { AxiosError } from "axios";
 import { ErrorType, ApiError, ErrorCode } from "rest-interfaces";
 import React, { MouseEvent } from "react";
 import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../components/Error/KnownErrors";
-import analyticsClient from "~/src/analytics";
+import analyticsClient from "../analytics";
 
 export type ErrorObjType = {
 	type: ErrorType,
