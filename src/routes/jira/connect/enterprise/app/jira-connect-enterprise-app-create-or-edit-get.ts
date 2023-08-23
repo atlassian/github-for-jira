@@ -72,7 +72,7 @@ export const JiraConnectEnterpriseAppCreateOrEditGet = async (
 			name: AnalyticsScreenEventsEnum.CreateOrEditGitHubServerAppScreenEventName
 		}, {
 			isNew
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		res.render("jira-manual-app-creation.hbs", {
 			... config,

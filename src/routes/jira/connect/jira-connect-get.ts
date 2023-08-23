@@ -14,7 +14,7 @@ export const JiraConnectGet = async (
 			name: AnalyticsScreenEventsEnum.SelectGitHubProductEventName
 		}, {
 			jiraHost: res.locals.jiraHost
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		res.render("jira-select-github-product.hbs");
 

@@ -65,7 +65,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 
 		logger.info("Branch create successful.");
-		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost, res.locals.userAccountId);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost, res.locals.accountId);
 		const tags = {
 			name: newBranchName,
 			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
@@ -74,7 +74,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	} catch (err) {
 		logger.error({ err }, getErrorMessages(err.status));
 		res.status(err.status).json({ error: getErrorMessages(err.status) });
-		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost, res.locals.userAccountId);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost, res.locals.accountId);
 		statsd.increment(metricCreateBranch.failed, {
 			name: newBranchName
 		}, { jiraHost });

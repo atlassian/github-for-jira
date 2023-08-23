@@ -67,7 +67,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		}, {
 			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: true
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		res.redirect(`/github/${uuid}/configuration`);
 	} catch (error) {
@@ -86,7 +86,7 @@ export const GithubManifestCompleteGet = async (req: Request, res: Response) => 
 		}, {
 			withApiKey: !!connectConfig.apiKeyHeaderName,
 			success: false
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		res.redirect(`/error/${errorQueryParam}?retryUrl=/github-manifest`);
 	}

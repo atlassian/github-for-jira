@@ -198,7 +198,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		successfulServerBackfillCount: countStatus(gheServersWithConnections, "FINISHED"),
 		numberOfSkippedRepos: countNumberSkippedRepos(completeConnections),
 		hasConnections
-	}, res.locals.userAccountId);
+	}, res.locals.accountId);
 };
 
 const getRetryableFailedSyncErrors = async (subscription: Subscription) => {

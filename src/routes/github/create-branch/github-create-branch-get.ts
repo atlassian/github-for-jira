@@ -51,7 +51,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
 		}, {
 			jiraHost
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 		return;
 	}
 
@@ -78,7 +78,7 @@ export const GithubCreateBranchGet = async (req: Request, res: Response, next: N
 		name: AnalyticsScreenEventsEnum.CreateBranchScreenEventName
 	}, {
 		jiraHost
-	}, res.locals.userAccountId);
+	}, res.locals.accountId);
 };
 
 export const generateBranchName = (issueKey: string, issueSummary: string) => {

@@ -37,7 +37,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 			name: AnalyticsScreenEventsEnum.NotConfiguredScreenEventName
 		}, {
 			jiraHost
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		return;
 	}
@@ -66,7 +66,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 		name: AnalyticsScreenEventsEnum.CreateBranchOptionsScreenEventName
 	}, {
 		jiraHost
-	}, res.locals.userAccountId);
+	}, res.locals.accountId);
 };
 
 const getGitHubServers = async (jiraHost: string) => {

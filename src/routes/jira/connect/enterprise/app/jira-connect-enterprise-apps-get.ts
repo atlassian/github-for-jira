@@ -32,7 +32,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 
-			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, userAccountId: res.locals.userAccountId, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
+			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, userAccountId: res.locals.accountId, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsListScreenEventName });
 			res.render("jira-select-server-app.hbs", {
 				list: serverApps,
 				pathNameForAddNew: "github-app-creation-page", // lol, this actually references the same endpoint, but with new flag :mindpop:
@@ -44,7 +44,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 				serverUrl: baseUrl
 			});
 		} else {
-			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, userAccountId: res.locals.userAccountId, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
+			await sendScreenAnalytics({ jiraHost: res.locals.jiraHost, userAccountId: res.locals.accountId, isNew, gheServers, name: AnalyticsScreenEventsEnum.SelectGitHubAppsCreationScreenEventName });
 			res.render("jira-select-app-creation.hbs", {
 				connectConfigUuid: tempConnectConfigUuidOrServerUuid
 			});

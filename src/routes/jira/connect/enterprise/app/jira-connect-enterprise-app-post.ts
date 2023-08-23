@@ -66,7 +66,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		}, {
 			withApiKey: !!apiKeyValue,
 			success: true
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		res.status(202).send();
 
@@ -80,7 +80,7 @@ export const JiraConnectEnterpriseAppPost = async (
 		}, {
 			withApiKey: !!apiKeyValue,
 			success: false
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		req.log.warn({ err }, "Could not create the app");
 		res.status(500).send({ message: "Failed to create GitHub App." });

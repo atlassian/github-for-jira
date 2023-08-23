@@ -59,7 +59,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			success: false,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
-		}, res.locals.userAccountId);
+		}, res.locals.accountId);
 
 		next(new Error("Unauthorized"));
 	}
