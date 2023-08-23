@@ -165,6 +165,7 @@ const ConfigSteps = () => {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			return { success: false, orgs: [] };
 		} else {
+			analyticsClient.sendTrackEvent({ actionSubject: "organizations", action: "fetched" }, { ...getOrgsFetchAnalyticsAttr(response.orgs), stage: "org-list" });
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
 		}
@@ -395,5 +396,20 @@ const ConfigSteps = () => {
 		</Wrapper>
 	);
 };
+
+const getOrgsFetchAnalyticsAttr = (orgs: Array<GitHubInstallationType> = []): Record<string, number> => {
+	try {
+		return {
+			totalCount: orgs.length,
+			nonAdminCount: orgs.filter(o => !o.isAdmin).length,
+			requiresSsoLoginCount: orgs.filter(o => !o.requiresSsoLogin).length,
+			ipBlockedCount: orgs.filter(o => !o.isIPBlocked).length,
+		};
+	} catch (e) {
+		reportError(e);
+		return {};
+	}
+};
+
 
 export default ConfigSteps;

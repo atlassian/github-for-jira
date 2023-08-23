@@ -19,12 +19,13 @@ export type ScreenNames =
 
 type TrackEventActionSubject =
 	"finishOAuthFlow"
+  | "organizations"
   | "organisationConnectResponse"
 	| "installNewOrgInGithubResponse";
 
 export type TrackEventProps = {
 	actionSubject: TrackEventActionSubject,
-	action: "success" | "fail"
+	action: "success" | "fail" | "fetched"
 };
 
 export type ScreenEventProps = {
