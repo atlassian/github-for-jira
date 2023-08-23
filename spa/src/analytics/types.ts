@@ -5,7 +5,9 @@ type UIEventActionSubject =
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
-	| "facedSSOLoginError" | "facedGitHubIPBlockedError" | "facedGithubNonAdminError";
+	| "facedSSOLoginError" | "facedGitHubIPBlockedError" | "facedGithubNonAdminError"
+	| "facedTimeoutError" | "facedGithubRateLimitError" | "facedInvalidGitHubTokenError"
+	| "facedGenericError";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,

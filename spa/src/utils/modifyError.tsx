@@ -2,6 +2,7 @@ import { AxiosError } from "axios";
 import { ErrorType, ApiError, ErrorCode } from "rest-interfaces";
 import React, { MouseEvent } from "react";
 import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../components/Error/KnownErrors";
+import analyticsClient from "~/src/analytics";
 
 export type ErrorObjType = {
 	type: ErrorType,
@@ -61,10 +62,13 @@ export const modifyError = (
 			message: <ErrorForNonAdmins orgName={context.orgLogin} />
 		};
 	} else if (errorCode === "TIMEOUT") {
+		analyticsClient.sendUIEvent({ actionSubject: "facedTimeoutError", action: "clicked" }, { type: "cloud" });
 		return { ...errorObj, message: "Request timeout. Please try again later." };
 	} else if (errorCode === "RATELIMIT") {
+		analyticsClient.sendUIEvent({ actionSubject: "facedGithubRateLimitError", action: "clicked" }, { type: "cloud" });
 		return { ...errorObj, message: "GitHub rate limit exceeded. Please try again later." };
 	} else if (errorCode === "INVALID_TOKEN") {
+		analyticsClient.sendUIEvent({ actionSubject: "facedInvalidGitHubTokenError", action: "clicked" }, { type: "cloud" });
 		return {
 			...errorObj,
 			message: <>
@@ -72,6 +76,7 @@ export const modifyError = (
 			</>
 		};
 	} else {
+		analyticsClient.sendUIEvent({ actionSubject: "facedGenericError", action: "clicked" }, { type: "cloud" });
 		return { ...errorObj, message: GENERIC_MESSAGE };
 	}
 };
