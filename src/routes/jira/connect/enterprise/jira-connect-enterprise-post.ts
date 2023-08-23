@@ -25,7 +25,7 @@ const isInteger = (n: string) => {
 	return !isNaN(Number(n));
 };
 
-const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) => {
+const sendErrorMetricAndAnalytics = (jiraHost: string, userAccountId: string | undefined, errorCode: ErrorResponseCode, maybeStatus: string | undefined = undefined) => {
 	const errorCodeAndStatusObj: { errorCode: string, status?: string } = { errorCode };
 	if (maybeStatus) {
 		errorCodeAndStatusObj.status = maybeStatus;
@@ -39,7 +39,7 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	}, {
 		jiraHost,
 		...errorCodeAndStatusObj
-	});
+	}, userAccountId);
 };
 
 const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
@@ -86,7 +86,7 @@ export const JiraConnectEnterprisePost = async (
 			errors: [{ code: ErrorResponseCode.INVALID_URL, reason: urlValidationResult.reason }]
 		});
 		req.log.info(`The entered URL is not valid. ${gheServerURL} is not a valid url`);
-		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.INVALID_URL);
+		sendErrorMetricAndAnalytics(jiraHost, res.locals.userAccountId, ErrorResponseCode.INVALID_URL);
 		return;
 	}
 
@@ -100,7 +100,7 @@ export const JiraConnectEnterprisePost = async (
 	if (GITHUB_CLOUD_HOSTS.includes(new URL(gheServerURL).hostname)) {
 		res.status(200).send({ success: false, errors: [ { code: ErrorResponseCode.CLOUD_HOST } ] });
 		req.log.info("The entered URL is GitHub cloud site, return error");
-		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CLOUD_HOST);
+		sendErrorMetricAndAnalytics(jiraHost, res.locals.userAccountId, ErrorResponseCode.CLOUD_HOST);
 		return;
 	}
 
@@ -146,7 +146,7 @@ export const JiraConnectEnterprisePost = async (
 					reason: "Received OK, but the host is not GitHub Enterprise server"
 				}]
 			});
-			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
+			sendErrorMetricAndAnalytics(jiraHost, res.locals.userAccountId, ErrorResponseCode.CANNOT_CONNECT, "" + response.status);
 			return;
 		}
 
@@ -158,7 +158,7 @@ export const JiraConnectEnterprisePost = async (
 			source: AnalyticsTrackSource.GitHubEnterprise
 		}, {
 			jiraHost: jiraHost
-		});
+		}, res.locals.userAccountId);
 	} catch (err) {
 		const axiosError: AxiosError = (err instanceof GithubClientError) ? err.cause : err;
 
@@ -172,7 +172,7 @@ export const JiraConnectEnterprisePost = async (
 				source: AnalyticsTrackSource.GitHubEnterprise
 			}, {
 				jiraHost
-			});
+			}, res.locals.userAccountId);
 			return;
 		}
 
@@ -198,6 +198,6 @@ export const JiraConnectEnterprisePost = async (
 					.join(". ")
 			}]
 		});
-		sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, codeOrStatus);
+		sendErrorMetricAndAnalytics(jiraHost, res.locals.userAccountId, ErrorResponseCode.CANNOT_CONNECT, codeOrStatus);
 	}
 };

@@ -66,6 +66,7 @@ export const verifyAdminPermsAndFinishInstallation =
 		gitHubServerAppIdPk: number | undefined,
 		gitHubInstallationId: number,
 		useNewSPAExperience: boolean,
+		userAccountId: string,
 		parentLogger: Logger
 	): Promise<ResultObject> => {
 
@@ -142,7 +143,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: true,
 				gitHubProduct
-			});
+			}, userAccountId);
 
 			return {};
 		} catch (err) {
@@ -157,7 +158,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: false,
 				gitHubProduct
-			});
+			}, userAccountId);
 
 			log.error({ err, gitHubProduct }, "Error processing subscription add request");
 			throw err;

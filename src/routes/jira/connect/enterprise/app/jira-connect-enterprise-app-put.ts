@@ -43,7 +43,7 @@ export const JiraConnectEnterpriseAppPut = async (
 			source: AnalyticsTrackSource.GitHubEnterprise
 		}, {
 			success: true
-		});
+		}, res.locals.userAccountId);
 
 		res.status(202).send();
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
@@ -55,7 +55,7 @@ export const JiraConnectEnterpriseAppPut = async (
 			source: AnalyticsTrackSource.GitHubEnterprise
 		}, {
 			success: false
-		});
+		}, res.locals.userAccountId);
 
 		res.status(404).send({ message: "Failed to update GitHub App." });
 		return next(new Error(`Failed to update GitHub app: ${error}`));

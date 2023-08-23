@@ -25,7 +25,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 			source: AnalyticsTrackSource.GitHubEnterprise
 		}, {
 			success: true
-		});
+		}, res.locals.userAccountId);
 
 		res.status(200).json({ success: true });
 		req.log.debug("Jira Connect Enterprise App deleted successfully.");
@@ -37,7 +37,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 			source: AnalyticsTrackSource.GitHubEnterprise
 		}, {
 			success: false
-		});
+		}, res.locals.userAccountId);
 
 		req.log.error({ error }, "Failed to delete app due error");
 		res.status(200).json({ success: false, message: "Failed to delete GitHub App." });

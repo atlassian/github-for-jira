@@ -65,7 +65,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 		res.sendStatus(200);
 
 		logger.info("Branch create successful.");
-		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchSuccessTrackEventName, jiraHost, res.locals.userAccountId);
 		const tags = {
 			name: newBranchName,
 			gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppConfig.githubAppId)
@@ -74,19 +74,19 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	} catch (err) {
 		logger.error({ err }, getErrorMessages(err.status));
 		res.status(err.status).json({ error: getErrorMessages(err.status) });
-		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost);
+		await sendTrackEventAnalytics(AnalyticsTrackEventsEnum.CreateBranchErrorTrackEventName, jiraHost, res.locals.userAccountId);
 		statsd.increment(metricCreateBranch.failed, {
 			name: newBranchName
 		}, { jiraHost });
 	}
 };
 
-const sendTrackEventAnalytics = async (name: string, jiraHost: string) => {
+const sendTrackEventAnalytics = async (name: string, jiraHost: string, userAccountId: string | undefined) => {
 	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		action: name,
 		actionSubject: name,
 		source: AnalyticsTrackSource.CreateBranch
 	}, {
 		jiraHost
-	});
+	}, userAccountId);
 };

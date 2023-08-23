@@ -31,12 +31,12 @@ export interface SQSAnalyticsMessagePayload {
 	eventPayload: SQSEventPayload;
 }
 
-export const sendAnalyticsWithSqs = async (
+const sendAnalyticsWithSqs = async (
 	jiraHost: string,
 	eventType: "screen" | "ui" | "operational" | "track",
 	eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>,
-	attributes: Record<string, unknown> = {},
-	accountId?: string
+	attributes: Record<string, unknown>,
+	accountId: string | undefined
 ): Promise<void> => {
 
 	const payload: SQSAnalyticsMessagePayload = {
@@ -72,9 +72,9 @@ export const sendAnalyticsWithSqs = async (
  * @param unsafeAttributes - free-form attributes, will be included as "attributes" property into the properties of the event
  */
 export const sendAnalytics: {
-	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
-	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
-} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): Promise<void> => {
+	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId: string | undefined);
+	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId: string | undefined);
+} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId: string | undefined): Promise<void> => {
 
 	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
 		logger.warn("Skip analytics for test jira in prod");
@@ -88,5 +88,5 @@ export const sendAnalytics: {
 
 	attributes.appKey = envVars.APP_KEY;
 
-	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
+	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes || {}, accountId);
 };

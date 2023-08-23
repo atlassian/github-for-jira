@@ -64,7 +64,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
 	}, {
 		gitHubProduct: getCloudOrServerFromGitHubAppId(gitHubAppId)
-	});
+	}, res.locals.userAccountId);
 
 	res.sendStatus(204);
 };

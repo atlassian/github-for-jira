@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import {
 	fetchAndSaveUserJiraAdminStatus,
@@ -98,6 +98,9 @@ describe("fetchAndSaveUserJiraAdminStatus",  () => {
 			error: jest.fn()
 		}
 	} as unknown as Request;
+	const mockResponse = {
+		locals: {}
+	} as unknown as Response;
 	const mockClaims = { sub: "1111" };
 	let installation;
 
@@ -117,7 +120,7 @@ describe("fetchAndSaveUserJiraAdminStatus",  () => {
 			.post("/rest/api/latest/permissions/check", payload)
 			.reply(200, { globalPermissions: ["ADMINISTER"] });
 
-		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockResponse, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(true);
 	});
@@ -135,7 +138,7 @@ describe("fetchAndSaveUserJiraAdminStatus",  () => {
 			.post("/rest/api/latest/permissions/check", payload)
 			.reply(200, { globalPermissions: [] });
 
-		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockResponse, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(false);
 	});
@@ -144,7 +147,7 @@ describe("fetchAndSaveUserJiraAdminStatus",  () => {
 		const mockClaimsNoSub = {};
 		mockRequest.session.isJiraAdmin = undefined;
 
-		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaimsNoSub, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockResponse, mockClaimsNoSub, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(undefined);
 	});
@@ -152,7 +155,7 @@ describe("fetchAndSaveUserJiraAdminStatus",  () => {
 	it("should return session value without JiraClient request if already exists", async () => {
 		mockRequest.session.isJiraAdmin = true;
 
-		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockClaims, installation);
+		await fetchAndSaveUserJiraAdminStatus(mockRequest, mockResponse, mockClaims, installation);
 
 		expect(mockRequest.session.isJiraAdmin).toBe(true);
 	});

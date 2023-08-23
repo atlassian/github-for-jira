@@ -215,7 +215,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 			durationPerRepoInMinute: subscription.totalNumberOfRepos ? Math.ceil(timeDiff / (60 * 1000 * subscription.totalNumberOfRepos)) : undefined,
 			reposBucket: repoCountToBucket(subscription.totalNumberOfRepos),
 			reposCount: subscription.totalNumberOfRepos
-		});
+		}, undefined);
 	}
 
 	logger.info({ startTime, endTime, timeDiff, gitHubProduct }, "Sync status is complete");

@@ -24,7 +24,7 @@ describe("analytics-client", () => {
 	});
 
 	it("hashes jiraHost attribute before sending", async () => {
-		await sendAnalytics(jiraHost, "screen", {} as unknown as ScreenEventProps & Record<string, unknown>, { jiraHost });
+		await sendAnalytics(jiraHost, "screen", {} as unknown as ScreenEventProps & Record<string, unknown>, { jiraHost }, undefined);
 
 		const sendMessageCalls = (SQS as unknown as jest.Mock).mock.results[0].value.sendMessage.mock.calls;
 
@@ -61,7 +61,7 @@ describe("analytics-client", () => {
 	});
 
 	it("does not send analytics for test instances", async () => {
-		await sendAnalytics("https://site-1.some-test.atlassian.net", "screen", {} as unknown as ScreenEventProps & Record<string, unknown>, {});
+		await sendAnalytics("https://site-1.some-test.atlassian.net", "screen", {} as unknown as ScreenEventProps & Record<string, unknown>, {}, undefined);
 		expect(SQS).not.toHaveBeenCalled();
 	});
 });

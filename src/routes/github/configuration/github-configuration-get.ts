@@ -170,7 +170,7 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 	{
 		jiraHost,
 		gitHubProduct
-	});
+	}, res.locals.userAccountId);
 
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
 

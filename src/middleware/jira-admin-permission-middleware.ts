@@ -3,7 +3,7 @@ import { Installation } from "models/installation";
 import { JiraClient } from "models/jira-client";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
-export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Record<any, any>, installation: Installation): Promise<void> => {
+export const fetchAndSaveUserJiraAdminStatus = async (req: Request, res: Response, claims: Record<any, any>, installation: Installation): Promise<void> => {
 	const ADMIN_PERMISSION = "ADMINISTER";
 	// We only need to fetch this from Jira if it doesn't exist in the session
 	if (req.session.isJiraAdmin !== undefined) {
@@ -15,7 +15,11 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, claims: Reco
 		// Can't check permissions without userAccountId
 		if (!userAccountId) {
 			return;
+		} else {
+			res.locals.accountId = userAccountId;
 		}
+
+		res.locals.accountId = userAccountId;
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 

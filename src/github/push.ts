@@ -42,7 +42,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		jiraHost,
 		totalCommitCount: context.payload?.commits?.length || 0,
 		commitWithJiraIssueKeyCount: payload.commits?.length || 0
-	});
+	}, undefined);
 
 	context.log = context.log.child({
 		jiraHost,

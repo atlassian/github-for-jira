@@ -46,7 +46,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			success: true,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
-		});
+		}, res.locals.accountId);
 
 		res.sendStatus(202);
 	} catch (error) {
@@ -59,7 +59,7 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 			success: false,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
-		});
+		}, res.locals.userAccountId);
 
 		next(new Error("Unauthorized"));
 	}
