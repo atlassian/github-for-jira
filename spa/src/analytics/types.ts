@@ -4,7 +4,8 @@ type UIEventActionSubject =
   | "startOAuthAuthorisation" | "switchGitHubAccount"
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
-	| "dropExperienceViaBackButton";
+	| "dropExperienceViaBackButton"
+	| "facedSSOLoginError" | "facedGitHubIPBlockedError" | "facedGithubNonAdminError";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
@@ -15,6 +16,7 @@ export type ScreenNames =
 	"StartConnectionEntryScreen"
   | "AuthorisationScreen"
 	| "OrganisationConnectionScreen"
+	| "OrganisationConnectionScreenWithSSOLoginError" | "OrganisationConnectionScreenWithGitHubIPBlockedError" | "OrganisationConnectionScreenWithGithubNonAdminError"
 	| "SuccessfulConnectedScreen";
 
 type TrackEventActionSubject =
