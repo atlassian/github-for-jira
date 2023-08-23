@@ -35,7 +35,7 @@ const sendAnalyticsWithSqs = async (
 	jiraHost: string,
 	eventType: "screen" | "ui" | "operational" | "track",
 	eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>,
-	attributes: Record<string, unknown>,
+	attributes: Record<string, unknown> = {},
 	accountId: string | undefined
 ): Promise<void> => {
 
@@ -88,5 +88,5 @@ export const sendAnalytics: {
 
 	attributes.appKey = envVars.APP_KEY;
 
-	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes || {}, accountId);
+	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
 };
