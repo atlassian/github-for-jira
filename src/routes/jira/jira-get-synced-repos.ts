@@ -3,20 +3,14 @@ import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
 
-interface Page {
-	pageNum: number;
-	isCurrentPage: boolean;
-}
-
-export const JiraGetConnectedRepos = async (
+export const JiraGetSyncededRepos = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> => {
 
 	try {
-		const { jiraHost, nonce } = res.locals;
-		const subscriptionId = Number(req.params.subscriptionId) || 6;
+		const subscriptionId = Number(req.params.subscriptionId);
 		const page = Number(req.query.page || 1);
 		const pageSize = Number(req.query.pageSize || 10);
 		const repoName = req.query.repoName || "";
@@ -87,7 +81,7 @@ export const JiraGetConnectedRepos = async (
 		const repos = repoSyncStates.map((repoSyncState) => {
 			return {
 				name: repoSyncState.repoFullName,
-				syncStatus: mapTaskStatus(getSyncStatus(repoSyncState)),
+				syncStatus: getSyncStatus(repoSyncState),
 				branchStatus: repoSyncState?.branchStatus,
 				commitStatus: repoSyncState?.commitStatus,
 				pullStatus: repoSyncState?.pullStatus,
@@ -96,14 +90,13 @@ export const JiraGetConnectedRepos = async (
 				failedCode: repoSyncState.failedCode
 			};
 		});
+		const completedRepos = repos.filter(repo => ['complete','failed'].includes(repo.syncStatus)).length;
 
-		res.render("jira-connected-repos.hbs", {
-			host: jiraHost,
-			repos: repos,
+		res.status(200).send({
+			completedRepos,
 			subscriptionId,
-			csrfToken: req.csrfToken(),
-			nonce,
-			...getPaginationState(page, pageSize, reposCount)
+			reposCount,
+			syncCompleted: completedRepos === reposCount,
 		});
 
 	} catch (error) {
@@ -111,51 +104,7 @@ export const JiraGetConnectedRepos = async (
 	}
 };
 
-const getPaginationState = (page: number, pageSize: number, reposCount: number) => {
 
-	const totalPages = Math.ceil(reposCount / pageSize);
-	const hasPrevPage = page > 1;
-	const prevPageNum = page - 1;
-	const hasNextPage = page < totalPages;
-	const nextPageNum = page + 1;
-
-	const pages = getPaginationNumbers(page, totalPages);
-
-	return {
-		page,
-		totalPages,
-		hasPrevPage,
-		prevPageNum,
-		hasNextPage,
-		nextPageNum,
-		pages
-	};
-};
-
-const getPaginationNumbers = (currentPageNum: number, totalPages: number): Page[] => {
-
-	const maxPagesToShow = 20;
-	const pages: Page[] = [];
-
-	// Determine the range of pages to show
-	let startPage = Math.max(currentPageNum - Math.floor(maxPagesToShow / 2), 1);
-	const endPage = Math.min(startPage + maxPagesToShow - 1, totalPages);
-
-	// Adjust the range so it shows pages relative to current
-	if (endPage - startPage < maxPagesToShow - 1) {
-		startPage = Math.max(endPage - maxPagesToShow + 1, 1);
-	}
-
-	// Add the pages to the array
-	for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-		pages.push({
-			pageNum,
-			isCurrentPage: pageNum === currentPageNum
-		});
-	}
-
-	return pages;
-};
 
 const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
 
@@ -173,15 +122,3 @@ const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
 	return "pending";
 };
 
-const mapTaskStatus = (syncStatus: TaskStatus): string => {
-	switch (syncStatus) {
-		case "pending":
-			return "IN PROGRESS";
-		case "complete":
-			return "FINISHED";
-		case "failed":
-			return "FAILED";
-		default:
-			return syncStatus;
-	}
-};

@@ -177,7 +177,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		hasConnections,
 		useNewSPAExperience,
 		APP_URL: process.env.APP_URL,
-		enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
+		enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost)||true,
 		csrfToken: req.csrfToken(),
 		nonce
 	});

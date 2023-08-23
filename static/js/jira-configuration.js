@@ -337,8 +337,45 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
 	}
 });
+let timeOut;
+function poll() {
+	const subscriptionId = $('.jiraConfiguration__table__repo_access').data('subscription-id');
+	$.ajax({
+		type: "GET",
+		url: `/jira/repoCount/${subscriptionId}`,
+		success: (response) => {
+			const completedRepos = response.completedRepos;
+			const reposCount = response.reposCount;
+			const syncCompleted = response.syncCompleted;
+			$('.syncCount').text(`${completedRepos}/${reposCount}`);
+			if(!syncCompleted){
+				console.log("....... 2 .....")
+				timeOut = setTimeout(poll, 3000);
+			}else{
+				clearTimeout(timeOut);
+			}
+		},
+		error: () => {
+		  showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
+		}
+	});
+	// $.get('/some-api', function(data) {
+	//   if (data > 10) {
+	// 	setTimeout(poll, 1000);
+	//   } else {
+	// 	console.log('Result is not greater than 10:', data);
+	//   }
+	// });
+}
 
 $(document).ready(function () {
+	//Todo:
+	//1. read a meta data from loaded html page to see if the repo sync has started
+	//2. if its in progress (not in finished state) -> call new API
+	// new API: should be able to fetch the status of current repo sync
+	// run that new API call in an interval -> till all repos are not synced 
+	// update the status of repo sync in the HTML  
+	poll();
 	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
 	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
