@@ -19,7 +19,6 @@ export const fetchAndSaveUserJiraAdminStatus = async (req: Request, res: Respons
 			res.locals.accountId = userAccountId;
 		}
 
-		res.locals.accountId = userAccountId;
 		const jiraClient = await JiraClient.getNewClient(installation, req.log);
 		const permissions = await jiraClient.checkAdminPermissions(userAccountId);
 
