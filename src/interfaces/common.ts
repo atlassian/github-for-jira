@@ -95,10 +95,10 @@ export interface Config {
 		 * of the valid Jira environment types.
 		 */
 		environmentMapping?: {
-			development?: string[];
-			testing?: string[];
-			staging?: string[];
-			production?: string[];
+			development?: string[] | undefined | null;
+			testing?: string[] | undefined | null;
+			staging?: string[] | undefined | null;
+			production?: string[] | undefined | null;
 		}
 
 		services?: {
