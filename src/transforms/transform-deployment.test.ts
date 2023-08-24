@@ -93,6 +93,15 @@ describe.each([
 
 describe("deployment environment mapping", () => {
 
+	it("pass with null env mapping correctly", () => {
+
+		const userConfig = { deployments: { environmentMapping: { development: null, staging: "stg" } } };
+
+		// match
+		expect(mapEnvironment("stg", userConfig as any)).toBe("staging");
+
+	});
+
 	it("falls back to hardcoded config when user config doesn't match", () => {
 		const userConfig = {
 			deployments: {
