@@ -4,6 +4,7 @@ import { reverseCalculatePrefix, transformRepositoryId } from "~/src/transforms/
 import { GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { RepoSyncState } from "models/reposyncstate";
 import { SecurityContainer } from "./jira-security-workspaces-containers.types";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 interface RepoUrlAndRepoId {
 	repoUrl: string,
@@ -42,27 +43,29 @@ const getRepos = async (repoIds: string[], jiraHost: string): Promise<RepoSyncSt
 
 export const transformRepositories = async (
 	repos: RepoSyncState[]
-): Promise<SecurityContainer[]> => {
-	const transformedSubscriptions = repos.map((repo) => {
-		const { repoId, repoName, repoUrl, updatedAt } = repo;
-		const baseUrl = new URL(repoUrl).origin;
-		return {
-			id: transformRepositoryId(repoId, baseUrl),
-			name: repoName,
-			url: repoUrl,
-			avatarUrl: DEFAULT_AVATAR,
-			lastUpdatedDate: updatedAt
-		};
-	});
-
-	return transformedSubscriptions;
-};
+): Promise<SecurityContainer[]> => repos.map((repo) => {
+	const { repoId, repoName, repoUrl, updatedAt } = repo;
+	const baseUrl = new URL(repoUrl).origin;
+	return {
+		id: transformRepositoryId(repoId, baseUrl),
+		name: repoName,
+		url: repoUrl,
+		avatarUrl: DEFAULT_AVATAR,
+		lastUpdatedDate: updatedAt
+	};
+});
 
 export const JiraSecurityWorkspacesContainersPost = async (req: Request, res: Response): Promise<void> => {
+	const { jiraHost } = res.locals;
+
+	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+		res.status(403).send(Errors.FORBIDDEN_PATH);
+		return;
+	}
+
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security POST repositories");
 
 	const { ids: repoIds } = req.body;
-	const { jiraHost } = res.locals;
 
 	if (!repoIds) {
 		// TODO: Return fetchContainers error handling spec once implemented
