@@ -8,6 +8,10 @@ import { Installation } from "~/src/models/installation";
 import { DEFAULT_AVATAR } from "./jira-security-workspaces-containers-post";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription } from "~/src/models/subscription";
+import { when } from "jest-when";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+
+jest.mock("config/feature-flags");
 
 const createMultipleSubscriptionsAndRepos = async () => {
 	const sub1 = await Subscription.create({
@@ -59,6 +63,10 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -76,6 +84,30 @@ describe("jira-security-workspaces-containers-search-get", () => {
 			iss: installation.plainClientKey
 		}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
 	};
+
+	it("Should return a 403 when the ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(false);
+
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			next();
+		});
+		app.use(getFrontendApp());
+
+		await supertest(app)
+			.get("/jira/security/workspaces/containers/search")
+			.set({
+				authorization: `JWT ${await generateJwt({ workspaceId: 12345 })}`
+			})
+			.query({ workspaceId: 12345 })
+			.expect(res => {
+				expect(res.status).toBe(403);
+				expect(res.text).toContain(Errors.FORBIDDEN_PATH);
+			});
+	});
 
 	it("Should return a 400 status if no workspace ID is passed", async () => {
 		app = express();
