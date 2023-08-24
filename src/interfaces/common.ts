@@ -94,12 +94,7 @@ export interface Config {
 		 * globs that are used in the `mapEnvironment()` function to match a given environment with one
 		 * of the valid Jira environment types.
 		 */
-		environmentMapping?: {
-			development?: string[] | undefined | null;
-			testing?: string[] | undefined | null;
-			staging?: string[] | undefined | null;
-			production?: string[] | undefined | null;
-		}
+		environmentMapping?: Record<string, string[] | undefined | null>
 
 		services?: {
 			ids?: string[];
