@@ -63,6 +63,10 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -106,10 +110,6 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	});
 
 	it("Should return a 400 status if no workspace ID is passed", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -129,10 +129,6 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	});
 
 	it("Should return all repos for workspace ID", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -178,10 +174,6 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	});
 
 	it("Should return matched repos with search query for workspace ID", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -220,10 +212,6 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	});
 
 	it("Should return an empty array if no matching workspace ID is found", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -254,10 +242,6 @@ describe("jira-security-workspaces-containers-search-get", () => {
 	});
 
 	it("Should return an empty array if no result matches with search query", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");

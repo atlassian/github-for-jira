@@ -81,6 +81,10 @@ describe("Workspaces Post", () => {
 
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(true);
+
 		createdDbEntries = await createMultipleSubscriptionsAndRepos();
 		installation = await Installation.install({
 			host: jiraHost,
@@ -122,10 +126,6 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return a 400 status if no IDs are passed in the body", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		await supertest(app)
@@ -140,10 +140,6 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return an empty array if no matching subscriptions are found", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		const response = {
@@ -165,10 +161,6 @@ describe("Workspaces Post", () => {
 			});
 	});
 	it("Should return a half response if a some of the entries are missin or malformed", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		const response = {
@@ -197,10 +189,6 @@ describe("Workspaces Post", () => {
 			});
 	});
 	it("Should not return subscriptions without repos", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		const response = {
@@ -224,10 +212,6 @@ describe("Workspaces Post", () => {
 
 
 	it("Should only return a subscription once even if the subscription is passed multiple times", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		const response = {
@@ -257,10 +241,6 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return the GitHub logo if there is no avatarUrl", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 
@@ -291,10 +271,6 @@ describe("Workspaces Post", () => {
 	});
 
 	it("Should return all subscriptions for provided IDs", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = getFrontendApp();
 
 		const response = {

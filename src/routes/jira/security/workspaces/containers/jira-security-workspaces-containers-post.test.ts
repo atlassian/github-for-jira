@@ -69,6 +69,10 @@ describe("Repositories Post", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
+		when(booleanFlag).calledWith(
+			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
+		).mockResolvedValue(true);
+
 		installation = await Installation.install({
 			host: jiraHost,
 			sharedSecret: "shared-secret",
@@ -114,10 +118,6 @@ describe("Repositories Post", () => {
 	});
 
 	it("Should return a 400 status if no IDs are passed in the body", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -137,10 +137,6 @@ describe("Repositories Post", () => {
 	});
 
 	it("Should return an empty array if no matching repositories are found", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -168,10 +164,6 @@ describe("Repositories Post", () => {
 	});
 
 	it("Should only return a repo once even if the repoId is passed multiple times", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -225,10 +217,6 @@ describe("Repositories Post", () => {
 	});
 
 	it("Should return all repos for provided IDs (cloud and server)", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -285,10 +273,6 @@ describe("Repositories Post", () => {
 	});
 
 	it("Should correctly return repos for identical cloud and server IDs (once hash is trimmed)", async () => {
-		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost
-		).mockResolvedValue(true);
-
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
