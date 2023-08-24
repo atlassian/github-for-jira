@@ -197,6 +197,26 @@ Object {
         "value": "GitHub",
       },
     },
+    "jiraSecurityInfoProvider": Object {
+      "actions": Object {
+        "fetchContainers": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces/containers",
+        },
+        "fetchWorkspaces": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces",
+        },
+        "searchContainers": Object {
+          "templateUrl": "https://test-github-app-instance.com/jira/security/workspaces/containers/search",
+        },
+      },
+      "documentationUrl": "https://docs.github.com/code-security",
+      "homeUrl": "https://github.com",
+      "key": "github-security",
+      "logoUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+      "name": Object {
+        "value": "GitHub Security",
+      },
+    },
     "postInstallPage": Object {
       "conditions": Array [
         Object {
