@@ -16,7 +16,7 @@ import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
-import { GitHubInstallationType, ErrorCode } from "../../../../src/rest-interfaces";
+import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
