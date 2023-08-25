@@ -64,6 +64,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 
 		res.locals.installation = installation;
 		res.locals.jiraHost = installation.jiraHost;
+		res.locals.accountId = req.session.accountId;
 		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 	}
