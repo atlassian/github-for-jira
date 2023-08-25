@@ -6,6 +6,7 @@ import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../components
 export type ErrorObjType = {
 	type: ErrorType,
 	message: string | React.JSX.Element;
+	errorCode: ErrorCode
 }
 
 type SimpleError = {
@@ -43,6 +44,7 @@ export const modifyError = (
 	if (errorCode === "IP_BLOCKED") {
 		return {
 			...warningObj,
+			errorCode,
 			message: <ErrorForIPBlocked resetCallback={callbacks.onRelogin} orgName={context.orgLogin} />
 		};
 	}  else if (errorCode === "SSO_LOGIN") {
@@ -51,6 +53,7 @@ export const modifyError = (
 
 		return {
 			...warningObj,
+			errorCode,
 			message: <>
 				<ErrorForSSO accessUrl={accessUrl} resetCallback={callbacks.onRelogin} orgName={context.orgLogin} />
 			</>
@@ -58,20 +61,22 @@ export const modifyError = (
 	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
 		return {
 			...warningObj,
+			errorCode,
 			message: <ErrorForNonAdmins orgName={context.orgLogin} />
 		};
 	} else if (errorCode === "TIMEOUT") {
-		return { ...errorObj, message: "Request timeout. Please try again later." };
+		return { ...errorObj, errorCode, message: "Request timeout. Please try again later." };
 	} else if (errorCode === "RATELIMIT") {
-		return { ...errorObj, message: "GitHub rate limit exceeded. Please try again later." };
+		return { ...errorObj, errorCode,  message: "GitHub rate limit exceeded. Please try again later." };
 	} else if (errorCode === "INVALID_TOKEN") {
 		return {
 			...errorObj,
+			errorCode,
 			message: <>
 				<span>GitHub token seems invalid, please <a href="" onClick={callbacks.onClearGitHubToken}>login again</a>.</span>
 			</>
 		};
 	} else {
-		return { ...errorObj, message: GENERIC_MESSAGE };
+		return { ...errorObj, errorCode, message: GENERIC_MESSAGE };
 	}
 };
