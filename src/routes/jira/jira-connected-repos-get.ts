@@ -2,13 +2,20 @@ import { NextFunction, Request, Response } from "express";
 import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
+import { escape } from "sequelize/lib/sql-string";
 
 interface Page {
 	pageNum: number;
 	isCurrentPage: boolean;
 }
 
-export const JiraGetConnectedRepos = async (
+// TODO: add tests:
+// 	- no subscription
+// 	- subscription with different jiraHost
+//  - sunny path
+//	- SQL injection test for syncStatusFilter
+// 	- SQL injection test for repoName
+export const JiraConnectedReposGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -30,7 +37,7 @@ export const JiraGetConnectedRepos = async (
 
 		const subscription = await Subscription.findByPk(subscriptionId);
 
-		if (!subscription) {
+		if (!subscription || subscription.jiraHost !== jiraHost) {
 			req.log.error("Missing Subscription");
 			res.status(401).send("Missing Subscription");
 			return;
@@ -40,11 +47,11 @@ export const JiraGetConnectedRepos = async (
 		if (syncStatusFilter && syncStatusFilter !== "all") {
 			syncStatusCondition = {
 				[Op.or]: [
-					{ branchStatus: `${syncStatusFilter}` },
-					{ commitStatus: `${syncStatusFilter}` },
-					{ pullStatus: `${syncStatusFilter}` },
-					{ buildStatus: `${syncStatusFilter}` },
-					{ deploymentStatus: `${syncStatusFilter}` }
+					{ branchStatus: `${escape(syncStatusFilter)}` },
+					{ commitStatus: `${escape(syncStatusFilter)}` },
+					{ pullStatus: `${escape(syncStatusFilter)}` },
+					{ buildStatus: `${escape(syncStatusFilter)}` },
+					{ deploymentStatus: `${escape(syncStatusFilter)}` }
 				]
 			};
 		}
@@ -54,7 +61,7 @@ export const JiraGetConnectedRepos = async (
 				[Op.and]: [
 					{
 						repoName: {
-							[Op.like]: `%${repoName}%`
+							[Op.like]: `%${escape(repoName)}%`
 						}
 					},
 					{
@@ -72,7 +79,7 @@ export const JiraGetConnectedRepos = async (
 				[Op.and]: [
 					{
 						repoName: {
-							[Op.like]: `%${repoName}%`
+							[Op.like]: `%${escape(repoName)}%`
 						}
 					},
 					{
