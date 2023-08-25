@@ -19,6 +19,7 @@ import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
+import OauthManager from "../../services/oauth-manager";
 
 type GitHubOptionType = {
 	selectedOption: number;
@@ -48,9 +49,9 @@ const TooltipContainer = styled.div`
 	}
 `;
 const GitHubOption = styled.div<GitHubOptionType>`
-	background: ${props => props.optionKey === props.selectedOption ? "#DEEBFF" : "rgba(9, 30, 66, 0.04)"};
+	background: ${props => props.optionKey === props.selectedOption ? token("color.background.selected") : token("color.background.accent.gray.subtlest")};
 	font-weight: ${props => props.optionKey === props.selectedOption ? 600 : 400};
-	color: ${props => props.optionKey === props.selectedOption ? token("color.text.accent.blue") : "inherit"};
+	color: ${props => props.optionKey === props.selectedOption ? token("color.text.selected") : token("color.text")};
 	padding: ${token("space.100")} ${token("space.200")};
 	margin-right: ${token("space.100")};
 	border-radius: 100px;
@@ -161,7 +162,7 @@ const ConfigSteps = () => {
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
 		if (response instanceof AxiosError) {
-			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			return { success: false, orgs: [] };
 		} else {
 			setOrganizations(response.orgs);
@@ -180,7 +181,7 @@ const ConfigSteps = () => {
 					});
 				} catch (e) {
 					setLoaderForLogin(false);
-					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken }));
+					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 					reportError(e);
 				}
 				break;
@@ -199,6 +200,16 @@ const ConfigSteps = () => {
 		clearLogin();
 	};
 
+	const reLogin = async () => {
+		// Clearing the errors
+		showError(undefined);
+		await OauthManager.clear();
+		// This resets the token validity check in the parent component and resets the UI
+		setIsLoggedIn(false);
+		// Restart the whole auth flow
+		await OauthManager.authenticateInGitHub(() => {});
+	};
+
 	const clearLogin = () => {
 		setIsLoggedIn(false);
 		setLoaderForLogin(false);
@@ -212,7 +223,7 @@ const ConfigSteps = () => {
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
-				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken }));
+				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			} else {
 				navigate("/spa/connected");
 			}
@@ -238,7 +249,7 @@ const ConfigSteps = () => {
 				}
 			});
 		} catch (e) {
-			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken }));
+			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode });
 			reportError(e);
 		}
@@ -252,7 +263,7 @@ const ConfigSteps = () => {
 				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
-					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken }));
+					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
@@ -272,7 +283,7 @@ const ConfigSteps = () => {
 		const recheckValidity = async () => {
 			const status: boolean | AxiosError = await OAuthManager.checkValidity();
 			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken }));
+				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 				return;
 			}
 			setLoggedInUser(OAuthManager.getUserDetails().username);

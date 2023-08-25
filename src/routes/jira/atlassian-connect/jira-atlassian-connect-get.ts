@@ -71,33 +71,6 @@ export const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): 
 	}
 };
 
-const jiraSecurityInfoProvider = {
-	homeUrl:  "https://github.com",
-	logoUrl: LOGO_URL,
-	documentationUrl: "https://docs.github.com/code-security",
-	actions: {
-		fetchContainers: {
-			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers`
-		},
-		fetchWorkspaces: {
-			templateUrl: `${envVars.APP_URL}/jira/security/workspaces`
-		},
-		searchContainers: {
-			templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
-		}
-	},
-	"name": {
-		"value": "GitHub Security"
-	},
-	"key": "github-security"
-};
-
-export const getSecurityContainerActionUrls = [
-	jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
-	jiraSecurityInfoProvider.actions.searchContainers.templateUrl,
-	jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl
-];
-
 const	modules = {
 	jiraDevelopmentTool: {
 		application: {
@@ -139,6 +112,26 @@ const	modules = {
 		},
 		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
+	},
+	jiraSecurityInfoProvider: {
+		key: "github-security",
+		name: {
+			value: "GitHub Security"
+		},
+		homeUrl:  "https://github.com",
+		logoUrl: LOGO_URL,
+		documentationUrl: "https://docs.github.com/code-security",
+		actions: {
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers`
+			},
+			fetchWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
+			}
+		}
 	},
 	postInstallPage: {
 		key: "github-post-install-page",
@@ -258,11 +251,15 @@ const	modules = {
 	]
 };
 
+export const getSecurityContainerActionUrls = [
+	modules.jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.searchContainers.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl
+];
 
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
 	const { jiraHost } =  res.locals;
 	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
-	const isGitHubSecurityInJiraEnabled = await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost);
 
 	res.status(200).json({
 		apiMigrations: {
@@ -292,10 +289,7 @@ export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promis
 			"DELETE"
 		],
 		apiVersion: 1,
-		modules: {
-			...(isGitHubSecurityInJiraEnabled && { jiraSecurityInfoProvider }),
-			...modules
-		}
+		modules
 	});
 };
 const moduleUrls = compact(map([...modules.adminPages, ...modules.generalPages], "url"));

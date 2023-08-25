@@ -142,7 +142,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
 			break;
 		case "installation":
-			if (context.action === "created" || context.action === "new_permissions_accepted") {
+			if (context.action === "new_permissions_accepted") {
 				await GithubWebhookMiddleware(installationWebhookHandler)(context);
 			}
 			break;

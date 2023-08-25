@@ -104,4 +104,15 @@ describe("JiraClient", () => {
 		});
 	});
 
+	describe("deleteVulnerabilities()", () => {
+		it("delete vulns", async () => {
+			jiraNock
+				.delete("/rest/security/1.0/bulkByProperties?workspaceId=123")
+				.reply(202);
+
+			const jiraRes = await jiraClient?.deleteVulnerabilities(123);
+			expect(jiraRes?.status).toEqual(202);
+		});
+	});
+
 });

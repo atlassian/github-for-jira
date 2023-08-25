@@ -165,22 +165,21 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {
 		res.redirect("/spa?from=homepage");
-		return;
+	} else {
+		res.render("jira-configuration.hbs", {
+			host: jiraHost,
+			gheServers: groupedGheServers,
+			ghCloud: { successfulCloudConnections, failedCloudConnections },
+			hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
+			hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
+			hasConnections,
+			useNewSPAExperience,
+			APP_URL: process.env.APP_URL,
+			enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
+			csrfToken: req.csrfToken(),
+			nonce
+		});
 	}
-
-	res.render("jira-configuration.hbs", {
-		host: jiraHost,
-		gheServers: groupedGheServers,
-		ghCloud: { successfulCloudConnections, failedCloudConnections },
-		hasCloudAndEnterpriseServers: !!((successfulCloudConnections.length || failedCloudConnections.length) && gheServers.length),
-		hasCloudServers: !!(successfulCloudConnections.length || failedCloudConnections.length),
-		hasConnections,
-		useNewSPAExperience,
-		APP_URL: process.env.APP_URL,
-		enableRepoConnectedPage: await booleanFlag(BooleanFlags.ENABLE_CONNECTED_REPOS_VIEW, jiraHost),
-		csrfToken: req.csrfToken(),
-		nonce
-	});
 
 	const successfulServerConnections = gheServersWithConnections
 		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
