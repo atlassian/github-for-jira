@@ -226,7 +226,7 @@ const ConfigSteps = () => {
 				showError(errorObj);
 				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
-				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "success" }, { mode });
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
 				navigate("/spa/connected");
 			}
 		} catch (e) {
