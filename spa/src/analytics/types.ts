@@ -25,7 +25,7 @@ type TrackEventActionSubject =
 
 export type TrackEventProps = {
 	actionSubject: TrackEventActionSubject,
-	action: "success" | "fail" | "fetched"
+	action: "success" | "fail" | "fetched" | "requested";
 };
 
 export type ScreenEventProps = {

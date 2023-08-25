@@ -16,7 +16,7 @@ import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
 import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
 import { reportError } from "../../utils";
-import { GitHubInstallationType } from "../../../../src/rest-interfaces";
+import { GitHubInstallationType, ErrorCode } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
 import SkeletonForLoading from "../ConfigSteps/SkeletonForLoading";
 import OauthManager from "../../services/oauth-manager";
@@ -165,7 +165,6 @@ const ConfigSteps = () => {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			return { success: false, orgs: [] };
 		} else {
-			analyticsClient.sendTrackEvent({ actionSubject: "organizations", action: "fetched" }, { ...getOrgsFetchAnalyticsAttr(response.orgs), stage: "org-list" });
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
 		}
@@ -222,10 +221,12 @@ const ConfigSteps = () => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
-				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+				showError(errorObj);
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "success" }, { mode });
 				navigate("/spa/connected");
 			}
 		} catch (e) {
@@ -246,12 +247,14 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
 				}
 			});
 		} catch (e) {
-			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode });
+			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+			showError(errorObj);
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
 			reportError(e);
 		}
 	};
@@ -294,6 +297,9 @@ const ConfigSteps = () => {
 				const result = await getOrganizations();
 				if (result.success && result.orgs.length === 0) {
 					await installNewOrg("auto");
+				}
+				if (result.success) {
+					setAnalyticsEventsForFetchedOrgs(result.orgs);
 				}
 			}
 		};
@@ -397,19 +403,19 @@ const ConfigSteps = () => {
 	);
 };
 
-const getOrgsFetchAnalyticsAttr = (orgs: Array<GitHubInstallationType> = []): Record<string, number> => {
+const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) => {
 	try {
-		return {
-			totalCount: orgs.length,
-			nonAdminCount: orgs.filter(o => !o.isAdmin).length,
-			requiresSsoLoginCount: orgs.filter(o => !o.requiresSsoLogin).length,
-			ipBlockedCount: orgs.filter(o => !o.isIPBlocked).length,
-		};
+		const notAdminCount = (orgs || []).filter(o => !o.isAdmin).length;
+		const isIPBlockedCount = (orgs || []).filter(o => o.isIPBlocked).length;
+		const requiresSsoLoginCount = (orgs || []).filter(o => o.requiresSsoLogin).length;
+		analyticsClient.sendTrackEvent({ actionSubject: "organizations", action: "fetched" }, {
+			notAdminCount,
+			requiresSsoLoginCount,
+			isIPBlockedCount,
+		});
 	} catch (e) {
 		reportError(e);
-		return {};
 	}
 };
-
 
 export default ConfigSteps;
