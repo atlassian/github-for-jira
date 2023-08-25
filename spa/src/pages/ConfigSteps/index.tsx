@@ -221,10 +221,12 @@ const ConfigSteps = () => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
 			const connected = await AppManager.connectOrg(gitHubInstallationId);
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: connected ? "success" : "fail"}, { mode });
 			if (connected instanceof AxiosError) {
-				showError(modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+				showError(errorObj);
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
 			} else {
+				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
 				navigate("/spa/connected");
 			}
 		} catch (e) {
@@ -245,12 +247,14 @@ const ConfigSteps = () => {
 					}
 				},
 				onRequested: async (_setupAction: string) => {
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
 					navigate("/spa/installationRequested");
 				}
 			});
 		} catch (e) {
-			showError(modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode });
+			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+			showError(errorObj);
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
 			reportError(e);
 		}
 	};
@@ -293,6 +297,9 @@ const ConfigSteps = () => {
 				const result = await getOrganizations();
 				if (result.success && result.orgs.length === 0) {
 					await installNewOrg("auto");
+				}
+				if (result.success) {
+					setAnalyticsEventsForFetchedOrgs(result.orgs);
 				}
 			}
 		};
@@ -394,6 +401,21 @@ const ConfigSteps = () => {
 			</ConfigContainer>
 		</Wrapper>
 	);
+};
+
+const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) => {
+	try {
+		const notAdminCount = (orgs || []).filter(o => !o.isAdmin).length;
+		const isIPBlockedCount = (orgs || []).filter(o => o.isIPBlocked).length;
+		const requiresSsoLoginCount = (orgs || []).filter(o => o.requiresSsoLogin).length;
+		analyticsClient.sendTrackEvent({ actionSubject: "organizations", action: "fetched" }, {
+			notAdminCount,
+			requiresSsoLoginCount,
+			isIPBlockedCount,
+		});
+	} catch (e) {
+		reportError(e);
+	}
 };
 
 export default ConfigSteps;
