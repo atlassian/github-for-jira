@@ -299,7 +299,9 @@ describe.each([
 		});
 		frontendApp.use(getFrontendApp());
 		jiraNock
-			.delete(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`)
+			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
+				isConfigured: false
+			})
 			.reply(200);
 	});
 
