@@ -13,7 +13,6 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { JiraClient } from "models/jira-client";
 
 interface FailedConnection {
 	id: number;
@@ -125,7 +124,7 @@ const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number =>
 
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
 
-	const { jiraHost, nonce, installation } = res.locals;
+	const { jiraHost, nonce } = res.locals;
 
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(res.locals.installation.id) || [];
@@ -161,11 +160,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		})).value();
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
-
-	if (!hasConnections) {
-		const jiraClient = await JiraClient.getNewClient(installation, req.log);
-		await jiraClient.appPropertiesDelete();
-	}
 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {
