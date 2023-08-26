@@ -220,7 +220,7 @@ const ConfigSteps = () => {
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
-			const connected = await AppManager.connectOrg(gitHubInstallationId);
+			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
 			if (connected instanceof AxiosError) {
 				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 				showError(errorObj);
@@ -240,7 +240,7 @@ const ConfigSteps = () => {
 			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
 			await AppManager.installNewApp({
 				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success"}, { mode });
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
 					getOrganizations();
 					if(gitHubInstallationId) {
 						await doCreateConnection(gitHubInstallationId, "auto");
@@ -264,14 +264,14 @@ const ConfigSteps = () => {
 		const handler = async (event: MessageEvent) => {
 			if (event.origin !== originalUrl) return;
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
 				setLoaderForLogin(false);
 				if (response instanceof AxiosError) {
 					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
 					return;
 				} else {
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: response === true ?  "success" : "fail" });
 				}
 				setIsLoggedIn(true);
 			}
