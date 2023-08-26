@@ -9,6 +9,8 @@ import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { getJiraClient } from "~/src/jira/client/jira-client";
 import { Installation } from "~/src/models/installation";
 import { JiraClient } from "~/src/models/jira-client";
+import { isConnected } from "utils/is-connected";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 /**
  * Handle the when a user deletes an entry in the UI
@@ -57,6 +59,10 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 		req.log.info({ subscriptionId: subscription.id }, "Deleted security workspace and vulnerabilities");
 	}
 	await subscription.destroy();
+
+	if (!(await isConnected(req, jiraHost, installation.id))) {
+		await saveConfiguredAppProperties(jiraHost, req.log, false);
+	}
 
 	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		action: AnalyticsTrackEventsEnum.DisconnectToOrgTrackEventName,
