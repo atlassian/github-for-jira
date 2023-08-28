@@ -61,7 +61,6 @@ describe("SQS", () => {
 			await queue.purgeQueue();
 		}
 		queue = undefined as any;
-		jest.resetAllMocks();
 	});
 
 	describe("Normal execution tests", () => {
