@@ -18,7 +18,7 @@
 
       <tbody class="jiraConfiguration__table__body">
       {{#each successfulConnections as |connection|}}
-        <tr class="jiraConfiguration__table__row">
+        <tr class="jiraConfiguration__table__row" data-subscription-id="{{subscriptionId}}">
           {{! Organization }}
           <td class="jiraConfiguration__table__cell">
             {{#unless ../hideAvatar}}
@@ -33,28 +33,30 @@
             <span class="jiraConfiguration__table__cell__orgName">{{connection.account.login}}</span>
           </td>
           {{! Repos Synced }}
-          <td class="jiraConfiguration__table__cell">
-            {{#if connection.isGlobalInstall}}
+          <td class="jiraConfiguration__table__cell repo-count">
+            {{#if ../enableRepoConnectedPage}}
+              <a href="#" class="jiraConfiguration__table__repo_access" data-subscription-id="{{subscriptionId}}">
+                {{#if connection.isGlobalInstall}}
+                <span>All repos</span>
+                {{else}}
+                <span>Only select repos</span>
+                {{/if}}
+              </a>
+            {{else}}
+              {{#if connection.isGlobalInstall}}
               <span>All repos</span>
             {{else}}
               <span>Only select repos</span>
             {{/if}}
 
-            {{#if connection.totalNumberOfRepos}}
-              <span class="jiraConfiguration__table__syncCount">
+            <span id="{{id}}-syncCount" class="jiraConfiguration__table__syncCount inprogress-syncCount">
+              {{#if connection.totalNumberOfRepos}}
                 {{ifAllReposSynced
                     connection.numberOfSyncedRepos
                     connection.totalNumberOfRepos
                 }}
-              </span>
-              {{else}}
-              <span class="syncCount">
-                {{ifAllReposSynced
-                    connection.numberOfSyncedRepos
-                    connection.totalNumberOfRepos
-                }}
-              </span>
-            {{/if}}
+              {{/if}}
+            </span>
             <a
               class="jiraConfiguration__table__editContainer"
               href="{{html_url}}"
@@ -69,7 +71,7 @@
           </td>
 
           {{! Backfill status }}
-          <td class="jiraConfiguration__table__cell">
+          <td class="jiraConfiguration__table__cell repo-status">
             <div class="jiraConfiguration__infoContainer">
               <span
                     id="{{id}}-status"

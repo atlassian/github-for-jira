@@ -323,45 +323,123 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
 	}
 });
-let timeOut;
-function poll() {
-	const subscriptionId = $('.jiraConfiguration__table__repo_access').data('subscription-id');
-	$.ajax({
-		type: "GET",
-		url: `/jira/repoCount/${subscriptionId}`,
-		success: (response) => {
-			const completedRepos = response.completedRepos;
-			const reposCount = response.reposCount;
-			const syncCompleted = response.syncCompleted;
-			$('.syncCount').text(`${completedRepos}/${reposCount}`);
-			if(!syncCompleted){
-				console.log("....... 2 .....")
-				timeOut = setTimeout(poll, 3000);
-			}else{
-				clearTimeout(timeOut);
-			}
-		},
-		error: () => {
-		  showErrorMessage("We couldn't fetch the branches because something went wrong. Please try again.");
+
+const getInprogressSubIds = () => {
+	let subscriptionIds = [];
+	// store ids of if which subscription repo backfill is in progress
+	$(".jiraConfiguration__table__row").each(function () {
+		const repoStatusTd = $(this).children("td.repo-status");
+		const subscriptionId = $(this).data("subscription-id");
+		const infoContainer = repoStatusTd.children(
+			`div.jiraConfiguration__infoContainer`
+		);
+		const syncStatusProgress = infoContainer.children(
+			`span.jiraConfiguration__table__syncStatus`
+		);
+		// repo status check if it is finished
+		if (
+			!syncStatusProgress.hasClass("jiraConfiguration__table__finished") &&
+			subscriptionId
+		) {
+			subscriptionIds.push(subscriptionId);
 		}
 	});
-	// $.get('/some-api', function(data) {
-	//   if (data > 10) {
-	// 	setTimeout(poll, 1000);
-	//   } else {
-	// 	console.log('Result is not greater than 10:', data);
-	//   }
-	// });
+	return subscriptionIds;
+};
+
+const updateBackfilledRepoCount = ({ subscriptionId, subscriptions, self }) => {
+	const totalRepos = Number(subscriptions[subscriptionId].totalRepos);
+	const syncedRepos = Number(subscriptions[subscriptionId].syncedRepos);
+	const inprogressSyncStatus =
+		syncedRepos === totalRepos ? totalRepos : `${syncedRepos}/${totalRepos}`;
+	const repoCountTd = $(self).children("td.repo-count");
+	const syncProgress = repoCountTd.children("span.inprogress-syncCount");
+	syncProgress.text(inprogressSyncStatus);
+};
+
+const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
+	const syncCompleted = subscriptions[subscriptionId].syncCompleted;
+	const backfillSince = subscriptions[subscriptionId].backfillSince;
+	const repoStatusTd = $(self).children("td.repo-status");
+	const infoContainer = repoStatusTd.children(
+		`div.jiraConfiguration__infoContainer`
+	);
+	const inprogressIcon = infoContainer.children(
+		`div.jiraConfiguration__infoSpinner`
+	);
+	const syncStatusProgress = infoContainer.children(
+		`span.jiraConfiguration__table__syncStatus`
+	);
+	const backfillDateInfo = infoContainer.children('div.jiraConfiguration__info__backfillDate');
+	const backfillDate = infoContainer.children('span.jiraConfiguration__info__backfillDate-label');
+	let syncStatus = "IN PROGRESS";
+	if (syncCompleted) {
+		inprogressIcon.css("display", "none");
+		syncStatusProgress.removeClass("jiraConfiguration__table__in-progress");
+		syncStatusProgress.removeClass("jiraConfiguration__table__pending");
+		syncStatusProgress.addClass("jiraConfiguration__table__finished");
+		if(backfillSince){
+			backfillDate.text(backfillSince.toISOString());
+		}	
+		else{
+			backfillDateInfo.text("All commits backfilled");
+		}
+		syncStatus = "FINISHED";
+	}else{
+		syncStatusProgress.removeClass("jiraConfiguration__table__pending");
+		syncStatusProgress.addClass("jiraConfiguration__table__in-progress");
+	}
+	syncStatusProgress.text(syncStatus);
+};
+
+let fetchBackfillStateTimeout;
+function fetchAllConnectionsBackfillStatus() {
+	const subscriptionIds = getInprogressSubIds();
+	// check if we have atleast one subscription backfill in progress
+	if (subscriptionIds.length > 0) {
+		$.ajax({
+			type: "GET",
+			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}`,
+			success: (response) => {
+				const data = response.data;
+				const subscriptions = data.subscriptions;
+				const backFillCompleted = data.backFillCompleted;
+
+				$(".jiraConfiguration__table__row").each(function () {
+					const self = this;
+					let subscriptionId = $(self).data("subscription-id");
+					if (subscriptionIds.includes(subscriptionId)) {
+						// repo count set
+						updateBackfilledRepoCount({ subscriptions, subscriptionId, self });
+						// repo status set
+						updateBackfilledStatus({ subscriptionId, subscriptions, self });
+					}
+				});
+				if (!backFillCompleted) {
+					fetchBackfillStateTimeout = setTimeout(
+						fetchAllConnectionsBackfillStatus,
+						6000
+					);
+				} else {
+					clearTimeout(fetchBackfillStateTimeout);
+				}
+			},
+			error: () => {
+				showErrorMessage(
+					"We couldn't fetch the backfill status of connections because something went wrong. Please try again."
+				);
+			},
+		});
+	}
 }
 
 $(document).ready(function () {
-	//Todo:
 	//1. read a meta data from loaded html page to see if the repo sync has started
-	//2. if its in progress (not in finished state) -> call new API
-	// new API: should be able to fetch the status of current repo sync
-	// run that new API call in an interval -> till all repos are not synced 
-	// update the status of repo sync in the HTML  
-	poll();
+	const hasConnections = $('.jiraConfiguration').data('has-connections');
+	//2. if its in progress (not in finished state) -> call the API to fetch live progress of backfill
+	if(hasConnections){
+		fetchAllConnectionsBackfillStatus();
+	}
 	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
 	AJS.$(".jiraConfiguration__info__backfillDate-label").tooltip();
 	AJS.$(".jiraConfiguration__restartBackfillModal__fullsync__label-icon").tooltip();
