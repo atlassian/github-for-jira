@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
-import { escape } from "sequelize/lib/sql-string";
+import { sequelize } from "models/sequelize";
 
 interface Page {
 	pageNum: number;
@@ -14,6 +14,38 @@ interface Page {
 // 	- subscription with different jiraHost
 //  - sunny path
 //	- SQL injection test for syncStatusFilter
+const mapFilterSyncStatusToQueryCondition = (filterStatusField: string | undefined) => {
+	if (!filterStatusField || filterStatusField === "all") {
+		return {};
+	}
+	if (filterStatusField === "pending") {
+		return {
+			[Op.or]: [
+				{ branchStatus: "pending" },
+				{ branchStatus: null },
+				{ commitStatus: "pending" },
+				{ commitStatus: null },
+				{ pullStatus: "pending" },
+				{ pullStatus: null },
+				{ buildStatus: "pending" },
+				{ buildStatus: null },
+				{ deploymentStatus: "pending" },
+				{ deploymentStatus: null }
+			]
+		};
+	} else if (filterStatusField == "failed") {
+		return {
+			[Op.or]: [
+				{ branchStatus: "failed" },
+				{ commitStatus: "failed" },
+				{ pullStatus: "failed" },
+				{ buildStatus: "failed" },
+				{ deploymentStatus: "failed" }
+			]
+		};
+	}
+	return undefined;
+};
 // 	- SQL injection test for repoName
 export const JiraConnectedReposGet = async (
 	req: Request,
@@ -24,10 +56,10 @@ export const JiraConnectedReposGet = async (
 	try {
 		const { jiraHost, nonce } = res.locals;
 		const subscriptionId = Number(req.params.subscriptionId);
-		const page = Number(req.query.page || 1);
-		const pageSize = Number(req.query.pageSize || 10);
-		const repoName = req.query.repoName || "";
-		const syncStatusFilter = req.query.syncStatus || undefined;
+		const page = Number(req.query.page) || 1;
+		const pageSize = Number(req.query.pageSize) || 10;
+		const filterRepoName = (req.query.repoName || "") as string;
+		const filterSyncStatus = (req.query.syncStatus || undefined) as (string | undefined);
 
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");
@@ -43,51 +75,34 @@ export const JiraConnectedReposGet = async (
 			return;
 		}
 
-		let syncStatusCondition = {};
-		if (syncStatusFilter && syncStatusFilter !== "all") {
-			syncStatusCondition = {
-				[Op.or]: [
-					{ branchStatus: `${escape(syncStatusFilter)}` },
-					{ commitStatus: `${escape(syncStatusFilter)}` },
-					{ pullStatus: `${escape(syncStatusFilter)}` },
-					{ buildStatus: `${escape(syncStatusFilter)}` },
-					{ deploymentStatus: `${escape(syncStatusFilter)}` }
-				]
-			};
+		const syncStatusCondition = mapFilterSyncStatusToQueryCondition(filterSyncStatus);
+		if (syncStatusCondition === undefined) {
+			req.log.error({ filterStatusField: filterSyncStatus }, "invalid status field");
+			res.status(400).send("invalid status field");
+			return;
 		}
 
-		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.like]: `%${escape(repoName)}%`
-						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
+		const repoFilterCondition = {
+			repoName: {
+				[Op.like]: sequelize.literal(sequelize.escape(`%${filterRepoName}%`))
 			}
+		};
+
+		const filterCondition = {
+			[Op.and]: [
+				repoFilterCondition,
+				syncStatusCondition
+			]
+		};
+
+		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
+			where: filterCondition
 		});
 
 		const offset = page == 1 ? 0 : (page - 1) * pageSize;
 
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.like]: `%${escape(repoName)}%`
-						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
-			},
+			where: filterCondition,
 			limit: pageSize,
 			offset
 		});
@@ -189,6 +204,6 @@ const mapTaskStatus = (syncStatus: TaskStatus): string => {
 		case "failed":
 			return "FAILED";
 		default:
-			return syncStatus;
+			return "IN PROGRESS";
 	}
 };
