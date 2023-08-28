@@ -26,6 +26,7 @@ export class DatabaseStateCreator {
 	private pendingForDeployments: boolean;
 	private pendingForDependabotAlerts: boolean;
 	private pendingForSecretScanningAlerts: boolean;
+	private pendingForCodeScanningAlerts: boolean;
 	private securityPermissionsAccepted: boolean;
 
 	private buildsCustomCursor: string | undefined;
@@ -98,6 +99,11 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
+	public repoSyncStatePendingForCodeScanningAlerts() {
+		this.pendingForCodeScanningAlerts = true;
+		return this;
+	}
+
 	public repoSyncStateFailedForBranches() {
 		this.failedForBranches = true;
 		return this;
@@ -157,6 +163,7 @@ export class DatabaseStateCreator {
 			deploymentStatus: this.pendingForDeployments ? "pending" : "complete",
 			dependabotAlertStatus: this.pendingForDependabotAlerts ? "pending" : "complete",
 			secretScanningAlertStatus: this.pendingForSecretScanningAlerts ? "pending" : "complete",
+			codeScanningAlertStatus: this.pendingForCodeScanningAlerts ? "pending" : "complete",
 			... (this.buildsCustomCursor ? { buildCursor: this.buildsCustomCursor } : { }),
 			... (this.prsCustomCursor ? { pullCursor: this.prsCustomCursor } : { }),
 			updatedAt: new Date(),
