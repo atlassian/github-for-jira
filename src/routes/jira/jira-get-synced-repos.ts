@@ -90,13 +90,13 @@ export const JiraGetSyncededRepos = async (
 				failedCode: repoSyncState.failedCode
 			};
 		});
-		const completedRepos = repos.filter(repo => ['complete','failed'].includes(repo.syncStatus)).length;
+		const completedRepos = repos.filter(repo => ["complete","failed"].includes(repo.syncStatus)).length;
 
 		res.status(200).send({
 			completedRepos,
 			subscriptionId,
 			reposCount,
-			syncCompleted: completedRepos === reposCount,
+			syncCompleted: completedRepos === reposCount
 		});
 
 	} catch (error) {
