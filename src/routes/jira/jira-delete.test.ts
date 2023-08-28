@@ -107,12 +107,6 @@ describe("DELETE /jira/configuration", () => {
 			})
 			.reply(200);
 
-		jiraNock
-			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
-				isConfigured: false
-			})
-			.reply(200);
-
 		// TODO: use supertest for this
 		const req = {
 			log: getLogger("request"),
