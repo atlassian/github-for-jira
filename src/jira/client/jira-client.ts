@@ -23,6 +23,7 @@ import { uniq } from "lodash";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getDeploymentDebugInfo } from "./jira-client-deployment-helper";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 
 // Max number of issue keys we can pass to the Jira API
 export const ISSUE_KEY_API_LIMIT = 500;
@@ -100,7 +101,7 @@ export const getJiraClient = async (
 	gitHubInstallationId: number,
 	gitHubAppId: number | undefined,
 	log: Logger = getLogger("jira-client")
-): Promise<JiraClient| void> => {
+): Promise<JiraClient | void> => {
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 	const logger = log.child({ jiraHost, gitHubInstallationId, gitHubProduct });
 	const installation = await Installation.getForHost(jiraHost);
@@ -109,6 +110,16 @@ export const getJiraClient = async (
 		logger.warn("Cannot initialize Jira Client, Installation doesn't exist.");
 		return undefined;
 	}
+
+	let subscription;
+	if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraHost)) {
+		subscription = await Subscription.getSingleInstallation(jiraHost, gitHubInstallationId, gitHubAppId);
+		if (!subscription) {
+			logger.warn("Cannot initialize Jira Client, Subscription doesn't exist.");
+			return undefined;
+		}
+	}
+
 	const instance = getAxiosInstance(
 		installation.jiraHost,
 		await installation.decrypt("encryptedSharedSecret", logger),
@@ -448,17 +459,28 @@ export const getJiraClient = async (
 				const payload = {
 					vulnerabilities: data.vulnerabilities,
 					properties: {
-						gitHubInstallationId
+						gitHubInstallationId,
+						workspaceId: subscription?.id
 					},
 					operationType: options?.operationType || "NORMAL"
 				};
 				logger.info("Sending vulnerabilities payload to jira.");
-				return await instance.post("/rest/security/1.0/bulk", payload);
+				const response = await instance.post("/rest/security/1.0/bulk", payload);
+				handleSubmitVulnerabilitiesResponse(response, logger);
+				return response;
 			}
 		}
 	};
 
 	return client;
+};
+
+const handleSubmitVulnerabilitiesResponse = (response: AxiosResponse, logger: Logger) => {
+	const rejectedEntities = response.data?.rejectedEntities;
+	if (rejectedEntities?.length > 0) {
+		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length} vulnerabilities`);
+	}
+
 };
 
 const extractDeploymentDataForLoggingPurpose = (data: JiraDeploymentBulkSubmitData, logger: Logger): Record<string, any> => {

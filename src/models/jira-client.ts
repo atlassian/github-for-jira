@@ -68,6 +68,10 @@ export class JiraClient {
 		return await this.axios.delete(`/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=${subscriptionId}`);
 	}
 
+	async deleteVulnerabilities(subscriptionId: number) {
+		return await this.axios.delete(`/rest/security/1.0/bulkByProperties?workspaceId=${subscriptionId}`);
+	}
+
 	async checkAdminPermissions(accountId: string) {
 		const payload = {
 			accountId,

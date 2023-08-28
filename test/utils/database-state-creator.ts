@@ -26,6 +26,8 @@ export class DatabaseStateCreator {
 	private pendingForDeployments: boolean;
 	private pendingForDependabotAlerts: boolean;
 	private pendingForSecretScanningAlerts: boolean;
+	private pendingForCodeScanningAlerts: boolean;
+	private securityPermissionsAccepted: boolean;
 
 	private buildsCustomCursor: string | undefined;
 	private prsCustomCursor: string | undefined;
@@ -87,8 +89,18 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
+	public withSecurityPermissionsAccepted() {
+		this.securityPermissionsAccepted = true;
+		return this;
+	}
+
 	public repoSyncStatePendingForSecretScanningAlerts() {
 		this.pendingForSecretScanningAlerts = true;
+		return this;
+	}
+
+	public repoSyncStatePendingForCodeScanningAlerts() {
+		this.pendingForCodeScanningAlerts = true;
 		return this;
 	}
 
@@ -128,7 +140,8 @@ export class DatabaseStateCreator {
 			jiraHost,
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",
-			gitHubAppId: gitHubServerApp?.id
+			gitHubAppId: gitHubServerApp?.id,
+			isSecurityPermissionsAccepted: this.securityPermissionsAccepted
 		});
 
 		const repoSyncState = this.withActiveRepoSyncStateFlag ? await RepoSyncState.create({
@@ -150,6 +163,7 @@ export class DatabaseStateCreator {
 			deploymentStatus: this.pendingForDeployments ? "pending" : "complete",
 			dependabotAlertStatus: this.pendingForDependabotAlerts ? "pending" : "complete",
 			secretScanningAlertStatus: this.pendingForSecretScanningAlerts ? "pending" : "complete",
+			codeScanningAlertStatus: this.pendingForCodeScanningAlerts ? "pending" : "complete",
 			... (this.buildsCustomCursor ? { buildCursor: this.buildsCustomCursor } : { }),
 			... (this.prsCustomCursor ? { pullCursor: this.prsCustomCursor } : { }),
 			updatedAt: new Date(),

@@ -3,6 +3,8 @@ import { Subscription } from "models/subscription";
 import { getJiraClient } from "./jira-client";
 import { getHashedKey } from "models/sequelize";
 import * as Axios from "./axios";
+import { when } from "jest-when";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 
 jest.mock("config/feature-flags");
 
@@ -30,6 +32,12 @@ describe("Test getting a jira client", () => {
 
 	it("Installation does not exist", async () => {
 		expect(await getJiraClient("https://non-existing-url.atlassian.net", gitHubInstallationId, undefined, undefined)).not.toBeDefined();
+	});
+
+	it("Subscription does not exist", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+
+		expect(await getJiraClient(jiraHost, 123456, undefined, undefined)).not.toBeDefined();
 	});
 
 	it("Should truncate issueKeys for commits if over the limit", async () => {

@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { Wrapper } from "../../common/Wrapper";
-import { token } from "@atlaskit/tokens";
+import { token, useThemeObserver } from "@atlaskit/tokens";
 import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
@@ -50,6 +50,8 @@ const Connected = () => {
 	useEffectScreenEvent("SuccessfulConnectedScreen");
 
 	const navigate = useNavigate();
+	const { colorMode } = useThemeObserver();
+
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
@@ -58,10 +60,10 @@ const Connected = () => {
 	return (<Wrapper>
 		<ConnectedContainer>
 			<div>
-				<HeaderImg src="/public/assets/jira-github-connected.svg" alt=""/>
+				<HeaderImg src={colorMode === "dark" ? "/public/assets/jira-github-connected-dark-theme.svg" : "/public/assets/jira-github-connected.svg"} alt=""/>
 				<Title>GitHub is connected!</Title>
 				<TopContent>
-					Its' time to let everyone know that GitHub's ready to use and your<br />
+					It’s time to let everyone know GitHub’s ready to use and your<br />
 					team can use issue keys to link work to Jira.<br />
 				</TopContent>
 				<ButtonContainer>
@@ -119,7 +121,7 @@ const Connected = () => {
 					onClick={navigateToBackfillPage}
 				>
 					Check your backfill status
-				</Button>
+				</Button>.
 			</Paragraph>
 		</ConnectedContainer>
 	</Wrapper>);
