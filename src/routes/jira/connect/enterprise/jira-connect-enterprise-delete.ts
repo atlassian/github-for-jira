@@ -13,6 +13,7 @@ export const JiraConnectEnterpriseDelete = async (
 
 		const { installation }  = res.locals;
 
+		await GitHubServerApp.removeAssociatedSubscriptions(req.body.serverUrl, installation.id);
 		await GitHubServerApp.uninstallServer(req.body.serverUrl, installation.id);
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {

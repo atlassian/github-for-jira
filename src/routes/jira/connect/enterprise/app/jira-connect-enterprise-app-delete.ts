@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
+import { Subscription } from "models/subscription";
 
 export const JiraConnectEnterpriseAppDelete = async (
 	req: Request,
@@ -18,6 +19,8 @@ export const JiraConnectEnterpriseAppDelete = async (
 		}
 
 		await GitHubServerApp.uninstallApp(gitHubAppConfig.uuid);
+		const correspondingSubscription = await Subscription.getAllForGitHubAppId(gitHubAppConfig.gitHubAppId);
+		await Promise.all(correspondingSubscription.map(app => app.destroy()));
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,

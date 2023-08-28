@@ -70,6 +70,16 @@ export class Subscription extends Model {
 		});
 	}
 
+	static getAllForGitHubAppId(
+		gitHubAppId: number
+	): Promise<Subscription[]> {
+		return this.findAll({
+			where: {
+				gitHubAppId: gitHubAppId || null
+			}
+		});
+	}
+
 	static findOneForGitHubInstallationId(
 		gitHubInstallationId: number,
 		gitHubAppId: number | undefined

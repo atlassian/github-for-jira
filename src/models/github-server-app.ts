@@ -1,4 +1,4 @@
-import { DataTypes, Sequelize, Model } from "sequelize";
+import { DataTypes, Sequelize, Model, QueryTypes } from "sequelize";
 import { sequelize } from "models/sequelize";
 import { EncryptionSecretKeyEnum, EncryptionClient } from "utils/encryption-client";
 import { getLogger } from "config/logger";
@@ -200,6 +200,22 @@ export class GitHubServerApp extends Model {
 		await this.destroy({
 			where: { uuid }
 		});
+	}
+
+	static async removeAssociatedSubscriptions(baseUrl: string, installationId: number): Promise<void> {
+		await this.sequelize!.query(
+			"DELETE FROM \"Subscriptions\" where id in (" +
+			"    SELECT s.id FROM" +
+			"    FROM \"Subscriptions\" s\n" +
+			"        LEFT JOIN \"GitHubServerApps\" GHSA on s.\"gitHubAppId\" = GHSA.\"id\"\n" +
+			"        WHERE GHSA.\"gitHubBaseUrl\"=':baseUrl'\n" +
+			"        AND GHSA.\"installationId\"=':installationId'\n" +
+			")",
+			{
+				replacements: { baseUrl, installationId },
+				type: QueryTypes.DELETE
+			}
+		);
 	}
 
 	static async uninstallServer(gitHubBaseUrl: string, installationId: number): Promise<void> {
