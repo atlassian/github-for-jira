@@ -34,16 +34,7 @@
           </td>
           {{! Repos Synced }}
           <td class="jiraConfiguration__table__cell repo-count">
-            {{#if ../enableRepoConnectedPage}}
-              <a href="#" class="jiraConfiguration__table__repo_access" data-subscription-id="{{subscriptionId}}">
-                {{#if connection.isGlobalInstall}}
-                <span>All repos</span>
-                {{else}}
-                <span>Only select repos</span>
-                {{/if}}
-              </a>
-            {{else}}
-              {{#if connection.isGlobalInstall}}
+            {{#if connection.isGlobalInstall}}
               <span>All repos</span>
             {{else}}
               <span>Only select repos</span>
