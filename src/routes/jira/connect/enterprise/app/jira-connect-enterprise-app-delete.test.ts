@@ -1,5 +1,6 @@
 import { GitHubServerApp } from "models/github-server-app";
 import { JiraConnectEnterpriseAppDelete } from "routes/jira/connect/enterprise/app/jira-connect-enterprise-app-delete";
+import { Subscription } from "models/subscription";
 
 describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 	const gitHubBaseUrl = "http://myinternalinstance.com";
@@ -67,6 +68,18 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 			privateKey: "privatekey",
 			installationId
 		}, jiraHost);
+		await Subscription.install({
+			host: jiraHost,
+			installationId: 1,
+			hashedClientKey: "client-key",
+			gitHubAppId: gheAppOne.id
+		});
+		await Subscription.install({
+			host: jiraHost,
+			installationId: 2,
+			hashedClientKey: "client-key",
+			gitHubAppId: gheAppOne.id
+		});
 	});
 
 	it("should delete GitHub app when uuid is found", async () => {
@@ -83,10 +96,16 @@ describe("DELETE /jira/connect/enterprise/app/:uuid", () => {
 
 	it("should send a successful response when app is deleted", async () => {
 		const response = await mockResponse();
+		const subscriptionsBeforeDeletion = await Subscription.getAllForHost(jiraHost, gheAppOne.id);
+		expect(subscriptionsBeforeDeletion.length).toBe(2);
+
 		await JiraConnectEnterpriseAppDelete(mockRequest(appOneUuid), response);
 
 		expect(response.status).toHaveBeenCalledWith(200);
 		expect(response.json).toHaveBeenCalledWith({ success: true });
+
+		const subscriptionsAfterDeletion = await Subscription.getAllForHost(jiraHost, gheAppOne.id);
+		expect(subscriptionsAfterDeletion.length).toBe(0);
 	});
 
 	it("should send a failure response when unable to delete app", async () => {
