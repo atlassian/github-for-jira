@@ -10,7 +10,6 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
-import { JiraGetConnectedRepos } from "~/src/routes/jira/jira-get-connected-repos";
 import { JiraGetConnectionsBackfilStatus } from "~/src/routes/jira/jira-get-connections-backfilStatus";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
@@ -40,8 +39,6 @@ JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRo
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
 JiraRouter.get("/subscriptions/backfill-status", JiraGetConnectionsBackfilStatus);
-
-JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, jiraSymmetricJwtMiddleware, JiraGetConnectedRepos);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`
