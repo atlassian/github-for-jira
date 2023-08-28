@@ -149,7 +149,8 @@ describe("DELETE /jira/connect/enterprise", () => {
 		const send = jest.fn();
 		const res = {
 			locals: {
-				installation: installation1
+				installation: installation1,
+				jiraHost: JIRA_HOST_1
 			},
 			status: jest.fn(() => ({ send }))
 		};
