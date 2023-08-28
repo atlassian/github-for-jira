@@ -30,9 +30,13 @@ $(".add-organization-link").click(function(event) {
 // TODO: passing JWT in query param is a security risk, we must either populate a session (if not already) or use cookies
 $(".jiraConfiguration__table__repo_access").click(function (event) {
 	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
-	AP.context.getToken(function (token) {
-		window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}`;
-	});
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "gh-addon-subscription-repos",
+			customData: { subscriptionId }
+		}
+	);
 });
 
 $(".add-enterprise-link").click(function(event) {
@@ -300,12 +304,15 @@ if (genericModalClose != null) {
 	});
 }
 
-// TODO: passing JWT in query param is a security risk, we must either populate a session (if not already) or use cookies
 $(".jiraConfiguration__table__repo_access").click(function (event) {
 	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
-	AP.context.getToken(function (token) {
-		window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}`;
-	});
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "gh-addon-subscription-repos",
+			customData: { subscriptionId }
+		}
+	);
 });
 
 // When the user clicks anywhere outside of the modal, close it

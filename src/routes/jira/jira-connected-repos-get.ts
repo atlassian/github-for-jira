@@ -56,7 +56,7 @@ export const JiraConnectedReposGet = async (
 	try {
 		const { jiraHost, nonce } = res.locals;
 		const subscriptionId = Number(req.params.subscriptionId);
-		const page = Number(req.query.page) || 1;
+		const pageNumber = Number(req.query.pageNumber) || 1;
 		const pageSize = Number(req.query.pageSize) || 10;
 		const filterRepoName = (req.query.repoName || "") as string;
 		const filterSyncStatus = (req.query.syncStatus || undefined) as (string | undefined);
@@ -64,6 +64,12 @@ export const JiraConnectedReposGet = async (
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");
 			res.status(401).send("Missing Subscription ID");
+			return;
+		}
+
+		if (pageSize > 100) {
+			req.log.error("pageSize cannot be larger than 100");
+			res.status(400).send("pageSize cannot be larger than 100");
 			return;
 		}
 
@@ -99,7 +105,7 @@ export const JiraConnectedReposGet = async (
 			where: filterCondition
 		});
 
-		const offset = page == 1 ? 0 : (page - 1) * pageSize;
+		const offset = pageNumber == 1 ? 0 : (pageNumber - 1) * pageSize;
 
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
 			where: filterCondition,
@@ -125,7 +131,7 @@ export const JiraConnectedReposGet = async (
 			subscriptionId,
 			csrfToken: req.csrfToken(),
 			nonce,
-			...getPaginationState(page, pageSize, reposCount)
+			...getPaginationState(pageNumber, pageSize, reposCount)
 		});
 
 	} catch (error) {
