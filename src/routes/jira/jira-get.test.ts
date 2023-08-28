@@ -12,7 +12,6 @@ import { encodeSymmetric } from "atlassian-jwt";
 import { getFrontendApp } from "~/src/app";
 import { when } from "jest-when";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { envVars } from "config/env";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/app-properties-utils");
@@ -298,11 +297,6 @@ describe.each([
 			next();
 		});
 		frontendApp.use(getFrontendApp());
-		jiraNock
-			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
-				isConfigured: false
-			})
-			.reply(200);
 	});
 
 	it(`Testing route: ${url}`, async () => {

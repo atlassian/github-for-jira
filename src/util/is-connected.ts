@@ -5,7 +5,7 @@ import { getConnectionsAndInstallations } from "routes/jira/jira-get";
 
 
 export const isConnected = async (req: Request, jiraHost: string, installationId: number): Promise<boolean> => {
-	const subscriptions = await Subscription.getAllForHost(jiraHost);
+	const subscriptions = await Subscription.getAllForHost(jiraHost) || [];
 	const gheServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(installationId) || [];
 
 	// Separating the subscriptions for GH cloud and GHE servers

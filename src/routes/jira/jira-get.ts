@@ -13,7 +13,6 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
-import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 interface FailedConnection {
 	id: number;
@@ -161,10 +160,6 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 		})).value();
 
 	const hasConnections =  !!(installations.total || gheServers?.length);
-
-	if (!hasConnections) {
-		await saveConfiguredAppProperties(jiraHost, req.log, false);
-	}
 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {
