@@ -92,7 +92,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 	}
 };
 
-export const getConnectionsAndInstallations = async (subscriptions: Subscription[], req: Request, githubAppId?: number): Promise<ConnectionsAndInstallations> => {
+const getConnectionsAndInstallations = async (subscriptions: Subscription[], req: Request, githubAppId?: number): Promise<ConnectionsAndInstallations> => {
 	const installations = await getInstallations(subscriptions, req.log, githubAppId);
 
 	const failedConnections: FailedConnection[] = await Promise.all(
