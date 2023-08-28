@@ -11,7 +11,7 @@ import { WebhookContext } from "../routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import {
 	transformGitHubSeverityToJiraSeverity,
-	transformGitHubStateToJiraStatus
+	transformGitHubStateToJiraStatus, transformRuleTagsToIdentifiers
 } from "~/src/transforms/util/github-security-alerts";
 
 const MAX_STRING_LENGTH = 255;
@@ -108,26 +108,6 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 			}]
 		}]
 	};
-};
-
-const transformRuleTagsToIdentifiers = (tags: string[] | null) => {
-	if (!tags) {
-		return null;
-	}
-	// CWE tags from GitHub take the format 'external/cwe/cwe-259'
-	const cwePrefix = "external/cwe/cwe-";
-	const identifiers = tags.filter(tag => tag.startsWith(cwePrefix)).map(tag => {
-		// Remove starting 0s as GitHub can provide 'cwe-079'
-		const cweId = tag.split(cwePrefix)[1].replace(/^0+/, "");
-		return {
-			displayName: `CWE-${cweId}`,
-			url: `https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=${cweId}`
-		};
-	});
-	if (!identifiers.length) {
-		return null;
-	}
-	return identifiers;
 };
 
 export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookContext, githubInstallationId: number, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData | null> => {
