@@ -26,7 +26,7 @@ export const JiraConnectEnterpriseDelete = async (
 			success: true
 		});
 
-		if (!(await isConnected(req, jiraHost, installation.id))) {
+		if (!(await isConnected(jiraHost))) {
 			await saveConfiguredAppProperties(jiraHost, req.log, false);
 		}
 

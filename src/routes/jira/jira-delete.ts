@@ -60,7 +60,7 @@ export const JiraDelete = async (req: Request, res: Response): Promise<void> => 
 	}
 	await subscription.destroy();
 
-	if (!(await isConnected(req, jiraHost, installation.id))) {
+	if (!(await isConnected(jiraHost))) {
 		await saveConfiguredAppProperties(jiraHost, req.log, false);
 	}
 
