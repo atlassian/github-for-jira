@@ -1,9 +1,9 @@
 import Api from "../../api";
 import { OrganizationsResponse } from "rest-interfaces";
-import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 
-async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
+async function fetchOrgs(): Promise<OrganizationsResponse> {
+
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
 	try {
@@ -11,19 +11,19 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 		return response.data;
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		throw e;
 	}
 }
 
-async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
-	if (!Api.token.hasGitHubToken()) return false;
+async function connectOrg(orgId: number): Promise<void> {
+
+	if (!Api.token.hasGitHubToken()) throw { errorCode: "INVALID_TOKEN" };
 
 	try {
-		const response = await Api.orgs.connectOrganization(orgId);
-		return response.status === 200;
+		await Api.orgs.connectOrganization(orgId);
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		throw e;
 	}
 }
 

@@ -10,11 +10,9 @@ export const GitHubOrgsRouter = Router({ mergeParams: true });
 GitHubOrgsRouter.get("/", errorWrapper("GitHubOrgsFetchOrgs", async (req: Request, res: Response<OrganizationsResponse>) => {
 	const { githubToken, jiraHost, installation } = res.locals;
 	const organizations = await fetchGitHubOrganizations(githubToken, jiraHost, installation, req.log);
-	if (organizations) {
-		res.status(200).send({
-			orgs: organizations
-		});
-	}
+	res.status(200).send({
+		orgs: organizations
+	});
 }));
 
 GitHubOrgsRouter.post("/", errorWrapper("GitHubOrgsConnectJira", async (req: Request, res: Response) => {
