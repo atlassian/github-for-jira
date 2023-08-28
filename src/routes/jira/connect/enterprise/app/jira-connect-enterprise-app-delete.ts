@@ -20,7 +20,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 		}
 
 		await GitHubServerApp.uninstallApp(gitHubAppConfig.uuid);
-		// TODO: Need to delete the corresponding subscription too
+		// TODO: Need to delete the corresponding subscription too - ARC-2440
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
