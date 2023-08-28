@@ -17,7 +17,6 @@ export const JiraConnectEnterpriseDelete = async (
 
 		await GitHubServerApp.removeAssociatedSubscriptions(req.body.serverUrl, installation.id);
 		await GitHubServerApp.uninstallServer(req.body.serverUrl, installation.id);
-		// TODO: Need to delete the corresponding subscription too - ARC-2440
 
 		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
