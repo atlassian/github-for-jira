@@ -3,6 +3,8 @@ import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { Subscription } from "models/subscription";
+import { isConnected } from "utils/is-connected";
+import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 
 export const JiraConnectEnterpriseAppDelete = async (
 	req: Request,
@@ -29,6 +31,10 @@ export const JiraConnectEnterpriseAppDelete = async (
 		}, {
 			success: true
 		});
+
+		if (!(await isConnected(jiraHost))) {
+			await saveConfiguredAppProperties(jiraHost, req.log, false);
+		}
 
 		res.status(200).json({ success: true });
 		req.log.debug("Jira Connect Enterprise App deleted successfully.");

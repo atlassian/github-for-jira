@@ -111,7 +111,6 @@ describe("DELETE /jira/connect/enterprise", () => {
 	});
 
 	it("should NOT able to delete other jiraHost ghe app", async () => {
-
 		const req = {
 			log: getLogger("test"),
 			body: {
@@ -121,7 +120,8 @@ describe("DELETE /jira/connect/enterprise", () => {
 		const send = jest.fn();
 		const res = {
 			locals: {
-				installation: installation2
+				installation: installation2,
+				jiraHost: JIRA_HOST_2
 			},
 			status: jest.fn(() => ({ send }))
 		};
