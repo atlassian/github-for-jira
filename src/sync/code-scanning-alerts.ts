@@ -6,8 +6,7 @@ import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData } from "../interfaces/jira";
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
-import { SortDirection } from "../github/client/github-client.types";
-import { CodeScanningAlertResponseItem } from "~/src/github/client/code-scanning-alert.types";
+import { CodeScanningAlertResponseItem, SortDirection } from "../github/client/github-client.types";
 import {
 	transformGitHubSeverityToJiraSeverity,
 	transformRuleTagsToIdentifiers,

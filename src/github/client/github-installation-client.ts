@@ -32,7 +32,8 @@ import {
 	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse,
-	SecretScanningAlertResponseItem
+	SecretScanningAlertResponseItem,
+	CodeScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
