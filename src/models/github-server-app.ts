@@ -205,12 +205,11 @@ export class GitHubServerApp extends Model {
 	static async removeAssociatedSubscriptions(baseUrl: string, installationId: number): Promise<void> {
 		await this.sequelize!.query(
 			"DELETE FROM \"Subscriptions\" where id in (" +
-			"    SELECT s.id FROM" +
+			"SELECT s.\"id\"" +
 			"    FROM \"Subscriptions\" s\n" +
 			"        LEFT JOIN \"GitHubServerApps\" GHSA on s.\"gitHubAppId\" = GHSA.\"id\"\n" +
-			"        WHERE GHSA.\"gitHubBaseUrl\"=':baseUrl'\n" +
-			"        AND GHSA.\"installationId\"=':installationId'\n" +
-			")",
+			"        WHERE GHSA.\"gitHubBaseUrl\"=:baseUrl\n" +
+			"        AND GHSA.\"installationId\"=:installationId)",
 			{
 				replacements: { baseUrl, installationId },
 				type: QueryTypes.DELETE

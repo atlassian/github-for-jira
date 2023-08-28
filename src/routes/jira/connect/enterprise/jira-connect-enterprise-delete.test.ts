@@ -2,6 +2,7 @@ import { GitHubServerApp } from "models/github-server-app";
 import { Installation } from "models/installation";
 import { getLogger } from "config/logger";
 import { JiraConnectEnterpriseDelete } from "./jira-connect-enterprise-delete";
+import { Subscription } from "models/subscription";
 
 describe("DELETE /jira/connect/enterprise", () => {
 
@@ -14,6 +15,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 	let installationId1: number;
 	let installation2: Installation;
 	let installationId2: number;
+	let githubApp1: GitHubServerApp;
 
 	beforeEach(async () => {
 		//Three GHE app for first installation for JIRA_HOST_1
@@ -23,7 +25,7 @@ describe("DELETE /jira/connect/enterprise", () => {
 			sharedSecret: "12345"
 		});
 		installationId1 = installation1.id;
-		await GitHubServerApp.install({
+		githubApp1 = await GitHubServerApp.install({
 			uuid: "c97806fc-c433-4ad5-b569-bf5191590be2",
 			appId: 1,
 			gitHubAppName: "my awesome app1",
@@ -74,6 +76,25 @@ describe("DELETE /jira/connect/enterprise", () => {
 			privateKey: "privatekey3",
 			installationId: installationId2
 		}, JIRA_HOST_2);
+
+		await Subscription.install({
+			host: JIRA_HOST_1,
+			installationId: 1,
+			hashedClientKey: "client-key",
+			gitHubAppId: githubApp1.id
+		});
+		await Subscription.install({
+			host: JIRA_HOST_1,
+			installationId: 2,
+			hashedClientKey: "client-key",
+			gitHubAppId: githubApp1.id
+		});
+		await Subscription.install({
+			host: JIRA_HOST_1,
+			installationId: 3,
+			hashedClientKey: "client-key",
+			gitHubAppId: githubApp1.id
+		});
 	});
 
 	it("should delete all gh apps for a server", async () => {
@@ -116,5 +137,38 @@ describe("DELETE /jira/connect/enterprise", () => {
 		expect(allServers.length).toBe(3);
 		const serverFromOtherJiraHost = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(GITHUB_BASE_URL_2, installationId1);
 		expect(serverFromOtherJiraHost.length).toBe(1);
+	});
+
+	it("should also delete the associated subscriptions", async () => {
+		const req = {
+			log: getLogger("test"),
+			body: {
+				serverUrl: GITHUB_BASE_URL_1
+			}
+		};
+		const send = jest.fn();
+		const res = {
+			locals: {
+				installation: installation1
+			},
+			status: jest.fn(() => ({ send }))
+		};
+		const next = jest.fn();
+
+		const allServersBeforeDeletion = await GitHubServerApp.findAll();
+		expect(allServersBeforeDeletion.length).toBe(4);
+		const subscriptionsBeforeDeletion = await Subscription.getAllForHost(JIRA_HOST_1, githubApp1.id);
+		expect(subscriptionsBeforeDeletion.length).toBe(3);
+
+		// Delete some GHE apps
+		await JiraConnectEnterpriseDelete(req as any, res as any, next);
+		expect(res.status).toHaveBeenCalledWith(200);
+		expect(send).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+
+		// Only 2 apps remaining, cause there are 2 GitHub server apps with id `githubApp1.id`
+		const allServersAfterDeletion = await GitHubServerApp.findAll();
+		expect(allServersAfterDeletion.length).toBe(2);
+		const subscriptionsAfterDeletion = await Subscription.getAllForHost(JIRA_HOST_1, githubApp1.id);
+		expect(subscriptionsAfterDeletion.length).toBe(0);
 	});
 });
