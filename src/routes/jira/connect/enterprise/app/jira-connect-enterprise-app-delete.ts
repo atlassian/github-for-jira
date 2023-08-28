@@ -12,7 +12,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App DELETE request");
 
-		const { gitHubAppConfig } = res.locals;
+		const { gitHubAppConfig, jiraHost } = res.locals;
 		if (!gitHubAppConfig || !gitHubAppConfig.uuid) {
 			req.log.warn("Refuse to delete app due to GitHubServerApp not found");
 			res.status(404).json({ message: "No GitHub App found. Cannot delete." });
@@ -22,7 +22,7 @@ export const JiraConnectEnterpriseAppDelete = async (
 		await GitHubServerApp.uninstallApp(gitHubAppConfig.uuid);
 		// TODO: Need to delete the corresponding subscription too - ARC-2440
 
-		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
 			actionSubject: AnalyticsTrackEventsEnum.DeleteGitHubServerAppTrackEventName,
 			source: AnalyticsTrackSource.GitHubEnterprise
