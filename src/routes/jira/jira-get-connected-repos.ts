@@ -16,7 +16,7 @@ export const JiraGetConnectedRepos = async (
 
 	try {
 		const { jiraHost, nonce } = res.locals;
-		const subscriptionId = Number(req.params.subscriptionId) || 6;
+		const subscriptionId = Number(req.params.subscriptionId);
 		const page = Number(req.query.page || 1);
 		const pageSize = Number(req.query.pageSize || 10);
 		const repoName = req.query.repoName || "";

@@ -4,15 +4,14 @@ import { RepoSyncState } from "~/src/models/reposyncstate";
 // import { Subscription, TaskStatus } from "~/src/models/subscription";
 import { TaskStatus } from "~/src/models/subscription";
 
-
 type subscriptionBackfillState = {
-	totalRepos?: Number;
-	syncCompleted?: Boolean;
-	syncedRepos?: Number;
+	totalRepos?: number;
+	syncCompleted?: boolean;
+	syncedRepos?: number;
 	backfillSince?: string | null;
-}
+};
 type backFillType = {
-	[key: string] : subscriptionBackfillState | {}
+	[key: string]: subscriptionBackfillState;
 };
 
 export const JiraGetConnectionsBackfilStatus = async (
@@ -39,7 +38,6 @@ export const JiraGetConnectionsBackfilStatus = async (
 		// });
 		// const subscriptions = groupBy(subscriptionStatus, "id") as unknown as { fulfilled: PromiseFulfilledResult<Subscription>[], rejected: PromiseRejectedResult[] };
 
-
 		// if (!subscriptions) {
 		// 	req.log.error("Missing Subscription");
 		// 	res.status(401).send("Missing Subscription");
@@ -48,46 +46,57 @@ export const JiraGetConnectionsBackfilStatus = async (
 
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
-				subscriptionId: subscriptionIds,
+				subscriptionId: subscriptionIds
 			}
 		});
 
-		const connections = groupBy(repoSyncStates, "subscriptionId") as unknown as { fulfilled: PromiseFulfilledResult<RepoSyncState>[], rejected: PromiseRejectedResult[] };
-		let backfillStatus : backFillType = {};
+		const connections = groupBy(
+			repoSyncStates,
+			"subscriptionId"
+		) as unknown as {
+			fulfilled: PromiseFulfilledResult<RepoSyncState>[];
+			rejected: PromiseRejectedResult[];
+		};
+		const backfillStatus: backFillType = {};
 
-		for (const subscriptionId in connections)	 {
+		for (const subscriptionId in connections) {
 			backfillStatus[subscriptionId] = {};
 			const subscriptionRepos = connections[subscriptionId];
 			// const subscription = subscriptions[subscriptionId][0];
-			// const totalRepos = subscription['totalNumberOfRepos'];
+			// const totalRepos = subscription['totalnumberOfRepos'];
 			// const backfillSince = subscription['backfillSince'];
-			let totalRepos = (countBy(subscriptionRepos,'subscriptionId'))[subscriptionId];
-			backfillStatus[subscriptionId]['totalRepos'] = totalRepos;
+			const totalRepos = countBy(subscriptionRepos, "subscriptionId")[
+				subscriptionId
+			];
+			backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
 			// backfillStatus[subscriptionId]['backfillSince'] = backfillSince;
 			const repos = subscriptionRepos.map((repoSyncState) => {
 				return {
 					name: repoSyncState.repoFullName,
-					syncStatus: getSyncStatus(repoSyncState),
+					syncStatus: getSyncStatus(repoSyncState)
 				};
 			});
 			const syncedRepos = repos.filter((repo) =>
 				["complete", "failed"].includes(repo.syncStatus)
 			).length;
-			backfillStatus[subscriptionId]['syncedRepos'] = syncedRepos;
-			backfillStatus[subscriptionId]['syncCompleted'] = syncedRepos === totalRepos;
+			backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
+			backfillStatus[subscriptionId]["syncCompleted"] =
+				syncedRepos === totalRepos;
 		}
 
 		let backFillCompleted = true;
-		Object.values(backfillStatus).forEach((backFill: subscriptionBackfillState) : void=> {
-			if(!backFill.syncCompleted){
-				backFillCompleted = false;
+		Object.values(backfillStatus).forEach(
+			(backFill: subscriptionBackfillState): void => {
+				if (!backFill.syncCompleted) {
+					backFillCompleted = false;
+				}
 			}
-		});
+		);
 		res.status(200).send({
-			data:{
+			data: {
 				subscriptions: backfillStatus,
 				backFillCompleted,
-				subscriptionIds,
+				subscriptionIds
 			}
 		});
 	} catch (error) {
@@ -101,7 +110,7 @@ const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
 		repoSyncState?.commitStatus,
 		repoSyncState?.pullStatus,
 		repoSyncState?.buildStatus,
-		repoSyncState?.deploymentStatus,
+		repoSyncState?.deploymentStatus
 	];
 	if (statuses.includes("pending")) {
 		return "pending";
