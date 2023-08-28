@@ -63,7 +63,7 @@ export const JiraGetConnectionsBackfilStatus = async (
 			backfillStatus[subscriptionId] = {};
 			const subscriptionRepos = connections[subscriptionId];
 			// const subscription = subscriptions[subscriptionId][0];
-			// const totalRepos = subscription['totalNumberOfRepos'];
+			// const totalRepos = subscription['totalnumberOfRepos'];
 			// const backfillSince = subscription['backfillSince'];
 			const totalRepos = countBy(subscriptionRepos, "subscriptionId")[
 				subscriptionId
