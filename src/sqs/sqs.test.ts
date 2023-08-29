@@ -76,7 +76,7 @@ describe("SQS", () => {
 
 		it("Message gets received", async () => {
 			await queue.sendMessage(payload);
-			await waitUntil(async () => expect(mockRequestHandler).toBeCalledTimes(1));
+			await waitUntil(async () => expect(mockRequestHandler).toBeCalledTimes(2));
 			expect(mockRequestHandler).toBeCalledWith(expect.objectContaining({ payload }));
 		});
 

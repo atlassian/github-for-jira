@@ -38,7 +38,7 @@ JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRo
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
-JiraRouter.get("/subscriptions/backfill-status", JiraGetConnectionsBackfillStatus);
+JiraRouter.get("/subscriptions/backfill-status", jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGetConnectionsBackfillStatus);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`
