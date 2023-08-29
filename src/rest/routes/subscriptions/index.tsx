@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { errorWrapper } from "../../helper";
-import { getAllSubscriptions } from "~/spa/src/api/subscriptions/service";
+import { getAllSubscriptions } from "./service";
 
 export const SubscriptionsRouter = Router();
 

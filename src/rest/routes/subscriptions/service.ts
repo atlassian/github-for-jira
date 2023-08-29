@@ -1,8 +1,7 @@
-import { Subscription } from "../../../../src/models/subscription";
-import { GitHubServerApp } from "../../../../src/models/github-server-app";
+import { Subscription } from "models/subscription";
+import { GitHubServerApp } from "models/github-server-app";
 
 export const getAllSubscriptions = async (jiraHost: string, installationId: number) => {
-
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 	const ghEnterpriseServers: GitHubServerApp[] = await GitHubServerApp.findForInstallationId(installationId) || [];
 

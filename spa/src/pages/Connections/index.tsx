@@ -10,7 +10,7 @@ const Connections = () => {
 	const fetchSubscriptions = async () => {
 		const subs = await ApiRequest.subscriptions.getSubscriptions();
 		setSubscriptions(subs.data);
-		console.log("here", subscriptions);
+		console.log("Subs -----> ", subscriptions);
 	};
 
 	return (
