@@ -58,7 +58,7 @@ async function installNewApp(callbacks: {
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
 			const id = parseInt(event.data?.gitHubInstallationId);
 			if(!id) {
-				reportError({ message: "GitHub installation id is emptpy on finish oauth flow" });
+				reportError({ message: "GitHub installation id is empty on finish OAuth flow" });
 			}
 			callbacks.onFinish(isNaN(id) ? undefined : id);
 		}
