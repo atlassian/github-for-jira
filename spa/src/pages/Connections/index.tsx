@@ -19,7 +19,7 @@ const Connections = () => {
 			<div>
 				List of connections should go here!
 			</div>
-			<Button onClick={fetchSubscriptions}>Fetch here</Button>
+			<Button appearance="link"  onClick={fetchSubscriptions}>Fetch here</Button>
 		</Wrapper>
 	);
 };
