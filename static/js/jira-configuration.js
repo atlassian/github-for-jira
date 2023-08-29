@@ -326,7 +326,7 @@ $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle
 
 const getInprogressSubIds = () => {
 	let subscriptionIds = [];
-	// store ids of if which subscription repo backfill is in progress
+	// store ids of subscription whose repo backfill is in progress
 	$(".jiraConfiguration__table__row").each(function () {
 		const repoStatusTd = $(this).children("td.repo-status");
 		const subscriptionId = $(this).data("subscription-id");
@@ -408,11 +408,14 @@ function fetchAllConnectionsBackfillStatus() {
 				$(".jiraConfiguration__table__row").each(function () {
 					const self = this;
 					let subscriptionId = $(self).data("subscription-id");
-					if (subscriptionIds.includes(subscriptionId)) {
+					if (subscriptionId in subscriptions) {
 						// repo count set
 						updateBackfilledRepoCount({ subscriptions, subscriptionId, self });
 						// repo status set
 						updateBackfilledStatus({ subscriptionId, subscriptions, self });
+					}
+					else{
+						$(`#${subscriptionId}-syncCount`).css("display", "none");
 					}
 				});
 				if (!backFillCompleted) {

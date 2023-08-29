@@ -1,20 +1,19 @@
 import { NextFunction, Request, Response } from "express";
 import { groupBy, countBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
-// import { Subscription, TaskStatus } from "~/src/models/subscription";
 import { TaskStatus } from "~/src/models/subscription";
 
-type subscriptionBackfillState = {
+type SubscriptionBackfillState = {
 	totalRepos?: number;
 	syncCompleted?: boolean;
 	syncedRepos?: number;
 	backfillSince?: string | null;
 };
-type backFillType = {
-	[key: string]: subscriptionBackfillState;
+type BackFillType = {
+	[key: string]: SubscriptionBackfillState;
 };
 
-export const JiraGetConnectionsBackfilStatus = async (
+export const JiraGetConnectionsBackfillStatus = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -23,27 +22,13 @@ export const JiraGetConnectionsBackfilStatus = async (
 		const subscriptionIds: number[] = String(req.query.subscriptionIds)
 			.split(",")
 			.map((id) => Number(id))
-			.filter((n) => !!n);
+			.filter(Boolean);
 
 		if (subscriptionIds.length <= 0) {
 			req.log.error("Missing Subscription IDs");
 			res.status(401).send("Missing Subscription IDs");
 			return;
 		}
-
-		// const subscriptionStatus = await Subscription.findAll({
-		// 	where: {
-		// 		id: subscriptionIds,
-		// 	}
-		// });
-		// const subscriptions = groupBy(subscriptionStatus, "id") as unknown as { fulfilled: PromiseFulfilledResult<Subscription>[], rejected: PromiseRejectedResult[] };
-
-		// if (!subscriptions) {
-		// 	req.log.error("Missing Subscription");
-		// 	res.status(401).send("Missing Subscription");
-		// 	return;
-		// }
-
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscriptionIds
@@ -57,19 +42,15 @@ export const JiraGetConnectionsBackfilStatus = async (
 			fulfilled: PromiseFulfilledResult<RepoSyncState>[];
 			rejected: PromiseRejectedResult[];
 		};
-		const backfillStatus: backFillType = {};
+		const backfillStatus: BackFillType = {};
 
 		for (const subscriptionId in connections) {
 			backfillStatus[subscriptionId] = {};
 			const subscriptionRepos = connections[subscriptionId];
-			// const subscription = subscriptions[subscriptionId][0];
-			// const totalRepos = subscription['totalnumberOfRepos'];
-			// const backfillSince = subscription['backfillSince'];
 			const totalRepos = countBy(subscriptionRepos, "subscriptionId")[
 				subscriptionId
 			];
 			backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
-			// backfillStatus[subscriptionId]['backfillSince'] = backfillSince;
 			const repos = subscriptionRepos.map((repoSyncState) => {
 				return {
 					name: repoSyncState.repoFullName,
@@ -86,7 +67,7 @@ export const JiraGetConnectionsBackfilStatus = async (
 
 		let backFillCompleted = true;
 		Object.values(backfillStatus).forEach(
-			(backFill: subscriptionBackfillState): void => {
+			(backFill: SubscriptionBackfillState): void => {
 				if (!backFill.syncCompleted) {
 					backFillCompleted = false;
 				}
@@ -118,10 +99,10 @@ const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
 	if (statuses.includes("failed")) {
 		return "failed";
 	}
-	const completeStatusesCount = statuses.filter(
+	const hasCompleteStatus = statuses.every(
 		(status) => status == "complete"
-	).length;
-	if (completeStatusesCount === statuses.length) {
+	);
+	if (hasCompleteStatus) {
 		return "complete";
 	}
 	return "pending";
