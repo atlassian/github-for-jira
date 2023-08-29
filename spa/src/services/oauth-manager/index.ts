@@ -15,7 +15,12 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 		username = res.data.login;
 		email = res.data.email;
 
-		return res.status === 200;
+		const ret = res.status === 200;
+
+		if(!ret) reportError({ message: "Response status is not 200 for getting user details", status: res.status });
+
+		return ret;
+
 	} catch (e) {
 		reportError(e);
 		return e as AxiosError;
@@ -35,17 +40,25 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 				}
 			}, 1000);
 		}
+	} else {
+		reportError({ message: "Fail to get redirectUrl and/or state" });
 	}
 }
 
 async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
 
-	if (!code && !state) return false;
+	if (!code && !state) {
+		reportError({ message: "state missing", isCodeEmpty: !code, isStateEmpty: !state });
+		return false;
+	}
 
 	const prevState = oauthState;
 	oauthState = undefined;
 
-	if (state !== prevState) return false;
+	if (state !== prevState) {
+		reportError({ message: "state not match", isPrevStateEmpty: !prevState, isStateEmpty: !state });
+		return false;
+	}
 
 	try {
 		const token = await Api.auth.exchangeToken(code, state);
@@ -53,6 +66,7 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			Api.token.setGitHubToken(token.data.accessToken);
 			return true;
 		} else {
+			reportError({ message: "fail to acquire accessToken (empty)" });
 			return false;
 		}
 	} catch (e) {
