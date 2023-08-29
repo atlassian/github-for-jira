@@ -358,7 +358,7 @@ const updateBackfilledRepoCount = ({ subscriptionId, subscriptions, self }) => {
 };
 
 const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
-	const syncCompleted = subscriptions[subscriptionId].syncCompleted;
+	const isSyncComplete = subscriptions[subscriptionId].isSyncComplete;
 	const backfillSince = subscriptions[subscriptionId].backfillSince;
 	const repoStatusTd = $(self).children("td.repo-status");
 	const infoContainer = repoStatusTd.children(
@@ -373,7 +373,7 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 	const backfillDateInfo = infoContainer.children('div.jiraConfiguration__info__backfillDate');
 	const backfillDate = infoContainer.children('span.jiraConfiguration__info__backfillDate-label');
 	let syncStatus = "IN PROGRESS";
-	if (syncCompleted) {
+	if (isSyncComplete) {
 		inprogressIcon.css("display", "none");
 		syncStatusProgress.removeClass("jiraConfiguration__table__in-progress");
 		syncStatusProgress.removeClass("jiraConfiguration__table__pending");
@@ -403,7 +403,7 @@ function fetchAllConnectionsBackfillStatus() {
 			success: (response) => {
 				const data = response.data;
 				const subscriptions = data.subscriptions;
-				const backFillCompleted = data.backFillCompleted;
+				const isbackFillComplete = data.isbackFillComplete;
 
 				$(".jiraConfiguration__table__row").each(function () {
 					const self = this;
@@ -418,7 +418,7 @@ function fetchAllConnectionsBackfillStatus() {
 						$(`#${subscriptionId}-syncCount`).css("display", "none");
 					}
 				});
-				if (!backFillCompleted) {
+				if (!isbackFillComplete) {
 					fetchBackfillStateTimeout = setTimeout(
 						fetchAllConnectionsBackfillStatus,
 						6000
