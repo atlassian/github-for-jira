@@ -403,7 +403,7 @@ function fetchAllConnectionsBackfillStatus() {
 			success: (response) => {
 				const data = response.data;
 				const subscriptions = data.subscriptions;
-				const isbackFillComplete = data.isbackFillComplete;
+				const isBackfillComplete = data.isBackfillComplete;
 
 				$(".jiraConfiguration__table__row").each(function () {
 					const self = this;
@@ -418,7 +418,7 @@ function fetchAllConnectionsBackfillStatus() {
 						$(`#${subscriptionId}-syncCount`).css("display", "none");
 					}
 				});
-				if (!isbackFillComplete) {
+				if (!isBackfillComplete) {
 					fetchBackfillStateTimeout = setTimeout(
 						fetchAllConnectionsBackfillStatus,
 						6000
@@ -428,9 +428,7 @@ function fetchAllConnectionsBackfillStatus() {
 				}
 			},
 			error: () => {
-				showErrorMessage(
-					"We couldn't fetch the backfill status of connections because something went wrong. Please try again."
-				);
+				console.log("failure in fetching  backfill status of connections.");
 			},
 		});
 	}

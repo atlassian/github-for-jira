@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
-import { groupBy, countBy } from "lodash";
+import { groupBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { TaskStatus } from "~/src/models/subscription";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
-	isSyncComplete?: boolean;
+	isSyncComplete: boolean;
 	syncedRepos?: number;
 	backfillSince?: string | null;
 };
@@ -25,8 +25,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			.filter(Boolean);
 
 		if (subscriptionIds.length <= 0) {
-			req.log.error("Missing Subscription IDs");
-			res.status(401).send("Missing Subscription IDs");
+			req.log.warn("Missing Subscription IDs");
+			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
 
@@ -39,18 +39,15 @@ export const JiraGetConnectionsBackfillStatus = async (
 		const connections = groupBy(
 			repoSyncStates,
 			"subscriptionId"
-		) as unknown as {
-			fulfilled: PromiseFulfilledResult<RepoSyncState>[];
-			rejected: PromiseRejectedResult[];
-		};
+		);
 
 		const backfillStatus = getBackfillStatus(connections);
 
-		const isbackFillComplete = getBackfillCompletionStatus(backfillStatus);
+		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
 		res.status(200).send({
 			data: {
 				subscriptions: backfillStatus,
-				isbackFillComplete,
+				isBackfillComplete,
 				subscriptionIds
 			}
 		});
@@ -60,25 +57,20 @@ export const JiraGetConnectionsBackfillStatus = async (
 };
 
 const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
-	let isbackFillComplete = true;
-	Object.values(backfillStatus).forEach(
-		(backFill: SubscriptionBackfillState): void => {
-			if (!backFill.isSyncComplete) {
-				isbackFillComplete = false;
-			}
-		}
+	let isBackfillComplete = true;
+	isBackfillComplete = Object.values(backfillStatus).every(
+		(backFill: SubscriptionBackfillState): boolean =>
+			backFill.isSyncComplete
 	);
-	return isbackFillComplete;
+	return isBackfillComplete;
 };
 
 const getBackfillStatus = (connections): BackFillType => {
 	const backfillStatus: BackFillType = {};
 	for (const subscriptionId in connections) {
-		backfillStatus[subscriptionId] = {};
+		backfillStatus[subscriptionId] = { isSyncComplete: true };
 		const subscriptionRepos = connections[subscriptionId];
-		const totalRepos = countBy(subscriptionRepos, "subscriptionId")[
-			subscriptionId
-		];
+		const totalRepos = subscriptionRepos.length;
 		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
 		const repos = subscriptionRepos.map((repoSyncState) => {
 			return {
