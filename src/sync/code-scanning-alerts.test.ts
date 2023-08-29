@@ -16,6 +16,7 @@ describe("sync/code-scanning-alerts", () => {
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+
 	let subscription;
 
 	describe("cloud", () => {
