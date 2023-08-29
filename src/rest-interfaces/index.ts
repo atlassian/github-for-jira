@@ -62,4 +62,5 @@ export type ErrorCode =
 	| "IP_BLOCKED"
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
+	| "TLS_CONNECTION"
 	| "UNKNOWN";

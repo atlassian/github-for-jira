@@ -21,6 +21,14 @@ export class GithubClientError extends Error {
 	}
 }
 
+export class GithubClientTLSError extends GithubClientError {
+	constructor(cause: AxiosError) {
+		super("TLS_CONNECTION", cause);
+		this.uiErrorCode = "TLS_CONNECTION";
+		this.isRetryable = false;
+	}
+}
+
 export class GithubClientTimeoutError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Timeout", cause);

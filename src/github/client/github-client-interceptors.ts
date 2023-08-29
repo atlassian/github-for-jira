@@ -5,7 +5,8 @@ import {
 	GithubClientInvalidPermissionsError,
 	GithubClientRateLimitingError,
 	GithubClientNotFoundError,
-	GithubClientSSOLoginError
+	GithubClientSSOLoginError,
+	GithubClientTLSError
 } from "./github-client-errors";
 import Logger from "bunyan";
 import { statsd } from "config/statsd";
@@ -105,7 +106,7 @@ export const instrumentFailedRequest = (metricName: string, host: string, jiraHo
 
 export const handleFailedRequest = (rootLogger: Logger) =>
 	(err: AxiosError) => {
-		const { response, config, request } = err;
+		const { code, response, config, request, stack } = err;
 		const requestId = response?.headers?.["x-github-request-id"];
 		const logger = rootLogger.child({
 			err,
@@ -117,6 +118,11 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 
 		const errorMessage = `Error executing Axios Request: ` + err.message;
 		logger.warn(errorMessage);
+
+		if (code === "PATH_LENGTH_EXCEEDED" && String(stack || "").includes("tls")) {
+			logger.warn("Fail at tls socket error");
+			return Promise.reject(new GithubClientTLSError(err));
+		}
 
 		if (response?.status === 408 || err.code === "ETIMEDOUT") {
 			logger.warn("Request timed out");

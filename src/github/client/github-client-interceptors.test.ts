@@ -3,8 +3,11 @@ import { getLogger } from "config/logger";
 import {
 	GithubClientBlockedIpError,
 	GithubClientInvalidPermissionsError,
-	GithubClientNotFoundError, GithubClientSSOLoginError
+	GithubClientNotFoundError, GithubClientSSOLoginError,
+	GithubClientTLSError
 } from "~/src/github/client/github-client-errors";
+import { handleFailedRequest } from "./github-client-interceptors";
+import { AxiosError } from "axios";
 
 describe("github-client-interceptors", () => {
 	it("correctly maps invalid permission error", async () => {
@@ -65,5 +68,14 @@ describe("github-client-interceptors", () => {
 			error = err;
 		}
 		expect(error!).toBeInstanceOf(GithubClientSSOLoginError);
+	});
+
+	it("should fail at tls error", async () => {
+		const axiosError: AxiosError = {
+			name: "whatever", message: "whatever", config: {} as any, isAxiosError: true,
+			toJSON: jest.fn(), request: {} as any, response: {} as any,
+			code: "PATH_LENGTH_EXCEEDED", stack: "something something that contains tls something something"
+		} as any;
+		await expect(() => handleFailedRequest(getLogger("test"))(axiosError)).rejects.toThrow(GithubClientTLSError);
 	});
 });

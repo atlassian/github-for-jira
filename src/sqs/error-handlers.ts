@@ -2,7 +2,7 @@ import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
 import { emitWebhookFailedMetrics } from "utils/webhook-utils";
 import { ErrorHandler, ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "./sqs.types";
-import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
+import { GithubClientRateLimitingError, GithubClientTLSError } from "../github/client/github-client-errors";
 
 /**
  * Sometimes we can get errors from Jira and GitHub which does not indicate a failured webhook. For example:
@@ -36,6 +36,7 @@ export const jiraAndGitHubErrorsHandler: ErrorHandler<BaseMessagePayload> = asyn
 
 	const maybeResult = maybeHandleNonFailureCase(error, context)
 		|| maybeHandleRateLimitingError(error, context)
+		|| maybeHandleGitHubTLSError(error, context)
 		|| maybeHandleNonRetryableResponseCode(error, context);
 
 	if (maybeResult) {
@@ -95,3 +96,13 @@ const maybeHandleRateLimitingError = <MessagePayload extends BaseMessagePayload>
 
 	return undefined;
 };
+
+const maybeHandleGitHubTLSError = <MessagePayload extends BaseMessagePayload>(error: Error, context: SQSMessageContext<MessagePayload>): ErrorHandlingResult | undefined => {
+	if (error instanceof GithubClientTLSError) {
+		context.log.warn({ error }, `GitHub tls error, skip retry`);
+		return { retryable: false, isFailure: true };
+	}
+
+	return undefined;
+};
+

@@ -4,7 +4,7 @@ import { jiraAndGitHubErrorsHandler, webhookMetricWrapper } from "./error-handle
 import { getLogger } from "config/logger";
 import { JiraClientError } from "../jira/client/axios";
 import { Octokit } from "@octokit/rest";
-import { GithubClientRateLimitingError } from "../github/client/github-client-errors";
+import { GithubClientRateLimitingError, GithubClientTLSError } from "../github/client/github-client-errors";
 import { AxiosError, AxiosResponse, AxiosResponseHeaders } from "axios";
 import { ErrorHandlingResult, SQSMessageContext, BaseMessagePayload } from "~/src/sqs/sqs.types";
 
@@ -132,6 +132,15 @@ describe("error-handlers", () => {
 
 			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
 			expect(result.retryable).toBe(true);
+			expect(result.isFailure).toBe(true);
+		});
+
+		it("Unretryable and not and error on GitHub client tls error", async () => {
+
+			const error = new GithubClientTLSError(new Error() as any);
+
+			const result = await jiraAndGitHubErrorsHandler(error, createContext(1, true));
+			expect(result.retryable).toBe(false);
 			expect(result.isFailure).toBe(true);
 		});
 	});
