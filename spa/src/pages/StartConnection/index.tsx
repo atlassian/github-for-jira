@@ -126,6 +126,14 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
+				<Button
+					appearance="subtle"
+					onClick={() => {
+						navigate("connections");
+					}}
+				>
+					Go to backfill page
+				</Button>
 			</ButtonContainer>
 		</Wrapper>
 	);
