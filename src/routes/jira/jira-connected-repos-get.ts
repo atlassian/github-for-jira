@@ -89,7 +89,7 @@ export const JiraConnectedReposGet = async (
 		}
 
 		const repoFilterCondition = {
-			repoName: {
+			repoFullName: {
 				[Op.like]: sequelize.literal(sequelize.escape(`%${filterRepoName}%`))
 			}
 		};
