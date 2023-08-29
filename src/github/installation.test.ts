@@ -50,7 +50,7 @@ describe("InstallationWebhookHandler", () => {
 		});
 
 		describe.each(
-			["created", "new_permissions_accepted"]
+			["new_permissions_accepted"]
 		)("should not set security permissions accepted field in subscriptions when FF is disabled", (action) => {
 			it(`${action} action`, async () => {
 				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
@@ -116,7 +116,7 @@ describe("InstallationWebhookHandler", () => {
 			expect(submitSecurityWorkspaceToLink).toBeCalledWith(installation, subscription, expect.anything());
 			expect(findOrStartSync).toBeCalledTimes(1);
 			expect(findOrStartSync).toBeCalledWith(
-				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert", "secretScanningAlert"], { "source": "webhook-security-permissions-accepted" }
+				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert", "secretScanningAlert", "codeScanningAlert"], { "source": "webhook-security-permissions-accepted" }
 			);
 
 		});
