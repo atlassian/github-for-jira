@@ -1,93 +1,92 @@
-import { getLogger 	} from "config/logger";
-import { omit } from "lodash";
-import { isNodeProd } from "utils/is-node-env";
-import { optionalRequire } from "optional-require";
+import { getLogger } from "config/logger";
 import { envVars } from "config/env";
+import { createHashWithoutSharedSecret } from "utils/encryption";
+import _ from "lodash";
+import { MicrosEnvTypeEnum } from "interfaces/common";
+import { isTestJiraHost } from "config/jira-test-site-check";
+import { SQS } from "aws-sdk";
+import { SendMessageRequest } from "aws-sdk/clients/sqs";
 
-const { analyticsClient } = optionalRequire("@atlassiansox/analytics-node-client", true) || {};
 const logger = getLogger("analytics");
 
-let analyticsNodeClient;
+export interface ScreenEventProps {
+	name: string;
+}
 
-export const sendAnalytics: {
-	(jiraHost: string, eventType: "screen", attributes: { name: string } & Record<string, unknown>);
-	(jiraHost: string, eventType: "track", attributes: { name: string, source: string } & Record<string, unknown>);
-	(jiraHost: string, eventType: "ui" | "operational", attributes: Record<string, unknown>);
-} = (jiraHost: string, eventType: string, attributes: Record<string, unknown> = {}): void => {
+export interface TrackOpUiEventProps {
+	action: string;
+	actionSubject: string;
+	source: string;
+}
 
-	logger.debug({ jiraHost }, analyticsClient ? "Found analytics client." : `No analytics client found.`);
+interface SQSEventPayload {
+	accountId?: string;
+	eventType: "screen" | "ui" | "operational" | "track";
+	eventProps: ScreenEventProps | TrackOpUiEventProps;
+	eventAttributes?: Record<string, unknown>;
+}
 
-	if (!analyticsClient || !isNodeProd()) {
-		logger.warn("No analyticsClient or skipping sending analytics");
-		return;
-	}
+export interface SQSAnalyticsMessagePayload {
+	jiraHost: string;
+	eventPayload: SQSEventPayload;
+}
 
-	if (!analyticsNodeClient){
-		// Values defined by DataPortal. Do not change their values as it will affect our metrics logs and dashboards.
-		analyticsNodeClient = analyticsClient({
-			env: "prod", // This needs to be "prod" as we're using prod Jira instances.
-			product: "gitHubForJira"
-		});
-	}
+export const sendAnalyticsWithSqs = async (
+	jiraHost: string,
+	eventType: "screen" | "ui" | "operational" | "track",
+	eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>,
+	attributes: Record<string, unknown> = {},
+	accountId?: string
+): Promise<void> => {
 
-	const baseAttributes = {
-		userId: "anonymousId",
-		userIdType: "atlassianAccount",
-		tenantIdType: "cloudId",
-		tenantId: "NONE"
+	const payload: SQSAnalyticsMessagePayload = {
+		jiraHost,
+		eventPayload: {
+			accountId,
+			eventType,
+			eventProps,
+			eventAttributes: attributes
+		}
 	};
-
-	attributes.appKey = envVars.APP_KEY;
-
-	logger.debug({ eventType }, "Sending analytics");
-
-	const name = attributes.name || "";
-	switch (eventType) {
-		case "screen":
-			sendEvent(eventType, name, analyticsNodeClient.sendScreenEvent({
-				...baseAttributes,
-				name: attributes.name,
-				screenEvent: {
-					platform: "web",
-					attributes: omit(attributes, "name")
-				}
-			}));
-			break;
-		case "ui":
-			sendEvent(eventType, name, analyticsNodeClient.sendUIEvent({
-				...baseAttributes,
-				uiEvent: {
-					attributes
-				}
-			}));
-			break;
-		case "track":
-			sendEvent(eventType, name, analyticsNodeClient.sendTrackEvent({
-				...baseAttributes,
-				trackEvent: {
-					source: attributes.source,
-					action: attributes.action || attributes.name,
-					actionSubject: attributes.actionSubject || attributes.name,
-					attributes
-				}
-			}));
-			break;
-		case "operational":
-			sendEvent(eventType, name, analyticsNodeClient.sendOperationalEvent({
-				...baseAttributes,
-				operationalEvent: {
-					attributes
-				}
-			}));
-			break;
-		default:
-			logger.warn(`Cannot sendAnalytics: unknown eventType`);
-			break;
+	const sqs = new SQS({ apiVersion: "2012-11-05", region: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_REGION });
+	const params: SendMessageRequest = {
+		MessageBody: JSON.stringify(payload),
+		QueueUrl: envVars.SQS_INCOMINGANALYTICEVENTS_QUEUE_URL,
+		DelaySeconds: 0
+	};
+	try {
+		const sendMessageResult = await sqs.sendMessage(params)
+			.promise();
+		logger.debug({ sendMessageResult }, "Published an analytic event to SQS");
+	} catch (err) {
+		logger.error({ err }, "Cannot publish the event to SQS");
 	}
 };
 
-const sendEvent = (eventType: string, name: unknown, promise: Promise<unknown>) => {
-	promise.catch((error) => {
-		logger.warn(`Cannot sendAnalytics event ${eventType} - ${name}, error: ${error}`);
-	});
+/**
+ *
+ * @param jiraHost
+ * @param eventType
+ * @param eventProps - even though it requires only a few fields leaving the rest as a loose Record, in fact all the properties
+ * 										 are well-defined and rigid. See the sample payloads here: https://bitbucket.org/atlassian/analytics-node-client/src/master/
+ * @param unsafeAttributes - free-form attributes, will be included as "attributes" property into the properties of the event
+ */
+export const sendAnalytics: {
+	(jiraHost: string, eventType: "screen", eventProps: ScreenEventProps & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
+	(jiraHost: string, eventType: "ui" | "operational" | "track", eventProps: TrackOpUiEventProps  & Record<string, unknown>, attributes: Record<string, unknown>, accountId?: string);
+} = async (jiraHost: string, eventType: "screen" | "ui" | "operational" | "track", eventProps: (ScreenEventProps | TrackOpUiEventProps)  & Record<string, unknown>, unsafeAttributes: Record<string, unknown> = {}, accountId?: string): Promise<void> => {
+
+	if (isTestJiraHost(jiraHost) && envVars.MICROS_ENVTYPE === MicrosEnvTypeEnum.prod) {
+		logger.warn("Skip analytics for test jira in prod");
+		return;
+	}
+
+	const attributes = _.cloneDeep(unsafeAttributes);
+	if (attributes.jiraHost && (typeof attributes.jiraHost === "string")) {
+		attributes.jiraHost = createHashWithoutSharedSecret(attributes.jiraHost);
+	}
+
+	attributes.appKey = envVars.APP_KEY;
+
+	await sendAnalyticsWithSqs(jiraHost, eventType, eventProps, attributes, accountId);
 };

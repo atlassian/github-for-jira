@@ -21,16 +21,19 @@ import {
 	getDeploymentsQueryWithStatuses,
 	SearchedRepositoriesResponse,
 	getPullRequests,
-	pullRequestQueryResponse,
-	getDependabotAlerts,
-	GetDependabotAlertsResponse
+	pullRequestQueryResponse
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
-	CreateReferenceBody,
+	CreateReferenceBody, GetCodeScanningAlertRequestParams,
+	DependabotAlertResponseItem,
+	GetDependabotAlertRequestParams,
 	GetPullRequestParams,
+	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
-	ReposGetContentsResponse
+	ReposGetContentsResponse,
+	SecretScanningAlertResponseItem,
+	CodeScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -72,6 +75,29 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.installationTokenCache = InstallationTokenCache.getInstance();
 		this.githubInstallationId = githubInstallationId;
 		this.gitHubServerAppId = gshaId;
+	}
+
+
+	public async getSecretScanningAlerts(owner: string, repo: string, secretScanningAlertRequestParams: GetSecretScanningAlertRequestParams): Promise<AxiosResponse<SecretScanningAlertResponseItem[]>> {
+		return await this.get<SecretScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/secret-scanning/alerts`, secretScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
+
+	public async getSecretScanningAlert(alertNumber: number, owner: string, repo: string): Promise<AxiosResponse<SecretScanningAlertResponseItem>> {
+		return await this.get<SecretScanningAlertResponseItem>(`/repos/{owner}/{repo}/secret-scanning/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
+
+	public async getCodeScanningAlerts(owner: string, repo: string, codeScanningAlertRequestParams: GetCodeScanningAlertRequestParams): Promise<AxiosResponse<CodeScanningAlertResponseItem[]>> {
+		return await this.get<CodeScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts`, codeScanningAlertRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	/**
@@ -362,18 +388,11 @@ export class GitHubInstallationClient extends GitHubClient {
 		return response?.data?.data?.viewer?.repositories?.totalCount;
 	}
 
-	public async getDependabotAlertsPage(owner: string, repoName: string, perPage = 20, cursor?: string): Promise<GetDependabotAlertsResponse> {
-
-		const response = await this.graphql<GetDependabotAlertsResponse>(getDependabotAlerts,
-			await this.installationAuthenticationHeaders(),
-			{
-				owner,
-				repo: repoName,
-				per_page: perPage,
-				cursor
-			},
-			{ graphQuery: "getDependabotAlerts" });
-		return response?.data?.data;
+	public async getDependabotAlerts(owner: string, repo: string, dependabotAlertRequestParams: GetDependabotAlertRequestParams): Promise<AxiosResponse<DependabotAlertResponseItem[]>> {
+		return await this.get<DependabotAlertResponseItem[]>(`/repos/{owner}/{repo}/dependabot/alerts`, dependabotAlertRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {

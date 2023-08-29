@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import styled from "@emotion/styled";
 import Button from "@atlaskit/button";
-import ArrowLeftIcon from "@atlaskit/icon/glyph/arrow-left";
+import CrossIcon from "@atlaskit/icon/glyph/cross";
 import analyticsClient from "../analytics";
 
 const navHeight = 56;
@@ -19,7 +19,10 @@ const WrapperCenterStyled = styled.div`
 
 const navigateToHomePage = () => {
 	analyticsClient.sendUIEvent({ actionSubject: "dropExperienceViaBackButton", action: "clicked" });
-	AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+	AP.getLocation((location: string) => {
+		const locationUrl = new URL(location);
+		AP.navigator.go( "site", { absoluteUrl: `${locationUrl.origin}/jira/marketplace/discover/app/com.github.integration.production` });
+	});
 };
 
 export const Wrapper = (attr: {
@@ -27,7 +30,8 @@ export const Wrapper = (attr: {
 }) => {
 	return <WrapperOutterStyled>
 			<Button
-				iconBefore={<ArrowLeftIcon label="Back to home" size="medium" />}
+				style={{ float: "right" }}
+				iconBefore={<CrossIcon label="Close" size="medium" />}
 				appearance="subtle"
 				onClick={ navigateToHomePage }
 			>

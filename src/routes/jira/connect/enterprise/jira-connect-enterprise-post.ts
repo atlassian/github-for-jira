@@ -33,8 +33,10 @@ const sendErrorMetricAndAnalytics = (jiraHost: string, errorCode: ErrorResponseC
 	statsd.increment(metricError.gheServerUrlError, errorCodeAndStatusObj, { jiraHost });
 
 	sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-		name: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
-		source: AnalyticsTrackSource.CreateBranch,
+		action: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlErrorTrackEventName,
+		source: AnalyticsTrackSource.CreateBranch
+	}, {
 		jiraHost,
 		...errorCodeAndStatusObj
 	});
@@ -150,9 +152,11 @@ export const JiraConnectEnterprisePost = async (
 
 		await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
 
-		sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-			source: AnalyticsTrackSource.GitHubEnterprise,
+		await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+			source: AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			jiraHost: jiraHost
 		});
 	} catch (err) {
@@ -162,10 +166,12 @@ export const JiraConnectEnterprisePost = async (
 		if (isResponseFromGhe(req.log, axiosError.response)) {
 			req.log.info({ err }, "Server is reachable, but responded with a status different from 200/202");
 			await saveTempConfigAndRespond200(res, gitHubConnectConfig, installationId);
-			sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
-				source: AnalyticsTrackSource.GitHubEnterprise,
-				jiraHost: jiraHost
+			await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
+				action: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.GitHubServerUrlTrackEventName,
+				source: AnalyticsTrackSource.GitHubEnterprise
+			}, {
+				jiraHost
 			});
 			return;
 		}

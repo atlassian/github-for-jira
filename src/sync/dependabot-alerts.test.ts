@@ -1,4 +1,3 @@
-import { dependabotAlertsNoLastCursor } from "~/test/fixtures/api/graphql/dependabot-alerts-queries";
 import { DatabaseStateCreator } from "~/test/utils/database-state-creator";
 import dependabotAlerts from "fixtures/api/graphql/dependabot-alerts.json";
 import { processInstallation } from "./installation";
@@ -9,6 +8,7 @@ import { waitUntil } from "~/test/utils/wait-until";
 import { BooleanFlags, booleanFlag } from "../config/feature-flags";
 import { when } from "jest-when";
 import { GitHubServerApp } from "../models/github-server-app";
+import { Subscription } from "../models/subscription";
 
 
 jest.mock("config/feature-flags");
@@ -16,14 +16,14 @@ describe("sync/dependabot-alerts", () => {
 
 	const sentry: Hub = { setUser: jest.fn() } as any;
 	const MOCK_SYSTEM_TIMESTAMP_SEC = 12345678;
+	let subscription;
 
 
 	describe("cloud", () => {
 
-		const nockDependabotAlertsRequest = (response: object, variables?: Record<string, unknown>) =>
+		const nockDependabotAlertsRequest = (response: object) =>
 			githubNock
-				.post("/graphql", dependabotAlertsNoLastCursor(variables))
-				.query(true)
+				.get("/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, response);
 
 		const mockBackfillQueueSendMessage = jest.fn();
@@ -39,11 +39,12 @@ describe("sync/dependabot-alerts", () => {
 		};
 		beforeEach(async () => {
 
-			await new DatabaseStateCreator()
+			const builderResult = await new DatabaseStateCreator()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
-
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 		});
@@ -55,7 +56,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseCloudServer()
+					expectedResponseCloudServer(subscription)
 				)
 				.reply(200);
 
@@ -75,13 +76,7 @@ describe("sync/dependabot-alerts", () => {
 			when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 			const data = { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID, jiraHost };
 			nockDependabotAlertsRequest({
-				"data": {
-					"repository": {
-						"vulnerabilityAlerts": {
-							"edges": []
-						}
-					}
-				}
+				"data": []
 			});
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// No Jira Nock
@@ -93,10 +88,9 @@ describe("sync/dependabot-alerts", () => {
 
 	describe("server", () => {
 
-		const nockDependabotAlertsRequest = (response: object, variables?: Record<string, unknown>) =>
+		const nockDependabotAlertsRequest = (response: object) =>
 			gheNock
-				.post("/api/graphql", dependabotAlertsNoLastCursor(variables))
-				.query(true)
+				.get("/api/v3/repos/integrations/test-repo-name/dependabot/alerts?per_page=20&page=1&sort=created&direction=desc")
 				.reply(200, response);
 
 		const verifyMessageSent = async (data: BackfillMessagePayload, delaySec?: number) => {
@@ -118,8 +112,10 @@ describe("sync/dependabot-alerts", () => {
 				.forServer()
 				.withActiveRepoSyncState()
 				.repoSyncStatePendingForDependabotAlerts()
+				.withSecurityPermissionsAccepted()
 				.create();
 
+			subscription = builderResult.subscription;
 			mockSystemTime(MOCK_SYSTEM_TIMESTAMP_SEC);
 
 			gitHubServerApp = builderResult.gitHubServerApp!;
@@ -144,7 +140,7 @@ describe("sync/dependabot-alerts", () => {
 			jiraNock
 				.post(
 					"/rest/security/1.0/bulk",
-					expectedResponseGHEServer()
+					expectedResponseGHEServer(subscription)
 				)
 				.reply(200);
 
@@ -168,13 +164,7 @@ describe("sync/dependabot-alerts", () => {
 			};
 			gheUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			nockDependabotAlertsRequest({
-				"data": {
-					"repository": {
-						"vulnerabilityAlerts": {
-							"edges": []
-						}
-					}
-				}
+				"data": []
 			});
 			// No Jira Nock
 
@@ -185,136 +175,134 @@ describe("sync/dependabot-alerts", () => {
 });
 
 
-const expectedResponseCloudServer = () => ({
-	vulnerabilities: [
+const expectedResponseCloudServer = (subscription: Subscription) => ({
+	"vulnerabilities": [
 		{
-			schemaVersion: "1.0",
-			id: "d-586512978-1",
-			updateSequenceNumber: 12345678,
-			containerId: "586512978",
-			displayName: "semver vulnerable to Regular Expression Denial of Service",
-			description: "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
-			url: "https://github.com/integrations/test-repo-name/security/dependabot/1",
-			type: "sca",
-			introducedDate: "2023-07-13T06:24:50Z",
-			lastUpdated: "2023-07-13T06:24:50Z",
-			severity: {
-				level: "medium"
+			"schemaVersion": "1.0",
+			"id": "d-1-1",
+			"updateSequenceNumber": 12345678,
+			"containerId": "1",
+			"displayName": "semver vulnerable to Regular Expression Denial of Service",
+			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"type": "sca",
+			"introducedDate": "2023-07-13T06:24:50Z",
+			"lastUpdated": "2023-07-13T06:24:50Z",
+			"severity": {
+				"level": "medium"
 			},
-			identifiers: [
+			"identifiers": [
 				{
-					displayName: "GHSA-c2qf-rxjj-qqgw",
-					url: "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+					"displayName": "GHSA-c2qf-rxjj-qqgw",
+					"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
 				},
 				{
-					displayName: "CVE-2022-25883",
-					url: "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+					"displayName": "CVE-2022-25883",
+					"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
 				}
 			],
-			status: "open",
-			additionalInfo: {
-				content: "yarn.lock"
+			"status": "open",
+			"additionalInfo": {
+				"content": "yarn.lock"
 			}
 		},
 		{
-			schemaVersion: "1.0",
-			id: "d-586512978-2",
-			updateSequenceNumber: 12345678,
-			containerId: "586512978",
-			displayName: "semver vulnerable to Regular Expression Denial of Service",
-			description: "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
-			url: "https://github.com/integrations/test-repo-name/security/dependabot/2",
-			type: "sca",
-			introducedDate: "2023-07-13T06:24:50Z",
-			lastUpdated: "2023-07-13T06:24:50Z",
-			severity: {
-				level: "low"
+			"schemaVersion": "1.0",
+			"id": "d-1-2",
+			"updateSequenceNumber": 12345678,
+			"containerId": "1",
+			"displayName": "semver vulnerable to Regular Expression Denial of Service",
+			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"type": "sca",
+			"introducedDate": "2023-07-13T06:24:50Z",
+			"lastUpdated": "2023-07-13T06:24:50Z",
+			"severity": {
+				"level": "low"
 			},
-			identifiers: [
+			"identifiers": [
 				{
-					displayName: "GHSA-c2qf-rxjj-qqgw",
-					url: "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+					"displayName": "GHSA-c2qf-rxjj-qqgw",
+					"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
 				},
 				{
-					displayName: "CVE-2022-25883",
-					url: "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+					"displayName": "CVE-2022-25883",
+					"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
 				}
 			],
-			status: "open",
-			additionalInfo: {
-				content: "yarn.lock"
+			"status": "open",
+			"additionalInfo": {
+				"content": "yarn.lock"
 			}
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });
 
-const expectedResponseGHEServer = () => ({
-	vulnerabilities: [
+const expectedResponseGHEServer = (subscription: Subscription) => ({
+	"vulnerabilities": [
 		{
-			schemaVersion: "1.0",
-			id: "d-6769746875626d79646f6d61696e636f6d-586512978-1",
-			updateSequenceNumber: 12345678,
-			containerId: "6769746875626d79646f6d61696e636f6d-586512978",
-			displayName: "semver vulnerable to Regular Expression Denial of Service",
-			description: "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
-			url: "https://github.com/integrations/test-repo-name/security/dependabot/1",
-			type: "sca",
-			introducedDate: "2023-07-13T06:24:50Z",
-			lastUpdated: "2023-07-13T06:24:50Z",
-			severity: {
-				level: "medium"
+			"schemaVersion": "1.0",
+			"id": "d-6769746875626d79646f6d61696e636f6d-1-1",
+			"updateSequenceNumber": 12345678,
+			"containerId": "6769746875626d79646f6d61696e636f6d-1",
+			"displayName": "semver vulnerable to Regular Expression Denial of Service",
+			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"type": "sca",
+			"introducedDate": "2023-07-13T06:24:50Z",
+			"lastUpdated": "2023-07-13T06:24:50Z",
+			"severity": {
+				"level": "medium"
 			},
-			identifiers: [
+			"identifiers": [
 				{
-					displayName: "GHSA-c2qf-rxjj-qqgw",
-					url: "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+					"displayName": "GHSA-c2qf-rxjj-qqgw",
+					"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
 				},
 				{
-					displayName: "CVE-2022-25883",
-					url: "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+					"displayName": "CVE-2022-25883",
+					"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
 				}
 			],
-			status: "open",
-			additionalInfo: {
-				content: "yarn.lock"
+			"status": "open",
+			"additionalInfo": {
+				"content": "yarn.lock"
 			}
 		},
 		{
-			schemaVersion: "1.0",
-			id: "d-6769746875626d79646f6d61696e636f6d-586512978-2",
-			updateSequenceNumber: 12345678,
-			containerId: "6769746875626d79646f6d61696e636f6d-586512978",
-			displayName: "semver vulnerable to Regular Expression Denial of Service",
-			description: "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
-			url: "https://github.com/integrations/test-repo-name/security/dependabot/2",
-			type: "sca",
-			introducedDate: "2023-07-13T06:24:50Z",
-			lastUpdated: "2023-07-13T06:24:50Z",
-			severity: {
-				level: "low"
+			"schemaVersion": "1.0",
+			"id": "d-6769746875626d79646f6d61696e636f6d-1-2",
+			"updateSequenceNumber": 12345678,
+			"containerId": "6769746875626d79646f6d61696e636f6d-1",
+			"displayName": "semver vulnerable to Regular Expression Denial of Service",
+			"description": "Versions of the package semver before 7.5.2 on the 7.x branch, before 6.3.1 on the 6.x branch, and all other versions before 5.7.2 are vulnerable to Regular Expression Denial of Service (ReDoS) via the function new Range, when untrusted user data is provided as a range.",
+			"type": "sca",
+			"introducedDate": "2023-07-13T06:24:50Z",
+			"lastUpdated": "2023-07-13T06:24:50Z",
+			"severity": {
+				"level": "low"
 			},
-			identifiers: [
+			"identifiers": [
 				{
-					displayName: "GHSA-c2qf-rxjj-qqgw",
-					url: "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
+					"displayName": "GHSA-c2qf-rxjj-qqgw",
+					"url": "https://github.com/advisories/GHSA-c2qf-rxjj-qqgw"
 				},
 				{
-					displayName: "CVE-2022-25883",
-					url: "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
+					"displayName": "CVE-2022-25883",
+					"url": "https://nvd.nist.gov/vuln/detail/CVE-2022-25883"
 				}
 			],
-			status: "open",
-			additionalInfo: {
-				content: "yarn.lock"
+			"status": "open",
+			"additionalInfo": {
+				"content": "yarn.lock"
 			}
 		}
 	],
 	"properties": {
-		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID
+		"gitHubInstallationId": DatabaseStateCreator.GITHUB_INSTALLATION_ID,
+		"workspaceId": subscription.id
 	},
 	"operationType": "BACKFILL"
 });

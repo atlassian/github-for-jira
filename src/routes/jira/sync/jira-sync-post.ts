@@ -38,10 +38,12 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		const { syncType, targetTasks } = await determineSyncTypeAndTargetTasks(syncTypeFromReq, subscription);
 		await findOrStartSync(subscription, req.log, syncType, commitsFromDate || subscription.backfillSince, targetTasks, { source });
 
-		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: true,
-			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -49,10 +51,12 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 		res.sendStatus(202);
 	} catch (error) {
 
-		sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
-			name: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
+			action: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			actionSubject: AnalyticsTrackEventsEnum.ManualRestartBackfillTrackEventName,
+			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+		}, {
 			success: false,
-			source: !gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
 			withStartingTime: commitsFromDate !== undefined,
 			startTimeInDaysAgo: getStartTimeInDaysAgo(commitsFromDate)
 		});
@@ -81,5 +85,5 @@ const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscrip
 		return { syncType: "full", targetTasks: undefined };
 	}
 
-	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert"] };
+	return { syncType: "partial", targetTasks: ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] };
 };

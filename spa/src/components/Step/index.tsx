@@ -17,6 +17,7 @@ const Header = styled.div`
 const StepTitle = styled.div`
 	cursor: pointer;
 	font-weight: 600;
+	font-size: ${token("space.200")};
 	color: token("color.text");
 	margin: 0 0 ${token("space.100")};
 `;

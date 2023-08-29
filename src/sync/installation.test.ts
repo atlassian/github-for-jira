@@ -329,8 +329,8 @@ describe("sync/installation", () => {
 
 	describe("getTargetTasks", () => {
 		it("should return all tasks if no target tasks present", async () => {
-			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert"]);
-			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert"]);
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
 		});
 
 		it("should return single target task", async () => {
@@ -566,7 +566,9 @@ describe("sync/installation", () => {
 			expect(repoSync.dependabotAlertFrom).toBeNull();
 		});
 
-		describe.each(["pull", "commit", "build", "deployment", "dependabotAlert"] as TaskType[])("Update jobs status for each tasks", (taskType: TaskType) => {
+		describe.each(
+			["pull", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] as TaskType[]
+		)("Update jobs status for each tasks", (taskType: TaskType) => {
 			const colTaskFrom = `${taskType}From`;
 			const task: Task = {
 				task: taskType,

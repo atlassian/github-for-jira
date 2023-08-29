@@ -12,7 +12,7 @@ import {
 	generateSignedSessionCookieHeader,
 	parseCookiesAndSession
 } from "test/utils/cookies";
-import { booleanFlag, BooleanFlags, stringFlag, StringFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
 import { Installation } from "models/installation";
 
@@ -22,8 +22,6 @@ describe("github-oauth", () => {
 	let installation: Installation;
 	beforeEach(async () => {
 		installation = (await new DatabaseStateCreator().create()).installation;
-
-		when(stringFlag).calledWith(StringFlags.GITHUB_SCOPES, expect.anything(), expect.anything()).mockResolvedValue("user,repo");
 	});
 
 	describe("GithubOAuthCallbackGet", () => {

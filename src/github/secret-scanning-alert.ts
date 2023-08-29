@@ -5,6 +5,7 @@ import { InstallationLite, SecretScanningAlert, SecretScanningAlertCreatedEvent,
 import { transformSecretScanningAlert } from "../transforms/transform-secret-scanning-alert";
 import { User } from "@sentry/node";
 import { BooleanFlags, booleanFlag } from "../config/feature-flags";
+import { createInstallationClient } from "../util/get-github-client-config";
 
 export const secretScanningAlertWebhookHandler = async (context: WebhookContext<SecretScanningAlertEvent>, jiraClient: JiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	if (!await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, jiraClient.baseURL)) {
@@ -15,7 +16,32 @@ export const secretScanningAlertWebhookHandler = async (context: WebhookContext<
 		jiraHost: jiraClient.baseURL
 	});
 
-	const jiraPayload = await transformSecretScanningAlert(context, jiraClient.baseURL);
+	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const metrics = {
+		trigger: "webhook",
+		subTrigger: "secretScanningAlert"
+	};
+
+	const {
+		alert: {
+			number: alertNumber
+		},
+		repository: {
+			owner,
+			name
+		}
+	} = context.payload;
+
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
+
+	const { data: secretScanningAlert } = await gitHubInstallationClient.getSecretScanningAlert(alertNumber, owner.login, name);
+
+	if (!secretScanningAlert) {
+		context.log.warn({ gitHubInstallationId }, "Failed to fetch secret scanning alert");
+		return;
+	}
+
+	const jiraPayload = await transformSecretScanningAlert(secretScanningAlert, context.payload.repository, jiraClient.baseURL, gitHubAppId, context.log);
 
 	if (!jiraPayload) {
 		context.log.info({ noop: "no_jira_payload_secret_scanning_alert" }, "Halting further execution for secret scanning alert since jiraPayload is empty");
@@ -24,7 +50,6 @@ export const secretScanningAlertWebhookHandler = async (context: WebhookContext<
 
 	context.log.info(`Sending secret scanning alert event as Vulnerability data to Jira's Security endpoint: ${jiraClient.baseURL}`);
 	const result = await jiraClient.security.submitVulnerabilities(jiraPayload);
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
 
 	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(

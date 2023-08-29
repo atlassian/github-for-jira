@@ -241,7 +241,7 @@ describe("scheduler", () => {
 			expect(task.task).toEqual("commit");
 		});
 	});
-	it("should not filter by dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+	it("should filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
 		configureRateLimit(10000, 10000);
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
@@ -255,7 +255,25 @@ describe("scheduler", () => {
 		expect(tasks.otherTasks.length).toEqual(0);
 	});
 
-	it("should not filter by dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
+	it("should not filter dependabot alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions accepted", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.dependabotAlertStatus = "pending";
+			return record.save();
+		}));
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["dependabotAlert"], getLogger("test"));
+		expect(tasks.mainTask!.task).toEqual("dependabotAlert");
+		tasks.otherTasks.forEach(task => {
+			expect(task.task).toEqual("dependabotAlert");
+		});
+	});
+
+	it("should filter dependabot alerts task if only ENABLE_GITHUB_SECURITY_IN_JIRA FF is on and security permissions are not accepted", async () => {
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 		configureRateLimit(10000, 10000);
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
@@ -266,9 +284,39 @@ describe("scheduler", () => {
 
 		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 		const tasks = await getNextTasks(subscription, ["dependabotAlert"], getLogger("test"));
-		expect(tasks.mainTask!.task).toEqual("dependabotAlert");
+		expect(tasks.mainTask).toBeUndefined();
+		expect(tasks.otherTasks.length).toEqual(0);
+	});
+
+
+	it("should filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is off", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.secretScanningAlertStatus = "pending";
+			return record.save();
+		}));
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["secretScanningAlert"], getLogger("test"));
+		expect(tasks.mainTask).toBeUndefined();
+		expect(tasks.otherTasks.length).toEqual(0);
+	});
+	it("should not filter secret scanning alerts task if ENABLE_GITHUB_SECURITY_IN_JIRA FF is on", async () => {
+		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
+		configureRateLimit(10000, 10000);
+		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription);
+		await Promise.all(repoSyncStates.map((record) => {
+			record.secretScanningAlertStatus = "pending";
+			return record.save();
+		}));
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+
+		githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+		const tasks = await getNextTasks(subscription, ["secretScanningAlert"], getLogger("test"));
+		expect(tasks.mainTask!.task).toEqual("secretScanningAlert");
 		tasks.otherTasks.forEach(task => {
-			expect(task.task).toEqual("dependabotAlert");
+			expect(task.task).toEqual("secretScanningAlert");
 		});
 	});
 });

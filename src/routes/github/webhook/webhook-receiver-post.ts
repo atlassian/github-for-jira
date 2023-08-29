@@ -14,7 +14,9 @@ import { createBranchWebhookHandler, deleteBranchWebhookHandler } from "~/src/gi
 import { repositoryWebhookHandler } from "~/src/github/repository";
 import { workflowWebhookHandler } from "~/src/github/workflow";
 import { deploymentWebhookHandler } from "~/src/github/deployment";
-import { codeScanningAlertWebhookHandler } from "~/src/github/code-scanning-alert";
+import {
+	codeScanningAlertWebhookHandler
+} from "~/src/github/code-scanning-alert";
 import { getLogger } from "config/logger";
 import { GITHUB_CLOUD_API_BASEURL, GITHUB_CLOUD_BASEURL } from "~/src/github/client/github-client-constants";
 import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
@@ -140,7 +142,7 @@ const webhookRouter = async (context: WebhookContext) => {
 			await GithubWebhookMiddleware(secretScanningAlertWebhookHandler)(context);
 			break;
 		case "installation":
-			if (context.action === "created" || context.action === "new_permissions_accepted") {
+			if (context.action === "new_permissions_accepted") {
 				await GithubWebhookMiddleware(installationWebhookHandler)(context);
 			}
 			break;

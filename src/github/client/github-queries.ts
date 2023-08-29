@@ -78,16 +78,8 @@ export type pullRequestNode = {
 	title: string;
 	body: string;
 	url: string;
-	baseRef?: {
-		name: string;
-		repository: {
-			url: string;
-			name: string;
-			owner: {
-				login: string;
-			};
-		};
-	};
+	headRefName: string; // is defined even if the ref was deleted
+	baseRefName: string; // is defined even if the ref was deleted
 	headRef?: {
 		id: string;
 		name: string;
@@ -188,15 +180,8 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					title
 					body
 					url
-					baseRef {
-						name
-						repository {
-							name
-							owner {
-								login
-							}
-						}
-					}
+					baseRefName,
+					headRefName,
 					headRef {
 						id
 						name
@@ -418,82 +403,6 @@ export type getBranchesResponse = {
 		}
 	}
 };
-
-export type GetDependabotAlertsResponse = {
-  repository: {
-    vulnerabilityAlerts: {
-      edges: VulnerabilityAlertNode[]
-    }
-  }
-};
-
-export type VulnerabilityAlertNode = {
-  cursor: string,
-  node: {
-    number: number,
-    state: string,
-    createdAt: string,
-    fixedAt: string,
-    dismissedAt: string,
-    autoDismissedAt: string,
-    vulnerableManifestPath: string,
-    securityAdvisory: {
-      summary: string,
-      description: string,
-      identifiers: {
-        type: string,
-        value: string
-      }[],
-      references: {
-        url: string,
-      }[],
-    },
-    repository: {
-      id: number,
-      url: string
-    },
-    securityVulnerability: {
-      severity: string,
-    }
-  }
-};
-
-export const getDependabotAlerts = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
-  repository(owner: $owner, name: $repo) {
-    vulnerabilityAlerts(first: $per_page, after: $cursor,) {
-      edges {
-        cursor
-        node {
-          number
-          state
-          createdAt
-          fixedAt
-          dismissedAt
-          autoDismissedAt
-          vulnerableManifestPath
-          securityAdvisory {
-            summary
-            description
-            identifiers {
-              type
-              value
-            }
-            references {
-              url
-            }
-          }
-          repository {
-            id: databaseId
-            url
-          }
-          securityVulnerability {
-            severity
-          }
-        }
-      }
-    }
-  }
-}`;
 
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {

@@ -47,14 +47,19 @@ describe("SecretScanningAlertWebhookHandler", () => {
 		global.Date.now = RealDate;
 	});
 	let jiraClient: JiraClient;
-	beforeEach(() => {
+	beforeEach(async () => {
 		jiraClient = {
 			baseURL: jiraHost,
-			security: { submitVulnerabilities: jest.fn(() =>({ status: 200 })) }
+			security: { submitVulnerabilities: jest.fn(() => ({ status: 200 })) }
 		} as unknown as JiraClient;
 		when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(true);
 	});
 	it("should call jira client with transformed vulnerability", async () => {
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/user/repo/secret-scanning/alerts/${ID_1}`)
+			.reply(200, secretScanningAlert);
+
 		await secretScanningAlertWebhookHandler(
 			getWebhookContext({ cloud: true }),
 			jiraClient,
@@ -66,6 +71,11 @@ describe("SecretScanningAlertWebhookHandler", () => {
 		);
 	});
 	it("should call the webhook logger", async () => {
+		githubUserTokenNock(GITHUB_INSTALLATION_ID);
+		githubNock
+			.get(`/repos/user/repo/secret-scanning/alerts/${ID_1}`)
+			.reply(200, secretScanningAlert);
+
 		await secretScanningAlertWebhookHandler(
 			getWebhookContext({ cloud: true }),
 			jiraClient,
@@ -101,14 +111,18 @@ describe("SecretScanningAlertWebhookHandler", () => {
 			action: CREATED,
 			payload: {
 				alert: {
-					number: 123,
+					number: ID_1,
 					html_url: SAMPLE_SECURITY_URL,
 					created_at: SAMPLE_SECURITY_CREATED_DATE,
 					updated_at: SAMPLE_SECURITY_UPDATED_DATE,
 					secret_type: "personal_access_token"
 				},
 				repository: {
-					id: 456
+					id: 456,
+					owner: {
+						login: "user"
+					},
+					name: "repo"
 				}
 			} as unknown as T,
 			gitHubAppConfig: cloud
@@ -136,10 +150,10 @@ describe("SecretScanningAlertWebhookHandler", () => {
 			vulnerabilities: [
 				{
 					schemaVersion: "1.0",
-					id: "d-456-123",
+					id: "s-456-1",
 					updateSequenceNumber: Date.now(),
 					containerId: "456",
-					displayName: "personal_access_token secret exposed",
+					displayName: "GitHub Personal Access Token",
 					description: "Secret scanning alert",
 					url: SAMPLE_SECURITY_URL,
 					type: "sast",
@@ -149,15 +163,28 @@ describe("SecretScanningAlertWebhookHandler", () => {
 						level: CRITICAL
 					},
 					identifiers: [{
-						"displayName": "personal_access_token",
-						"url":SAMPLE_SECURITY_URL
+						"displayName": "github_personal_access_token",
+						"url": SAMPLE_SECURITY_URL
 					}],
-					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN,
-					additionalInfo: {
-						content: "personal_access_token"
-					}
+					status: JIRA_VULNERABILITY_STATUS_ENUM_OPEN
 				}
 			]
 		};
 	};
 });
+
+const secretScanningAlert = {
+	"number": ID_1,
+	"created_at": SAMPLE_SECURITY_CREATED_DATE,
+	"updated_at": SAMPLE_SECURITY_UPDATED_DATE,
+	"url": SAMPLE_SECURITY_URL,
+	"html_url": SAMPLE_SECURITY_URL,
+	"state": "open",
+	"secret_type": "github_personal_access_token",
+	"secret_type_display_name": "GitHub Personal Access Token",
+	"secret": "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",
+	"resolution": null,
+	"resolved_by": null,
+	"resolved_at": null,
+	"resolution_comment": null
+};
