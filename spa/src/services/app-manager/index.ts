@@ -4,6 +4,7 @@ import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 
 async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
+
 	if (!Api.token.hasGitHubToken()) return { orgs: [] };
 
 	try {
@@ -16,11 +17,21 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 }
 
 async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
-	if (!Api.token.hasGitHubToken()) return false;
+
+	if (!Api.token.hasGitHubToken()) {
+		reportError({ message: "Api github token is empty" });
+		return false;
+	}
 
 	try {
+
 		const response = await Api.orgs.connectOrganization(orgId);
-		return response.status === 200;
+		const ret = response.status === 200;
+
+		if(!ret) reportError({ message: "Response status for connecting org is not 200", status: response.status });
+
+		return ret;
+
 	} catch (e) {
 		reportError(e);
 		return e as AxiosError;
@@ -46,6 +57,9 @@ async function installNewApp(callbacks: {
 		lastOpenWin = null;
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
 			const id = parseInt(event.data?.gitHubInstallationId);
+			if(!id) {
+				reportError({ message: "GitHub installation id is emptpy on finish oauth flow" });
+			}
 			callbacks.onFinish(isNaN(id) ? undefined : id);
 		}
 		if (event.data?.type === "install-requested" && event.data?.setupAction) {
