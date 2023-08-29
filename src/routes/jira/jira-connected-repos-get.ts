@@ -9,11 +9,6 @@ interface Page {
 	isCurrentPage: boolean;
 }
 
-// TODO: add tests:
-// 	- no subscription
-// 	- subscription with different jiraHost
-//  - sunny path
-//	- SQL injection test for syncStatusFilter
 const mapFilterSyncStatusToQueryCondition = (filterStatusField: string | undefined) => {
 	if (!filterStatusField || filterStatusField === "all") {
 		return {};
@@ -46,7 +41,7 @@ const mapFilterSyncStatusToQueryCondition = (filterStatusField: string | undefin
 	}
 	return undefined;
 };
-// 	- SQL injection test for repoName
+
 export const JiraConnectedReposGet = async (
 	req: Request,
 	res: Response,
