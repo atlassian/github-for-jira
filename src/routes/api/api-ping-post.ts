@@ -32,7 +32,7 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 
 	try {
 		if (data.jiraHost) {
-			const gitHubClient = await createAnonymousClientByGitHubAppId(data.gitHubAppId, jiraHost, { trigger: "api-ping-post" }, req.log);
+			const gitHubClient = await createAnonymousClientByGitHubAppId(data.gitHubAppId, data.jiraHost, { trigger: "api-ping-post" }, req.log);
 			try {
 				await gitHubClient.checkGitHubToken("invalid-token");
 			} catch (e) {
