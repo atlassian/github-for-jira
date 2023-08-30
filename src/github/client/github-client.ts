@@ -102,13 +102,17 @@ export class GitHubClient {
 		// HOT-105065
 		if (certs) {
 			this.axios.interceptors.request.use(async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
-				if (await booleanFlag(BooleanFlags.USE_CUSTOM_ROOT_CA_BUNDLE, gitHubConfig.baseUrl)) {
-					this.logger.info("Using proxy with custom CA");
-					config.httpsAgent = gitHubConfig.proxyBaseUrl
-						? new HttpsProxyAgentWithCustomCA(gitHubConfig.proxyBaseUrl, certs)
-						: new https.Agent({
-							ca: certs
-						});
+				try {
+					if (await booleanFlag(BooleanFlags.USE_CUSTOM_ROOT_CA_BUNDLE, gitHubConfig.baseUrl)) {
+						this.logger.info("Using proxy with custom CA");
+						config.httpsAgent = gitHubConfig.proxyBaseUrl
+							? new HttpsProxyAgentWithCustomCA(gitHubConfig.proxyBaseUrl, certs)
+							: new https.Agent({
+								ca: certs
+							});
+					}
+				} catch (err) {
+					this.logger.error({ err }, "HOT-105065: should never happen, but just in case cause we don't have test for this");
 				}
 				return config;
 			});
