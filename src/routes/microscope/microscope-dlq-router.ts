@@ -9,7 +9,8 @@ export const debugIt = async (req: Request, res: Response): Promise<void> => {
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	const jiraHost: string = req.query?.jiraHost || "";
-	const hashedValue = createHashWithSharedSecret(jiraHost);
+	const decodedUrl = decodeURIComponent(jiraHost);
+	const hashedValue = createHashWithSharedSecret(decodedUrl);
 	res.send(hashedValue);
 };
 
