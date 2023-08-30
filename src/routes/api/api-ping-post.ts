@@ -3,6 +3,7 @@ import axios from "axios";
 import { createAnonymousClientByGitHubAppId } from "~/src/util/get-github-client-config";
 import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
 import { GithubClientError } from "~/src/github/client/github-client-errors";
+import { envVars } from "config/env";
 
 /**
  * Makes a call to the URL passed into the "url" field of the body JSON.
@@ -23,7 +24,8 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 		const output = await runCurl({
 			fullUrl: data.url,
 			method: "GET",
-			authorization: ""
+			authorization: "",
+			proxy: data.useProxy === true ? envVars.PROXY : undefined
 		});
 		logCurlOutputInChunks(output, req.log);
 	} catch (e) {
