@@ -100,7 +100,6 @@ export class GitHubClient {
 		});
 
 		// HOT-105065
-		gitHubConfig.proxyBaseUrl = "http://edge-outboundproxy01-prd-uswest1.net.atlassian.com:8080";
 		if (certs) {
 			this.axios.interceptors.request.use(async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
 				if (await booleanFlag(BooleanFlags.USE_CUSTOM_ROOT_CA_BUNDLE, gitHubConfig.baseUrl)) {
