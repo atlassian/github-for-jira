@@ -219,7 +219,7 @@ export const getAxiosInstance = (
 	});
 
 	// *** IMPORTANT: Interceptors are executed in reverse order. ***
-	// the last one specified is the first to executed.
+	// the last one specified is the first to be executed.
 
 	instance.interceptors.request.use(logRequest(logger));
 	instance.interceptors.request.use(setRequestStartTime);
