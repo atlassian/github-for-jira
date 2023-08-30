@@ -84,10 +84,14 @@
 				"POST"
 			],
 			"principals": {
+				"asap": {
+					"issuers": [
+						"micros/manager-service"
+					]
+				},
 				"staff": {
 					"groups": [
-						"micros-sv--github-for-jira-dl-safe-logging-read",
-						"micros/manager-service"
+						"micros-sv--github-for-jira-dl-safe-logging-read"
 					]
 				}
 			}
