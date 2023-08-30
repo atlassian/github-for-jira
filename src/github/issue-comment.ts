@@ -5,7 +5,6 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { getJiraClient } from "~/src/jira/client/jira-client";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const issueCommentWebhookHandler = async (
 	context: WebhookContext,
@@ -36,9 +35,7 @@ export const issueCommentWebhookHandler = async (
 	};
 	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraClient.baseURL, metrics, context.log, gitHubAppId);
 
-	if (await booleanFlag(BooleanFlags.SEND_PR_COMMENTS_TO_JIRA, jiraHost)){
-		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
-	}
+	await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 
 	// TODO: need to create reusable function for unfurling
 	try {
@@ -84,6 +81,7 @@ export const issueCommentWebhookHandler = async (
 const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
 	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
+
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
 	// Note: we are only considering the branch name here. Should we also check for pr titles?
 	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
@@ -98,10 +96,77 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
 		return;
 	}
+
+	const bodyDataOption1 = {
+		"content": [
+			{
+				"type": "paragraph",
+				"content": [
+					{
+						"type": "text",
+						"text": `${comment.user.login}`,
+						"marks": [
+							{
+								"type": "strong"
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": " left a comment "
+					},
+					{
+						"type": "text",
+						"text": "on GitHub",
+						"marks": [
+							{
+								"type": "link",
+								"attrs": {
+									"href": `${gitHubCommentUrl}`
+								}
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": ":"
+					}
+				]
+			},
+			{
+				"type": "blockquote",
+				"content": [
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": `${gitHubMessage}`
+							}
+						]
+					}
+				]
+			}
+		],
+		"type": "doc",
+		"version": 1
+	};
+
+	const bodyDataOption2 = `*${comment.user.login} left a comment on Github:* ${gitHubMessage}`;
+	const bodyDataOption3 = `[${comment.user.login} said ${gitHubMessage} on *Github*](${gitHubCommentUrl}) <a href="https://www.example.com">https://www.example.com</a>`;
+
+	context.log.warn(bodyDataOption1, bodyDataOption2, bodyDataOption3);
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: gitHubMessage + " - " + gitHubCommentUrl,
+				body: bodyDataOption1,
+				// author: {
+				// 	// accountId: 1234,
+				// 	avatarUrls: {
+				// 		"48x48": comment.user.avatar_url
+				// 	},
+				// 	displayName: "Github"
+				// },
 				properties: [
 					{
 						key: "gitHubId",
