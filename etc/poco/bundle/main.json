@@ -86,7 +86,8 @@
 			"principals": {
 				"staff": {
 					"groups": [
-						"micros-sv--github-for-jira-dl-safe-logging-read"
+						"micros-sv--github-for-jira-dl-safe-logging-read",
+						"micros/manager-service"
 					]
 				}
 			}
