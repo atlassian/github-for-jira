@@ -27,6 +27,8 @@ export const ApiPingPost = async (req: Request, res: Response): Promise<void> =>
 			authorization: "",
 			proxy: data.useProxy === true ? envVars.PROXY : undefined
 		});
+		req.log.info(`Api ping post output: body`, { body: output.body });
+		req.log.info(`Api ping post output: meta`, { meta: output.meta });
 		logCurlOutputInChunks(output, req.log);
 	} catch (e) {
 		req.log.warn("Fail initiate ping url using curl", { err: e, url: data.url });
