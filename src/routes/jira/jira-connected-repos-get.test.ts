@@ -7,6 +7,7 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import supertest from "supertest";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
+import { RepoSyncState } from "models/reposyncstate";
 
 jest.mock("config/feature-flags");
 
@@ -15,6 +16,7 @@ describe("jira-connected-repos-get", () => {
 	let app;
 	let installation: Installation;
 	let subscription: Subscription;
+	let repoSyncState: RepoSyncState;
 	const generateJwt = async (subscriptionId: number, query: any = {}) => {
 		return encodeSymmetric({
 			qsh: createQueryStringHash({
@@ -29,9 +31,10 @@ describe("jira-connected-repos-get", () => {
 
 	beforeEach(async () => {
 		app = getFrontendApp();
-		const result = (await new DatabaseStateCreator().create());
+		const result = (await new DatabaseStateCreator().withActiveRepoSyncState().create());
 		installation = result.installation;
 		subscription = result.subscription;
+		repoSyncState = result.repoSyncState!;
 
 		when(booleanFlag).calledWith(BooleanFlags.JIRA_ADMIN_CHECK).mockResolvedValue(true);
 	});
@@ -91,22 +94,97 @@ describe("jira-connected-repos-get", () => {
 			expect(resp.status).toStrictEqual(400);
 		});
 
-		// TODO
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		it("should return the first page of repos by default without any filters", ()=> {
+		describe("happy paths", () => {
+			beforeEach(async () => {
+				const newRepoSyncStatesData: any[] = [];
+				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
+					const newRepoSyncState = { ...repoSyncState.dataValues };
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-ignore
+					delete newRepoSyncState["id"];
+					delete newRepoSyncState["commitStatus"];
+					delete newRepoSyncState["branchStatus"];
+					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
+					newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
+					newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + String(newRepoStateNo).padStart(3, "0");
+					if (newRepoStateNo % 3 == 1) {
+						newRepoSyncState["commitStatus"] = "complete";
+						newRepoSyncState["branchStatus"] = "complete";
+						newRepoSyncState["pullStatus"] = "complete";
+						newRepoSyncState["buildStatus"] = "complete";
+						newRepoSyncState["deploymentStatus"] = "complete";
+					} else if (newRepoStateNo % 3 == 2) {
+						newRepoSyncState["commitStatus"] = "failed";
+						newRepoSyncState["branchStatus"] = "complete";
+						newRepoSyncState["pullStatus"] = "complete";
+						newRepoSyncState["buildStatus"] = "complete";
+						newRepoSyncState["deploymentStatus"] = "failed";
+					}
+					newRepoSyncStatesData.push(newRepoSyncState);
+				}
+				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
+			});
 
-		});
+			it("should return the first page of repos by default without any filters", async ()=> {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id)}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).toContain("<div class=\"page-num-link page-selector\" data-page-num=\"5\">5</div>");
+				expect(resp.text).not.toContain("<div class=\"page-num-link page-selector\" data-page-num=\"6\">6</div>");
+				expect(resp.text).toContain("test-repo-name006");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__in-progress");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__failed");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__finished");
+			});
 
-		// TODO
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		it("should correctly apply repoSearch filter", () => {
+			it("should correctly apply repoSearch filter", async () => {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos?repoName=est-repo-name048`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id, { repoName: "est-repo-name048" })}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).toContain("test-repo-name048");
+				expect(resp.text).not.toContain("<div class=\"page-num-link page-selector\" data-page-num=\"2\">2</div>");
+			});
 
-		});
+			it("should correctly apply all status filter", async () => {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos?syncStatus=all`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id, { syncStatus: "all" })}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__in-progress");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__failed");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__finished");
+			});
 
-		// TODO
-		// eslint-disable-next-line @typescript-eslint/no-empty-function
-		it("should correctly apply pagination", () => {
+			it("should correctly apply pending status filter", async () => {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos?syncStatus=pending`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id, { syncStatus: "pending" })}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__in-progress");
+				expect(resp.text).not.toContain("<span class=\"jiraConnectedRepos__table__failed");
+				expect(resp.text).not.toContain("<span class=\"jiraConnectedRepos__table__finished");
+			});
 
+			it("should correctly apply failed status filter", async () => {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos?syncStatus=failed`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id, { syncStatus: "failed" })}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).not.toContain("<span class=\"jiraConnectedRepos__table__in-progress");
+				expect(resp.text).toContain("<span class=\"jiraConnectedRepos__table__failed");
+				expect(resp.text).not.toContain("<span class=\"jiraConnectedRepos__table__finished");
+			});
+
+			it("should correctly apply pagination", async () => {
+				const resp = await supertest(app)
+					.get(`/jira/subscription/${subscription.id}/repos?pageNumber=2`)
+					.set("authorization", `JWT ${await generateJwt(subscription.id, { pageNumber: "2" })}`);
+				expect(resp.status).toStrictEqual(200);
+				expect(resp.text).not.toContain("test-repo-name006");
+				expect(resp.text).toContain("test-repo-name016");
+			});
 		});
 	});
 

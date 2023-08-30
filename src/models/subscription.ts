@@ -45,7 +45,7 @@ export class Subscription extends Model {
 	numberOfSyncedRepos?: number;
 	repositoryCursor?: string;
 	repositoryStatus?: TaskStatus;
-	gitHubAppId: number | undefined;
+	gitHubAppId: number | undefined; // the primary key (id) of GitHubServerApp
 	avatarUrl: string | undefined;
 	isSecurityPermissionsAccepted: boolean;
 

@@ -105,6 +105,7 @@ export const JiraConnectedReposGet = async (
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
 			where: filterCondition,
 			limit: pageSize,
+			order: [["repoFullName", "ASC"]],
 			offset
 		});
 		const repos = repoSyncStates.map((repoSyncState) => {
@@ -129,8 +130,9 @@ export const JiraConnectedReposGet = async (
 			...getPaginationState(pageNumber, pageSize, reposCount)
 		});
 
-	} catch (error) {
-		return next(new Error(`Failed to render connected repos: ${error}`));
+	} catch (err) {
+		req.log.warn({ err }, "Failed to render connected repos");
+		return next(new Error(`Failed to render connected repos: ${err}`));
 	}
 };
 
