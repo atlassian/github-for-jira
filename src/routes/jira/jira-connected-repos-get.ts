@@ -58,7 +58,7 @@ export const JiraConnectedReposGet = async (
 
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");
-			res.status(401).send("Missing Subscription ID");
+			res.status(400).send("Missing Subscription ID");
 			return;
 		}
 
@@ -72,7 +72,7 @@ export const JiraConnectedReposGet = async (
 
 		if (!subscription || subscription.jiraHost !== jiraHost) {
 			req.log.error("Missing Subscription");
-			res.status(401).send("Missing Subscription");
+			res.status(400).send("Missing Subscription");
 			return;
 		}
 

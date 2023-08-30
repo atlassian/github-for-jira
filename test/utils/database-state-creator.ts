@@ -28,6 +28,7 @@ export class DatabaseStateCreator {
 	private pendingForSecretScanningAlerts: boolean;
 	private pendingForCodeScanningAlerts: boolean;
 	private securityPermissionsAccepted: boolean;
+	private jiraHost = jiraHost;
 
 	private buildsCustomCursor: string | undefined;
 	private prsCustomCursor: string | undefined;
@@ -41,6 +42,11 @@ export class DatabaseStateCreator {
 
 	public forCloud() {
 		this.forServerFlag = false;
+		return this;
+	}
+
+	public forJiraHost(newJiraHost: string) {
+		this.jiraHost = newJiraHost;
 		return this;
 	}
 
@@ -109,7 +115,7 @@ export class DatabaseStateCreator {
 		return this;
 	}
 
-	public static createServerApp(installationIdPk: number): Promise<GitHubServerApp> {
+	public static createServerApp(installationIdPk: number, aJiraHost: string = jiraHost): Promise<GitHubServerApp> {
 		return GitHubServerApp.install({
 			uuid: v4(),
 			appId: 12321,
@@ -120,24 +126,24 @@ export class DatabaseStateCreator {
 			privateKey: fs.readFileSync(path.resolve(__dirname, "../../test/setup/test-key.pem"), { encoding: "utf8" }),
 			gitHubAppName: "app-name",
 			installationId: installationIdPk
-		}, jiraHost);
+		}, aJiraHost);
 	}
 
 	public async create(): Promise<CreatorResult> {
 		const installation  = await Installation.create({
-			jiraHost,
+			jiraHost: this.jiraHost,
 			encryptedSharedSecret: "secret",
 			clientKey: getHashedKey("client-key"),
 			plainClientKey: "client-key"
 		});
 
 		const gitHubServerApp = this.forServerFlag
-			? await DatabaseStateCreator.createServerApp(installation.id)
+			? await DatabaseStateCreator.createServerApp(installation.id, this.jiraHost)
 			: undefined;
 
 		const subscription = await Subscription.create({
 			gitHubInstallationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID,
-			jiraHost,
+			jiraHost: this.jiraHost,
 			syncStatus: "ACTIVE",
 			repositoryStatus: "complete",
 			gitHubAppId: gitHubServerApp?.id,
