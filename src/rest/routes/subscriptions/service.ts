@@ -38,11 +38,9 @@ export const getAllSubscriptions = async (jiraHost: string, installationId: numb
 			gitHubBaseUrl: key,
 			applications: value
 		})).value();
+
 	return {
 		ghCloudSubscriptions: { successfulCloudConnections, failedCloudConnections },
-		ghEnterpriseServers,
-
-		gheServers: groupedGheServers,
-		ghCloud: { successfulCloudConnections, failedCloudConnections }
+		ghEnterpriseServers: groupedGheServers
 	};
 };
