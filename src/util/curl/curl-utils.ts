@@ -46,6 +46,7 @@ export const runCurl = async (opts: {
 // In case payload is too large, it might be truncated by a logger when logged as it is. Use this one for such case
 export const logCurlOutputInChunks = (output: { body: string; meta: string }, logger: Logger) => {
 	logger.warn({ body: output.body }, "Curl body");
+	logger.warn({ meta: output.meta }, "Curl meta");
 	const metaChunked = splitStringToChunks(encodeBase64(output.meta), 128).map((chunk) => `...${chunk}...`);
 	metaChunked.forEach((metaChunk, metaChunkIdx) => {
 		logger.warn({ metaChunk, metaChunkIdx, metaChunksCount: metaChunked.length }, `Curl split(base64(metaChunk)), index ${metaChunkIdx}`);
