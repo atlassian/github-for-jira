@@ -1,6 +1,7 @@
-import { FC, ReactNode } from "react";
 import Avatar from "@atlaskit/avatar";
-// import { style } from '@emotion/styled';
+import styled from "@emotion/styled";
+import { token } from "@atlaskit/tokens";
+
 export const presidents = [
 	{
 		id: 1,
@@ -35,26 +36,15 @@ interface President {
 	term: string;
 }
 
-function createKey(input: string) {
-	return input ? input.replace(/^(the|a|an)/, "").replace(/\s/g, "") : input;
-}
 
-// const nameWrapperStyles = css({
-//   display: 'flex',
-//   alignItems: 'center',
-// });
+const NameWrapper = styled.span`
+	display: flex;
+	align-items: center;
+`;
 
-const NameWrapper: FC<{ children: ReactNode }> = ({ children }) => (
-	<span>{children}</span>
-);
-
-// const avatarWrapperStyles = css({
-//   marginRight: token('space.100', '8px'),
-// });
-
-const AvatarWrapper: FC<{ children: ReactNode }> = ({ children }) => (
-	<div>{children}</div>
-);
+const AvatarWrapper = styled.span`
+	marginright: ${token("space.200")};
+`;
 
 export const caption = "List of US Presidents";
 
@@ -64,32 +54,23 @@ export const createHead = (withWidth: boolean) => {
 			{
 				key: "name",
 				content: "Name",
-				isSortable: true,
 				width: withWidth ? 25 : undefined,
 			},
 			{
 				key: "party",
 				content: "Party",
-				shouldTruncate: true,
-				isSortable: true,
-				width: withWidth ? 15 : undefined,
+				width: withWidth ? 25 : undefined,
 			},
 			{
 				key: "term",
 				content: "Term",
-				shouldTruncate: true,
-				isSortable: true,
-				width: withWidth ? 10 : undefined,
+				width: withWidth ? 25 : undefined,
 			},
 			{
 				key: "content",
 				content: "Comment",
-				shouldTruncate: true,
-			},
-			{
-				key: "more",
-				shouldTruncate: true,
-			},
+				width: withWidth ? 25 : undefined,
+			}
 		],
 	};
 };
@@ -101,7 +82,7 @@ export const rows = presidents.map((president: President, index: number) => ({
 	isHighlighted: false,
 	cells: [
 		{
-			key: createKey(president.name),
+			key: president.name,
 			content: (
 				<NameWrapper>
 					<AvatarWrapper>
@@ -112,7 +93,7 @@ export const rows = presidents.map((president: President, index: number) => ({
 			),
 		},
 		{
-			key: createKey(president.party),
+			key: president.party,
 			content: president.party,
 		},
 		{
@@ -122,10 +103,6 @@ export const rows = presidents.map((president: President, index: number) => ({
 		{
 			key: "Lorem",
 			content: president.term,
-		},
-		{
-			key: "MoreDropdown",
-			content: president.term,
-		},
+		}
 	],
 }));

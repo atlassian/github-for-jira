@@ -14,26 +14,34 @@ const Paragraph = styled.p`
 `;
 
 const Connections = () => {
-	const [subscriptions, setSubscriptions] = useState([]);
+	const [ghSubscriptions, setSubscriptions] = useState(null);
 	const [selectedOption, setSelectedOption] = useState<number>(1);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
-	const fetchSubscriptions = async () => {
+	const fetchGHSubscriptions = async () => {
 		try {
-				setIsLoading(true);
-				const subs = await ApiRequest.subscriptions.getSubscriptions();
-				setSubscriptions(subs.data);
-				setIsLoading(false);
+			setIsLoading(true);
+			const subs = await ApiRequest.subscriptions.getSubscriptions();
+			setSubscriptions(subs.data);
+			setIsLoading(false);
 		} catch (e) {
 			console.log("Error -----> ", e);
-			console.log("Error -----> ", subscriptions);
+			console.log("Error -----> ", ghSubscriptions);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 	useEffect(() => {
-		fetchSubscriptions();
+		fetchGHSubscriptions();
 	}, []);
+
+	// GET cloud subs .. err n success
+	// GET server subs .. err n success
+
+	if (ghSubscriptions) {
+		console.log("ghSubscriptions >>>>", JSON.stringify(ghSubscriptions));
+	}
+
 	return (
 		<Wrapper>
 			<SyncHeader />
