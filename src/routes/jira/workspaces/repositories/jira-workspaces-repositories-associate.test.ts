@@ -19,7 +19,7 @@ describe("Workspaces Associate Repository", () => {
 
 	beforeEach(async () => {
 		when(booleanFlag).calledWith(
-			BooleanFlags.ENABLE_GENERIC_CONTAINERS
+			BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 		).mockResolvedValue(true);
 
 		installation = await Installation.install({
@@ -107,7 +107,49 @@ describe("Workspaces Associate Repository", () => {
 			});
 	});
 
-	it("Should return empty object when no repo is found", async () => {
+	it("Should return repo payload when a server ID is passed in the request", async () => {
+		app = express();
+		app.use((req, _, next) => {
+			req.log = getLogger("test");
+			req.csrfToken = jest.fn();
+			next();
+		});
+		app.use(getFrontendApp());
+
+		const repo1 = await RepoSyncState.create({
+			subscriptionId: sub.id,
+			repoId: 1,
+			repoName: "my-repo",
+			repoOwner: "atlassian",
+			repoFullName: "atlassian/my-repo",
+			repoUrl: "http://github.internal.atlassian.com/atlassian/my-repo"
+		});
+
+		Date.now = jest.fn(() => 1487076708000);
+
+		const associateRepoRes = {
+			id: "676974687562696e7465726e616c61746c61737369616e636f6d-1",
+			name: repo1.repoFullName,
+			url: repo1.repoUrl,
+			updateSequenceId: 1487076708000
+		};
+
+		await supertest(app)
+			.post("/jira/workspaces/repositories/associate")
+			.set({
+				authorization: `JWT ${await generateJwt()}`
+			})
+			.send({
+				id: "676974687562696e7465726e616c61746c61737369616e636f6d-1"
+			})
+			.expect(res => {
+				expect(res.status).toBe(200);
+				expect(res.text).toContain(JSON.stringify(associateRepoRes));
+			});
+	});
+
+
+	it("Should return 404 not found status when no repo is found", async () => {
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
@@ -118,11 +160,6 @@ describe("Workspaces Associate Repository", () => {
 
 		Date.now = jest.fn(() => 1487076708000);
 
-		const response = {
-			success: true,
-			associatedRepository: {}
-		};
-
 		await supertest(app)
 			.post("/jira/workspaces/repositories/associate")
 			.set({
@@ -132,8 +169,8 @@ describe("Workspaces Associate Repository", () => {
 				id: "1"
 			})
 			.expect(res => {
-				expect(res.status).toBe(200);
-				expect(res.text).toContain(JSON.stringify(response));
+				expect(res.status).toBe(404);
+				expect(res.text).toContain(Errors.REPOSITORY_NOT_FOUND);
 			});
 	});
 });

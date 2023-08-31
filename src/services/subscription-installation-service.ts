@@ -9,8 +9,11 @@ import { Installation } from "models/installation";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { GitHubServerApp } from "models/github-server-app";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
+import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
+import { JiraClient } from "~/src/models/jira-client";
+import { SECURITY_EVENTS, SECURITY_PERMISSIONS } from "../github/installation";
 
-export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean>  => {
+export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitHubInstallationId: number, logger: Logger, gitHubServerAppIdPk?: number): Promise<boolean> => {
 	const metrics = {
 		trigger: "github-configuration-post"
 	};
@@ -26,10 +29,24 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 
 		logger.info("Checking if the user is an admin");
 		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
-	}	catch (err) {
+	} catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
 	}
+};
+
+export const getAvatarUrl = async (
+	logger: Logger,
+	jiraHost: string,
+	gitHubInstallationId: number,
+	metrics: {
+		trigger: string
+	},
+	gitHubServerAppIdPk?: number
+): Promise<string> => {
+	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubServerAppIdPk, metrics);
+	const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
+	return installation.account.avatar_url;
 };
 
 const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: number) => {
@@ -39,6 +56,7 @@ const calculateWithApiKeyFlag = async (installation: Installation, gitHubAppId: 
 
 export interface ResultObject {
 	error?: string;
+	errorCode?: "NOT_ADMIN"
 }
 
 export const verifyAdminPermsAndFinishInstallation =
@@ -47,6 +65,7 @@ export const verifyAdminPermsAndFinishInstallation =
 		installation: Installation,
 		gitHubServerAppIdPk: number | undefined,
 		gitHubInstallationId: number,
+		useNewSPAExperience: boolean,
 		parentLogger: Logger
 	): Promise<ResultObject> => {
 
@@ -60,18 +79,49 @@ export const verifyAdminPermsAndFinishInstallation =
 			if (!await hasAdminAccess(githubToken, installation.jiraHost, gitHubInstallationId, log, gitHubServerAppIdPk)) {
 				log.warn(`Failed to add subscription to ${gitHubInstallationId}. User is not an admin of that installation`);
 				return {
-					error: "`User is not an admin of the installation"
+					error: "`User is not an admin of the installation",
+					errorCode: "NOT_ADMIN"
 				};
+			}
+
+			const metrics = {
+				trigger: "github-configuration-post"
+			};
+			let avatarUrl;
+			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
+				avatarUrl = await getAvatarUrl(
+					log,
+					installation.jiraHost,
+					gitHubInstallationId,
+					metrics,
+					gitHubServerAppIdPk
+				);
 			}
 
 			const subscription: Subscription = await Subscription.install({
 				hashedClientKey: installation.clientKey,
 				installationId: gitHubInstallationId,
 				host: installation.jiraHost,
-				gitHubAppId: gitHubServerAppIdPk
+				gitHubAppId: gitHubServerAppIdPk,
+				avatarUrl
 			});
 
 			log.info({ subscriptionId: subscription.id }, "Subscription was created");
+
+			if (await booleanFlag(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, installation.jiraHost)) {
+				try {
+					if (subscription.isSecurityPermissionsAccepted) {
+						await submitSecurityWorkspaceToLink(installation, subscription, log);
+					} else if (await hasSecurityPermissionsAndEvents(installation, gitHubServerAppIdPk, log, metrics)) {
+						await Promise.allSettled([
+							await setSecurityPermissionAccepted(subscription, log),
+							await submitSecurityWorkspaceToLink(installation, subscription, log)
+						]);
+					}
+				} catch (err) {
+					log.warn({ err }, "Failed to submit security workspace to Jira");
+				}
+			}
 
 			await Promise.all(
 				[
@@ -82,22 +132,28 @@ export const verifyAdminPermsAndFinishInstallation =
 				]
 			);
 
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+				action: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+			}, {
 				jiraHost: installation.jiraHost,
+				pageExperience: useNewSPAExperience ? "spa" : "",
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: true,
 				gitHubProduct
 			});
 
-			return { };
+			return {};
 		} catch (err) {
 
-			sendAnalytics(AnalyticsEventTypes.TrackEvent, {
-				name: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
-				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise,
+			await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+				action: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				actionSubject: AnalyticsTrackEventsEnum.ConnectToOrgTrackEventName,
+				source: !gitHubServerAppIdPk ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+			}, {
 				jiraHost: installation.jiraHost,
+				pageExperience: useNewSPAExperience ? "spa" : "",
 				withApiKey: gitHubServerAppIdPk ? await calculateWithApiKeyFlag(installation, gitHubServerAppIdPk) : false,
 				success: false,
 				gitHubProduct
@@ -107,3 +163,34 @@ export const verifyAdminPermsAndFinishInstallation =
 			throw err;
 		}
 	};
+
+export const submitSecurityWorkspaceToLink = async (
+	installation: Installation,
+	subscription: Subscription,
+	logger: Logger
+) => {
+	const jiraClient = await JiraClient.getNewClient(installation, logger);
+	await jiraClient.linkedWorkspace(subscription.id);
+	logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
+};
+
+const hasSecurityPermissionsAndEvents = async (installation: Installation, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
+	try {
+		const gitHubAppClient = await createAppClient(logger, installation.jiraHost, gitHubServerAppId, metrics);
+		const { data: ghApp } = await gitHubAppClient.getApp();
+		return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in ghApp.permissions) &&
+			SECURITY_EVENTS.every((securityEvent) => ghApp.events.includes(securityEvent));
+	} catch (err) {
+		logger.warn({ err }, "Failed to fetch GitHub app details for evaluating security permissions and events");
+		throw err;
+	}
+};
+
+const setSecurityPermissionAccepted = async (subscription: Subscription, logger: Logger) => {
+	try {
+		await subscription.update({ isSecurityPermissionsAccepted: true });
+	} catch (err) {
+		logger.warn({ err }, "Failed to set security permissions accepted field in Subscriptions");
+		throw err;
+	}
+};

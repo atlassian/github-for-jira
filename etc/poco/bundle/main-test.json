@@ -16,6 +16,14 @@
       "principals": [],
       "allowed": true
     },
+		{
+			"name": "allow request with no asap to retrieve healthcheck via POST for GHE",
+			"path": "/healthcheck/my-uuid",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
     {
       "name": "allow request with no asap to retrieve deepcheck",
       "path": "/deepcheck",
@@ -81,6 +89,30 @@
 			"allowed": true
 		},
 		{
+			"name": "Allow external users to access spa root",
+			"path": "/spa",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access spa resources",
+			"path": "/spa/index.html",
+			"method": "GET",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
+			"name": "Allow external users to access rest api resources",
+			"path": "/rest/app/cloud",
+			"method": "POST",
+			"mechanism": "open",
+			"principals": [],
+			"allowed": true
+		},
+		{
 			"name": "Allow external users to access the session route",
 			"path": "/session",
 			"method": "GET",
@@ -120,7 +152,6 @@
 			"principals": [],
 			"allowed": true
 		},
-
 		{
 			"name": "Allow external users to disconnect github account",
 			"path": "/jira/configuration",
@@ -152,6 +183,14 @@
 			"mechanism": "group",
 			"principals": ["micros-sv--github-for-jira-dl-admins"],
 			"allowed": true
+		},
+		{
+			"name": "Block service team members to access Admin DELETE API endpoints",
+			"path": "/api/deleteInstallation/12345/https%3A%2F%2Fsome-jira-instance.atlassian.net",
+			"method": "DELETE",
+			"mechanism": "group",
+			"principals": ["micros-sv--github-for-jira-dl-admins"],
+			"allowed": false
 		},
 		{
 			"name": "Allow micros manager-service to microscope endpoints",

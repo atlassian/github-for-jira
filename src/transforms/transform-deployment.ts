@@ -203,8 +203,8 @@ export const mapState = (state: string | undefined): string => {
 	}
 };
 
-const matchesEnvironment = (environment: string, globPatterns: string[] = []): boolean => {
-	for (const glob of globPatterns) {
+const matchesEnvironment = (environment: string, globPatterns: string[] | undefined | null): boolean => {
+	for (const glob of globPatterns || []) {
 		if (minimatch(environment, glob)) {
 			return true;
 		}

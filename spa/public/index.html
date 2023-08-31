@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub for Jira</title>
+    <script>window.SPA_APP_ENV = "##SPA_APP_ENV##";</script>
+    <script>window.SENTRY_SPA_DSN = "##SENTRY_SPA_DSN##";</script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Per https://blog.developer.atlassian.com/announcement-reminder-about-deprecation-of-xdm_e-usage-and-needing-to-load-all-js-from-the-cdn/ we are required to load this from this specific CDN -->
+    <!-- DO NOT TOUCH!!! THIS IS NEEDED FOR CONNECT OR ELSE IT WILL CAUSE AN ERROR -->
+    <script src="https://connect-cdn.atl-paas.net/all.js"></script>
+  </body>
+</html>

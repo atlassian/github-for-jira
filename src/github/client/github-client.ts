@@ -5,16 +5,26 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import { GraphQlQueryResponse } from "~/src/github/client/github-client.types";
 import {
 	buildAxiosStubErrorForGraphQlErrors,
-	GithubClientGraphQLError, GithubClientInvalidPermissionsError,
-	GithubClientRateLimitingError, GithubClientNotFoundError, GithubClientBlockedIpError, GithubClientSSOLoginError
+	GithubClientBlockedIpError,
+	GithubClientGraphQLError,
+	GithubClientInvalidPermissionsError,
+	GithubClientNotFoundError,
+	GithubClientRateLimitingError,
+	GithubClientSSOLoginError
 } from "~/src/github/client/github-client-errors";
 import {
-	handleFailedRequest, instrumentFailedRequest, instrumentRequest,
+	handleFailedRequest,
+	instrumentFailedRequest,
+	instrumentRequest,
 	setRequestStartTime,
 	setRequestTimeout
 } from "~/src/github/client/github-client-interceptors";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { metricHttpRequest } from "config/metric-names";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import fs from "fs";
+import * as https from "https";
+import { getLogger } from "config/logger";
 
 export interface GitHubClientApiKeyConfig {
 	headerName: string;
@@ -35,6 +45,25 @@ export interface Metrics {
 	subTrigger?: string,
 }
 
+class HttpsProxyAgentWithCustomCA extends HttpsProxyAgent {
+	private ca;
+	constructor(_opts, ca) {
+		super(_opts);
+		this.ca = ca;
+	}
+	callback(req, opts) {
+		return super.callback(req, { ... opts, ca: this.ca });
+	}
+}
+
+let certs: Buffer | undefined = undefined;
+try {
+	certs = fs.readFileSync("node_modules/node_extra_ca_certs_mozilla_bundle/ca_bundle/ca_intermediate_root_bundle.pem");
+	getLogger("github-client").warn("the bundle is loaded");
+} catch (err) {
+	getLogger("github-client").error({ err }, "cannot read certificate bundle");
+}
+
 /**
  * A GitHub client superclass to encapsulate what differs between our GH clients
  */
@@ -52,7 +81,7 @@ export class GitHubClient {
 
 	constructor(
 		gitHubConfig: GitHubConfig,
-		jiraHost: string,
+		jiraHost: string | undefined,
 		metrics: Metrics,
 		logger: Logger
 	) {
@@ -69,6 +98,25 @@ export class GitHubClient {
 			},
 			... (gitHubConfig.proxyBaseUrl ? this.buildProxyConfig(gitHubConfig.proxyBaseUrl) : {})
 		});
+
+		// HOT-105065
+		if (certs) {
+			this.axios.interceptors.request.use(async (config: AxiosRequestConfig): Promise<AxiosRequestConfig> => {
+				try {
+					if (await booleanFlag(BooleanFlags.USE_CUSTOM_ROOT_CA_BUNDLE, gitHubConfig.baseUrl)) {
+						this.logger.info("Using proxy with custom CA");
+						config.httpsAgent = gitHubConfig.proxyBaseUrl
+							? new HttpsProxyAgentWithCustomCA(gitHubConfig.proxyBaseUrl, certs)
+							: new https.Agent({
+								ca: certs
+							});
+					}
+				} catch (err) {
+					this.logger.error({ err }, "HOT-105065: should never happen, but just in case cause we don't have test for this");
+				}
+				return config;
+			});
+		}
 
 		this.axios.interceptors.request.use(setRequestStartTime);
 		this.axios.interceptors.request.use(setRequestTimeout);

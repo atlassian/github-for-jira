@@ -37,21 +37,16 @@ const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
 
-export const getGenericContainerUrls = async (): Promise<string[] | null> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
-		return [
-			CREATE_BRANCH_ENDPOINT,
-			SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
-			SEARCH_REPOSITORIES_ENDPOINT,
-			ASSOCIATE_REPOSITORY_ENDPOINT
-		];
-	}
-
-	return null;
+export const getGenericContainerUrls = async (): Promise<string[]> => {
+	return [
+		SEARCH_CONNECTED_WORKSPACES_ENDPOINT,
+		SEARCH_REPOSITORIES_ENDPOINT,
+		ASSOCIATE_REPOSITORY_ENDPOINT
+	];
 };
 
-const defineJiraDevelopmentToolModuleActions = async (): Promise<JiraDevelopmentToolActions> => {
-	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS)) {
+export const defineJiraDevelopmentToolModuleActions = async (jiraHost: string): Promise<JiraDevelopmentToolActions> => {
+	if (await booleanFlag(BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost)) {
 		return {
 			createBranch: {
 				templateUrl: CREATE_BRANCH_ENDPOINT
@@ -116,6 +111,26 @@ const	modules = {
 		},
 		logoUrl: LOGO_URL,
 		homeUrl: "https://github.com"
+	},
+	jiraSecurityInfoProvider: {
+		key: "github-security",
+		name: {
+			value: "GitHub Security"
+		},
+		homeUrl:  "https://github.com",
+		logoUrl: LOGO_URL,
+		documentationUrl: "https://docs.github.com/code-security",
+		actions: {
+			fetchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers`
+			},
+			fetchWorkspaces: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces`
+			},
+			searchContainers: {
+				templateUrl: `${envVars.APP_URL}/jira/security/workspaces/containers/search`
+			}
+		}
 	},
 	postInstallPage: {
 		key: "github-post-install-page",
@@ -194,6 +209,15 @@ const	modules = {
 			url: "/jira/connect/enterprise/app/{ac.uuid}",
 			location: "none",
 			conditions: adminCondition
+		},
+		{
+			key: "spa-index-page",
+			name: {
+				value: "GitHub for Jira SPA Index Page"
+			},
+			url: "/spa",
+			location: "none",
+			conditions: adminCondition
 		}
 	],
 	webSections: [
@@ -226,8 +250,15 @@ const	modules = {
 	]
 };
 
+export const getSecurityContainerActionUrls = [
+	modules.jiraSecurityInfoProvider.actions.fetchContainers.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.searchContainers.templateUrl,
+	modules.jiraSecurityInfoProvider.actions.fetchWorkspaces.templateUrl
+];
+
 export const JiraAtlassianConnectGet = async (_: Request, res: Response): Promise<void> => {
-	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions();
+	const { jiraHost } =  res.locals;
+	modules.jiraDevelopmentTool.actions = await defineJiraDevelopmentToolModuleActions(jiraHost);
 
 	res.status(200).json({
 		apiMigrations: {

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import { ApiRouter } from "./api/api-router";
 import { GithubRouter } from "./github/github-router";
 import { JiraRouter } from "./jira/jira-router";
@@ -17,17 +17,11 @@ import { createAppClient } from "~/src/util/get-github-client-config";
 import { GithubCreateBranchOptionsGet } from "~/src/routes/github/create-branch/github-create-branch-options-get";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
 import { MicroscopeDlqRouter } from "routes/microscope/microscope-dlq-router";
+import { RestRouter } from "~/src/rest/rest-router";
+import { SpaRouter } from "routes/spa/spa-router";
 
 export const RootRouter = Router();
 
-// TODO - remove function once rollout complete
-// False flag wont parse the jwt query param so we need to allow current functionality to work while this happens
-const maybeJiraSymmetricJwtMiddleware = (req: Request, res: Response, next: NextFunction) => {
-	if (req.query.jwt && req.query.jwt !== "{jwt}") {
-		return jiraSymmetricJwtMiddleware(req, res, next);
-	}
-	return next();
-};
 
 // The request handler must be the first middleware on the app
 RootRouter.use(Sentry.Handlers.requestHandler());
@@ -50,6 +44,10 @@ RootRouter.use(LogMiddleware);
 // Static Assets
 RootRouter.use("/public", PublicRouter);
 
+RootRouter.use("/spa", SpaRouter);
+
+RootRouter.use("/rest", RestRouter);
+
 // These 2 need to be first (above maintenance mode) to make sure they're always accessible
 RootRouter.use(HealthcheckRouter);
 RootRouter.get("/version", VersionGet);
@@ -69,7 +67,7 @@ RootRouter.get(["/session", "/session/*"], SessionGet);
 
 RootRouter.use(cookieSessionMiddleware);
 
-RootRouter.get("/create-branch-options", maybeJiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
+RootRouter.get("/create-branch-options", jiraSymmetricJwtMiddleware, GithubCreateBranchOptionsGet);
 
 RootRouter.use("/github", GithubRouter);
 RootRouter.use("/jira", JiraRouter);

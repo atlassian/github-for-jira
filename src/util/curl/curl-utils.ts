@@ -21,10 +21,12 @@ const splitStringToChunks = (str: string, chunkSize: number): string[] => {
 export const runCurl = async (opts: {
 	fullUrl: string,
 	method: "GET" | "POST",
-	authorization: string
+	authorization: string,
+	proxy?: string | undefined
 }) => {
 	const methodFlag = opts.method === "GET" ? "" : `-X ${opts.method}`;
-	const cmd = `curl -s -v ${methodFlag} -H "Accept: application/json" -H "Authorization: ${opts.authorization}" '${opts.fullUrl}'`;
+	const proxyOption = opts.proxy ? ` -x "${opts.proxy}" ` : "";
+	const cmd = `curl -s -v ${methodFlag} -H "Accept: application/json" -H "Authorization: ${opts.authorization}" ${proxyOption} '${opts.fullUrl}'`;
 	const { stdout = "", stderr = "" } = await exec(cmd, {
 		env: {
 			...process.env
@@ -44,6 +46,7 @@ export const runCurl = async (opts: {
 // In case payload is too large, it might be truncated by a logger when logged as it is. Use this one for such case
 export const logCurlOutputInChunks = (output: { body: string; meta: string }, logger: Logger) => {
 	logger.warn({ body: output.body }, "Curl body");
+	logger.warn({ meta: output.meta }, "Curl meta");
 	const metaChunked = splitStringToChunks(encodeBase64(output.meta), 128).map((chunk) => `...${chunk}...`);
 	metaChunked.forEach((metaChunk, metaChunkIdx) => {
 		logger.warn({ metaChunk, metaChunkIdx, metaChunksCount: metaChunked.length }, `Curl split(base64(metaChunk)), index ${metaChunkIdx}`);

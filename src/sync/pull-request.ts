@@ -114,26 +114,36 @@ const getPullRequestTaskGraphQL = async (
 
 	logger.info({ startTime }, "Backfill task started");
 
-	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const createdSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 
-	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, commitSince, perPage, cursor);
+	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, perPage, cursor);
 
-	const pullRequests = response.repository?.pullRequests?.edges
-		?.map((edge) => transformPullRequest(jiraHost, edge.node, logger))
+	const filteredByCreatedSince = response.repository?.pullRequests?.edges
+		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
+
+	const pullRequests = filteredByCreatedSince
+		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
 		?.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
 	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
+
+	emitStats(jiraHost, startTime, "GRAPHQL");
+
+	if (pullRequests.length === 0) {
+		return {
+			edges: filteredByCreatedSince || [],
+			jiraPayload: undefined
+		};
+	}
 
 	const jiraPayload = {
 		...transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 		pullRequests
 	};
 
-	emitStats(jiraHost, startTime, "GRAPHQL");
-
 	return {
-		edges: response.repository?.pullRequests?.edges || [],
+		edges: filteredByCreatedSince || [],
 		jiraPayload
 	};
 
@@ -193,7 +203,7 @@ const getPullRequestTaskRest = async (
 		await Promise.all(
 			edgesWithCursor.map(async (pull) => {
 
-				if (isEmpty(extractIssueKeysFromPrRest(pull))) {
+				if (isEmpty(await extractIssueKeysFromPrRest(pull, jiraHost))) {
 					logger.info({
 						prId: pull.id
 					}, "Skip PR cause it has no issue keys");
@@ -203,7 +213,7 @@ const getPullRequestTaskRest = async (
 				const prDetails = prResponse?.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
-				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger);
+				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger, jiraHost);
 				return data?.pullRequests[0];
 
 			})

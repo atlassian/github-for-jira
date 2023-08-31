@@ -20,6 +20,7 @@ describe("frontend-log-middleware", () => {
 			log: createLogger({ name: "test", foo: 123 }),
 			session: {},
 			cookies: {},
+			headers: {},
 			query: {}
 		} as Request;
 

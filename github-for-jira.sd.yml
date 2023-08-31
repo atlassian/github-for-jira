@@ -52,6 +52,9 @@ serviceProxy:
   ingress:
     authentication:
       enabled: true
+  egress:
+    dependencies:
+      - name: brahmos-wiremock
   plugins:
     auth:
       logLevel: info
@@ -69,6 +72,8 @@ lifecycleEvents:
   timeout: 30
 
 resources:
+  - type: slauth-gateway # needed for "atlas slauth curl" calls, see https://hello.atlassian.net/wiki/spaces/MICROS/pages/1463433257/Network+Segmentation+for+Micros+EC2+compute#Add-a-slauth-gateway-resource
+    name: ingress
   - type: redisx
     name: cache
     attributes:
@@ -141,7 +146,7 @@ resources:
       connectionLimit: 150 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
         # For ddev and staging we have scaling policy different from prod: up to 5 Worker and up to 5 WebServer nodes.
         # Therefore, when all the nodes are running, we might have up to "PGBOUNCER_DEFAULT_POOL_SIZE * 10" number
-        # of connections.
+      # of connections.
       dataType:
         - UGC/Label                # name of GitHub org / Jira site
         - PII/IndirectConfidential # name of GitHub org
@@ -240,9 +245,9 @@ config:
     # WEBHOOK_SECRET: the webhook secret configured in the GitHub app
     PGBOUNCER_POOL_MODE: "session"
     PGBOUNCER_DEFAULT_POOL_SIZE: "15" # Max scale up:
-                      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
-                      # Normal business:
-                      #   (5 web servers + 3 workers) * 15 pool size = 120 connections
+      #   (15 web servers + 15 workers) * 15 pool size  = 450 connections (See postgres-db connections limit)
+      # Normal business:
+    #   (5 web servers + 3 workers) * 15 pool size = 120 connections
     PGBOUNCER_SERVER_IDLE_TIMEOUT: "60"
     PGBOUNCER_MAX_CLIENT_CONN: "1000"
 
@@ -331,16 +336,16 @@ workers:
 
 environmentOverrides:
   ddev:
-#  Uncomment lines 140-149 if you want remote debugging in ddev
-#    loadBalancer:
-#      type: ELB # needed for remote debugging, default is "ALB"
-#    compose:
-#      microservice:
-#        ports:
-#          - 8080:8080
-#          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
-#    links:
-#      remoteDebug: true
+    #  Uncomment lines 140-149 if you want remote debugging in ddev
+    #    loadBalancer:
+    #      type: ELB # needed for remote debugging, default is "ALB"
+    #    compose:
+    #      microservice:
+    #        ports:
+    #          - 8080:8080
+    #          - 5005:5005 # remote debugging port (has to be 5005 because that is hard coded into Micros)
+    #    links:
+    #      remoteDebug: true
     config:
       environmentVariables:
         APP_URL: https://github-for-jira.dev.services.atlassian.com
@@ -476,22 +481,22 @@ environmentOverrides:
     alarms:
       overrides:
         LatencyHigh: null
-#TODO Uncomment when we stop doing hourly deployments
-#        ElbResponseTimeAlert:
-#          Namespace: AWS/ApplicationELB
-#          MetricName: TargetResponseTime
-#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-#          Dimensions:
-#            - Name: LoadBalancer
-#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
-#            - Name: TargetGroup
-#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-#          Threshold: 5
-#          Priority: Low
-#          EvaluationPeriods: 5
-#          Period: 180
-#          ComparisonOperator: GreaterThanThreshold
-#          Statistic: Average
+    #TODO Uncomment when we stop doing hourly deployments
+    #        ElbResponseTimeAlert:
+    #          Namespace: AWS/ApplicationELB
+    #          MetricName: TargetResponseTime
+    #          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+    #          Dimensions:
+    #            - Name: LoadBalancer
+    #              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+    #            - Name: TargetGroup
+    #              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+    #          Threshold: 5
+    #          Priority: Low
+    #          EvaluationPeriods: 5
+    #          Period: 180
+    #          ComparisonOperator: GreaterThanThreshold
+    #          Statistic: Average
     workers:
       - name: Worker
         scaling:
@@ -526,6 +531,10 @@ environmentOverrides:
       - *cryptorJiraInstanceSecrets
 
   prod:
+    serviceProxy:
+      egress:
+        dependencies:
+          - name: brahmos-wiremock
     config:
       environmentVariables:
         APP_URL:  https://github.atlassian.com
@@ -554,22 +563,22 @@ environmentOverrides:
     alarms:
       overrides:
         LatencyHigh: null
-#TODO Uncomment when we stop doing hourly deployments
-#        ElbResponseTimeAlert:
-#          Namespace: AWS/ApplicationELB
-#          MetricName: TargetResponseTime
-#          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
-#          Dimensions:
-#            - Name: LoadBalancer
-#              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
-#            - Name: TargetGroup
-#              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
-#          Threshold: 5
-#          Priority: Low
-#          EvaluationPeriods: 5
-#          Period: 180
-#          ComparisonOperator: GreaterThanThreshold
-#          Statistic: Average
+    #TODO Uncomment when we stop doing hourly deployments
+    #        ElbResponseTimeAlert:
+    #          Namespace: AWS/ApplicationELB
+    #          MetricName: TargetResponseTime
+    #          Description: "Response latency is too high. Runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1283532004/HOWTO+Investigate+High+CPU+Memory+or+Latency+Alarms"
+    #          Dimensions:
+    #            - Name: LoadBalancer
+    #              Value: { "Fn::GetAtt": ["EnvironmentStack", "LoadBalancerName"] }
+    #            - Name: TargetGroup
+    #              Value: { "Fn::GetAtt": [ "ALBTargetGroup", "TargetGroupFullName" ] }
+    #          Threshold: 5
+    #          Priority: Low
+    #          EvaluationPeriods: 5
+    #          Period: 180
+    #          ComparisonOperator: GreaterThanThreshold
+    #          Statistic: Average
     resources:
       - type: redisx
         name: cache
@@ -591,7 +600,7 @@ environmentOverrides:
         type: postgres-db
         attributes:
           connectionLimit: 675 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE.
-            # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
+          # Should be set to Max Connections can be used by nodes + some room if we have to scale even more manually. PGBOUNCER_DEFAULT_POOL_SIZE*N*1.5
 
       - name: rds
         type: dedicated-rds
@@ -601,7 +610,7 @@ environmentOverrides:
             AllocatedStorage: 40 # GB
             MaxAllocatedStorage: 100
             ConnectionAlarm: 900 # keep in sync with PGBOUNCER_DEFAULT_POOL_SIZE * 2 * N (cause two stacks can work
-                                 # together during the deploy)
+            # together during the deploy)
             TransactionLogsDiskUsageAlarm: 4000000000 # approximately 4GB
 
       - name: deployment-history-cache
@@ -626,7 +635,7 @@ environmentOverrides:
             MetricName: ApproximateNumberOfMessagesVisible
             Namespace: AWS/SQS
             Description: "Message count for backfill queue too high! Follow the runbook: https://hello.atlassian.net/wiki/spaces/PF/pages/1550488861/HOWTO+Respond+to+Too+Many+Messages+on+the+Queue+Alert"
-            Threshold: 300 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
+            Threshold: 3000 #~ Autoscaling Threshold x 5. So we'll be alerted if autoscaling failed to fix the piling messages
             Priority: High
             Dimensions:
               - Name: QueueName

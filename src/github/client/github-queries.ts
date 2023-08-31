@@ -74,19 +74,12 @@ export type pullRequestNode = {
 	state: string;
 	mergedAt?: string;
 	updatedAt: string;
+	createdAt: string;
 	title: string;
 	body: string;
 	url: string;
-	baseRef?: {
-		name: string;
-		repository: {
-			url: string;
-			name: string;
-			owner: {
-				login: string;
-			};
-		};
-	};
+	headRefName: string; // is defined even if the ref was deleted
+	baseRefName: string; // is defined even if the ref was deleted
 	headRef?: {
 		id: string;
 		name: string;
@@ -163,6 +156,7 @@ export type pullRequestQueryResponse = {
 	repository: {
 		pullRequests: {
 			edges: {
+				createdAt: string;
 			cursor: string,
 			node: pullRequestNode;
 			}[]
@@ -172,6 +166,7 @@ export type pullRequestQueryResponse = {
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
+
 		pullRequests(first: $per_page, orderBy: {field: CREATED_AT, direction: DESC}, after: $cursor) {
       edges {
       	cursor
@@ -180,19 +175,13 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
 					id
 					state
 					mergedAt
+					createdAt
 					updatedAt
 					title
 					body
 					url
-					baseRef {
-						name
-						repository {
-							name
-							owner {
-								login
-							}
-						}
-					}
+					baseRefName,
+					headRefName,
 					headRef {
 						id
 						name

@@ -39,6 +39,10 @@ export class JiraClient {
 		}
 	}
 
+	async getCloudId(): Promise<{ cloudId: string }> {
+		return (await this.axios.get("_edge/tenant_info")).data;
+	}
+
 	async appPropertiesCreate(isConfiguredState: boolean) {
 		return await this.axios.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
 			"isConfigured": isConfiguredState
@@ -51,6 +55,21 @@ export class JiraClient {
 
 	async appPropertiesDelete() {
 		return await this.axios.delete(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`);
+	}
+
+	async linkedWorkspace(subscriptionId: number) {
+		const payload = {
+			"workspaceIds": [subscriptionId]
+		};
+		return await this.axios.post("/rest/security/1.0/linkedWorkspaces/bulk", payload);
+	}
+
+	async deleteWorkspace(subscriptionId: number) {
+		return await this.axios.delete(`/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds=${subscriptionId}`);
+	}
+
+	async deleteVulnerabilities(subscriptionId: number) {
+		return await this.axios.delete(`/rest/security/1.0/bulkByProperties?workspaceId=${subscriptionId}`);
 	}
 
 	async checkAdminPermissions(accountId: string) {

@@ -25,10 +25,15 @@ import {
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
-	CreateReferenceBody,
+	CreateReferenceBody, GetCodeScanningAlertRequestParams,
+	DependabotAlertResponseItem,
+	GetDependabotAlertRequestParams,
 	GetPullRequestParams,
+	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
-	ReposGetContentsResponse
+	ReposGetContentsResponse,
+	SecretScanningAlertResponseItem,
+	CodeScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -72,6 +77,29 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.gitHubServerAppId = gshaId;
 	}
 
+
+	public async getSecretScanningAlerts(owner: string, repo: string, secretScanningAlertRequestParams: GetSecretScanningAlertRequestParams): Promise<AxiosResponse<SecretScanningAlertResponseItem[]>> {
+		return await this.get<SecretScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/secret-scanning/alerts`, secretScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
+
+	public async getSecretScanningAlert(alertNumber: number, owner: string, repo: string): Promise<AxiosResponse<SecretScanningAlertResponseItem>> {
+		return await this.get<SecretScanningAlertResponseItem>(`/repos/{owner}/{repo}/secret-scanning/alerts/{alertNumber}`, {}, {
+			owner,
+			repo,
+			alertNumber
+		});
+	}
+
+	public async getCodeScanningAlerts(owner: string, repo: string, codeScanningAlertRequestParams: GetCodeScanningAlertRequestParams): Promise<AxiosResponse<CodeScanningAlertResponseItem[]>> {
+		return await this.get<CodeScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts`, codeScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
@@ -93,13 +121,11 @@ export class GitHubInstallationClient extends GitHubClient {
 			pullNumber
 		});
 	}
-
-	public async getPullRequestPage(owner: string, repo: string, commitSince?: Date, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
+	public async getPullRequestPage(owner: string, repo: string, per_page = 100, cursor?: string): Promise<pullRequestQueryResponse> {
 		const response = await this.graphql<pullRequestQueryResponse>(getPullRequests, await this.installationAuthenticationHeaders(), {
 			owner,
 			repo,
 			per_page,
-			commitSince: commitSince?.toISOString(),
 			cursor
 		}, { graphQuery: "getPullRequests" });
 		return response.data.data;
@@ -282,12 +308,30 @@ export class GitHubInstallationClient extends GitHubClient {
 	}
 
 	public searchRepositories = async (queryString: string, order = "updated"): Promise<AxiosResponse<SearchedRepositoriesResponse>> => {
-		return await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
+		const resp =  await this.get<SearchedRepositoriesResponse>(`search/repositories?q={queryString}&order={order}`,{ },
 			{
 				queryString,
 				order
 			}
 		);
+		if (!resp.data?.items?.length) {
+			if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
+				try {
+					this.logger.warn({ queryString, order }, "Couldn't find repo, run curl for commands to get from github, try again with curl");
+					const { headers } = await this.installationAuthenticationHeaders();
+					const { Authorization } = headers as { Authorization: string };
+					const output = await runCurl({
+						fullUrl: `${this.restApiUrl}/search/repositories?q=${encodeURIComponent(queryString)}&order=${order}`,
+						method: "GET",
+						authorization: Authorization
+					});
+					logCurlOutputInChunks(output, this.logger);
+				} catch (curlE) {
+					this.logger.error({ err: curlE?.stderr }, "Error running curl for list repos");
+				}
+			}
+		}
+		return resp;
 	};
 
 	public listDeployments = async (owner: string, repo: string, environment: string, per_page: number): Promise<AxiosResponse<Octokit.ReposListDeploymentsResponse>> => {
@@ -342,6 +386,13 @@ export class GitHubInstallationClient extends GitHubClient {
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders(), undefined, { graphQuery: "ViewerRepositoryCountQuery" });
 		return response?.data?.data?.viewer?.repositories?.totalCount;
+	}
+
+	public async getDependabotAlerts(owner: string, repo: string, dependabotAlertRequestParams: GetDependabotAlertRequestParams): Promise<AxiosResponse<DependabotAlertResponseItem[]>> {
+		return await this.get<DependabotAlertResponseItem[]>(`/repos/{owner}/{repo}/dependabot/alerts`, dependabotAlertRequestParams, {
+			owner,
+			repo
+		});
 	}
 
 	public async getBranchesPage(owner: string, repoName: string, perPage = 1, commitSince?: Date, cursor?: string): Promise<getBranchesResponse> {

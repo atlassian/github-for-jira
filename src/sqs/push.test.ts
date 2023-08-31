@@ -569,6 +569,7 @@ describe("Push Webhook", () => {
 					properties: { installationId: DatabaseStateCreator.GITHUB_INSTALLATION_ID }
 				}).reply(200);
 
+				pushNoUsername.payload.installation.id = DatabaseStateCreator.GITHUB_INSTALLATION_ID;
 				await expect(app.receive(pushNoUsername as any)).toResolve();
 
 				await waitUntil(async () => {

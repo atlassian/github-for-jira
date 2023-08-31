@@ -85,6 +85,7 @@ jobs:
           path: '**/node_modules'
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install --frozen-lockfile
+      - run: yarn spa:build
       - name: create .env file
         run: |
           echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-e2e-test.pem
@@ -107,7 +108,7 @@ jobs:
           echo "GITHUB_PASSWORD=${{ secrets.E2E_GITHUB_PASSWORD }}" >> .env
           echo "GITHUB_URL=https://github.com" >> .env
           echo "LOG_LEVEL=debug" >> .env
-      - run: docker-compose up -d
+      - run: COMPOSE_PROFILES=e2e docker-compose up -d
       - name: wait for app to be ready
         run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
       - run: yarn run test:e2e
