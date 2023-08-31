@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { ErrorType, ApiError, ErrorCode } from "rest-interfaces";
+import { ErrorType, ErrorCode } from "rest-interfaces";
 import React, { MouseEvent } from "react";
 import { ErrorForIPBlocked, ErrorForNonAdmins, ErrorForSSO } from "../components/Error/KnownErrors";
 
@@ -7,10 +7,6 @@ export type ErrorObjType = {
 	type: ErrorType,
 	message: string | React.JSX.Element;
 	errorCode: ErrorCode
-}
-
-type SimpleError = {
-	message: string;
 }
 
 type ErrorWithErrorCode = {
@@ -25,7 +21,7 @@ export const GENERIC_MESSAGE_WITH_LINK = <>
 </>;
 
 export const modifyError = (
-  error: AxiosError<ApiError> | SimpleError | ErrorWithErrorCode,
+  error: unknown,
   context: { orgLogin?: string; },
   callbacks: { onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void; onRelogin: () => void }
 ): ErrorObjType => {

@@ -7,8 +7,9 @@ let email: string | undefined;
 
 let oauthState: string | undefined;
 
-async function checkValidity(): Promise<boolean | AxiosError> {
-	if (!Api.token.hasGitHubToken()) return false;
+async function checkValidity(): Promise<"SUCCESS" | "SKIP"> {
+
+	if (!Api.token.hasGitHubToken()) return "SKIP";
 
 	try {
 		const res = await Api.gitHub.getUserDetails();
@@ -17,13 +18,16 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 
 		const ret = res.status === 200;
 
-		if(!ret) reportError({ message: "Response status is not 200 for getting user details", status: res.status });
+		if(!ret) {
+			reportError({ message: "Response status is not 200 for getting user details", status: res.status });
+			throw { errorCode: "ERR_RESP_STATUS_NOT_200" };
+		}
 
-		return ret;
+		return "SUCCESS";
 
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		throw e;
 	}
 }
 

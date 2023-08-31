@@ -159,14 +159,15 @@ const ConfigSteps = () => {
 
 	const getOrganizations = async () => {
 		setLoaderForOrgFetching(true);
-		const response = await AppManager.fetchOrgs();
-		setLoaderForOrgFetching(false);
-		if (response instanceof AxiosError) {
-			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-			return { success: false, orgs: [] };
-		} else {
+		try {
+			const response = await AppManager.fetchOrgs();
 			setOrganizations(response.orgs);
 			return { success: true, orgs: response.orgs };
+		} catch (e) {
+			showError(modifyError(e, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			return { success: false, orgs: [] };
+		} finally {
+			setLoaderForOrgFetching(false);
 		}
 	};
 
@@ -220,17 +221,13 @@ const ConfigSteps = () => {
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
 		try {
 			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
-			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
-			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
-				showError(errorObj);
-				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
-			} else {
-				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
-			}
+			await AppManager.connectOrg(gitHubInstallationId);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "success" }, { mode });
+			navigate("/spa/connected");
 		} catch (e) {
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
+			const errorObj = modifyError(e, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+			showError(errorObj);
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
 			reportError(e);
 		}
 	};
@@ -285,22 +282,23 @@ const ConfigSteps = () => {
 
 	useEffect(() => {
 		const recheckValidity = async () => {
-			const status: boolean | AxiosError = await OAuthManager.checkValidity();
-			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			try {
+				const result = await OAuthManager.checkValidity();
+				setLoggedInUser(OAuthManager.getUserDetails().username);
+				setLoaderForLogin(false);
+				setOrganizations([]);
+				if (result === "SUCCESS") {
+					const result = await getOrganizations();
+					if (result.success && result.orgs.length === 0) {
+						await installNewOrg("auto");
+					}
+					if (result.success) {
+						setAnalyticsEventsForFetchedOrgs(result.orgs);
+					}
+				}
+			} catch (e) {
+				showError(modifyError(e, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 				return;
-			}
-			setLoggedInUser(OAuthManager.getUserDetails().username);
-			setLoaderForLogin(false);
-			setOrganizations([]);
-			if (status) {
-				const result = await getOrganizations();
-				if (result.success && result.orgs.length === 0) {
-					await installNewOrg("auto");
-				}
-				if (result.success) {
-					setAnalyticsEventsForFetchedOrgs(result.orgs);
-				}
 			}
 		};
 		isLoggedIn && recheckValidity();
