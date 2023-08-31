@@ -230,27 +230,30 @@ const ConfigSteps = () => {
 	};
 
 	const installNewOrg = async (mode: "auto" | "manual") => {
-		try {
-			analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
-			await AppManager.installNewApp({
-				onFinish: async (gitHubInstallationId: number | undefined) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: gitHubInstallationId ? "success" : "fail"}, { mode });
+
+		analyticsClient.sendUIEvent({ actionSubject: "installToNewOrganisation", action: "clicked"}, { mode });
+
+		const result = await AppManager.installNewApp({
+			onFinish: async (gitHubInstallationId: number | undefined) => {
+				if(gitHubInstallationId) {
 					getOrganizations();
-					if(gitHubInstallationId) {
-						await doCreateConnection(gitHubInstallationId, "auto");
-					}
-				},
-				onRequested: async (_setupAction: string) => {
-					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
-					navigate("/spa/installationRequested");
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "success" }, { mode });
+					await doCreateConnection(gitHubInstallationId, "auto");
+				} else {
+					analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail" }, { mode, errCode: "ERR_GITHUB_INSTALLATION_ID_MISSING" });
 				}
-			});
-		} catch (e) {
-			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
-			showError(errorObj);
-			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
-			reportError(e);
+			},
+			onRequested: async (_setupAction: string) => {
+				analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "requested"}, { mode });
+				navigate("/spa/installationRequested");
+			}
+		});
+
+		if (!result.success) {
+			showError(getErrorUI(result.errCode, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: result.errCode });
 		}
+
 	};
 
 	useEffect(() => {

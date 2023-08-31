@@ -54,5 +54,11 @@ describe("OAuthManager", () => {
 				errCode: "ERR_OAUTH_CODE_EMPTY"
 			});
 		});
+		it("should return error when state is empty", async () => {
+			expect(await OAuthManager.finishOAuthFlow("code", "")).toEqual({
+				success: false,
+				errCode: "ERR_OAUTH_STATE_EMPTY"
+			});
+		});
 	});
 });

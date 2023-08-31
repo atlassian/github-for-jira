@@ -84,4 +84,15 @@ describe("App Manager", () => {
 			});
 		});
 	});
+	describe("installNewApp", () => {
+		it("should return success:false when generating app url fail", async () => {
+			jest.mocked(Api.token.hasGitHubToken).mockReturnValue(true);
+			jest.mocked(Api.app.getAppNewInstallationUrl).mockRejectedValue(mockAxiosError("INSUFFICIENT_PERMISSION"));
+			const result = await AppManagaer.installNewApp({ onFinish: jest.fn(), onRequested: jest.fn() });
+			expect(result).toEqual({
+				success: false,
+				errCode: "INSUFFICIENT_PERMISSION"
+			});
+		});
+	});
 });

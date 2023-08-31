@@ -67,48 +67,57 @@ let lastOpenWin: WindowProxy | null = null;
 async function installNewApp(callbacks: {
 	onFinish: (gitHubInstallationId: number | undefined) => void,
 	onRequested: (setupAction: string) => void
-}): Promise<void> {
+}): Promise<Result<void>> {
 
-	const app = await Api.app.getAppNewInstallationUrl();
+	try {
 
-	if(lastOpenWin) {
-		//do nothing, as there's already an win opened.
-		return;
+		const app = await Api.app.getAppNewInstallationUrl();
+
+		if(lastOpenWin) {
+			//do nothing, as there's already an win opened.
+			return { success: true, data: undefined };
+		}
+
+		const winInstall = lastOpenWin = popup(app.data.appInstallationUrl);
+
+		const handler = async (event: MessageEvent) => {
+			lastOpenWin = null;
+			if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
+				const id = parseInt(event.data?.gitHubInstallationId);
+				if(!id) {
+					reportError({ message: "GitHub installation id is empty on finish OAuth flow" });
+				}
+				callbacks.onFinish(isNaN(id) ? undefined : id);
+			}
+			if (event.data?.type === "install-requested" && event.data?.setupAction) {
+				const setupAction = event.data?.setupAction;
+				callbacks.onRequested(setupAction);
+			}
+		};
+		window.addEventListener("message", handler);
+
+		// Still need below interval for window close
+		// As user might not finish the app install flow, there's no guarantee that above message
+		// event will happen.
+		const hdlWinInstall = setInterval(() => {
+			if (winInstall?.closed) {
+				try {
+					lastOpenWin = null;
+					setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
+				} catch (e) {
+					reportError(e);
+				} finally {
+					clearInterval(hdlWinInstall);
+				}
+			}
+		}, 1000);
+
+		return { success: true, data: undefined }
+
+	} catch (e) {
+		reportError(e);
+		return { success: false, errCode: toErrorCode(e) };
 	}
-
-	const winInstall = lastOpenWin = popup(app.data.appInstallationUrl);
-
-	const handler = async (event: MessageEvent) => {
-		lastOpenWin = null;
-		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
-			const id = parseInt(event.data?.gitHubInstallationId);
-			if(!id) {
-				reportError({ message: "GitHub installation id is empty on finish OAuth flow" });
-			}
-			callbacks.onFinish(isNaN(id) ? undefined : id);
-		}
-		if (event.data?.type === "install-requested" && event.data?.setupAction) {
-			const setupAction = event.data?.setupAction;
-			callbacks.onRequested(setupAction);
-		}
-	};
-	window.addEventListener("message", handler);
-
-	// Still need below interval for window close
-	// As user might not finish the app install flow, there's no guarantee that above message
-	// event will happen.
-	const hdlWinInstall = setInterval(() => {
-		if (winInstall?.closed) {
-			try {
-				lastOpenWin = null;
-				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
-			} catch (e) {
-				reportError(e);
-			} finally {
-				clearInterval(hdlWinInstall);
-			}
-		}
-	}, 1000);
 }
 
 export default {
