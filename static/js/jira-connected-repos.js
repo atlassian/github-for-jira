@@ -1,4 +1,6 @@
 $(document).ready(() => {
+	// to get the focus back on search bar after comp reload
+	$('#repo-search').focus();
 	const params = new URLSearchParams(window.location.search.substring(1));
 	const repoSearch = params.get("repoName");
 	if (repoSearch) {
@@ -20,6 +22,18 @@ $(document).ready(() => {
 
 	$("#status-filter").on("change", () => {
 		loadRepos(1);
+	});
+	let repoSearchTimeoutId;
+	$('#repo-search').on('input', function() {
+		// re-render the original list after clearing the search bar
+		if($(this).val().length === 0) {
+			loadRepos(1);
+		}
+		// search bar is using de-bouncing
+		clearTimeout(repoSearchTimeoutId);
+		repoSearchTimeoutId = setTimeout(function() {
+		  loadRepos(1);
+		}, 500);
 	});
 
 	const loadRepos = (pageNumber ) => {
