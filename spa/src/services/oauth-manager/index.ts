@@ -29,7 +29,7 @@ async function checkValidity(): Promise<Result<void>> {
 			return {
 				success: true,
 				data: undefined
-			}
+			};
 		} else {
 			reportError({
 				message: "Response status is not 200 for getting user details",
@@ -38,7 +38,7 @@ async function checkValidity(): Promise<Result<void>> {
 			return {
 				success: false,
 				errCode: "ERR_RESP_STATUS_NOT_200"
-			}
+			};
 		}
 
 	} catch (e) {
@@ -46,7 +46,7 @@ async function checkValidity(): Promise<Result<void>> {
 		return {
 			success: false,
 			errCode: toErrorCode(e)
-		}
+		};
 	}
 }
 

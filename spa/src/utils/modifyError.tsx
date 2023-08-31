@@ -21,9 +21,9 @@ export const modifyError = (
   context: { orgLogin?: string; },
   callbacks: { onClearGitHubToken: (e: MouseEvent<HTMLAnchorElement>) => void; onRelogin: () => void }
 ): ErrorObjType => {
-	let errorCode: ErrorCode = toErrorCode(error);
+	const errorCode: ErrorCode = toErrorCode(error);
 	return getErrorUI(errorCode, context, callbacks);
-}
+};
 
 export const getErrorUI = (
   errorCode: ErrorCode,

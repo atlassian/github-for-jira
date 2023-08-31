@@ -290,6 +290,10 @@ const ConfigSteps = () => {
 			setLoaderForLogin(false);
 
 			if (!checkValidityResult.success) {
+				if (checkValidityResult.errCode === "ERR_GITHUB_TOKEN_EMPTY") {
+					//this shouldn't happen, but just skip it as it has no impact to user
+					return;
+				}
 				showError(getErrorUI(checkValidityResult.errCode, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 				return;
 			}
