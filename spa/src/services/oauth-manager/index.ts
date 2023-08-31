@@ -1,5 +1,4 @@
 import Api from "../../api";
-import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 import { Result } from "../index";
 import { toErrorCode } from "../index";
@@ -68,11 +67,16 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 	}
 }
 
-async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
+async function finishOAuthFlow(code: string, state: string): Promise<Result<void>> {
 
-	if (!code && !state) {
-		reportError({ message: "state missing", isCodeEmpty: !code, isStateEmpty: !state });
-		return false;
+	if (!code) {
+		reportError({ message: "code missing" });
+		return { success: false, errCode: "ERR_OAUTH_CODE_EMPTY" };
+	}
+
+	if (!state) {
+		reportError({ message: "state missing" });
+		return { success: false, errCode: "ERR_OAUTH_STATE_EMPTY" };
 	}
 
 	const prevState = oauthState;
@@ -80,21 +84,21 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 
 	if (state !== prevState) {
 		reportError({ message: "state not match", isPrevStateEmpty: !prevState, isStateEmpty: !state });
-		return false;
+		return { success: false, errCode: "ERR_OAUTH_STATE_INVALID" };
 	}
 
 	try {
 		const token = await Api.auth.exchangeToken(code, state);
 		if (token.data.accessToken) {
 			Api.token.setGitHubToken(token.data.accessToken);
-			return true;
+			return { success: true, data: undefined };
 		} else {
 			reportError({ message: "fail to acquire accessToken (empty)" });
-			return false;
+			return { success: false, errCode: "ERR_OAUTH_TOKEN_ACQUIRE_FAILURE" };
 		}
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		return { success: false, errCode: toErrorCode(e) }
 	}
 }
 

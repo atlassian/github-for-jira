@@ -262,19 +262,27 @@ const ConfigSteps = () => {
 	useEffect(() => {
 		getJiraHostUrls();
 		const handler = async (event: MessageEvent) => {
+
 			if (event.origin !== originalUrl) return;
+
 			if (event.data?.type === "oauth-callback" && event.data?.code) {
-				const response: boolean | AxiosError = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+
+				const response = await OAuthManager.finishOAuthFlow(event.data?.code, event.data?.state);
+
 				setLoaderForLogin(false);
-				if (response instanceof AxiosError) {
-					showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" });
+
+				if(!response.success) {
+					showError(getErrorUI(response.errCode, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail" }, { errCode: response.errCode });
 					return;
-				} else {
-					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: response === true ?  "success" : "fail" });
 				}
+
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "success" });
+
 				setIsLoggedIn(true);
+
 			}
+
 		};
 		window.addEventListener("message", handler);
 		return () => {

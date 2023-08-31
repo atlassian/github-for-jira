@@ -68,7 +68,7 @@ const SELECT_GH_PRODUCT_CTA = "Next";
 const SELECT_GH_TEXT = "Select a GitHub organization";
 const NO_ORGS_INSTALL_ORG_CTA = "Select an organization in GitHub";
 
-test.only("Connect GitHub Screen - Initial Loading of the page when not authenticated", async () => {
+test("Connect GitHub Screen - Initial Loading of the page when not authenticated", async () => {
 	jest.mocked(OAuthManager).getUserDetails = UnAuthenticated.getUserDetails;
 	jest.mocked(OAuthManager).checkValidity = UnAuthenticated.checkValidity;
 
