@@ -14,7 +14,7 @@ import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
 import { AxiosError } from "axios";
-import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError } from "../../utils/modifyError";
+import { ErrorObjType, GENERIC_MESSAGE_WITH_LINK, modifyError, getErrorUI } from "../../utils/modifyError";
 import { reportError } from "../../utils";
 import { GitHubInstallationType } from "../../../../src/rest-interfaces";
 import OrganizationsList from "../ConfigSteps/OrgsContainer";
@@ -285,22 +285,23 @@ const ConfigSteps = () => {
 
 	useEffect(() => {
 		const recheckValidity = async () => {
-			const status: boolean | AxiosError = await OAuthManager.checkValidity();
-			if (status instanceof AxiosError) {
-				showError(modifyError(status, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+
+			const checkValidityResult = await OAuthManager.checkValidity();
+			setLoaderForLogin(false);
+
+			if (!checkValidityResult.success) {
+				showError(getErrorUI(checkValidityResult.errCode, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 				return;
 			}
+
 			setLoggedInUser(OAuthManager.getUserDetails().username);
-			setLoaderForLogin(false);
 			setOrganizations([]);
-			if (status) {
-				const result = await getOrganizations();
-				if (result.success && result.orgs.length === 0) {
-					await installNewOrg("auto");
-				}
-				if (result.success) {
-					setAnalyticsEventsForFetchedOrgs(result.orgs);
-				}
+			const result = await getOrganizations();
+			if (result.success && result.orgs.length === 0) {
+				await installNewOrg("auto");
+			}
+			if (result.success) {
+				setAnalyticsEventsForFetchedOrgs(result.orgs);
 			}
 		};
 		isLoggedIn && recheckValidity();

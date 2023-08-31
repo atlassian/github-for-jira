@@ -15,7 +15,7 @@ jest.mock("react-router-dom", () => ({
 
 /* eslint-disable react-refresh/only-export-components */
 const Authenticated = {
-	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
+	checkValidity: jest.fn().mockReturnValue(Promise.resolve({ success: true, data: undefined } )),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
 	fetchOrgs: jest.fn().mockReturnValue({ orgs: [ { account: { login: "org-1" }, id: 1, isAdmin: true }, { account: { login: "org-2" }, id: 2, isAdmin: true }, { account: { login: "org-3" }, id: 3, isAdmin: true  } ]}),
 	installNewApp: jest.fn(),
@@ -25,7 +25,7 @@ const Authenticated = {
 	clear: jest.fn(),
 };
 const AuthenticatedWithNoOrgs = {
-	checkValidity: jest.fn().mockReturnValue(Promise.resolve(true)),
+	checkValidity: jest.fn().mockReturnValue(Promise.resolve({ success: true, data: undefined } )),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
 	fetchOrgs: jest.fn().mockReturnValue({ orgs: [] }),
 	installNewApp: jest.fn(),
@@ -36,7 +36,7 @@ const AuthenticatedWithNoOrgs = {
 
 /* eslint-disable react-refresh/only-export-components */
 const UnAuthenticated = {
-	checkValidity: jest.fn().mockReturnValue(Promise.resolve(false)),
+	checkValidity: jest.fn().mockReturnValue(Promise.resolve({ success: false, errCode: "UNKNOWN" })),
 	authenticateInGitHub: jest.fn().mockReturnValue(Promise),
 	fetchOrgs: jest.fn().mockReturnValue({ orgs: []}),
 	setTokens: jest.fn(),

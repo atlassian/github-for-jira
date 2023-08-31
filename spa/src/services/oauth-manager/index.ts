@@ -1,29 +1,52 @@
 import Api from "../../api";
 import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
+import { Result } from "../index";
+import { toErrorCode } from "../index";
 
 let username: string | undefined;
 let email: string | undefined;
 
 let oauthState: string | undefined;
 
-async function checkValidity(): Promise<boolean | AxiosError> {
-	if (!Api.token.hasGitHubToken()) return false;
+async function checkValidity(): Promise<Result<void>> {
+
+	if (!Api.token.hasGitHubToken()){
+		return {
+			success: false,
+			errCode: "ERR_GITHUB_TOKEN_EMPTY"
+		};
+	}
 
 	try {
 		const res = await Api.gitHub.getUserDetails();
 		username = res.data.login;
 		email = res.data.email;
 
-		const ret = res.status === 200;
+		const success = res.status === 200;
 
-		if(!ret) reportError({ message: "Response status is not 200 for getting user details", status: res.status });
-
-		return ret;
+		if (success) {
+			return {
+				success: true,
+				data: undefined
+			}
+		} else {
+			reportError({
+				message: "Response status is not 200 for getting user details",
+				status: res.status
+			});
+			return {
+				success: false,
+				errCode: "ERR_RESP_STATUS_NOT_200"
+			}
+		}
 
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		return {
+			success: false,
+			errCode: toErrorCode(e)
+		}
 	}
 }
 
