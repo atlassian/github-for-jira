@@ -100,7 +100,7 @@ const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
 		return false;
 	}
 	return Object.keys(environmentMapping).some(key => {
-		return environmentMapping[key]?.length > MAX_PATTERNS_PER_ENVIRONMENT;
+		return (environmentMapping[key]?.length || 0) > MAX_PATTERNS_PER_ENVIRONMENT;
 	});
 };
 

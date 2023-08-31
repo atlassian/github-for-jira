@@ -40,9 +40,13 @@ $(document).ready(() => {
 		const syncStatus =$("#status-filter").val();
 		const repoName = $("#repo-search").val();
 		const subscriptionId = $(".jiraConnectedRepos_pagination").attr('data-subscription-id');
-		AP.context.getToken(function (token) {
-			window.location.href = `/jira/subscription/${subscriptionId}/repos?jwt=${token}&page=${pageNumber}&repoName=${repoName}&syncStatus=${syncStatus}`;
-		});
+		AP.navigator.go(
+			'addonmodule',
+			{
+				moduleKey: "gh-addon-subscription-repos",
+				customData: { subscriptionId, pageNumber, repoName, syncStatus }
+			}
+		);
 	};
 
 	$(".jiraConnectedRepos__table__cell__repoName").click((event) => {
@@ -104,7 +108,7 @@ const getStatusIconInfo = (status) => {
 const mapErrorToMessage = (errorCode) => {
 	if(errorCode == "CONNECTION_ERROR") {
 		return "This is caused by connection error. To fix this, restarting backfilling may rectify this error. If this error persists, please contact the Atlassian support team."
-	} 
+	}
 	return errorCode;
 };
 

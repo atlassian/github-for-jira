@@ -282,6 +282,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		const receiveCount = Number(message.Attributes?.ApproximateReceiveCount || "1");
 
+		const lastAttempt = receiveCount >= this.maxAttempts;
 		const context: SQSMessageContext<MessagePayload> = {
 			message,
 			payload,
@@ -292,10 +293,12 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 				jiraHost: payload?.jiraHost,
 				installationId: payload?.installationId,
 				gitHubAppId: payload?.gitHubAppConfig?.gitHubAppId,
-				webhookId: payload?.webhookId
+				webhookId: payload?.webhookId,
+				receiveCount,
+				lastAttempt
 			}),
 			receiveCount,
-			lastAttempt: receiveCount >= this.maxAttempts
+			lastAttempt
 		};
 
 		context.log.info(`SQS message received. Receive count: ${receiveCount}`);

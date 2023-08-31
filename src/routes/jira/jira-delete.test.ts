@@ -7,6 +7,7 @@ import { getLogger } from "config/logger";
 import { when } from "jest-when";
 import { BooleanFlags, booleanFlag } from "~/src/config/feature-flags";
 import { Errors } from "~/src/config/errors";
+import { envVars } from "config/env";
 
 jest.mock("models/installation");
 jest.mock("models/subscription");
@@ -52,6 +53,12 @@ describe("DELETE /jira/configuration", () => {
 			.query({ gitHubInstallationId: subscription.githubInstallationId })
 			.reply(200, "OK");
 
+		jiraNock
+			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
+				isConfigured: false
+			})
+			.reply(200);
+
 		// TODO: use supertest for this
 		const req = {
 			log: getLogger("request"),
@@ -90,6 +97,15 @@ describe("DELETE /jira/configuration", () => {
 			.delete("/rest/security/1.0/linkedWorkspaces/bulk?workspaceIds="+subscription.id)
 			.reply(202);
 
+		jiraNock
+			.delete("/rest/security/1.0/bulkByProperties?workspaceId="+subscription.id)
+			.reply(202);
+
+		jiraNock
+			.put(`/rest/atlassian-connect/latest/addons/${envVars.APP_KEY}/properties/is-configured`, {
+				isConfigured: false
+			})
+			.reply(200);
 
 		// TODO: use supertest for this
 		const req = {

@@ -4,7 +4,7 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import Logger from "bunyan";
 
 /* valid task types */
-export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment" | "dependabotAlert" | "secretScanningAlert";
+export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "deployment" | "dependabotAlert" | "secretScanningAlert" | "codeScanningAlert";
 
 export type SyncType = "full" | "partial";
 

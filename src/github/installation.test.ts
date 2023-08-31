@@ -50,7 +50,7 @@ describe("InstallationWebhookHandler", () => {
 		});
 
 		describe.each(
-			["created", "new_permissions_accepted"]
+			["new_permissions_accepted"]
 		)("should not set security permissions accepted field in subscriptions when FF is disabled", (action) => {
 			it(`${action} action`, async () => {
 				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
@@ -61,7 +61,7 @@ describe("InstallationWebhookHandler", () => {
 			});
 		});
 		describe.each(
-			["created", "new_permissions_accepted"]
+			["new_permissions_accepted"]
 		)("should set security permissions accepted field in subscriptions", (action) => {
 			it(`${action} action`, async () => {
 				await installationWebhookHandler(getWebhookContext({ cloud: true, action }), jiraClient, util, GITHUB_INSTALLATION_ID);
@@ -116,17 +116,11 @@ describe("InstallationWebhookHandler", () => {
 			expect(submitSecurityWorkspaceToLink).toBeCalledWith(installation, subscription, expect.anything());
 			expect(findOrStartSync).toBeCalledTimes(1);
 			expect(findOrStartSync).toBeCalledWith(
-				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert", "secretScanningAlert"], { "source": "webhook-security-permissions-accepted" }
+				subscription, expect.anything(), "full", subscription?.backfillSince, ["dependabotAlert", "secretScanningAlert", "codeScanningAlert"], { "source": "webhook-security-permissions-accepted" }
 			);
 
 		});
 
-		it("should not submit workspace to link for created action", async () => {
-			const webhookContext = getWebhookContext({ cloud: true, action: "created" });
-			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
-			expect(submitSecurityWorkspaceToLink).toBeCalledTimes(0);
-
-		});
 		it("should throw error if subscription is not found", async () => {
 			const webhookContext = getWebhookContext({ cloud: true });
 			await expect(installationWebhookHandler(webhookContext, jiraClient, util, 0)).rejects.toThrow("Subscription not found");
@@ -168,7 +162,7 @@ describe("InstallationWebhookHandler", () => {
 
 		});
 		describe.each(
-			["created", "new_permissions_accepted"]
+			["new_permissions_accepted"]
 		)("should not set security permissions accepted field in subscriptions when FF is disabled", (action) => {
 			it(`${action} action`, async () => {
 				when(booleanFlag).calledWith(BooleanFlags.ENABLE_GITHUB_SECURITY_IN_JIRA, expect.anything()).mockResolvedValue(false);
@@ -180,7 +174,7 @@ describe("InstallationWebhookHandler", () => {
 		});
 
 		describe.each(
-			["created", "new_permissions_accepted"]
+			["new_permissions_accepted"]
 		)("should set security permissions accepted field in subscriptions", (action) => {
 			it(`${action} action`, async () => {
 				await installationWebhookHandler(getWebhookContext({ cloud: false, action }), jiraClient, util, GITHUB_INSTALLATION_ID);

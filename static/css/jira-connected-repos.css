@@ -1,6 +1,5 @@
 .jiraConnectedRepos {
     box-sizing: border-box;
-    height: 100vh;
     overflow-y: hidden;
     padding: 3.5em 4.5em;
 }
@@ -16,7 +15,8 @@
 }
 
 .jiraConnectedRepos_content {
-    margin-top: 2em;
+    margin: 0 auto;
+    max-width: 560px;
 }
 
 .jiraConnectedRepos_content > .jiraConnectedRepos__tableContainer {
@@ -44,7 +44,7 @@
 }
 
 .jiraConnectedRepos__table__head__title:not(:last-child) {
-    width: 30%;
+
 }
 
 .jiraConnectedRepos__table__body
@@ -130,7 +130,7 @@
 }
 
 .jiraConnectedRepos_pagination .prev-page {
-    margin-right: 10px;    
+    margin-right: 10px;
 }
 
 .jiraConnectedRepos_pagination .next-page span,

@@ -2,13 +2,47 @@ import { NextFunction, Request, Response } from "express";
 import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
+import { sequelize } from "models/sequelize";
 
 interface Page {
 	pageNum: number;
 	isCurrentPage: boolean;
 }
 
-export const JiraGetConnectedRepos = async (
+const mapFilterSyncStatusToQueryCondition = (filterStatusField: string | undefined) => {
+	if (!filterStatusField || filterStatusField === "all") {
+		return {};
+	}
+	if (filterStatusField === "pending") {
+		return {
+			[Op.or]: [
+				{ branchStatus: "pending" },
+				{ branchStatus: null },
+				{ commitStatus: "pending" },
+				{ commitStatus: null },
+				{ pullStatus: "pending" },
+				{ pullStatus: null },
+				{ buildStatus: "pending" },
+				{ buildStatus: null },
+				{ deploymentStatus: "pending" },
+				{ deploymentStatus: null }
+			]
+		};
+	} else if (filterStatusField == "failed") {
+		return {
+			[Op.or]: [
+				{ branchStatus: "failed" },
+				{ commitStatus: "failed" },
+				{ pullStatus: "failed" },
+				{ buildStatus: "failed" },
+				{ deploymentStatus: "failed" }
+			]
+		};
+	}
+	return undefined;
+};
+
+export const JiraConnectedReposGet = async (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -17,71 +51,61 @@ export const JiraGetConnectedRepos = async (
 	try {
 		const { jiraHost, nonce } = res.locals;
 		const subscriptionId = Number(req.params.subscriptionId);
-		const page = Number(req.query.page || 1);
-		const pageSize = Number(req.query.pageSize || 10);
-		const repoName = req.query.repoName || "";
-		const syncStatusFilter = req.query.syncStatus || undefined;
+		const pageNumber = Number(req.query.pageNumber) || 1;
+		const pageSize = Number(req.query.pageSize) || 10;
+		const filterRepoName = (req.query.repoName || "") as string;
+		const filterSyncStatus = (req.query.syncStatus || undefined) as (string | undefined);
 
 		if (!subscriptionId) {
 			req.log.error("Missing Subscription ID");
-			res.status(401).send("Missing Subscription ID");
+			res.status(400).send("Missing Subscription ID");
+			return;
+		}
+
+		if (pageSize > 100) {
+			req.log.error("pageSize cannot be larger than 100");
+			res.status(400).send("pageSize cannot be larger than 100");
 			return;
 		}
 
 		const subscription = await Subscription.findByPk(subscriptionId);
 
-		if (!subscription) {
+		if (!subscription || subscription.jiraHost !== jiraHost) {
 			req.log.error("Missing Subscription");
-			res.status(401).send("Missing Subscription");
+			res.status(400).send("Missing Subscription");
 			return;
 		}
 
-		let syncStatusCondition = {};
-		if (syncStatusFilter && syncStatusFilter !== "all") {
-			syncStatusCondition = {
-				[Op.or]: [
-					{ branchStatus: `${syncStatusFilter}` },
-					{ commitStatus: `${syncStatusFilter}` },
-					{ pullStatus: `${syncStatusFilter}` },
-					{ buildStatus: `${syncStatusFilter}` },
-					{ deploymentStatus: `${syncStatusFilter}` }
-				]
-			};
+		const syncStatusCondition = mapFilterSyncStatusToQueryCondition(filterSyncStatus);
+		if (syncStatusCondition === undefined) {
+			req.log.error({ filterStatusField: filterSyncStatus }, "invalid status field");
+			res.status(400).send("invalid status field");
+			return;
 		}
 
-		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.iLike]: `%${repoName}%`
-						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
+		const repoFilterCondition = {
+			repoFullName: {
+				[Op.like]: sequelize.literal(sequelize.escape(`%${filterRepoName}%`))
 			}
+		};
+
+		const filterCondition = {
+			[Op.and]: [
+				repoFilterCondition,
+				syncStatusCondition
+			]
+		};
+
+		const reposCount = await RepoSyncState.countSubscriptionRepos(subscription, {
+			where: filterCondition
 		});
 
-		const offset = page == 1 ? 0 : (page - 1) * pageSize;
+		const offset = pageNumber == 1 ? 0 : (pageNumber - 1) * pageSize;
 
 		const repoSyncStates = await RepoSyncState.findAllFromSubscription(subscription, {
-			where: {
-				[Op.and]: [
-					{
-						repoName: {
-							[Op.iLike]: `%${repoName}%`
-						}
-					},
-					{
-						...syncStatusCondition
-					}
-				]
-
-			},
+			where: filterCondition,
 			limit: pageSize,
+			order: [["repoFullName", "ASC"]],
 			offset
 		});
 		const repos = repoSyncStates.map((repoSyncState) => {
@@ -103,11 +127,12 @@ export const JiraGetConnectedRepos = async (
 			subscriptionId,
 			csrfToken: req.csrfToken(),
 			nonce,
-			...getPaginationState(page, pageSize, reposCount)
+			...getPaginationState(pageNumber, pageSize, reposCount)
 		});
 
-	} catch (error) {
-		return next(new Error(`Failed to render connected repos: ${error}`));
+	} catch (err) {
+		req.log.warn({ err }, "Failed to render connected repos");
+		return next(new Error(`Failed to render connected repos: ${err}`));
 	}
 };
 
@@ -182,6 +207,6 @@ const mapTaskStatus = (syncStatus: TaskStatus): string => {
 		case "failed":
 			return "FAILED";
 		default:
-			return syncStatus;
+			return "IN PROGRESS";
 	}
 };
