@@ -17,11 +17,13 @@ const Connections = () => {
 	const [subscriptions, setSubscriptions] = useState([]);
 	const [selectedOption, setSelectedOption] = useState<number>(1);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
+
 	const fetchSubscriptions = async () => {
 		try {
-			setIsLoading(true);
-			const subs = await ApiRequest.subscriptions.getSubscriptions();
-			setSubscriptions(subs.data);
+				setIsLoading(true);
+				const subs = await ApiRequest.subscriptions.getSubscriptions();
+				setSubscriptions(subs.data);
+				setIsLoading(false);
 		} catch (e) {
 			console.log("Error -----> ", e);
 			console.log("Error -----> ", subscriptions);
@@ -47,7 +49,7 @@ const Connections = () => {
 				selectedOption={selectedOption}
 				setSelectedOption={setSelectedOption}
 			/>
-
+			{isLoading && <h1>i loading.....</h1>}
 			{selectedOption <= 2 && (
 				<>
 					<h3>GitHub Cloud</h3>

@@ -22,8 +22,10 @@
     ]
   },
   "dependencies": {
+    "@atlaskit/avatar": "^21.3.9",
     "@atlaskit/button": "^16.8.0",
     "@atlaskit/css-reset": "^6.5.2",
+    "@atlaskit/dynamic-table": "^14.11.5",
     "@atlaskit/form": "^8.11.8",
     "@atlaskit/heading": "^1.3.7",
     "@atlaskit/icon": "^21.12.4",
