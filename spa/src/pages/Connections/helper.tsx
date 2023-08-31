@@ -29,13 +29,108 @@ export const presidents = [
 	},
 ];
 
+export type Account = {
+	login: string;
+	id: number;
+	avatar_url: string;
+	type?: string;
+	site_admin?: boolean;
+};
+
+export type SuccessfulCloudConnection = {
+	id: number;
+	account: Account;
+	repository_selection: string;
+	app_id: number;
+	app_slug: string;
+	target_id: number;
+	target_type: string;
+	created_at: string;
+	updated_at: string;
+	syncStatus: string;
+	totalNumberOfRepos: number;
+	numberOfSyncedRepos: number;
+	jiraHost: string;
+	isGlobalInstall: boolean;
+};
+
+export type FailedCloudConnection = {};
+
+export type GhCloudSubscriptions = {
+	successfulCloudConnections: SuccessfulCloudConnection[];
+	failedCloudConnections: FailedCloudConnection[];
+};
+
+export type SuccessfulConnection = {
+	id: number;
+	account: Account;
+	repository_selection: string;
+	app_id: number;
+	target_id: number;
+	target_type: string;
+	created_at: string;
+	updated_at: string;
+	syncStatus: string;
+	totalNumberOfRepos: number;
+	numberOfSyncedRepos: number;
+	jiraHost: string;
+	isGlobalInstall: boolean;
+};
+
+export type FailedConnection = {
+	id: number;
+	deleted: boolean;
+	orgName?: string;
+};
+
+export type Installation = {
+	id: number;
+	account: Account;
+	target_type: string;
+	created_at: string;
+	updated_at: string;
+	syncStatus: string;
+	totalNumberOfRepos: number;
+	numberOfSyncedRepos: number;
+	backfillSince: null | string;
+	jiraHost: string;
+};
+
+export type GitHubApplication = {
+	id: number;
+	uuid: string;
+	appId: number;
+	gitHubBaseUrl: string;
+	gitHubClientId: string;
+	gitHubAppName: string;
+	installationId: number;
+	createdAt: string;
+	updatedAt: string;
+	successfulConnections: SuccessfulConnection[];
+	failedConnections: FailedConnection[];
+	installations: {
+		fulfilled: Installation[];
+		rejected: any[];
+		total: number;
+	};
+};
+
+export type GhEnterpriseServer = {
+	gitHubBaseUrl: string;
+	applications: GitHubApplication[];
+};
+
+export type GHSUbscriptions = {
+	ghCloudSubscriptions: GhCloudSubscriptions;
+	ghEnterpriseServers: GhEnterpriseServer[];
+};
+
 interface President {
 	id: number;
 	name: string;
 	party: string;
 	term: string;
 }
-
 
 const NameWrapper = styled.span`
 	display: flex;
@@ -70,7 +165,7 @@ export const createHead = (withWidth: boolean) => {
 				key: "content",
 				content: "Comment",
 				width: withWidth ? 25 : undefined,
-			}
+			},
 		],
 	};
 };
@@ -103,6 +198,6 @@ export const rows = presidents.map((president: President, index: number) => ({
 		{
 			key: "Lorem",
 			content: president.term,
-		}
+		},
 	],
 }));
