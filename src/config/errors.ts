@@ -1,4 +1,4 @@
-import { ApiError, ErrorCode } from "rest-interfaces";
+import { ApiError, ApiErrorCode } from "rest-interfaces";
 
 export enum Errors {
 	MISSING_JIRA_HOST = "Jira Host url is missing",
@@ -27,8 +27,8 @@ export class UIDisplayableError extends Error {
 
 export class RestApiError extends Error implements ApiError {
 	httpStatus: number;
-	errorCode: ErrorCode;
-	constructor(httpStatus: number, errorCode: ErrorCode, msg: string) {
+	errorCode: ApiErrorCode;
+	constructor(httpStatus: number, errorCode: ApiErrorCode, msg: string) {
 		super(msg);
 		this.httpStatus = httpStatus;
 		this.errorCode = errorCode;

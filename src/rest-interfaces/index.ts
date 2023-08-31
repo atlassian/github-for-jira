@@ -48,12 +48,12 @@ export type ErrorType = "warning" | "error";
 
 export type ApiError = {
 	message: string;
-	errorCode: ErrorCode;
+	errorCode: ApiErrorCode;
 }
 
 //DO NOT USE ENUM as webpack can't handler anything none "type"
 //ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
-export type ErrorCode =
+export type ApiErrorCode =
 	| "INVALID_OR_MISSING_ARG"
 	| "INVALID_TOKEN"
 	| "INSUFFICIENT_PERMISSION"

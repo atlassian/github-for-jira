@@ -20,7 +20,8 @@
 		"allowSyntheticDefaultImports": true,
 		"paths": {
 			"~/*": ["./*"],
-			"rest-interfaces": ["./src/rest-interfaces"]
+			"rest-interfaces": ["./src/rest-interfaces"],
+			"types": ["./src/types"]
 		}
 	},
   "include": ["src"]
