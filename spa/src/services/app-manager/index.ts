@@ -1,6 +1,5 @@
 import Api from "../../api";
 import { OrganizationsResponse } from "rest-interfaces";
-import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
 import { Result } from "../index";
 import { toErrorCode } from "../index";
@@ -27,11 +26,14 @@ async function fetchOrgs(): Promise<Result<OrganizationsResponse>> {
 	}
 }
 
-async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
+async function connectOrg(orgId: number): Promise<Result<void>> {
 
 	if (!Api.token.hasGitHubToken()) {
 		reportError({ message: "Api github token is empty" });
-		return false;
+		return {
+			success: false,
+			errCode: "ERR_GITHUB_TOKEN_EMPTY"
+		}
 	}
 
 	try {
@@ -39,13 +41,25 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 		const response = await Api.orgs.connectOrganization(orgId);
 		const ret = response.status === 200;
 
-		if(!ret) reportError({ message: "Response status for connecting org is not 200", status: response.status });
-
-		return ret;
+		if(ret) {
+			return {
+				success: true,
+				data: undefined
+			}
+		} else {
+			reportError({ message: "Response status for connecting org is not 200", status: response.status });
+			return {
+				success: false,
+				errCode: "ERR_RESP_STATUS_NOT_200"
+			}
+		}
 
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		return {
+			success: false,
+			errCode: toErrorCode(e)
+		}
 	}
 }
 

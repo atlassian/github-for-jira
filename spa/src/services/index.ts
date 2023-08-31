@@ -24,7 +24,7 @@ type ErrorWithErrorCode = {
 export function toErrorCode(error: unknown): ErrorCode {
 	if (error instanceof AxiosError) {
 		return error?.response?.data?.errorCode || "UNKNOWN";
-	} else if ((error as ErrorWithErrorCode).errorCode) {
+	} else if ((error as ErrorWithErrorCode)?.errorCode) {
 		return (error as ErrorWithErrorCode).errorCode;
 	} else {
 		return "UNKNOWN";

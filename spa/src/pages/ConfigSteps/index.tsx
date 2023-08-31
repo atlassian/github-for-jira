@@ -218,20 +218,14 @@ const ConfigSteps = () => {
 	};
 
 	const doCreateConnection = async (gitHubInstallationId: number, mode: "auto" | "manual", orgLogin?: string) => {
-		try {
-			analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
-			const connected: boolean | AxiosError = await AppManager.connectOrg(gitHubInstallationId);
-			if (connected instanceof AxiosError) {
-				const errorObj = modifyError(connected, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
-				showError(errorObj);
-				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: errorObj.errorCode });
-			} else {
-				analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: (connected === true ? "success" : "fail") }, { mode });
-				navigate("/spa/connected");
-			}
-		} catch (e) {
-			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
-			reportError(e);
+		analyticsClient.sendUIEvent({ actionSubject: "connectOrganisation", action: "clicked" }, { mode });
+		const connected = await AppManager.connectOrg(gitHubInstallationId);
+		if (!connected.success) {
+			showError(getErrorUI(connected.errCode, { orgLogin }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail" }, { mode, errorCode: connected.errCode });
+		} else {
+			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "success" }, { mode });
+			navigate("/spa/connected");
 		}
 	};
 
