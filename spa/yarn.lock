@@ -64,6 +64,16 @@
     "@emotion/react" "^11.7.1"
     "@emotion/serialize" "^1.1.0"
 
+"@atlaskit/badge@^15.1.14":
+  version "15.1.14"
+  resolved "https://registry.yarnpkg.com/@atlaskit/badge/-/badge-15.1.14.tgz#29db13083a4a888c2ee5a2df9b9c33670993d8fb"
+  integrity sha512-vFsqSszCghWiBsnZ7K36wdabxDKQ2UmVu7v+dMzGEIghBgGVFb8MPo/zQ2Ig6Cyj1r3/TJJk/kVkN6RNYNzq9g==
+  dependencies:
+    "@atlaskit/codemod-utils" "^4.2.0"
+    "@atlaskit/ds-explorations" "^2.2.0"
+    "@atlaskit/primitives" "^1.0.6"
+    "@babel/runtime" "^7.0.0"
+
 "@atlaskit/button@^16.8.0":
   version "16.8.0"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/button/-/button-16.8.0.tgz#85afd61b219f4a6b25524e61f9ca3da769a438b7"
@@ -215,6 +225,17 @@
   dependencies:
     "@babel/runtime" "^7.0.0"
 
+"@atlaskit/lozenge@^11.4.3":
+  version "11.4.3"
+  resolved "https://registry.yarnpkg.com/@atlaskit/lozenge/-/lozenge-11.4.3.tgz#bf9ea032bbdc94bd9b24167fa88e150b86426f6a"
+  integrity sha512-BEqQAOOyL523Xqr9otMcGjvqGhGF2W6lXyDCQqTsen3D5EeCg5VZK7/ssZLt7LTz3oA32Fa2J/aLIoa3yI6L1Q==
+  dependencies:
+    "@atlaskit/codemod-utils" "^4.2.0"
+    "@atlaskit/ds-explorations" "^2.2.0"
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.13.0"
+    "@babel/runtime" "^7.0.0"
+
 "@atlaskit/motion@^1.4.0":
   version "1.4.3"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@atlaskit/motion/-/motion-1.4.3.tgz#4a48f3b3a130fdcfaf5764215b98a1766d0315e7"
@@ -265,7 +286,7 @@
     "@atlaskit/theme" "^12.5.0"
     "@babel/runtime" "^7.0.0"
 
-"@atlaskit/primitives@^1.2.0":
+"@atlaskit/primitives@^1.0.6", "@atlaskit/primitives@^1.2.0":
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/@atlaskit/primitives/-/primitives-1.2.3.tgz#b3434d82092bc8ca88a97f952772403c92d159a3"
   integrity sha512-RJ5dAyJ0N7kVZ4MjgM4po2/O+vrppXEG3lpOFltk2Iey1ll4LME27OEMVz34UoCOw1Spx3Z5OwlJ48FkfPGqDA==
@@ -343,7 +364,7 @@
     "@babel/types" "^7.20.0"
     bind-event-listener "^2.1.1"
 
-"@atlaskit/tokens@^1.14.0", "@atlaskit/tokens@^1.15.0", "@atlaskit/tokens@^1.18.0":
+"@atlaskit/tokens@^1.13.0", "@atlaskit/tokens@^1.14.0", "@atlaskit/tokens@^1.15.0", "@atlaskit/tokens@^1.18.0":
   version "1.18.0"
   resolved "https://registry.yarnpkg.com/@atlaskit/tokens/-/tokens-1.18.0.tgz#b79a75ad0dac50668433637e10851b071f171ba6"
   integrity sha512-0tjcsQ5Jc9KoohKKKTeh7c3aP2RHdUIaVzjUshj7piczl48D2J0+ARzRSRj1fiCTPsCLy6VcdgWAaFYP1zRj3Q==

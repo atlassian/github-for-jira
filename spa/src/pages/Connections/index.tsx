@@ -7,6 +7,7 @@ import { Wrapper } from "../../common/Wrapper";
 import GitHubConnectionOptions from "./GitHubConnectionOptions";
 import GitHubCloudConnections from "./GitHubCloudConnections";
 import GitHubEnterpriseConnections from "./GitHubEnterpriseConnections";
+import { GHSUbscriptions } from "./helper";
 
 const Paragraph = styled.p`
 	color: ${token("color.text.subtle")};
@@ -14,7 +15,9 @@ const Paragraph = styled.p`
 `;
 
 const Connections = () => {
-	const [ghSubscriptions, setSubscriptions] = useState(null);
+	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(
+		null
+	);
 	const [selectedOption, setSelectedOption] = useState<number>(1);
 	const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -38,8 +41,15 @@ const Connections = () => {
 	// GET cloud subs .. err n success
 	// GET server subs .. err n success
 
+	let ghCloudSubscriptions = null;
 	if (ghSubscriptions) {
-		console.log("ghSubscriptions >>>>", JSON.stringify(ghSubscriptions));
+		ghCloudSubscriptions = ghSubscriptions.ghCloudSubscriptions;
+		console.log(
+			"ghCloudSubscriptions >>>>",
+			JSON.stringify(ghCloudSubscriptions)
+		);
+		// const ghEnterpriseServers: GhEnterpriseServer = ghSubscriptions.ghEnterpriseServers;
+		// console.log("ghCloudSubscriptions >>>>", JSON.stringify(ghEnterpriseServers));
 	}
 
 	return (
@@ -57,11 +67,13 @@ const Connections = () => {
 				selectedOption={selectedOption}
 				setSelectedOption={setSelectedOption}
 			/>
-			{isLoading && <h1>i loading.....</h1>}
 			{selectedOption <= 2 && (
 				<>
 					<h3>GitHub Cloud</h3>
-					<GitHubCloudConnections isLoading={isLoading} />
+					<GitHubCloudConnections
+						isLoading={isLoading}
+						ghCloudSubscriptions={ghCloudSubscriptions}
+					/>
 				</>
 			)}
 			{(selectedOption === 1 || selectedOption === 3) && (

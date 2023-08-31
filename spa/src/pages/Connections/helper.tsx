@@ -1,6 +1,9 @@
 import Avatar from "@atlaskit/avatar";
 import styled from "@emotion/styled";
+import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
+import Lozenge from "@atlaskit/lozenge";
+import EditIcon from "@atlaskit/icon/glyph/edit";
 
 export const presidents = [
 	{
@@ -29,6 +32,12 @@ export const presidents = [
 	},
 ];
 
+export type Row = {
+	key: string;
+	isHighlighted: boolean;
+	cells: { key: string | number; content: JSX.Element | string | number }[];
+};
+
 export type Account = {
 	login: string;
 	id: number;
@@ -48,13 +57,19 @@ export type SuccessfulCloudConnection = {
 	created_at: string;
 	updated_at: string;
 	syncStatus: string;
+	syncWarning: string;
+	backfillSince: string | null;
 	totalNumberOfRepos: number;
 	numberOfSyncedRepos: number;
 	jiraHost: string;
 	isGlobalInstall: boolean;
 };
 
-export type FailedCloudConnection = {};
+export type FailedCloudConnection = {
+	id: number;
+	deleted: boolean;
+	orgName?: string;
+};
 
 export type GhCloudSubscriptions = {
 	successfulCloudConnections: SuccessfulCloudConnection[];
@@ -75,6 +90,7 @@ export type SuccessfulConnection = {
 	numberOfSyncedRepos: number;
 	jiraHost: string;
 	isGlobalInstall: boolean;
+	backfillSince: string | null;
 };
 
 export type FailedConnection = {
@@ -132,7 +148,7 @@ interface President {
 	term: string;
 }
 
-const NameWrapper = styled.span`
+const RowWrapper = styled.div`
 	display: flex;
 	align-items: center;
 `;
@@ -140,6 +156,22 @@ const NameWrapper = styled.span`
 const AvatarWrapper = styled.span`
 	marginright: ${token("space.200")};
 `;
+
+const ifAllReposSynced = (
+	numberOfSyncedRepos: number,
+	totalNumberOfRepos: number
+) =>
+	numberOfSyncedRepos === totalNumberOfRepos
+		? totalNumberOfRepos
+		: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
+
+export const isAllSyncSuccess = (connection?: SuccessfulCloudConnection) => {
+	return connection &&
+		connection.syncStatus === "FINISHED" &&
+		!connection.syncWarning
+		? true
+		: false;
+};
 
 export const caption = "List of US Presidents";
 
@@ -172,6 +204,90 @@ export const createHead = (withWidth: boolean) => {
 
 export const head = createHead(true);
 
+export const getGHCloudSubscriptionsRows = (
+	ghCloudSubscriptions: GhCloudSubscriptions | null
+): Row[] => {
+	if (!ghCloudSubscriptions) {
+		return [];
+	}
+	const successfulCloudConnections: SuccessfulCloudConnection[] =
+		ghCloudSubscriptions.successfulCloudConnections;
+	return successfulCloudConnections.map(
+		(cloudConnection: SuccessfulCloudConnection, index: number) => ({
+			key: `row-${index}-${cloudConnection.id}`,
+			isHighlighted: false,
+			cells: [
+				{
+					key: cloudConnection.account.login,
+					content: (
+						<RowWrapper>
+							<AvatarWrapper>
+								<Avatar
+									name={cloudConnection.account.login}
+									src={cloudConnection.account.avatar_url}
+									size="medium"
+								/>
+							</AvatarWrapper>
+							<a href="https://atlassian.design">
+								{cloudConnection.account.login}
+							</a>
+						</RowWrapper>
+					),
+				},
+				{
+					key: cloudConnection.account.login,
+					content: (
+						<RowWrapper>
+							<span>
+								{cloudConnection.isGlobalInstall
+									? `All repos`
+									: `Only select repos`}
+							</span>
+							<Badge>
+								{ifAllReposSynced(
+									cloudConnection.numberOfSyncedRepos,
+									cloudConnection.totalNumberOfRepos
+								)}
+							</Badge>
+							<EditIcon label="" />
+						</RowWrapper>
+					),
+				},
+				{
+					key: cloudConnection.id,
+					content: (
+						<RowWrapper>
+							<Lozenge appearance="success">
+								{cloudConnection.syncStatus}
+							</Lozenge>
+							{isAllSyncSuccess() && (
+								<>
+									{cloudConnection.backfillSince ? (
+										<>
+											{" "}
+											<span>Backfilled from:</span>
+											<span data-backfill-since="{{ toISOString connection.backfillSince }}"></span>
+											<span title='If you want to backfill more data, choose "Continue backfill" in the settings menu on the right'>
+												Information
+											</span>
+										</>
+									) : (
+										`All commits backfilled`
+									)}
+								</>
+							)}
+						</RowWrapper>
+					),
+				},
+				{
+					key: "Lorem",
+					content: cloudConnection.id,
+				},
+			],
+		})
+	);
+};
+
 export const rows = presidents.map((president: President, index: number) => ({
 	key: `row-${index}-${president.name}`,
 	isHighlighted: false,
@@ -179,12 +295,12 @@ export const rows = presidents.map((president: President, index: number) => ({
 		{
 			key: president.name,
 			content: (
-				<NameWrapper>
+				<RowWrapper>
 					<AvatarWrapper>
 						<Avatar name={president.name} size="medium" />
 					</AvatarWrapper>
 					<a href="https://atlassian.design">{president.name}</a>
-				</NameWrapper>
+				</RowWrapper>
 			),
 		},
 		{
