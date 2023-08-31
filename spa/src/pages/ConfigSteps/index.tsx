@@ -161,12 +161,12 @@ const ConfigSteps = () => {
 		setLoaderForOrgFetching(true);
 		const response = await AppManager.fetchOrgs();
 		setLoaderForOrgFetching(false);
-		if (response instanceof AxiosError) {
+		if (!response.success) {
 			showError(modifyError(response, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
 			return { success: false, orgs: [] };
 		} else {
-			setOrganizations(response.orgs);
-			return { success: true, orgs: response.orgs };
+			setOrganizations(response.data.orgs);
+			return { success: true, orgs: response.data.orgs };
 		}
 	};
 

@@ -2,17 +2,28 @@ import Api from "../../api";
 import { OrganizationsResponse } from "rest-interfaces";
 import { AxiosError } from "axios";
 import { popup, reportError } from "../../utils";
+import { Result } from "../index";
+import { toErrorCode } from "../index";
 
-async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
+async function fetchOrgs(): Promise<Result<OrganizationsResponse>> {
 
-	if (!Api.token.hasGitHubToken()) return { orgs: [] };
+	if (!Api.token.hasGitHubToken()) return {
+		success: true,
+		data: { orgs: [] }
+	}
 
 	try {
 		const response = await Api.orgs.getOrganizations();
-		return response.data;
+		return {
+			success: true,
+			data: response.data
+		}
 	} catch (e) {
 		reportError(e);
-		return e as AxiosError;
+		return {
+			success: false,
+			errCode: toErrorCode(e)
+		}
 	}
 }
 
