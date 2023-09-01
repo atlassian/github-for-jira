@@ -8,6 +8,7 @@ import { JiraBranchBulkSubmitData, JiraCommit } from "src/interfaces/jira";
 import { getLogger } from "config/logger";
 import Logger from "bunyan";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: CreateEvent, issueKeys: string[]): Promise<JiraCommit> => {
 	const { data: { object: { sha } } } = await github.getRef(webhookPayload.repository.owner.login, webhookPayload.repository.name, `heads/${webhookPayload.ref}`);
@@ -34,8 +35,8 @@ export const transformBranch = async (gitHubInstallationClient: GitHubInstallati
 
 	const { ref, repository } = webhookPayload;
 	const issueKeys = jiraIssueKeyParser(ref);
-
-	if (isEmpty(issueKeys)) {
+	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_BRANCHES, jiraHost);
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		return;
 	}
 

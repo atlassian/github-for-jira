@@ -29,7 +29,17 @@ export enum BooleanFlags {
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
-	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle"
+	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
+	SEND_ALL_BRANCHES_BACKFILL = "send-all-branches-backfill",
+	SEND_ALL_BUILDS_BACKFILL = "send-all-builds-backfill",
+	SEND_ALL_COMMITS_BACKFILL = "send-all-commits-backfill",
+	SEND_ALL_DEPLOYMENTS_BACKFILL = "send-all-deployments-backfill",
+	SEND_ALL_PRS_BACKFILL = "send-all-prs-backfill",
+	SEND_ALL_BRANCHES = "send-all-branches",
+	SEND_ALL_BUILDS = "send-all-builds",
+	SEND_ALL_COMMITS = "send-all-commits",
+	SEND_ALL_DEPLOYMENTS = "send-all-deployments",
+	SEND_ALL_PRS = "send-all-prs"
 }
 
 export enum StringFlags {

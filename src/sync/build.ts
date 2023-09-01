@@ -17,7 +17,7 @@ const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logge
 
 	const transformTasks = workflowRun.map(workflow => {
 		const workflowItem = { workflow_run: workflow, workflow: { id: workflow.id } } as GitHubWorkflowPayload;
-		return transformWorkflow(gitHubInstallationClient, workflowItem, logger);
+		return transformWorkflow(gitHubInstallationClient, workflowItem, "backfill", logger);
 	});
 
 	const transformedBuilds = await Promise.all(transformTasks);

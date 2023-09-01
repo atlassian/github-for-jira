@@ -374,7 +374,10 @@ export const transformDeployment = async (
 		config
 	);
 
-	if (!associations?.length) {
+	const alwaysSend = type === "webhook" ?
+		await booleanFlag(BooleanFlags.SEND_ALL_DEPLOYMENTS, jiraHost) :
+		await booleanFlag(BooleanFlags.SEND_ALL_DEPLOYMENTS_BACKFILL, jiraHost);
+	if (!associations?.length && !alwaysSend) {
 		return undefined;
 	}
 

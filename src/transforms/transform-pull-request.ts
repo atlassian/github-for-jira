@@ -112,7 +112,8 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	if (isEmpty(issueKeys) || !head?.repo) {
+	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_PRS, jiraHost);
+	if ((isEmpty(issueKeys) || !head?.repo) && !alwaysSend) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
@@ -184,10 +185,10 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id

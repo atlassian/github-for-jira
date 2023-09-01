@@ -41,7 +41,7 @@ export const getCommitTask = async (
 		(logger.fields || {}).commitShaArray = commits.map(c => createHashWithSharedSecret(String(c.oid)));
 	}
 
-	const jiraPayload = transformCommit(
+	const jiraPayload = await transformCommit(
 		{ commits, repository },
 		messagePayload.gitHubAppConfig?.gitHubBaseUrl
 	);

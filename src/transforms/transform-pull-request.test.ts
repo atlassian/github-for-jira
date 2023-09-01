@@ -412,6 +412,69 @@ describe("pull_request transform REST", () => {
 		});
 	});
 
+	it("should map pullrequest without associations", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const fixture = pullRequestList[0];
+		fixture.title = "PR without an issue key";
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		fixture.user = null;
+
+		githubUserTokenNock(gitHubInstallationId);
+		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
+			.reply(200, {
+				...reviewersListHasUser[0].user,
+				email: "octocat-mapped@github.com"
+			});
+
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+
+		const { updated_at, title } = fixture;
+
+		expect(data).toMatchObject({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: [],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							email: "octocat-mapped@github.com",
+							name: "octocat",
+							url: "https://github.com/octocat",
+							approvalStatus: "APPROVED"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should send the correct review state for multiple reviewers", async () => {
 		const pullRequestList = Object.assign({},
 			transformPullRequestList

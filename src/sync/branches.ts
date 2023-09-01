@@ -27,7 +27,7 @@ export const getBranchTask = async (
 	(logger.fields || {}).branchNameArray = (branches || []).map(b => createHashWithSharedSecret(String(b.name)));
 	(logger.fields || {}).branchShaArray = (branches || []).map(b => createHashWithSharedSecret(String(b.target?.oid)));
 
-	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
+	const jiraPayload = await transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
 
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.branches?.length }, "Backfill task complete");
 
