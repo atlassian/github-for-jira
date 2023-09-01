@@ -9,8 +9,16 @@ import GitHubCloudConnections from "./GitHubCloudConnections";
 import GitHubEnterpriseConnections from "./GitHubEnterpriseConnections";
 import { GHSUbscriptions } from "./helper";
 
+const BackfillWrapper = styled(Wrapper)`
+	background: red;
+`;
+
 const Paragraph = styled.p`
 	color: ${token("color.text.subtle")};
+	margin-bottom: ${token("space.200")};
+`;
+
+const Header = styled.h3`
 	margin-bottom: ${token("space.200")};
 `;
 
@@ -38,22 +46,15 @@ const Connections = () => {
 		fetchGHSubscriptions();
 	}, []);
 
-	// GET cloud subs .. err n success
-	// GET server subs .. err n success
-
 	let ghCloudSubscriptions = null;
+	let ghEnterpriseServers = null;
 	if (ghSubscriptions) {
 		ghCloudSubscriptions = ghSubscriptions.ghCloudSubscriptions;
-		console.log(
-			"ghCloudSubscriptions >>>>",
-			JSON.stringify(ghCloudSubscriptions)
-		);
-		// const ghEnterpriseServers: GhEnterpriseServer = ghSubscriptions.ghEnterpriseServers;
-		// console.log("ghCloudSubscriptions >>>>", JSON.stringify(ghEnterpriseServers));
+		ghEnterpriseServers = ghSubscriptions.ghEnterpriseServers;
 	}
 
 	return (
-		<Wrapper>
+		<BackfillWrapper>
 			<SyncHeader />
 			<Paragraph>
 				Connecting GitHub to Jira allows you to view development activity in the
@@ -67,22 +68,28 @@ const Connections = () => {
 				selectedOption={selectedOption}
 				setSelectedOption={setSelectedOption}
 			/>
-			{selectedOption <= 2 && (
+			{selectedOption <= 2 && ghCloudSubscriptions && (
 				<>
-					<h3>GitHub Cloud</h3>
+					<Header>GitHub Cloud</Header>
+
 					<GitHubCloudConnections
 						isLoading={isLoading}
 						ghCloudSubscriptions={ghCloudSubscriptions}
 					/>
 				</>
 			)}
-			{(selectedOption === 1 || selectedOption === 3) && (
+			{(selectedOption === 1 || selectedOption === 3) && ghEnterpriseServers && (
 				<>
-					<h3>GitHub Enterprise Server</h3>
-					<GitHubEnterpriseConnections isLoading={isLoading} />
+					<Header>GitHub Enterprise Server</Header>
+					{/* <Box xcss={containerStyles}> */}
+					<GitHubEnterpriseConnections
+						isLoading={isLoading}
+						ghEnterpriseServers={ghEnterpriseServers}
+					/>
+					{/* </Box> */}
 				</>
 			)}
-		</Wrapper>
+		</BackfillWrapper>
 	);
 };
 

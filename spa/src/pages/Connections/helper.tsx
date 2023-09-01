@@ -4,33 +4,8 @@ import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
 import EditIcon from "@atlaskit/icon/glyph/edit";
+import MoreIcon from "@atlaskit/icon/glyph/more";
 
-export const presidents = [
-	{
-		id: 1,
-		name: "George Washington",
-		party: "None, Federalist",
-		term: "1789-1797",
-	},
-	{
-		id: 2,
-		name: "John Adams",
-		party: "Federalist",
-		term: "1797-1801",
-	},
-	{
-		id: 3,
-		name: "Thomas Jefferson",
-		party: "Democratic-Republican",
-		term: "1801-1809",
-	},
-	{
-		id: 4,
-		name: "James Madison",
-		party: "Democratic-Republican",
-		term: "1809-1817",
-	},
-];
 
 export type Row = {
 	key: string;
@@ -112,7 +87,7 @@ export type Installation = {
 	jiraHost: string;
 };
 
-export type GitHubApplication = {
+export type GitHubEnterpriseApplication = {
 	id: number;
 	uuid: string;
 	appId: number;
@@ -133,20 +108,13 @@ export type GitHubApplication = {
 
 export type GhEnterpriseServer = {
 	gitHubBaseUrl: string;
-	applications: GitHubApplication[];
+	applications: GitHubEnterpriseApplication[];
 };
 
 export type GHSUbscriptions = {
 	ghCloudSubscriptions: GhCloudSubscriptions;
 	ghEnterpriseServers: GhEnterpriseServer[];
 };
-
-interface President {
-	id: number;
-	name: string;
-	party: string;
-	term: string;
-}
 
 const RowWrapper = styled.div`
 	display: flex;
@@ -173,7 +141,6 @@ export const isAllSyncSuccess = (connection?: SuccessfulCloudConnection) => {
 		: false;
 };
 
-export const caption = "List of US Presidents";
 
 export const createHead = (withWidth: boolean) => {
 	return {
@@ -181,22 +148,22 @@ export const createHead = (withWidth: boolean) => {
 			{
 				key: "name",
 				content: "Name",
-				width: withWidth ? 25 : undefined,
+				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "party",
 				content: "Party",
-				width: withWidth ? 25 : undefined,
+				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "term",
 				content: "Term",
-				width: withWidth ? 25 : undefined,
+				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "content",
 				content: "Comment",
-				width: withWidth ? 25 : undefined,
+				width: withWidth ? 10 : undefined,
 			},
 		],
 	};
@@ -257,18 +224,18 @@ export const getGHCloudSubscriptionsRows = (
 					key: cloudConnection.id,
 					content: (
 						<RowWrapper>
-							<Lozenge appearance="success">
+							<Lozenge appearance="success" maxWidth="500">
 								{cloudConnection.syncStatus}
 							</Lozenge>
-							{isAllSyncSuccess() && (
+							{isAllSyncSuccess(cloudConnection) && (
 								<>
 									{cloudConnection.backfillSince ? (
 										<>
-											{" "}
-											<span>Backfilled from:</span>
-											<span data-backfill-since="{{ toISOString connection.backfillSince }}"></span>
-											<span title='If you want to backfill more data, choose "Continue backfill" in the settings menu on the right'>
-												Information
+											<span>
+												Backfilled from:
+												{new Date(
+													cloudConnection.backfillSince
+												).toLocaleDateString("en-GB")}
 											</span>
 										</>
 									) : (
@@ -281,39 +248,14 @@ export const getGHCloudSubscriptionsRows = (
 				},
 				{
 					key: "Lorem",
-					content: cloudConnection.id,
+					content: (
+						<RowWrapper>
+							<MoreIcon label="" />
+						</RowWrapper>
+					),
 				},
 			],
 		})
 	);
 };
 
-export const rows = presidents.map((president: President, index: number) => ({
-	key: `row-${index}-${president.name}`,
-	isHighlighted: false,
-	cells: [
-		{
-			key: president.name,
-			content: (
-				<RowWrapper>
-					<AvatarWrapper>
-						<Avatar name={president.name} size="medium" />
-					</AvatarWrapper>
-					<a href="https://atlassian.design">{president.name}</a>
-				</RowWrapper>
-			),
-		},
-		{
-			key: president.party,
-			content: president.party,
-		},
-		{
-			key: president.id,
-			content: president.term,
-		},
-		{
-			key: "Lorem",
-			content: president.term,
-		},
-	],
-}));
