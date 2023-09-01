@@ -182,7 +182,10 @@ const ConfigSteps = () => {
 				} catch (e) {
 					setLoaderForLogin(false);
 					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-					reportError(e);
+					reportError(e, {
+						path: "authorize",
+						selectedOption
+					});
 				}
 				break;
 			}
@@ -203,7 +206,7 @@ const ConfigSteps = () => {
 	const reLogin = async () => {
 		// Clearing the errors
 		showError(undefined);
-		await OauthManager.clear();
+		OauthManager.clear();
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
 		// Restart the whole auth flow
@@ -231,7 +234,11 @@ const ConfigSteps = () => {
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
-			reportError(e);
+			reportError(e, {
+				path: "doCreateConnection",
+				isGitHubInstallationIdEmpty: !gitHubInstallationId,
+				mode
+			});
 		}
 	};
 
@@ -255,7 +262,10 @@ const ConfigSteps = () => {
 			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
-			reportError(e);
+			reportError(e, {
+				path: "installNewOrg",
+				mode
+			});
 		}
 	};
 
@@ -414,7 +424,9 @@ const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) 
 			isIPBlockedCount,
 		});
 	} catch (e) {
-		reportError(e);
+		reportError(e, {
+			path: "setAnalyticsEventsForFetchedOrgs"
+		});
 	}
 };
 

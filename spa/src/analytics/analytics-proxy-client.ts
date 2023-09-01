@@ -7,7 +7,14 @@ const sendAnalytics = (eventType: string, eventProperties: Record<string, unknow
 			eventType,
 			eventProperties,
 			eventAttributes
-		}).catch(reportError);
+		}).catch(e => {
+			reportError(e, {
+				path: "sendAnalytics",
+				eventType,
+				...eventProperties,
+				...eventAttributes
+			});
+		});
 };
 export const analyticsProxyClient: AnalyticClient = {
 	sendScreenEvent: function(eventProps: ScreenEventProps, attributes?: Record<string, unknown>) {
