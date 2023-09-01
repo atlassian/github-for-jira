@@ -81,12 +81,10 @@ const Connections = () => {
 			{(selectedOption === 1 || selectedOption === 3) && ghEnterpriseServers && (
 				<>
 					<Header>GitHub Enterprise Server</Header>
-					{/* <Box xcss={containerStyles}> */}
 					<GitHubEnterpriseConnections
 						isLoading={isLoading}
 						ghEnterpriseServers={ghEnterpriseServers}
 					/>
-					{/* </Box> */}
 				</>
 			)}
 		</BackfillWrapper>

@@ -1,18 +1,25 @@
-// import { DynamicTableStateless } from "@atlaskit/dynamic-table";
+import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import { useState } from "react";
 import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
-import { GitHubEnterpriseApplication } from "./helper";
+import {
+	GitHubEnterpriseApplication,
+	head,
+	getGHSubscriptionsRows,
+} from "./helper";
 
 const Wrapper = styled.div`
 	display: flex;
 	align-items: center;
+    flex-direction: column;
 `;
 
 const ApplicationHeader = styled.div`
 	display: flex;
 	align-items: center;
+    justify-content: flex-start;
+    width: 100%;
 `;
 
 type GitHubEnterpriseApplicationProps = {
@@ -27,13 +34,20 @@ const GitHubEnterpriseApp = ({
 		<Wrapper>
 			<ApplicationHeader
 				onClick={() => {
-					setShowAppContent(prevState => !prevState);
+					setShowAppContent((prevState) => !prevState);
 				}}
 			>
 				<ChevronRightIcon label="" />
 				<Heading level="h400">{application.gitHubAppName}</Heading>
 			</ApplicationHeader>
-			{showAppContent && <h1>HI</h1>}
+			{showAppContent && (
+				<DynamicTableStateless
+					head={head}
+					rows={getGHSubscriptionsRows(application.successfulConnections)}
+					rowsPerPage={5}
+					page={1}
+				/>
+			)}
 		</Wrapper>
 	);
 };

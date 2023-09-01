@@ -2,7 +2,7 @@ import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import {
 	head,
 	GhCloudSubscriptions,
-	getGHCloudSubscriptionsRows,
+	getGHSubscriptionsRows,
 } from "./helper";
 import { Box, xcss } from "@atlaskit/primitives";
 
@@ -24,11 +24,12 @@ const GitHubCloudConnections = ({
 	isLoading,
 	ghCloudSubscriptions,
 }: GitHubCloudConnectionsProps) => {
+	console.log("oooo",ghCloudSubscriptions);
 	return (
 		<Box xcss={containerStyles}>
 			<DynamicTableStateless
 				head={head}
-				rows={getGHCloudSubscriptionsRows(ghCloudSubscriptions)}
+				rows={getGHSubscriptionsRows(ghCloudSubscriptions.successfulCloudConnections)}
 				rowsPerPage={5}
 				page={1}
 				isLoading={isLoading}

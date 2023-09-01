@@ -6,7 +6,6 @@ import Lozenge from "@atlaskit/lozenge";
 import EditIcon from "@atlaskit/icon/glyph/edit";
 import MoreIcon from "@atlaskit/icon/glyph/more";
 
-
 export type Row = {
 	key: string;
 	isHighlighted: boolean;
@@ -21,23 +20,23 @@ export type Account = {
 	site_admin?: boolean;
 };
 
-export type SuccessfulCloudConnection = {
+export type SuccessfulConnection = {
+	app_slug: string;
+	syncWarning: string;
 	id: number;
 	account: Account;
 	repository_selection: string;
 	app_id: number;
-	app_slug: string;
 	target_id: number;
 	target_type: string;
 	created_at: string;
 	updated_at: string;
 	syncStatus: string;
-	syncWarning: string;
-	backfillSince: string | null;
 	totalNumberOfRepos: number;
 	numberOfSyncedRepos: number;
 	jiraHost: string;
 	isGlobalInstall: boolean;
+	backfillSince: string | null;
 };
 
 export type FailedCloudConnection = {
@@ -47,25 +46,8 @@ export type FailedCloudConnection = {
 };
 
 export type GhCloudSubscriptions = {
-	successfulCloudConnections: SuccessfulCloudConnection[];
+	successfulCloudConnections: SuccessfulConnection[];
 	failedCloudConnections: FailedCloudConnection[];
-};
-
-export type SuccessfulConnection = {
-	id: number;
-	account: Account;
-	repository_selection: string;
-	app_id: number;
-	target_id: number;
-	target_type: string;
-	created_at: string;
-	updated_at: string;
-	syncStatus: string;
-	totalNumberOfRepos: number;
-	numberOfSyncedRepos: number;
-	jiraHost: string;
-	isGlobalInstall: boolean;
-	backfillSince: string | null;
 };
 
 export type FailedConnection = {
@@ -133,14 +115,13 @@ const ifAllReposSynced = (
 		? totalNumberOfRepos
 		: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
 
-export const isAllSyncSuccess = (connection?: SuccessfulCloudConnection) => {
+export const isAllSyncSuccess = (connection?: SuccessfulConnection) => {
 	return connection &&
 		connection.syncStatus === "FINISHED" &&
 		!connection.syncWarning
 		? true
 		: false;
 };
-
 
 export const createHead = (withWidth: boolean) => {
 	return {
@@ -171,16 +152,14 @@ export const createHead = (withWidth: boolean) => {
 
 export const head = createHead(true);
 
-export const getGHCloudSubscriptionsRows = (
-	ghCloudSubscriptions: GhCloudSubscriptions | null
+export const getGHSubscriptionsRows = (
+	SuccessfulConnections: SuccessfulConnection[]
 ): Row[] => {
-	if (!ghCloudSubscriptions) {
+	if (!SuccessfulConnections) {
 		return [];
 	}
-	const successfulCloudConnections: SuccessfulCloudConnection[] =
-		ghCloudSubscriptions.successfulCloudConnections;
-	return successfulCloudConnections.map(
-		(cloudConnection: SuccessfulCloudConnection, index: number) => ({
+	return SuccessfulConnections.map(
+		(cloudConnection: SuccessfulConnection, index: number) => ({
 			key: `row-${index}-${cloudConnection.id}`,
 			isHighlighted: false,
 			cells: [
@@ -188,16 +167,17 @@ export const getGHCloudSubscriptionsRows = (
 					key: cloudConnection.account.login,
 					content: (
 						<RowWrapper>
-							<AvatarWrapper>
-								<Avatar
-									name={cloudConnection.account.login}
-									src={cloudConnection.account.avatar_url}
-									size="medium"
-								/>
-							</AvatarWrapper>
-							<a href="https://atlassian.design">
-								{cloudConnection.account.login}
-							</a>
+							{cloudConnection.account.avatar_url && (
+								<AvatarWrapper>
+									<Avatar
+										name={cloudConnection.account.login}
+										src={cloudConnection.account.avatar_url}
+										size="medium"
+									/>
+								</AvatarWrapper>
+							)}
+
+							<span>{cloudConnection.account.login}</span>
 						</RowWrapper>
 					),
 				},
@@ -258,4 +238,3 @@ export const getGHCloudSubscriptionsRows = (
 		})
 	);
 };
-
