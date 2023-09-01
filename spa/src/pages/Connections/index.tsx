@@ -7,10 +7,10 @@ import { Wrapper } from "../../common/Wrapper";
 import GitHubConnectionOptions from "./GitHubConnectionOptions";
 import GitHubCloudConnections from "./GitHubCloudConnections";
 import GitHubEnterpriseConnections from "./GitHubEnterpriseConnections";
-import { GHSUbscriptions } from "./helper";
+import { GHSUbscriptions } from "../../rest-interfaces";
 
 const BackfillWrapper = styled(Wrapper)`
-	background: red;
+	width: 80%
 `;
 
 const Paragraph = styled.p`
@@ -27,19 +27,18 @@ const Connections = () => {
 		null
 	);
 	const [selectedOption, setSelectedOption] = useState<number>(1);
-	const [isLoading, setIsLoading] = useState<boolean>(false);
+	// const [isLoading, setIsLoading] = useState<boolean>(false);
 
 	const fetchGHSubscriptions = async () => {
 		try {
-			setIsLoading(true);
+			// setIsLoading(true);
 			const subs = await ApiRequest.subscriptions.getSubscriptions();
 			setSubscriptions(subs.data);
-			setIsLoading(false);
+			// setIsLoading(false);
 		} catch (e) {
 			console.log("Error -----> ", e);
-			console.log("Error -----> ", ghSubscriptions);
 		} finally {
-			setIsLoading(false);
+			// setIsLoading(false);
 		}
 	};
 	useEffect(() => {
@@ -71,9 +70,7 @@ const Connections = () => {
 			{selectedOption <= 2 && ghCloudSubscriptions && (
 				<>
 					<Header>GitHub Cloud</Header>
-
 					<GitHubCloudConnections
-						isLoading={isLoading}
 						ghCloudSubscriptions={ghCloudSubscriptions}
 					/>
 				</>
@@ -82,7 +79,6 @@ const Connections = () => {
 				<>
 					<Header>GitHub Enterprise Server</Header>
 					<GitHubEnterpriseConnections
-						isLoading={isLoading}
 						ghEnterpriseServers={ghEnterpriseServers}
 					/>
 				</>

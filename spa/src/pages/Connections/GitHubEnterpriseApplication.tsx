@@ -4,22 +4,27 @@ import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
 import {
-	GitHubEnterpriseApplication,
 	head,
 	getGHSubscriptionsRows,
-} from "./helper";
+} from "../../utils/dynamicTableHelper";
+import { GitHubEnterpriseApplication } from "../../rest-interfaces";
 
 const Wrapper = styled.div`
 	display: flex;
 	align-items: center;
-    flex-direction: column;
+	flex-direction: column;
 `;
 
 const ApplicationHeader = styled.div`
 	display: flex;
 	align-items: center;
-    justify-content: flex-start;
-    width: 100%;
+	justify-content: flex-start;
+	width: 100%;
+	margin-bottom: 20px;
+`;
+
+const ApplicationContent = styled.div`
+	width: 100%;
 `;
 
 type GitHubEnterpriseApplicationProps = {
@@ -41,12 +46,14 @@ const GitHubEnterpriseApp = ({
 				<Heading level="h400">{application.gitHubAppName}</Heading>
 			</ApplicationHeader>
 			{showAppContent && (
-				<DynamicTableStateless
-					head={head}
-					rows={getGHSubscriptionsRows(application.successfulConnections)}
-					rowsPerPage={5}
-					page={1}
-				/>
+				<ApplicationContent>
+					<DynamicTableStateless
+						head={head}
+						rows={getGHSubscriptionsRows(application.successfulConnections)}
+						rowsPerPage={5}
+						page={1}
+					/>
+				</ApplicationContent>
 			)}
 		</Wrapper>
 	);

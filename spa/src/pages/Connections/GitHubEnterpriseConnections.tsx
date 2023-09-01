@@ -1,10 +1,9 @@
-// import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import { token } from "@atlaskit/tokens";
 import { Box, xcss } from "@atlaskit/primitives";
 import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
-import { GhEnterpriseServer } from "./helper";
+import { GhEnterpriseServer } from "../../rest-interfaces";
 import GitHubEnterpriseApplication from "./GitHubEnterpriseApplication";
 
 const EnterpriserServerHeader = styled.div`
@@ -40,14 +39,11 @@ const whiteBoxStyle = xcss({
 	width: "100%"
 });
 type GitHubEnterpriseConnectionsProps = {
-	isLoading: boolean;
 	ghEnterpriseServers: GhEnterpriseServer[];
 };
 const GitHubEnterpriseConnections = ({
-	isLoading,
 	ghEnterpriseServers,
 }: GitHubEnterpriseConnectionsProps) => {
-	console.log(":::+++::", isLoading);
 	return ghEnterpriseServers.map((connection) => {
 		return (
 			<Box xcss={containerStyles}>
