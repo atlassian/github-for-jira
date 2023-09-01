@@ -6,9 +6,9 @@ import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const workflowWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number): Promise<void> => {
 	const { payload, log: logger } = context;
-
+	const jiraHost = jiraClient.baseURL;
 	context.log = context.log.child({
-		jiraHost: jiraClient.baseURL,
+		jiraHost,
 		gitHubInstallationId
 	});
 
