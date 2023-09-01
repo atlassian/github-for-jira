@@ -16,7 +16,7 @@ import { Subscription } from "models/subscription";
 import minimatch from "minimatch";
 import { getRepoConfig } from "services/user-config-service";
 import { TransformedRepositoryId, transformRepositoryId } from "~/src/transforms/transform-repository-id";
-import { BooleanFlags, booleanFlag } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { findLastSuccessDeploymentFromCache } from "services/deployment-cache-service";
 import { statsd } from "config/statsd";
 import { metricDeploymentCache } from "config/metric-names";
@@ -375,8 +375,8 @@ export const transformDeployment = async (
 	);
 
 	const alwaysSend = type === "webhook" ?
-		await booleanFlag(BooleanFlags.SEND_ALL_DEPLOYMENTS, jiraHost) :
-		await booleanFlag(BooleanFlags.SEND_ALL_DEPLOYMENTS_BACKFILL, jiraHost);
+		await shouldSendAll("deployments", jiraHost, logger) :
+		await shouldSendAll("deployments-backfill", jiraHost, logger);
 	if (!associations?.length && !alwaysSend) {
 		return undefined;
 	}

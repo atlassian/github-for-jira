@@ -5,7 +5,7 @@ import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repos
 
 export const mapCommit = (commit, alwaysSend): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
-	if (isEmpty(issueKeys) && !alwaysSend) { // TODO or keep going if backfill FF is on
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		return undefined;
 	}
 

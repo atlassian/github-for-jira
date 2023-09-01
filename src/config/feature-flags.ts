@@ -29,23 +29,14 @@ export enum BooleanFlags {
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
-	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle",
-	SEND_ALL_BRANCHES_BACKFILL = "send-all-branches-backfill",
-	SEND_ALL_BUILDS_BACKFILL = "send-all-builds-backfill",
-	SEND_ALL_COMMITS_BACKFILL = "send-all-commits-backfill",
-	SEND_ALL_DEPLOYMENTS_BACKFILL = "send-all-deployments-backfill",
-	SEND_ALL_PRS_BACKFILL = "send-all-prs-backfill",
-	SEND_ALL_BRANCHES = "send-all-branches",
-	SEND_ALL_BUILDS = "send-all-builds",
-	SEND_ALL_COMMITS = "send-all-commits",
-	SEND_ALL_DEPLOYMENTS = "send-all-deployments",
-	SEND_ALL_PRS = "send-all-prs"
+	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle"
 }
 
 export enum StringFlags {
 	BLOCKED_INSTALLATIONS = "blocked-installations",
 	LOG_LEVEL = "log-level",
-	HEADERS_TO_ENCRYPT = "headers-to-encrypt"
+	HEADERS_TO_ENCRYPT = "headers-to-encrypt",
+	SEND_ALL = "send-all"
 }
 
 export enum NumberFlags {
@@ -96,6 +87,23 @@ export const numberFlag = async (flag: NumberFlags, defaultValue: number, key?: 
 
 export const onFlagChange = (flag: BooleanFlags | StringFlags | NumberFlags, listener: () => void): void => {
 	launchdarklyClient.on(`update:${flag}`, listener);
+};
+
+type ShouldSendAllStringTypes =
+	"branches-backfill" | "builds-backfill" | "commits-backfill" | "deployments-backfill" | "prs-backfill" |
+	"branches" | "builds" | "commits" | "deployments" | "prs";
+
+export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost?: string, logger?: Logger): Promise<boolean> => {
+	try {
+		// Full set:
+		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
+		const sendAllString: string = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
+		const sendAllArray: string[] = JSON.parse(sendAllString);
+		return sendAllArray.includes(type);
+	} catch (e) {
+		logger?.error({ err: e, type }, "Cannot define if should send all");
+		return false;
+	}
 };
 
 export const isBlocked = async (jiraHost: string, installationId: number, logger: Logger): Promise<boolean> => {

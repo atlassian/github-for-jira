@@ -9,7 +9,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "../interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { Repository } from "models/subscription";
 
@@ -112,7 +112,7 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_PRS, jiraHost);
+	const alwaysSend = await shouldSendAll("prs", jiraHost, log);
 	if ((isEmpty(issueKeys) || !head?.repo) && !alwaysSend) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,

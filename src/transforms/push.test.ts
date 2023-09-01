@@ -2,7 +2,7 @@ import { enqueuePush } from "./push";
 import { sqsQueues } from "../sqs/queues";
 import { when } from "jest-when";
 import { GitHubCommit, GitHubRepository } from "interfaces/github";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { shouldSendAll } from "config/feature-flags";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -46,7 +46,7 @@ describe("Enqueue push", () => {
 	});
 
 	it("should push shas with no issue keys", async () => {
-		when(booleanFlag).calledWith(BooleanFlags.SEND_ALL_COMMITS, expect.anything()).mockResolvedValue(true);
+		when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(true);
 		await enqueuePush({
 			installation: { id: 123, node_id: 456 },
 			webhookId: "wh123",
@@ -75,7 +75,7 @@ describe("Enqueue push", () => {
 	});
 
 	it("should not push shas with no issue keys", async () => {
-		when(booleanFlag).calledWith(BooleanFlags.SEND_ALL_COMMITS, expect.anything()).mockResolvedValue(false);
+		when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(false);
 		await enqueuePush({
 			installation: { id: 123, node_id: 456 },
 			webhookId: "wh123",

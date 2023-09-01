@@ -4,7 +4,7 @@ import { getJiraClient } from "../jira/client/jira-client";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import { JiraCommit, JiraCommitFile, JiraCommitFileChangeTypeEnum } from "interfaces/jira";
-import { booleanFlag, BooleanFlags, isBlocked } from "config/feature-flags";
+import { isBlocked, shouldSendAll } from "config/feature-flags";
 import { sqsQueues } from "../sqs/queues";
 import { GitHubAppConfig, PushQueueMessagePayload } from "~/src/sqs/sqs.types";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
@@ -60,7 +60,7 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, g
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
-	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_COMMITS, jiraHost);
+	const alwaysSend = await shouldSendAll("commits", jiraHost);
 	for (const commit of payload.commits) {
 		const issueKeys = jiraIssueKeyParser(commit.message);
 		if (!isEmpty(issueKeys) || alwaysSend) {

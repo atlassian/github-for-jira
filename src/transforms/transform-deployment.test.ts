@@ -9,7 +9,7 @@ import deployment_status_staging from "fixtures/deployment_status_staging.json";
 import { getRepoConfig } from "services/user-config-service";
 import { when } from "jest-when";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 import { Config } from "interfaces/common";
 
@@ -218,7 +218,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		});
 
 		it(`transforms deployments without issue keys`, async () => {
-			when(booleanFlag).calledWith(BooleanFlags.SEND_ALL_DEPLOYMENTS, expect.anything())
+			when(shouldSendAll).calledWith("deployments", expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			// Mocking all GitHub API Calls
