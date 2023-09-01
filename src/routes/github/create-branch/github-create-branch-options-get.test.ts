@@ -6,18 +6,10 @@ import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
 import { Installation } from "models/installation";
-import { encodeSymmetric } from "atlassian-jwt";
 import { getHashedKey } from "models/sequelize";
 import { getLogger } from "config/logger";
 
 jest.mock("config/feature-flags");
-
-const generateJwt = async (installation: Installation) => {
-	return encodeSymmetric({
-		qsh: "context-qsh",
-		iss: installation.plainClientKey
-	}, await installation.decrypt("encryptedSharedSecret", getLogger("test")));
-};
 
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
@@ -31,12 +23,11 @@ describe("GitHub Create Branch Options Get", () => {
 			clientKey: getHashedKey("client-key"),
 			plainClientKey: "client-key"
 		});
-		const jwt = await generateJwt(installation);
 
 		app = express();
 		app.use((req, _, next) => {
 			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string", jwt };
+			req.query = { issueKey: "1", issueSummary: "random-string" };
 			req.csrfToken = jest.fn();
 			next();
 		});
