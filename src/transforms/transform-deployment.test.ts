@@ -32,6 +32,19 @@ const mockConfig = {
 	}
 };
 
+const mockConfigNoServices = {
+	deployments: {
+		environmentMapping: {
+			development: [
+				"foo*" // nonsense pattern to make sure that we're hitting it in the tests below
+			]
+		},
+		services: {
+			ids: []
+		}
+	}
+};
+
 const mockGetRepoConfig = () => {
 	when(getRepoConfig).calledWith(
 		expect.anything(),
@@ -41,6 +54,17 @@ const mockGetRepoConfig = () => {
 		expect.anything(),
 		expect.anything()
 	).mockResolvedValue(mockConfig);
+};
+
+const mockGetRepoConfigNoServices = () => {
+	when(getRepoConfig).calledWith(
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything(),
+		expect.anything()
+	).mockResolvedValue(mockConfigNoServices);
 };
 
 const buildJiraPayload = (displayName="testing", associations) => {
@@ -220,6 +244,8 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`transforms deployments without issue keys`, async () => {
 			when(shouldSendAll).calledWith("deployments", expect.anything(), expect.anything())
 				.mockResolvedValue(true);
+			const deploymentPayload = Object.assign({}, deployment_status_staging.payload) as any;
+			deploymentPayload.deployment.ref = "not-a-issue-key";
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
@@ -261,29 +287,14 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				]);
 
 			// Compare commits
-			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deployment_status.payload.deployment.sha}`)
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deploymentPayload.deployment.sha}`)
 				.reply(200, { commits: [] });
 
-			mockGetRepoConfig();
+			mockGetRepoConfigNoServices();
 
-			const jiraPayload = await transformDeployment(gitHubClient, deployment_status_staging.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
+			const jiraPayload = await transformDeployment(gitHubClient, deploymentPayload, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
-			expect(jiraPayload?.deployments[0].associations).toStrictEqual(
-				[
-					{
-						associationType: "commit",
-						values: [
-							{
-								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc1",
-								repositoryId: "test-repo-id"
-							},
-							{
-								commitHash: "6e87a40179eb7ecf5094b9c8d690db727472d5bc2",
-								repositoryId: "test-repo-id"
-							}
-						]
-					}]
-			);
+			expect(jiraPayload?.deployments[0].associations).toStrictEqual([]);
 		});
 
 		it(`uses user config to associate services`, async () => {

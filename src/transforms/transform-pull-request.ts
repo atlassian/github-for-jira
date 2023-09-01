@@ -113,7 +113,7 @@ export const transformPullRequestRest = async (
 
 	// This is the same thing we do in sync, concatenating these values
 	const alwaysSend = await shouldSendAll("prs", jiraHost, log);
-	if ((isEmpty(issueKeys) || !head?.repo) && !alwaysSend) {
+	if ((isEmpty(issueKeys) && !alwaysSend) || !head?.repo) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
