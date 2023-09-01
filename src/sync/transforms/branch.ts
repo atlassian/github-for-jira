@@ -3,7 +3,6 @@ import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jir
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 // TODO: better typing in file
 /**
@@ -84,10 +83,8 @@ const mapCommit = (commit, alwaysSend: boolean) => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformBranches = async (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined) => {
+export const transformBranches = (payload: { branches: any, repository: any }, gitHubBaseUrl: string | undefined, alwaysSendBranches: boolean, alwaysSendCommits: boolean) => {
 	// TODO: use reduce instead of map/filter
-	const alwaysSendBranches = await booleanFlag(BooleanFlags.SEND_ALL_BRANCHES_BACKFILL, jiraHost);
-	const alwaysSendCommits = await booleanFlag(BooleanFlags.SEND_ALL_COMMITS_BACKFILL, jiraHost);
 	const branches = payload.branches
 		.map((branch) => mapBranch(branch, payload.repository, alwaysSendBranches))
 		.filter((branch) => !!branch);

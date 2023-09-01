@@ -4,7 +4,6 @@ import { JiraBuildBulkSubmitData, JiraPullRequestHead } from "interfaces/jira";
 import { getAllCommitMessagesBetweenReferences } from "./util/github-api-requests";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 // We need to map the status and conclusion of a GitHub workflow back to a valid build state in Jira.
 // https://docs.github.com/en/rest/reference/actions#list-workflow-runs-for-a-repository
@@ -54,7 +53,7 @@ const mapPullRequests = (
 export const transformWorkflow = async (
 	githubClient: GitHubInstallationClient,
 	payload: GitHubWorkflowPayload,
-	type: "backfill" | "webhook",
+	alwaysSend: boolean,
 	logger: Logger
 ): Promise<JiraBuildBulkSubmitData | undefined> => {
 	const {
@@ -85,9 +84,6 @@ export const transformWorkflow = async (
 	) : "";
 
 	const issueKeys = jiraIssueKeyParser(`${head_branch}\n${payload.workflow_run.head_commit?.message}\n${commitMessages}`);
-	const alwaysSend = type === "webhook" ?
-		await booleanFlag(BooleanFlags.SEND_ALL_BUILDS, jiraHost) :
-		await booleanFlag(BooleanFlags.SEND_ALL_BUILDS_BACKFILL, jiraHost);
 	if (!issueKeys.length && !alwaysSend) {
 		return undefined;
 	}

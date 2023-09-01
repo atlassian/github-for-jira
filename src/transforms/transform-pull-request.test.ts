@@ -617,7 +617,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const data = transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toMatchObject({
 			author: {
@@ -657,7 +657,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toStrictEqual({
 			author: {
@@ -697,7 +697,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createReview("APPROVED", "cool-email@emails.com");
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 		const { updatedAt } = payload;
 
 		expect(data).toMatchObject({
@@ -736,7 +736,7 @@ describe("pull_request transform GraphQL", () => {
 		const payload = { ...createPullPayload(title), author: {} };
 		payload.reviews = createMultipleReviews();
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect({ firstReviewStatus: data?.reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({

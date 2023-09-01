@@ -2,7 +2,6 @@ import { JiraCommit, JiraCommitBulkSubmitData } from "interfaces/jira";
 import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jira-utils";
 import { isEmpty } from "lodash";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const mapCommit = (commit, alwaysSend): JiraCommit | undefined => {
 	const issueKeys = jiraIssueKeyParser(commit.message);
@@ -30,9 +29,8 @@ export const mapCommit = (commit, alwaysSend): JiraCommit | undefined => {
  * @param payload
  * @param gitHubBaseUrl - can be undefined for Cloud
  */
-export const transformCommit = async (payload, gitHubBaseUrl?: string): Promise<JiraCommitBulkSubmitData | undefined> => {
+export const transformCommit = (payload, alwaysSend: boolean, gitHubBaseUrl?: string): JiraCommitBulkSubmitData | undefined => {
 	// TODO: use reduce instead of map/filter combo
-	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_COMMITS_BACKFILL, jiraHost);
 	const commits = payload.commits
 		.map((commit) => mapCommit(commit, alwaysSend))
 		.filter((commit) => !!commit);

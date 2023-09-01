@@ -7,6 +7,7 @@ import { JiraCommitBulkSubmitData } from "src/interfaces/jira";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { TaskResultPayload } from "~/src/sync/sync.types";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
@@ -40,9 +41,10 @@ export const getCommitTask = async (
 		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate}`);
 		(logger.fields || {}).commitShaArray = commits.map(c => createHashWithSharedSecret(String(c.oid)));
 	}
-
-	const jiraPayload = await transformCommit(
+	const alwaysSend = await booleanFlag(BooleanFlags.SEND_ALL_COMMITS_BACKFILL, _jiraHost);
+	const jiraPayload = transformCommit(
 		{ commits, repository },
+		alwaysSend,
 		messagePayload.gitHubAppConfig?.gitHubBaseUrl
 	);
 
