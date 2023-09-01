@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // eslint-disable-next-line import/no-duplicates
-import { transformDeployment, mapEnvironment, mapState } from "./transform-deployment";
+import { mapEnvironment, mapState, transformDeployment } from "./transform-deployment";
 import { getLogger } from "config/logger";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import { getInstallationId, InstallationId } from "../github/client/installation-id";
@@ -221,6 +221,10 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 			when(shouldSendAll).calledWith("deployments", expect.anything(), expect.anything())
 				.mockResolvedValue(true);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+
 			// Mocking all GitHub API Calls
 			// Get commit
 			githubNock.get(`/repos/${owner.login}/${repoName}/commits/${deployment_status.payload.deployment.sha}`)

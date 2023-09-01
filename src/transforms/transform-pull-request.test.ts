@@ -3,13 +3,17 @@ import { transformPullRequest, transformPullRequestRest } from "./transform-pull
 import transformPullRequestList from "fixtures/api/transform-pull-request-list.json";
 import reviewersListNoUser from "fixtures/api/pull-request-reviewers-no-user.json";
 import reviewersListHasUser from "fixtures/api/pull-request-reviewers-has-user.json";
-import multipleReviewersWithMultipleReviews from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
+import multipleReviewersWithMultipleReviews
+	from "fixtures/api/pull-request-has-multiple-reviewers-with-multiple-reviews.json";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
 import _ from "lodash";
 import { createLogger } from "bunyan";
+import { when } from "jest-when";
+import { shouldSendAll } from "config/feature-flags";
 
+jest.mock("config/feature-flags");
 describe("pull_request transform REST", () => {
 	const gitHubInstallationId = 100403908;
 	let client: GitHubInstallationClient;
@@ -413,6 +417,7 @@ describe("pull_request transform REST", () => {
 	});
 
 	it("should map pullrequest without associations", async () => {
+		when(shouldSendAll).calledWith("prs", expect.anything(), expect.anything()).mockResolvedValue(true);
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
 		);

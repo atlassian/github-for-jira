@@ -16,7 +16,7 @@ describe("Enqueue push", () => {
 			repository: {} as GitHubRepository,
 			commits: [{
 				id: "c123",
-				message: "ARC-0001 some message",
+				message: "ARC-1 some message",
 				added: [],
 				modified: [],
 				removed: []
@@ -32,7 +32,7 @@ describe("Enqueue push", () => {
 
 		expect(sqsQueues.push.sendMessage).toBeCalledWith(expect.objectContaining({
 			shas: [
-				{ id: "c123", issueKeys: ["ARC-0001"] }
+				{ id: "c123", issueKeys: ["ARC-1"] }
 			],
 			gitHubAppConfig: {
 				gitHubAppId: 1,
