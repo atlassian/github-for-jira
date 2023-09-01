@@ -151,6 +151,19 @@ Object {
         },
         "url": "/spa",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-subscription-repos",
+        "location": "none",
+        "name": Object {
+          "value": "Sync status",
+        },
+        "url": "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
