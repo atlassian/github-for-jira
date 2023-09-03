@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import { Application } from "express";
 import supertest from "supertest";
 import { getFrontendApp } from "~/src/app";
 import { generateSignedSessionCookieHeader } from "test/utils/cookies";
@@ -6,8 +6,7 @@ import { Subscription } from "models/subscription";
 import { GitHubServerApp } from "models/github-server-app";
 import { v4 as newUUID } from "uuid";
 import { Installation } from "models/installation";
-import { getHashedKey } from "models/sequelize";
-import { getLogger } from "config/logger";
+import { DatabaseStateCreator } from "test/utils/database-state-creator";
 
 jest.mock("config/feature-flags");
 
@@ -16,22 +15,10 @@ describe("GitHub Create Branch Options Get", () => {
 	let installation: Installation;
 
 	beforeEach(async () => {
-
-		installation = await Installation.create({
-			jiraHost,
-			encryptedSharedSecret: "secret",
-			clientKey: getHashedKey("client-key"),
-			plainClientKey: "client-key"
-		});
-
-		app = express();
-		app.use((req, _, next) => {
-			req.log = getLogger("test");
-			req.query = { issueKey: "1", issueSummary: "random-string" };
-			req.csrfToken = jest.fn();
-			next();
-		});
-		app.use(getFrontendApp());
+		app = getFrontendApp();
+		const result = await (new DatabaseStateCreator().create());
+		installation = result.installation;
+		await result.subscription.destroy();
 	});
 
 	it("401 if no session/JWT", async () => {
