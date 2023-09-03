@@ -8,9 +8,6 @@ import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
 import { GHSUbscriptions } from "../../rest-interfaces";
 
-const BackfillWrapper = styled(Wrapper)`
-	width: 80%;
-`;
 const Header = styled.h3`
 	margin-bottom: ${token("space.200")};
 `;
@@ -19,18 +16,12 @@ const Connections = () => {
 	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(
 		null
 	);
-	// const [isLoading, setIsLoading] = useState<boolean>(false);
-
 	const fetchGHSubscriptions = async () => {
 		try {
-			// setIsLoading(true);
 			const subs = await ApiRequest.subscriptions.getSubscriptions();
 			setSubscriptions(subs.data);
-			// setIsLoading(false);
 		} catch (e) {
 			console.log("Error -----> ", e);
-		} finally {
-			// setIsLoading(false);
 		}
 	};
 	useEffect(() => {
@@ -45,7 +36,7 @@ const Connections = () => {
 	}
 
 	return (
-		<BackfillWrapper>
+		<Wrapper>
 			<SyncHeader />
 			{ghCloudSubscriptions && (
 				<>
@@ -61,7 +52,7 @@ const Connections = () => {
 					/>
 				</>
 			)}
-		</BackfillWrapper>
+		</Wrapper>
 	);
 };
 
