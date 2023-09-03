@@ -1,10 +1,9 @@
 import { token } from "@atlaskit/tokens";
 import { Box, xcss } from "@atlaskit/primitives";
-import Button from "@atlaskit/button";
 import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
-import { GhEnterpriseServer } from "../../rest-interfaces";
-import GitHubEnterpriseApplication from "./GitHubEnterpriseApplication";
+import { GhEnterpriseServer } from "../../../rest-interfaces";
+import GitHubEnterpriseApplication from "./GHEnterpriseApplication";
 
 const EnterpriserServerHeader = styled.div`
 	display: flex;
@@ -49,7 +48,6 @@ const GitHubEnterpriseConnections = ({
 			<Box xcss={containerStyles}>
 				<EnterpriserServerHeader>
 					<Heading level="h600">{connection.gitHubBaseUrl}</Heading>
-					<Button>Disconnect server</Button>
 				</EnterpriserServerHeader>
 				<Box xcss={whiteBoxStyle}>
 					{connection.applications.map((application) => (<GitHubEnterpriseApplication application={application}/>))}

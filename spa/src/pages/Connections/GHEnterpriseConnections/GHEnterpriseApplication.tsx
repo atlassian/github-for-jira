@@ -4,8 +4,8 @@ import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
 import ChevronDownIcon from "@atlaskit/icon/glyph/chevron-down";
-import { head, getGHSubscriptionsRows } from "../../utils/dynamicTableHelper";
-import { GitHubEnterpriseApplication } from "../../rest-interfaces";
+import { head, getGHSubscriptionsRows } from "../../../utils/dynamicTableHelper";
+import { GitHubEnterpriseApplication } from "../../../rest-interfaces";
 
 const Wrapper = styled.div`
 	display: flex;

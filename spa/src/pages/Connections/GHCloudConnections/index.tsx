@@ -2,8 +2,8 @@ import { DynamicTableStateless } from "@atlaskit/dynamic-table";
 import {
 	head,
 	getGHSubscriptionsRows,
-} from "../../utils/dynamicTableHelper";
-import { GhCloudSubscriptions } from "../../rest-interfaces";
+} from "../../../utils/dynamicTableHelper";
+import { GhCloudSubscriptions } from "../../../rest-interfaces";
 import { Box, xcss } from "@atlaskit/primitives";
 
 const containerStyles = xcss({

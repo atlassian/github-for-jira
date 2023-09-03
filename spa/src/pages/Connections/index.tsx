@@ -4,8 +4,8 @@ import ApiRequest from "../../api";
 import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
-import GitHubCloudConnections from "./GitHubCloudConnections";
-import GitHubEnterpriseConnections from "./GitHubEnterpriseConnections";
+import GitHubCloudConnections from "./GHCloudConnections";
+import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
 import { GHSUbscriptions } from "../../rest-interfaces";
 
 const BackfillWrapper = styled(Wrapper)`
