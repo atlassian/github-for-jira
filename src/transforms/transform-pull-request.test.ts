@@ -8,7 +8,7 @@ import multipleReviewersWithMultipleReviews
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { getInstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
-import _ from "lodash";
+import _, { cloneDeep } from "lodash";
 import { createLogger } from "bunyan";
 import { when } from "jest-when";
 import { shouldSendAll } from "config/feature-flags";
@@ -418,11 +418,8 @@ describe("pull_request transform REST", () => {
 
 	it("should map pullrequest without associations", async () => {
 		when(shouldSendAll).calledWith("prs", expect.anything(), expect.anything()).mockResolvedValue(true);
-		const pullRequestList = Object.assign({},
-			transformPullRequestList
-		);
 
-		const fixture = pullRequestList[0];
+		const fixture = cloneDeep(transformPullRequestList[0]);
 		fixture.title = "PR without an issue key";
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
