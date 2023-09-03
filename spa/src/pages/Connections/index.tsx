@@ -1,25 +1,57 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { token } from "@atlaskit/tokens";
+import ApiRequest from "../../api";
+import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
-import ApiRequest from "../../api";
-import Button from "@atlaskit/button";
+import GitHubCloudConnections from "./GHCloudConnections";
+import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
+import { GHSUbscriptions } from "../../rest-interfaces";
+
+const Header = styled.h3`
+	margin-bottom: ${token("space.200")};
+`;
 
 const Connections = () => {
-	const [ subscriptions, setSubscriptions ] = useState([]);
-
-	const fetchSubscriptions = async () => {
-		const subs = await ApiRequest.subscriptions.getSubscriptions();
-		setSubscriptions(subs.data);
-		console.log("Subs -----> ", subscriptions);
+	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(
+		null
+	);
+	const fetchGHSubscriptions = async () => {
+		try {
+			const subs = await ApiRequest.subscriptions.getSubscriptions();
+			setSubscriptions(subs.data);
+		} catch (e) {
+			console.log("Error -----> ", e);
+		}
 	};
+	useEffect(() => {
+		fetchGHSubscriptions();
+	}, []);
+
+	let ghCloudSubscriptions = null;
+	let ghEnterpriseServers = null;
+	if (ghSubscriptions) {
+		ghCloudSubscriptions = ghSubscriptions.ghCloudSubscriptions;
+		ghEnterpriseServers = ghSubscriptions.ghEnterpriseServers;
+	}
 
 	return (
 		<Wrapper>
-			<SyncHeader/>
-			<div>
-				List of connections should go here!
-			</div>
-			<Button appearance="link"  onClick={fetchSubscriptions}>Fetch here</Button>
+			<SyncHeader />
+			{ghCloudSubscriptions && (
+				<>
+					<Header>GitHub Cloud</Header>
+					<GitHubCloudConnections ghCloudSubscriptions={ghCloudSubscriptions} />
+				</>
+			)}
+			{ghEnterpriseServers && (
+				<>
+					<Header>GitHub Enterprise Server</Header>
+					<GitHubEnterpriseConnections
+						ghEnterpriseServers={ghEnterpriseServers}
+					/>
+				</>
+			)}
 		</Wrapper>
 	);
 };
