@@ -3,10 +3,8 @@ import { useState } from "react";
 import styled from "@emotion/styled";
 import Heading from "@atlaskit/heading";
 import ChevronRightIcon from "@atlaskit/icon/glyph/chevron-right";
-import {
-	head,
-	getGHSubscriptionsRows,
-} from "../../utils/dynamicTableHelper";
+import ChevronDownIcon from "@atlaskit/icon/glyph/chevron-down";
+import { head, getGHSubscriptionsRows } from "../../utils/dynamicTableHelper";
 import { GitHubEnterpriseApplication } from "../../rest-interfaces";
 
 const Wrapper = styled.div`
@@ -42,7 +40,11 @@ const GitHubEnterpriseApp = ({
 					setShowAppContent((prevState) => !prevState);
 				}}
 			>
-				<ChevronRightIcon label="" />
+				{showAppContent ? (
+					<ChevronDownIcon label="" />
+				) : (
+					<ChevronRightIcon label="" />
+				)}
 				<Heading level="h400">{application.gitHubAppName}</Heading>
 			</ApplicationHeader>
 			{showAppContent && (
