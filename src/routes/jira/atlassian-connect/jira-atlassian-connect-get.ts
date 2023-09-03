@@ -218,6 +218,14 @@ const	modules = {
 			url: "/spa",
 			location: "none",
 			conditions: adminCondition
+		}, {
+			url: "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
+			name: {
+				value: "Sync status"
+			},
+			conditions: adminCondition,
+			key: "gh-addon-subscription-repos",
+			location: "none"
 		}
 	],
 	webSections: [
