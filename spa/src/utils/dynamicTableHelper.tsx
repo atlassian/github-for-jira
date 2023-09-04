@@ -5,7 +5,13 @@ import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
 import EditIcon from "@atlaskit/icon/glyph/edit";
 import MoreIcon from "@atlaskit/icon/glyph/more";
-import { SuccessfulConnection, Row } from "../rest-interfaces";
+import { SuccessfulConnection } from "../rest-interfaces";
+
+type Row = {
+	key: string;
+	isHighlighted: boolean;
+	cells: { key: string | number; content: React.JSX.Element | string | number }[];
+};
 
 const RowWrapper = styled.div`
 	display: flex;
@@ -13,7 +19,7 @@ const RowWrapper = styled.div`
 `;
 
 const AvatarWrapper = styled.span`
-	marginright: ${token("space.200")};
+	margin-right: ${token("space.200")};
 `;
 
 const ifAllReposSynced = (
@@ -25,11 +31,7 @@ const ifAllReposSynced = (
 		: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
 
 export const isAllSyncSuccess = (connection?: SuccessfulConnection) => {
-	return connection &&
-		connection.syncStatus === "FINISHED" &&
-		!connection.syncWarning
-		? true
-		: false;
+	return connection && connection.syncStatus === "FINISHED" && !connection.syncWarning;
 };
 
 export const createHead = (withWidth: boolean) => {
@@ -105,7 +107,7 @@ export const getGHSubscriptionsRows = (
 									cloudConnection.totalNumberOfRepos
 								)}
 							</Badge>
-							<EditIcon label="" />
+							<EditIcon label="edit" />
 						</RowWrapper>
 					),
 				},
@@ -139,7 +141,7 @@ export const getGHSubscriptionsRows = (
 					key: "Lorem",
 					content: (
 						<RowWrapper>
-							<MoreIcon label="" />
+							<MoreIcon label="more" />
 						</RowWrapper>
 					),
 				},

@@ -1,3 +1,4 @@
+
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
 	state: string;
@@ -15,11 +16,11 @@ export type UsersGetAuthenticatedResponse = {
 
 export type GetGitHubAppsUrlResponse = {
 	appInstallationUrl: string;
-};
+}
 
 export type OrganizationsResponse = {
 	orgs: Array<GitHubInstallationType>;
-};
+}
 
 export type GitHubInstallationType = {
 	account: GitHubInstallationAccountType;
@@ -48,7 +49,7 @@ export type ErrorType = "warning" | "error";
 export type ApiError = {
 	message: string;
 	errorCode: ErrorCode;
-};
+}
 
 //DO NOT USE ENUM as webpack can't handler anything none "type"
 //ts-load is not a real typescript compile, it only strips off the types, hence cannot process Enum/Class/etc
@@ -62,12 +63,6 @@ export type ErrorCode =
 	| "SSO_LOGIN"
 	| "RESOURCE_NOT_FOUND"
 	| "UNKNOWN";
-
-export type Row = {
-	key: string;
-	isHighlighted: boolean;
-	cells: { key: string | number; content: JSX.Element | string | number }[];
-};
 
 export type Account = {
 	login: string;
