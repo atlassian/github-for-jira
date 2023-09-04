@@ -1,7 +1,8 @@
 import styled from "@emotion/styled";
 import { token } from "@atlaskit/tokens";
-import { popup } from "../../../utils";
 import Button from "@atlaskit/button";
+import analyticsClient from "../../../analytics";
+import { popup } from "../../../utils";
 
 const Paragraph = styled.div`
 	color: ${token("color.text.subtle")};
@@ -28,8 +29,13 @@ export const ErrorForSSO = ({ orgName, accessUrl, resetCallback }: { orgName?: s
 	</Paragraph>
 </>;
 
-export const ErrorForNonAdmins = ({ orgName }: { orgName?: string; }) => <Paragraph>
-	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />Ask an owner to complete this step.
+export const ErrorForNonAdmins = ({ orgName, adminOrgsUrl }: { orgName?: string; adminOrgsUrl: string; }) => <Paragraph>
+	Can't connect, you're not the organization owner{orgName && <span> of <b>{orgName}</b></span>}.<br />
+	Ask an <StyledLink onClick={() => {
+	// TODO: Need to get this URL for Enterprise users too, this is only for Cloud users
+		popup(adminOrgsUrl);
+		analyticsClient.sendUIEvent({ actionSubject: "checkOrgAdmin", action: "clicked"}, { type: "cloud" });
+	}}>organization owner</StyledLink> to complete this step.
 </Paragraph>;
 
 export const ErrorForIPBlocked = ({ orgName, resetCallback }: { orgName?: string; resetCallback: () => void }) => <>
