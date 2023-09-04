@@ -46,7 +46,7 @@ describe("Enqueue push", () => {
 	});
 
 	it("should push shas with no issue keys", async () => {
-		when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(true);
+		when(shouldSendAll).calledWith("commits", expect.anything()).mockResolvedValue(true);
 		await enqueuePush({
 			installation: { id: 123, node_id: 456 },
 			webhookId: "wh123",

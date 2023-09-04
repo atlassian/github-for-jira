@@ -417,7 +417,7 @@ describe("pull_request transform REST", () => {
 	});
 
 	it("should map pullrequest without associations", async () => {
-		when(shouldSendAll).calledWith("prs", expect.anything(), expect.anything()).mockResolvedValue(true);
+		when(shouldSendAll).calledWith("prs").mockResolvedValue(true);
 
 		const fixture = cloneDeep(transformPullRequestList[0]);
 		fixture.title = "PR without an issue key";
