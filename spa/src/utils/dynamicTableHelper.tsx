@@ -30,11 +30,11 @@ const ifAllReposSynced = (
 		? totalNumberOfRepos
 		: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
 
-export const isAllSyncSuccess = (connection?: SuccessfulConnection) => {
+const isAllSyncSuccess = (connection?: SuccessfulConnection) => {
 	return connection && connection.syncStatus === "FINISHED" && !connection.syncWarning;
 };
 
-export const createHead = (withWidth: boolean) => {
+const createHead = (withWidth: boolean) => {
 	return {
 		cells: [
 			{
