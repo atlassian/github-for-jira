@@ -11,7 +11,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 		const response = await Api.orgs.getOrganizations();
 		return response.data;
 	} catch (e) {
-		reportError(e);
+		reportError(e, { path: "fetchOrgs" });
 		return e as AxiosError;
 	}
 }
@@ -19,7 +19,7 @@ async function fetchOrgs(): Promise<OrganizationsResponse | AxiosError> {
 async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 
 	if (!Api.token.hasGitHubToken()) {
-		reportError({ message: "Api github token is empty" });
+		reportError({ message: "Api github token is empty" }, { path: "connectOrg" });
 		return false;
 	}
 
@@ -28,12 +28,17 @@ async function connectOrg(orgId: number): Promise<boolean | AxiosError> {
 		const response = await Api.orgs.connectOrganization(orgId);
 		const ret = response.status === 200;
 
-		if(!ret) reportError({ message: "Response status for connecting org is not 200", status: response.status });
+		if(!ret) {
+			reportError(
+				{ message: "Response status for connecting org is not 200", status: response.status },
+				{ path: "connectOrg" }
+			);
+		}
 
 		return ret;
 
 	} catch (e) {
-		reportError(e);
+		reportError(e, { path: "connectOrg" });
 		return e as AxiosError;
 	}
 }
@@ -58,7 +63,10 @@ async function installNewApp(callbacks: {
 		if (event.data?.type === "install-callback" && event.data?.gitHubInstallationId) {
 			const id = parseInt(event.data?.gitHubInstallationId);
 			if(!id) {
-				reportError({ message: "GitHub installation id is empty on finish OAuth flow" });
+				reportError(
+					{ message: "GitHub installation id is empty on finish OAuth flow" },
+					{ path: "installNewApp" }
+				);
 			}
 			callbacks.onFinish(isNaN(id) ? undefined : id);
 		}
@@ -78,7 +86,7 @@ async function installNewApp(callbacks: {
 				lastOpenWin = null;
 				setTimeout(() => window.removeEventListener("message", handler), 1000); //give time for above message handler to kick off
 			} catch (e) {
-				reportError(e);
+				reportError(e, { path: "installNewApp", reason: "Fail remove message listener" });
 			} finally {
 				clearInterval(hdlWinInstall);
 			}

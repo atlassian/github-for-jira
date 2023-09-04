@@ -90,9 +90,9 @@ export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
-	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
-	log?: Logger,
-	jiraHost?: string
+	reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
+	log: Logger,
+	jiraHost: string
 ) =>
 {
 	const {
