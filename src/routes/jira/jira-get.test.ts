@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/no-var-requires */
-import { getInstallations, JiraGet } from "./jira-get";
+import { JiraGet } from "./jira-get";
+import { getInstallations } from "utils/github-installations-helper";
 import { Installation } from "models/installation";
 import { Subscription } from "models/subscription";
 import { RepoSyncState } from "models/reposyncstate";

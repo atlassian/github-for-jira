@@ -1,11 +1,12 @@
 import hbs from "hbs";
 import { isPlainObject } from "lodash";
-import { ConnectionSyncStatus } from "~/src/routes/jira/jira-get";
+import { ConnectionSyncStatus } from "utils/github-installations-helper";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
 export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
 export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
 export const toISOStringHelper = (date?: Date) => date ? date.toISOString() : undefined;
+
 
 type Connection = { syncStatus?: ConnectionSyncStatus, syncWarning?: string };
 export const isAllSyncSuccess = (conn?: Connection) => {
