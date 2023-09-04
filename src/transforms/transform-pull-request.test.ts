@@ -417,7 +417,7 @@ describe("pull_request transform REST", () => {
 	});
 
 	it("should map pullrequest without associations", async () => {
-		when(shouldSendAll).calledWith("prs", undefined, undefined).mockResolvedValue(true);
+		when(shouldSendAll).calledWith("prs", expect.anything(), expect.anything()).mockResolvedValue(true);
 
 		const fixture = cloneDeep(transformPullRequestList[0]);
 		fixture.title = "PR without an issue key";
@@ -432,7 +432,7 @@ describe("pull_request transform REST", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 

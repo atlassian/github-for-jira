@@ -94,7 +94,7 @@ type ShouldSendAllStringTypes =
 	"branches-backfill" | "builds-backfill" | "commits-backfill" | "deployments-backfill" | "prs-backfill" |
 	"branches" | "builds" | "commits" | "deployments" | "prs";
 
-export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost?: string, logger?: Logger): Promise<boolean> => {
+export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: string, logger?	: Logger): Promise<boolean> => {
 	try {
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
