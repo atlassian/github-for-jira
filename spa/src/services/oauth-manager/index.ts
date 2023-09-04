@@ -15,9 +15,20 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 		username = res.data.login;
 		email = res.data.email;
 
-		return res.status === 200;
+		const ret = res.status === 200;
+
+		if(!ret) {
+			reportError({
+				message: "Response status is not 200 for getting user details", status: res.status
+			}, {
+				path: "checkValidity"
+			});
+		}
+
+		return ret;
+
 	} catch (e) {
-		reportError(e);
+		reportError(e, { path: "checkValidity" });
 		return e as AxiosError;
 	}
 }
@@ -31,21 +42,54 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 			const winCloseCheckHandler = setInterval(() => {
 				if (win.closed) {
 					clearInterval(winCloseCheckHandler);
-					try { onWinClosed(); } catch (e) { reportError(e); }
+					try {
+						onWinClosed();
+					} catch (e) {
+						reportError(e, {
+							path: "authenticateInGitHub",
+							reason: "error in onWinClosed"
+						});
+					}
 				}
 			}, 1000);
 		}
+	} else {
+		reportError({
+			message: "Empty redirectUrl and/or state"
+		}, {
+			path: "authenticateInGitHub",
+			isRedirectUrlEmpty: !res.data?.redirectUrl,
+			isStateEmpty: !res.data.state
+		});
 	}
 }
 
 async function finishOAuthFlow(code: string, state: string): Promise<boolean | AxiosError> {
 
-	if (!code && !state) return false;
+	if (!code && !state) {
+		reportError({
+			message: "code or state missing"
+		}, {
+			path: "finishOAuthFlow",
+			isCodeEmpty: !code,
+			isStateEmpty: !state
+		});
+		return false;
+	}
 
 	const prevState = oauthState;
 	oauthState = undefined;
 
-	if (state !== prevState) return false;
+	if (state !== prevState) {
+		reportError({
+			message: "state not match"
+		}, {
+			path: "finishOAuthFlow",
+			isPrevStateEmpty: !prevState,
+			isStateEmpty: !state
+		});
+		return false;
+	}
 
 	try {
 		const token = await Api.auth.exchangeToken(code, state);
@@ -53,10 +97,11 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			Api.token.setGitHubToken(token.data.accessToken);
 			return true;
 		} else {
+			reportError({ message: "fail to acquire accessToken (empty)" }, { path: "finishOAuthFlow", });
 			return false;
 		}
 	} catch (e) {
-		reportError(e);
+		reportError(e, { path: "finishOAuthFlow" });
 		return e as AxiosError;
 	}
 }

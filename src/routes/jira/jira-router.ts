@@ -10,6 +10,7 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
+import { JiraConnectedReposGet } from "routes/jira/jira-connected-repos-get";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";
 import { JiraSecurityWorkspacesRouter } from "routes/jira/security/workspaces/jira-security-workspaces-router";
@@ -36,6 +37,8 @@ JiraRouter.use("/workspaces", jiraSymmetricJwtMiddleware, JiraWorkspacesRouter);
 JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRouter);
 
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
+
+JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectedReposGet);
 
 /********************************************************************************************************************
  * TODO: remove this later, keeping this for now cause its out in `Prod`

@@ -36,6 +36,7 @@ export interface RepoSyncStateProperties {
 	deploymentStatus?: TaskStatus;
 	dependabotAlertStatus?: TaskStatus;
 	secretScanningAlertStatus?: TaskStatus,
+	codeScanningAlertStatus?: TaskStatus,
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
@@ -44,6 +45,7 @@ export interface RepoSyncStateProperties {
 	deploymentCursor?: string;
 	dependabotAlertCursor?: string;
 	secretScanningAlertCursor?: string;
+	codeScanningAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
@@ -51,6 +53,7 @@ export interface RepoSyncStateProperties {
 	deploymentFrom?: Date;
 	dependabotAlertFrom?: Date;
 	secretScanningAlertFrom?: Date;
+	codeScanningAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -80,6 +83,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	deploymentStatus?: TaskStatus;
 	dependabotAlertStatus?: TaskStatus;
 	secretScanningAlertStatus?: TaskStatus;
+	codeScanningAlertStatus?: TaskStatus;
 	branchCursor?: string;
 	commitCursor?: string;
 	issueCursor?: string;
@@ -88,6 +92,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	deploymentCursor?: string;
 	dependabotAlertCursor?: string;
 	secretScanningAlertCursor?: string;
+	codeScanningAlertCursor?: string;
 	commitFrom?: Date;
 	branchFrom?: Date;
 	pullFrom?: Date;
@@ -95,6 +100,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 	deploymentFrom?: Date;
 	dependabotAlertFrom?: Date;
 	secretScanningAlertFrom?: Date;
+	codeScanningAlertFrom?: Date;
 	forked?: boolean;
 	repoPushedAt: Date;
 	repoUpdatedAt: Date;
@@ -142,7 +148,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					buildStatus: "failed",
 					deploymentStatus: "failed",
 					dependabotAlertStatus: "failed",
-					secretScanningAlertStatus: "failed"
+					secretScanningAlertStatus: "failed",
+					codeScanningAlertStatus: "failed"
 				}
 			}
 		});
@@ -160,7 +167,8 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 					buildStatus: "failed",
 					deploymentStatus: "failed",
 					dependabotAlertStatus: "failed",
-					secretScanningAlertStatus: "failed"
+					secretScanningAlertStatus: "failed",
+					codeScanningAlertStatus: "failed"
 				}
 			}
 		}));
@@ -171,7 +179,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
-	private static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+	static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
 		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id
@@ -328,7 +336,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 
 	static async findOneForRepoUrlAndRepoIdAndJiraHost(repoUrl: string, repoId: number, jiraHost: string):Promise<RepoSyncState | null> {
 		const results = await this.sequelize!.query(
-			`SELECT rss.* 
+			`SELECT rss.*
 			FROM "RepoSyncStates" rss
 			JOIN "Subscriptions" s ON rss."subscriptionId" = s."id"
 			WHERE REPLACE(rss."repoUrl", '.', '') LIKE :repoUrl
@@ -373,7 +381,10 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 			dependabotAlertFrom: null,
 			secretScanningAlertFrom: null,
 			secretScanningAlertStatus: null,
-			secretScanningAlertCursor: null
+			secretScanningAlertCursor: null,
+			codeScanningAlertFrom: null,
+			codeScanningAlertStatus: null,
+			codeScanningAlertCursor: null
 		}, {
 			where: {
 				subscriptionId: subscription.id
@@ -422,6 +433,7 @@ RepoSyncState.init({
 	deploymentStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	dependabotAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	secretScanningAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
+	codeScanningAlertStatus: DataTypes.ENUM("pending", "complete", "failed"),
 	branchCursor: STRING,
 	commitCursor: STRING,
 	issueCursor: STRING,
@@ -430,6 +442,7 @@ RepoSyncState.init({
 	deploymentCursor: STRING,
 	dependabotAlertCursor: STRING,
 	secretScanningAlertCursor: STRING,
+	codeScanningAlertCursor: STRING,
 	commitFrom: DATE,
 	branchFrom: DATE,
 	pullFrom: DATE,
@@ -437,6 +450,7 @@ RepoSyncState.init({
 	deploymentFrom: DATE,
 	dependabotAlertFrom: DATE,
 	secretScanningAlertFrom: DATE,
+	codeScanningAlertFrom: DATE,
 	forked: BOOLEAN,
 	repoPushedAt: DATE,
 	repoUpdatedAt: DATE,
