@@ -5,6 +5,7 @@ import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { getJiraClient } from "~/src/jira/client/jira-client";
+import { isEmpty } from "lodash";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const issueCommentWebhookHandler = async (
@@ -40,7 +41,6 @@ export const issueCommentWebhookHandler = async (
 		await syncIssueCommentsToJira(jiraClient.baseURL, context, gitHubInstallationClient);
 	}
 
-	// TODO: need to create reusable function for unfurling
 	try {
 		linkifiedBody = await util.unfurl(comment.body);
 		if (!linkifiedBody) {
@@ -83,10 +83,8 @@ export const issueCommentWebhookHandler = async (
 
 const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext, gitHubInstallationClient: GitHubInstallationClient) => {
 	const { comment, repository, issue } = context.payload;
-	const { body: gitHubMessage, id: gitHubId, html_url: gitHubCommentUrl } = comment;
+	const { body: gitHubMessage, id: gitHubCommentId, html_url: gitHubCommentUrl } = comment;
 	const pullRequest = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, issue.number);
-	// Note: we are only considering the branch name here. Should we also check for pr titles?
-	const issueKey = jiraIssueKeyParser(pullRequest.data.head.ref)[0] || "";
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationClient.githubInstallationId.installationId,
@@ -98,42 +96,53 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
 		return;
 	}
+
+	const allKeys = jiraIssueKeyParser(`${pullRequest.data.head.ref}\n${pullRequest.data.title}`);
+	if (isEmpty(allKeys)) {
+		context.log.info("No issue key found in PR Title or Branch Name for PR Comment.");
+		return;
+	}
+
 	switch (context.action) {
 		case "created": {
-			await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: gitHubMessage + " - " + gitHubCommentUrl,
-				properties: [
-					{
-						key: "gitHubId",
-						value: {
-							gitHubId
+			for (const issueKey of allKeys) {
+				await jiraClient.issues.comments.addForIssue(issueKey, {
+					body: gitHubMessage + " - " + gitHubCommentUrl,
+					properties: [
+						{
+							key: "gitHubId",
+							value: {
+								gitHubId: gitHubCommentId
+							}
 						}
-					}
-				]
-			});
+					]
+				});
+			}
 			break;
 		}
 		case "edited": {
-			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
-				body: gitHubMessage + " - " + gitHubCommentUrl
-			});
+			for (const issueKey of allKeys) {
+				await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubCommentId), {
+					body: gitHubMessage + " - " + gitHubCommentUrl
+				});
+			}
 			break;
 		}
 		case "deleted":
-			await jiraClient.issues.comments.deleteForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId));
+			for (const issueKey of allKeys) {
+				await jiraClient.issues.comments.deleteForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubCommentId));
+			}
 			break;
 		default:
-			context.log.error("This shouldn't happen", context);
+			context.log.error("PR Comment error: Action not recognised. This shouldn't happen", context);
 			break;
 	}
 };
 
 const getCommentId = async (jiraClient, issueKey: string, gitHubId: string) => {
-
 	// TODO - this currently only fetchs 50, do we want to loop de loop and find everything!?!?!?
 	const listOfComments = await jiraClient.issues.comments.list(issueKey);
 
-	// TODO Tidy up the getting of the githubid from comment props
 	const mappedResults = listOfComments.data.comments.map(comment => {
 		return {
 			commentId: comment.id,
