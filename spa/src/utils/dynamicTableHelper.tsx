@@ -3,7 +3,6 @@ import styled from "@emotion/styled";
 import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
-import EditIcon from "@atlaskit/icon/glyph/edit";
 import { SuccessfulConnection } from "../rest-interfaces";
 import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 
@@ -28,7 +27,7 @@ const ifAllReposSynced = (
 	totalNumberOfRepos: number
 ): number | string =>
 	numberOfSyncedRepos === totalNumberOfRepos ? totalNumberOfRepos :
-		(totalNumberOfRepos ? `${numberOfSyncedRepos} / ${totalNumberOfRepos}` : "No repos");
+		(totalNumberOfRepos ? `${numberOfSyncedRepos} / ${totalNumberOfRepos}` : "");
 
 const mapSyncStatus = (status: string): ThemeAppearance => {
 	switch (status) {
@@ -113,7 +112,6 @@ export const getGHSubscriptionsRows = (
 									cloudConnection.totalNumberOfRepos
 								)}
 							</Badge>
-							<EditIcon label="edit" />
 						</RowWrapper>
 					),
 				},
@@ -121,25 +119,27 @@ export const getGHSubscriptionsRows = (
 					key: cloudConnection.id,
 					content: (
 						<RowWrapper>
-							<Lozenge appearance={mapSyncStatus(cloudConnection.syncStatus)} maxWidth="500">
-								{cloudConnection.syncStatus}
-							</Lozenge>
-							{isAllSyncSuccess(cloudConnection) && (
-								<>
-									{cloudConnection.backfillSince ? (
-										<>
-											<span>
-												Backfilled from:
-												{new Date(
-													cloudConnection.backfillSince
-												).toLocaleDateString("en-GB")}
-											</span>
-										</>
-									) : (
-										`All commits backfilled`
-									)}
-								</>
-							)}
+							<div>
+								<Lozenge appearance={mapSyncStatus(cloudConnection.syncStatus)} maxWidth="500">
+									{cloudConnection.syncStatus}
+								</Lozenge> <br/>
+								{isAllSyncSuccess(cloudConnection) && (
+									<>
+										{cloudConnection.backfillSince ? (
+											<>
+												<span>
+													Backfilled from:
+													{new Date(
+														cloudConnection.backfillSince
+													).toLocaleDateString("en-GB")}
+												</span>
+											</>
+										) : (
+											`All commits backfilled`
+										)}
+									</>
+								)}
+							</div>
 						</RowWrapper>
 					),
 				}
