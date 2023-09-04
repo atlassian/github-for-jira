@@ -33,7 +33,7 @@ export enum TokenType {
 
 const extractJwtFromRequest = (req: Request): string | undefined => {
 
-	const tokenInQuery = req.query?.[JWT_PARAM];
+	const tokenInQuery = req.query[JWT_PARAM];
 	const tokenInBody = req.body?.[JWT_PARAM];
 	if (tokenInQuery && tokenInBody) {
 		req.log.info("JWT token can only appear in either query parameter or request body.");
@@ -41,7 +41,7 @@ const extractJwtFromRequest = (req: Request): string | undefined => {
 	}
 	let token = tokenInQuery || tokenInBody;
 
-	const authHeader = req.headers?.[AUTH_HEADER];
+	const authHeader = req.headers[AUTH_HEADER];
 	if (authHeader?.startsWith("JWT ")) {
 		if (token) {
 			const foundIn = tokenInQuery ? "query" : "request body";
@@ -187,7 +187,7 @@ const isStagingTenant = (req: Request): boolean => {
 		const hostBaseUrl = req.body?.baseUrl;
 		if (hostBaseUrl) {
 			const host = new URL(hostBaseUrl).hostname;
-			return /\.jira-dev\.com$/.test(host);
+			return host.endsWith(".jira-dev.com");
 		}
 	} catch (err) {
 		req.log.error(err, "Error determining Jira instance environment");
@@ -284,12 +284,12 @@ const canonicalizeUri = (req: JWTRequest) => {
 	path = path.replace(new RegExp(CANONICAL_QUERY_SEPARATOR, "g"), encodeRfc3986(CANONICAL_QUERY_SEPARATOR));
 
 	// Prefix with /
-	if (path[0] !== "/") {
+	if (!path.startsWith("/")) {
 		path = "/" + path;
 	}
 
 	// Remove trailing /
-	if (path.length > 1 && path[path.length - 1] === "/") {
+	if (path.length > 1 && path.endsWith("/")) {
 		path = path.substring(0, path.length - 1);
 	}
 

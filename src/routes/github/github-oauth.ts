@@ -28,7 +28,7 @@ interface OAuthState {
 
 const getRedirectUrl = async (res: Response, state: string) => {
 	let callbackPath = callbackPathCloud;
-	if (res.locals?.gitHubAppConfig?.uuid) {
+	if (res.locals.gitHubAppConfig?.uuid) {
 		callbackPath = callbackPathServer.replace("<uuid>", res.locals.gitHubAppConfig.uuid);
 	}
 	const scopes = ["user", "repo"];
@@ -43,7 +43,7 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 	// Create unique state for each oauth request
 	const stateKey = crypto.randomBytes(8).toString("hex");
 
-	req.session["timestamp_before_oauth"] = Date.now();
+	req.session.timestamp_before_oauth = Date.now();
 
 	const parsedOriginalUrl = url.parse(req.originalUrl);
 
@@ -134,7 +134,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		state: stateKey
 	} = req.query as Record<string, string>;
 
-	const timestampBefore = req.session["timestamp_before_oauth"] as number;
+	const timestampBefore = req.session.timestamp_before_oauth as number;
 	if (timestampBefore) {
 		const timestampAfter = Date.now();
 		req.log.debug(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
@@ -195,11 +195,11 @@ const queryToQueryString = (query) =>
 export const GithubAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
 	try {
 		const { query, originalUrl } = req;
-		if (query && query["resetGithubToken"]) {
+		if (query && query.resetGithubToken) {
 			req.session.githubToken = undefined;
 			req.session.githubRefreshToken = undefined;
 
-			delete query["resetGithubToken"];
+			delete query.resetGithubToken;
 
 			const newUrl = originalUrl.split("?")[0] + "?" + queryToQueryString(query);
 			req.log.info("Github Token reset for URL: ", newUrl);
@@ -234,7 +234,7 @@ export const GithubAuthMiddleware = async (req: Request, res: Response, next: Ne
 		return next();
 	} catch (err) {
 		req.log.info({ err }, `Github token is not valid.`);
-		if (req.session?.githubRefreshToken) {
+		if (req.session.githubRefreshToken) {
 			req.log.debug(`Trying to renew Github token...`);
 			const token = await renewGitHubToken(req.session.githubRefreshToken, res.locals.gitHubAppConfig, res.locals.jiraHost, req.log);
 			if (token) {
@@ -276,7 +276,7 @@ const renewGitHubToken = async (githubRefreshToken: string, gitHubAppConfig: Git
 			const metrics = {
 				trigger: "auth-middleware"
 			};
-			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig?.gitHubAppId, jiraHost, metrics, logger);
+			const gitHubAnonymousClient = await createAnonymousClientByGitHubAppId(gitHubAppConfig.gitHubAppId, jiraHost, metrics, logger);
 			const res = await gitHubAnonymousClient.renewGitHubToken(githubRefreshToken, gitHubAppConfig.clientId, clientSecret);
 			return { accessToken: res.accessToken, refreshToken: res.refreshToken };
 		}

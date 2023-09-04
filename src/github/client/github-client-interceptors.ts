@@ -60,7 +60,7 @@ const sendResponseMetrics = (metricName: string, gitHubProduct: string, jiraHost
 	};
 
 	statsd.histogram(metricName, requestDurationMs, tags, { jiraHost });
-	tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+	tags.gsd_histogram = RESPONSE_TIME_HISTOGRAM_BUCKETS;
 	statsd.histogram(metricName, requestDurationMs, tags, { jiraHost });
 	return response;
 };
@@ -87,16 +87,16 @@ export const instrumentFailedRequest = (metricName: string, host: string, jiraHo
 	(error) => {
 		const gitHubProduct = getCloudOrServerFromHost(host);
 		if (error instanceof GithubClientRateLimitingError) {
-			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "rateLimiting", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause.response, "rateLimiting", extraTags);
 		} else if (error instanceof GithubClientBlockedIpError) {
-			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "blockedIp", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause.response, "blockedIp", extraTags);
 			statsd.increment(metricError.blockedByGitHubAllowlist, { gitHubProduct }, { jiraHost });
 		} else if (error instanceof GithubClientTimeoutError) {
-			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "timeout", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause.response, "timeout", extraTags);
 		} else if (error instanceof GithubClientSSOLoginError) {
-			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, "ssoLogin", extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause.response, "ssoLogin", extraTags);
 		} else if (error instanceof GithubClientError) {
-			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause?.response, undefined, extraTags);
+			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.cause.response, undefined, extraTags);
 		} else {
 			sendResponseMetrics(metricName, gitHubProduct, jiraHost, error.response, undefined, extraTags);
 		}
@@ -106,7 +106,7 @@ export const instrumentFailedRequest = (metricName: string, host: string, jiraHo
 export const handleFailedRequest = (rootLogger: Logger) =>
 	(err: AxiosError) => {
 		const { response, config, request } = err;
-		const requestId = response?.headers?.["x-github-request-id"];
+		const requestId = response?.headers["x-github-request-id"];
 		const logger = rootLogger.child({
 			err,
 			config,
@@ -127,9 +127,9 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 			// Please keep in sync with GraphQL error mappings!!!!
 			// TODO: consider moving both into some single error mapper to keep them close and avoid being not in sync
 
-			const status = response?.status;
+			const status = response.status;
 
-			const rateLimitRemainingHeaderValue: string = response.headers?.["x-ratelimit-remaining"];
+			const rateLimitRemainingHeaderValue: string = response.headers["x-ratelimit-remaining"];
 			if (status === 403 && rateLimitRemainingHeaderValue == "0") {
 				const mappedError = new GithubClientRateLimitingError(err);
 				logger.warn({ err: mappedError }, "Rate limiting error");
@@ -151,7 +151,7 @@ export const handleFailedRequest = (rootLogger: Logger) =>
 				return Promise.reject(mappedError);
 			}
 
-			if (status === 403 && response.headers?.["x-github-sso"]) {
+			if (status === 403 && response.headers["x-github-sso"]) {
 				const mappedError = new GithubClientSSOLoginError(err);
 				logger.warn({ err: mappedError, remote: response.data.message }, "SSO Login required");
 				return Promise.reject(mappedError);

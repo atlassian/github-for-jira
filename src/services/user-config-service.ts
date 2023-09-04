@@ -95,7 +95,7 @@ const getRepoConfigFromGitHub = async (gitHubInstallationClient: GitHubInstallat
  * Iterates through environment patterns and returns true if any environment contains too many patterns to test against.
  */
 const hasTooManyPatternsPerEnvironment = (config: Config): boolean => {
-	const environmentMapping = config?.deployments?.environmentMapping;
+	const environmentMapping = config.deployments?.environmentMapping;
 	if (!environmentMapping) {
 		return false;
 	}
@@ -116,15 +116,15 @@ const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Con
 	const config: Config = YAML.parse(input);
 	logger.info("User config file yaml content parsed successfully");
 
-	const configDeployments = config?.deployments;
+	const configDeployments = config.deployments;
 	const deployments = {};
 	if (configDeployments != null) {
 		if (configDeployments.environmentMapping) {
-			deployments["environmentMapping"] = configDeployments.environmentMapping;
+			deployments.environmentMapping = configDeployments.environmentMapping;
 			logger.info("Found deployments mappings in user config files");
 		}
 		if (configDeployments.services?.ids) {
-			deployments["services"] = {
+			deployments.services = {
 				ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
 			};
 			logger.info("Found services ids mappings in user config files");

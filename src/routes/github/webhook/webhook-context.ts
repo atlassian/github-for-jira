@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/node";
 import Logger from "bunyan";
 import { GitHubAppConfig } from "~/src/sqs/sqs.types";
 
-type WebhookContextConstructorParam <E = any> = {
+interface WebhookContextConstructorParam <E = any> {
 	id: string;
 	name: string;
 	payload: E;

@@ -4,7 +4,7 @@ import { hasAdminAccess } from "services/subscription-installation-service";
 
 export const GitHubSubscriptionDeferredInstallGet = async (req: Request, res: Response) => {
 	// Use only data from payload as it was created by Jira admin and cannot be forged. Do not access anything else from the request!
-	const payload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
+	const payload = await extractSubscriptionDeferredInstallPayload(req.params.requestId);
 
 	const { githubToken, installation } = res.locals;
 

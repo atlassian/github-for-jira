@@ -12,7 +12,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App page request");
 
-		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid as string;
+		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid ;
 		const isNew = req.query.new;
 		const installationId = res.locals.installation.id;
 
@@ -28,7 +28,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 
 		const gheServers = await GitHubServerApp.getAllForGitHubBaseUrlAndInstallationId(decodeURIComponent(baseUrl), installationId);
 
-		if (!isNew && gheServers?.length) {
+		if (!isNew && gheServers.length) {
 			// `identifier` is the githubAppName for the GH server app
 			const serverApps = gheServers.map(server => ({ identifier: server.gitHubAppName, uuid: server.uuid }));
 

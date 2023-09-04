@@ -1,6 +1,6 @@
 import { RepoSyncState } from "models/reposyncstate";
 
-export type JobId = {
+export interface JobId {
 	installationId: number;
 	jiraHost: string;
 }
@@ -11,7 +11,7 @@ export type JobId = {
  * JobState from the database must choose which repository is the next to be worked on (for example by sorting them
  * by the last updated date to pick the one that was not updated for the longest time).
  */
-export type JobState = {
+export interface JobState {
 	installationId: number;
 	jiraHost: string;
 	numberOfSyncedRepos?: number;

@@ -15,7 +15,7 @@ export const JiraSecurityWorkspacesContainersSearchGet = async (req: Request, re
 
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started for security GET repositories");
 
-	if (!req.query?.workspaceId) {
+	if (!req.query.workspaceId) {
 		const errMessage = Errors.MISSING_WORKSPACE_ID;
 		req.log.warn(errMessage);
 		res.status(400).send(errMessage);
@@ -23,7 +23,7 @@ export const JiraSecurityWorkspacesContainersSearchGet = async (req: Request, re
 	}
 
 	const subscriptionId = req.query.workspaceId as unknown as number;
-	const repoName = sanitizeHtml(req.query?.searchQuery as string);
+	const repoName = sanitizeHtml(req.query.searchQuery as string);
 
 	// Fetch first 200 repos only
 	const repos = await RepoSyncState.findRepositoriesBySubscriptionIdsAndRepoName(jiraHost, subscriptionId, 1, 200, repoName);

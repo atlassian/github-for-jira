@@ -24,7 +24,7 @@ const possibleJiraXmlInfo = [
 
 describe("Extract client key from xml", ()=>{
 	it.each(possibleJiraXmlInfo)("should extract client key correctly", (xml, key)=>{
-		expect(extractClientKey(xml as string)).toBe(key);
+		expect(extractClientKey(xml!)).toBe(key);
 	});
 });
 

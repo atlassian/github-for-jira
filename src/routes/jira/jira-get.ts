@@ -55,8 +55,8 @@ export const getInstallations = async (subscriptions: Subscription[], log: Logge
 	const installations = await Promise.allSettled(subscriptions.map((sub) => getInstallation(sub, gitHubAppId, log)));
 	// Had to add "unknown" in between type as lodash types is incorrect for
 	const connections = groupBy(installations, "status") as unknown as { fulfilled: PromiseFulfilledResult<AppInstallation>[], rejected: PromiseRejectedResult[] };
-	const fulfilled = connections.fulfilled?.map(v => v.value) || [];
-	const rejected = connections.rejected?.map(v => v.reason as FailedAppInstallation) || [];
+	const fulfilled = connections.fulfilled.map(v => v.value) || [];
+	const rejected = connections.rejected.map(v => v.reason as FailedAppInstallation) || [];
 	return {
 		fulfilled,
 		rejected,
@@ -117,10 +117,10 @@ const getConnectionsAndInstallations = async (subscriptions: Subscription[], req
 };
 
 const countStatus = (connections: SuccessfulConnection[], syncStatus: string): number =>
-	connections.filter(org => org?.syncStatus === syncStatus).length || 0;
+	connections.filter(org => org.syncStatus === syncStatus).length || 0;
 
 const countNumberSkippedRepos = (connections: SuccessfulConnection[]): number => {
-	return connections.reduce((acc, obj) => acc + (obj?.totalNumberOfRepos || 0) - (obj?.numberOfSyncedRepos || 0) , 0);
+	return connections.reduce((acc, obj) => acc + (obj.totalNumberOfRepos || 0) - (obj.numberOfSyncedRepos || 0) , 0);
 };
 
 const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): Promise<void> => {
@@ -160,7 +160,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 			applications: value
 		})).value();
 
-	const hasConnections =  !!(installations.total || gheServers?.length);
+	const hasConnections =  !!(installations.total || gheServers.length);
 
 	const useNewSPAExperience = await booleanFlag(BooleanFlags.USE_NEW_5KU_SPA_EXPERIENCE, jiraHost);
 	if (useNewSPAExperience && !hasConnections) {

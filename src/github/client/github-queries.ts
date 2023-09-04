@@ -68,7 +68,7 @@ export const GetRepositoriesQuery = `query ($per_page: Int!, $order_by: Reposito
   }
 }`;
 
-export type pullRequestNode = {
+export interface pullRequestNode {
 	number: number;
 	id: string;
 	state: string;
@@ -150,19 +150,19 @@ export type pullRequestNode = {
 			};
 		}[];
 	};
-};
+}
 
-export type pullRequestQueryResponse = {
+export interface pullRequestQueryResponse {
 	repository: {
 		pullRequests: {
 			edges: {
 				createdAt: string;
-			cursor: string,
-			node: pullRequestNode;
+				cursor: string,
+				node: pullRequestNode;
 			}[]
 		};
 	};
-};
+}
 
 export const getPullRequests = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo) {
@@ -270,7 +270,7 @@ export const getPullRequests = `query ($owner: String!, $repo: String!, $per_pag
   }
 }`;
 
-export type CommitQueryNode = {
+export interface CommitQueryNode {
 	cursor: string,
 	node: {
 		author: {
@@ -287,7 +287,7 @@ export type CommitQueryNode = {
 	}
 }
 
-export type getCommitsResponse = {
+export interface getCommitsResponse {
 	repository: {
 		defaultBranchRef: {
 			target: {
@@ -297,7 +297,7 @@ export type getCommitsResponse = {
 			}
 		}
 	}
-};
+}
 
 export const getCommitsQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
   repository(owner: $owner, name: $repo){
@@ -360,7 +360,7 @@ export const getCommitsQueryWithoutChangedFiles = `query ($owner: String!, $repo
   }
   }`;
 
-export type getBranchesResponse = {
+export interface getBranchesResponse {
 	repository: {
 		refs: {
 			edges: {
@@ -402,7 +402,7 @@ export type getBranchesResponse = {
 			}[]
 		}
 	}
-};
+}
 
 export const getBranchesQueryWithChangedFiles = `query ($owner: String!, $repo: String!, $per_page: Int!, $commitSince: GitTimestamp, $cursor: String) {
     repository(owner: $owner, name: $repo) {
@@ -530,7 +530,7 @@ export const getBranchesQueryWithoutCommits = `query ($owner: String!, $repo: St
     }
   }`;
 
-export type DeploymentQueryNode = {
+export interface DeploymentQueryNode {
 	cursor: string,
 	node: {
 		createdAt: string,
@@ -563,13 +563,13 @@ export type DeploymentQueryNode = {
 	}
 }
 
-export type getDeploymentsResponse = {
+export interface getDeploymentsResponse {
 	repository: {
 		deployments: {
 			edges: DeploymentQueryNode[]
 		}
 	}
-};
+}
 
 export const getDeploymentsQuery = `query ($owner: String!, $repo: String!, $per_page: Int!, $cursor: String) {
   repository(owner: $owner, name: $repo){

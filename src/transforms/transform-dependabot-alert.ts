@@ -32,7 +32,7 @@ export const mapVulnIdentifiers = (identifiers: GitHubVulnIdentifier[], referenc
 export const transformDependabotAlert = async (context: WebhookContext<DependabotAlertEvent>, jiraHost: string): Promise<JiraVulnerabilityBulkSubmitData> => {
 	const { alert, repository } = context.payload;
 
-	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig?.gitHubAppId, jiraHost);
+	const githubClientConfig = await getGitHubClientConfigFromAppId(context.gitHubAppConfig.gitHubAppId, jiraHost);
 
 	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from dependabot_alert webhook: ${state}`);
 	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from dependabot_alert webhook: ${severity}`);

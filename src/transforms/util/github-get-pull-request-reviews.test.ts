@@ -41,7 +41,7 @@ describe("getPullRequestReviews", () => {
 			.reply(200, [{ stuff: "things" }]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([{ stuff: "things" }]);
 	});
 
@@ -58,7 +58,7 @@ describe("getPullRequestReviews", () => {
 			.reply(404);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
@@ -69,7 +69,7 @@ describe("getPullRequestReviews", () => {
 			.reply(500);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger)).toEqual([]);
 	});
 
@@ -92,7 +92,7 @@ describe("getPullRequestReviews", () => {
 			}]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const result = await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger);
 
 		expect(result[0].user.login).toStrictEqual("requestedReviewer");
@@ -116,7 +116,7 @@ describe("getPullRequestReviews", () => {
 			}]);
 		const client = new GitHubInstallationClient(getInstallationId(GITHUB_INSTALLATION_ID), gitHubCloudConfig, jiraHost, { trigger: "test" }, logger);
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const result = await getPullRequestReviews(jiraHost, client, MOCK_REPOSITORY, MOCK_PR, logger);
 
 		expect(result).toHaveLength(1);

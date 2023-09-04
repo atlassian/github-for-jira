@@ -30,7 +30,7 @@ export const cacheSuccessfulDeploymentInfo = async (deploymentInfo : {
 	}
 };
 
-export type LastSuccessfulDeploymentFromCache = {
+export interface LastSuccessfulDeploymentFromCache {
 	commitSha: string;
 	createdAt: Date;
 }

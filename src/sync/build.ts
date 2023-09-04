@@ -76,7 +76,7 @@ const doGetBuildTask = async (
 	const startTime = Date.now();
 
 	logger.info({ startTime }, "Backfill task started");
-	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const { data } = await gitHubInstallationClient.listWorkflowRuns(repository.owner.login, repository.name, pageSizeAwareCursor.perPage, pageSizeAwareCursor.pageNo);
 	const { workflow_runs } = data;
 
@@ -92,7 +92,7 @@ const doGetBuildTask = async (
 
 	const edgesWithCursor: BuildWithCursor[] = [{ total_count: data.total_count, workflow_runs, cursor: nextPageCursorStr }];
 
-	if (!workflow_runs?.length) {
+	if (!workflow_runs.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
@@ -106,7 +106,7 @@ const doGetBuildTask = async (
 	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
-	if (!builds?.length) {
+	if (!builds.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: edgesWithCursor,
@@ -119,7 +119,7 @@ const doGetBuildTask = async (
 		builds
 	};
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.builds.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload

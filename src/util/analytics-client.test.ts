@@ -29,7 +29,7 @@ describe("analytics-client", () => {
 		const sendMessageCalls = (SQS as unknown as jest.Mock).mock.results[0].value.sendMessage.mock.calls;
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		expect(JSON.parse(sendMessageCalls[0][0].MessageBody).eventPayload.eventAttributes.jiraHost).toStrictEqual("553291b03783c4875ed1b0ae4d1c8dde93070e028bc064137980c99e3e7df1da");
 	});
 
@@ -39,7 +39,7 @@ describe("analytics-client", () => {
 		const sendMessageCalls = (SQS as unknown as jest.Mock).mock.results[0].value.sendMessage.mock.calls;
 
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+		// @ts-expect-error
 		const capturedPayload = JSON.parse(sendMessageCalls[0][0].MessageBody);
 		expect(capturedPayload).toStrictEqual(
 			{

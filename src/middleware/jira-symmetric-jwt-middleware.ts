@@ -14,11 +14,11 @@ import { envVars } from "~/src/config/env";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-	const authHeader = req.headers["authorization"] as string;
+	const authHeader = req.headers.authorization!;
 	const authHeaderPrefix = "JWT ";
-	const token = req.query?.["jwt"]
-		|| req.cookies?.["jwt"] || req.body?.["jwt"]
-		|| authHeader?.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
+	const token = req.query.jwt
+		|| req.cookies?.jwt || req.body?.jwt
+		|| authHeader.startsWith(authHeaderPrefix) && authHeader.substring(authHeaderPrefix.length);
 	if (token) {
 		let issuer;
 		try {
@@ -53,7 +53,7 @@ export const jiraSymmetricJwtMiddleware = async (req: Request, res: Response, ne
 		req.addLogFields({ jiraHost: res.locals.jiraHost });
 		return next();
 
-	} else if (req.session?.jiraHost) {
+	} else if (req.session.jiraHost) {
 
 		const installation = await Installation.getForHost(req.session.jiraHost);
 		if (!installation) {
@@ -151,7 +151,7 @@ const checkPathValidity = (url: string) => {
 export const checkGenericContainerActionUrl = async (url: string): Promise<boolean | undefined> => {
 	const genericContainerActionUrls = await getGenericContainerUrls();
 
-	return genericContainerActionUrls?.some(moduleUrl => {
+	return genericContainerActionUrls.some(moduleUrl => {
 		return matchRouteWithPattern(moduleUrl, url);
 	});
 };

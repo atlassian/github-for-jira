@@ -47,7 +47,7 @@ declare global {
 
 export const LogMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	req.log = getLogger("frontend-log-middleware", {
-		fields: req.log?.fields,
+		fields: req.log.fields,
 		level: await stringFlag(StringFlags.LOG_LEVEL, defaultLogLevel, getUnvalidatedJiraHost(req)),
 		filterHttpRequests: true
 	});
@@ -71,7 +71,7 @@ export const LogMiddleware = async (req: Request, res: Response, next: NextFunct
 };
 
 const getUnvalidatedJiraHost = (req: Request): string | undefined =>
-	req.session?.jiraHost || extractUnsafeJiraHost(req);
+	req.session.jiraHost || extractUnsafeJiraHost(req);
 
 /**
  * Checks if the URL matches any of the URL patterns defined in `moduleUrls`

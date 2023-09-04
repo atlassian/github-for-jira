@@ -37,7 +37,7 @@ export class GithubClientRateLimitingError extends GithubClientError {
 	constructor(cause: AxiosError) {
 		super("Rate limiting error", cause);
 		this.uiErrorCode = "RATELIMIT";
-		const rateLimitResetHeaderValue: string = cause.response?.headers?.["x-ratelimit-reset"] || "";
+		const rateLimitResetHeaderValue: string = cause.response?.headers["x-ratelimit-reset"] || "";
 		this.rateLimitReset = parseInt(rateLimitResetHeaderValue) || ((Date.now() / 1000) + ONE_HOUR_IN_SECONDS);
 		this.isRetryable = false;
 	}
@@ -76,7 +76,7 @@ export class GithubClientNotFoundError extends GithubClientError {
 /**
  * Type for errors section in GraphQL response
  */
-export type GraphQLError = {
+export interface GraphQLError {
 	message: string;
 	type: string;
 	path?: string[];
@@ -87,11 +87,11 @@ export type GraphQLError = {
 		[key: string]: any;
 	};
 	locations?:
-		{
-			line: number;
-			column: number;
-		}[];
-};
+	{
+		line: number;
+		column: number;
+	}[];
+}
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {
 	return {
@@ -121,7 +121,7 @@ export class GithubClientGraphQLError extends GithubClientError {
 		this.isRetryable = !!errors.find(
 			(error) =>
 				"MAX_NODE_LIMIT_EXCEEDED" == error.type ||
-				error.message?.startsWith("Something went wrong while executing your query")
+				error.message.startsWith("Something went wrong while executing your query")
 		);
 	}
 

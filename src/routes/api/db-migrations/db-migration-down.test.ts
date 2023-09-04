@@ -46,7 +46,7 @@ describe("DB migration down", ()=>{
 		});
 		it("should successfully migration db down from latest script", async () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			sequelize.query = jest.fn(async () => [{
 				name: MIGRATION_SCRIPT_LAST
 			}]);
@@ -62,7 +62,7 @@ describe("DB migration down", ()=>{
 		it("should fail migration db down if target script is not latest in db", async () => {
 			jest.mocked(runDbMigration).mockRejectedValue("Shouldn't call this");
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			sequelize.query = jest.fn(async () => [{
 				name: MIGRATION_SCRIPT_FIRST
 			}]);

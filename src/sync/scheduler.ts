@@ -59,7 +59,7 @@ const mapSyncStateToTasks = (tasks: TaskType[], syncState: RepoSyncState): Task[
 						full_name: syncState.repoFullName,
 						owner: { login: syncState.repoOwner },
 						html_url: syncState.repoUrl,
-						updated_at: syncState.repoUpdatedAt?.toISOString()
+						updated_at: syncState.repoUpdatedAt.toISOString()
 					},
 					cursor: syncState[getCursorKey(taskType)] || undefined
 				});

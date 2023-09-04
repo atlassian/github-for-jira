@@ -359,7 +359,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				20,
@@ -489,7 +489,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				2,

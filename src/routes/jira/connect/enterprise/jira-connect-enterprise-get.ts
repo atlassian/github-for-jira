@@ -12,7 +12,7 @@ export const JiraConnectEnterpriseGet = async (
 ): Promise<void> => {
 	try {
 		const { id: installationId } = res.locals.installation;
-		const isNew = req.query?.new;
+		const isNew = req.query.new;
 		req.log.debug("Received Jira Connect Enterprise GET page request");
 
 		const gheServers = await GitHubServerApp.findForInstallationId(installationId);

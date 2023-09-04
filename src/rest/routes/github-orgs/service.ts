@@ -12,7 +12,7 @@ const fetchGitHubOrganizations = async (
 	jiraHost: string,
 	installation: Installation,
 	log: Logger
-): Promise<Array<GitHubInstallationType> | void> => {
+): Promise<GitHubInstallationType[] | void> => {
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, { trigger: "getOrganizations" }, log, undefined);
 	const { data: { login } } = await gitHubUserClient.getUser();
 

@@ -49,7 +49,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		gitHubInstallationId
 	});
 
-	if (!context?.payload?.repository?.id) {
+	if (!context.payload?.repository?.id) {
 		context.log.warn("Cannot delete repository. Missing repository ID");
 		webhookProcessComplete(context, 500, subscription.jiraHost);
 		return;
@@ -61,7 +61,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 
 	try {
 		const jiraResponse = await jiraClient.devinfo.repository.delete(
-			repositoryId,  context.gitHubAppConfig?.gitHubBaseUrl
+			repositoryId,  context.gitHubAppConfig.gitHubBaseUrl
 		);
 
 		await	RepoSyncState.deleteRepoForSubscription(subscription, repositoryId);
@@ -82,6 +82,6 @@ const webhookProcessComplete = (context: WebhookContext, status: number, jiraHos
 		jiraHost,
 		log,
 		status,
-		context.gitHubAppConfig?.gitHubAppId
+		context.gitHubAppConfig.gitHubAppId
 	);
 };

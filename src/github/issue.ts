@@ -18,7 +18,7 @@ export const issueWebhookHandler = async (context: WebhookContext<IssuesOpenedEv
 		jiraHost: jiraClient.baseURL
 	});
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const metrics = {
 		trigger: "webhook",
 		subTrigger: "issue"
@@ -59,7 +59,7 @@ export const issueWebhookHandler = async (context: WebhookContext<IssuesOpenedEv
 		name,
 		jiraClient.jiraHost,
 		log,
-		githubResponse?.status,
+		githubResponse.status,
 		gitHubAppId
 	);
 };

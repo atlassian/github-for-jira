@@ -2,13 +2,13 @@ import { errorWrapper } from "~/src/rest/helper";
 import { Request, Response } from "express";
 import { ScreenEventProps, sendAnalytics, TrackOpUiEventProps } from "~/src/util/analytics-client";
 
-type AnalyticsScreenPayload = {
+interface AnalyticsScreenPayload {
 	eventType: "screen";
 	eventProperties: ScreenEventProps & Record<string, unknown>;
 	eventAttributes?: Record<string, unknown>;
 }
 
-type AnalyticsTrackUiPayload = {
+interface AnalyticsTrackUiPayload {
 	eventType: "ui" | "track";
 	eventProperties: TrackOpUiEventProps & Record<string, unknown>;
 	eventAttributes?: Record<string, unknown>;

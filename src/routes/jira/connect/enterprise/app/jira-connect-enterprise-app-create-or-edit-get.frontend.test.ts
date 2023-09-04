@@ -119,7 +119,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				};
 				window.AP.navigator = window.AP.navigator || {};
 				window.AP.navigator.go = (arg1, arg2) => {
-					window["redirectData"] = {
+					window.redirectData = {
 						arg1, arg2
 					};
 				};

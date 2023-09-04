@@ -20,7 +20,7 @@ export const GithubCreateBranchOptionsGet = async (req: Request, res: Response, 
 
 	const logger = getLogger("github-create-branch-get-options", {
 		fields: {
-			...req.log?.fields,
+			...req.log.fields,
 			jiraHost
 		}
 	});

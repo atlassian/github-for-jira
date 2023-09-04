@@ -99,7 +99,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				};
 				window.AP.navigator = window.AP.navigator || {};
 				window.AP.navigator.go = (arg1, arg2) => {
-					window["redirectData"] = {
+					window.redirectData = {
 						arg1, arg2
 					};
 				};
@@ -112,10 +112,10 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 	};
 
 	const waitAndGetRedirectData = async () => {
-		await page.waitForFunction(() => window["redirectData"] !== undefined, { timeout: 5000 });
+		await page.waitForFunction(() => window.redirectData !== undefined, { timeout: 5000 });
 
 		const redirectData = await page.evaluate(() => {
-			return window["redirectData"];
+			return window.redirectData;
 		});
 		return redirectData;
 	};
@@ -134,6 +134,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 
 		describe("validates API Key header", () => {
 
+			// eslint-disable-next-line jest/expect-expect
 			it("when the value is a known HTTP header", async () => {
 				await enterApiKeyHeaderName("authorization");
 
@@ -141,6 +142,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				await expectDisabledButton();
 			});
 
+			// eslint-disable-next-line jest/expect-expect
 			it("when the value is too long", async () => {
 				await enterApiKeyHeaderName(Array.from({ length: 1200 }, () => "x").join(""));
 
@@ -154,6 +156,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				await enterApiKeyHeaderName("foo");
 			});
 
+			// eslint-disable-next-line jest/expect-expect
 			it("when the value is empty", async () => {
 				await enterApiKeyHeaderValue("   ");
 
@@ -161,6 +164,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				await expectDisabledButton();
 			});
 
+			// eslint-disable-next-line jest/expect-expect
 			it("when the value is too long", async () => {
 				await enterApiKeyHeaderValue(Array.from({ length: 12000 }, () => "x").join(""));
 
@@ -168,6 +172,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				await expectDisabledButton();
 			});
 
+			// eslint-disable-next-line jest/expect-expect
 			it("when API header name is not provided", async () => {
 				await enterApiKeyHeaderName("");
 				await enterApiKeyHeaderValue("some-correct-value");
@@ -236,6 +241,7 @@ describe("jira-connect-enterprise-get.frontend(jira-server-url.hbs + jira-server
 				});
 			});
 
+			// eslint-disable-next-line jest/expect-expect
 			it("Errpr with API key", async () => {
 				gheNock.get("/api/v3/rate_limit")
 					.matchHeader("OK-HEADER", "foo")

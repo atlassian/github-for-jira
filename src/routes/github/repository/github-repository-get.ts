@@ -10,7 +10,7 @@ const MAX_REPOS_RETURNED = 20;
 export const GitHubRepositoryGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost: jiraHostLocals, gitHubAppConfig } = res.locals;
 	const { jiraHost: jiraHostParam } = req.query;
-	const repoName = req.query?.repoName as string;
+	const repoName = req.query.repoName as string;
 	const jiraHost = jiraHostLocals || jiraHostParam;
 
 	const log = req.log.child({ jiraHost, repoName });
@@ -66,7 +66,7 @@ const getReposBySubscriptions = async (repoName: string, subscriptions: Subscrip
 
 			const installationSearch = await gitHubInstallationClient.searchRepositories(searchQueryInstallationString, "updated")
 				.then(responseInstallationSearch => {
-					const userInstallationSearch = responseInstallationSearch.data?.items || [];
+					const userInstallationSearch = responseInstallationSearch.data.items || [];
 					logger.info(`Found ${userInstallationSearch.length} repos from installation search`);
 					return userInstallationSearch;
 				})
@@ -106,5 +106,5 @@ const getOrgName = async (subscription: Subscription, jiraHost: string, logger: 
 	const metrics = { trigger: "github-repo-get" };
 	const gitHubAppClient = await createAppClient(logger, jiraHost, subscription.gitHubAppId, metrics);
 	const response = await gitHubAppClient.getInstallation(subscription.gitHubInstallationId);
-	return response.data?.account?.login;
+	return response.data.account.login;
 };

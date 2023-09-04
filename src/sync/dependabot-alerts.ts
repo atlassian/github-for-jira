@@ -36,7 +36,7 @@ export const getDependabotAlertTask = async (
 		direction: SortDirection.DES
 	});
 
-	if (!dependabotAlerts?.length) {
+	if (!dependabotAlerts.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
@@ -58,7 +58,7 @@ export const getDependabotAlertTask = async (
 
 	const jiraPayload = await transformDependabotAlerts(dependabotAlerts, repository, messagePayload.jiraHost, parentLogger, messagePayload.gitHubAppConfig?.gitHubAppId);
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Dependabot Alerts task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.vulnerabilities.length }, "Dependabot Alerts task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload
@@ -102,10 +102,10 @@ const transformDependabotAlerts = async (
 			introducedDate: alert.created_at,
 			lastUpdated: alert.updated_at,
 			severity: {
-				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability?.severity?.toLowerCase(), handleUnmappedSeverity)
+				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability.severity.toLowerCase(), handleUnmappedSeverity)
 			},
 			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
-			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
+			status: transformGitHubStateToJiraStatus(alert.state.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
 				content: alert.dependency.manifest_path
 			}

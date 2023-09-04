@@ -99,7 +99,7 @@ describe("PUT /jira/connect/enterprise/app/:uuid", () => {
 
 		existingApp =(await GitHubServerApp.findByPk(existingApp.id))!;
 
-		expect(await existingApp?.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
+		expect(await existingApp.getDecryptedPrivateKey(jiraHost)).toBe("privatekey");
 	});
 
 	it("should return 202 when correct uuid and installation id are passed, with partial data", async () => {

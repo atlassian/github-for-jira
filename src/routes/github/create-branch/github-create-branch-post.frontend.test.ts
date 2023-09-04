@@ -89,7 +89,7 @@ describe("github-create-branch-post.frontend", () => {
 			}, element))!;
 
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			await parentAnchor.click();
 
 			// await page.keyboard.type("Your desired text");
@@ -105,6 +105,7 @@ describe("github-create-branch-post.frontend", () => {
 
 		describe("with pre-loaded repo", () => {
 
+			// eslint-disable-next-line jest/expect-expect
 			it("should successfully create a branch", async () => {
 				gheApiNock
 					.post(`/app/installations/${subscription.gitHubInstallationId}/access_tokens`)

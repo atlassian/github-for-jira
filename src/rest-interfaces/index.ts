@@ -1,52 +1,52 @@
 
-export type GetRedirectUrlResponse = {
+export interface GetRedirectUrlResponse {
 	redirectUrl: string;
 	state: string;
-};
+}
 
-export type ExchangeTokenResponse = {
+export interface ExchangeTokenResponse {
 	accessToken: string;
 	refreshToken: string;
-};
+}
 
-export type UsersGetAuthenticatedResponse = {
+export interface UsersGetAuthenticatedResponse {
 	email: string;
 	login: string;
-};
+}
 
-export type GetGitHubAppsUrlResponse = {
+export interface GetGitHubAppsUrlResponse {
 	appInstallationUrl: string;
 }
 
-export type OrganizationsResponse = {
-	orgs: Array<GitHubInstallationType>;
+export interface OrganizationsResponse {
+	orgs: GitHubInstallationType[];
 }
 
-export type GitHubInstallationType = {
+export interface GitHubInstallationType {
 	account: GitHubInstallationAccountType;
 	app_id: number;
 	requiresSsoLogin: boolean;
 	isIPBlocked: boolean;
 	isAdmin: boolean;
 	id: number;
-};
+}
 
-type GitHubInstallationAccountType = {
+interface GitHubInstallationAccountType {
 	avatar_url: string;
 	id: number;
 	login: string;
 	url: string;
 	site_admin?: boolean;
 	type?: string;
-};
+}
 
-export type JiraCloudIDResponse = {
+export interface JiraCloudIDResponse {
 	cloudId: string;
-};
+}
 
 export type ErrorType = "warning" | "error";
 
-export type ApiError = {
+export interface ApiError {
 	message: string;
 	errorCode: ErrorCode;
 }

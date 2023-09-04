@@ -63,7 +63,7 @@ export const findOrStartSync = async (
 	}, 0, logger);
 };
 
-type SubscriptionUpdateTasks = {
+interface SubscriptionUpdateTasks {
 	totalNumberOfRepos?: number | null;
 	repositoryCursor?: string | null;
 	repositoryStatus?: string | null;

@@ -8,7 +8,7 @@ interface CompareCommitsPayload {
 	head: string;
 }
 
-export type CommitSummary = {
+export interface CommitSummary {
 	sha: string;
 	message: string;
 }
@@ -34,10 +34,10 @@ export const getAllCommitsBetweenReferences = async (
 	let commitSummaries;
 	try {
 		const commitsDiff = await gitHubInstallationClient.compareReferences(payload.owner, payload.repo, payload.base, payload.head);
-		commitSummaries = commitsDiff.data?.commits
-			?.map((c) => { return { sha: c.sha, message: c.commit.message }; });
+		commitSummaries = commitsDiff.data.commits
+			.map((c) => { return { sha: c.sha, message: c.commit.message }; });
 	} catch (err) {
-		logger?.debug(
+		logger.debug(
 			{ err, repo: payload.repo },
 			"Failed to compare commits on repo."
 		);

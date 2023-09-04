@@ -31,9 +31,9 @@ const transforms: Transforms<EnvVars> = {
 		const proxyPort = process.env.EXTERNAL_ONLY_PROXY_PORT;
 		return proxyHost && proxyPort ? `http://${proxyHost}:${proxyPort}` : undefined;
 	},
-	WEBHOOK_SECRETS: (value?: string): Array<string> => {
+	WEBHOOK_SECRETS: (value?: string): string[] => {
 		try {
-			const parsed = value ? JSON.parse(value) as Array<string> : undefined;
+			const parsed = value ? JSON.parse(value) as string[] : undefined;
 			if (!parsed) {
 				return [];
 			}
@@ -109,7 +109,7 @@ export interface EnvVars {
 	APP_ID: string;
 	APP_URL: string;
 	APP_KEY: string;
-	WEBHOOK_SECRETS: Array<string>;
+	WEBHOOK_SECRETS: string[];
 	COOKIE_SESSION_KEY: string;
 	GITHUB_CLIENT_ID: string;
 	GITHUB_CLIENT_SECRET: string;

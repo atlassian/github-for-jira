@@ -112,11 +112,11 @@ export const JiraConnectedReposGet = async (
 			return {
 				name: repoSyncState.repoFullName,
 				syncStatus: mapTaskStatus(getSyncStatus(repoSyncState)),
-				branchStatus: repoSyncState?.branchStatus,
-				commitStatus: repoSyncState?.commitStatus,
-				pullStatus: repoSyncState?.pullStatus,
-				buildStatus: repoSyncState?.buildStatus,
-				deploymentStatus: repoSyncState?.deploymentStatus,
+				branchStatus: repoSyncState.branchStatus,
+				commitStatus: repoSyncState.commitStatus,
+				pullStatus: repoSyncState.pullStatus,
+				buildStatus: repoSyncState.buildStatus,
+				deploymentStatus: repoSyncState.deploymentStatus,
 				failedCode: repoSyncState.failedCode
 			};
 		});
@@ -184,7 +184,7 @@ const getPaginationNumbers = (currentPageNum: number, totalPages: number): Page[
 
 const getSyncStatus = (repoSyncState: RepoSyncState): TaskStatus => {
 
-	const statuses = [repoSyncState?.branchStatus, repoSyncState?.commitStatus, repoSyncState?.pullStatus, repoSyncState?.buildStatus, repoSyncState?.deploymentStatus];
+	const statuses = [repoSyncState.branchStatus, repoSyncState.commitStatus, repoSyncState.pullStatus, repoSyncState.buildStatus, repoSyncState.deploymentStatus];
 	if (statuses.includes("pending")) {
 		return "pending";
 	}

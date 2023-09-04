@@ -29,7 +29,7 @@ export const issueCommentWebhookHandler = async (
 	});
 
 	let linkifiedBody;
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const metrics = {
 		trigger: "webhook",
 		subTrigger: "issueComment"
@@ -90,7 +90,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 	const jiraClient = await getJiraClient(
 		jiraHost,
 		gitHubInstallationClient.githubInstallationId.installationId,
-		context.gitHubAppConfig?.gitHubAppId,
+		context.gitHubAppConfig.gitHubAppId,
 		context.log
 	);
 

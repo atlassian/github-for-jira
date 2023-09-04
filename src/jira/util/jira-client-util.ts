@@ -9,7 +9,7 @@ export const getJiraUtil = (jiraClient) => {
 	const containsReferenceLink = (line: string) => {
 		// reference text links should have 2 parts only
 		if (line.split(" ").length === 2) {
-			const hasSquareBrackets = line.charAt(0) === "[" && line.includes("]:");
+			const hasSquareBrackets = line.startsWith("[") && line.includes("]:");
 			const hasUrl = line.includes("http://") || line.includes("https://");
 
 			return hasSquareBrackets && hasUrl;
@@ -89,13 +89,13 @@ export const getJiraUtil = (jiraClient) => {
 		}
 	};
 
-	type Command = {
+	interface Command {
 		kind: string;
 		name: string;
 		text: string;
 		time: number;
 		issueKeys: string[]
-	};
+	}
 	const runJiraCommands = async (commands: Command[]) => {
 		return Promise.all(commands.map(command => {
 			if (command.kind === "comment") {

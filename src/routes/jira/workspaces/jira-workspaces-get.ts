@@ -6,7 +6,7 @@ import { paginatedResponse } from "utils/paginate-response";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import sanitizeHtml from "sanitize-html";
 
-export type Workspace = {
+export interface Workspace {
 	id: string,
 	name: string,
 	canCreateContainer: boolean
@@ -57,9 +57,9 @@ export const JiraWorkspacesGet = async (req: Request, res: Response): Promise<vo
 		return;
 	}
 
-	const orgName = sanitizeHtml(req.query?.searchQuery as string);
-	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
+	const orgName = sanitizeHtml(req.query.searchQuery as string);
+	const page = Number(sanitizeHtml(req.query.page)) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query.limit)) || DEFAULT_LIMIT;
 
 	const matchedOrgs = await findMatchingOrgs(subscriptions, orgName);
 

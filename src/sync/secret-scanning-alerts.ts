@@ -22,7 +22,7 @@ export const getSecretScanningAlertTask = async (
 	const startTime = Date.now();
 
 	logger.info({ startTime }, "Secret scanning alerts task started");
-	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
 
 	const { data: secretScanningAlerts  } = await gitHubClient.getSecretScanningAlerts(repository.owner.login, repository.name, {
@@ -32,7 +32,7 @@ export const getSecretScanningAlertTask = async (
 		direction: SortDirection.DES
 	});
 
-	if (!secretScanningAlerts?.length) {
+	if (!secretScanningAlerts.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges: [],
@@ -53,7 +53,7 @@ export const getSecretScanningAlertTask = async (
 
 	const jiraPayload = await transformSecretScanningAlert(secretScanningAlerts, repository, jiraHost, logger,  messagePayload.gitHubAppConfig?.gitHubAppId);
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.vulnerabilities?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload.vulnerabilities.length }, "Backfill task complete");
 	return {
 		edges: edgesWithCursor,
 		jiraPayload
@@ -93,7 +93,7 @@ const transformSecretScanningAlert = async (
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
-			lastUpdated: alert?.resolved_at || alert.created_at,
+			lastUpdated: alert.resolved_at || alert.created_at,
 			severity: {
 				level: JiraVulnerabilitySeverityEnum.CRITICAL
 			},

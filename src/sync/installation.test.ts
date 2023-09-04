@@ -119,7 +119,7 @@ describe("sync/installation", () => {
 	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error
 	const sentry: Hub = { setUser: jest.fn() } as Hub;
 
 	describe("isRetryableWithSmallerRequest()", () => {
@@ -300,7 +300,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
 		});
 
@@ -322,7 +322,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
 	});
@@ -343,7 +343,7 @@ describe("sync/installation", () => {
 
 		it("should return set of target tasks and filter out invalid values", async () => {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
+			// @ts-expect-error
 			expect(getTargetTasks(["pull", "commit", "cats"])).toEqual(["pull", "commit"]);
 		});
 	});
@@ -386,16 +386,16 @@ describe("sync/installation", () => {
 				const	newRepoSyncStatesData: any[] = [];
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.get() };
-					delete newRepoSyncState["id"];
-					delete newRepoSyncState["branchStatus"];
-					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
+					delete newRepoSyncState.id;
+					delete newRepoSyncState.branchStatus;
+					newRepoSyncState.repoId = repoSyncState.repoId + newRepoStateNo;
 					if (newRepoStateNo < 49) {
 						// the last one should be main
-						newRepoSyncState["repoName"] = repoSyncState.repoName + "_subtask";
-						newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + "_subtask";
+						newRepoSyncState.repoName = repoSyncState.repoName + "_subtask";
+						newRepoSyncState.repoFullName = repoSyncState.repoFullName + "_subtask";
 					} else {
-						newRepoSyncState["repoName"] = repoSyncState.repoName + "_main";
-						newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + "_main";
+						newRepoSyncState.repoName = repoSyncState.repoName + "_main";
+						newRepoSyncState.repoFullName = repoSyncState.repoFullName + "_main";
 					}
 					newRepoSyncStatesData.push(newRepoSyncState);
 				}
@@ -453,7 +453,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(2);
+				expect(updatedRows.length).toEqual(2);
 			});
 
 			it("for multiple tasks ignores failures of non-main tasks", async () => {
@@ -482,7 +482,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(1);
+				expect(updatedRows.length).toEqual(1);
 			});
 		});
 

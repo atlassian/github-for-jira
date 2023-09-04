@@ -5,7 +5,7 @@ import { v4 as uuid } from "uuid";
 import { envVars } from "config/env";
 import { RootRouter } from "routes/router";
 
-type Event = {
+interface Event {
 	name: string,
 	payload: object
 }

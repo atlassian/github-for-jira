@@ -44,9 +44,9 @@ import { logCurlOutputInChunks, runCurl } from "utils/curl/curl-utils";
 
 // Unfortunately, the type is not exposed in Octokit...
 // https://docs.github.com/en/rest/pulls/review-requests?apiVersion=2022-11-28#get-all-requested-reviewers-for-a-pull-request
-export type PullRequestedReviewersResponse = {
-	users: Array<Octokit.PullsUpdateResponseRequestedReviewersItem>,
-	teams: Array<Octokit.PullsUpdateResponseRequestedTeamsItem>,
+export interface PullRequestedReviewersResponse {
+	users: Octokit.PullsUpdateResponseRequestedReviewersItem[],
+	teams: Octokit.PullsUpdateResponseRequestedTeamsItem[],
 }
 
 /**
@@ -230,7 +230,7 @@ export class GitHubInstallationClient extends GitHubClient {
 		}
 	};
 
-	public getRepository = async (id: number): Promise<AxiosResponse<any>> => {
+	public getRepository = async (id: number): Promise<AxiosResponse> => {
 		return await this.get<Octokit.GitGetRefResponse>(`/repositories/{id}`, {}, {
 			id
 		});
@@ -251,7 +251,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				perPage,
 				page
 			});
-			const hasNextPage = !!response?.headers.link?.includes("rel=\"next\"");
+			const hasNextPage = !!response.headers.link.includes("rel=\"next\"");
 			return {
 				...response,
 				hasNextPage
@@ -314,7 +314,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				order
 			}
 		);
-		if (!resp.data?.items?.length) {
+		if (!resp.data.items.length) {
 			if (await booleanFlag(BooleanFlags.LOG_CURLV_OUTPUT, this.jiraHost)) {
 				try {
 					this.logger.warn({ queryString, order }, "Couldn't find repo, run curl for commands to get from github, try again with curl");
@@ -385,7 +385,7 @@ export class GitHubInstallationClient extends GitHubClient {
 
 	public async getNumberOfReposForInstallation(): Promise<number> {
 		const response = await this.graphql<{ viewer: { repositories: { totalCount: number } } }>(ViewerRepositoryCountQuery, await this.installationAuthenticationHeaders(), undefined, { graphQuery: "ViewerRepositoryCountQuery" });
-		return response?.data?.data?.viewer?.repositories?.totalCount;
+		return response.data.data.viewer.repositories.totalCount;
 	}
 
 	public async getDependabotAlerts(owner: string, repo: string, dependabotAlertRequestParams: GetDependabotAlertRequestParams): Promise<AxiosResponse<DependabotAlertResponseItem[]>> {
@@ -437,7 +437,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				}
 				return Promise.reject(err);
 			});
-		return response?.data?.data;
+		return response.data.data;
 	}
 
 	public async getDeploymentsPage(jiraHost: string, owner: string, repoName: string, perPage?: number, cursor?: string | number): Promise<getDeploymentsResponse> {
@@ -454,7 +454,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				cursor
 			},
 			{ graphQuery: "getDeploymentsQuery" });
-		return response?.data?.data;
+		return response.data.data;
 	}
 
 	/**
@@ -480,7 +480,7 @@ export class GitHubInstallationClient extends GitHubClient {
 				}
 				return Promise.reject(err);
 			});
-		return response?.data?.data;
+		return response.data.data;
 	}
 
 	public async updateIssueComment({ owner, repo, comment_id, body }: Octokit.IssuesUpdateCommentParams): Promise<AxiosResponse<Octokit.IssuesUpdateCommentResponse>> {

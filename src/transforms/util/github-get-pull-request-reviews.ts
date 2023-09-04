@@ -12,7 +12,7 @@ export const 	getPullRequestReviews = async (
 	repository: Repository,
 	pullRequest: Octokit.PullsListResponseItem,
 	logger: Logger
-): Promise<Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>> =>
+): Promise<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }[]> =>
 {
 	const { owner: { login: repositoryOwner }, name: repositoryName, id: repositoryId } = repository;
 	const { number: pullRequestNumber, id: pullRequestId } = pullRequest;

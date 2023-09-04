@@ -8,7 +8,7 @@ import { Errors } from "config/errors";
 export const GithubBranchesGet = async (req: Request, res: Response): Promise<void> => {
 	const { jiraHost, gitHubAppConfig } = res.locals;
 	const logger = getLogger("github-branches-get", {
-		fields: req.log?.fields
+		fields: req.log.fields
 	});
 
 	if (!gitHubAppConfig) {

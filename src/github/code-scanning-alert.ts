@@ -25,7 +25,7 @@ export const handleRemoteLinks = async (context: WebhookContext, jiraClient, git
 
 	context.log.info(`Sending code scanning alert event as Remote Link to Jira: ${jiraClient.baseURL}`);
 	const result = await jiraClient.remoteLink.submit(jiraPayload);
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(
 		new Date(webhookReceived).getTime(),
@@ -56,7 +56,7 @@ export const handleSecurityVulnerability = async (context: WebhookContext, jiraC
 
 	context.log.info(`Sending code scanning alert event as Security Vulnerability to Jira: ${jiraClient.baseURL}`);
 	const result = await jiraClient.security.submitVulnerabilities(jiraPayload);
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 
 	const webhookReceived = context.webhookReceived;
 	webhookReceived && emitWebhookProcessedMetrics(

@@ -6,8 +6,8 @@ const logger = getLogger("healthcheck");
 export const HealthcheckGetPost = async (req: Request, res: Response): Promise<void> => {
 
 	try {
-		if (req.params["uuid"]) {
-			logger.info({ uuid: req.params["uuid"] }, "healthcheck call from GHEs");
+		if (req.params.uuid) {
+			logger.info({ uuid: req.params.uuid }, "healthcheck call from GHEs");
 		}
 		await EncryptionClient.healthcheck();
 		await EncryptionClient.deepcheck();

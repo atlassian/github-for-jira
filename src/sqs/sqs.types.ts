@@ -6,7 +6,7 @@ import Logger from "bunyan";
 /**
  * Message processing context, which will be passed to message handler to handle the received message
  */
-export type SQSMessageContext<MessagePayload> = {
+export interface SQSMessageContext<MessagePayload> {
 
 	/**
 	 * Message payload
@@ -35,7 +35,7 @@ export type SQSMessageContext<MessagePayload> = {
 	lastAttempt: boolean;
 }
 
-export type QueueSettings = {
+export interface QueueSettings {
 
 	readonly queueName: string,
 
@@ -119,7 +119,7 @@ export interface SQSContext {
 	log: Logger;
 }
 
-export type BaseMessagePayload = {
+export interface BaseMessagePayload {
 	jiraHost: string,
 	installationId: number,
 	gitHubAppConfig?: GitHubAppConfig, //undefined for cloud
@@ -158,7 +158,7 @@ export type PushQueueMessagePayload = BaseMessagePayload & {
 	webhookReceived?: number,
 }
 
-export type GitHubAppConfig = {
+export interface GitHubAppConfig {
 	gitHubAppId: number | undefined, // undefined for cloud
 	appId: number,
 	clientId: string,
@@ -168,7 +168,7 @@ export type GitHubAppConfig = {
 }
 
 //refer from https://docs.github.com/en/rest/repos/repos#get-a-repository
-type PayloadRepository = {
+interface PayloadRepository {
 	id: number,
 	name: string,
 	full_name: string,

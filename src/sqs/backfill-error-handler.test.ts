@@ -44,7 +44,7 @@ describe("backfillErrorHandler", () => {
 		subscription = ret.subscription;
 		repoSyncState = ret.repoSyncState!;
 
-		task = { task: "commit", repositoryId: repoSyncState?.repoId, repository: _.cloneDeep(TEST_REPO) };
+		task = { task: "commit", repositoryId: repoSyncState.repoId, repository: _.cloneDeep(TEST_REPO) };
 		sendMessageMock = jest.fn();
 	});
 
@@ -102,7 +102,7 @@ describe("backfillErrorHandler", () => {
 			receiveCount, lastAttempt, log: getLogger("test"), message: {}, payload: {
 				jiraHost,
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				installationId: subscription?.gitHubInstallationId
 			}
 		});

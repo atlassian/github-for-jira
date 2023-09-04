@@ -65,7 +65,7 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 		trigger: "webhook",
 		subTrigger: "code_scanning_alert"
 	};
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig.gitHubAppId);
 
 	// Grab branch names or PR titles
 	const entityTitles: string[] = [];
@@ -122,7 +122,7 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 		trigger: "webhook",
 		subTrigger: "code_scanning_alert"
 	};
-	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
+	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig.gitHubAppId);
 
 	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
 	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity}`);

@@ -54,7 +54,7 @@ export const processDeployment = async (
 		webhookId: webhookId,
 		gitHubInstallationId,
 		jiraHost,
-		repositoryId: webhookPayload.repository?.id,
+		repositoryId: webhookPayload.repository.id,
 		deploymentState: state,
 		deploymentEnvironment: environment,
 		webhookReceived: webhookReceivedDate
@@ -99,7 +99,7 @@ export const processDeployment = async (
 		"deployment_status",
 		jiraHost,
 		logger,
-		result?.status,
+		result.status,
 		gitHubAppId
 	);
 };

@@ -20,7 +20,7 @@ export enum PullRequestSort {
 	LONG_RUNNING = "long-running",
 }
 
-export type GetPullRequestParams = {
+export interface GetPullRequestParams {
 	state?: string;
 	head?: string;
 	base?: string;
@@ -30,14 +30,14 @@ export type GetPullRequestParams = {
 	page?: number;
 }
 
-export type GetSecretScanningAlertRequestParams = {
+export interface GetSecretScanningAlertRequestParams {
 	sort?: string;
 	direction?: string;
 	per_page?: number;
 	page?: number;
 }
 
-export type GetCodeScanningAlertRequestParams = {
+export interface GetCodeScanningAlertRequestParams {
 	sort?: string;
 	direction?: string;
 	per_page?: number;
@@ -46,10 +46,10 @@ export type GetCodeScanningAlertRequestParams = {
 	severity?: "critical" | "high" | "medium" | "low" | "warning" | "note" | "error"
 }
 
-export type GraphQlQueryResponse<ResponseData> = {
+export interface GraphQlQueryResponse<ResponseData> {
 	data: ResponseData;
 	errors?: GraphQLError[];
-};
+}
 
 export type PaginatedAxiosResponse<T> = { hasNextPage: boolean; } & AxiosResponse<T>;
 
@@ -72,14 +72,14 @@ export type ActionsListRepoWorkflowRunsResponseEnhanced =
 	& { name: string };
 
 
-export type CreateReferenceBody = {
+export interface CreateReferenceBody {
 	owner: string,
 	repo: string,
 	ref: string,
 	sha: string
 }
 
-export type GetDependabotAlertRequestParams = {
+export interface GetDependabotAlertRequestParams {
 	sort?: string;
 	direction?: string;
 	per_page?: number;
@@ -87,7 +87,7 @@ export type GetDependabotAlertRequestParams = {
 }
 
 
-export type DependabotAlertResponseItem = {
+export interface DependabotAlertResponseItem {
 	number: number,
 	created_at: string,
 	updated_at: string,
@@ -112,7 +112,7 @@ export type DependabotAlertResponseItem = {
 	}
 }
 
-export type SecretScanningAlertResponseItem = {
+export interface SecretScanningAlertResponseItem {
 	number: number,
 	created_at: string,
 	updated_at?: string,
@@ -127,7 +127,7 @@ export type SecretScanningAlertResponseItem = {
 	secret_type_display_name: string
 }
 
-export type CodeScanningAlertResponseItem = {
+export interface CodeScanningAlertResponseItem {
 	number: number;
 	created_at: string;
 	updated_at: string;
@@ -142,9 +142,9 @@ export type CodeScanningAlertResponseItem = {
 	rule: CodeScanningAlertResponseItemRule;
 	tool: CodeScanningAlertResponseItemTool;
 	most_recent_instance: CodeScanningAlertResponseItemMostRecentInstance;
-};
+}
 
-type CodeScanningAlertResponseItemRule = {
+interface CodeScanningAlertResponseItemRule {
 	name: string;
 	description: string;
 	full_description: string;
@@ -154,15 +154,15 @@ type CodeScanningAlertResponseItemRule = {
 	security_severity_level: "low" | "medium" | "high" | "critical" | null;
 	help: string | null;
 	help_uri: string | null;
-};
+}
 
-type CodeScanningAlertResponseItemTool = {
+interface CodeScanningAlertResponseItemTool {
 	name: string;
 	version: string | null;
 	guid: string | null;
 }
 
-type CodeScanningAlertResponseItemMostRecentInstance = {
+interface CodeScanningAlertResponseItemMostRecentInstance {
 	ref: string;
 	environment: string;
 	category: string;

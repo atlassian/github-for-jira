@@ -20,7 +20,7 @@ describe("Cookie session middleware", () => {
 			//1. cookie-sessions lib create none-secure cookie,
 			//2. and cookies lib refuse to set-cookie header if connection is not secure
 			//In production, the connection will always be encrypted
-			req.connection["encrypted"] = true;
+			req.connection.encrypted = true;
 			req.session["test-cookie-key"] = "test-cookie-value";
 			res.send("ok");
 		});

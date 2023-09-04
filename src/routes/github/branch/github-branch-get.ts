@@ -12,7 +12,7 @@ export const GithubBranchGet = async (req: Request, res: Response): Promise<void
 	const { owner, repo, ref } = req.params;
 
 	const logger = getLogger("github-branch-get", {
-		fields: req.log?.fields
+		fields: req.log.fields
 	});
 
 	if (!gitHubAppConfig) {

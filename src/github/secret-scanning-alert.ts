@@ -16,7 +16,7 @@ export const secretScanningAlertWebhookHandler = async (context: WebhookContext<
 		jiraHost: jiraClient.baseURL
 	});
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const metrics = {
 		trigger: "webhook",
 		subTrigger: "secretScanningAlert"

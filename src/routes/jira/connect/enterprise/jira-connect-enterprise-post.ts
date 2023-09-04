@@ -48,7 +48,7 @@ const isResponseFromGhe = (logger: Logger, response?: AxiosResponse) => {
 		return false;
 	}
 	return !!Object.keys(response.headers).find(isUniquelyGitHubServerHeader) ||
-		response.headers["server"] === "GitHub.com";
+		response.headers.server === "GitHub.com";
 };
 
 const saveTempConfigAndRespond200 = async (res: Response, gheConnectConfig: GheConnectConfig, installationId: number) => {
@@ -114,7 +114,7 @@ export const JiraConnectEnterprisePost = async (
 			: null
 	};
 
-	if (gitHubServerApps?.length) {
+	if (gitHubServerApps.length) {
 		req.log.debug(`GitHub apps found for url: ${gheServerURL}. Redirecting to Jira list apps page.`);
 		await useExistingConfigAndRespond200(res, gitHubServerApps[0]);
 		return;

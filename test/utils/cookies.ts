@@ -24,20 +24,20 @@ export const parseCookiesAndSession = (response: Response): { cookies: any, sess
 		const parsed = cookie.parse(setCookieString);
 		return Object.assign(acc, parsed);
 	}, {});
-	if (parsedCookies["session"]) {
+	if (parsedCookies.session) {
 		return {
 			cookies: parsedCookies,
-			session: JSON.parse(new Buffer(parsedCookies["session"], "base64").toString("ascii"))
+			session: JSON.parse(new Buffer(parsedCookies.session, "base64").toString("ascii"))
 		};
 	}
 	return { cookies: parsedCookies };
 };
 
 export const 	findOAuthStateInSession = (session: any) => Object.entries(session).find(keyValue =>
-	keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
+	keyValue[1] instanceof Object && keyValue[1].postLoginRedirectUrl
 )![1];
 
 export const 	findOAuthStateKeyInSession = (session: any) => Object.entries(session).find(keyValue =>
-	keyValue[1] instanceof Object && keyValue[1]["postLoginRedirectUrl"]
+	keyValue[1] instanceof Object && keyValue[1].postLoginRedirectUrl
 )![0];
 

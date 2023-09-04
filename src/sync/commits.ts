@@ -10,8 +10,8 @@ import { createHashWithSharedSecret } from "utils/encryption";
 
 const fetchCommits = async (gitHubClient: GitHubInstallationClient, repository: Repository, commitSince?: Date, cursor?: string | number, perPage?: number) => {
 	const commitsData = await gitHubClient.getCommitsPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
-	const edges = commitsData.repository?.defaultBranchRef?.target?.history?.edges;
-	const commits = edges?.map(({ node: item }) => item) || [];
+	const edges = commitsData.repository.defaultBranchRef.target.history.edges;
+	const commits = edges.map(({ node: item }) => item) || [];
 
 	return {
 		edges,
@@ -46,7 +46,7 @@ export const getCommitTask = async (
 		messagePayload.gitHubAppConfig?.gitHubBaseUrl
 	);
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.commits?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.commits.length }, "Backfill task complete");
 
 	return {
 		edges,

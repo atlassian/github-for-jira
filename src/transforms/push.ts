@@ -109,7 +109,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		jiraHost
 	});
 
-	log.info({ shas, shasCount: shas?.length }, "Processing push");
+	log.info({ shas, shasCount: shas.length }, "Processing push");
 
 	const gitHubAppId = payload.gitHubAppConfig?.gitHubAppId;
 
@@ -159,7 +159,7 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 					const filesToSend = files.slice(0, 10) as GithubCommitFile[];
 
 					// merge commits will have 2 or more parents, depending how many are in the sequence
-					const isMergeCommit = parents?.length > 1;
+					const isMergeCommit = parents.length > 1;
 
 					log.info("GitHub call succeeded");
 					return {

@@ -55,7 +55,7 @@ export const webhookMetricWrapper = <MessagePayload extends BaseMessagePayload>(
 
 		if (errorHandlingResult.isFailure && (!errorHandlingResult.retryable || context.lastAttempt)) {
 			context.log.error({ error }, `${webhookName} webhook processing failed and won't be retried anymore`);
-			emitWebhookFailedMetrics(webhookName, context.payload?.jiraHost);
+			emitWebhookFailedMetrics(webhookName, context.payload.jiraHost);
 		}
 
 		return errorHandlingResult;

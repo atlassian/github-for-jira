@@ -114,7 +114,7 @@ describe("GitHub router", () => {
 				const expectedUrl = `https://github.com/login/oauth/authorize?client_id=${envVars.GITHUB_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}&state=${oauthStateKey}`;
 
 				expect(resultUrl).toEqual(expectedUrl);
-				expect(oauthState["postLoginRedirectUrl"]).toStrictEqual(`/github/configuration`);
+				expect(oauthState.postLoginRedirectUrl).toStrictEqual(`/github/configuration`);
 			});
 
 			it("should skip uuid when absent", async () => {
@@ -225,7 +225,7 @@ describe("GitHub router", () => {
 				const expectedUrl = `${gheUrl}/login/oauth/authorize?client_id=${GITHUB_SERVER_CLIENT_ID}&scope=user%20repo&redirect_uri=${encodeURIComponent(redirectUrl)}&state=${oauthStateKey}`;
 				expect(resultUrl).toEqual(expectedUrl);
 
-				expect(oauthState["postLoginRedirectUrl"]).toStrictEqual(`/github/${GITHUB_SERVER_APP_UUID}/configuration`);
+				expect(oauthState.postLoginRedirectUrl).toStrictEqual(`/github/${GITHUB_SERVER_APP_UUID}/configuration`);
 			});
 
 			it("testing the redirect URL in GithubOAuthLoginGet middleware when FF is on", async () => {
@@ -249,7 +249,7 @@ describe("GitHub router", () => {
 
 				const { session } = parseCookiesAndSession(response);
 				const oauthState = findOAuthStateInSession(session) as any;
-				expect(oauthState["postLoginRedirectUrl"]).toStrictEqual(`/github/${GITHUB_SERVER_APP_UUID}/configuration`);
+				expect(oauthState.postLoginRedirectUrl).toStrictEqual(`/github/${GITHUB_SERVER_APP_UUID}/configuration`);
 			});
 
 			it("should extract uuid when present", async () => {

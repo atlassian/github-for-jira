@@ -68,13 +68,13 @@ export const JiraSyncPost = async (req: Request, res: Response, next: NextFuncti
 const MILLISECONDS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
 const getStartTimeInDaysAgo = (commitsFromDate: Date | undefined) => {
 	if (commitsFromDate === undefined) return undefined;
-	return Math.floor((Date.now() -  commitsFromDate?.getTime()) / MILLISECONDS_IN_ONE_DAY);
+	return Math.floor((Date.now() -  commitsFromDate.getTime()) / MILLISECONDS_IN_ONE_DAY);
 };
 
-type SyncTypeAndTargetTasks = {
+interface SyncTypeAndTargetTasks {
 	syncType: SyncType,
 	targetTasks: TaskType[] | undefined,
-};
+}
 
 const determineSyncTypeAndTargetTasks = async (syncTypeFromReq: string, subscription: Subscription): Promise<SyncTypeAndTargetTasks> => {
 	if (syncTypeFromReq === "full") {

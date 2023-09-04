@@ -8,17 +8,15 @@ export type TaskType = "repository" | "pull" | "commit" | "branch" | "build" | "
 
 export type SyncType = "full" | "partial";
 
-export interface TaskProcessors {
-	[task: string]: (
-		logger: Logger,
-		gitHubInstallationClient: GitHubInstallationClient,
-		jiraHost: string,
-		repository: Repository,
-		cursor: string | undefined,
-		perPage: number,
-		messagePayload: BackfillMessagePayload
-	) => Promise<TaskResultPayload>;
-}
+export type TaskProcessors = Record<string, (
+	logger: Logger,
+	gitHubInstallationClient: GitHubInstallationClient,
+	jiraHost: string,
+	repository: Repository,
+	cursor: string | undefined,
+	perPage: number,
+	messagePayload: BackfillMessagePayload
+) => Promise<TaskResultPayload>>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface TaskResultPayload<E = any, P = any> {

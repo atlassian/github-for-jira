@@ -90,9 +90,9 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 
 			const updatedApp: GitHubServerApp = (await GitHubServerApp.findByPk(app.id))!;
 			if (
-				originWebhookSecret !== await updatedApp?.getDecryptedWebhookSecret(jiraHost)
-				|| originPrivateKey !== await updatedApp?.getDecryptedPrivateKey(jiraHost)
-				|| originGitHubClientSecret !== await updatedApp?.getDecryptedGitHubClientSecret(jiraHost)
+				originWebhookSecret !== await updatedApp.getDecryptedWebhookSecret(jiraHost)
+				|| originPrivateKey !== await updatedApp.getDecryptedPrivateKey(jiraHost)
+				|| originGitHubClientSecret !== await updatedApp.getDecryptedGitHubClientSecret(jiraHost)
 			) {
 				const msg = `
 						== !! ERROR !! === \n

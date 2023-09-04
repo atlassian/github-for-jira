@@ -7,7 +7,7 @@ import { metricHttpRequest } from "config/metric-names";
 import { urlParamsMiddleware } from "utils/axios/url-params-middleware";
 import { jiraAuthMiddleware } from "utils/axios/jira-auth-middleware";
 
-type SkipRedirect ={
+interface SkipRedirect {
 	result: string;
 }
 
@@ -67,12 +67,12 @@ const getErrorMiddleware = (logger: Logger) =>
 		 * This GET request is now failing with a 405 response, which is not an error on the app side
 		 * So treating this as a non-error case
 		 */
-		if (error?.request?.method === "GET" && API_PATHS_TO_IGNORE_ON_405.includes(error?.request?.path)) {
+		if (error.request?.method === "GET" && API_PATHS_TO_IGNORE_ON_405.includes(error.request?.path)) {
 			logger.warn({ error } , "Ignoring the error when redirected to GET api on another jira site");
 			return Promise.resolve({ status: 200, result: "SKIP_REDIRECTED" });
 		}
 
-		const status = error?.response?.status;
+		const status = error.response?.status;
 
 		const errorMessage = "Error executing Axios Request " + (status ? getJiraErrorMessages(status) : error.message || "");
 
@@ -81,9 +81,9 @@ const getErrorMiddleware = (logger: Logger) =>
 		// Log appropriate level depending on status - WARN: 300-499, ERROR: everything else
 		// Log exception only if it is error, because AxiosError contains the request payload
 		if (isWarning) {
-			logger.warn({ err: error, res: error?.response }, errorMessage);
+			logger.warn({ err: error, res: error.response }, errorMessage);
 		} else {
-			logger.error({ err: error, res: error?.response }, errorMessage);
+			logger.error({ err: error, res: error.response }, errorMessage);
 		}
 
 		return Promise.reject(new JiraClientError(errorMessage, error, status));
@@ -157,7 +157,7 @@ const instrumentRequest = (baseURL: string) => {
 		};
 
 		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
-		tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+		tags.gsd_histogram = RESPONSE_TIME_HISTOGRAM_BUCKETS;
 		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
 
 		return response;
@@ -176,7 +176,7 @@ const instrumentFailedRequest = (baseURL: string, logger: Logger) => {
 			// TODO: and we are safe to kill the thing.
 			logger.info("Ok, looks like still works.");
 		}
-		instrumentRequest(baseURL)(error?.response);
+		instrumentRequest(baseURL)(error.response);
 
 		if (error.response?.status === 503 || error.response?.status === 405) {
 			try {

@@ -88,7 +88,7 @@ const createMultipleRepositoriesForOneSubscription = async (subscriptionId, numb
 	return repositories;
 };
 
-type Response = {
+interface Response {
 	success: boolean,
 	repositories: WorkspaceRepo[]
 }

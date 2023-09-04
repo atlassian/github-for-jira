@@ -30,7 +30,7 @@ import { v4 as uuidv4 } from "uuid";
  */
 
 
-type InProgressStorage = {
+interface InProgressStorage {
 
 	/**
 	 * During the processing of a job, the worker should be calling this method regularly with the same workerId, thus
@@ -77,10 +77,10 @@ const sleep = (ms: number) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
 };
 
-type Flag = {
+interface Flag {
 	jobRunnerId: string,
 	timestamp: number
-};
+}
 
 export class RedisInProgressStorageWithTimeout implements InProgressStorage {
 	private redis: Redis;

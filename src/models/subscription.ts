@@ -93,7 +93,7 @@ export class Subscription extends Model {
 
 		const andFilter: WhereOptions[] = [];
 
-		if (statusTypes?.length > 0) {
+		if (statusTypes.length > 0) {
 			andFilter.push({
 				syncStatus: {
 					[Op.in]: statusTypes
@@ -101,7 +101,7 @@ export class Subscription extends Model {
 			});
 		}
 
-		if (installationIds?.length > 0) {
+		if (installationIds.length > 0) {
 			andFilter.push({
 				gitHubInstallationId: {
 					[Op.in]: uniq(installationIds)

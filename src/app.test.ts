@@ -6,8 +6,8 @@ describe("app", () => {
 		it("please review routes and update snapshot when adding or modifying the routes!", async () => {
 			const app = getFrontendApp();
 
-			const appRoutes: Array<any> = [];
-			const collectRoutes = (stack, parentPath = "", parentMiddlewares: Array<any> = []) => {
+			const appRoutes: any[] = [];
+			const collectRoutes = (stack, parentPath = "", parentMiddlewares: any[] = []) => {
 				const ROOT_REGEX = parentPath + sanitizeRegexStr("^\\/?(?=\\/|$)");
 				const pathMiddlewares = {};
 				pathMiddlewares[ROOT_REGEX] = [...parentMiddlewares];

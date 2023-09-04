@@ -9,10 +9,10 @@ import type { BaseMessagePayload } from "~/src/sqs/sqs.types";
 const TARGETED_QUEUES = ["backfill", "deployment"];
 export const DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS = 10 * 60; // 10 minutes
 
-type PreemptyRateLimitCheckResult = {
+interface PreemptyRateLimitCheckResult {
 	isExceedThreshold: boolean;
 	resetTimeInSeconds?: number;
-};
+}
 
 // Fetch the rate limit from GitHub API and check if the usages has exceeded the preemptive threshold
 export const preemptiveRateLimitCheck = async <T extends BaseMessagePayload>(context: SQSMessageContext<T>, sqsQueue: SqsQueue<T>) : Promise<PreemptyRateLimitCheckResult> => {
@@ -62,7 +62,7 @@ const getRateRateLimitStatus = async (context: SQSMessageContext<BaseMessagePayl
 
 const getRateResetTimeInSeconds = (rateLimitResponse: Octokit.RateLimitGetResponse): number => {
 	// Get the furthest away rate reset to ensure we don't exhaust the other one too quickly
-	const resetEpochDateTimeInSeconds = Math.max(rateLimitResponse?.resources?.core?.reset, rateLimitResponse?.resources?.graphql?.reset);
+	const resetEpochDateTimeInSeconds = Math.max(rateLimitResponse.resources.core.reset, rateLimitResponse.resources.graphql.reset);
 	const timeToResetInSeconds = resetEpochDateTimeInSeconds - (Date.now()/1000);
 	//sometimes, possibly a bug in github?, the timeToResetInSeconds is almost 0. To avoid reschdule to task too soon, adding a minimum of 10 minutes.
 	const finalTimeToRestInSeconds = Math.max(DEFAULT_PREEMPTY_RATELIMIT_DELAY_IN_SECONDS, timeToResetInSeconds);

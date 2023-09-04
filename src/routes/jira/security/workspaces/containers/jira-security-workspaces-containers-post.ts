@@ -19,7 +19,7 @@ export const splitServerId = (input: string): [string, string] => {
 };
 
 export const getRepoUrlAndRepoId = (id: string): RepoUrlAndRepoId => {
-	if (/-/.test(id)) {
+	if (id.includes("-")) {
 		const [hashedRepoUrl, repoId] = splitServerId(id);
 		const repoDomain = reverseCalculatePrefix(hashedRepoUrl);
 		return { repoUrl: repoDomain, id: parseInt(repoId) };

@@ -144,7 +144,7 @@ export const getJiraClient = async (
 						.catch(() => undefined))
 				);
 				return responses.reduce((acc: JiraIssue[], response) => {
-					if (response?.status === 200 && !!response?.data) {
+					if (response?.status === 200 && !!response.data) {
 						acc.push(response.data);
 					}
 					return acc;
@@ -377,7 +377,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger?.info({ gitHubProduct }, "Sending builds payload to jira.");
+				logger.info({ gitHubProduct }, "Sending builds payload to jira.");
 				return await instance.post("/rest/builds/0.1/bulk", payload);
 			}
 		},
@@ -402,7 +402,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 
-				logger?.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
+				logger.info({ gitHubProduct, ...extractDeploymentDataForLoggingPurpose(data, logger) }, "Sending deployments payload to jira.");
 				const response: AxiosResponse = await instance.post("/rest/deployments/0.1/bulk", payload);
 
 				if (
@@ -561,7 +561,7 @@ const extractAndHashIssueKeysForLoggingPurpose = (commitChunk: JiraCommit[], log
 
 const safeParseAndHashUnknownIssueKeysForLoggingPurpose = (responseData: any, logger: Logger): string[] => {
 	try {
-		return (responseData["unknownIssueKeys"] || []).map((key: string) => createHashWithSharedSecret(key));
+		return (responseData.unknownIssueKeys || []).map((key: string) => createHashWithSharedSecret(key));
 	} catch (error) {
 		logger.error({ error }, "Error parsing unknownIssueKeys from jira api response");
 		return [];
@@ -577,7 +577,7 @@ const findIssueKeyAssociation = (resource: IssueKeyObject): JiraAssociation | un
  */
 const withinIssueKeyLimit = (resources: IssueKeyObject[]): boolean => {
 	if (!resources) return true;
-	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values?.length || 0);
+	const issueKeyCounts = resources.map((r) => r.issueKeys?.length || findIssueKeyAssociation(r)?.values.length || 0);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
@@ -591,7 +591,7 @@ const withinIssueKeyAssociationsLimit = (resources: JiraRemoteLink[]): boolean =
 		return true;
 	}
 
-	const issueKeyCounts = resources.filter(resource => resource.associations?.length > 0).map((resource) => resource.associations[0].values.length);
+	const issueKeyCounts = resources.filter(resource => resource.associations.length > 0).map((resource) => resource.associations[0].values.length);
 	return Math.max(...issueKeyCounts) <= ISSUE_KEY_API_LIMIT;
 };
 
@@ -626,7 +626,7 @@ interface IssueKeyObject {
 // TODO: add unit tests
 export const getTruncatedIssuekeys = (data: IssueKeyObject[] = []): IssueKeyObject[] =>
 	data.reduce((acc: IssueKeyObject[], value: IssueKeyObject) => {
-		if (value?.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
+		if (value.issueKeys && value.issueKeys.length > ISSUE_KEY_API_LIMIT) {
 			acc.push({
 				issueKeys: value.issueKeys.slice(ISSUE_KEY_API_LIMIT)
 			});
@@ -686,7 +686,7 @@ const updateIssueKeysFor = (resources, func) => {
  * "issueIdOrKeys" association.
  */
 const updateIssueKeyAssociationValuesFor = (resources: JiraRemoteLink[], mutatingFunc: any): JiraRemoteLink[] => {
-	resources?.forEach(resource => {
+	resources.forEach(resource => {
 		const association = findIssueKeyAssociation(resource);
 		if (association) {
 			association.values = mutatingFunc(resource.associations[0].values);

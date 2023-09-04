@@ -25,7 +25,7 @@ export const SessionGet = (req: Request, res: Response) => {
  * Query parameter `ghRedirect` determines the text to be displayed on the loading screen
  */
 export const configForPage = (req: Request): string => {
-	switch (req.query?.ghRedirect) {
+	switch (req.query.ghRedirect) {
 		case "to":
 			return "Redirecting to your GitHub Enterprise Server instance";
 		case "from":

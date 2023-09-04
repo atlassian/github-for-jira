@@ -37,7 +37,7 @@ export const GithubCreateBranchPost = async (req: Request, res: Response): Promi
 	const { gitHubAppConfig, jiraHost } = res.locals;
 	const { owner, repo, sourceBranchName, newBranchName } = req.body;
 	const logger = getLogger("github-create-branch-options-get", {
-		fields: req.log?.fields
+		fields: req.log.fields
 	});
 
 	if (!owner || !repo || !sourceBranchName || !newBranchName) {

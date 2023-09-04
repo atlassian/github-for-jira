@@ -23,7 +23,7 @@ GithubSubscriptionDeferredInstallRouter.use("/request/:requestId", subRouter);
 const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	let parsedPayload: SubscriptionDeferredInstallPayload | undefined;
 	try {
-		parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
+		parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params.requestId);
 	} catch (err) {
 		req.log.warn({ err }, "Cannot deserialize");
 		res.status(400).json({ error: INVALID_PAYLOAD_ERR });
@@ -50,7 +50,7 @@ const validatePayloadAndPopulateJiraHost = async (req: Request, res: Response, n
 };
 
 const validateGitHubConfig = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
+	const parsedPayload = await extractSubscriptionDeferredInstallPayload(req.params.requestId);
 
 	if (parsedPayload.gitHubServerAppIdPk != res.locals.gitHubAppConfig.gitHubAppId) {
 		req.log.warn("Wrong appIdPk");

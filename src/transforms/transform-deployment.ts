@@ -216,7 +216,7 @@ const matchesEnvironment = (environment: string, globPatterns: string[] | undefi
  * Maps a given environment name to a Jira environment name using the custom mapping defined in a Config.
  */
 export const mapEnvironmentWithConfig = (environment: string, config: Config): string | undefined => {
-	return _.keys(config?.deployments?.environmentMapping)
+	return _.keys(config.deployments?.environmentMapping)
 		.find(jiraEnvironmentType => matchesEnvironment(environment, config.deployments?.environmentMapping?.[jiraEnvironmentType]));
 };
 
@@ -273,7 +273,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 
 	const associations: JiraAssociation[] = [];
 	let totalAssociationCount = 0;
-	if (issueIds?.length) {
+	if (issueIds.length) {
 		const maximumIssuesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 		const issues = issueIds
 			.slice(0, maximumIssuesToSubmit);
@@ -382,7 +382,7 @@ export const transformDeployment = async (
 	const state = mapState(deployment_status.state);
 
 	if (environment === "unmapped") {
-		logger?.info({
+		logger.info({
 			environment: deployment_status.environment,
 			description: deployment.description
 		}, "Unmapped environment detected.");

@@ -24,10 +24,10 @@ export const LOGGER_NAME = "github.webhooks";
 const withSentry = function(callback) {
 	return async (context: WebhookContext) => {
 		context.sentry = new Sentry.Hub(Sentry.getCurrentHub().getClient());
-		context.sentry?.configureScope((scope) =>
+		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor(AxiosErrorEventDecorator.decorate)
 		);
-		context.sentry?.configureScope((scope) =>
+		context.sentry.configureScope((scope) =>
 			scope.addEventProcessor(SentryScopeProxy.processEvent)
 		);
 
@@ -36,7 +36,7 @@ const withSentry = function(callback) {
 		} catch (err) {
 			context.log.error({ err, context }, "Error while processing webhook");
 			emitWebhookFailedMetrics(extractWebhookEventNameFromContext(context), undefined);
-			context.sentry?.captureException(err);
+			context.sentry.captureException(err);
 			throw err;
 		}
 	};
@@ -107,7 +107,7 @@ export const GithubWebhookMiddleware = (
 			return;
 		}
 		const gitHubInstallationId = Number(payload?.installation?.id);
-		const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+		const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 
 		const subscriptions = await Subscription.getAllForInstallation(gitHubInstallationId, gitHubAppId);
 		const jiraHost = subscriptions.length ? subscriptions[0].jiraHost : undefined;
@@ -220,7 +220,7 @@ export const GithubWebhookMiddleware = (
 			const jiraClient = await getJiraClient(
 				jiraHost,
 				gitHubInstallationId,
-				context.gitHubAppConfig?.gitHubAppId,
+				context.gitHubAppConfig.gitHubAppId,
 				context.log
 			);
 

@@ -31,7 +31,7 @@ describe("frontend-log-middleware", () => {
 
 	it("preserves old fields", async () => {
 		await LogMiddleware(request, response, next);
-		expect(request.log?.fields?.foo).toBe(123);
+		expect(request.log.fields?.foo).toBe(123);
 	});
 
 	describe("log level FF", () => {

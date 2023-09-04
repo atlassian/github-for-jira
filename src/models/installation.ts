@@ -29,7 +29,7 @@ export class Installation extends EncryptedModel {
 	static async getForClientKey(
 		clientKey: string
 	): Promise<Installation | null> {
-		if (!clientKey?.length) {
+		if (!clientKey.length) {
 			return null;
 		}
 		return await this.findOne({
@@ -40,7 +40,7 @@ export class Installation extends EncryptedModel {
 	}
 
 	static async getForHost(host: string): Promise<Installation | null> {
-		if (!host?.length) {
+		if (!host.length) {
 			return null;
 		}
 		return await this.findOne({
@@ -52,7 +52,7 @@ export class Installation extends EncryptedModel {
 	}
 
 	static async getAllForHost(host: string): Promise<Installation[]> {
-		if (!host?.length) {
+		if (!host.length) {
 			return [];
 		}
 		return await this.findAll({

@@ -107,8 +107,8 @@ export const updateTaskStatusAndContinue = async (
 				logger.info({ name, associatedPullRequests }, "Sending branch data");
 			}
 
-			if (edge["workflow_runs"]) {
-				edge["workflow_runs"].forEach((workflow) => {
+			if (edge.workflow_runs) {
+				edge.workflow_runs.forEach((workflow) => {
 					const { repository, event } = workflow;
 					logger.info({ repositoryName: repository.name, eventType: event }, "Workflow run event");
 				});
@@ -121,7 +121,7 @@ export const updateTaskStatusAndContinue = async (
 		});
 	}
 
-	const updateRepoSyncFields: { [x: string]: string | Date} = { [getStatusKey(task.task)]: status };
+	const updateRepoSyncFields: Record<string, string | Date> = { [getStatusKey(task.task)]: status };
 
 	if (isComplete) {
 		//Skip branches as it sync all history
@@ -142,7 +142,7 @@ export const updateTaskStatusAndContinue = async (
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
 	} else {
-		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
+		updateRepoSyncFields[getCursorKey(task.task)] = edges[edges.length - 1].cursor;
 		if (task.startTime) {
 			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
@@ -194,7 +194,7 @@ const markSyncAsCompleteAndStop = async (data: BackfillMessagePayload, subscript
 		backfillSince: await getBackfillSince(data, logger)
 	});
 	const endTime = Date.now();
-	const startTime = data?.startTime || 0;
+	const startTime = data.startTime || 0;
 	const timeDiff = startTime ? endTime - Date.parse(startTime) : 0;
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(subscription.gitHubAppId);
 
@@ -340,7 +340,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		}
 	};
 
-	const executors = [nextTasks.mainTask!, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
+	const executors = [nextTasks.mainTask, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
 		isMainTask(index)
 			// Only the first task is responsible for error handling, the other tasks are best-effort and not
 			// supposed to schedule anything
@@ -391,7 +391,7 @@ export const markCurrentTaskAsFailedAndContinue = async (data: BackfillMessagePa
 
 	if (isPermissionError) {
 		await updateRepo(subscription, mainNextTask.repositoryId, { failedCode: "PERMISSIONS_ERROR" });
-		await subscription?.update({ syncWarning: `Invalid permissions for ${mainNextTask.task} task` });
+		await subscription.update({ syncWarning: `Invalid permissions for ${mainNextTask.task} task` });
 		log.error(`Invalid permissions for ${mainNextTask.task} task`);
 	}
 

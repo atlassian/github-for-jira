@@ -73,7 +73,7 @@ describe("InstallationWebhookHandler", () => {
 
 		it("should not set security permissions accepted field if the payload doesn't contain secret_scanning_alerts permission", async () => {
 			const webhookContext = getWebhookContext({ cloud: true });
-			delete webhookContext.payload.installation.permissions["secret_scanning_alerts"];
+			delete webhookContext.payload.installation.permissions.secret_scanning_alerts;
 			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
 			const subscription = await Subscription.findOneForGitHubInstallationId(GITHUB_INSTALLATION_ID, undefined);
 			expect(subscription?.isSecurityPermissionsAccepted).toBeFalsy();
@@ -82,7 +82,7 @@ describe("InstallationWebhookHandler", () => {
 
 		it("should not set security permissions accepted field if the payload doesn't contain security_events permission", async () => {
 			const webhookContext = getWebhookContext({ cloud: true });
-			delete webhookContext.payload.installation.permissions["security_events"];
+			delete webhookContext.payload.installation.permissions.security_events;
 			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
 			const subscription = await Subscription.findOneForGitHubInstallationId(GITHUB_INSTALLATION_ID, undefined);
 			expect(subscription?.isSecurityPermissionsAccepted).toBeFalsy();
@@ -91,7 +91,7 @@ describe("InstallationWebhookHandler", () => {
 
 		it("should not set security permissions accepted field if the payload doesn't contain vulnerability_alerts permission", async () => {
 			const webhookContext = getWebhookContext({ cloud: true });
-			delete webhookContext.payload.installation.permissions["vulnerability_alerts"];
+			delete webhookContext.payload.installation.permissions.vulnerability_alerts;
 			await installationWebhookHandler(webhookContext, jiraClient, util, GITHUB_INSTALLATION_ID);
 			const subscription = await Subscription.findOneForGitHubInstallationId(GITHUB_INSTALLATION_ID, undefined);
 			expect(subscription?.isSecurityPermissionsAccepted).toBeFalsy();

@@ -7,16 +7,16 @@ const { DlqService } = optionalRequire("@atlassian/sqs-queue-dlq-service", true)
 
 const log: Logger = getLogger("microscope-dlq");
 
-type RequeueMessageRequest = {
+interface RequeueMessageRequest {
 	messageId: string;
 	receiptHandle: string;
 	body: string;
 	messageAttributes: object;
-};
+}
 
-type DeleteMessageRequest = {
+interface DeleteMessageRequest {
 	receiptHandle: string;
-};
+}
 
 let dlqServiceClient;
 

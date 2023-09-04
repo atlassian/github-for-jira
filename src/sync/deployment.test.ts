@@ -61,7 +61,7 @@ describe("sync/deployments", () => {
 				full_name: repoSyncState.repoFullName,
 				owner: { login: repoSyncState.repoOwner },
 				html_url: repoSyncState.repoUrl,
-				updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+				updated_at: repoSyncState.repoUpdatedAt.toISOString()
 			};
 
 			Array.from({ length: REPEAT_LOTS_OF_TIME }).forEach(() => githubUserTokenNock(installationId));
@@ -385,7 +385,7 @@ describe("sync/deployments", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				20,

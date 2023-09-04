@@ -109,7 +109,7 @@ const createRepos = async(subscriptions: Subscription[]): Promise<void> => {
 	});
 };
 
-type Response = {
+interface Response {
 	success: boolean,
 	workspaces: Workspace[]
 }

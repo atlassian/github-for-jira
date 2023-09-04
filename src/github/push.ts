@@ -31,8 +31,8 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 	};
 
 	const jiraHost = jiraClient.baseURL;
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
-	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig?.gitHubAppId);
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
+	const gitHubProduct = getCloudOrServerFromGitHubAppId(context.gitHubAppConfig.gitHubAppId);
 	await sendAnalytics(jiraHost, AnalyticsEventTypes.TrackEvent, {
 		action: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
 		actionSubject: AnalyticsTrackEventsEnum.CommitsPushedTrackEventName,
@@ -41,7 +41,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		gitHubProduct,
 		jiraHost,
 		totalCommitCount: context.payload?.commits?.length || 0,
-		commitWithJiraIssueKeyCount: payload.commits?.length || 0
+		commitWithJiraIssueKeyCount: payload.commits.length || 0
 	});
 
 	context.log = context.log.child({
@@ -59,7 +59,7 @@ export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _u
 		context.log.warn("could not load user config because subscription does not exist");
 	}
 
-	if (!payload.commits?.length) {
+	if (!payload.commits.length) {
 		context.log.info(
 			{ noop: "no_commits" },
 			"Halting further execution for push since no commits were found for the payload"

@@ -32,7 +32,7 @@ export const getNextPage = (logger: Logger, headers: Headers = {}): number | und
 		return undefined;
 	}
 	logger.debug("Extracting next PRs page url");
-	const parsed = url.parse(nextUrl)?.query?.split("&");
+	const parsed = url.parse(nextUrl).query?.split("&");
 	let nextPage;
 	parsed?.forEach((query) => {
 		const [key, value] = query.split("=");
@@ -59,7 +59,7 @@ export const getPullRequestTask = async (
 	messagePayload: BackfillMessagePayload
 ) => {
 	if (await booleanFlag(BooleanFlags.USE_NEW_PULL_ALGO, jiraHost)) {
-		return getPullRequestTaskGraphQL(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor as string, perPage);
+		return getPullRequestTaskGraphQL(logger, gitHubInstallationClient, jiraHost, repository, messagePayload, cursor, perPage);
 	}
 
 	const smartCursor = new PageSizeAwareCounterCursor(cursor).scale(perPage);
@@ -118,15 +118,15 @@ const getPullRequestTaskGraphQL = async (
 
 	const response = await gitHubInstallationClient.getPullRequestPage(repository.owner.login, repository.name, perPage, cursor);
 
-	const filteredByCreatedSince = response.repository?.pullRequests?.edges
+	const filteredByCreatedSince = response.repository.pullRequests.edges
 		.filter(pull => !createdSince || pull.node.createdAt > createdSince.toISOString());
 
 	const pullRequests = filteredByCreatedSince
-		?.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
-		?.filter((pr) => pr !== undefined) || [];
+		.map((edge) => transformPullRequest(repository, jiraHost, edge.node, logger))
+		.filter((pr) => pr !== undefined) || [];
 
 	(logger.fields || {}).prNumberArray = pullRequests.map(pull => createHashWithSharedSecret(String(pull?.id)));
-	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests?.length || 0 }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, pullRequestsLength: pullRequests.length || 0 }, "Backfill task complete");
 
 	emitStats(jiraHost, startTime, "GRAPHQL");
 
@@ -186,7 +186,7 @@ const getPullRequestTaskRest = async (
 	//Rest api: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
 	//Because GitHub rest api  doesn't support supply a from date in the query param,
 	//So we have to do a filter after we fetch the data and stop (via return []) once the date has passed.
-	const fromDate = messagePayload?.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
+	const fromDate = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
 	if (areAllEdgesEarlierThanFromDate(edges, fromDate)) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
@@ -210,7 +210,7 @@ const getPullRequestTaskRest = async (
 					return undefined;
 				}
 				const prResponse = await gitHubInstallationClient.getPullRequest(repository.owner.login, repository.name, pull.number);
-				const prDetails = prResponse?.data;
+				const prDetails = prResponse.data;
 
 				const	reviews = await getPullRequestReviews(jiraHost, gitHubInstallationClient, repository, pull, logger);
 				const data = await transformPullRequestRest(gitHubInstallationClient, prDetails, reviews, logger, jiraHost);
@@ -220,7 +220,7 @@ const getPullRequestTaskRest = async (
 		)
 	).filter((value) => !!value);
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: pullRequests.length }, "Backfill task complete");
 
 	statsd.timing(
 		metricHttpRequest.syncPullRequest,
@@ -234,7 +234,7 @@ const getPullRequestTaskRest = async (
 
 		edges: edgesWithCursor,
 		jiraPayload:
-			pullRequests?.length
+			pullRequests.length
 				? {
 					... transformRepositoryDevInfoBulk(repository, gitHubInstallationClient.baseUrl),
 					pullRequests

@@ -159,7 +159,7 @@ export class GitHubClient {
 				metrics
 			}));
 
-		const graphqlErrors = response.data?.errors;
+		const graphqlErrors = response.data.errors;
 		if (graphqlErrors?.length) {
 			const err = new GithubClientGraphQLError(response, graphqlErrors);
 			this.logger.warn({ err }, "GraphQL errors");
@@ -179,7 +179,7 @@ export class GitHubClient {
 				this.logger.info({ err }, "Mapping GraphQL errors to a BlockedIpError error");
 				return Promise.reject(new GithubClientBlockedIpError(buildAxiosStubErrorForGraphQlErrors(response)));
 
-			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && response.headers?.["x-github-sso"])) {
+			} else if (graphqlErrors.find(graphqlError => graphqlError.type === "FORBIDDEN" && response.headers["x-github-sso"])) {
 				this.logger.info({ err }, "Mapping GraphQL errors to a SSOLoginError error");
 				return Promise.reject(new GithubClientSSOLoginError(buildAxiosStubErrorForGraphQlErrors(response)));
 

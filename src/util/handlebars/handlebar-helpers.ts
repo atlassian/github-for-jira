@@ -3,11 +3,11 @@ import { isPlainObject } from "lodash";
 import { ConnectionSyncStatus } from "~/src/routes/jira/jira-get";
 
 export const concatStringHelper = (...strings: string[]) => strings.filter((arg: unknown) => typeof arg !== "object").join(" ");
-export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().toLowerCase() || "";
-export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString?.().replace(/ /g, "-") || "";
+export const toLowercaseHelper = (str?: string) => !isPlainObject(str) && str?.toString().toLowerCase() || "";
+export const replaceSpaceWithHyphenHelper = (str?: string) => !isPlainObject(str) && str?.toString().replace(/ /g, "-") || "";
 export const toISOStringHelper = (date?: Date) => date ? date.toISOString() : undefined;
 
-type Connection = { syncStatus?: ConnectionSyncStatus, syncWarning?: string };
+interface Connection { syncStatus?: ConnectionSyncStatus, syncWarning?: string }
 export const isAllSyncSuccess = (conn?: Connection) => {
 	return conn && conn.syncStatus === "FINISHED" && !conn.syncWarning ? true : false;
 };
@@ -60,7 +60,7 @@ export const registerHandlebarsHelpers = () => {
 	hbs.registerHelper("isModal", (modalId) => modalId === "jiraDomainModal");
 
 
-	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning?.includes("Invalid permissions for"));
+	hbs.registerHelper("isMissingPermissions", (syncWarning: string) => syncWarning.includes("Invalid permissions for"));
 
 	hbs.registerHelper(
 		"disableDeleteSubscription",

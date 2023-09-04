@@ -34,10 +34,12 @@ describe("curl-utils", () => {
 	});
 
 	describe("logCurlOutput", () => {
+		// eslint-disable-next-line jest/expect-expect
 		it("should not explode with empty output", () => {
 			logCurlOutputInChunks({ body: "", meta: "" }, getLogger("test"));
 		});
 
+		// eslint-disable-next-line jest/expect-expect
 		it("should not explode with non-empty output", async () => {
 			const result = await runCurl({
 				fullUrl: `https://www.atlassian.com`,

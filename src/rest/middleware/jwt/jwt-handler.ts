@@ -9,7 +9,7 @@ const INVALID_SECRET = "some-invalid-secret";
 
 export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: Response, next: NextFunction) => {
 
-	const token = req.headers["authorization"];
+	const token = req.headers.authorization;
 
 	if (!token) {
 		throw new InvalidTokenError("Unauthorised");

@@ -11,13 +11,13 @@ import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service
 
 const EXTRA_PAGE_COUNT = 1;
 
-type FetchDeploymentResponse = { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] };
+interface FetchDeploymentResponse { edges: DeploymentQueryNode[], deployments: DeploymentQueryNode["node"][], extraDeployments: DeploymentQueryNode["node"][] }
 const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitHubInstallationClient, repository: Repository, logger: Logger, cursor?: string | number, perPage?: number): Promise<FetchDeploymentResponse>  => {
 
 	const deploymentData: getDeploymentsResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, cursor);
 
 	const edges = deploymentData.repository.deployments.edges || [];
-	const deployments = edges?.map(({ node: item }) => item) || [];
+	const deployments = edges.map(({ node: item }) => item) || [];
 
 	let extraDeploymentResponse: getDeploymentsResponse | undefined;
 	const extraDeployments: DeploymentQueryNode["node"][] = [];
@@ -29,7 +29,7 @@ const fetchDeployments = async (jiraHost: string, gitHubInstallationClient: GitH
 			try {
 				extraDeploymentResponse = await gitHubInstallationClient.getDeploymentsPage(jiraHost, repository.owner.login, repository.name, perPage, lastEdges[lastEdges.length - 1].cursor);
 				const extraDeploymentsEdges = extraDeploymentResponse.repository.deployments.edges || [];
-				const extraDeploymentsItems = extraDeploymentsEdges?.map(({ node: item }) => item);
+				const extraDeploymentsItems = extraDeploymentsEdges.map(({ node: item }) => item);
 				extraDeployments.push(...extraDeploymentsItems);
 				lastEdges = extraDeploymentsEdges;
 			} catch (e) {
@@ -55,14 +55,14 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 			logger.warn({ foundStatusStates: deployment.statuses?.nodes.map(n=>n.state) },  "Should always find a first non inactive status. Ignore and fallback to latestStatus for now");
 		}
 
-		const logUrl = firstNonInactiveStatus?.logUrl || deployment.latestStatus?.logUrl;
+		const logUrl = firstNonInactiveStatus?.logUrl || deployment.latestStatus.logUrl;
 
 		const deploymentStatus = {
 			repository: deployment.repository,
 			deployment: {
 				sha: deployment.commitOid,
 				id: deployment.databaseId,
-				ref: deployment.ref?.id,
+				ref: deployment.ref.id,
 				description: deployment.description,
 				task: deployment.task,
 				url: logUrl
@@ -71,9 +71,9 @@ const getTransformedDeployments = async (useDynamoForBackfill: boolean, deployme
 				environment: deployment.environment,
 				id: deployment.databaseId,
 				target_url: logUrl,
-				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus?.createdAt,
-				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus?.updatedAt,
-				state: firstNonInactiveStatus?.state?.toLowerCase() || deployment.latestStatus?.state
+				created_at: firstNonInactiveStatus?.createdAt || deployment.latestStatus.createdAt,
+				updated_at: firstNonInactiveStatus?.updatedAt || deployment.latestStatus.updatedAt,
+				state: firstNonInactiveStatus?.state.toLowerCase() || deployment.latestStatus.state
 			}
 		} as any as DeploymentStatusEvent;
 
@@ -154,7 +154,7 @@ export const getDeploymentTask = async (
 		};
 	}
 
-	if (!deployments?.length) {
+	if (!deployments.length) {
 		logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: 0 }, "Backfill task complete");
 		return {
 			edges,
@@ -164,13 +164,13 @@ export const getDeploymentTask = async (
 
 	// latestStatus might always be defined, however in getTransformedDeployments() it is optional... leaving with
 	// question mark for now. TODO: review logs and remove it here and in getTransformedDeployments() too
-	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus?.updatedAt}`);
+	logger.info(`Last deployment's updated_at=${deployments[deployments.length - 1].latestStatus.updatedAt}`);
 
 	const transformedDeployments = await getTransformedDeployments(useDynamoForBackfill, deployments, gitHubInstallationClient, jiraHost, logger, messagePayload.gitHubAppConfig?.gitHubAppId);
 
 	const jiraPayload = transformedDeployments.length > 0 ? { deployments: transformedDeployments } : undefined;
 
-	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.deployments?.length }, "Backfill task complete");
+	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.deployments.length }, "Backfill task complete");
 
 	return {
 		edges,

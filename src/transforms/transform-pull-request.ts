@@ -29,7 +29,7 @@ interface JiraReviewer extends JiraReview {
 const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
 
-const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
+const mapReviewsRest = async (reviews: { state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }[] = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 
 	const usernames: Record<string, JiraReviewer> = {};
 
@@ -38,8 +38,8 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 	// and it considers 'APPROVED' as the main approval status for that user.
 	const reviewsReduced: JiraReviewer[] = reviews.reduce((acc: JiraReviewer[], review) => {
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const reviewer = review?.user;
-		const reviewerUsername = reviewer?.login;
+		const reviewer = review.user;
+		const reviewerUsername = reviewer.login;
 		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
 
 		if (!haveWeSeenThisReviewerAlready) {
@@ -79,7 +79,7 @@ export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListR
 	if (await booleanFlag(BooleanFlags.VERBOSE_LOGGING, jiraHost)) {
 		logger.info({ prTitle }, `verbose logging: prTitle`);
 	}
-	return jiraIssueKeyParser(`${prTitle}\n${head?.ref}\n${body}`);
+	return jiraIssueKeyParser(`${prTitle}\n${head.ref}\n${body}`);
 };
 
 export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
@@ -90,7 +90,7 @@ export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
-	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
+	reviews?: { state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }[],
 	log?: Logger,
 	jiraHost?: string
 ) =>
@@ -112,7 +112,7 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	if (isEmpty(issueKeys) || !head?.repo) {
+	if (isEmpty(issueKeys) || !head.repo) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
@@ -122,7 +122,7 @@ export const transformPullRequestRest = async (
 
 	const branches = await getBranches(gitHubInstallationClient, pullRequest, issueKeys);
 	// Need to get full name from a REST call as `pullRequest.user.login` doesn't have it
-	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user?.login));
+	const author = getJiraAuthor(user, await getGithubUser(gitHubInstallationClient, user.login));
 	const reviewers = await mapReviewsRest(reviews, gitHubInstallationClient);
 	const status = mapStatus(state, merged_at);
 
@@ -161,12 +161,12 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 
 	return [
 		{
-			createPullRequestUrl: generateCreatePullRequestUrl(pullRequest?.head?.repo?.html_url, pullRequest?.head?.ref, issueKeys),
+			createPullRequestUrl: generateCreatePullRequestUrl(pullRequest.head.repo.html_url, pullRequest.head.ref, issueKeys),
 			lastCommit: {
 				// Need to get full name from a REST call as `pullRequest.head.user` doesn't have it
-				author: getJiraAuthor(pullRequest.head?.user, await getGithubUser(gitHubInstallationClient, pullRequest.head?.user?.login)),
+				author: getJiraAuthor(pullRequest.head.user, await getGithubUser(gitHubInstallationClient, pullRequest.head.user.login)),
 				authorTimestamp: pullRequest.updated_at,
-				displayId: pullRequest?.head?.sha?.substring(0, 6),
+				displayId: pullRequest.head.sha.substring(0, 6),
 				fileCount: 0,
 				hash: pullRequest.head.sha,
 				id: pullRequest.head.sha,
@@ -201,17 +201,17 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		author: getJiraAuthor(pullRequest.author),
 		commentCount: pullRequest.comments.totalCount || 0,
 		destinationBranch: pullRequest.baseRefName || "",
-		destinationBranchUrl: `https://github.com/${repository.owner?.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
+		destinationBranchUrl: `https://github.com/${repository.owner.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
 		displayId: `#${pullRequest.number}`,
 		id: pullRequest.number,
 		issueKeys,
 		lastUpdate: pullRequest.updatedAt,
-		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
+		reviewers: mapReviews(pullRequest.reviews.nodes, pullRequest.reviewRequests.nodes),
 		sourceBranch: pullRequest.headRefName,
 		...(
 			pullRequest.headRef
 				? {
-					sourceBranchUrl: `https://github.com/${pullRequest.headRef?.repository?.owner?.login}/${pullRequest.headRef?.repository?.name}/tree/${pullRequest.headRef?.name}`
+					sourceBranchUrl: `https://github.com/${pullRequest.headRef.repository.owner.login}/${pullRequest.headRef.repository.name}/tree/${pullRequest.headRef.name}`
 				}
 				: {}
 		),
@@ -233,8 +233,8 @@ const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewReq
 	const reviewsReduced: JiraReviewer[] = allReviews.reduce((acc: JiraReviewer[], review) => {
 
 		// Adds user to the usernames object if user is not yet added, then it adds that unique user to the accumulator.
-		const reviewer = review?.author;
-		const reviewerUsername = reviewer?.login;
+		const reviewer = review.author;
+		const reviewerUsername = reviewer.login;
 
 		const haveWeSeenThisReviewerAlready = usernames[reviewerUsername];
 
@@ -263,7 +263,7 @@ const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewReq
 		const isDeletedUser = !reviewer.login;
 		if (!isDeletedUser) {
 			const gitHubUser = getJiraAuthor(reviewer);
-			mappedReviewer.email = gitHubUser?.email || `${reviewer.login}@noreply.user.github.com`;
+			mappedReviewer.email = gitHubUser.email || `${reviewer.login}@noreply.user.github.com`;
 		}
 		return mappedReviewer;
 	});

@@ -100,25 +100,25 @@ describe("jira-connected-repos-get", () => {
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.dataValues };
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
-					delete newRepoSyncState["id"];
-					delete newRepoSyncState["commitStatus"];
-					delete newRepoSyncState["branchStatus"];
-					newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
-					newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
-					newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + String(newRepoStateNo).padStart(3, "0");
+					// @ts-expect-error
+					delete newRepoSyncState.id;
+					delete newRepoSyncState.commitStatus;
+					delete newRepoSyncState.branchStatus;
+					newRepoSyncState.repoId = repoSyncState.repoId + newRepoStateNo;
+					newRepoSyncState.repoName = repoSyncState.repoName + newRepoStateNo;
+					newRepoSyncState.repoFullName = repoSyncState.repoFullName + String(newRepoStateNo).padStart(3, "0");
 					if (newRepoStateNo % 3 == 1) {
-						newRepoSyncState["commitStatus"] = "complete";
-						newRepoSyncState["branchStatus"] = "complete";
-						newRepoSyncState["pullStatus"] = "complete";
-						newRepoSyncState["buildStatus"] = "complete";
-						newRepoSyncState["deploymentStatus"] = "complete";
+						newRepoSyncState.commitStatus = "complete";
+						newRepoSyncState.branchStatus = "complete";
+						newRepoSyncState.pullStatus = "complete";
+						newRepoSyncState.buildStatus = "complete";
+						newRepoSyncState.deploymentStatus = "complete";
 					} else if (newRepoStateNo % 3 == 2) {
-						newRepoSyncState["commitStatus"] = "failed";
-						newRepoSyncState["branchStatus"] = "complete";
-						newRepoSyncState["pullStatus"] = "complete";
-						newRepoSyncState["buildStatus"] = "complete";
-						newRepoSyncState["deploymentStatus"] = "failed";
+						newRepoSyncState.commitStatus = "failed";
+						newRepoSyncState.branchStatus = "complete";
+						newRepoSyncState.pullStatus = "complete";
+						newRepoSyncState.buildStatus = "complete";
+						newRepoSyncState.deploymentStatus = "failed";
 					}
 					newRepoSyncStatesData.push(newRepoSyncState);
 				}

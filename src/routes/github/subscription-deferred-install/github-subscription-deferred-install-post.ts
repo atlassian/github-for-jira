@@ -6,7 +6,7 @@ import {
 import { verifyAdminPermsAndFinishInstallation } from "services/subscription-installation-service";
 
 export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: Response) => {
-	const payload = await extractSubscriptionDeferredInstallPayload(req.params["requestId"]);
+	const payload = await extractSubscriptionDeferredInstallPayload(req.params.requestId);
 	const { githubToken, installation } = res.locals;
 
 	const result = await verifyAdminPermsAndFinishInstallation(
@@ -17,7 +17,7 @@ export const GithubSubscriptionDeferredInstallPost = async (req: Request, res: R
 		return;
 	}
 
-	await forgetSubscriptionDeferredInstallRequest(req.params["requestId"]);
+	await forgetSubscriptionDeferredInstallRequest(req.params.requestId);
 
 	res.render("subscription-deferred-install-approval-form.hbs", {
 		success: true,

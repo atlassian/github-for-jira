@@ -10,7 +10,7 @@ export const generateCreatePullRequestUrl = (baseUrl: string, branchName: string
 
 	let keys = "";
 	if (!branchKeys.length) {
-		keys = issueKeys?.length ? issueKeys[0] : "";
+		keys = issueKeys.length ? issueKeys[0] : "";
 	}
 
 	const title = encodeURIComponent(keys != "" ? keys + "-" + branchName : branchName);

@@ -73,14 +73,14 @@ describe("github-create-branch", () => {
 			})
 			.reply(200);
 
-		await GithubCreateBranchPost(req as any, res as any);
+		await GithubCreateBranchPost(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(200);
 	});
 
 	it.each(["owner", "repo", "sourceBranchName", "newBranchName"])("Should 400 when missing required fields", async (attribute) => {
 		res.status.mockReturnValue(res);
 		delete req.body[attribute];
-		await GithubCreateBranchPost(req as any, res as any);
+		await GithubCreateBranchPost(req , res);
 		expect(res.status).toHaveBeenCalledWith(400);
 	});
 
@@ -104,7 +104,7 @@ describe("github-create-branch", () => {
 			"sha": sha
 		}).reply(403);
 
-		await GithubCreateBranchPost(req as any, res as any);
+		await GithubCreateBranchPost(req , res);
 
 		expect(res.status).toHaveBeenCalledWith(403);
 		expect(res.json).toBeCalledWith({

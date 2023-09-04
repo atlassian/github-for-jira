@@ -49,7 +49,7 @@ export const getRepositoryTask = async (
 		nextCursor = smartCursor.copyWithPageNo(smartCursor.pageNo + 1).serialise();
 		repositories = response.data.repositories;
 	} else {
-		const response = await gitHubInstallationClient.getRepositoriesPage(perPage, cursor as string);
+		const response = await gitHubInstallationClient.getRepositoriesPage(perPage, cursor);
 		hasNextPage = response.viewer.repositories.pageInfo.hasNextPage;
 		totalCount = response.viewer.repositories.totalCount;
 		nextCursor = response.viewer.repositories.pageInfo.endCursor;
@@ -57,9 +57,9 @@ export const getRepositoryTask = async (
 		// fetches the cursor from one of the edges instead of letting us return it explicitly.
 		const edges = response.viewer.repositories.edges.map((edge) => ({ ...edge, cursor: nextCursor }));
 
-		repositories = edges.map(edge => edge?.node);
+		repositories = edges.map(edge => edge.node);
 	}
-	const edges = repositories?.map(repo => ({
+	const edges = repositories.map(repo => ({
 		node: repo,
 		cursor: nextCursor
 	}));

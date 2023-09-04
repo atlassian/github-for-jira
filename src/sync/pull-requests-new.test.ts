@@ -503,7 +503,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				5,
@@ -558,7 +558,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				1,
@@ -617,7 +617,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				50,
@@ -670,7 +670,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				1,
@@ -723,7 +723,7 @@ describe("sync/pull-request", () => {
 					full_name: repoSyncState.repoFullName,
 					owner: { login: repoSyncState.repoOwner },
 					html_url: repoSyncState.repoUrl,
-					updated_at: repoSyncState.repoUpdatedAt?.toISOString()
+					updated_at: repoSyncState.repoUpdatedAt.toISOString()
 				},
 				undefined,
 				1,

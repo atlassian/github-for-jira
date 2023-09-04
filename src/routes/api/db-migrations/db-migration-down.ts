@@ -41,7 +41,7 @@ export const DBMigrationDown = async (req: Request, res: Response): Promise<void
 
 };
 
-type LastScript = {
+interface LastScript {
 	name: string;
 }
 

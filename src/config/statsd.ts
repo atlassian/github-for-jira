@@ -30,8 +30,8 @@ const innerStatsd = new StatsD({
 	mock: !isNodeProd()
 });
 
-type ObjectTags = { [key: string]: string };
-type ExtraInfo = {
+type ObjectTags = Record<string, string>;
+interface ExtraInfo {
 	jiraHost?: string
 }
 

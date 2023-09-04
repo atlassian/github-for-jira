@@ -9,7 +9,7 @@ const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "
 // Otherwise, if local development, we want human readable logs.
 const outputMode = process.env.MICROS_ENV ? "json" : "short";
 
-type ChunkData = {
+interface ChunkData {
 	msg?: string;
 	filterHttpRequests?: boolean;
 	level?: number | undefined;

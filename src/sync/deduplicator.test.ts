@@ -60,7 +60,7 @@ describe("deduplicator", () => {
 					timestamp: 100
 				}));
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-ignore
+				// @ts-expect-error
 				const storage = new RedisInProgressStorageWithTimeout({
 					get: redisGet
 				} as IORedis.Redis);

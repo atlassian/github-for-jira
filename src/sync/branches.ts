@@ -21,11 +21,11 @@ export const getBranchTask = async (
 	logger.info({ startTime }, "Backfill task started");
 
 	const commitSince = messagePayload.commitsFromDate ? new Date(messagePayload.commitsFromDate) : undefined;
-	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor as string);
-	const edges = result?.repository?.refs?.edges || [];
-	const branches = edges.map(edge => edge?.node);
+	const result = await gitHubClient.getBranchesPage(repository.owner.login, repository.name, perPage, commitSince, cursor);
+	const edges = result.repository.refs.edges || [];
+	const branches = edges.map(edge => edge.node);
 	(logger.fields || {}).branchNameArray = (branches || []).map(b => createHashWithSharedSecret(String(b.name)));
-	(logger.fields || {}).branchShaArray = (branches || []).map(b => createHashWithSharedSecret(String(b.target?.oid)));
+	(logger.fields || {}).branchShaArray = (branches || []).map(b => createHashWithSharedSecret(String(b.target.oid)));
 
 	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
 

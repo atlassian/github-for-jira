@@ -11,7 +11,7 @@ export const workflowWebhookHandler = async (context: WebhookContext, jiraClient
 		gitHubInstallationId
 	});
 
-	const gitHubAppId = context.gitHubAppConfig?.gitHubAppId;
+	const gitHubAppId = context.gitHubAppConfig.gitHubAppId;
 	const metrics = {
 		trigger: "webhook",
 		subTrigger: "workflow"

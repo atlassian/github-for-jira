@@ -40,9 +40,9 @@ export const JiraWorkspacesRepositoriesGet = async (req: Request, res: Response)
 	req.log.info({ method: req.method, requestUrl: req.originalUrl }, "Request started to GET repositories");
 
 	const { jiraHost } = res.locals;
-	const repoName = sanitizeHtml(req.query?.searchQuery as string);
-	const page = Number(sanitizeHtml(req.query?.page)) || DEFAULT_PAGE_NUMBER;
-	const limit = Number(sanitizeHtml(req.query?.limit)) || DEFAULT_LIMIT;
+	const repoName = sanitizeHtml(req.query.searchQuery as string);
+	const page = Number(sanitizeHtml(req.query.page)) || DEFAULT_PAGE_NUMBER;
+	const limit = Number(sanitizeHtml(req.query.limit)) || DEFAULT_LIMIT;
 	const subscriptions = await Subscription.getAllForHost(jiraHost);
 
 	if (!subscriptions.length) {
