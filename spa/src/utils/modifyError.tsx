@@ -59,10 +59,13 @@ export const modifyError = (
 			</>
 		};
 	} else if (errorCode === "INSUFFICIENT_PERMISSION") {
+		// TODO: Update this to support GHE
+		const adminOrgsUrl = `https://github.com/orgs/${context.orgLogin}/people?query=role%3Aowner`;
+
 		return {
 			...warningObj,
 			errorCode,
-			message: <ErrorForNonAdmins orgName={context.orgLogin} />
+			message: <ErrorForNonAdmins orgName={context.orgLogin} adminOrgsUrl={adminOrgsUrl} />
 		};
 	} else if (errorCode === "TIMEOUT") {
 		return { ...errorObj, errorCode, message: "Request timeout. Please try again later." };
