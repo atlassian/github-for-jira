@@ -32,8 +32,7 @@ interface JiraDevelopmentToolActions {
 	};
 }
 
-const CREATE_BRANCH_ENDPOINT =
-	`${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=${envVars.APP_KEY}`;
+const CREATE_BRANCH_ENDPOINT = `${envVars.APP_URL}/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=${envVars.APP_KEY}`;
 const SEARCH_CONNECTED_WORKSPACES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/search`;
 const SEARCH_REPOSITORIES_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/search`;
 const ASSOCIATE_REPOSITORY_ENDPOINT = `${envVars.APP_URL}/jira/workspaces/repositories/associate`;
