@@ -12,6 +12,7 @@ import { DatabaseStateCreator } from "test/utils/database-state-creator";
 import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { cacheSuccessfulDeploymentInfo } from "services/deployment-cache-service";
 import { Config } from "interfaces/common";
+import { cloneDeep } from "lodash";
 
 jest.mock("services/user-config-service");
 jest.mock("config/feature-flags");
@@ -244,7 +245,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 		it(`transforms deployments without issue keys`, async () => {
 			when(shouldSendAll).calledWith("deployments", expect.anything(), expect.anything())
 				.mockResolvedValue(true);
-			const deploymentPayload = Object.assign({}, deployment_status_staging.payload) as any;
+			const deploymentPayload = cloneDeep(deployment_status_staging.payload) as any;
 			deploymentPayload.deployment.ref = "not-a-issue-key";
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 			githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);

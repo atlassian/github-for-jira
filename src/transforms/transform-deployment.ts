@@ -286,7 +286,7 @@ const mapJiraIssueIdsCommitsAndServicesToAssociationArray = (
 		totalAssociationCount += issues.length;
 	}
 
-	if (config?.deployments?.services?.ids) {
+	if (config?.deployments?.services?.ids?.length) {
 		const maximumServicesToSubmit = MAX_ASSOCIATIONS_PER_ENTITY - totalAssociationCount;
 		const services = config.deployments.services.ids
 			.slice(0, maximumServicesToSubmit);
