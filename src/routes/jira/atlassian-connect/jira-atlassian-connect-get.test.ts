@@ -58,7 +58,7 @@ describe("Atlassian Connect", () => {
 					"templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate"
 				},
 				"createBranch": {
-					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
+					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
 				},
 				"searchConnectedWorkspaces":
 				{
@@ -83,7 +83,7 @@ describe("Atlassian Connect", () => {
 			const actions =  await defineJiraDevelopmentToolModuleActions(jiraHost);
 			expect(actions).toEqual({
 				"createBranch": {
-					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
+					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
 				}
 			});
 		});
