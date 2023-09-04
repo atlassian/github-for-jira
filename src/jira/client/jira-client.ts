@@ -166,17 +166,21 @@ export const getJiraClient = async (
 					instance.post("/rest/api/3/issue/{issue_id}/comment", payload, {
 						urlParams: {
 							issue_id
-						}
+						},
 						headers: {
 							"accept": "application/json",
 							"content-type": "application/json"
 						}
 					}),
 				updateForIssue: (issue_id: string, comment_id: string, payload) =>
-					instance.put("rest/api/latest/issue/{issue_id}/comment/{comment_id}", payload, {
+					instance.put("rest/api/3/issue/{issue_id}/comment/{comment_id}", payload, {
 						urlParams: {
 							issue_id,
 							comment_id
+						},
+						headers: {
+							"accept": "application/json",
+							"content-type": "application/json"
 						}
 					}),
 				deleteForIssue: (issue_id: string, comment_id: string) =>

@@ -97,7 +97,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		return;
 	}
 
-	const bodyDataOption1 = {
+	const formattedComment = {
 		"content": [
 			{
 				"type": "paragraph",
@@ -152,21 +152,10 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		"version": 1
 	};
 
-	const bodyDataOption2 = `*${comment.user.login} left a comment on Github:* ${gitHubMessage}`;
-	const bodyDataOption3 = `[${comment.user.login} said ${gitHubMessage} on *Github*](${gitHubCommentUrl}) <a href="https://www.example.com">https://www.example.com</a>`;
-
-	context.log.warn(bodyDataOption1, bodyDataOption2, bodyDataOption3);
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: bodyDataOption1,
-				// author: {
-				// 	// accountId: 1234,
-				// 	avatarUrls: {
-				// 		"48x48": comment.user.avatar_url
-				// 	},
-				// 	displayName: "Github"
-				// },
+				body: formattedComment,
 				properties: [
 					{
 						key: "gitHubId",
@@ -180,7 +169,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		}
 		case "edited": {
 			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
-				body: gitHubMessage + " - " + gitHubCommentUrl
+				body: formattedComment
 			});
 			break;
 		}
