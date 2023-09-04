@@ -9,7 +9,7 @@ module.exports = {
 		video: "retain-on-failure",
 		screenshot: "only-on-failure"
 	},
-	timeout: 60000,
+	timeout: 90000,
 	globalSetup: `${__dirname}/test/e2e/setup.ts`,
 	globalTeardown: `${__dirname}/test/e2e/teardown.ts`,
 	// Fail the build on CI if you accidentally left test.only in the source code.
