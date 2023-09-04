@@ -43,18 +43,22 @@ type GitHubEnterpriseConnectionsProps = {
 const GitHubEnterpriseConnections = ({
 	ghEnterpriseServers,
 }: GitHubEnterpriseConnectionsProps) => {
-	return ghEnterpriseServers.map((connection) => {
-		return (
-			<Box xcss={containerStyles}>
-				<EnterpriserServerHeader>
-					<Heading level="h600">{connection.gitHubBaseUrl}</Heading>
-				</EnterpriserServerHeader>
-				<Box xcss={whiteBoxStyle}>
-					{connection.applications.map((application) => (<GitHubEnterpriseApplication application={application}/>))}
-				</Box>
-			</Box>
-		);
-	});
+	return <>
+		{
+			ghEnterpriseServers.map((connection) => {
+				return (
+					<Box xcss={containerStyles}>
+						<EnterpriserServerHeader>
+							<Heading level="h400">{connection.gitHubBaseUrl}</Heading>
+						</EnterpriserServerHeader>
+						<Box xcss={whiteBoxStyle}>
+							{connection.applications.map((application) => (<GitHubEnterpriseApplication application={application}/>))}
+						</Box>
+					</Box>
+				);
+			})
+		}
+	</>;
 };
 
 export default GitHubEnterpriseConnections;

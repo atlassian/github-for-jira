@@ -7,6 +7,7 @@ import { Wrapper } from "../../common/Wrapper";
 import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
 import { GHSUbscriptions } from "../../rest-interfaces";
+import { reportError } from "../../utils";
 
 const Header = styled.h3`
 	margin-bottom: ${token("space.200")};
@@ -21,7 +22,7 @@ const Connections = () => {
 			const subs = await ApiRequest.subscriptions.getSubscriptions();
 			setSubscriptions(subs.data);
 		} catch (e) {
-			console.log("Error -----> ", e);
+			reportError(e, { path: "Fetching subscriptions" });
 		}
 	};
 	useEffect(() => {
@@ -47,9 +48,7 @@ const Connections = () => {
 			{ghEnterpriseServers && (
 				<>
 					<Header>GitHub Enterprise Server</Header>
-					<GitHubEnterpriseConnections
-						ghEnterpriseServers={ghEnterpriseServers}
-					/>
+					<GitHubEnterpriseConnections ghEnterpriseServers={ghEnterpriseServers} />
 				</>
 			)}
 		</Wrapper>

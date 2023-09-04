@@ -4,8 +4,8 @@ import Badge from "@atlaskit/badge";
 import { token } from "@atlaskit/tokens";
 import Lozenge from "@atlaskit/lozenge";
 import EditIcon from "@atlaskit/icon/glyph/edit";
-import MoreIcon from "@atlaskit/icon/glyph/more";
 import { SuccessfulConnection } from "../rest-interfaces";
+import { ThemeAppearance } from "@atlaskit/lozenge/dist/types/Lozenge";
 
 type Row = {
 	key: string;
@@ -13,11 +13,12 @@ type Row = {
 	cells: { key: string | number; content: React.JSX.Element | string | number }[];
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 const RowWrapper = styled.div`
 	display: flex;
 	align-items: center;
 `;
-
+// eslint-disable-next-line react-refresh/only-export-components
 const AvatarWrapper = styled.span`
 	margin-right: ${token("space.200")};
 `;
@@ -25,14 +26,24 @@ const AvatarWrapper = styled.span`
 const ifAllReposSynced = (
 	numberOfSyncedRepos: number,
 	totalNumberOfRepos: number
-) =>
-	numberOfSyncedRepos === totalNumberOfRepos
-		? totalNumberOfRepos
-		: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
+): number | string =>
+	numberOfSyncedRepos === totalNumberOfRepos ? totalNumberOfRepos :
+		(totalNumberOfRepos ? `${numberOfSyncedRepos} / ${totalNumberOfRepos}` : "No repos");
 
-const isAllSyncSuccess = (connection?: SuccessfulConnection) => {
-	return connection && connection.syncStatus === "FINISHED" && !connection.syncWarning;
+const mapSyncStatus = (status: string): ThemeAppearance => {
+	switch (status) {
+		case "IN PROGRESS":
+			return "inprogress";
+		case "FINISHED":
+			return "success";
+		case "FAILED":
+			return "removed";
+		default:
+			return "default";
+	}
 };
+
+const isAllSyncSuccess = (connection?: SuccessfulConnection) => connection && connection.syncStatus === "FINISHED" && !connection.syncWarning;
 
 const createHead = (withWidth: boolean) => {
 	return {
@@ -44,19 +55,14 @@ const createHead = (withWidth: boolean) => {
 			},
 			{
 				key: "party",
-				content: "Party",
+				content: "Repos",
 				width: withWidth ? 30 : undefined,
 			},
 			{
 				key: "term",
-				content: "Term",
+				content: "Status",
 				width: withWidth ? 30 : undefined,
-			},
-			{
-				key: "content",
-				content: "Comment",
-				width: withWidth ? 10 : undefined,
-			},
+			}
 		],
 	};
 };
@@ -115,7 +121,7 @@ export const getGHSubscriptionsRows = (
 					key: cloudConnection.id,
 					content: (
 						<RowWrapper>
-							<Lozenge appearance="success" maxWidth="500">
+							<Lozenge appearance={mapSyncStatus(cloudConnection.syncStatus)} maxWidth="500">
 								{cloudConnection.syncStatus}
 							</Lozenge>
 							{isAllSyncSuccess(cloudConnection) && (
@@ -136,15 +142,7 @@ export const getGHSubscriptionsRows = (
 							)}
 						</RowWrapper>
 					),
-				},
-				{
-					key: "Lorem",
-					content: (
-						<RowWrapper>
-							<MoreIcon label="more" />
-						</RowWrapper>
-					),
-				},
+				}
 			],
 		})
 	);
