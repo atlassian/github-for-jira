@@ -47,7 +47,7 @@ const mapFile = (
 	};
 };
 
-export const createJobData = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig): Promise<PushQueueMessagePayload> => {
+export const createJobData = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig): Promise<PushQueueMessagePayload> => {
 	// Store only necessary repository data in the queue
 	const { id, name, full_name, html_url, owner } = payload.repository;
 
@@ -60,7 +60,7 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, g
 	};
 
 	const shas: { id: string, issueKeys: string[] }[] = [];
-	const alwaysSend = await shouldSendAll("commits", jiraHost);
+	const alwaysSend = await shouldSendAll("commits", jiraHost, logger);
 	for (const commit of payload.commits) {
 		const issueKeys = jiraIssueKeyParser(commit.message);
 		if (!isEmpty(issueKeys) || alwaysSend) {
@@ -81,8 +81,8 @@ export const createJobData = async (payload: GitHubPushData, jiraHost: string, g
 	};
 };
 
-export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, gitHubAppConfig?: GitHubAppConfig) =>
-	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, gitHubAppConfig));
+export const enqueuePush = async (payload: GitHubPushData, jiraHost: string, logger: Logger, gitHubAppConfig?: GitHubAppConfig) =>
+	await sqsQueues.push.sendMessage(await createJobData(payload, jiraHost, logger, gitHubAppConfig));
 
 export const processPush = async (github: GitHubInstallationClient, payload: PushQueueMessagePayload, rootLogger: Logger) => {
 	const {

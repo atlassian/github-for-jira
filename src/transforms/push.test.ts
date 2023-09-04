@@ -3,6 +3,7 @@ import { sqsQueues } from "../sqs/queues";
 import { when } from "jest-when";
 import { GitHubCommit, GitHubRepository } from "interfaces/github";
 import { shouldSendAll } from "config/feature-flags";
+import { getLogger } from "config/logger";
 
 jest.mock("../sqs/queues");
 jest.mock("config/feature-flags");
@@ -21,7 +22,7 @@ describe("Enqueue push", () => {
 				modified: [],
 				removed: []
 			} as unknown as GitHubCommit]
-		}, jiraHost, {
+		}, jiraHost, getLogger("test"), {
 			gitHubAppId: 1,
 			appId: 2,
 			clientId: "clientId",
@@ -46,7 +47,7 @@ describe("Enqueue push", () => {
 	});
 
 	it("should push shas with no issue keys", async () => {
-		when(shouldSendAll).calledWith("commits", expect.anything()).mockResolvedValue(true);
+		when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(true);
 		await enqueuePush({
 			installation: { id: 123, node_id: 456 },
 			webhookId: "wh123",
@@ -59,7 +60,7 @@ describe("Enqueue push", () => {
 				modified: [],
 				removed: []
 			} as unknown as GitHubCommit]
-		}, jiraHost, {
+		}, jiraHost, getLogger("test"), {
 			gitHubAppId: 1,
 			appId: 2,
 			clientId: "clientId",
@@ -75,7 +76,7 @@ describe("Enqueue push", () => {
 	});
 
 	it("should not push shas with no issue keys", async () => {
-		when(shouldSendAll).calledWith("commits", expect.anything()).mockResolvedValue(false);
+		when(shouldSendAll).calledWith("commits", expect.anything(), expect.anything()).mockResolvedValue(false);
 		await enqueuePush({
 			installation: { id: 123, node_id: 456 },
 			webhookId: "wh123",
@@ -88,7 +89,7 @@ describe("Enqueue push", () => {
 				modified: [],
 				removed: []
 			} as unknown as GitHubCommit]
-		}, jiraHost, {
+		}, jiraHost, getLogger("test"), {
 			gitHubAppId: 1,
 			appId: 2,
 			clientId: "clientId",

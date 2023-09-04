@@ -91,10 +91,10 @@ const createJiraPayloadNoUsername = (transofmedRepoId: string) => {
 describe("Push Webhook", () => {
 
 	describe("cloud",  () => {
-
+		const logger = getLogger("test");
 		const createMessageProcessingContext = async (payload: any): Promise<SQSMessageContext<PushQueueMessagePayload>> => ({
-			payload: await createJobData(updateInstallationId(payload), jiraHost),
-			log: getLogger("test"),
+			payload: await createJobData(updateInstallationId(payload), jiraHost, logger),
+			log: logger,
 			message: {} as Message,
 			receiveCount: 1,
 			lastAttempt: false
@@ -585,7 +585,7 @@ describe("Push Webhook", () => {
 		let gitHubServerApp: GitHubServerApp;
 
 		const createMessageProcessingContext = async (payload): Promise<SQSMessageContext<PushQueueMessagePayload>> => ({
-			payload: await createJobData(updateInstallationId(payload), jiraHost, {
+			payload: await createJobData(updateInstallationId(payload), jiraHost, getLogger("test"), {
 				gitHubAppId: gitHubServerApp.id,
 				appId: gitHubServerApp.appId,
 				clientId: gitHubServerApp.gitHubClientId,
