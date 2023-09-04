@@ -75,6 +75,7 @@ const getInstallation = async (subscription: Subscription, gitHubAppId: number |
 		const response = await gitHubAppClient.getInstallation(gitHubInstallationId);
 		return {
 			...response.data,
+			subscriptionId: subscription.id,
 			syncStatus: mapSyncStatus(subscription.syncStatus),
 			syncWarning: subscription.syncWarning,
 			totalNumberOfRepos: subscription.totalNumberOfRepos,

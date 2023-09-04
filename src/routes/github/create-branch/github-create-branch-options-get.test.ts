@@ -13,6 +13,7 @@ jest.mock("config/feature-flags");
 describe("GitHub Create Branch Options Get", () => {
 	let app: Application;
 	let installation: Installation;
+
 	beforeEach(async () => {
 		app = getFrontendApp();
 		const result = await (new DatabaseStateCreator().create());
@@ -49,6 +50,7 @@ describe("GitHub Create Branch Options Get", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: undefined
 		});
+
 		await supertest(app)
 			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
@@ -81,6 +83,7 @@ describe("GitHub Create Branch Options Get", () => {
 			hashedClientKey: "key-123",
 			gitHubAppId: serverApp.id
 		});
+
 		await supertest(app)
 			.get("/create-branch-options?issueKey=TEST-123").set(
 				"Cookie",
