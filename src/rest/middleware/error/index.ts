@@ -34,11 +34,16 @@ export const RestErrorHandler = (err: any, req: Request, res: Response<ApiError>
 const logErrorOrWarning = (err: any, req: Request) => {
 
 	const httpStatus = parseInt(err.status) || parseInt(err.httpStatus) || 500;
-
+	const extraInfo = {
+		httpStatus,
+		method: req.method,
+		path: req.path,
+		base: req.baseUrl
+	};
 	if (httpStatus >= 500) {
-		req.log.error({ err }, "Error happen during rest api");
+		req.log.error({ err, ...extraInfo }, "Error happen during rest api");
 	} else {
-		req.log.warn({ err }, "Error happen during rest api");
+		req.log.warn({ err, ...extraInfo }, "Error happen during rest api");
 	}
 
 };
