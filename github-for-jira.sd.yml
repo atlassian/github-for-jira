@@ -219,6 +219,14 @@ alarms:
     HighSeverityAlarmWhenTooManyELB5xxErrors: null
     LowSeverityAlarmWhenTooManyBackend5xxErrors: null
     LowSeverityAlarmWhenTooManyELB5xxErrors: null
+    UnHealthyHostCount:
+      EvaluationPeriods: 4
+      Period: 60
+      Threshold: 2
+    ManyUnHealthyHostCount:
+      EvaluationPeriods: 8
+      Period: 60
+      Threshold: 3
 
 config:
   environmentVariables:
