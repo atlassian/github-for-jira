@@ -30,7 +30,7 @@ describe("pull_request transform REST", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -87,7 +87,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -171,7 +171,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -244,7 +244,7 @@ describe("pull_request transform REST", () => {
 		// @ts-expect-error
 		fixture.user = null;
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -302,7 +302,7 @@ describe("pull_request transform REST", () => {
 		// @ts-expect-error
 		delete reviewrsListNoState[0].state;
 
-		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = pulLRequestFixture;
 
@@ -367,7 +367,7 @@ describe("pull_request transform REST", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -425,7 +425,7 @@ describe("pull_request transform REST", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 
-		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any, getLogger("test"), jiraHost);
 
 		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
