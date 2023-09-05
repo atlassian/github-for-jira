@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { groupBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
-import { TaskStatus } from "~/src/models/subscription";
+import { TaskStatus, Subscription } from "~/src/models/subscription";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
@@ -19,6 +19,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 	next: NextFunction
 ): Promise<void> => {
 	try {
+		const { jiraHost: localJiraHost } = res.locals;
 		const subscriptionIds: number[] = String(req.query.subscriptionIds)
 			.split(",")
 			.map((id) => Number(id))
@@ -29,6 +30,31 @@ export const JiraGetConnectionsBackfillStatus = async (
 			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
+		const subscriptionStatus: Subscription[] = await Subscription.findAll({
+			where: {
+				id: subscriptionIds
+			}
+		});
+
+		if (subscriptionStatus.length <= 0) {
+			req.log.error("Missing Subscription");
+			res.status(400).send("Missing Subscription");
+			return;
+		}
+
+		const jiraHosts: string[] = subscriptionStatus.map(
+			(subscription) => subscription.jiraHost
+		);
+
+		const jiraHostsMatched = jiraHosts.every(
+			(jiraHost) => jiraHost === localJiraHost
+		);
+
+		if (jiraHostsMatched) {
+			req.log.error("Missmached Jira Host");
+			res.status(403).send("Missmached Jira Host");
+			return;
+		}
 
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
@@ -36,10 +62,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 			}
 		});
 
-		const connections = groupBy(
-			repoSyncStates,
-			"subscriptionId"
-		);
+		const connections = groupBy(repoSyncStates, "subscriptionId");
 
 		const backfillStatus = getBackfillStatus(connections);
 
@@ -59,8 +82,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
 	let isBackfillComplete = true;
 	isBackfillComplete = Object.values(backfillStatus).every(
-		(backFill: SubscriptionBackfillState): boolean =>
-			backFill.isSyncComplete
+		(backFill: SubscriptionBackfillState): boolean => backFill.isSyncComplete
 	);
 	return isBackfillComplete;
 };
