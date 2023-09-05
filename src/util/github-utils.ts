@@ -10,7 +10,7 @@ export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, 
 	}
 
 	try {
-		if (await booleanFlag(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, jiraHost)) {
+		if (await booleanFlag(BooleanFlags.USE_INSTALLATION_CLIENT_CHECK_PERMISSION, jiraHost)) {
 			logger.info("isUserAdminOfOrganization: orgType is an org, checking membership (app client)");
 			const { data: { state, role } } = await gitHubInstallationClient.getUserMembershipForOrg(username, orgName);
 			logger.info({ orgName, username, state, role }, `isUserAdminOfOrganization: User has role for org`);

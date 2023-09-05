@@ -76,7 +76,7 @@ describe("GitHub Utils", () => {
 
 		it("should call app client to check permission, fail at non admin role", async () => {
 
-			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
+			when(booleanFlag).calledWith(BooleanFlags.USE_INSTALLATION_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
 			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
 
@@ -97,7 +97,7 @@ describe("GitHub Utils", () => {
 
 		it("should call app client to check permission, fail at non-active state", async () => {
 
-			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
+			when(booleanFlag).calledWith(BooleanFlags.USE_INSTALLATION_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
 			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
 
@@ -118,7 +118,7 @@ describe("GitHub Utils", () => {
 
 		it("should call app client to check permission, success when active and admin", async () => {
 
-			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
+			when(booleanFlag).calledWith(BooleanFlags.USE_INSTALLATION_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
 			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
 
