@@ -1,4 +1,4 @@
-import { createAppClient, createUserClient } from "utils/get-github-client-config";
+import { createAppClient, createUserClient, createInstallationClient } from "utils/get-github-client-config";
 import { Subscription } from "models/subscription";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { findOrStartSync } from "~/src/sync/sync-utils";
@@ -27,8 +27,10 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "hasAdminAccess" }, logger, gitHubServerAppIdPk);
+
 		logger.info("Checking if the user is an admin");
-		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubAppClient, installation.account.login, login, installation.target_type, logger);
+		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
 	} catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;

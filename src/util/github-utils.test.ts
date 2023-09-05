@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isUserAdminOfOrganization } from "./github-utils";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
-import { GitHubAppClient } from "~/src/github/client/github-app-client";
-import { keyLocator } from "~/src/github/client/key-locator";
+import { GitHubInstallationClient } from "~/src/github/client/github-installation-client";
+import { InstallationId } from "~/src/github/client/installation-id";
 import { getLogger } from "config/logger";
 import { BooleanFlags, booleanFlag } from "config/feature-flags";
 import { when } from "jest-when";
@@ -12,10 +12,10 @@ jest.mock("config/feature-flags");
 describe("GitHub Utils", () => {
 	describe("isUserAdminOfOrganization", () => {
 		let githubUserClient: GitHubUserClient;
-		let gitHubAppClient: GitHubAppClient;
+		let gitHubInstallationClient: GitHubInstallationClient;
 		beforeEach(async () => {
 			githubUserClient = new GitHubUserClient("token", gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"));
-			gitHubAppClient = new GitHubAppClient(gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"), "111", await keyLocator(undefined, jiraHost));
+			gitHubInstallationClient = new GitHubInstallationClient(new InstallationId("https://api.github.com", 1, 111), gitHubCloudConfig, jiraHost, { trigger: "test" }, getLogger("test"), undefined);
 		});
 
 		it("should return true if user is admin of a given organization", async () => {
@@ -26,7 +26,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-org",
 				"test-user",
 				"Organization",
@@ -42,7 +42,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-org",
 				"test-user",
 				"Organization",
@@ -54,7 +54,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-user",
 				"test-user",
 				"User",
@@ -66,7 +66,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"different-user",
 				"test-user",
 				"User",
@@ -78,6 +78,8 @@ describe("GitHub Utils", () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
+			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
+
 			githubNock
 				.get("/orgs/test-org/memberships/test-user")
 				.reply(200, { state: "active", role: "non-admin" });
@@ -85,7 +87,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-org",
 				"test-user",
 				"Org",
@@ -97,6 +99,8 @@ describe("GitHub Utils", () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
+			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
+
 			githubNock
 				.get("/orgs/test-org/memberships/test-user")
 				.reply(200, { state: "inactive", role: "admin" });
@@ -104,7 +108,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-org",
 				"test-user",
 				"Org",
@@ -116,6 +120,8 @@ describe("GitHub Utils", () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
+			githubNock.post("/app/installations/111/access_tokens").reply(200, { token: "token", expires_at: new Date().getTime() });
+
 			githubNock
 				.get("/orgs/test-org/memberships/test-user")
 				.reply(200, { state: "active", role: "admin" });
@@ -123,7 +129,7 @@ describe("GitHub Utils", () => {
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
 				jiraHost,
-				gitHubAppClient,
+				gitHubInstallationClient,
 				"test-org",
 				"test-user",
 				"Org",
