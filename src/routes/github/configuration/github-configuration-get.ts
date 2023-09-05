@@ -9,7 +9,7 @@ import { envVars } from "config/env";
 import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { isUserAdminOfOrganization } from "utils/github-utils";
 import { GithubClientBlockedIpError, GithubClientSSOLoginError } from "~/src/github/client/github-client-errors";
-import { createInstallationClient, createUserClient } from "~/src/util/get-github-client-config";
+import { createInstallationClient, createUserClient, createAppClient } from "~/src/util/get-github-client-config";
 import { GitHubServerApp } from "models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
@@ -77,6 +77,7 @@ export const getInstallationsWithAdmin = async (
 	return await Promise.all(installations.map(async (installation) => {
 		const errors: Error[] = [];
 		const gitHubClient = await createInstallationClient(installation.id, jiraHost, { trigger: "github-configuration-get" }, log, gitHubAppId);
+		const gitHubAppClient = await createAppClient(log, jiraHost, gitHubAppId, { trigger: "github-configuration-get" });
 
 		const numberOfReposPromise = await gitHubClient.getNumberOfReposForInstallation().catch((err) => {
 			errors.push(err);
@@ -88,6 +89,8 @@ export const getInstallationsWithAdmin = async (
 		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
+			jiraHost,
+			gitHubAppClient,
 			installation.account.login,
 			login,
 			installation.target_type,

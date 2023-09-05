@@ -28,7 +28,7 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
 		logger.info("Checking if the user is an admin");
-		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
+		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubAppClient, installation.account.login, login, installation.target_type, logger);
 	} catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
