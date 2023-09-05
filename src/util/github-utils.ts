@@ -2,6 +2,7 @@ import { GitHubUserClient } from "~/src/github/client/github-user-client";
 import { GitHubAppClient } from "~/src/github/client/github-app-client";
 import Logger from "bunyan";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { GithubClientNotFoundError, GithubClientInvalidPermissionsError } from "~/src/github/client/github-client-errors";
 
 export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, jiraHost: string, gitHubAppClient: GitHubAppClient, orgName: string, username: string, orgType: string, logger: Logger): Promise<boolean> => {
 	if (orgType === "User") {
@@ -12,12 +13,20 @@ export const isUserAdminOfOrganization = async (githubClient: GitHubUserClient, 
 	try {
 		if (await booleanFlag(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, jiraHost)) {
 			logger.info("isUserAdminOfOrganization: orgType is an org, checking membership (app client)");
-			const { data: { role } } = await gitHubAppClient.getUserMembershipForOrg(username, orgName);
-			logger.info({ orgName, username, role }, `isUserAdminOfOrganization: User has role for org`);
-			return role === "admin";
+			const { data: { state, role } } = await gitHubAppClient.getUserMembershipForOrg(username, orgName);
+			logger.info({ orgName, username, state, role }, `isUserAdminOfOrganization: User has role for org`);
+			return role === "admin" && state === "active";
 		}
-	} catch (e) {
-		logger.error({ err: e }, "Fail checking permission using GitHub App Client, fallback to user client");
+	} catch (err) {
+		if (err instanceof GithubClientNotFoundError) {
+			logger.warn({ err, orgName, username }, `could not determine admin status of user in org: GithubClientNotFoundError`);
+			return false;
+		} else if (err instanceof GithubClientInvalidPermissionsError) {
+			logger.warn({ err, orgName, username }, `could not determine admin status of user in org: GithubClientInvalidPermissionsError`);
+			return false;
+		} else {
+			logger.error({ err }, "Fail checking permission using GitHub App Client, fallback to user client");
+		}
 	}
 
 	try {

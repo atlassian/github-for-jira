@@ -74,13 +74,51 @@ describe("GitHub Utils", () => {
 			)).toBe(false);
 		});
 
-		it("should call app client to check permission", async () => {
+		it("should call app client to check permission, fail at non admin role", async () => {
 
 			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
 
 			githubNock
 				.get("/orgs/test-org/memberships/test-user")
-				.reply(200, { role: "admin" });
+				.reply(200, { state: "active", role: "non-admin" });
+
+			expect(await isUserAdminOfOrganization(
+				githubUserClient,
+				jiraHost,
+				gitHubAppClient,
+				"test-org",
+				"test-user",
+				"Org",
+				getLogger("test")
+			)).toBe(false);
+		});
+
+		it("should call app client to check permission, fail at non-active state", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
+
+			githubNock
+				.get("/orgs/test-org/memberships/test-user")
+				.reply(200, { state: "inactive", role: "admin" });
+
+			expect(await isUserAdminOfOrganization(
+				githubUserClient,
+				jiraHost,
+				gitHubAppClient,
+				"test-org",
+				"test-user",
+				"Org",
+				getLogger("test")
+			)).toBe(false);
+		});
+
+		it("should call app client to check permission, success when active and admin", async () => {
+
+			when(booleanFlag).calledWith(BooleanFlags.USE_APP_CLIENT_CHECK_PERMISSION, expect.anything()).mockResolvedValue(true);
+
+			githubNock
+				.get("/orgs/test-org/memberships/test-user")
+				.reply(200, { state: "active", role: "admin" });
 
 			expect(await isUserAdminOfOrganization(
 				githubUserClient,
