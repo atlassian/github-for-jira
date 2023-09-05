@@ -32,7 +32,7 @@ $(".add-enterprise-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-			moduleKey: "github-list-servers-page"
+		moduleKey: "github-list-servers-page"
 		}
 	);
 });
@@ -48,7 +48,7 @@ $(".select-github-product-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-			moduleKey: "github-select-product-page"
+		moduleKey: "github-select-product-page"
 		}
 	);
 });
@@ -94,18 +94,18 @@ $(".sync-connection-link").click(event => {
 	document.getElementById("restart-backfill-modal").style.display = "block";
 
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
-		event.preventDefault();
-		const commitsFromDate = document.getElementById('backfill-date-picker').value;
-		const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
-		let syncType = undefined;
-		if (fullSyncCheckbox && fullSyncCheckbox.checked) {
-			syncType = "full";
-		}
-		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
+			event.preventDefault();
+			const commitsFromDate = document.getElementById('backfill-date-picker').value;
+			const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
+			let syncType = undefined;
+			if (fullSyncCheckbox && fullSyncCheckbox.checked) {
+				syncType = "full";
+			}
+			window.AP.context.getToken(function (jwt) {
+				restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
+				});
+			});
 		});
-	});
-});
 
 $(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
 	const installationId = $(event.target).data("installation-id");
@@ -120,12 +120,12 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
 
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
-		event.preventDefault();
-		window.AP.context.getToken(function (jwt) {
-			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
+			event.preventDefault();
+			window.AP.context.getToken(function (jwt) {
+				restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
+				});
+			});
 		});
-	});
-});
 
 $("#restart-backfill-action-button, #restart-backfill").click(initializeBackfillDateInput);
 
@@ -308,20 +308,20 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-			moduleKey: "github-edit-app-page",
-			customData: { uuid }
+		moduleKey: "github-edit-app-page",
+		customData: { uuid }
 		}
 	);
 });
 
 $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle) => {
-	try {
-		const isoStr = backfillSinceLabelEle.dataset.backfillSince;
-		const backfillDate = new Date(isoStr);
-		$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
-	} catch (e) {
-		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
-	}
+		try {
+			const isoStr = backfillSinceLabelEle.dataset.backfillSince;
+			const backfillDate = new Date(isoStr);
+			$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
+		} catch (e) {
+			console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
+			}
 });
 
 const getInprogressSubIds = () => {
@@ -370,22 +370,29 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 	const syncStatusProgress = infoContainer.children(
 		`span.jiraConfiguration__table__syncStatus`
 	);
-	const backfillDateInfo = infoContainer.children('div.jiraConfiguration__info__backfillDate');
-	const backfillDate = infoContainer.children('span.jiraConfiguration__info__backfillDate-label');
+	const backfillDateInfo = infoContainer.children(
+		"div.jiraConfiguration__info__backfillDate"
+	);
 	let syncStatus = "IN PROGRESS";
 	if (isSyncComplete) {
 		inprogressIcon.css("display", "none");
 		syncStatusProgress.removeClass("jiraConfiguration__table__in-progress");
 		syncStatusProgress.removeClass("jiraConfiguration__table__pending");
 		syncStatusProgress.addClass("jiraConfiguration__table__finished");
-		if(backfillSince){
-			backfillDate.text(backfillSince.toISOString());
-		}	
-		else{
-			backfillDateInfo.text("All commits backfilled");
+		if (backfillSince) {
+			console.log("Backfilled from:");
+			const backfillSinceDate = new Date(backfillSince);
+			const formattedDate = backfillSinceDate.toLocaleDateString('en-GB'); // Change 'en-GB' to your desired language/locale
+			infoContainer.append(
+				`<div class="jiraConfiguration__info__backfillDate"><span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label">${formattedDate}</span><span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose Continue backfill in the settings menu on the right">Information</span></div>`
+			);
+		} else {
+			infoContainer.append(
+				'<div class="jiraConfiguration__info__backfillDate">All commits backfilled</span>'
+			);
 		}
 		syncStatus = "FINISHED";
-	}else{
+	} else {
 		syncStatusProgress.removeClass("jiraConfiguration__table__pending");
 		syncStatusProgress.addClass("jiraConfiguration__table__in-progress");
 	}

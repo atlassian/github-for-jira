@@ -30,19 +30,19 @@ export const JiraGetConnectionsBackfillStatus = async (
 			res.status(400).send("Missing Subscription IDs");
 			return;
 		}
-		const subscriptionStatus: Subscription[] = await Subscription.findAll({
+		const subscriptions: Subscription[] = await Subscription.findAll({
 			where: {
 				id: subscriptionIds
 			}
 		});
 
-		if (subscriptionStatus.length <= 0) {
+		if (subscriptions.length <= 0) {
 			req.log.error("Missing Subscription");
 			res.status(400).send("Missing Subscription");
 			return;
 		}
 
-		const jiraHosts: string[] = subscriptionStatus.map(
+		const jiraHosts: string[] = subscriptions.map(
 			(subscription) => subscription.jiraHost
 		);
 
@@ -50,7 +50,8 @@ export const JiraGetConnectionsBackfillStatus = async (
 			(jiraHost) => jiraHost === localJiraHost
 		);
 
-		if (jiraHostsMatched) {
+		const subscriptionsById = groupBy(subscriptions, "id");
+		if (!jiraHostsMatched) {
 			req.log.error("Missmached Jira Host");
 			res.status(403).send("Missmached Jira Host");
 			return;
@@ -62,9 +63,9 @@ export const JiraGetConnectionsBackfillStatus = async (
 			}
 		});
 
-		const connections = groupBy(repoSyncStates, "subscriptionId");
+		const repos = groupBy(repoSyncStates, "subscriptionId");
 
-		const backfillStatus = getBackfillStatus(connections);
+		const backfillStatus = getBackfillStatus(repos, subscriptionsById);
 
 		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
 		res.status(200).send({
@@ -87,7 +88,7 @@ const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
 	return isBackfillComplete;
 };
 
-const getBackfillStatus = (connections): BackFillType => {
+const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 	const backfillStatus: BackFillType = {};
 	for (const subscriptionId in connections) {
 		backfillStatus[subscriptionId] = { isSyncComplete: true };
@@ -104,6 +105,8 @@ const getBackfillStatus = (connections): BackFillType => {
 			["complete", "failed"].includes(repo.syncStatus)
 		).length;
 		backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
+		backfillStatus[subscriptionId]["backfillSince"] =
+			subscriptionsById[subscriptionId][0].backfillSince || null;
 		backfillStatus[subscriptionId]["isSyncComplete"] =
 			syncedRepos === totalRepos;
 	}
