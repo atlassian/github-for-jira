@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Subscription } from "models/subscription";
 import { isUserAdminOfOrganization } from "~/src/util/github-utils";
-import { createAppClient, createUserClient } from "~/src/util/get-github-client-config";
+import { createAppClient, createInstallationClient, createUserClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 
 export const GithubSubscriptionDelete = async (req: Request, res: Response): Promise<void> => {
@@ -16,6 +16,7 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		trigger: "github-subscription-delete"
 	};
 	const gitHubAppClient = await createAppClient(logger, jiraHost, gitHubAppId, metrics);
+	const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "github-subscription-delete" }, logger, gitHubAppId);
 	const gitHubUserClient = await createUserClient(githubToken, jiraHost, metrics, logger, gitHubAppId);
 	const gitHubProduct = getCloudOrServerFromGitHubAppId(gitHubAppId);
 
@@ -39,6 +40,8 @@ export const GithubSubscriptionDelete = async (req: Request, res: Response): Pro
 		// Only show the page if the logged in user is an admin of this installation
 		if (!await isUserAdminOfOrganization(
 			gitHubUserClient,
+			jiraHost,
+			gitHubInstallationClient ,
 			installation.account.login,
 			login,
 			installation.target_type,
