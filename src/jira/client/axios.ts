@@ -157,7 +157,7 @@ const instrumentRequest = (baseURL: string) => {
 		};
 
 		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
-		tags.gsd_histogram = RESPONSE_TIME_HISTOGRAM_BUCKETS;
+		tags["gsd_histogram"] = RESPONSE_TIME_HISTOGRAM_BUCKETS;
 		statsd.histogram(metricHttpRequest.jira, requestDurationMs, tags, { jiraHost: baseURL });
 
 		return response;

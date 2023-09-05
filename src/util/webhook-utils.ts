@@ -48,7 +48,7 @@ export const emitWebhookProcessedMetrics = (
 			const histogramBuckets =
 				"1000_10000_30000_60000_120000_300000_600000_3000000";
 
-			tags.gsd_histogram = histogramBuckets;
+			tags["gsd_histogram"] = histogramBuckets;
 
 			// send metrics with gsd_histogram so it will be treated as a histogram-type metric
 			statsd.histogram(
@@ -108,7 +108,7 @@ export const emitWebhookPayloadMetrics = (webhookName: string, jiraHost: string 
 	const histogramBuckets =
 		"128000_256000_512000_1024000_2048000"; //buckets in byte size
 
-	tags.gsd_histogram = histogramBuckets;
+	tags["gsd_histogram"] = histogramBuckets;
 
 	statsd.histogram(
 		metricWebhooks.webhookPayloadSize,

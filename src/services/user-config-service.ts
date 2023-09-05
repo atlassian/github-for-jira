@@ -120,11 +120,11 @@ const convertYamlToUserConfig = (input: string | undefined, logger: Logger): Con
 	const deployments = {};
 	if (configDeployments != null) {
 		if (configDeployments.environmentMapping) {
-			deployments.environmentMapping = configDeployments.environmentMapping;
+			deployments["environmentMapping"] = configDeployments.environmentMapping;
 			logger.info("Found deployments mappings in user config files");
 		}
 		if (configDeployments.services?.ids) {
-			deployments.services = {
+			deployments["services"] = {
 				ids: configDeployments.services.ids.slice(0, MAX_SERVICE_ID_COUNT)
 			};
 			logger.info("Found services ids mappings in user config files");

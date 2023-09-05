@@ -43,7 +43,7 @@ export const GithubOAuthLoginGet = async (req: Request, res: Response): Promise<
 	// Create unique state for each oauth request
 	const stateKey = crypto.randomBytes(8).toString("hex");
 
-	req.session.timestamp_before_oauth = Date.now();
+	req.session["timestamp_before_oauth"] = Date.now();
 
 	const parsedOriginalUrl = url.parse(req.originalUrl);
 
@@ -134,7 +134,7 @@ export const GithubOAuthCallbackGet = async (req: Request, res: Response, next: 
 		state: stateKey
 	} = req.query as Record<string, string>;
 
-	const timestampBefore = req.session.timestamp_before_oauth as number;
+	const timestampBefore = req.session["timestamp_before_oauth"] as number;
 	if (timestampBefore) {
 		const timestampAfter = Date.now();
 		req.log.debug(`callback called after spending ${timestampAfter - timestampBefore} ms on GitHub servers`);
