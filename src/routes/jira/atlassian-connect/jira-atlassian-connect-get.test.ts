@@ -44,7 +44,7 @@ describe("Atlassian Connect", () => {
 
 		it("should return generic container urls, and create branch url, when feature flag is enabled", async () => {
 			const req = { log: getLogger("test") } as any;
-			const res = { ...mockResponse, locals: { jiraHost } } as any;
+			const res = { ...mockResponse, locals: { jiraHost } } ;
 			when(booleanFlag).calledWith(
 				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(true);
@@ -72,7 +72,7 @@ describe("Atlassian Connect", () => {
 
 		it("should only return the create branch url when generic container FF is not enabled", async () => {
 			const req = { log: getLogger("test") } as any;
-			const res = { ...mockResponse, locals: { jiraHost } } as any;
+			const res = { ...mockResponse, locals: { jiraHost } } ;
 			when(booleanFlag).calledWith(
 				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(false);
