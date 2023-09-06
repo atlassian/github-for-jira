@@ -100,7 +100,6 @@
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"jest/no-done-callback": "off",
-			"jest/no-disabled-tests": "off",
 			"jest/expect-expect": "off"
 		}
 	}]
