@@ -1,13 +1,19 @@
 import { NextFunction, Request, Response } from "express";
 import { groupBy } from "lodash";
 import { RepoSyncState } from "~/src/models/reposyncstate";
-import { TaskStatus, Subscription } from "~/src/models/subscription";
+import {
+	TaskStatus,
+	Subscription,
+	SyncStatus
+} from "~/src/models/subscription";
+import { mapSyncStatus, ConnectionSyncStatus } from "./jira-get";
 
 type SubscriptionBackfillState = {
 	totalRepos?: number;
 	isSyncComplete: boolean;
 	syncedRepos?: number;
 	backfillSince?: string | null;
+	syncStatus: ConnectionSyncStatus;
 };
 type BackFillType = {
 	[key: string]: SubscriptionBackfillState;
@@ -91,24 +97,32 @@ const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
 const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 	const backfillStatus: BackFillType = {};
 	for (const subscriptionId in connections) {
-		backfillStatus[subscriptionId] = { isSyncComplete: true };
+		backfillStatus[subscriptionId] = {
+			isSyncComplete: true,
+			syncStatus: SyncStatus.PENDING
+		};
 		const subscriptionRepos = connections[subscriptionId];
 		const totalRepos = subscriptionRepos.length;
 		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
+		const syncStatus = mapSyncStatus(
+			subscriptionsById[subscriptionId][0].syncStatus
+		);
 		const repos = subscriptionRepos.map((repoSyncState) => {
 			return {
 				name: repoSyncState.repoFullName,
-				syncStatus: getSyncStatus(repoSyncState)
+				repoSyncStatus: getSyncStatus(repoSyncState),
+				syncStatus: syncStatus
 			};
 		});
 		const syncedRepos = repos.filter((repo) =>
-			["complete", "failed"].includes(repo.syncStatus)
+			["complete", "failed"].includes(repo.repoSyncStatus)
 		).length;
 		backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
 		backfillStatus[subscriptionId]["backfillSince"] =
 			subscriptionsById[subscriptionId][0].backfillSince || null;
 		backfillStatus[subscriptionId]["isSyncComplete"] =
 			syncedRepos === totalRepos;
+		backfillStatus[subscriptionId]["syncStatus"] = syncStatus;
 	}
 	return backfillStatus;
 };
