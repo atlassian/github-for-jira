@@ -7,8 +7,8 @@ import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 
 const start = async () => {
-	initializeSentry();
 	const app: Express = getFrontendApp();
+	initializeSentry(app);
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
 	app.listen(port, () => {
 		getLogger("frontend-app").info(`started at port ${port}`);

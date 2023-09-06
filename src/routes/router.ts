@@ -25,6 +25,7 @@ export const RootRouter = Router();
 
 // The request handler must be the first middleware on the app
 RootRouter.use(Sentry.Handlers.requestHandler());
+RootRouter.use(Sentry.Handlers.tracingHandler());
 
 // Parse URL-encoded bodies for Jira configuration requests
 RootRouter.use(urlencoded({ extended: true }));
