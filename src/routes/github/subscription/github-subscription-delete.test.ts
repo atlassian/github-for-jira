@@ -63,7 +63,7 @@ describe("delete-github-subscription", () => {
 			role: "admin", user: { login: "test-org" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
 		expect(await Subscription.count()).toEqual(0);
 	});
@@ -105,7 +105,7 @@ describe("delete-github-subscription", () => {
 			role: "admin", user: { login: "test-org" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
 		expect(await Subscription.count()).toEqual(1);
 	});
@@ -118,7 +118,7 @@ describe("delete-github-subscription", () => {
 			login: "test-user"
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
 		expect(await Subscription.count()).toEqual(0);
 	});
@@ -159,7 +159,7 @@ describe("delete-github-subscription", () => {
 			login: "test-user"
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(202);
 		expect(await Subscription.count()).toEqual(1);
 	});
@@ -175,7 +175,7 @@ describe("delete-github-subscription", () => {
 			role: "notadmin", user: { login: "test-org" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(await Subscription.count()).toEqual(1);
 	});
@@ -191,7 +191,7 @@ describe("delete-github-subscription", () => {
 			role: "batman", user: { login: "test-user" }
 		});
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.status).toHaveBeenCalledWith(401);
 		expect(await Subscription.count()).toEqual(1);
 	});
@@ -203,7 +203,7 @@ describe("delete-github-subscription", () => {
 			locals: {}
 		};
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.sendStatus).toHaveBeenCalledWith(401);
 	});
 
@@ -213,7 +213,7 @@ describe("delete-github-subscription", () => {
 
 		res.status.mockReturnValue(res);
 
-		await GithubSubscriptionDelete(req as any, res as any);
+		await GithubSubscriptionDelete(req , res);
 		expect(res.status).toHaveBeenCalledWith(400);
 		expect(res.json.mock.calls[0]).toMatchSnapshot([
 			{

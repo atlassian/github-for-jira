@@ -12,7 +12,7 @@ export const JiraConnectEnterpriseAppsGet = async (
 	try {
 		req.log.debug("Received Jira Connect Enterprise App page request");
 
-		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid as string;
+		const tempConnectConfigUuidOrServerUuid = req.params.tempConnectConfigUuidOrServerUuid ;
 		const isNew = req.query.new;
 		const installationId = res.locals.installation.id;
 

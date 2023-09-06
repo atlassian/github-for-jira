@@ -356,7 +356,7 @@ describe("API Router", () => {
 					})
 					.expect(200)
 					.then((response) => {
-						expect(response.body!.recryptedValue).toEqual("encrypted:blah");
+						expect(response.body.recryptedValue).toEqual("encrypted:blah");
 					});
 			});
 
