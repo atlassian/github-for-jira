@@ -74,6 +74,7 @@ export const jiraCreateProject = async (page: Page, projectId: string): Promise<
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
 	await page.fill("[data-testid='project-create.create-form.name-field.input']", projectId);
+	process.env.PROJECT_ID = await page.inputValue("input#key-field-project-create-uid24");
 	// Waiting for the Issue Key to be filled
 	await page.waitForTimeout(2000);
 	await page.click("[data-testid='project-create.create-form.create-screen.submit-button']");
