@@ -14,7 +14,7 @@
 		"clean": "rimraf coverage build tmp src/**/*.js src/**/*.js.map test/**/*.js test/**/*.js.map",
 		"init": "run-p db",
 		"start": "run-p spa:dev start:main start:worker",
-		"start:no-spa": "run-p start:main start:worker",
+		"start:no-spa": "run-p prestart start:main start:worker",
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
 		"start:worker": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
 		"start:production": "run-p start:main:production start:worker:production",

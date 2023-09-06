@@ -20,4 +20,4 @@ RUN yarn install --frozen-lockfile
 #   https://github.com/nodejs/node/issues/16336#issuecomment-568845447
 # ENV NODE_EXTRA_CA_CERTS=node_modules/node_extra_ca_certs_mozilla_bundle/ca_bundle/ca_intermediate_root_bundle.pem
 
-CMD ["yarn", "start"]
+CMD ["yarn", "start:no-spa"]
