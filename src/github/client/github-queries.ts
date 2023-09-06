@@ -157,8 +157,8 @@ export type pullRequestQueryResponse = {
 		pullRequests: {
 			edges: {
 				createdAt: string;
-			cursor: string,
-			node: pullRequestNode;
+				cursor: string,
+				node: pullRequestNode;
 			}[]
 		};
 	};

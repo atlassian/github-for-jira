@@ -136,7 +136,7 @@ describe("DELETE /jira/configuration", () => {
 		};
 
 		const res = { status: jest.fn(() => res), send: jest.fn(), locals: { installation, jiraHost:"" } };
-		await JiraDelete(req as any, res as any);
+		await JiraDelete(req as any, res);
 		expect(subscription.destroy).not.toHaveBeenCalled();
 
 		expect(req.log.warn).toHaveBeenCalledWith(Errors.MISSING_JIRA_HOST);
