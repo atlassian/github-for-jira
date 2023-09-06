@@ -16,7 +16,8 @@ export const initializeSentry = (app: Express): void => {
 			// enable Express.js middleware tracing
 			new Sentry.Integrations.Express({
 				app
-			})
+			}),
+			...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations()
 		],
 		tracesSampleRate: Number(envVars.SENTRY_TRACING_RATE) || 1.0
 	});
