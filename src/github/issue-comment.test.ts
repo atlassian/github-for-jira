@@ -51,7 +51,7 @@ describe("Issue Comment Webhook", () => {
 					});
 
 				jiraNock
-					.post("/rest/api/latest/issue/TEST-123/comment", {
+					.post("/rest/api/3/issue/TEST-123/comment", {
 						body: "Test example comment with linked Jira issue: [TEST-123] - some-comment-url",
 						properties: [
 							{
@@ -62,7 +62,10 @@ describe("Issue Comment Webhook", () => {
 							}
 						]
 					})
-					.reply(201);
+					.reply(201, undefined, {
+						"Accept": "application/json",
+						"Content-Type": "application/json"
+					});
 
 				// Mocks for updating GitHub with a linked Jira ticket
 				jiraNock
