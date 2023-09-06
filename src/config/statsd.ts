@@ -103,7 +103,7 @@ export const elapsedTimeMetrics = (
 ) => {
 	const elapsedTimeInMs = hrtimer();
 	const method = req.method;
-	(req.log || logger).debug({
+	(req.log || logger)?.debug({
 		method: req.method,
 		path: req.path,
 		body: JSON.stringify(req.body),
@@ -115,7 +115,7 @@ export const elapsedTimeMetrics = (
 		const statusCode = `${res.statusCode}`;
 		const path = (req.baseUrl || "") + (req.route?.path || "/*");
 		const tags = { path, method, statusCode };
-		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
+		(req.log || logger)?.debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric
 		innerStatsd.histogram(metricHttpRequest.duration, elapsedTime, tags);
