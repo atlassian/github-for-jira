@@ -7,12 +7,10 @@ export const getRedisInfo = (connectionName: string): IORedis.RedisOptions => ({
 	host: envVars.REDISX_CACHE_HOST || "127.0.0.1",
 	db: 0,
 	reconnectOnError(err) {
-		const targetErrors = ["READONLY", "ETIMEDOUT"];
+		const targetError = "READONLY";
 
-		for (const targetError of targetErrors) {
-			if (err.message.includes(targetError)) {
-				return 1;
-			}
+		if (err.message.includes(targetError)) {
+			return 1;
 		}
 		return false;
 	},
