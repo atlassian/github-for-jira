@@ -180,12 +180,15 @@ const ConfigSteps = () => {
 						setLoaderForLogin(false);
 					});
 				} catch (e) {
-					setLoaderForLogin(false);
-					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-					reportError(new Error("Fail authenticateInGitHub", { cause: e }), {
+					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+					showError(errorObj);
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+					reportError(new Error("Fail initiate authorize", { cause: e }), {
 						path: "authorize",
 						selectedOption
 					});
+				} finally {
+					setLoaderForLogin(false);
 				}
 				break;
 			}
@@ -210,7 +213,12 @@ const ConfigSteps = () => {
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {});
+		await OauthManager.authenticateInGitHub(() => {})
+			.catch(e => {
+				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {} });
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+			});
 	};
 
 	const clearLogin = () => {
