@@ -30,7 +30,7 @@ describe("pull_request transform REST", () => {
 				name: "Some User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -87,7 +87,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -171,7 +171,7 @@ describe("pull_request transform REST", () => {
 				name: "Last Commit User Name"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any);
+		const data = await transformPullRequestRest(client, fixture as any, [], getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -244,7 +244,7 @@ describe("pull_request transform REST", () => {
 		// @ts-ignore
 		fixture.user = null;
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListNoUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -302,7 +302,7 @@ describe("pull_request transform REST", () => {
 		// @ts-ignore
 		delete reviewrsListNoState[0].state;
 
-		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any);
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewrsListNoState as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = pulLRequestFixture;
 
@@ -349,6 +349,64 @@ describe("pull_request transform REST", () => {
 		});
 	});
 
+	it("maps CHANGES_REQUESTED state to NEEDSWORK", async () => {
+		const pullRequestList = Object.assign({},
+			transformPullRequestList
+		);
+
+		const pulLRequestFixture = pullRequestList[0];
+		pulLRequestFixture.title = "[TEST-1] Branch payload with loads of issue keys Test";
+
+		const reviewersListChangesRequestedState = _.cloneDeep(reviewersListHasUser);
+		reviewersListChangesRequestedState[0].state = "CHANGES_REQUESTED";
+
+		const data = await transformPullRequestRest(client, pulLRequestFixture as any, reviewersListChangesRequestedState as any, getLogger("test"), jiraHost);
+
+		const { updated_at, title } = pulLRequestFixture;
+
+		expect(data).toStrictEqual({
+			id: "100403908",
+			name: "integrations/test",
+			pullRequests: [
+				{
+					author: {
+						avatar: "https://github.com/ghost.png",
+						email: "deleted@noreply.user.github.com",
+						name: "Deleted User",
+						url: "https://github.com/ghost"
+					},
+					commentCount: 0,
+					destinationBranch: "devel",
+					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+					displayId: "#51",
+					id: 51,
+					issueKeys: ["TEST-1"],
+					lastUpdate: updated_at,
+					reviewers: [
+						{
+							avatar: "https://github.com/images/error/octocat_happy.gif",
+							name: "octocat",
+							email: "octocat@noreply.user.github.com",
+							url: "https://github.com/octocat",
+							approvalStatus: "NEEDSWORK"
+						}
+					],
+					sourceBranch: "use-the-force",
+					sourceBranchUrl:
+						"https://github.com/integrations/test/tree/use-the-force",
+					status: "MERGED",
+					timestamp: updated_at,
+					title: title,
+					url: "https://github.com/integrations/test/pull/51",
+					updateSequenceId: 12345678
+				}
+			],
+			branches: [],
+			url: "https://github.com/integrations/test",
+			updateSequenceId: 12345678
+		});
+	});
+
 	it("should resolve reviewer's email", async () => {
 		const pullRequestList = Object.assign({},
 			transformPullRequestList
@@ -367,7 +425,7 @@ describe("pull_request transform REST", () => {
 				email: "octocat-mapped@github.com"
 			});
 
-		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any);
+		const data = await transformPullRequestRest(client, fixture as any, reviewersListHasUser as any, getLogger("test"), jiraHost);
 
 		const { updated_at, title } = fixture;
 
@@ -425,11 +483,11 @@ describe("pull_request transform REST", () => {
 
 		githubUserTokenNock(gitHubInstallationId);
 
-		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any);
+		const data = await transformPullRequestRest(client, fixture as any, multipleReviewersWithMultipleReviews as any, getLogger("test"), jiraHost);
 
 		expect({ firstReviewStatus: data?.pullRequests[0].reviewers[0] }).toEqual(expect.objectContaining({
 			firstReviewStatus: expect.objectContaining({
-				approvalStatus: "UNAPPROVED"
+				approvalStatus: "NEEDSWORK"
 			})
 		}));
 
@@ -617,6 +675,48 @@ describe("pull_request transform GraphQL", () => {
 					name: "test-pull-request-reviewer-login",
 					url: "https://github.com/reviewer",
 					approvalStatus: "UNAPPROVED"
+				}
+			],
+			sourceBranch: "evernote-test",
+			sourceBranchUrl: "https://github.com/integrations/test/tree/evernote-test",
+			status: "MERGED",
+			timestamp: updatedAt,
+			title,
+			url: "https://github.com/integrations/test/pull/51",
+			updateSequenceId: 12345678
+		});
+	});
+
+	it("maps CHANGES_REQUESTED state to NEEDSWORK", async () => {
+		const title = "[TES-123] Branch payload Test";
+		const payload = { ...createPullPayload(title) };
+		payload.reviews = createReview("CHANGES_REQUESTED");
+
+		const { updatedAt } = payload;
+
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+
+		expect(data).toStrictEqual({
+			author: {
+				avatar: "test-pull-request-author-avatar",
+				email: "test-pull-request-author-login@noreply.user.github.com",
+				name: "test-pull-request-author-login",
+				url: "test-pull-request-author-url"
+			},
+			commentCount: 10,
+			destinationBranch: "devel",
+			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
+			displayId: "#51",
+			id: 51,
+			issueKeys: ["TES-123"],
+			lastUpdate: updatedAt,
+			reviewers: [
+				{
+					avatar: "test-pull-request-reviewer-avatar",
+					email: "test-pull-request-reviewer-login@email.test",
+					name: "test-pull-request-reviewer-login",
+					url: "https://github.com/reviewer",
+					approvalStatus: "NEEDSWORK"
 				}
 			],
 			sourceBranch: "evernote-test",

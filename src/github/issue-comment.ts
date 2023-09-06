@@ -103,11 +103,66 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		return;
 	}
 
+	const formattedComment = {
+		"content": [
+			{
+				"type": "paragraph",
+				"content": [
+					{
+						"type": "text",
+						"text": `${comment.user.login}`,
+						"marks": [
+							{
+								"type": "strong"
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": " left a comment "
+					},
+					{
+						"type": "text",
+						"text": "on GitHub",
+						"marks": [
+							{
+								"type": "link",
+								"attrs": {
+									"href": `${gitHubCommentUrl}`
+								}
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": ":"
+					}
+				]
+			},
+			{
+				"type": "blockquote",
+				"content": [
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": `${gitHubMessage}`
+							}
+						]
+					}
+				]
+			}
+		],
+		"type": "doc",
+		"version": 1
+	};
+
 	switch (context.action) {
 		case "created": {
 			for (const issueKey of allKeys) {
 				await jiraClient.issues.comments.addForIssue(issueKey, {
-					body: gitHubMessage + " - " + gitHubCommentUrl,
+					body: formattedComment,
 					properties: [
 						{
 							key: "gitHubId",
@@ -123,7 +178,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		case "edited": {
 			for (const issueKey of allKeys) {
 				await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubCommentId), {
-					body: gitHubMessage + " - " + gitHubCommentUrl
+					body: formattedComment
 				});
 			}
 			break;

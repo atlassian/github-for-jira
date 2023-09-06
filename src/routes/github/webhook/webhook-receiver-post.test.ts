@@ -400,7 +400,7 @@ const createGHESReqForEvent = (event: string, action?: string, uuid?: string, pa
 
 const createReqForEvent = (
 	{ event, action, uuid, webhookSecret, signature, payload }:
-		{ event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string, payload?: Schema }
+	{ event: string, action?: string, uuid?: string, webhookSecret?: string, signature?: string, payload?: Schema }
 ) => {
 	const body = action ? { action, ...payload } : { ...payload };
 

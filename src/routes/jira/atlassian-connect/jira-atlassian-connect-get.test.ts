@@ -44,7 +44,7 @@ describe("Atlassian Connect", () => {
 
 		it("should return generic container urls, and create branch url, when feature flag is enabled", async () => {
 			const req = { log: getLogger("test") } as any;
-			const res = { ...mockResponse, locals: { jiraHost } } as any;
+			const res = { ...mockResponse, locals: { jiraHost } } ;
 			when(booleanFlag).calledWith(
 				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(true);
@@ -58,7 +58,7 @@ describe("Atlassian Connect", () => {
 					"templateUrl": "https://test-github-app-instance.com/jira/workspaces/repositories/associate"
 				},
 				"createBranch": {
-					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
+					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
 				},
 				"searchConnectedWorkspaces":
 				{
@@ -72,7 +72,7 @@ describe("Atlassian Connect", () => {
 
 		it("should only return the create branch url when generic container FF is not enabled", async () => {
 			const req = { log: getLogger("test") } as any;
-			const res = { ...mockResponse, locals: { jiraHost } } as any;
+			const res = { ...mockResponse, locals: { jiraHost } } ;
 			when(booleanFlag).calledWith(
 				BooleanFlags.ENABLE_GENERIC_CONTAINERS, jiraHost
 			).mockResolvedValue(false);
@@ -83,7 +83,7 @@ describe("Atlassian Connect", () => {
 			const actions =  await defineJiraDevelopmentToolModuleActions(jiraHost);
 			expect(actions).toEqual({
 				"createBranch": {
-					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
+					"templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance"
 				}
 			});
 		});

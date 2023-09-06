@@ -73,7 +73,10 @@ const OrganizationsList = ({
 		}
 
 		if (!org.isAdmin) {
-			return <ErrorForNonAdmins />;
+			// TODO: Update this to support GHE
+			const adminOrgsUrl = `https://github.com/orgs/${org.account.login}/people?query=role%3Aowner`;
+
+			return <ErrorForNonAdmins adminOrgsUrl={adminOrgsUrl} />;
 		}
 	};
 
