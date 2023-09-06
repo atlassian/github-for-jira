@@ -17,7 +17,7 @@ export const initializeSentry = (app: Express): void => {
 			new Sentry.Integrations.Express({
 				app
 			}),
-			...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations()
+			new Sentry.Integrations.Postgres()
 		],
 		tracesSampleRate: Number(envVars.SENTRY_TRACING_RATE) || 1.0
 	});
