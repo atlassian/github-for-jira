@@ -104,6 +104,8 @@ const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 		const subscriptionRepos = connections[subscriptionId];
 		const totalRepos = subscriptionRepos?.length;
 		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
+		let isSyncComplete = subscriptionsById[subscriptionId][0]?.syncStatus;
+		isSyncComplete = isSyncComplete === SyncStatus.COMPLETE || isSyncComplete === SyncStatus.FAILED;
 		const syncStatus = mapSyncStatus(
 			subscriptionsById[subscriptionId][0]?.syncStatus
 		);
@@ -120,8 +122,7 @@ const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 		backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
 		backfillStatus[subscriptionId]["backfillSince"] =
 			subscriptionsById[subscriptionId][0]?.backfillSince || null;
-		backfillStatus[subscriptionId]["isSyncComplete"] =
-			syncedRepos === totalRepos;
+		backfillStatus[subscriptionId]["isSyncComplete"] = isSyncComplete;
 		backfillStatus[subscriptionId]["syncStatus"] = syncStatus;
 	}
 	return backfillStatus;

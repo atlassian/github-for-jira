@@ -406,7 +406,7 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 		`jiraConfiguration__table__${syncStatusClassName}`
 	);
 
-	if (syncStatus === "FINISHED" || syncStatus === "FAILED") {
+	if (isSyncComplete) {
 		inprogressIcon.css("display", "none");
 		if (backfillSince) {
 			const backfillSinceDate = new Date(backfillSince);
@@ -432,46 +432,44 @@ function fetchAllConnectionsBackfillStatus() {
 	const subscriptionIds = getInprogressSubIds();
 	// check if we have atleast one subscription backfill in progress
 	if (subscriptionIds.length > 0) {
-		AP.context.getToken(function (token) {
-			$.ajax({
-				type: "GET",
-				url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}&jwt=${token}`,
-				success: (response) => {
-					const data = response.data;
-					const subscriptions = data.subscriptions;
+		$.ajax({
+			type: "GET",
+			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}&jwt=${token}`,
+			success: (response) => {
+				const data = response.data;
+				const subscriptions = data.subscriptions;
 
-					const isBackfillComplete = data.isBackfillComplete;
+				const isBackfillComplete = data.isBackfillComplete;
 
-					$(".jiraConfiguration__table__row").each(function () {
-						const self = this;
-						let subscriptionId = $(self).data("subscription-id");
+				$(".jiraConfiguration__table__row").each(function () {
+					const self = this;
+					let subscriptionId = $(self).data("subscription-id");
 
-						if (subscriptionId in subscriptions) {
-							// repo count set
-							updateBackfilledRepoCount({
-								subscriptions,
-								subscriptionId,
-								self,
-							});
-							// repo status set
-							updateBackfilledStatus({ subscriptionId, subscriptions, self });
-						} else {
-							$(`#${subscriptionId}-syncCount`).css("display", "none");
-						}
-					});
-					if (!isBackfillComplete) {
-						fetchBackfillStateTimeout = setTimeout(
-							fetchAllConnectionsBackfillStatus,
-							6000
-						);
+					if (subscriptionId in subscriptions) {
+						// repo count set
+						updateBackfilledRepoCount({
+							subscriptions,
+							subscriptionId,
+							self,
+						});
+						// repo status set
+						updateBackfilledStatus({ subscriptionId, subscriptions, self });
 					} else {
-						clearTimeout(fetchBackfillStateTimeout);
+						$(`#${subscriptionId}-syncCount`).css("display", "none");
 					}
-				},
-				error: () => {
-					console.log("failure in fetching  backfill status of connections.");
-				},
-			});
+				});
+				if (!isBackfillComplete) {
+					fetchBackfillStateTimeout = setTimeout(
+						fetchAllConnectionsBackfillStatus,
+						6000
+					);
+				} else {
+					clearTimeout(fetchBackfillStateTimeout);
+				}
+			},
+			error: () => {
+				console.log("failure in fetching  backfill status of connections.");
+			},
 		});
 	}
 }
@@ -483,6 +481,7 @@ $(document).ready(function () {
 	if (hasConnections) {
 		fetchAllConnectionsBackfillStatus();
 	}
+
 	setBackfillDateToolTip();
 	AJS.$(
 		".jiraConfiguration__restartBackfillModal__fullsync__label-icon"
