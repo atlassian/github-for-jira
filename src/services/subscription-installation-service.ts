@@ -174,6 +174,15 @@ export const submitSecurityWorkspaceToLink = async (
 	const jiraClient = await JiraClient.getNewClient(installation, logger);
 	await jiraClient.linkedWorkspace(subscription.id);
 	logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
+
+	await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
+		actionSubject: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
+		source: !subscription.gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+	}, {
+		jiraHost: installation.jiraHost,
+		workspaceId: subscription.id
+	});
 };
 
 const hasSecurityPermissionsAndEvents = async (installation: Installation, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
