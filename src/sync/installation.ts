@@ -17,7 +17,7 @@ import { isBlocked, numberFlag, NumberFlags, booleanFlag, BooleanFlags } from "c
 import { Deduplicator, DeduplicatorResult, RedisInProgressStorageWithTimeout } from "./deduplicator";
 import { getRedisInfo } from "config/redis-info";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
-import { Hub } from "@sentry/types/dist/hub";
+import { Hub } from "@sentry/node/types";
 import { getRepositoryTask } from "~/src/sync/discovery";
 import { createInstallationClient } from "~/src/util/get-github-client-config";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
