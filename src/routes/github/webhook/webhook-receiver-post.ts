@@ -23,6 +23,8 @@ import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { extraLoggerInfo } from "./webhook-logging-extra";
 import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
 import { installationWebhookHandler } from "~/src/github/installation";
+import { statsd } from "config/statsd";
+import { metricPerf } from "config/metric-names";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -42,7 +44,14 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 	try {
 		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
+
+			const started = Date.now();
 			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
+			const finished = Date.now();
+
+			statsd.histogram(metricPerf.webhookShaGeneratorHist, finished-started, { } ,{ });
+			statsd.increment(metricPerf.webhookShaGeneratorCnt, { }, { });
+
 			/**
 			 * The latest updated webhook secret will be at index 0,
 			 * Once we stop receiving logs with index other than 0,

@@ -1,10 +1,10 @@
 import { StatsD, Tags } from "hot-shots";
-import { getLogger } from "./logger";
 import { NextFunction, Request, Response } from "express";
 import { isNodeProd, isNodeTest } from "utils/is-node-env";
 import { metricHttpRequest } from "./metric-names";
 import { envVars } from "./env";
 import { isTestJiraHost } from "./jira-test-site-check";
+import Logger from "bunyan";
 
 export const globalTags = {
 	environment: isNodeTest() ? "test" : process.env.MICROS_ENV || "",
@@ -14,7 +14,12 @@ export const globalTags = {
 };
 
 const RESPONSE_TIME_HISTOGRAM_BUCKETS = "100_1000_2000_3000_5000_10000_30000_60000";
-const logger = getLogger("config.statsd");
+
+// Not using getLogger() to avoid cyclic dependencies
+let logger: Logger | undefined;
+export const initStatsdLogger = (loggerArg: Logger) => {
+	logger = loggerArg;
+};
 
 const innerStatsd = new StatsD({
 	prefix: "github-for-jira.",
@@ -23,7 +28,12 @@ const innerStatsd = new StatsD({
 	globalTags,
 	errorHandler: (err) => {
 		if (isNodeProd()) {
-			logger.warn(err, "Error writing metrics");
+			if (logger) {
+				logger.warn({ err }, "Error writing metrics");
+			} else {
+				// eslint-disable-next-line no-console
+				console.error("Error writing metrics", err);
+			}
 		}
 	},
 
@@ -93,7 +103,7 @@ export const elapsedTimeMetrics = (
 ) => {
 	const elapsedTimeInMs = hrtimer();
 	const method = req.method;
-	(req.log || logger).debug({
+	(req.log || logger)?.debug({
 		method: req.method,
 		path: req.path,
 		body: JSON.stringify(req.body),
@@ -105,7 +115,7 @@ export const elapsedTimeMetrics = (
 		const statusCode = `${res.statusCode}`;
 		const path = (req.baseUrl || "") + (req.route?.path || "/*");
 		const tags = { path, method, statusCode };
-		(req.log || logger).debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
+		(req.log || logger)?.debug(`${method} request executed in ${elapsedTime} with status ${statusCode} path ${path}`);
 
 		//Count response time metric
 		innerStatsd.histogram(metricHttpRequest.duration, elapsedTime, tags);

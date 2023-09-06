@@ -8,8 +8,11 @@ import { initializeSentry } from "./config/sentry";
 import { listenForClusterCommand } from "./services/cluster/listen-command";
 import { start, stop } from "./worker/startup";
 import { getLogger } from "config/logger";
+import { initStatsdLogger } from "config/statsd";
 
 const initialize = () => {
+	initStatsdLogger(getLogger("config.statsd"));
+
 	initializeSentry();
 	// starts healthcheck/deepcheck or else deploy will fail
 	const port = Number(process.env.WORKER_PORT) || Number(process.env.PORT) || 8081;

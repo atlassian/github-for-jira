@@ -6,10 +6,12 @@ import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 import createLag from "event-loop-lag";
-import { statsd } from "config/statsd";
-import { metricLag } from "config/metric-names";
+import { initStatsdLogger, statsd } from "config/statsd";
+import { metricPerf } from "config/metric-names";
 
 const start = async () => {
+	initStatsdLogger(getLogger("config.statsd"));
+
 	initializeSentry();
 	const app: Express = getFrontendApp();
 	const port = Number(process.env.TUNNEL_PORT) || Number(process.env.PORT) || 8080;
@@ -18,7 +20,7 @@ const start = async () => {
 	});
 	const lag = createLag(1000);
 	setInterval(() => {
-		statsd.histogram(metricLag.lagHist, lag(), { }, { });
+		statsd.histogram(metricPerf.lagHist, lag(), { }, { });
 	}, 1000);
 };
 
