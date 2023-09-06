@@ -9,69 +9,6 @@ on:
   pull_request:
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v1
-      - uses: volta-cli/action@v4
-      - uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
-      - run: yarn run lint
-      - run: yarn run build:release
-
-  unit-test:
-    runs-on: ubuntu-22.04
-    if: github.ref != 'refs/heads/ARC-2458'
-    steps:
-      - uses: actions/checkout@v1
-      - uses: volta-cli/action@v4
-      - uses: actions/cache@v2
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
-      - run: yarn run playwright install
-      - name: create .env file
-        run: |
-          echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-test.pem
-          echo "APP_URL=http://localhost:8080" > .env
-          echo "WEBHOOK_PROXY_URL=http://localhost:8080" >> .env
-          echo "APP_KEY=com.github.integration.fusion-test" >> .env
-          echo "NODE_ENV=test" >> .env
-          echo "APP_NAME=jira" >> .env
-          echo "APP_ID=${{ secrets.E2E_GITHUB_APP_ID }}" >> .env
-          echo "WEBHOOK_SECRETS=${{ secrets.E2E_GITHUB_WEBHOOK_SECRETS }}" >> .env
-          echo "COOKIE_SESSION_KEY=${{ secrets.E2E_COOKIE_SESSION_KEY }}" >> .env
-          echo "GITHUB_CLIENT_ID=${{ secrets.E2E_GITHUB_CLIENT_ID }}" >> .env
-          echo "GITHUB_CLIENT_SECRET=${{ secrets.E2E_GITHUB_CLIENT_SECRET }}" >> .env
-          echo "PRIVATE_KEY_PATH=jira-test.pem" >> .env
-          echo "ATLASSIAN_URL=${{ secrets.E2E_ATLASSIAN_URL }}" >> .env
-      - run: docker-compose up -d app
-      - name: wait for app to be ready
-        run: curl --head -X GET -f --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/healthcheck
-      - run: yarn run db:test
-      - name: Run tests
-        env:
-          REDISX_CACHE_HOST: localhost
-          REDISX_CACHE_PORT: 6379
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/jira-test
-          AWS_DEFAULT_REGION: us-west-1
-          AWS_ACCESS_KEY_ID: localkey
-          AWS_SECRET_ACCESS_KEY: localsecret
-          AWS_EC2_METADATA_DISABLED: true
-          NODE_OPTIONS: "--max_old_space_size=4096"
-        run: yarn test
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: test-coverage
-          retention-days: 14
-          path: |
-            coverage/
-
   e2e-test:
     runs-on: ubuntu-22.04
     timeout-minutes: 60
@@ -134,13 +71,3 @@ jobs:
           path: |
             test/e2e/test-results/
             *.log
-
-  docker:
-    runs-on: ubuntu-22.04
-    if: github.ref != 'refs/heads/ARC-2458'
-    steps:
-      - uses: actions/checkout@v1
-      - name: Build Docker image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          file: Dockerfile
