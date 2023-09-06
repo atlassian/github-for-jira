@@ -65,8 +65,6 @@ services:
       - "9229:9229" # main debug port
       - "8081:8081" # worker port
       - "9230:9230" # worker debug port
-    profiles:
-      - e2e
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/jira-dev
       CRYPTOR_URL: http://cryptor:26272
