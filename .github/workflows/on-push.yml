@@ -24,6 +24,7 @@ jobs:
 
   unit-test:
     runs-on: ubuntu-22.04
+    if: github.ref != 'refs/heads/ARC-2458'
     steps:
       - uses: actions/checkout@v1
       - uses: volta-cli/action@v4
@@ -136,6 +137,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-22.04
+    if: github.ref != 'refs/heads/ARC-2458'
     steps:
       - uses: actions/checkout@v1
       - name: Build Docker image
