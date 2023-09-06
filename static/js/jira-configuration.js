@@ -27,6 +27,18 @@ $(".add-organization-link").click(function(event) {
 	});
 });
 
+// TODO: passing JWT in query param is a security risk, we must either populate a session (if not already) or use cookies
+$(".jiraConfiguration__table__repo_access").click(function (event) {
+	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "gh-addon-subscription-repos",
+			customData: { subscriptionId }
+		}
+	);
+});
+
 $(".add-enterprise-link").click(function(event) {
 	event.preventDefault();
 	AP.navigator.go(
@@ -291,6 +303,17 @@ if (genericModalClose != null) {
 		$(".modal__additionalContent").empty();
 	});
 }
+
+$(".jiraConfiguration__table__repo_access").click(function (event) {
+	const subscriptionId = $(event.target.parentElement).attr('data-subscription-id');
+	AP.navigator.go(
+		'addonmodule',
+		{
+			moduleKey: "gh-addon-subscription-repos",
+			customData: { subscriptionId }
+		}
+	);
+});
 
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function(event) {

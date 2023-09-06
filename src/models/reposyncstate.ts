@@ -179,7 +179,7 @@ export class RepoSyncState extends Model implements RepoSyncStateProperties {
 		return RepoSyncState.create(merge(values, { subscriptionId: subscription.id }), options);
 	}
 
-	private static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
+	static async countSubscriptionRepos(subscription: Subscription, options: CountOptions = {}): Promise<number> {
 		return RepoSyncState.count(merge(options, {
 			where: {
 				subscriptionId: subscription.id

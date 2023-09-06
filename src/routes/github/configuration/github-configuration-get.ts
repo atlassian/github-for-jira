@@ -88,6 +88,8 @@ export const getInstallationsWithAdmin = async (
 		//  all orgs the user is a member of and cross reference with the installation org
 		const checkAdmin = isUserAdminOfOrganization(
 			gitHubUserClient,
+			jiraHost,
+			gitHubClient,
 			installation.account.login,
 			login,
 			installation.target_type,

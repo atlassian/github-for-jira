@@ -142,7 +142,7 @@ export const updateTaskStatusAndContinue = async (
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
 	} else {
-		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
+		updateRepoSyncFields[getCursorKey(task.task)] = edges[edges.length - 1].cursor;
 		if (task.startTime) {
 			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
@@ -340,7 +340,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		}
 	};
 
-	const executors = [nextTasks.mainTask!, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
+	const executors = [nextTasks.mainTask, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
 		isMainTask(index)
 			// Only the first task is responsible for error handling, the other tasks are best-effort and not
 			// supposed to schedule anything

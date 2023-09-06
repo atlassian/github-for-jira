@@ -77,6 +77,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.gitHubServerAppId = gshaId;
 	}
 
+	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
+		return await this.get<Octokit.OrgsGetMembershipResponse>(`/orgs/{org}/memberships/{username}`, {}, {
+			username,
+			org
+		});
+	};
 
 	public async getSecretScanningAlerts(owner: string, repo: string, secretScanningAlertRequestParams: GetSecretScanningAlertRequestParams): Promise<AxiosResponse<SecretScanningAlertResponseItem[]>> {
 		return await this.get<SecretScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/secret-scanning/alerts`, secretScanningAlertRequestParams, {
