@@ -76,6 +76,7 @@
 		"date-fns": "^1.29.0",
 		"dotenv": "^16.0.1",
 		"dotenv-expand": "^8.0.3",
+		"event-loop-lag": "^1.4.0",
 		"express": "^4.17.3",
 		"express-async-handler": "^1.2.0",
 		"express-rate-limit": "^5.1.3",
