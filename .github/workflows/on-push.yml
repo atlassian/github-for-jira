@@ -27,8 +27,8 @@ jobs:
       - name: create .env file
         run: |
           echo "${{ secrets.E2E_GITHUB_PRIVATE_KEY }}" > jira-e2e-test.pem
-          echo "APP_URL=http://localhost:8080" > .env
-          echo "WEBHOOK_PROXY_URL=http://localhost:8080" >> .env
+          echo "APP_URL=http://localhost" > .env
+          echo "WEBHOOK_PROXY_URL=http://localhost" >> .env
           echo "NGROK_AUTHTOKEN=${{ secrets.E2E_NGROK_AUTHTOKEN }}" >> .env
           echo "APP_KEY=com.github.integration.fusion-arc-e2e" >> .env
           echo "NODE_ENV=e2e" >> .env
