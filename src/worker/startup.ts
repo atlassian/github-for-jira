@@ -1,5 +1,8 @@
 import { sqsQueues } from "../sqs/queues";
 import { getLogger } from "config/logger";
+import { statsd } from "config/statsd";
+import { metricLag } from "config/metric-names";
+import createLag from "event-loop-lag";
 
 const logger = getLogger("worker");
 
@@ -10,6 +13,10 @@ export const start = async () => {
 		logger.debug("Worker instance already running, skipping.");
 		return;
 	}
+	const lag = createLag(1000);
+	setInterval(() => {
+		statsd.histogram(metricLag.lagHist, lag(), { }, { });
+	}, 1000);
 
 	logger.info("Micros Lifecycle: Starting queue processing");
 	sqsQueues.start();

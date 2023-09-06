@@ -2482,7 +2482,7 @@ debug@2.6.9, debug@^2.6.9:
   dependencies:
     ms "2.0.0"
 
-debug@3.2.7, debug@^3.2.7:
+debug@3.2.7, debug@^3.1.0, debug@^3.2.7:
   version "3.2.7"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.2.7.tgz#72580b7e9145fb39b6676f9c5e5fb100b934179a"
   integrity sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==
@@ -3187,6 +3187,13 @@ event-emitter@^0.3.5:
   dependencies:
     d "1"
     es5-ext "~0.10.14"
+
+event-loop-lag@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/event-loop-lag/-/event-loop-lag-1.4.0.tgz#c7f42f1c1155768f2e7214d2139b15fd44c48a59"
+  integrity sha512-uNAYTAexGyPI7rms2jSES20nhUoCtjkmxgaOcAfaoaOQ6h3q1+fw6d5MfyfV0zMJpR//+GUYPVXrh2Wbv+E0sQ==
+  dependencies:
+    debug "^3.1.0"
 
 eventemitter3@^4.0.0:
   version "4.0.7"
