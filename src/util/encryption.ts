@@ -8,14 +8,14 @@ export const createHashWithSharedSecret = (data?: string): string => {
 		return "";
 	}
 
-	const started = new Date().getTime();
+	const started = Date.now();
 	try {
 		const cleanedData = removeNonAlphaNumericCharacters(data);
 		return createHmac("sha256", envVars.GLOBAL_HASH_SECRET)
 			.update(cleanedData)
 			.digest("hex");
 	} finally {
-		const finished = new Date().getTime();
+		const finished = Date.now();
 		statsd.histogram(metricPerf.hashWithSharedSecretHist, finished-started, { } ,{ });
 		statsd.increment(metricPerf.hashWithSharedSecretCnt, { }, { });
 	}
@@ -25,11 +25,11 @@ export const createHashWithoutSharedSecret = (data: string | null | undefined) =
 	if (!data) {
 		return "";
 	}
-	const started = new Date().getTime();
+	const started = Date.now();
 	try {
 		return createHash("sha256").update(data).digest("hex");
 	} finally {
-		const finished = new Date().getTime();
+		const finished = Date.now();
 		statsd.histogram(metricPerf.hashWithoutSharedSecretHist, finished-started, { } ,{ });
 		statsd.increment(metricPerf.hashWithoutSharedSecretCnt, { }, { });
 	}

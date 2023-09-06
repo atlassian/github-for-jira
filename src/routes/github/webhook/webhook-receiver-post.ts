@@ -45,9 +45,9 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);
 		const isVerified = webhookSecrets.some((secret, index) => {
 
-			const started = new Date().getTime();
+			const started = Date.now();
 			const matchesSignature = createHash(request.rawBody, secret) === signatureSHA256;
-			const finished = new Date().getTime();
+			const finished = Date.now();
 
 			statsd.histogram(metricPerf.webhookShaGeneratorHist, finished-started, { } ,{ });
 			statsd.increment(metricPerf.webhookShaGeneratorCnt, { }, { });

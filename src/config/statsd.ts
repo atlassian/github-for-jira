@@ -28,7 +28,12 @@ const innerStatsd = new StatsD({
 	globalTags,
 	errorHandler: (err) => {
 		if (isNodeProd()) {
-			logger?.warn({ err }, "Error writing metrics");
+			if (logger) {
+				logger.warn({ err }, "Error writing metrics");
+			} else {
+				// eslint-disable-next-line no-console
+				console.error("Error writing metrics", err);
+			}
 		}
 	},
 

@@ -84,10 +84,13 @@ export const metricPrReviewers = {
 
 export const metricPerf = {
 	lagHist: `${server}.lag.histogram`,
+
 	webhookShaGeneratorHist: `${server}.webhook.sha.generator.histogram`,
 	webhookShaGeneratorCnt: `${server}.webhook.sha.generator.count`,
+
 	hashWithSharedSecretHist: `${server}.hash.with.shared.secret.histogram`,
 	hashWithSharedSecretCnt: `${server}.hash.with.shared.secret.count`,
+
 	hashWithoutSharedSecretHist: `${server}.hash.without.shared.secret.histogram`,
 	hashWithoutSharedSecretCnt: `${server}.hash.without.shared.secret.count`
 };
