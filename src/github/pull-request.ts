@@ -6,7 +6,7 @@ import { JiraPullRequestBulkSubmitData } from "interfaces/jira";
 import { jiraIssueKeyParser } from "utils/jira-utils";
 import { GitHubIssueData } from "interfaces/github";
 import { createInstallationClient } from "utils/get-github-client-config";
-import { WebhookContext } from "../routes/github/webhook/webhook-context";
+import { WebhookContext } from "routes/github/webhook/webhook-context";
 import { transformRepositoryId } from "~/src/transforms/transform-repository-id";
 import { getPullRequestReviews } from "~/src/transforms/util/github-get-pull-request-reviews";
 import { Subscription } from "models/subscription";

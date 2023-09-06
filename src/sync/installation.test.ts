@@ -300,7 +300,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
 		});
 
@@ -322,7 +322,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
 	});
@@ -453,7 +453,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(2);
+				expect(updatedRows.length).toEqual(2);
 			});
 
 			it("for multiple tasks ignores failures of non-main tasks", async () => {
@@ -482,7 +482,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(1);
+				expect(updatedRows.length).toEqual(1);
 			});
 		});
 

@@ -28,7 +28,7 @@ async function checkValidity(): Promise<boolean | AxiosError> {
 		return ret;
 
 	} catch (e) {
-		reportError(e, { path: "checkValidity" });
+		reportError(new Error("Fail checkValidity", { cause: e }), { path: "checkValidity" });
 		return e as AxiosError;
 	}
 }
@@ -45,7 +45,7 @@ async function authenticateInGitHub(onWinClosed: () => void): Promise<void> {
 					try {
 						onWinClosed();
 					} catch (e) {
-						reportError(e, {
+						reportError(new Error("Fail authenticateInGitHub", { cause: e }), {
 							path: "authenticateInGitHub",
 							reason: "error in onWinClosed"
 						});
@@ -101,7 +101,7 @@ async function finishOAuthFlow(code: string, state: string): Promise<boolean | A
 			return false;
 		}
 	} catch (e) {
-		reportError(e, { path: "finishOAuthFlow" });
+		reportError(new Error("Fail exchangeToken", { cause: e }), { path: "finishOAuthFlow" });
 		return e as AxiosError;
 	}
 }
