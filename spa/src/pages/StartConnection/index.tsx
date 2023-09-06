@@ -75,7 +75,7 @@ const getAnalyticsSourceFrom = (): string => {
 		const url = new URL(window.location.href);
 		return url.searchParams.get("from") || "";
 	} catch (e) {
-		reportError(e, { path: "getAnalyticsSourceFrom" });
+		reportError(new Error("Fail getAnalyticsSourceFrom", { cause: e }), { path: "getAnalyticsSourceFrom" });
 		return "";
 	}
 };
