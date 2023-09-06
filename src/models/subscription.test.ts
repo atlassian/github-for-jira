@@ -257,30 +257,6 @@ describe("Subscription", () => {
 		});
 	});
 
-	describe.skip("getAllForInstallation", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("findOneForGitHubInstallationId", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("getAllFiltered", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("getAllForClientKey", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("getSingleInstallation", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("getInstallationForClientKey", () => {
-		// TODO: add tests
-	});
-
 	describe("install", () => {
 		describe("cloud", () => {
 			let cloudSub =
@@ -360,14 +336,6 @@ describe("Subscription", () => {
 				expect((await Subscription.findAll()).length).toBe(2);
 			});
 		});
-	});
-
-	describe.skip("uninstall", () => {
-		// TODO: add tests
-	});
-
-	describe.skip("syncStatusCounts", () => {
-		// TODO: add tests
 	});
 
 	describe("gitHubAppIdCondition", () => {
