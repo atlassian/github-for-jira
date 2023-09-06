@@ -36,7 +36,7 @@ describe("DB migration utils", () => {
 		beforeEach(() => {
 			jest.mocked(fs.promises.readdir as (arg0: string) => Promise<string[]>)
 				.mockImplementation(async (path) => {
-					if ((path as string).includes("db/migrations")) {
+					if ((path).includes("db/migrations")) {
 						return [MIGRATION_SCRIPT_FIRST, MIGRATION_SCRIPT_LAST];
 					} else {
 						throw new Error("shouldn't come to this line");
