@@ -10,10 +10,10 @@ import { start, stop } from "./worker/startup";
 import { getLogger } from "config/logger";
 
 const initialize = () => {
-	initializeSentry();
 	// starts healthcheck/deepcheck or else deploy will fail
 	const port = Number(process.env.WORKER_PORT) || Number(process.env.PORT) || 8081;
 	const workerWebApp = createWorkerServerApp();
+	initializeSentry(workerWebApp);
 	workerWebApp.listen(port, ()=>{
 		getLogger("worker").info(`Worker started at port ${port}`);
 	});
