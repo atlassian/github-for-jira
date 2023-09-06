@@ -26,12 +26,12 @@ export const JiraGetConnectionsBackfillStatus = async (
 ): Promise<void> => {
 	try {
 		const { jiraHost: localJiraHost } = res.locals;
-		const subscriptionIds: number[] = String(req.query.subscriptionIds)
+		const subscriptionIds: number[] = String(req.query?.subscriptionIds)
 			.split(",")
 			.map((id) => Number(id))
 			.filter(Boolean);
 
-		if (subscriptionIds.length <= 0) {
+		if (subscriptionIds?.length <= 0) {
 			req.log.warn("Missing Subscription IDs");
 			res.status(400).send("Missing Subscription IDs");
 			return;
@@ -42,14 +42,14 @@ export const JiraGetConnectionsBackfillStatus = async (
 			}
 		});
 
-		if (subscriptions.length <= 0) {
+		if (subscriptions?.length <= 0) {
 			req.log.error("Missing Subscription");
 			res.status(400).send("Missing Subscription");
 			return;
 		}
 
 		const jiraHosts: string[] = subscriptions.map(
-			(subscription) => subscription.jiraHost
+			(subscription) => subscription?.jiraHost
 		);
 
 		const jiraHostsMatched = jiraHosts.every(
@@ -89,7 +89,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
 	let isBackfillComplete = true;
 	isBackfillComplete = Object.values(backfillStatus).every(
-		(backFill: SubscriptionBackfillState): boolean => backFill.isSyncComplete
+		(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
 	);
 	return isBackfillComplete;
 };
@@ -102,24 +102,24 @@ const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 			syncStatus: SyncStatus.PENDING
 		};
 		const subscriptionRepos = connections[subscriptionId];
-		const totalRepos = subscriptionRepos.length;
+		const totalRepos = subscriptionRepos?.length;
 		backfillStatus[subscriptionId]["totalRepos"] = totalRepos;
 		const syncStatus = mapSyncStatus(
-			subscriptionsById[subscriptionId][0].syncStatus
+			subscriptionsById[subscriptionId][0]?.syncStatus
 		);
 		const repos = subscriptionRepos.map((repoSyncState) => {
 			return {
-				name: repoSyncState.repoFullName,
+				name: repoSyncState?.repoFullName,
 				repoSyncStatus: getSyncStatus(repoSyncState),
 				syncStatus: syncStatus
 			};
 		});
 		const syncedRepos = repos.filter((repo) =>
-			["complete", "failed"].includes(repo.repoSyncStatus)
+			["complete", "failed"].includes(repo?.repoSyncStatus)
 		).length;
 		backfillStatus[subscriptionId]["syncedRepos"] = syncedRepos;
 		backfillStatus[subscriptionId]["backfillSince"] =
-			subscriptionsById[subscriptionId][0].backfillSince || null;
+			subscriptionsById[subscriptionId][0]?.backfillSince || null;
 		backfillStatus[subscriptionId]["isSyncComplete"] =
 			syncedRepos === totalRepos;
 		backfillStatus[subscriptionId]["syncStatus"] = syncStatus;

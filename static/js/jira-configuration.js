@@ -366,7 +366,7 @@ const updateBackfilledRepoCount = ({ subscriptionId, subscriptions, self }) => {
 	const totalRepos = Number(subscriptions[subscriptionId].totalRepos);
 	const syncedRepos = Number(subscriptions[subscriptionId].syncedRepos);
 	const inprogressSyncStatus =
-		syncedRepos === totalRepos ? totalRepos : `${syncedRepos}/${totalRepos}`;
+		syncedRepos === totalRepos ? `${totalRepos} ` : `${syncedRepos}/${totalRepos} `;
 	const repoCountTd = $(self).children("td.repo-count");
 	const syncProgress = repoCountTd.children("span.inprogress-syncCount");
 	syncProgress.text(inprogressSyncStatus);
@@ -432,40 +432,46 @@ function fetchAllConnectionsBackfillStatus() {
 	const subscriptionIds = getInprogressSubIds();
 	// check if we have atleast one subscription backfill in progress
 	if (subscriptionIds.length > 0) {
-		$.ajax({
-			type: "GET",
-			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}`,
-			success: (response) => {
-				const data = response.data;
-				const subscriptions = data.subscriptions;
+		AP.context.getToken(function (token) {
+			$.ajax({
+				type: "GET",
+				url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}&jwt=${token}`,
+				success: (response) => {
+					const data = response.data;
+					const subscriptions = data.subscriptions;
 
-				const isBackfillComplete = data.isBackfillComplete;
+					const isBackfillComplete = data.isBackfillComplete;
 
-				$(".jiraConfiguration__table__row").each(function () {
-					const self = this;
-					let subscriptionId = $(self).data("subscription-id");
+					$(".jiraConfiguration__table__row").each(function () {
+						const self = this;
+						let subscriptionId = $(self).data("subscription-id");
 
-					if (subscriptionId in subscriptions) {
-						// repo count set
-						updateBackfilledRepoCount({ subscriptions, subscriptionId, self });
-						// repo status set
-						updateBackfilledStatus({ subscriptionId, subscriptions, self });
+						if (subscriptionId in subscriptions) {
+							// repo count set
+							updateBackfilledRepoCount({
+								subscriptions,
+								subscriptionId,
+								self,
+							});
+							// repo status set
+							updateBackfilledStatus({ subscriptionId, subscriptions, self });
+						} else {
+							$(`#${subscriptionId}-syncCount`).css("display", "none");
+						}
+					});
+					if (!isBackfillComplete) {
+						fetchBackfillStateTimeout = setTimeout(
+							fetchAllConnectionsBackfillStatus,
+							6000
+						);
 					} else {
-						$(`#${subscriptionId}-syncCount`).css("display", "none");
+						clearTimeout(fetchBackfillStateTimeout);
 					}
-				});
-				if (!isBackfillComplete) {
-					fetchBackfillStateTimeout = setTimeout(
-						fetchAllConnectionsBackfillStatus,
-						6000
-					);
-				} else {
-					clearTimeout(fetchBackfillStateTimeout);
-				}
-			},
-			error: () => {
-				console.log("failure in fetching  backfill status of connections.");
-			},
+				},
+				error: () => {
+					console.log("failure in fetching  backfill status of connections.");
+				},
+			});
 		});
 	}
 }
