@@ -19,7 +19,7 @@
 		"plugin:import/recommended",
 		"plugin:import/typescript",
 		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended"
+		"plugin:@typescript-eslint/recommended-requiring-type-checking"
 	],
 	"settings": {
 		"import/parsers": {
@@ -51,6 +51,9 @@
 		"indent": ["error", "tab", {
 			"SwitchCase": 1
 		}],
+		"@typescript-eslint/indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
 		"@import/no-unresolved": "off",
 		"object-curly-spacing": ["error", "always"],
 		"semi": ["error", "always"],
@@ -70,16 +73,34 @@
 					"*.expect"
 				]
 			}
-		]
+		],
+		// To be removed later
+		"@typescript-eslint/no-non-null-assertion": "off",
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
+		"@typescript-eslint/restrict-template-expressions": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-return": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/unbound-method": "off",
+		"@typescript-eslint/require-await": "off",
+		"@typescript-eslint/await-thenable": "off",
+		"@typescript-eslint/restrict-plus-operands": "off",
+		"@typescript-eslint/no-misused-promises": "off"
+		
 	},
 	"overrides": [{
-		"files": [ "src/**/*.test.ts" ],
+		"files": [ "test/**/*.ts", "src/**/*.test.ts" ],
 		"extends": [
 			"plugin:jest/recommended"
 		],
 		"rules": {
 			"@typescript-eslint/no-explicit-any": "off",
-			"@typescript-eslint/no-non-null-assertion": "off"
+			"@typescript-eslint/no-non-null-assertion": "off",
+			"jest/no-done-callback": "off",
+			"jest/expect-expect": "off"
 		}
 	}]
 }

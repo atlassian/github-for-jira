@@ -201,7 +201,7 @@ describe("github-oauth", () => {
 							isJiraAdmin: true
 						})
 					);
-				const session = parseCookiesAndSession(response).session!;
+				const session = parseCookiesAndSession(response).session;
 				const stateKey = findOAuthStateKeyInSession(session);
 				expect(stateKey.length).toBeGreaterThan(6);
 				expect(response.status).toEqual(302);
@@ -238,7 +238,7 @@ describe("github-oauth", () => {
 							isJiraAdmin: true
 						})
 					);
-				const session = parseCookiesAndSession(response).session!;
+				const session = parseCookiesAndSession(response).session;
 				expect(response.status).toEqual(302);
 
 				const stateKey = findOAuthStateKeyInSession(session);

@@ -82,3 +82,7 @@ export const metricPrReviewers = {
 	failedCount: `${server}.prs.failed.count`
 };
 
+export const metricLag = {
+	lagHist: `${server}.lag.histogram`
+};
+

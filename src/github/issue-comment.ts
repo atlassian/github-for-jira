@@ -98,10 +98,66 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		context.log.info("Halting further execution for syncIssueCommentsToJira as JiraClient is empty for this installation");
 		return;
 	}
+
+	const formattedComment = {
+		"content": [
+			{
+				"type": "paragraph",
+				"content": [
+					{
+						"type": "text",
+						"text": `${comment.user.login}`,
+						"marks": [
+							{
+								"type": "strong"
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": " left a comment "
+					},
+					{
+						"type": "text",
+						"text": "on GitHub",
+						"marks": [
+							{
+								"type": "link",
+								"attrs": {
+									"href": `${gitHubCommentUrl}`
+								}
+							}
+						]
+					},
+					{
+						"type": "text",
+						"text": ":"
+					}
+				]
+			},
+			{
+				"type": "blockquote",
+				"content": [
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": `${gitHubMessage}`
+							}
+						]
+					}
+				]
+			}
+		],
+		"type": "doc",
+		"version": 1
+	};
+
 	switch (context.action) {
 		case "created": {
 			await jiraClient.issues.comments.addForIssue(issueKey, {
-				body: gitHubMessage + " - " + gitHubCommentUrl,
+				body: formattedComment,
 				properties: [
 					{
 						key: "gitHubId",
@@ -115,7 +171,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 		}
 		case "edited": {
 			await jiraClient.issues.comments.updateForIssue(issueKey, await getCommentId(jiraClient, issueKey, gitHubId), {
-				body: gitHubMessage + " - " + gitHubCommentUrl
+				body: formattedComment
 			});
 			break;
 		}

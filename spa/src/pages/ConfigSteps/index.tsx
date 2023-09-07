@@ -9,7 +9,7 @@ import LoggedinInfo from "../../common/LoggedinInfo";
 import Tooltip, { TooltipPrimitive } from "@atlaskit/tooltip";
 import { token } from "@atlaskit/tokens";
 import { useNavigate } from "react-router-dom";
-import Error from "../../components/Error";
+import ErrorUI from "../../components/Error";
 import AppManager from "../../services/app-manager";
 import OAuthManager from "../../services/oauth-manager";
 import analyticsClient from "../../analytics";
@@ -180,12 +180,15 @@ const ConfigSteps = () => {
 						setLoaderForLogin(false);
 					});
 				} catch (e) {
-					setLoaderForLogin(false);
-					showError(modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin }));
-					reportError(e, {
+					const errorObj = modifyError(e as AxiosError, {}, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
+					showError(errorObj);
+					analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+					reportError(new Error("Fail initiate authorize", { cause: e }), {
 						path: "authorize",
 						selectedOption
 					});
+				} finally {
+					setLoaderForLogin(false);
 				}
 				break;
 			}
@@ -210,7 +213,12 @@ const ConfigSteps = () => {
 		// This resets the token validity check in the parent component and resets the UI
 		setIsLoggedIn(false);
 		// Restart the whole auth flow
-		await OauthManager.authenticateInGitHub(() => {});
+		await OauthManager.authenticateInGitHub(() => {})
+			.catch(e => {
+				const errorObj = modifyError(e, { }, { onClearGitHubToken: () => {}, onRelogin: () => {} });
+				analyticsClient.sendTrackEvent({ actionSubject: "finishOAuthFlow", action: "fail"}, { errorCode: errorObj.errorCode, step: "initiate-oauth"});
+				reportError(new Error("Reset oauth flow on relogin", { cause: e }), { path: "reLogin" });
+			});
 	};
 
 	const clearLogin = () => {
@@ -234,7 +242,7 @@ const ConfigSteps = () => {
 			}
 		} catch (e) {
 			analyticsClient.sendTrackEvent({ actionSubject: "organisationConnectResponse", action: "fail"}, { mode });
-			reportError(e, {
+			reportError(new Error("Fail doCreateConnection", { cause: e }), {
 				path: "doCreateConnection",
 				isGitHubInstallationIdEmpty: !gitHubInstallationId,
 				mode
@@ -262,7 +270,7 @@ const ConfigSteps = () => {
 			const errorObj = modifyError(e as AxiosError, { }, { onClearGitHubToken: clearGitHubToken, onRelogin: reLogin });
 			showError(errorObj);
 			analyticsClient.sendTrackEvent({ actionSubject: "installNewOrgInGithubResponse", action: "fail"}, { mode, errorCode: errorObj.errorCode });
-			reportError(e, {
+			reportError(new Error("Fail installNewOrg", { cause: e }), {
 				path: "installNewOrg",
 				mode
 			});
@@ -321,7 +329,7 @@ const ConfigSteps = () => {
 		<Wrapper>
 			<SyncHeader />
 			{
-				error && <Error type={error.type} message={error.message} />
+				error && <ErrorUI type={error.type} message={error.message} />
 			}
 			<ConfigContainer>
 				{
@@ -424,7 +432,7 @@ const setAnalyticsEventsForFetchedOrgs  = (orgs: Array<GitHubInstallationType>) 
 			isIPBlockedCount,
 		});
 	} catch (e) {
-		reportError(e, {
+		reportError(new Error("Fail setAnalyticsEventsForFetchedOrgs", { cause: e }), {
 			path: "setAnalyticsEventsForFetchedOrgs"
 		});
 	}
