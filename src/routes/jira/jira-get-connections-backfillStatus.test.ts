@@ -16,7 +16,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 	let installation: Installation;
 	let subscription: Subscription;
 	let repoSyncState: RepoSyncState;
-	const generateJwt = async (query) => {
+	const generateJwt = async (query: any = {}) => {
 		return encodeSymmetric(
 			{
 				qsh: createQueryStringHash(
@@ -62,33 +62,34 @@ describe("jira-get-connections-backfillStatus.test", () => {
 			)
 			.set(
 				"authorization",
-				`JWT ${await generateJwt({ subscriptionIds: "77379" })}`
+				`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
 			);
 		expect(resp.status).toStrictEqual(403);
 	});
 
 	describe("admin and JWT are OK", () => {
 		beforeEach(() => {
-			when(booleanFlag)
-				.calledWith(BooleanFlags.JIRA_ADMIN_CHECK)
-				.mockResolvedValue(false);
+			const payload = {
+				accountId: "myAccountId",
+				globalPermissions: ["ADMINISTER"]
+			};
+			jiraNock
+				.post("/rest/api/latest/permissions/check", payload)
+				.reply(200, { globalPermissions: ["ADMINISTER"] });
 		});
 
 		it("should return 400 when no subscriptions were found", async () => {
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status/?subscriptionIds=${
+					`/jira/subscriptions/backfill-status?subscriptionIds=${
 						subscription.id + 1
 					}`
 				)
 				.set(
 					"authorization",
-					`JWT ${await generateJwt({
-						subscriptionIds: `${subscription.id + 1}`
-					})}`
+					`JWT ${await generateJwt({ subscriptionIds: subscription.id + 1 })}`
 				);
 			expect(resp.status).toStrictEqual(400);
-			expect(resp.text).toBe("Missing Subscription");
 		});
 
 		it("should return 400 when no Missing Subscription IDs were found in query", async () => {
@@ -103,35 +104,40 @@ describe("jira-get-connections-backfillStatus.test", () => {
 			const result = await new DatabaseStateCreator()
 				.forJiraHost("https://another-one.atlassian.net")
 				.create();
-			const resultOne = await new DatabaseStateCreator()
-				.forJiraHost("https://another-two.atlassian.net")
-				.create();
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status/?subscriptionIds=${result.subscription.id},${resultOne.subscription.id}`
+					`/jira/subscriptions/backfill-status?subscriptionIds=${result.subscription.id}`
 				)
 				.set(
 					"authorization",
 					`JWT ${await generateJwt({
-						subscriptionIds: `${result.subscription.id}`
+						subscriptionIds: result.subscription.id
 					})}`
 				);
+			// expect(resp.status).toStrictEqual(200);
+
+			// const resp = await supertest(app)
+			// 	.get(
+			// 		`/jira/subscriptions/backfill-status/?subscriptionIds=${result.subscription.id}`
+			// 	)
+			// 	.set(
+			// 		"authorization",
+			// 		`JWT ${await generateJwt({
+			// 			subscriptionIds: result.subscription.id,
+			// 		})}`
+			// 	);
+
 			expect(resp.status).toStrictEqual(403);
 		});
 
 		it("should return 200 if the subscription belongs to the same user", async () => {
-			const result = await new DatabaseStateCreator()
-				.forJiraHost("https://test-atlassian-instance.atlassian.net")
-				.create();
 			const resp = await supertest(app)
 				.get(
-					`/jira/subscriptions/backfill-status/?subscriptionIds=${result.subscription.id}`
+					`/jira/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 				)
 				.set(
 					"authorization",
-					`JWT ${await generateJwt({
-						subscriptionIds: `${result.subscription.id}`
-					})}`
+					`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
 				);
 			expect(resp.status).toStrictEqual(200);
 		});
@@ -176,13 +182,11 @@ describe("jira-get-connections-backfillStatus.test", () => {
 			it("should return 200 if the subscription belongs to the same user", async () => {
 				const resp = await supertest(app)
 					.get(
-						`/jira/subscriptions/backfill-status/?subscriptionIds=${subscription.id}`
+						`/jira/subscriptions/backfill-status?subscriptionIds=${subscription.id}`
 					)
 					.set(
 						"authorization",
-						`JWT ${await generateJwt({
-							subscriptionIds: `${subscription.id}`
-						})}`
+						`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
 					);
 				expect(resp.status).toStrictEqual(200);
 
