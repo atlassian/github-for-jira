@@ -12,7 +12,7 @@ type SubscriptionBackfillState = {
 	totalRepos?: number;
 	isSyncComplete: boolean;
 	syncedRepos?: number;
-	backfillSince?: string | null;
+	backfillSince?: string;
 	syncStatus: ConnectionSyncStatus;
 };
 type BackFillType = {
@@ -56,7 +56,6 @@ export const JiraGetConnectionsBackfillStatus = async (
 			(jiraHost) => jiraHost === localJiraHost
 		);
 
-		const subscriptionsById = groupBy(subscriptions, "id");
 		if (!jiraHostsMatched) {
 			req.log.error("mismatched Jira Host");
 			res.status(403).send("mismatched Jira Host");
@@ -70,7 +69,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 		});
 
 		const repos = groupBy(repoSyncStates, "subscriptionId");
-
+		const subscriptionsById = groupBy(subscriptions, "id");
 		const backfillStatus = getBackfillStatus(repos, subscriptionsById);
 
 		const isBackfillComplete = getBackfillCompletionStatus(backfillStatus);
@@ -86,13 +85,9 @@ export const JiraGetConnectionsBackfillStatus = async (
 	}
 };
 
-const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => {
-	let isBackfillComplete = true;
-	isBackfillComplete = Object.values(backfillStatus).every(
-		(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
-	);
-	return isBackfillComplete;
-};
+const getBackfillCompletionStatus = (backfillStatus: BackFillType): boolean => Object.values(backfillStatus).every(
+	(backFill: SubscriptionBackfillState): boolean => backFill?.isSyncComplete
+);
 
 const getBackfillStatus = (connections, subscriptionsById): BackFillType => {
 	const backfillStatus: BackFillType = {};

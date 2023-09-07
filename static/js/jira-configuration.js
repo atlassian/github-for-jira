@@ -3,7 +3,7 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
 function openChildWindow(url) {
-const child = window.open(url);
+	const child = window.open(url);
 	const interval = setInterval(function () {
 		if (child.closed) {
 			clearInterval(interval);
@@ -432,7 +432,7 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 		{
 			if (backfillSince) {
 				const backfillSinceDate = new Date(backfillSince);
-				const formattedDate = backfillSinceDate.toLocaleDateString("en-GB"); // Change 'en-GB' to your desired language/locale
+				const formattedDate = backfillSinceDate.toISOString(); // Change 'en-GB' to your desired language/locale
 				infoContainer.append(
 					`<div class="jiraConfiguration__info__backfillDate">
 						<span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="${backfillSince}">${formattedDate}</span>
