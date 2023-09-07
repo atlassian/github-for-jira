@@ -175,7 +175,7 @@ Object {
         "name": Object {
           "value": "Backfill status",
         },
-        "url": "/jira/subscriptions/backfill-status?subscriptionIds=={ac.subscriptionIds}",
+        "url": "/jira/subscriptions/backfill-status?subscriptionIds={ac.subscriptionIds}",
       },
     ],
     "jiraBuildInfoProvider": Object {

@@ -62,6 +62,7 @@ export const JiraGetConnectionsBackfillStatus = async (
 			res.status(403).send("mismatched Jira Host");
 			return;
 		}
+
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscriptionIds

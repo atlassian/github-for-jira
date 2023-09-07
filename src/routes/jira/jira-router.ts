@@ -10,7 +10,7 @@ import { JiraConnectRouter } from "routes/jira/connect/jira-connect-router";
 import { body } from "express-validator";
 import { returnOnValidationError } from "routes/api/api-utils";
 import { jiraSymmetricJwtMiddleware } from "~/src/middleware/jira-symmetric-jwt-middleware";
-import { JiraGetConnectionsBackfillStatus } from "~/src/routes/jira/jira-get-connections-backfillStatus";
+import { JiraGetConnectionsBackfillStatus } from "~/src/routes/jira/jira-get-connections-backfill-status";
 import { JiraConnectedReposGet } from "routes/jira/jira-connected-repos-get";
 import { jiraAdminPermissionsMiddleware } from "middleware/jira-admin-permission-middleware";
 import { JiraWorkspacesRouter } from "routes/jira/workspaces/jira-workspaces-router";

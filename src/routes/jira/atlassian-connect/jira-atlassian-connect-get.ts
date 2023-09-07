@@ -228,7 +228,7 @@ const	modules = {
 			location: "none"
 		},
 		{
-			url: "/jira/subscriptions/backfill-status?subscriptionIds=={ac.subscriptionIds}",
+			url: "/jira/subscriptions/backfill-status?subscriptionIds={ac.subscriptionIds}",
 			name: {
 				value: "Backfill status"
 			},
