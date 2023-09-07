@@ -61,7 +61,7 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 						}
 					]
 				*/
-			return `${result[1].rowCount} rows deleted`;
+			return `${(result[1].rowCount as number).toString()} rows deleted`;
 		} else {
 			/*
 			 * something like   result: [
@@ -102,7 +102,7 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 					}
 				]
 			 */
-			return result[0].map((r: object) => safeJsonStringify(r)).join("\n");
+			return result[0].map((r: object) => safeJsonStringify(r)).join("\n") as string;
 		}
 	} catch (_) {
 		return result;

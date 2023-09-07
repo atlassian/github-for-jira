@@ -47,7 +47,7 @@ export const JiraConnectEnterpriseAppPut = async (
 
 		res.status(202).send();
 		req.log.debug("Jira Connect Enterprise App updated successfully.");
-	} catch (error) {
+	} catch (error: unknown) {
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.UpdateGitHubServerAppTrackEventName,
@@ -58,6 +58,6 @@ export const JiraConnectEnterpriseAppPut = async (
 		});
 
 		res.status(404).send({ message: "Failed to update GitHub App." });
-		return next(new Error(`Failed to update GitHub app: ${error}`));
+		return next(new Error(`Failed to update GitHub app: ${error instanceof Error ? error.toString() : "unkown"}`));
 	}
 };

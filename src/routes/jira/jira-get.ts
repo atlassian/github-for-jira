@@ -182,7 +182,7 @@ const renderJiraCloudAndEnterpriseServer = async (res: Response, req: Request): 
 	}
 
 	const successfulServerConnections = gheServersWithConnections
-		.reduce((acc, obj) => acc + obj.successfulConnections?.length, 0);
+		.reduce((acc: number, obj: any) => acc + (obj.successfulConnections?.length as number), 0);
 	const allSuccessfulConnections = [...successfulCloudConnections, ...gheServersWithConnections];
 	const completeConnections = allSuccessfulConnections.filter(connection => connection.syncStatus === "FINISHED");
 
@@ -232,7 +232,7 @@ export const JiraGet = async (
 
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira configuration: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira configuration: ${error instanceof Error ? error.toString() : "unknown"}`));
 	}
 };

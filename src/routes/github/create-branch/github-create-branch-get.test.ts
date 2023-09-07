@@ -19,12 +19,12 @@ for (let i = 0; i < 100; i++) {
 	REPOS_FIXTURE_EXPANDED.data.viewer.repositories.edges.push({
 		node: {
 			id: 1000 + i,
-			name: "SampleRepo" + i,
-			full_name: "user1/SampleRepo" + i,
+			name: `SampleRepo${i}`,
+			full_name: `user1/SampleRepo${i}`,
 			owner: {
 				login: "user1"
 			},
-			html_url: "https://github.com/user1/SampleRepo" + i,
+			html_url: `https://github.com/user1/SampleRepo${i}`,
 			updated_at: new Date(i * 1000).toISOString()
 		}
 	});

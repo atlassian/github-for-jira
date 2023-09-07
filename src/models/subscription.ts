@@ -25,6 +25,28 @@ export interface Repository {
 	updated_at: string; // TODO: is this a date object or a timestamp?  Different places uses different things
 }
 
+export interface Branch {
+	associatedPullRequests: {
+		nodes: {
+			title: string;
+		}[];
+	};
+	name: string;
+	target: {
+		author: {
+			avatarUrl: string;
+			email: string;
+			name: string;
+		};
+		authoredDate: string;
+		changedFiles: number;
+		oid: string;
+		message: string;
+		url: string;
+		history: any;
+	};
+}
+
 export const gitHubAppIdCondition = (isServer: boolean): string => {
 	return isServer ? "AND s.\"gitHubAppId\" IS NOT NULL" : "AND s.\"gitHubAppId\" IS NULL";
 };

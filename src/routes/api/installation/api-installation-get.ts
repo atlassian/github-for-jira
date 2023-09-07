@@ -46,7 +46,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 				req.log.error({ ...response }, "Failed installation");
 				return {
 					id: response.id,
-					error: response.err.message + ". More details in logs",
+					error: `${response.err instanceof Error ? response.err.message : "unkown"}. More details in logs`,
 					deleted: response.deleted
 				};
 			});
@@ -56,7 +56,7 @@ export const ApiInstallationGet = async (req: Request, res: Response): Promise<v
 			connections,
 			failedConnections,
 			hasConnections: connections.length > 0 || failedConnections.length > 0,
-			syncStateUrl: `${req.protocol}://${req.get("host")}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
+			syncStateUrl: `${req.protocol}://${req.get("host") ?? ""}/api/${installationId}/${encodeURIComponent(jiraHost)}/syncstate`
 		});
 	} catch (err) {
 		req.log.error({ installationId, err }, "Error getting installation");

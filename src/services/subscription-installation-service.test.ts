@@ -36,7 +36,7 @@ describe("subscription-installation-service", () => {
 
 		if (config.isInstalledInUserSpace !== undefined) {
 			cloudOrGheNock
-				.get("/app/installations/" + gitHubInstallationId)
+				.get("/app/installations/" + gitHubInstallationId.toString())
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(200, {
 					account: {
@@ -48,7 +48,7 @@ describe("subscription-installation-service", () => {
 
 		if (config.fetchAvatar === true) {
 			cloudOrGheNock
-				.get("/app/installations/" + gitHubInstallationId)
+				.get("/app/installations/" + gitHubInstallationId.toString())
 				.matchHeader("Authorization", /^Bearer .+$/)
 				.reply(200, {
 					account: {

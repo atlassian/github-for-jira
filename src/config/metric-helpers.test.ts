@@ -11,7 +11,7 @@ describe("metrics helper", () => {
 		{ repoNum: 1000, bucket: "1000+" },
 		{ repoNum: 10000, bucket: "1000+" }
 	])("for each repo num", ({ repoNum, bucket }) => {
-		it(`should show correct bucket ${bucket} for repo num ${repoNum}`, () => {
+		it(`should show correct bucket ${bucket} for repo num ${repoNum ? repoNum.toString() : "undefined"}`, () => {
 			expect(repoCountToBucket(repoNum)).toEqual(bucket);
 		});
 	});
@@ -27,7 +27,7 @@ describe("metrics helper", () => {
 			if (daysAgo === undefined) return undefined;
 			return new Date(new Date().getTime() - (daysAgo * 24 * 60 * 60 * 1000));
 		};
-		it(`should show correct bucket ${bucket} for ${daysAgo} days ago`, () => {
+		it(`should show correct bucket ${bucket} for ${daysAgo ? daysAgo.toString() : "undefined"} days ago`, () => {
 			expect(backfillFromDateToBucket(getDate(daysAgo))).toEqual(bucket);
 		});
 	});

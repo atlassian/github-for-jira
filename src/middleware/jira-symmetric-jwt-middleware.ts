@@ -79,9 +79,9 @@ const getIssuer = (token: string, logger: Logger): string | undefined => {
 	let unverifiedClaims;
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", getAlgorithm(token), true); // decode without verification;
-	} catch (err) {
+	} catch (err: unknown) {
 		logger.warn({ err }, "Invalid JWT");
-		throw new Error(`Invalid JWT: ${err.message}`);
+		throw new Error(`Invalid JWT: ${err instanceof Error ? err.message : "unkown"}`);
 	}
 
 	if (!unverifiedClaims.iss) {
@@ -113,9 +113,9 @@ const verifySymmetricJwt = async (req: Request, token: string, installation: Ins
 
 		verifyJwtClaims(claims, tokenType, req);
 		return claims;
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Invalid JWT");
-		throw new Error(`Unable to decode JWT token: ${err.message}`);
+		throw new Error(`Unable to decode JWT token: ${err instanceof Error ? err.message : "unkown"}`);
 	}
 };
 

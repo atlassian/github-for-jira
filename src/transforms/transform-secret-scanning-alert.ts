@@ -44,7 +44,7 @@ export const transformSecretScanningAlert = async (
 // To Jira: Status can be one of: : open, closed
 export const transformGitHubStateToJiraStatus = (state: string | undefined, logger: Logger): JiraVulnerabilityStatusEnum => {
 	if (!state) {
-		logger.info(`Received unmapped state from secret_scanning_alert webhook: ${state}`);
+		logger.info(`Received unmapped state from secret_scanning_alert webhook: ${state ?? "Missing State"}`);
 		return JiraVulnerabilityStatusEnum.UNKNOWN;
 	}
 	switch (state) {

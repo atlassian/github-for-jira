@@ -32,7 +32,7 @@ export const JiraConnectEnterpriseDelete = async (
 
 		res.status(200).send({ success: true });
 		req.log.debug("Jira Connect Enterprise Server successfully deleted.");
-	} catch (error) {
+	} catch (error: unknown) {
 
 		await sendAnalytics(res.locals.jiraHost, AnalyticsEventTypes.TrackEvent, {
 			action: AnalyticsTrackEventsEnum.RemoveGitHubServerTrackEventName,
@@ -43,6 +43,6 @@ export const JiraConnectEnterpriseDelete = async (
 		});
 
 		res.status(200).send({ success: false, message: "Failed to delete GitHub Enterprise Server." });
-		return next(new Error(`Failed to DELETE GitHub Enterprise Server: ${error}`));
+		return next(new Error(`Failed to DELETE GitHub Enterprise Server: ${error instanceof Error ? error.toString() : "unkown"}`));
 	}
 };

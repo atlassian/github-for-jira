@@ -54,7 +54,7 @@ export const issueCommentWebhookHandler = async (
 		);
 	}
 
-	context.log.info(`Updating comment in GitHub with ID ${comment.id}`);
+	context.log.info(`Updating comment in GitHub with ID ${comment.id as number}`);
 	const updatedIssueComment: GitHubIssueCommentData = {
 		body: linkifiedBody,
 		owner,
@@ -106,7 +106,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 				"content": [
 					{
 						"type": "text",
-						"text": `${comment.user.login}`,
+						"text": `${comment.user.login as string}`,
 						"marks": [
 							{
 								"type": "strong"
@@ -124,7 +124,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 							{
 								"type": "link",
 								"attrs": {
-									"href": `${gitHubCommentUrl}`
+									"href": `${gitHubCommentUrl as string}`
 								}
 							}
 						]
@@ -143,7 +143,7 @@ const syncIssueCommentsToJira = async (jiraHost: string, context: WebhookContext
 						"content": [
 							{
 								"type": "text",
-								"text": `${gitHubMessage}`
+								"text": `${gitHubMessage as string}`
 							}
 						]
 					}

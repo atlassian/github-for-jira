@@ -69,7 +69,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 		failCount += errors.length;
 		for (const { id, err } of errors) {
 			log.warn({ id, err }, `Failed at processing installation`);
-			res.write(`SKIPPED: ${safeJsonStringify(err)}\n`);
+			res.write(`SKIPPED: ${safeJsonStringify(err) as string}\n`);
 		}
 		res.write(".".repeat(chunks.length) + "\n");
 	}
@@ -94,7 +94,7 @@ const getAndVerifyplainClientKey = async ({ id, jiraHost, clientKey: hashedClien
 		//https://hello.atlassian.net/wiki/spaces/EDGE/pages/315794033/Whitelist+Proxy+-+Usage
 		//use whitelist proxy so that we can hit xxx.jira-dev.com
 		//Unless we don't care about those records in db?
-		const proxy = `http://${process.env.WHITELIST_PROXY_HOST}:${process.env.WHITELIST_PROXY_PORT}`;
+		const proxy = `http://${process.env.WHITELIST_PROXY_HOST ?? ""}:${process.env.WHITELIST_PROXY_PORT ?? ""}`;
 		const result = await axios.create({
 			baseURL: jiraHost,
 			httpAgent: new HttpProxyAgent(proxy),

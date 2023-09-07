@@ -64,7 +64,7 @@ export const installationWebhookHandler = async (
 		const webhookReceived = context.webhookReceived;
 		webhookReceived && emitWebhookProcessedMetrics(
 			new Date(webhookReceived).getTime(),
-			`installation-${action}`,
+			`installation-${action ?? "undefined"}`,
 			jiraClient.baseURL,
 			logger,
 			jiraResponse?.status,

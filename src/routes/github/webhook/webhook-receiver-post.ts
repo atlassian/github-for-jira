@@ -87,8 +87,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		webhookContext.log.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
-	} catch (err) {
-		(webhookContext?.log || logger).error({ err }, "Something went wrong, returning 400: " + err.message);
+	} catch (err: unknown) {
+		(webhookContext?.log || logger).error({ err }, "Something went wrong, returning 400: " + (err instanceof Error ? err.message : "unkown"));
 		response.sendStatus(400);
 	}
 };

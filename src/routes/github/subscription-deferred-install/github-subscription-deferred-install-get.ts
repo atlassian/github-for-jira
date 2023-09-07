@@ -18,7 +18,7 @@ export const GitHubSubscriptionDeferredInstallGet = async (req: Request, res: Re
 	res.render("subscription-deferred-install-approval-form.hbs", {
 		csrfToken: req.csrfToken(),
 		orgName: payload.orgName,
-		orgUrl: `${res.locals.gitHubAppConfig.hostname}/${payload.orgName}`,
+		orgUrl: `${res.locals.gitHubAppConfig.hostname as string}/${payload.orgName}`,
 		jiraHost: res.locals.jiraHost
 	});
 

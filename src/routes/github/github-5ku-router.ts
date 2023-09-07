@@ -3,8 +3,8 @@ import sanitize from "sanitize-html";
 
 export const GitHub5KURedirectHandler = (req: Request, res: Response, next: NextFunction) => {
 	if (req.query["state"] === "spa") {
-		const sanitizedGitHubInstallationId = sanitize(String(req.query.installation_id || ""));
-		const sanitizedSetupAction = sanitize(String(req.query.setup_action || ""));
+		const sanitizedGitHubInstallationId: string = sanitize(String(req.query.installation_id || ""));
+		const sanitizedSetupAction: string = sanitize(String(req.query.setup_action || ""));
 		if (sanitizedGitHubInstallationId) {
 			res.redirect(`/rest/app/cloud/github-installed?installation_id=${sanitizedGitHubInstallationId}`);
 		} else if (sanitizedSetupAction) {

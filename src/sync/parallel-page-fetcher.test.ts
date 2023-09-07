@@ -7,11 +7,11 @@ describe("fetchNextPagesInParallel", () => {
 		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
 			const edges = [{
 				cursor: pageCursor.serialise(),
-				node: { id: "id" + pageCursor.pageNo }
+				node: { id: "id" + pageCursor.pageNo.toString() }
 			}];
 			const jiraPayload = {
-				pullRequests: [{ id: "pid" + pageCursor.pageNo }],
-				builds: [{ id: "bid" + pageCursor.pageNo }]
+				pullRequests: [{ id: "pid" + pageCursor.pageNo.toString() }],
+				builds: [{ id: "bid" + pageCursor.pageNo.toString() }]
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
@@ -33,12 +33,12 @@ describe("fetchNextPagesInParallel", () => {
 		const singlePageFetchFactory = jest.fn().mockImplementation((pageCursor: PageSizeAwareCounterCursor) => {
 			const edges = [{
 				cursor: pageCursor.serialise(),
-				node: { id: "id" + pageCursor.pageNo }
+				node: { id: "id" + pageCursor.pageNo.toString() }
 			}];
 			const jiraPayload = {
 				foo: "bar",
-				pullRequests: [{ id: "pid" + pageCursor.pageNo }],
-				builds: [{ id: "bid" + pageCursor.pageNo }]
+				pullRequests: [{ id: "pid" + pageCursor.pageNo.toString() }],
+				builds: [{ id: "bid" + pageCursor.pageNo.toString() }]
 			};
 			return Promise.resolve({ edges, jiraPayload });
 		});
@@ -65,9 +65,9 @@ describe("fetchNextPagesInParallel", () => {
 			}
 			const edges = [{
 				cursor: pageCursor.serialise(),
-				node: { id: "id" + pageCursor.pageNo }
+				node: { id: "id" + pageCursor.pageNo.toString() }
 			}];
-			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
+			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo.toString() }] };
 			return Promise.resolve({ edges, jiraPayload });
 		});
 		const fetchedData = await fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory);
@@ -86,9 +86,9 @@ describe("fetchNextPagesInParallel", () => {
 			}
 			const edges = [{
 				cursor: pageCursor.serialise(),
-				node: { id: "id" + pageCursor.pageNo }
+				node: { id: "id" + pageCursor.pageNo.toString() }
 			}];
-			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo }] };
+			const jiraPayload = { pullRequests: [{ id: "pid" + pageCursor.pageNo.toString() }] };
 			return Promise.resolve({ edges, jiraPayload });
 		});
 		await expect(fetchNextPagesInParallel(2, new PageSizeAwareCounterCursor("1"), singlePageFetchFactory)).rejects.toThrowError("foo");

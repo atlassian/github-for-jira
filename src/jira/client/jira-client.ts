@@ -82,7 +82,7 @@ export interface JiraClient {
 		) => Promise<DeploymentsResult>;
 	},
 	remoteLink: {
-		submit: (data: any, options?: JiraSubmitOptions) => Promise<void>;
+		submit: (data: any, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
 	},
 	security: {
 		submitVulnerabilities: (data: JiraVulnerabilityBulkSubmitData, options?: JiraSubmitOptions) => Promise<AxiosResponse>;
@@ -461,7 +461,7 @@ export const getJiraClient = async (
 					operationType: options?.operationType || "NORMAL"
 				};
 				logger.info("Sending remoteLinks payload to jira.");
-				await instance.post("/rest/remotelinks/1.0/bulk", payload);
+				return await instance.post("/rest/remotelinks/1.0/bulk", payload);
 			}
 		},
 		security: {
@@ -498,7 +498,7 @@ export const getJiraClient = async (
 const handleSubmitVulnerabilitiesResponse = (response: AxiosResponse, logger: Logger) => {
 	const rejectedEntities = response.data?.rejectedEntities;
 	if (rejectedEntities?.length > 0) {
-		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length} vulnerabilities`);
+		logger.warn({ rejectedEntities }, `Data depot rejected ${rejectedEntities.length as number} vulnerabilities`);
 	}
 };
 

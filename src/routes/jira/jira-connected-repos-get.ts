@@ -130,9 +130,9 @@ export const JiraConnectedReposGet = async (
 			...getPaginationState(pageNumber, pageSize, reposCount)
 		});
 
-	} catch (err) {
+	} catch (err: unknown) {
 		req.log.warn({ err }, "Failed to render connected repos");
-		return next(new Error(`Failed to render connected repos: ${err}`));
+		return next(new Error(`Failed to render connected repos: ${err instanceof Error ? err.toString() : "unknown"}`));
 	}
 };
 

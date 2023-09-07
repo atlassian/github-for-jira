@@ -37,7 +37,7 @@ export const getCommitTask = async (
 	const { edges, commits } = await fetchCommits(gitHubClient, repository, commitSince, cursor, perPage);
 
 	if (commits.length > 0) {
-		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate}`);
+		logger.info(`Last commit authoredDate=${commits[commits.length - 1].authoredDate.toString()}`);
 		(logger.fields || {}).commitShaArray = commits.map(c => createHashWithSharedSecret(String(c.oid)));
 	}
 

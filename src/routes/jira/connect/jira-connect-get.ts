@@ -19,7 +19,7 @@ export const JiraConnectGet = async (
 		res.render("jira-select-github-product.hbs");
 
 		req.log.info("Jira Connect page rendered successfully.");
-	} catch (error) {
-		return next(new Error(`Failed to render Jira Connect page: ${error}`));
+	} catch (error: unknown) {
+		return next(new Error(`Failed to render Jira Connect page: ${error instanceof Error ? error.toString() : "unknown"}`));
 	}
 };

@@ -99,7 +99,7 @@ export const getInstallationsWithAdmin = async (
 			return false;
 		});
 		const [isAdmin, numberOfRepos] = await Promise.all([checkAdmin, numberOfReposPromise]);
-		log.info("Number of repos in the org received via GraphQL: " + numberOfRepos);
+		log.info(`Number of repos in the org received via GraphQL: ${numberOfRepos}`);
 
 		let deferredInstallUrl: string | undefined;
 
@@ -138,8 +138,8 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 					host: jiraHost,
 					gitHubAppId
 				});
-			} catch (err) {
-				const deleteSubscriptionError = `Failed to delete subscription: ${err}`;
+			} catch (err: unknown) {
+				const deleteSubscriptionError = `Failed to delete subscription: ${err instanceof Error ? err.toString() : "unkown"}`;
 				logger.error(deleteSubscriptionError);
 			}
 		}));
@@ -157,7 +157,8 @@ export const GithubConfigurationGet = async (req: Request, res: Response, next: 
 
 	const log = req.log.child({ jiraHost });
 
-	const { gitHubAppId, uuid: gitHubAppUuid } = gitHubAppConfig;
+	const { uuid: gitHubAppUuid } = gitHubAppConfig;
+	const gitHubAppId: number = gitHubAppConfig.gitHubAppId;
 
 	gitHubAppId ? req.log.debug(`Displaying orgs that have GitHub Enterprise app ${gitHubAppId} installed.`)
 		: req.log.debug("Displaying orgs that have GitHub Cloud app installed.");

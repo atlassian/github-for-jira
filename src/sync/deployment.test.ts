@@ -206,10 +206,24 @@ describe("sync/deployments", () => {
 			commitsFromDate: "2023-01-01T00:00:00Z"
 		});
 
+		interface DeploymentEntity {
+			_seq: number;
+			cursor: string;
+			node: DeploymentEntityNode;
+		}
+		interface DeploymentEntityNode {
+			repository: { id: number }
+			environment: string;
+			createdAt: string;
+			updatedAt: string;
+			databaseId: string;
+			commitOid: string;
+			statuses: any;
+		}
 		//size up to 9 entities
 		const createDeploymentEntities = (size: number) => {
 			return Array.from({ length: size }).map((_, idx) => {
-				const clone = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
+				const clone: DeploymentEntity = JSON.parse(JSON.stringify(deploymentNodesFixture.data.repository.deployments.edges[0]));
 				clone._seq = idx + 1;
 				clone.cursor = `cursor:${idx + 1}`;
 				clone.node.createdAt = `2023-01-0${idx + 1}T10:00:00Z`;
@@ -232,10 +246,10 @@ describe("sync/deployments", () => {
 				.query(true).reply(200, { data: { repository: { deployments: { edges: deployments } } } });
 		};
 
-		const nockDeploymentListingApi = (deployments, repeatTimes) => {
+		const nockDeploymentListingApi = (deployments: DeploymentEntity[], repeatTimes: number) => {
 			Array.from({ length: repeatTimes }).forEach(() => {
 				githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments?environment=prod&per_page=10`)
-					.reply(200, deployments.map((item, idx) => ({
+					.reply(200, deployments.map((item: DeploymentEntity, idx: number) => ({
 						id: item.node.databaseId,
 						sha: item.node.commitOid,
 						ref: "random",
@@ -255,7 +269,7 @@ describe("sync/deployments", () => {
 			});
 		};
 
-		const nockDeploymentStatusApi = (deployments, repeatTimes) => {
+		const nockDeploymentStatusApi = (deployments: DeploymentEntity[], repeatTimes: number) => {
 			Array.from({ length: repeatTimes }).forEach(() => {
 				deployments.forEach((item, idx) => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/deployments/${item.node.databaseId}/statuses?per_page=100`)
@@ -267,7 +281,7 @@ describe("sync/deployments", () => {
 			});
 		};
 
-		const nockDeploymentCommitGetApi = (deployments, repeatTimes) => {
+		const nockDeploymentCommitGetApi = (deployments: DeploymentEntity[], repeatTimes: number) => {
 			Array.from({ length: repeatTimes }).forEach(() => {
 				deployments.forEach(item => {
 					githubNock.get(`/repos/test-repo-owner/test-repo-name/commits/${item.node.commitOid}`)
@@ -281,7 +295,7 @@ describe("sync/deployments", () => {
 			});
 		};
 
-		const expectDeploymentEntryInDB = async (deployments) => {
+		const expectDeploymentEntryInDB = async (deployments: DeploymentEntity[]) => {
 			for (const deployment of deployments) {
 				const { repository: { id: repoId }, environment, statuses, commitOid } = deployment.node;
 				const key = createHashWithoutSharedSecret(`ghurl_${gitHubCloudConfig.baseUrl}_repo_${repoId}_env_${environment}`);
@@ -299,7 +313,7 @@ describe("sync/deployments", () => {
 			}
 		};
 
-		const expectEdgesAndPayloadMatchToDeploymentCommits = (result, deployments) => {
+		const expectEdgesAndPayloadMatchToDeploymentCommits = (result, deployments: DeploymentEntity[]) => {
 			expect(result).toEqual({
 				edges: deployments.map(d =>
 					expect.objectContaining({ cursor: d.cursor, node: expect.objectContaining({ commitOid: d.node.commitOid }) })

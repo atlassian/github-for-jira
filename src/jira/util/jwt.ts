@@ -139,8 +139,8 @@ const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: To
 	let unverifiedClaims: any;
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
-	} catch (e) {
-		throw `Invalid JWT: ${e.message}`;
+	} catch (e: unknown) {
+		throw `Invalid JWT: ${e instanceof Error ? e.message : "unknown"}`;
 	}
 
 	if (!unverifiedClaims.iss) {
@@ -151,8 +151,8 @@ const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: To
 	let verifiedClaims: any; //due to decodeSymmetric return any
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
-	} catch (error) {
-		throw `Unable to decode JWT token: ${error}`;
+	} catch (e: unknown) {
+		throw `Unable to decode JWT token: ${e instanceof Error ? e.toString() : "unknown"}`;
 	}
 
 	validateJwtClaims(verifiedClaims, tokenType, request);
@@ -269,7 +269,7 @@ export const createCanonicalRequest = (req: JWTRequest, checkBodyForParams?: boo
 	CANONICAL_QUERY_SEPARATOR +
 	canonicalizeQueryString(req, checkBodyForParams);
 
-const canonicalizeMethod = (req) => req.method.toUpperCase();
+const canonicalizeMethod = (req: JWTRequest) => req.method.toUpperCase();
 
 const canonicalizeUri = (req: JWTRequest) => {
 	let path = req.pathname;

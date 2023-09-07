@@ -79,7 +79,7 @@ describe("github-create-branch-post.frontend", () => {
 			]);
 		});
 
-		const expandSelector = async (text) => {
+		const expandSelector = async (text: string) => {
 			const elementWithTextLocator = await page.locator(`span.select2-chosen:has-text("${text}")`);
 			const element = await elementWithTextLocator.elementHandle();
 

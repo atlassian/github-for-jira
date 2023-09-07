@@ -82,7 +82,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 		const sendMessageResult = await this.sqs.sendMessage(params)
 			.promise();
-		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId}`);
+		logger.info({ delaySeconds: delaySec, newMessageId: sendMessageResult.MessageId }, `Successfully added message to sqs queue messageId: ${sendMessageResult.MessageId ?? ""}`);
 		statsd.increment(sqsQueueMetrics.sent, this.metricsTags, { jiraHost: payload.jiraHost });
 		return sendMessageResult;
 	}
@@ -382,7 +382,7 @@ export class SqsQueue<MessagePayload extends BaseMessagePayload> {
 
 	public async changeVisibilityTimeout(message: Message, timeoutSec: number, logger: Logger): Promise<void> {
 		if (!message.ReceiptHandle) {
-			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId}`);
+			logger.error(`No ReceiptHandle in message with ID = ${message.MessageId ?? ""}`);
 			return;
 		}
 

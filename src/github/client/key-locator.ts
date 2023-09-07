@@ -38,6 +38,6 @@ export const keyLocator = async (gitHubAppId: number | undefined, jiraHost: stri
 			}
 		}
 	}
-	throw new Error(`Private key doesn not found for Github app ${gitHubAppId}`);
+	throw new Error(`Private key doesn not found for Github app ${gitHubAppId ? gitHubAppId.toString() : "undefined"}`);
 };
 

@@ -616,7 +616,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				const jiraPayload = await transformDeployment(gitHubClient, deployment_status.payload as any, jiraHost, "webhook", getLogger("deploymentLogger"), undefined);
 
 				// make expected issue id array
-				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1));
+				const expectedIssueIds = [...Array(500).keys()].map(number => "ABC-" + (number + 1).toString());
 
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
@@ -652,7 +652,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1))
+						values: [...Array(499).keys()].map(number => "ABC-" + (number + 1).toString())
 					},
 					{
 						associationType: "serviceIdOrKeys",
@@ -698,7 +698,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				expect(jiraPayload).toMatchObject(buildJiraPayload("testing", [
 					{
 						associationType: "issueIdOrKeys",
-						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1))
+						values: [...Array(497).keys()].map(number => "ABC-" + (number + 1).toString())
 					},
 					{
 						associationType: "serviceIdOrKeys",

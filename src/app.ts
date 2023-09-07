@@ -44,7 +44,7 @@ const secureHeaders = (app: Express) => {
 			defaultSrc: ["'self'"],
 			// Allow <script> tags hosted by ourselves and from atlassian when inserted into an iframe
 			scriptSrc: ["'self'", process.env.APP_URL, "https://*.atlassian.net", "https://*.jira.com", "https://connect-cdn.atl-paas.net/",
-				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce}'`],
+				"'unsafe-inline'", "'strict-dynamic'", (_: Request, res: Response): string => `'nonce-${res.locals.nonce as string}'`],
 			// Allow XMLHttpRequest/fetch requests
 			connectSrc: ["'self'", process.env.APP_URL],
 			// Allow <style> tags hosted by ourselves as well as style="" attributes

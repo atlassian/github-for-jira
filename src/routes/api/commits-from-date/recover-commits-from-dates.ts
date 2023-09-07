@@ -52,12 +52,12 @@ export const RecoverCommitsFromDatePost = async (req: Request, res: Response): P
 			}
 			lastId = sub.id;
 		}
-		info(`${count} subscriptions updated, last subscription id is ${lastId})`);
+		info(`${count} subscriptions updated, last subscription id is ${lastId ? lastId.toString() : "undefined"})`);
 
 		res.end();
 
 	} catch (e) {
 		log.error({ err: e }, "Error happen when recovering commits from date");
-		res.end(`Error happen when recovering commits from date: ${safeJsonStringify(e)}`);
+		res.end(`Error happen when recovering commits from date: ${safeJsonStringify(e) as string}`);
 	}
 };
