@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,@typescript-eslint/explicit-module-boundary-types */
+import url from "url";
 /*
  * Adds request/response metadata to a Sentry event for an Axios error
  * To use, pass AxiosErrorEventDecorator.decorate to scope.addEventProcessor
@@ -65,12 +66,12 @@ export class AxiosErrorEventDecorator {
 	}
 
 	generateFingerprint() {
-		const pathname = new URL(this.request?.path || "").pathname;
+		const { pathname } = url.parse(this.request?.path || "");
 
 		return [
 			"{{ default }}",
 			this.response?.status,
-			`${this.request?.method as string} ${pathname}`
+			`${this.request?.method as string} ${pathname ?? "undefined"}`
 		];
 	}
 
