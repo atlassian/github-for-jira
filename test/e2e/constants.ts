@@ -7,10 +7,10 @@ export const SCREENSHOT_PATH = "./test/e2e/test-results/screenshots";
 export const createProjectId = () => `P${uuid().substring(0, 5)}`.toUpperCase();
 // Project ID created for each e2e test run
 const projectId = (): string => {
-	if (!process.env.PROJECT_ID) {
-		process.env.PROJECT_ID = createProjectId();
+	if (!process.env.PROJECT_KEY) {
+		process.env.PROJECT_KEY = createProjectId();
 	}
-	return process.env.PROJECT_ID;
+	return process.env.PROJECT_KEY;
 };
 
 export const testData: TestData = {

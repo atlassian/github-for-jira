@@ -87,10 +87,10 @@ export type GraphQLError = {
 		[key: string]: any;
 	};
 	locations?:
-		{
-			line: number;
-			column: number;
-		}[];
+	{
+		line: number;
+		column: number;
+	}[];
 };
 
 export const buildAxiosStubErrorForGraphQlErrors = (response: AxiosResponse) => {

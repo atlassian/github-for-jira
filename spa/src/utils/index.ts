@@ -16,9 +16,16 @@ export function popup (url: string) {
 	return openedPopup;
 }
 
-export function reportError(err: unknown) {
+export function reportError(err: unknown, extra: {
+	path: string,
+	reason?: string
+} & Record<string, unknown>) {
 	try {
-		Sentry.captureException(err);
+		Sentry.captureException(err, {
+			extra: {
+				...extra
+			}
+		});
 	} catch (_) {
 		//do nothing
 	}

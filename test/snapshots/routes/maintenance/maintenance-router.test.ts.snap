@@ -151,6 +151,19 @@ Object {
         },
         "url": "/spa",
       },
+      Object {
+        "conditions": Array [
+          Object {
+            "condition": "user_is_admin",
+          },
+        ],
+        "key": "gh-addon-subscription-repos",
+        "location": "none",
+        "name": Object {
+          "value": "Sync status",
+        },
+        "url": "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
+      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",
@@ -171,7 +184,7 @@ Object {
     "jiraDevelopmentTool": Object {
       "actions": Object {
         "createBranch": Object {
-          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&tenantUrl={tenant.url}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
+          "templateUrl": "https://test-github-app-instance.com/create-branch-options?issueKey={issue.key}&issueSummary={issue.summary}&jwt={jwt}&addonkey=com.github.integration.test-atlassian-instance",
         },
       },
       "application": Object {

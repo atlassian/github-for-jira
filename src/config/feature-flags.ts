@@ -24,11 +24,13 @@ export enum BooleanFlags {
 	SKIP_REQUESTED_REVIEWERS = "skip-requested-reviewers",
 	ENABLE_SUBSCRIPTION_DEFERRED_INSTALL = "enable-subscription-deferred-install",
 	EARLY_EXIT_ON_VALIDATION_FAILED = "early-exit-on-validation-failed",
+	ENABLE_CONNECTED_REPOS_VIEW="enable-connected-repos-view",
 	USE_REST_API_FOR_DISCOVERY = "use-rest-api-for-discovery-again",
 	ENABLE_GENERIC_CONTAINERS = "enable-generic-containers",
 	ENABLE_GITHUB_SECURITY_IN_JIRA = "enable-github-security-in-jira",
 	DELETE_MESSAGE_ON_BACKFILL_WHEN_OTHERS_WORKING_ON_IT = "delete-message-on-backfill-when-others-working-on-it",
 	USE_NEW_5KU_SPA_EXPERIENCE = "enable-5ku-experience--cloud-connect",
+	USE_INSTALLATION_CLIENT_CHECK_PERMISSION = "use-installation-client-to-check-permission",
 	USE_CUSTOM_ROOT_CA_BUNDLE = "use-custom-root-ca-bundle"
 }
 
