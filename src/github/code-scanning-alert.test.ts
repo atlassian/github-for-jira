@@ -10,6 +10,11 @@ import { mocked } from "jest-mock";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import Logger from "bunyan";
 import { booleanFlag } from "config/feature-flags";
+import { DeploymentsResult, JiraClient } from "../jira/client/jira-client";
+import { AxiosResponse } from "axios";
+import { JiraIssue, JiraSubmitOptions, JiraBuildBulkSubmitData, JiraDeploymentBulkSubmitData } from "../interfaces/jira";
+import { TransformedRepositoryId } from "../transforms/transform-repository-id";
+
 jest.mock("config/feature-flags");
 jest.mock("utils/webhook-utils");
 jest.mock("../transforms/transform-code-scanning-alert");
@@ -52,10 +57,83 @@ describe("Code Scanning Alert Webhook Handler", () => {
 
 	const mockJiraRemoteLinkSubmit = jest.fn();
 	const mockJiraSecuritySubmit = jest.fn();
-	const jiraClient = {
+	const jiraClient: JiraClient = {
 		baseURL: JIRA_BASE_URL,
 		remoteLink: { submit: mockJiraRemoteLinkSubmit },
-		security: { submitVulnerabilities: mockJiraSecuritySubmit }
+		security: { submitVulnerabilities: mockJiraSecuritySubmit },
+		issues: {
+			get: function (_issueId: string, _query?: { fields: string; } | undefined): Promise<AxiosResponse<JiraIssue, any>> {
+				throw new Error("Function not implemented.");
+			},
+			getAll: function (_issueIds: string[], _query?: { fields: string; } | undefined): Promise<JiraIssue[]> {
+				throw new Error("Function not implemented.");
+			},
+			parse: function (_text: string): string[] | undefined {
+				throw new Error("Function not implemented.");
+			},
+			comments: {
+				list: function (_issue_id: string) {
+					throw new Error("Function not implemented.");
+				},
+				addForIssue: function (_issue_id: string, _payload: any) {
+					throw new Error("Function not implemented.");
+				},
+				updateForIssue: function (_issue_id: string, _comment_id: string, _payload: any) {
+					throw new Error("Function not implemented.");
+				},
+				deleteForIssue: function (_issue_id: string, _comment_id: string) {
+					throw new Error("Function not implemented.");
+				}
+			},
+			transitions: {
+				getForIssue: function (_issue_id: string) {
+					throw new Error("Function not implemented.");
+				},
+				updateForIssue: function (_issue_id: string, _transition_id: string) {
+					throw new Error("Function not implemented.");
+				}
+			},
+			worklogs: {
+				addForIssue: function (_issue_id: string, _payload: any) {
+					throw new Error("Function not implemented.");
+				}
+			}
+		},
+		devinfo: {
+			branch: {
+				delete: function (_transformedRepositoryId: TransformedRepositoryId, _branchRef: string) {
+					throw new Error("Function not implemented.");
+				}
+			},
+			installation: {
+				delete: function (_gitHubInstallationId: string | number): Promise<any[]> {
+					throw new Error("Function not implemented.");
+				}
+			},
+			pullRequest: {
+				delete: function (_transformedRepositoryId: TransformedRepositoryId, _pullRequestId: string) {
+					throw new Error("Function not implemented.");
+				}
+			},
+			repository: {
+				delete: function (_epositoryId: number, _gitHubBaseUrl?: string | undefined): Promise<any[]> {
+					throw new Error("Function not implemented.");
+				},
+				update: function (_data: any, _options?: JiraSubmitOptions | undefined) {
+					throw new Error("Function not implemented.");
+				}
+			}
+		},
+		workflow: {
+			submit: function (_data: JiraBuildBulkSubmitData, _repositoryId: number, _options?: JiraSubmitOptions | undefined): Promise<any> {
+				throw new Error("Function not implemented.");
+			}
+		},
+		deployment: {
+			submit: function (_data: JiraDeploymentBulkSubmitData, _repositoryId: number, _options?: JiraSubmitOptions | undefined): Promise<DeploymentsResult> {
+				throw new Error("Function not implemented.");
+			}
+		}
 	};
 
 	it("transform and submit remote link to jira", async () => {
