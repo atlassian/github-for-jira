@@ -114,18 +114,6 @@ describe("jira-get-connections-backfillStatus.test", () => {
 						subscriptionIds: result.subscription.id
 					})}`
 				);
-			// expect(resp.status).toStrictEqual(200);
-
-			// const resp = await supertest(app)
-			// 	.get(
-			// 		`/jira/subscriptions/backfill-status/?subscriptionIds=${result.subscription.id}`
-			// 	)
-			// 	.set(
-			// 		"authorization",
-			// 		`JWT ${await generateJwt({
-			// 			subscriptionIds: result.subscription.id,
-			// 		})}`
-			// 	);
 
 			expect(resp.status).toStrictEqual(403);
 		});

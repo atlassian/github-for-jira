@@ -58,11 +58,10 @@ export const JiraGetConnectionsBackfillStatus = async (
 
 		const subscriptionsById = groupBy(subscriptions, "id");
 		if (!jiraHostsMatched) {
-			req.log.error("Missmached Jira Host");
-			res.status(403).send("Missmached Jira Host");
+			req.log.error("mismatched Jira Host");
+			res.status(403).send("mismatched Jira Host");
 			return;
 		}
-
 		const repoSyncStates = await RepoSyncState.findAll({
 			where: {
 				subscriptionId: subscriptionIds

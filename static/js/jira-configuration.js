@@ -3,7 +3,7 @@ const params = new URLSearchParams(window.location.search.substring(1));
 const jiraHost = params.get("xdm_e");
 
 function openChildWindow(url) {
-	const child = window.open(url);
+const child = window.open(url);
 	const interval = setInterval(function () {
 		if (child.closed) {
 			clearInterval(interval);
@@ -44,7 +44,7 @@ $(".add-enterprise-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-		moduleKey: "github-list-servers-page"
+			moduleKey: "github-list-servers-page"
 		}
 	);
 });
@@ -60,7 +60,7 @@ $(".select-github-product-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-		moduleKey: "github-select-product-page"
+			moduleKey: "github-select-product-page"
 		}
 	);
 });
@@ -106,18 +106,18 @@ $(".sync-connection-link").click(event => {
 	document.getElementById("restart-backfill-modal").style.display = "block";
 
 	AJS.$("#jiraConfiguration__restartBackfillModal__form").on("aui-valid-submit", event => {
-			event.preventDefault();
-			const commitsFromDate = document.getElementById('backfill-date-picker').value;
-			const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
-			let syncType = undefined;
-			if (fullSyncCheckbox && fullSyncCheckbox.checked) {
-				syncType = "full";
-			}
-			window.AP.context.getToken(function (jwt) {
-				restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
-				});
-			});
+		event.preventDefault();
+		const commitsFromDate = document.getElementById('backfill-date-picker').value;
+		const fullSyncCheckbox = document.getElementById('backfill-fullsync-checkbox');
+		let syncType = undefined;
+		if (fullSyncCheckbox && fullSyncCheckbox.checked) {
+			syncType = "full";
+		}
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, commitsFromDate, appId, syncType, source: "backfill-button"});
 		});
+	});
+});
 
 $(".jiraConfiguration__syncErrorSummaryModal__closeBtn").click(event => {
 	const installationId = $(event.target).data("installation-id");
@@ -132,12 +132,12 @@ $(".jiraConfiguration__errorSummary__btn").click(event => {
 	document.getElementById(`error-summary-modal-${installationId}`).style.display = "block";
 
 	AJS.$(".jiraConfiguration__errorSummaryModal__form").on("aui-valid-submit", event => {
-			event.preventDefault();
-			window.AP.context.getToken(function (jwt) {
-				restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
-				});
-			});
+		event.preventDefault();
+		window.AP.context.getToken(function (jwt) {
+			restartBackfillPost({jwt, _csrf: csrfToken, installationId, undefined, appId, source: "backfill-retry"});
 		});
+	});
+});
 
 $("#restart-backfill-action-button, #restart-backfill").click(initializeBackfillDateInput);
 
@@ -331,21 +331,21 @@ $(".jiraConfiguration__editGitHubApp").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-		moduleKey: "github-edit-app-page",
-		customData: { uuid }
+			moduleKey: "github-edit-app-page",
+			customData: { uuid }
 		}
 	);
 });
 
 $(".jiraConfiguration__info__backfillDate-label").each((_, backfillSinceLabelEle) => {
-		try {
-			const isoStr = backfillSinceLabelEle.dataset.backfillSince;
-			const backfillDate = new Date(isoStr);
-			$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
-		} catch (e) {
-			console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
-		}
-	});
+	try {
+		const isoStr = backfillSinceLabelEle.dataset.backfillSince;
+		const backfillDate = new Date(isoStr);
+		$(backfillSinceLabelEle).text(backfillDate.toLocaleDateString());
+	} catch (e) {
+		console.error(`Error trying to show the backfill since date for backfillSinceLabelEle`, e);
+	}
+});
 
 const setBackfillDateToolTip = () =>{
 	AJS.$(".jiraConfiguration__table__backfillInfoIcon").tooltip();
@@ -381,7 +381,6 @@ const getInprogressSubIds = () => {
 			subscriptionIds.push(subscriptionId);
 		}
 	});
-	console.log("subscriptionIds",subscriptionIds);
 	return subscriptionIds;
 };
 
