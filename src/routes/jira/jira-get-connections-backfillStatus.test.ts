@@ -174,9 +174,6 @@ describe("jira-get-connections-backfillStatus.test", () => {
 					newRepoSyncStatesData.push(newRepoSyncState);
 				}
 				await RepoSyncState.bulkCreate(newRepoSyncStatesData);
-				when(booleanFlag)
-					.calledWith(BooleanFlags.JIRA_ADMIN_CHECK)
-					.mockResolvedValue(false);
 			});
 
 			it("should return 200 if the subscription belongs to the same user", async () => {
