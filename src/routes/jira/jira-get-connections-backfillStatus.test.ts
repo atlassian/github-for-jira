@@ -158,7 +158,13 @@ describe("jira-get-connections-backfillStatus.test", () => {
 					newRepoSyncState["repoFullName"] =
 						repoSyncState.repoFullName +
 						String(newRepoStateNo).padStart(3, "0");
-					if (newRepoStateNo % 3 == 1) {
+					if (newRepoStateNo === 1) {
+						newRepoSyncState["commitStatus"] = "pending";
+						newRepoSyncState["branchStatus"] = "complete";
+						newRepoSyncState["pullStatus"] = "complete";
+						newRepoSyncState["buildStatus"] = "complete";
+						newRepoSyncState["deploymentStatus"] = "pending";
+					} else if (newRepoStateNo % 3 == 1) {
 						newRepoSyncState["commitStatus"] = "complete";
 						newRepoSyncState["branchStatus"] = "complete";
 						newRepoSyncState["pullStatus"] = "complete";
@@ -194,7 +200,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 								isSyncComplete: false,
 								syncStatus: "IN PROGRESS",
 								totalRepos: 50,
-								syncedRepos: 34,
+								syncedRepos: 33,
 								backfillSince: null
 							}
 						},
