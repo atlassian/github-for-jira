@@ -51,19 +51,15 @@ describe("getRedisInfo without envvars", () => {
 	});
 
 	it("should set the port to default value", () => {
-		redisOptions = getRedisInfo("mock-connection");
 		expect(redisOptions.port).toBe(6379);
 	});
 
 	it("should set the host to default", () => {
-		redisOptions = getRedisInfo("mock-connection");
 		expect(redisOptions.host).toBe("127.0.0.1");
 	});
 
 	it("should set tls to undefined by default", () => {
-		redisOptions = getRedisInfo("mock-connection");
 		expect(redisOptions.tls).toBeUndefined();
 	});
-
 
 });
