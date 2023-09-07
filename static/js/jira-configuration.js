@@ -381,6 +381,7 @@ const getInprogressSubIds = () => {
 			subscriptionIds.push(subscriptionId);
 		}
 	});
+	console.log("subscriptionIds",subscriptionIds);
 	return subscriptionIds;
 };
 
@@ -415,9 +416,6 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 	const syncStatusProgress = infoContainer.children(
 		`span.jiraConfiguration__table__syncStatus`
 	);
-	// const backfillDateInfo = infoContainer.children(
-	// 	"div.jiraConfiguration__info__backfillDate"
-	// );
 
 	syncStatusProgress.removeClass(function(index, className) {
 		return (className.match(/\bjiraConfiguration__table__\S*/g) || []).join(' ');
@@ -431,20 +429,23 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 
 	if (isSyncComplete) {
 		inprogressIcon.css("display", "none");
-		if (backfillSince) {
-			const backfillSinceDate = new Date(backfillSince);
-			const formattedDate = backfillSinceDate.toLocaleDateString("en-GB"); // Change 'en-GB' to your desired language/locale
-			infoContainer.append(
-				`<div class="jiraConfiguration__info__backfillDate">
-					<span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="${backfillSince}">${formattedDate}</span>
-					<span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
-				</div>`
-			);
-			setBackfillDateToolTip();
-		} else {
-			infoContainer.append(
-				'<div class="jiraConfiguration__info__backfillDate">All commits backfilled</span>'
-			);
+		if(syncStatus === 'FINISHED')
+		{
+			if (backfillSince) {
+				const backfillSinceDate = new Date(backfillSince);
+				const formattedDate = backfillSinceDate.toLocaleDateString("en-GB"); // Change 'en-GB' to your desired language/locale
+				infoContainer.append(
+					`<div class="jiraConfiguration__info__backfillDate">
+						<span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="${backfillSince}">${formattedDate}</span>
+						<span class="jiraConfiguration__table__backfillInfoIcon aui-icon aui-iconfont-info-filled" title="If you want to backfill more data, choose &quot;Continue backfill&quot; in the settings menu on the right">Information</span>
+					</div>`
+				);
+				setBackfillDateToolTip();
+			} else {
+				infoContainer.append(
+					'<div class="jiraConfiguration__info__backfillDate">All commits backfilled</span>'
+				);
+			}
 		}
 	}
 	syncStatusProgress.text(syncStatus);
@@ -457,7 +458,7 @@ function fetchAllConnectionsBackfillStatus() {
 	if (subscriptionIds.length > 0) {
 		$.ajax({
 			type: "GET",
-			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}&jwt=${token}`,
+			url: `/jira/subscriptions/backfill-status/?subscriptionIds=${subscriptionIds}`,
 			success: (response) => {
 				const data = response.data;
 				const subscriptions = data.subscriptions;
