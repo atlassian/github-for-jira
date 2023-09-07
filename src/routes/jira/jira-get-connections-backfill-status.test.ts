@@ -1,6 +1,6 @@
 import { getFrontendApp } from "~/src/app";
 import { Installation } from "models/installation";
-import { createQueryStringHash, encodeSymmetric } from "atlassian-jwt";
+import { encodeSymmetric } from "atlassian-jwt";
 import { getLogger } from "config/logger";
 import { Subscription } from "models/subscription";
 import { DatabaseStateCreator } from "test/utils/database-state-creator";
@@ -16,17 +16,10 @@ describe("jira-get-connections-backfillStatus.test", () => {
 	let installation: Installation;
 	let subscription: Subscription;
 	let repoSyncState: RepoSyncState;
-	const generateJwt = async (query: any = {}) => {
+	const generateJwt = async () => {
 		return encodeSymmetric(
 			{
-				qsh: createQueryStringHash(
-					{
-						method: "GET",
-						pathname: `/jira/subscriptions/backfill-status`,
-						query
-					},
-					false
-				),
+				qsh: "context-qsh",
 				iss: installation.plainClientKey,
 				sub: "myAccountId"
 			},
@@ -62,7 +55,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 			)
 			.set(
 				"authorization",
-				`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
+				`JWT ${await generateJwt()}`
 			);
 		expect(resp.status).toStrictEqual(403);
 	});
@@ -87,7 +80,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 				)
 				.set(
 					"authorization",
-					`JWT ${await generateJwt({ subscriptionIds: subscription.id + 1 })}`
+					`JWT ${await generateJwt()}`
 				);
 			expect(resp.status).toStrictEqual(400);
 		});
@@ -95,7 +88,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 		it("should return 400 when no Missing Subscription IDs were found in query", async () => {
 			const resp = await supertest(app)
 				.get(`/jira/subscriptions/backfill-status`)
-				.set("authorization", `JWT ${await generateJwt({})}`);
+				.set("authorization", `JWT ${await generateJwt()}`);
 			expect(resp.status).toStrictEqual(400);
 			expect(resp.text).toBe("Missing Subscription IDs");
 		});
@@ -110,9 +103,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 				)
 				.set(
 					"authorization",
-					`JWT ${await generateJwt({
-						subscriptionIds: result.subscription.id
-					})}`
+					`JWT ${await generateJwt()}`
 				);
 
 			expect(resp.status).toStrictEqual(403);
@@ -125,7 +116,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 				)
 				.set(
 					"authorization",
-					`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
+					`JWT ${await generateJwt()}`
 				);
 			expect(resp.status).toStrictEqual(200);
 		});
@@ -135,8 +126,6 @@ describe("jira-get-connections-backfillStatus.test", () => {
 				const newRepoSyncStatesData: any[] = [];
 				for (let newRepoStateNo = 1; newRepoStateNo < 50; newRepoStateNo++) {
 					const newRepoSyncState = { ...repoSyncState.dataValues };
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-ignore
 					delete newRepoSyncState["id"];
 					delete newRepoSyncState["commitStatus"];
 					delete newRepoSyncState["branchStatus"];
@@ -177,7 +166,7 @@ describe("jira-get-connections-backfillStatus.test", () => {
 					)
 					.set(
 						"authorization",
-						`JWT ${await generateJwt({ subscriptionIds: subscription.id })}`
+						`JWT ${await generateJwt()}`
 					);
 				expect(resp.status).toStrictEqual(200);
 

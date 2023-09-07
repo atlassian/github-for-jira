@@ -226,15 +226,6 @@ const	modules = {
 			conditions: adminCondition,
 			key: "gh-addon-subscription-repos",
 			location: "none"
-		},
-		{
-			url: "/jira/subscriptions/backfill-status?subscriptionIds={ac.subscriptionIds}",
-			name: {
-				value: "Backfill status"
-			},
-			conditions: adminCondition,
-			key: "gh-addon-subscription-repos",
-			location: "none"
 		}
 	],
 	webSections: [
