@@ -31,8 +31,10 @@ const Logo = styled.div`
 	margin: ${token("space.025")} ${token("space.075")} 0 0;
 `;
 const ButtonContainer = styled.div`
-	text-align: center;
 	margin: ${token("space.300")} 0 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 `;
 const InlineDialogLink = styled.a`
 	cursor: pointer;
