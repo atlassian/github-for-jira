@@ -73,10 +73,13 @@ export const jiraCreateProject = async (page: Page, projectId: string): Promise<
 	await page.click("[data-testid='project-template-select-v2.ui.layout.category-overview.template-list-card.template-list-button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.template-overview.template-overview-card.use-template-button.button']");
 	await page.click("[data-testid='project-template-select-v2.ui.layout.screens.project-types.footer.select-project-button-team-managed']");
-	await page.fill("[id='project-create.create-form.name-field.input']", projectId);
+	await page.fill("[data-testid='project-create.create-form.name-field.input']", projectId);
+	// Wait while the Project key is set and then set that project key
+	await page.waitForTimeout(2000);
+	process.env.PROJECT_KEY = await page.getByTestId("project-create.create-form.advanced-dropdown.key-field.textfield").inputValue();
 	// Waiting for the Issue Key to be filled
 	await page.waitForTimeout(2000);
-	await page.click("[data-test-id='project-create.create-form.create-screen.submit-button']");
+	await page.click("[data-testid='project-create.create-form.create-screen.submit-button']");
 	// Waiting for the Project creation, don't care about the screens after that
 	await page.waitForTimeout(5000);
 };

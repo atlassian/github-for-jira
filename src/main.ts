@@ -5,6 +5,9 @@ import throng from "throng";
 import { initializeSentry } from "config/sentry";
 import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
+import createLag from "event-loop-lag";
+import { statsd } from "config/statsd";
+import { metricLag } from "config/metric-names";
 
 const start = async () => {
 	initializeSentry();
@@ -13,6 +16,10 @@ const start = async () => {
 	app.listen(port, () => {
 		getLogger("frontend-app").info(`started at port ${port}`);
 	});
+	const lag = createLag(1000);
+	setInterval(() => {
+		statsd.histogram(metricLag.lagHist, lag(), { }, { });
+	}, 1000);
 };
 
 if (isNodeProd()) {

@@ -4,7 +4,8 @@ type UIEventActionSubject =
   | "startOAuthAuthorisation" | "switchGitHubAccount"
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
-	| "dropExperienceViaBackButton";
+	| "dropExperienceViaBackButton"
+	| "checkOrgAdmin";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
