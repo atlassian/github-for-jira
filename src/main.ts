@@ -16,14 +16,30 @@ import Logger from "bunyan";
 //
 // "throng" was supposed to restart the dead nodes, but for some reason that doesn't happen for us. The code
 // below is to debug this and also to mitigate (while the root cause is unknown): once too many workers are
-// dead/frozen, the primary node broadcasts "SHUTDOWN" event that make workers to respond with 500 to healthcheck
+// dead/frozen, the primary node broadcasts "SHUTDOWN" message that makes workers to respond with 500 to healthcheck
 // requests, which eventually triggers the recycling of the node.
 //
-const unresponsiveWorkersLogger = getLogger("frontend-app-dead-workers-debug");
+const unresponsiveWorkersLogger = getLogger("frontend-app-unresponsive-workers-troubleshooting");
 
-const WORKER_STARTUP_TIME_MSEC = 60 * 1000;
-const WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC = 60 * 1000;
-const SHUTDOWN_MSG = "shutdown";
+const CONF_WORKER_STARTUP_TIME_MSEC = 60 * 1000;
+const CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC = 60 * 1000;
+const CONF_SHUTDOWN_MSG = "shutdown";
+const CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC = 7000;
+const CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC = Math.floor(
+	CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC * (2 + Math.random()) // different from KEEP_ALIVE to keep logs separated
+);
+
+if (cluster.isMaster) {
+	unresponsiveWorkersLogger.info({
+		tConfig: {
+			CONF_WORKER_STARTUP_TIME_MSEC,
+			CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC,
+			CONF_SHUTDOWN_MSG,
+			CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC,
+			CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC
+		}
+	}, "troubleshooting config");
+}
 
 const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout[]) => {
 	process.on("uncaughtExceptionMonitor", (err, origin) => {
@@ -54,16 +70,16 @@ const troubleshootUnresponsiveWorkers_worker = () => {
 		if (typeof process.send === "function") {
 			process.send(`${process.pid}`);
 		} else {
-			logger.error("process.send is undefined in worker");
+			logger.error("process.send is undefined in worker, shouldn't happen");
 			clearInterval(workerPingingServerInterval);
 		}
-	}, 7000);
+	}, CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC);
 
 	handleErrorsGracefully(logger, [workerPingingServerInterval]);
 
 	process.on("message", (msg) => {
 		logger.info(`worker received a message: ${msg}`);
-		if (msg === SHUTDOWN_MSG) {
+		if (msg === CONF_SHUTDOWN_MSG) {
 			logger.warn("shutdown received, stop healthcheck");
 			stopHealthcheck();
 		}
@@ -79,6 +95,7 @@ const troubleshootUnresponsiveWorkers_master = () => {
 	logger.info(`nCpus=${nCpus}`);
 
 	const registerNewWorkers = () => {
+		logger.info(`registering workers`);
 		for (const worker of Object.values(cluster.workers)) {
 			if (worker) {
 				const workerPid = worker.process.pid;
@@ -94,53 +111,72 @@ const troubleshootUnresponsiveWorkers_master = () => {
 		}
 	};
 
-	const sendShutdownToAllWorkers = () => {
-		logger.info(`send shutdown signal to all workers`);
-		for (const worker of Object.values(cluster.workers)) {
-			worker?.send(SHUTDOWN_MSG);
+	let workersReadyAt: undefined | Date;
+	const maybeSetupWorkersReadyAt = () => {
+		if (Object.keys(registeredWorkers).length > nCpus / 2) {
+			workersReadyAt = new Date(Date.now() + CONF_WORKER_STARTUP_TIME_MSEC);
+			logger.info(`consider workers as ready after ${workersReadyAt}`);
+			return true;
+		} else {
+			logger.info("no enough workers to consider cluster ready");
+			return false;
+		}
+	};
+	const areWorkersReady = () => workersReadyAt && workersReadyAt.getTime() < Date.now();
+
+	const maybeRemoveDeadWorkers = () => {
+		if (areWorkersReady()) {
+			logger.info(`removing dead workers`);
+			const keysToKill: Array<string> = [];
+			const now = Date.now();
+			Object.keys(liveWorkers).forEach((key) => {
+				if (now - liveWorkers[key] > CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC) {
+					keysToKill.push(key);
+				}
+			});
+			keysToKill.forEach((key) => {
+				logger.info(`remove worker with pid=${key} from live workers`);
+				delete liveWorkers[key];
+			});
+		} else {
+			logger.warn("workers are not ready yet, skip removing logic");
 		}
 	};
 
-	const removeDeadWorkers = () => {
-		const keysToKill: Array<string> = [];
-		const now = Date.now();
-		Object.keys(liveWorkers).forEach((key) => {
-			if (now - liveWorkers[key] > WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC) {
-				keysToKill.push(key);
+	const maybeSendShutdownToAllWorkers = () => {
+		if (areWorkersReady() && (Object.keys(liveWorkers).length < nCpus / 2)) {
+			logger.info(`send shutdown signal to all workers`);
+			for (const worker of Object.values(cluster.workers)) {
+				worker?.send(CONF_SHUTDOWN_MSG);
 			}
-		});
-		keysToKill.forEach((key) => {
-			logger.info(`remove worker with pid=${key} from live workers`);
-			delete liveWorkers[key];
-		});
+		}
 	};
 
-	let workersAreReadyAfter: undefined | Date;
-	const registerWorkersInterval = setInterval(() => {
-		logger.info(`registering workers`);
+	const registerNewWorkersInterval = setInterval(() => {
 		// must be invoked periodically to make sure we pick up the respawned workers (if throng does this of course)
 		registerNewWorkers();
-		if (!workersAreReadyAfter && Object.keys(registeredWorkers).length > nCpus / 2) {
-			workersAreReadyAfter = new Date(Date.now() + WORKER_STARTUP_TIME_MSEC);
-			logger.info(`consider workers as ready after ${workersAreReadyAfter}`);
+	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
+
+	const maybeSetupWorkersReadyAtInterval = setInterval(() => {
+		if (maybeSetupWorkersReadyAt()) {
+			clearInterval(maybeSetupWorkersReadyAtInterval);
 		}
-	}, 10000);
+	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
 
-	const removeDeadInterval = setInterval(() => {
-		logger.info(`removing dead workers`);
+	const maybeRemoveDeadWorkersInterval = setInterval(() => {
+		maybeRemoveDeadWorkers();
+	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
 
-		if (workersAreReadyAfter && workersAreReadyAfter.getTime() < Date.now()) {
-			removeDeadWorkers();
-			if (Object.keys(liveWorkers).length < nCpus / 2) {
-				logger.info(`half of all the workers are unresponsive`);
-				sendShutdownToAllWorkers();
-			}
-		} else {
-			logger.info(`workers are not ready yet, skip`);
-		}
-	}, 10000);
+	const maybeSendShutdownToAllWorkersInterval = setInterval(() => {
+		maybeSendShutdownToAllWorkers();
+	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
 
-	handleErrorsGracefully(logger, [registerWorkersInterval, removeDeadInterval]);
+	handleErrorsGracefully(logger, [
+		registerNewWorkersInterval,
+		maybeSetupWorkersReadyAtInterval,
+		maybeRemoveDeadWorkersInterval,
+		maybeSendShutdownToAllWorkersInterval
+	]);
 };
 
 const start = async () => {
@@ -164,7 +200,7 @@ throng({
 		await start();
 		troubleshootUnresponsiveWorkers_worker();
 	},
-	lifetime: 1
+	lifetime: Infinity
 });
 // } else {
 // 	// Dev/test single process, don't need clustering
