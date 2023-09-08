@@ -34,7 +34,7 @@ const Connections = () => {
 		if (!ghSubscriptions?.ghCloudSubscriptions && ghSubscriptions?.ghEnterpriseServers && ghSubscriptions.ghEnterpriseServers?.length === 0) {
 			navigate("/spa");
 		}
-	}, [ghSubscriptions]);
+	}, [ghSubscriptions, navigate]);
 
 	return (
 		<Wrapper>
