@@ -8,10 +8,9 @@ import { getFrontendApp } from "./app";
 import createLag from "event-loop-lag";
 import { statsd } from "config/statsd";
 import { metricLag } from "config/metric-names";
-import cluster from "cluster";
-import { cpus } from "os";
-import { stopHealthcheck } from "utils/healthcheck-stopper";
 import Logger from "bunyan";
+import { startMonitorOnMaster, startMonitorOnWorker } from "utils/workers-health-monitor";
+import { cpus } from "os";
 
 //
 // "throng" was supposed to restart the dead nodes, but for some reason that doesn't happen for us. The code
@@ -22,24 +21,11 @@ import Logger from "bunyan";
 const unresponsiveWorkersLogger = getLogger("frontend-app-unresponsive-workers-troubleshooting");
 
 const CONF_WORKER_STARTUP_TIME_MSEC = 60 * 1000;
-const CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC = 60 * 1000;
-const CONF_SHUTDOWN_MSG = "shutdown";
+const CONF_WORKER_UNRESPONSIVE_THRESHOLD_MSEC = 60 * 1000;
 const CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC = 7000;
 const CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC = Math.floor(
 	CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC * (2 + Math.random()) // different from KEEP_ALIVE to keep logs separated
 );
-
-if (cluster.isMaster) {
-	unresponsiveWorkersLogger.info({
-		tConfig: {
-			CONF_WORKER_STARTUP_TIME_MSEC,
-			CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC,
-			CONF_SHUTDOWN_MSG,
-			CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC,
-			CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC
-		}
-	}, "troubleshooting config");
-}
 
 const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout[]) => {
 	process.on("uncaughtExceptionMonitor", (err, origin) => {
@@ -65,114 +51,20 @@ const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout
 };
 
 const troubleshootUnresponsiveWorkers_worker = () => {
-	const logger = unresponsiveWorkersLogger.child({ isWorker: true });
-	const workerPingingServerInterval = setInterval(() => {
-		if (typeof process.send === "function") {
-			logger.info("sending I'm alive");
-			process.send(`${process.pid}`);
-		} else {
-			logger.error("process.send is undefined in worker, shouldn't happen");
-			clearInterval(workerPingingServerInterval);
-		}
-	}, CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC);
-
-	handleErrorsGracefully(logger, [workerPingingServerInterval]);
-
-	process.on("message", (msg) => {
-		logger.info(`worker received a message: ${msg}`);
-		if (msg === CONF_SHUTDOWN_MSG) {
-			logger.warn("shutdown received, stop healthcheck");
-			stopHealthcheck();
-		}
-	});
+	handleErrorsGracefully(unresponsiveWorkersLogger,
+		[startMonitorOnWorker(unresponsiveWorkersLogger, CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC)]
+	);
 };
 
 const troubleshootUnresponsiveWorkers_master = () => {
-	const logger = unresponsiveWorkersLogger.child({ isWorker: false });
-
-	const registeredWorkers: Record<string, boolean> = { }; // pid => true
-	const liveWorkers: Record<string, number> = { }; // pid => timestamp
-	const nCpus = cpus().length;
-	logger.info(`nCpus=${nCpus}`);
-
-	const registerNewWorkers = () => {
-		logger.info(`registering workers`);
-		for (const worker of Object.values(cluster.workers)) {
-			if (worker) {
-				const workerPid = worker.process.pid;
-				if (!registeredWorkers[workerPid]) {
-					logger.info(`registering a new worker with pid=${workerPid}`);
-					registeredWorkers[workerPid] = true;
-					worker.on("message", () => {
-						logger.info(`received message from worker ${workerPid}, marking as live`);
-						liveWorkers[workerPid] = Date.now();
-					});
-				}
-			}
-		}
-	};
-
-	let workersReadyAt: undefined | Date;
-	const areWorkersReady = () => workersReadyAt && workersReadyAt.getTime() < Date.now();
-	const maybeSetupWorkersReadyAt = () => {
-		if (!workersReadyAt) {
-			if (Object.keys(registeredWorkers).length > nCpus / 2) {
-				workersReadyAt = new Date(Date.now() + CONF_WORKER_STARTUP_TIME_MSEC);
-				logger.info(`consider workers as ready after ${workersReadyAt}`);
-			} else {
-				logger.info("no enough workers");
-			}
-		} else {
-			logger.info({
-				workersReadyAt
-			}, "workersReadyAt is defined");
-		}
-	};
-
-	const maybeRemoveDeadWorkers = () => {
-		if (areWorkersReady()) {
-			logger.info(`removing dead workers`);
-			const keysToKill: Array<string> = [];
-			const now = Date.now();
-			Object.keys(liveWorkers).forEach((key) => {
-				if (now - liveWorkers[key] > CONF_WORKER_NOT_RESPONSIVE_THRESHOLD_MSEC) {
-					keysToKill.push(key);
-				}
-			});
-			keysToKill.forEach((key) => {
-				logger.info(`remove worker with pid=${key} from live workers`);
-				delete liveWorkers[key];
-			});
-		} else {
-			logger.warn("workers are not ready yet, skip removing logic");
-		}
-	};
-
-	const maybeSendShutdownToAllWorkers = () => {
-		const nLiveWorkers = Object.keys(liveWorkers).length;
-		if (areWorkersReady() && (nLiveWorkers < nCpus / 2)) {
-			logger.info({
-				nLiveWorkers
-			}, `send shutdown signal to all workers`);
-			for (const worker of Object.values(cluster.workers)) {
-				worker?.send(CONF_SHUTDOWN_MSG);
-			}
-		} else {
-			logger.info({
-				areWorkersReady: areWorkersReady(),
-				nLiveWorkers
-			}, "not sending shutdown signal");
-		}
-	};
-
-	const interval = setInterval(() => {
-		registerNewWorkers(); // must be called periodically to make sure we pick up new/respawned workers
-		maybeSetupWorkersReadyAt();
-		maybeRemoveDeadWorkers();
-		maybeSendShutdownToAllWorkers();
-	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
-
-	handleErrorsGracefully(logger, [interval]);
+	handleErrorsGracefully(unresponsiveWorkersLogger,
+		[startMonitorOnMaster(unresponsiveWorkersLogger, {
+			pollIntervalMsecs: CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC,
+			workerStartupTimeMsecs: CONF_WORKER_STARTUP_TIME_MSEC,
+			workerUnresponsiveThresholdMsecs: CONF_WORKER_UNRESPONSIVE_THRESHOLD_MSEC,
+			numberOfWorkersThreshold: cpus().length / 2
+		})]
+	);
 };
 
 const start = async () => {
