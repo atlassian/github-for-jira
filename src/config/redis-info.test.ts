@@ -47,6 +47,9 @@ describe("getRedisInfo without envvars", () => {
 	let redisOptions: RedisOptions;
 
 	beforeEach(() => {
+		delete process.env.REDISX_CACHE_HOST;
+		delete process.env.REDISX_CACHE_PORT;
+		delete process.env.REDISX_CACHE_TLS_ENABLED ;
 		redisOptions = getRedisInfo("mock-connection");
 	});
 
