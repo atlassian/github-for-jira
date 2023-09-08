@@ -145,7 +145,7 @@ export type GhEnterpriseServer = {
 	applications: GitHubEnterpriseApplication[];
 };
 
-export type GHSUbscriptions = {
+export type GHSubscriptions = {
 	ghCloudSubscriptions: GhCloudSubscriptions;
 	ghEnterpriseServers: GhEnterpriseServer[];
 };

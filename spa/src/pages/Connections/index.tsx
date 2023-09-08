@@ -5,7 +5,7 @@ import Step from "../../components/Step";
 import { Wrapper } from "../../common/Wrapper";
 import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
-import { GHSUbscriptions } from "../../rest-interfaces";
+import { GHSubscriptions } from "../../rest-interfaces";
 import { reportError } from "../../utils";
 import SkeletonForLoading from "./SkeletonForLoading";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 const Connections = () => {
 	const navigate = useNavigate();
 	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(null);
+	const [ghSubscriptions, setSubscriptions] = useState<GHSubscriptions | null>(null);
 	const fetchGHSubscriptions = async () => {
 		try {
 			setIsLoading(true);
