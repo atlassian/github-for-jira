@@ -164,19 +164,6 @@ Object {
         },
         "url": "/jira/subscription/{ac.subscriptionId}/repos?pageNumber={ac.pageNumber}&repoName={ac.repoName}&syncStatus={ac.syncStatus}",
       },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "gh-addon-subscription-repos",
-        "location": "none",
-        "name": Object {
-          "value": "Backfill status",
-        },
-        "url": "/jira/subscriptions/backfill-status?subscriptionIds={ac.subscriptionIds}",
-      },
     ],
     "jiraBuildInfoProvider": Object {
       "homeUrl": "https://github.com/features/actions",

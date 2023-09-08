@@ -432,7 +432,7 @@ const updateBackfilledStatus = ({ subscriptionId, subscriptions, self }) => {
 		{
 			if (backfillSince) {
 				const backfillSinceDate = new Date(backfillSince);
-				const formattedDate = backfillSinceDate.toISOString(); // Change 'en-GB' to your desired language/locale
+				const formattedDate = backfillSinceDate.toISOString();
 				infoContainer.append(
 					`<div class="jiraConfiguration__info__backfillDate">
 						<span>Backfilled from:</span><span class="jiraConfiguration__info__backfillDate-label" data-backfill-since="${backfillSince}">${formattedDate}</span>
