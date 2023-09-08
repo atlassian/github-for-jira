@@ -14,6 +14,7 @@ const Wrapper = styled.div`
 `;
 
 const ApplicationHeader = styled.div`
+	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: flex-start;
@@ -32,7 +33,7 @@ type GitHubEnterpriseApplicationProps = {
 const GitHubEnterpriseApp = ({
 	application,
 }: GitHubEnterpriseApplicationProps) => {
-	const [showAppContent, setShowAppContent] = useState<boolean>(false);
+	const [showAppContent, setShowAppContent] = useState<boolean>(true);
 	return (
 		<Wrapper>
 			<ApplicationHeader

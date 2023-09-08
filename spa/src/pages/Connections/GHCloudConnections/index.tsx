@@ -9,11 +9,6 @@ import { Box, xcss } from "@atlaskit/primitives";
 const containerStyles = xcss({
 	display: "flex",
 	flexDirection: "column",
-	backgroundColor: "elevation.surface.raised",
-	padding: "space.150",
-	transition: "200ms",
-	borderRadius: "border.radius.200",
-	boxShadow: "elevation.shadow.raised",
 });
 
 type GitHubCloudConnectionsProps = {
