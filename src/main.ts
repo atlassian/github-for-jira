@@ -3,7 +3,7 @@ import "config/env"; // Important to be before other dependencies
 import { getLogger } from "config/logger";
 import throng from "throng";
 import { initializeSentry } from "config/sentry";
-// import { isNodeProd } from "utils/is-node-env";
+import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 import createLag from "event-loop-lag";
 import { statsd } from "config/statsd";
@@ -68,6 +68,7 @@ const troubleshootUnresponsiveWorkers_worker = () => {
 	const logger = unresponsiveWorkersLogger.child({ isWorker: true });
 	const workerPingingServerInterval = setInterval(() => {
 		if (typeof process.send === "function") {
+			logger.info("sending I'm alive");
 			process.send(`${process.pid}`);
 		} else {
 			logger.error("process.send is undefined in worker, shouldn't happen");
@@ -112,17 +113,21 @@ const troubleshootUnresponsiveWorkers_master = () => {
 	};
 
 	let workersReadyAt: undefined | Date;
+	const areWorkersReady = () => workersReadyAt && workersReadyAt.getTime() < Date.now();
 	const maybeSetupWorkersReadyAt = () => {
-		if (Object.keys(registeredWorkers).length > nCpus / 2) {
-			workersReadyAt = new Date(Date.now() + CONF_WORKER_STARTUP_TIME_MSEC);
-			logger.info(`consider workers as ready after ${workersReadyAt}`);
-			return true;
+		if (!workersReadyAt) {
+			if (Object.keys(registeredWorkers).length > nCpus / 2) {
+				workersReadyAt = new Date(Date.now() + CONF_WORKER_STARTUP_TIME_MSEC);
+				logger.info(`consider workers as ready after ${workersReadyAt}`);
+			} else {
+				logger.info("no enough workers");
+			}
 		} else {
-			logger.info("no enough workers to consider cluster ready");
-			return false;
+			logger.info({
+				workersReadyAt
+			}, "workersReadyAt is defined");
 		}
 	};
-	const areWorkersReady = () => workersReadyAt && workersReadyAt.getTime() < Date.now();
 
 	const maybeRemoveDeadWorkers = () => {
 		if (areWorkersReady()) {
@@ -144,39 +149,30 @@ const troubleshootUnresponsiveWorkers_master = () => {
 	};
 
 	const maybeSendShutdownToAllWorkers = () => {
-		if (areWorkersReady() && (Object.keys(liveWorkers).length < nCpus / 2)) {
-			logger.info(`send shutdown signal to all workers`);
+		const nLiveWorkers = Object.keys(liveWorkers).length;
+		if (areWorkersReady() && (nLiveWorkers < nCpus / 2)) {
+			logger.info({
+				nLiveWorkers
+			}, `send shutdown signal to all workers`);
 			for (const worker of Object.values(cluster.workers)) {
 				worker?.send(CONF_SHUTDOWN_MSG);
 			}
+		} else {
+			logger.info({
+				areWorkersReady: areWorkersReady(),
+				nLiveWorkers
+			}, "not sending shutdown signal");
 		}
 	};
 
-	const registerNewWorkersInterval = setInterval(() => {
-		// must be invoked periodically to make sure we pick up the respawned workers (if throng does this of course)
-		registerNewWorkers();
-	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
-
-	const maybeSetupWorkersReadyAtInterval = setInterval(() => {
-		if (maybeSetupWorkersReadyAt()) {
-			clearInterval(maybeSetupWorkersReadyAtInterval);
-		}
-	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
-
-	const maybeRemoveDeadWorkersInterval = setInterval(() => {
+	const interval = setInterval(() => {
+		registerNewWorkers(); // must be called periodically to make sure we pick up new/respawned workers
+		maybeSetupWorkersReadyAt();
 		maybeRemoveDeadWorkers();
-	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
-
-	const maybeSendShutdownToAllWorkersInterval = setInterval(() => {
 		maybeSendShutdownToAllWorkers();
 	}, CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC);
 
-	handleErrorsGracefully(logger, [
-		registerNewWorkersInterval,
-		maybeSetupWorkersReadyAtInterval,
-		maybeRemoveDeadWorkersInterval,
-		maybeSendShutdownToAllWorkersInterval
-	]);
+	handleErrorsGracefully(logger, [interval]);
 };
 
 const start = async () => {
@@ -192,19 +188,19 @@ const start = async () => {
 	}, 1000);
 };
 
-// if (isNodeProd()) {
-// Production clustering (one process per core)
-throng({
-	master: troubleshootUnresponsiveWorkers_master,
-	worker: async () => {
-		await start();
-		troubleshootUnresponsiveWorkers_worker();
-	},
-	lifetime: Infinity
-});
-// } else {
-// 	// Dev/test single process, don't need clustering
-// 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-// 	start();
-// }
+if (isNodeProd()) {
+	// Production clustering (one process per core)
+	throng({
+		master: troubleshootUnresponsiveWorkers_master,
+		worker: async () => {
+			await start();
+			troubleshootUnresponsiveWorkers_worker();
+		},
+		lifetime: Infinity
+	});
+} else {
+	// Dev/test single process, don't need clustering
+	// eslint-disable-next-line @typescript-eslint/no-floating-promises
+	start();
+}
 
