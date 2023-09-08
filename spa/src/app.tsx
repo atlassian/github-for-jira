@@ -31,11 +31,11 @@ const App = () => {
 		<BrowserRouter>
 			<SentryRoutes>
 				<Route path="/spa">
-					<Route index element={<StartConnection/>}/>
+					<Route index element={<Connections />}/>
+					<Route path="start" element={<StartConnection/>}/>
 					<Route path="steps" element={<ConfigSteps/>}/>
 					<Route path="connected" element={<Connected />}/>
 					<Route path="installationRequested" element={<InstallationRequested />}/>
-					<Route path="connections" element={<Connections />}/>
 				</Route>
 			</SentryRoutes>
 		</BrowserRouter>

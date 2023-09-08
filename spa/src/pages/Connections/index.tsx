@@ -1,56 +1,59 @@
 import { useEffect, useState } from "react";
-import { token } from "@atlaskit/tokens";
 import ApiRequest from "../../api";
-import styled from "@emotion/styled";
 import SyncHeader from "../../components/SyncHeader";
+import Step from "../../components/Step";
 import { Wrapper } from "../../common/Wrapper";
 import GitHubCloudConnections from "./GHCloudConnections";
 import GitHubEnterpriseConnections from "./GHEnterpriseConnections";
 import { GHSUbscriptions } from "../../rest-interfaces";
 import { reportError } from "../../utils";
-
-const Header = styled.h3`
-	margin-bottom: ${token("space.200")};
-`;
+import SkeletonForLoading from "./SkeletonForLoading";
+import { useNavigate } from "react-router-dom";
 
 const Connections = () => {
-	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(
-		null
-	);
+	const navigate = useNavigate();
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [ghSubscriptions, setSubscriptions] = useState<GHSUbscriptions | null>(null);
 	const fetchGHSubscriptions = async () => {
 		try {
-			const subs = await ApiRequest.subscriptions.getSubscriptions();
-			setSubscriptions(subs.data);
+			setIsLoading(true);
+			const { data } = await ApiRequest.subscriptions.getSubscriptions();
+			setSubscriptions(data);
 		} catch (e) {
 			reportError(e, { path: "Fetching subscriptions" });
+		} finally {
+			setIsLoading(false);
 		}
 	};
 	useEffect(() => {
 		fetchGHSubscriptions();
 	}, []);
 
-	let ghCloudSubscriptions = null;
-	let ghEnterpriseServers = null;
-	if (ghSubscriptions) {
-		ghCloudSubscriptions = ghSubscriptions.ghCloudSubscriptions;
-		ghEnterpriseServers = ghSubscriptions.ghEnterpriseServers;
-	}
+	// If there are no connections then go back to the start page
+	useEffect(() => {
+		if (!ghSubscriptions?.ghCloudSubscriptions && ghSubscriptions?.ghEnterpriseServers && ghSubscriptions.ghEnterpriseServers?.length === 0) {
+			navigate("/spa");
+		}
+	}, [ghSubscriptions]);
 
 	return (
 		<Wrapper>
 			<SyncHeader />
-			{ghCloudSubscriptions && (
-				<>
-					<Header>GitHub Cloud</Header>
-					<GitHubCloudConnections ghCloudSubscriptions={ghCloudSubscriptions} />
+			{
+				isLoading ? <SkeletonForLoading /> : <>
+					{
+						ghSubscriptions?.ghCloudSubscriptions && <Step title="GitHub Cloud">
+							<GitHubCloudConnections ghCloudSubscriptions={ghSubscriptions.ghCloudSubscriptions} />
+						</Step>
+					}
+
+					{
+						ghSubscriptions?.ghEnterpriseServers && ghSubscriptions.ghEnterpriseServers?.length > 0 && <Step title="GitHub Enterprise Server">
+							<GitHubEnterpriseConnections ghEnterpriseServers={ghSubscriptions.ghEnterpriseServers} />
+						</Step>
+					}
 				</>
-			)}
-			{ghEnterpriseServers && (
-				<>
-					<Header>GitHub Enterprise Server</Header>
-					<GitHubEnterpriseConnections ghEnterpriseServers={ghEnterpriseServers} />
-				</>
-			)}
+			}
 		</Wrapper>
 	);
 };
