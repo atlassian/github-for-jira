@@ -4037,6 +4037,11 @@ balanced-match@^1.0.0:
   resolved "https://packages.atlassian.com/api/npm/npm-remote/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
+base64-js@^1.3.0:
+  version "1.5.1"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
+  integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
+
 batch@0.6.1:
   version "0.6.1"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/batch/-/batch-0.6.1.tgz#dc34314f4e679318093fc760272525f94bf25c16"
@@ -5700,6 +5705,11 @@ express@^4.17.3:
     type-is "~1.6.18"
     utils-merge "1.0.1"
     vary "~1.1.2"
+
+fast-deep-equal@^2.0.1:
+  version "2.0.1"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
+  integrity sha512-bCK/2Z4zLidyB4ReuIsvALH6w31YfAQDmXMqMx6FyfHqvBxtjC0eRumeSu4Bs3XtXwpyIywtSTrVT99BxY1f9w==
 
 fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
@@ -7861,6 +7871,32 @@ launch-editor@^2.6.0:
     picocolors "^1.0.0"
     shell-quote "^1.7.3"
 
+launchdarkly-js-client-sdk@^3.1.3:
+  version "3.1.4"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/launchdarkly-js-client-sdk/-/launchdarkly-js-client-sdk-3.1.4.tgz#e613cb53412533c07ccf140ae570fc994c59758d"
+  integrity sha512-yq0FeklpVuHMSRz7jfUAfyM7I/659RvGztqJ0Y9G5eN/ZrG1o2W61ZU0Nrv/gqZCtLXjarh/u1otxSFFBjTpHw==
+  dependencies:
+    escape-string-regexp "^4.0.0"
+    launchdarkly-js-sdk-common "5.0.3"
+
+launchdarkly-js-sdk-common@5.0.3:
+  version "5.0.3"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/launchdarkly-js-sdk-common/-/launchdarkly-js-sdk-common-5.0.3.tgz#345f899f5779be8b03d6599978c855eb838d8b7f"
+  integrity sha512-wKG8UsVbPVq8+7eavgAm5CVmulQWN6Ddod2ZoA3euZ1zPvJPwIQ2GrOYaCJr3cFrrMIX+nQyBJHBHYxUAPcM+Q==
+  dependencies:
+    base64-js "^1.3.0"
+    fast-deep-equal "^2.0.1"
+    uuid "^8.0.0"
+
+launchdarkly-react-client-sdk@^3.0.9:
+  version "3.0.9"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/launchdarkly-react-client-sdk/-/launchdarkly-react-client-sdk-3.0.9.tgz#a914175e5bdde9cb49a9d4d25d1197b69ac61d4a"
+  integrity sha512-U7STCSINfL698jI7tpUnvWc7iqsnkAdCV8rAGz3oeQB+BMn4SJ0yjpf5OA9I2pKdh7u+SlWJST/gz657tSUdVA==
+  dependencies:
+    hoist-non-react-statics "^3.3.2"
+    launchdarkly-js-client-sdk "^3.1.3"
+    lodash.camelcase "^4.3.0"
+
 leven@^3.1.0:
   version "3.1.0"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/leven/-/leven-3.1.0.tgz#77891de834064cccba82ae7842bb6b14a13ed7f2"
@@ -7924,6 +7960,11 @@ locate-path@^6.0.0:
   integrity sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
   dependencies:
     p-locate "^5.0.0"
+
+lodash.camelcase@^4.3.0:
+  version "4.3.0"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz#b28aa6288a2b9fc651035c7711f65ab6190331a6"
+  integrity sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==
 
 lodash.debounce@^4.0.8:
   version "4.0.8"
@@ -10937,7 +10978,7 @@ utils-merge@1.0.1:
   resolved "https://packages.atlassian.com/api/npm/npm-remote/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
 
-uuid@^8.3.2:
+uuid@^8.0.0, uuid@^8.3.2:
   version "8.3.2"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
