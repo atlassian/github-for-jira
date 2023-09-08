@@ -1,3 +1,6 @@
+export type FeatureFlagDefs = {
+	enable5KuExperienceBackfillPage: boolean;
+};
 
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;

@@ -131,7 +131,7 @@ const StartConnection = () => {
 				<Button
 					appearance="subtle"
 					onClick={() => {
-						navigate("connections");
+						navigate("/spa/connections");
 					}}
 				>
 					Go to backfill page

@@ -5,6 +5,8 @@ import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
+import { useFlags } from "launchdarkly-react-client-sdk";
+import { FeatureFlagDefs } from "./../../rest-interfaces";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
@@ -48,13 +50,19 @@ const SectionImg = styled.img`
 
 const Connected = () => {
 	useEffectScreenEvent("SuccessfulConnectedScreen");
+	const { enable5KuExperienceBackfillPage} = useFlags<FeatureFlagDefs>();
 
 	const navigate = useNavigate();
 	const { colorMode } = useThemeObserver();
 
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
-		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+
+		if (enable5KuExperienceBackfillPage) {
+			navigate("/spa/connections");
+		} else {
+			AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+		}
 	};
 
 	return (<Wrapper>
