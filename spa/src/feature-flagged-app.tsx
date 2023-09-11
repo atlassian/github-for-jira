@@ -12,8 +12,6 @@ const getJiraHost = (): string => {
 	return jiraHostFromUrl ? createHashWithSharedSecret(jiraHostFromUrl.toString()) : "global";
 };
 
-console.log("WHat is the value", LD_CLIENT_KEY, getJiraHost());
-
 const FeatureFlaggedApp = withLDProvider({
 	clientSideID: LD_CLIENT_KEY,
 	user: {
