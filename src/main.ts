@@ -11,8 +11,6 @@ import { metricLag } from "config/metric-names";
 import Logger from "bunyan";
 import { startMonitorOnMaster, startMonitorOnWorker } from "utils/workers-health-monitor";
 import { cpus } from "os";
-import copyEnvVarsInSpa from "./copy-env-vars-in-spa";
-import { exec } from "child_process";
 
 //
 // "throng" was supposed to restart the dead nodes, but for some reason that doesn't happen for us. The code
@@ -80,29 +78,6 @@ const start = async () => {
 	setInterval(() => {
 		statsd.histogram(metricLag.lagHist, lag(), { }, { });
 	}, 1000);
-
-	// First copy the env vars in spa
-	copyEnvVarsInSpa();
-	// Then rebuild the spa app again for prod/staging
-	if (isNodeProd()) {
-		await new Promise<void>((resolve, reject) => {
-			exec("pwd", (err, stdout) => {
-				if (err) {
-					reject(err);
-					return;
-				}
-				getLogger("spa-environment").info("Checking path before: ", stdout);
-			});
-			exec("yarn spa:build", (error) => {
-				if (error) {
-					reject(error);
-					return;
-				}
-				getLogger("spa-environment").info("Rebuild after env file was created");
-				resolve();
-			});
-		});
-	}
 };
 
 if (isNodeProd()) {
