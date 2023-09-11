@@ -131,14 +131,17 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
-				{ enable5KuExperienceBackfillPage && <Button
-					appearance="subtle"
-					onClick={() => {
-						navigate("/spa/connections");
-					}}
-				>
-					Go to backfill page
-				</Button> }
+				{
+					enable5KuExperienceBackfillPage &&
+						<Button
+							appearance="subtle"
+							onClick={() => {
+								navigate("/spa/connections");
+							}}
+						>
+							Go to backfill page
+						</Button>
+				}
 			</ButtonContainer>
 			<div></div>
 		</Wrapper>
