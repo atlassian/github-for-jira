@@ -86,6 +86,13 @@ const start = async () => {
 	// Then rebuild the spa app again for prod/staging
 	if (isNodeProd()) {
 		await new Promise<void>((resolve, reject) => {
+			exec("pwd", (err, stdout) => {
+				if (err) {
+					reject(err);
+					return;
+				}
+				getLogger("spa-environment").info("Checking path before: ", stdout);
+			});
 			exec("yarn spa:build", (error) => {
 				if (error) {
 					reject(error);
