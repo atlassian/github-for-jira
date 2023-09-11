@@ -143,7 +143,6 @@ const StartConnection = () => {
 						</Button>
 				}
 			</ButtonContainer>
-			<div></div>
 		</Wrapper>
 	);
 };
