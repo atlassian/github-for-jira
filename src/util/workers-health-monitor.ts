@@ -7,7 +7,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 	const logger = parentLogger.child({ isWorker: true });
 	logger.info({ iAmAliveInervalMsec }, "worker config");
 
-	process.on("message", (msg) => {
+	process.on("message", (msg: string) => {
 		logger.info(`worker received a message: ${msg}`);
 		if (msg === CONF_SHUTDOWN_MSG) {
 			logger.warn("shutdown received, stop healthcheck");
@@ -63,7 +63,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		if (!workersReadyAt) {
 			if (Object.keys(registeredWorkers).length > config.numberOfWorkersThreshold) {
 				workersReadyAt = new Date(Date.now() + config.workerStartupTimeMsecs);
-				logger.info(`consider workers as ready after ${workersReadyAt}`);
+				logger.info(`consider workers as ready after ${workersReadyAt.toString()}`);
 			} else {
 				logger.info("no enough workers");
 			}
