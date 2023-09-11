@@ -2,7 +2,7 @@
  * Please make sure you have these environment variables defined in you .env,
  * otherwise it won't be copied to spa
  */
-import fs from "fs";
+const fs = require("fs");
 
 const ENV_VARS_TO_BE_COPIED = [
 	{ LAUNCHDARKLY_CLIENT_KEY: process.env.LAUNCHDARKLY_CLIENT_KEY },
