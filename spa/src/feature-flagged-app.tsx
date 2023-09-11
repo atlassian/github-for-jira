@@ -2,9 +2,9 @@ import "@atlaskit/css-reset";
 import { withLDProvider } from "launchdarkly-react-client-sdk";
 import createHashWithSharedSecret from "./services/encryptor";
 import App from "./app";
+import envVars from "./envVars";
 
-// TODO: Find out how these values are being set for current app and use similar approach
-const LD_CLIENT_KEY: string = process.env.REACT_APP_LAUNCHDARKLY_CLIENT_KEY || "";
+const LD_CLIENT_KEY: string = envVars.LAUNCHDARKLY_CLIENT_KEY;
 
 // Getting the jiraHost name from the iframe URL
 const getJiraHost = (): string => {
