@@ -10,6 +10,8 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
+import { useFlags } from "launchdarkly-react-client-sdk";
+import { FeatureFlagDefs } from "rest-interfaces";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -86,6 +88,7 @@ const screenAnalyticsAttributes = { from: getAnalyticsSourceFrom() };
 
 const StartConnection = () => {
 	const navigate = useNavigate();
+	const { enable5KuExperienceBackfillPage } = useFlags<FeatureFlagDefs>();
 
 	useEffectScreenEvent("StartConnectionEntryScreen", screenAnalyticsAttributes);
 
@@ -128,15 +131,16 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
-				<Button
+				{ enable5KuExperienceBackfillPage && <Button
 					appearance="subtle"
 					onClick={() => {
 						navigate("/spa/connections");
 					}}
 				>
 					Go to backfill page
-				</Button>
+				</Button> }
 			</ButtonContainer>
+			<div></div>
 		</Wrapper>
 	);
 };
