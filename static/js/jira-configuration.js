@@ -37,14 +37,14 @@ $(".jiraConfiguration__table__repo_access").click(function (event) {
 			customData: { subscriptionId }
 		}
 	);
-	});
+});
 
 $(".add-enterprise-link").click(function(event) {
 	event.preventDefault();
 	AP.navigator.go(
 		'addonmodule',
 		{
-		moduleKey: "github-list-servers-page"
+			moduleKey: "github-list-servers-page"
 		}
 	);
 });
@@ -60,7 +60,7 @@ $(".select-github-product-link").click(function(event) {
 	AP.navigator.go(
 		'addonmodule',
 		{
-		moduleKey: "github-select-product-page"
+			moduleKey: "github-select-product-page"
 		}
 	);
 });
