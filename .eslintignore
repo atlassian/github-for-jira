@@ -1,3 +1,4 @@
 /**/*.js
 prestart.ts
 spa/
+copy-env-vars-in-spa.ts
