@@ -162,6 +162,8 @@ describe("github-create-branch-post.frontend", () => {
 
 				await page.click("#createBranchBtn");
 				await page.waitForSelector("text=Github branch created");
+
+				expect(gheApiNock).toBeDone();
 			});
 		});
 	});

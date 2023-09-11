@@ -35,11 +35,12 @@
 		}
 	},
 	"rules": {
-		"@typescript-eslint/explicit-module-boundary-types": "off",
-		"@typescript-eslint/no-var-requires": "error",
-		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-		"no-unused-vars": "off",
-		"no-console": "error",
+		"indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
+		"@typescript-eslint/indent": ["error", "tab", {
+			"SwitchCase": 1
+		}],
 		"quotes": [
 			"error",
 			"double",
@@ -48,13 +49,7 @@
 				"allowTemplateLiterals": true
 			}
 		],
-		"indent": ["error", "tab", {
-			"SwitchCase": 1
-		}],
-		"@typescript-eslint/indent": ["error", "tab", {
-			"SwitchCase": 1
-		}],
-		"@import/no-unresolved": "off",
+		//extra rules
 		"object-curly-spacing": ["error", "always"],
 		"semi": ["error", "always"],
 		"no-trailing-spaces": "error",
@@ -62,18 +57,12 @@
 		"keyword-spacing": "error",
 		"space-in-parens": ["error", "never"],
 		"func-style" : ["error", "expression"],
-		"require-await": "off",
 		"@typescript-eslint/no-floating-promises": ["error"],
-		"jest/expect-expect": [
-			"error",
-			{
-				"assertFunctionNames": [
-					"expect",
-					"supertest.**.expect",
-					"*.expect"
-				]
-			}
-		],
+		"@typescript-eslint/explicit-module-boundary-types": "off",
+		"@typescript-eslint/no-var-requires": "error",
+		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+		"no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+		"no-console": "error",
 		// To be removed later
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"@typescript-eslint/no-unsafe-argument": "off",
@@ -95,7 +84,18 @@
 			"@typescript-eslint/no-explicit-any": "off",
 			"@typescript-eslint/no-non-null-assertion": "off",
 			"jest/no-done-callback": "off",
-			"jest/expect-expect": "off"
+			"jest/expect-expect": [
+				"error",
+				{
+					"assertFunctionNames": [
+						"expect",
+						"supertest.**.expect",
+						"*.expect",
+						"expectDisabledButton",
+						"expectEnabledButton"
+					]
+				}
+			]
 		}
 	}]
 }
