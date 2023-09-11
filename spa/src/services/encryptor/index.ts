@@ -1,7 +1,7 @@
 import jsSHA from "jssha";
 
 // TODO: Find out how to get the values for the env variables
-const GLOBAL_HASH_SECRET = "";
+const GLOBAL_HASH_SECRET: string = process.env.REACT_APP_GLOBAL_HASH_SECRET || "";
 const removeNonAlphaNumericCharacters = (str: string): string => {
 	return str.replace(/[^\p{L}\p{N}]+/ug, ""); // Tests all unicode characters and only keeps Letters and Numbers
 };

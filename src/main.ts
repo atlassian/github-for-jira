@@ -11,6 +11,7 @@ import { metricLag } from "config/metric-names";
 import Logger from "bunyan";
 import { startMonitorOnMaster, startMonitorOnWorker } from "utils/workers-health-monitor";
 import { cpus } from "os";
+import copyEnvVarsInSpa from "./copy-env-vars-in-spa";
 
 //
 // "throng" was supposed to restart the dead nodes, but for some reason that doesn't happen for us. The code
@@ -78,6 +79,7 @@ const start = async () => {
 	setInterval(() => {
 		statsd.histogram(metricLag.lagHist, lag(), { }, { });
 	}, 1000);
+	copyEnvVarsInSpa();
 };
 
 if (isNodeProd()) {
