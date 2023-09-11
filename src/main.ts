@@ -86,13 +86,12 @@ const start = async () => {
 	// Then rebuild the spa app again for prod/staging
 	if (isNodeProd()) {
 		await new Promise<void>((resolve, reject) => {
-			exec("yarn spa:build", (error, stdout) => {
+			exec("yarn spa:build", (error) => {
 				if (error) {
 					reject(error);
 					return;
 				}
-				// eslint-disable-next-line no-console
-				console.info(stdout);
+				getLogger("spa-environment").info("Rebuild after env file was created");
 				resolve();
 			});
 		});

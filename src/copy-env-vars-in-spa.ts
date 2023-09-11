@@ -19,7 +19,7 @@ const copyEnvVarsInSpa = () => {
 
 	try {
 		fs.writeFileSync("spa/.env", envVars);
-		getLogger("spa-environment").info("Created env file for SPA");
+		getLogger("spa-environment").info("Created env file for SPA", envVars);
 	} catch (e) {
 		getLogger("spa-environment").warn("Couldn't create env file for SPA");
 	}
