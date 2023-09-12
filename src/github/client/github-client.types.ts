@@ -170,3 +170,11 @@ type CodeScanningAlertResponseItemMostRecentInstance = {
 	commit_sha: string;
 	html_url: string;
 }
+
+export type CodeScanningAlertInstanceResponseItem = {
+	ref: string;
+	environment: string;
+	category: string;
+	state: string;
+	commit_sha: string;
+}

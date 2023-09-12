@@ -5,7 +5,7 @@ import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { transformRepositoryId } from "../transforms/transform-repository-id";
 import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config";
 import { JiraVulnerabilityBulkSubmitData } from "../interfaces/jira";
-import { mapVulnIdentifiers } from "../transforms/transform-dependabot-alert";
+import { getDependabotScanningVulnDescription, mapVulnIdentifiers } from "../transforms/transform-dependabot-alert";
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
 import { DependabotAlertResponseItem, SortDirection } from "../github/client/github-client.types";
 import {
@@ -90,13 +90,14 @@ const transformDependabotAlerts = async (
 	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from dependabot_alerts sync: ${severity}`);
 
 	const vulnerabilities = alerts.map((alert) => {
+		const identifiers = mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references);
 		return {
 			schemaVersion: "1.0",
 			id: `d-${transformRepositoryId(repository.id, gitHubClientConfig.baseUrl)}-${alert.number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			displayName: alert.security_advisory.summary,
-			description: alert.security_advisory.description,
+			description: getDependabotScanningVulnDescription(alert, identifiers,logger),
 			url: alert.html_url,
 			type: "sca",
 			introducedDate: alert.created_at,
@@ -104,7 +105,7 @@ const transformDependabotAlerts = async (
 			severity: {
 				level: transformGitHubSeverityToJiraSeverity(alert.security_vulnerability?.severity?.toLowerCase(), handleUnmappedSeverity)
 			},
-			identifiers: mapVulnIdentifiers(alert.security_advisory.identifiers, alert.security_advisory.references),
+			identifiers,
 			status: transformGitHubStateToJiraStatus(alert.state?.toLowerCase(), handleUnmappedState),
 			additionalInfo: {
 				content: alert.dependency.manifest_path

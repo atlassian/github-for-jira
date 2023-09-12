@@ -33,7 +33,8 @@ import {
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse,
 	SecretScanningAlertResponseItem,
-	CodeScanningAlertResponseItem
+	CodeScanningAlertResponseItem,
+	CodeScanningAlertInstanceResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -103,6 +104,14 @@ export class GitHubInstallationClient extends GitHubClient {
 		return await this.get<CodeScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts`, codeScanningAlertRequestParams, {
 			owner,
 			repo
+		});
+	}
+
+	public async getCodeScanningAlertInstances(owner: string, repo: string, alertNumber: number): Promise<AxiosResponse<CodeScanningAlertInstanceResponseItem[]>> {
+		return await this.get<CodeScanningAlertInstanceResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts/{alertNumber}/instances`, { }, {
+			owner,
+			repo,
+			alertNumber
 		});
 	}
 
