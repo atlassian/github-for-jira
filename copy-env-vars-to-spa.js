@@ -12,7 +12,7 @@ const dotenv = require("dotenv");
 	`.env.${process.env.NODE_ENV}`,
 	".env"
 ].map((env) => (dotenv.config({
-	path: path.resolve(__dirname, "../..", env)
+	path: path.resolve(__dirname, env)
 })));
 
 const ENV_VARS_TO_BE_COPIED = [
