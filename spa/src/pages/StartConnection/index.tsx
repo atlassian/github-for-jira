@@ -10,7 +10,7 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
-import FrontendFeatureFlagClient from "./../../services/frontend-feature-flag-client";
+import FrontendFeatureFlagClient from "../../frontend-feature-flag-client";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};

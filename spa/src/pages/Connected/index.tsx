@@ -5,7 +5,7 @@ import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
-import FrontendFeatureFlagClient from "./../../services/frontend-feature-flag-client";
+import FrontendFeatureFlagClient from "../../frontend-feature-flag-client";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
