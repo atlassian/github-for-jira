@@ -300,7 +300,7 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(GithubClientNotFoundError);
 		});
 
@@ -322,15 +322,15 @@ describe("sync/installation", () => {
 				err = caught;
 			}
 			expect(err!).toBeInstanceOf(TaskError);
-			expect(err!.task!.task).toEqual("branch");
+			expect(err!.task.task).toEqual("branch");
 			expect(err!.cause).toBeInstanceOf(JiraClientError);
 		});
 	});
 
 	describe("getTargetTasks", () => {
 		it("should return all tasks if no target tasks present", async () => {
-			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"]);
-			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"]);
+			expect(getTargetTasks()).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
+			expect(getTargetTasks([])).toEqual(["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"]);
 		});
 
 		it("should return single target task", async () => {
@@ -453,7 +453,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(2);
+				expect(updatedRows.length).toEqual(2);
 			});
 
 			it("for multiple tasks ignores failures of non-main tasks", async () => {
@@ -482,7 +482,7 @@ describe("sync/installation", () => {
 				const updatedRows = await RepoSyncState.findAll({ where: {
 					branchCursor: "MQ"
 				} });
-				expect(updatedRows!.length).toEqual(1);
+				expect(updatedRows.length).toEqual(1);
 			});
 		});
 
@@ -567,7 +567,7 @@ describe("sync/installation", () => {
 		});
 
 		describe.each(
-			["pull", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"] as TaskType[]
+			["pull", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"] as TaskType[]
 		)("Update jobs status for each tasks", (taskType: TaskType) => {
 			const colTaskFrom = `${taskType}From`;
 			const task: Task = {

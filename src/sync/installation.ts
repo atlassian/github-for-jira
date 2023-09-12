@@ -27,6 +27,7 @@ import { AnalyticsEventTypes, AnalyticsTrackEventsEnum } from "interfaces/common
 import { getNextTasks } from "~/src/sync/scheduler";
 import { getDependabotAlertTask } from "./dependabot-alerts";
 import { getSecretScanningAlertTask } from "./secret-scanning-alerts";
+import { getCodeScanningAlertTask } from "~/src/sync/code-scanning-alerts";
 
 const tasks: TaskProcessors = {
 	repository: getRepositoryTask,
@@ -36,10 +37,11 @@ const tasks: TaskProcessors = {
 	build: getBuildTask,
 	deployment: getDeploymentTask,
 	dependabotAlert: getDependabotAlertTask,
-	secretScanningAlert: getSecretScanningAlertTask
+	secretScanningAlert: getSecretScanningAlertTask,
+	codeScanningAlert: getCodeScanningAlertTask
 };
 
-const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert"];
+const allTaskTypes: TaskType[] = ["pull", "branch", "commit", "build", "deployment", "dependabotAlert", "secretScanningAlert", "codeScanningAlert"];
 const allTasksExceptBranch = without(allTaskTypes, "branch");
 
 export const getTargetTasks = (targetTasks?: TaskType[]): TaskType[] => {
@@ -140,7 +142,7 @@ export const updateTaskStatusAndContinue = async (
 			logger.warn({ task }, "Fail to find startime in mainNextTask for metrics purpose");
 		}
 	} else {
-		updateRepoSyncFields[getCursorKey(task.task)] = edges![edges!.length - 1].cursor;
+		updateRepoSyncFields[getCursorKey(task.task)] = edges[edges.length - 1].cursor;
 		if (task.startTime) {
 			statsd.histogram(metricTaskStatus.pending, Date.now() - task.startTime, { type: task.task, gitHubProduct }, { jiraHost: subscription.jiraHost });
 		} else {
@@ -237,7 +239,8 @@ const sendPayloadToJira = async (task: TaskType, jiraClient, jiraPayload, reposi
 				});
 				break;
 			case "dependabotAlert":
-			case "secretScanningAlert":{
+			case "secretScanningAlert":
+			case "codeScanningAlert": {
 				await jiraClient.security.submitVulnerabilities(jiraPayload, {
 					operationType: "BACKFILL"
 				});
@@ -337,7 +340,7 @@ const doProcessInstallation = async (data: BackfillMessagePayload, sentry: Hub, 
 		}
 	};
 
-	const executors = [nextTasks.mainTask!, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
+	const executors = [nextTasks.mainTask, ...nextTasks.otherTasks].map((nextTask, index) => taskExecutor(nextTask,
 		isMainTask(index)
 			// Only the first task is responsible for error handling, the other tasks are best-effort and not
 			// supposed to schedule anything

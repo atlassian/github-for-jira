@@ -1,4 +1,4 @@
-import { createAppClient, createUserClient } from "utils/get-github-client-config";
+import { createAppClient, createUserClient, createInstallationClient } from "utils/get-github-client-config";
 import { Subscription } from "models/subscription";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
 import { findOrStartSync } from "~/src/sync/sync-utils";
@@ -27,8 +27,10 @@ export const hasAdminAccess = async (githubToken: string, jiraHost: string, gitH
 		logger.info("Fetching info about installation");
 		const { data: installation } = await gitHubAppClient.getInstallation(gitHubInstallationId);
 
+		const gitHubInstallationClient = await createInstallationClient(gitHubInstallationId, jiraHost, { trigger: "hasAdminAccess" }, logger, gitHubServerAppIdPk);
+
 		logger.info("Checking if the user is an admin");
-		return await isUserAdminOfOrganization(gitHubUserClient, installation.account.login, login, installation.target_type, logger);
+		return await isUserAdminOfOrganization(gitHubUserClient, jiraHost, gitHubInstallationClient, installation.account.login, login, installation.target_type, logger);
 	} catch (err) {
 		logger.warn({ err }, "Error checking user access");
 		return false;
@@ -112,7 +114,7 @@ export const verifyAdminPermsAndFinishInstallation =
 				try {
 					if (subscription.isSecurityPermissionsAccepted) {
 						await submitSecurityWorkspaceToLink(installation, subscription, log);
-					} else if (await hasSecurityPermissionsAndEvents(installation, gitHubServerAppIdPk, log, metrics)) {
+					} else if (await hasSecurityPermissionsAndEvents(subscription, gitHubServerAppIdPk, log, metrics)) {
 						await Promise.allSettled([
 							await setSecurityPermissionAccepted(subscription, log),
 							await submitSecurityWorkspaceToLink(installation, subscription, log)
@@ -172,12 +174,21 @@ export const submitSecurityWorkspaceToLink = async (
 	const jiraClient = await JiraClient.getNewClient(installation, logger);
 	await jiraClient.linkedWorkspace(subscription.id);
 	logger.info({ subscriptionId: subscription.id }, "Linked security workspace");
+
+	await sendAnalytics(installation.jiraHost, AnalyticsEventTypes.TrackEvent, {
+		action: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
+		actionSubject: AnalyticsTrackEventsEnum.GitHubSecurityConfiguredEventName,
+		source: !subscription.gitHubAppId ? AnalyticsTrackSource.Cloud : AnalyticsTrackSource.GitHubEnterprise
+	}, {
+		jiraHost: installation.jiraHost,
+		workspaceId: subscription.id
+	});
 };
 
-const hasSecurityPermissionsAndEvents = async (installation: Installation, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
+const hasSecurityPermissionsAndEvents = async (subscription: Subscription, gitHubServerAppId: number | undefined, logger: Logger, metrics: any) => {
 	try {
-		const gitHubAppClient = await createAppClient(logger, installation.jiraHost, gitHubServerAppId, metrics);
-		const { data: ghApp } = await gitHubAppClient.getApp();
+		const gitHubAppClient = await createAppClient(logger, subscription.jiraHost, gitHubServerAppId, metrics);
+		const { data: ghApp } = await gitHubAppClient.getInstallation(subscription.gitHubInstallationId);
 		return SECURITY_PERMISSIONS.every(securityPermission => securityPermission in ghApp.permissions) &&
 			SECURITY_EVENTS.every((securityEvent) => ghApp.events.includes(securityEvent));
 	} catch (err) {

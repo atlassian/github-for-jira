@@ -57,7 +57,7 @@ export const installationWebhookHandler = async (
 
 			await setSecurityPermissionAccepted(subscription, logger);
 
-			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert", "secretScanningAlert"], { source: "webhook-security-permissions-accepted" });
+			await findOrStartSync(subscription, logger, "full", subscription.backfillSince, ["dependabotAlert", "secretScanningAlert", "codeScanningAlert"], { source: "webhook-security-permissions-accepted" });
 			logger.info({ subscriptionId: subscription.id }, "Triggered security backfill successfully");
 		}
 

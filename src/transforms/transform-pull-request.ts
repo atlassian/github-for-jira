@@ -6,10 +6,10 @@ import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraReview } from "../interfaces/jira";
+import { JiraReview } from "interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { Repository } from "models/subscription";
 
@@ -26,8 +26,20 @@ interface JiraReviewer extends JiraReview {
 	login: string;
 }
 
+// Data Depot valid ENUM values
 const STATE_APPROVED = "APPROVED";
 const STATE_UNAPPROVED = "UNAPPROVED";
+const STATE_NEEDS_WORK = "NEEDSWORK";
+
+const mapReviewState = (state: string | undefined) => {
+	if (state === STATE_APPROVED) {
+		return STATE_APPROVED;
+	} else if (state === "CHANGES_REQUESTED") {
+		return STATE_NEEDS_WORK;
+	} else {
+		return STATE_UNAPPROVED;
+	}
+};
 
 const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }> = [], gitHubInstallationClient: GitHubInstallationClient): Promise<JiraReview[]> => {
 
@@ -46,13 +58,13 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 			usernames[reviewerUsername] = {
 				...getJiraAuthor(reviewer),
 				login: reviewerUsername,
-				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+				approvalStatus: mapReviewState(review.state)
 			};
 
 			acc.push(usernames[reviewerUsername]);
 
 		} else {
-			usernames[reviewerUsername].approvalStatus = review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED;
+			usernames[reviewerUsername].approvalStatus = mapReviewState(review.state);
 		}
 
 		// Returns the reviews' array with unique users
@@ -90,9 +102,9 @@ export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 export const transformPullRequestRest = async (
 	gitHubInstallationClient: GitHubInstallationClient,
 	pullRequest: Octokit.PullsGetResponse,
-	reviews?: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
-	log?: Logger,
-	jiraHost?: string
+	reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
+	log: Logger,
+	jiraHost: string
 ) =>
 {
 	const {
@@ -112,7 +124,8 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	if (isEmpty(issueKeys) || !head?.repo) {
+	const alwaysSend = await shouldSendAll("prs", jiraHost, log);
+	if ((isEmpty(issueKeys) && !alwaysSend) || !head?.repo) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
@@ -153,7 +166,8 @@ export const transformPullRequestRest = async (
 };
 
 // Do not send the branch on the payload when the Pull Request Merged event is called.
-// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out “at the same time” and received out of order, which causes the branch being created again.
+// Reason: If "Automatically delete head branches" is enabled, the branch deleted and PR merged events might be sent out
+// “at the same time” and received out of order, which causes the branch being created again.
 const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, pullRequest: Octokit.PullsGetResponse, issueKeys: string[]) => {
 	if (mapStatus(pullRequest.state, pullRequest.merged_at) === "MERGED") {
 		return [];
@@ -184,10 +198,10 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
@@ -242,13 +256,13 @@ const mapReviews = (reviews: pullRequestNode["reviews"]["nodes"] = [], reviewReq
 			usernames[reviewerUsername] = {
 				...getJiraAuthor(reviewer),
 				login: reviewerUsername,
-				approvalStatus: review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED
+				approvalStatus: mapReviewState(review.state)
 			};
 
 			acc.push(usernames[reviewerUsername]);
 
 		} else {
-			usernames[reviewerUsername].approvalStatus = review.state === STATE_APPROVED ? STATE_APPROVED : STATE_UNAPPROVED;
+			usernames[reviewerUsername].approvalStatus = mapReviewState(review.state);
 		}
 
 		// Returns the reviews' array with unique users

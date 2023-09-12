@@ -25,14 +25,15 @@ import {
 } from "./github-queries";
 import {
 	ActionsListRepoWorkflowRunsResponseEnhanced,
-	CreateReferenceBody,
+	CreateReferenceBody, GetCodeScanningAlertRequestParams,
 	DependabotAlertResponseItem,
 	GetDependabotAlertRequestParams,
 	GetPullRequestParams,
 	GetSecretScanningAlertRequestParams,
 	PaginatedAxiosResponse,
 	ReposGetContentsResponse,
-	SecretScanningAlertResponseItem
+	SecretScanningAlertResponseItem,
+	CodeScanningAlertResponseItem
 } from "./github-client.types";
 import { GITHUB_ACCEPT_HEADER } from "./github-client-constants";
 import { GitHubClient, GitHubConfig, Metrics } from "./github-client";
@@ -76,6 +77,12 @@ export class GitHubInstallationClient extends GitHubClient {
 		this.gitHubServerAppId = gshaId;
 	}
 
+	public getUserMembershipForOrg = async (username: string, org: string): Promise<AxiosResponse<Octokit.OrgsGetMembershipResponse>> => {
+		return await this.get<Octokit.OrgsGetMembershipResponse>(`/orgs/{org}/memberships/{username}`, {}, {
+			username,
+			org
+		});
+	};
 
 	public async getSecretScanningAlerts(owner: string, repo: string, secretScanningAlertRequestParams: GetSecretScanningAlertRequestParams): Promise<AxiosResponse<SecretScanningAlertResponseItem[]>> {
 		return await this.get<SecretScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/secret-scanning/alerts`, secretScanningAlertRequestParams, {
@@ -91,6 +98,14 @@ export class GitHubInstallationClient extends GitHubClient {
 			alertNumber
 		});
 	}
+
+	public async getCodeScanningAlerts(owner: string, repo: string, codeScanningAlertRequestParams: GetCodeScanningAlertRequestParams): Promise<AxiosResponse<CodeScanningAlertResponseItem[]>> {
+		return await this.get<CodeScanningAlertResponseItem[]>(`/repos/{owner}/{repo}/code-scanning/alerts`, codeScanningAlertRequestParams, {
+			owner,
+			repo
+		});
+	}
+
 	/**
 	 * Lists pull requests for the given repository.
 	 */
