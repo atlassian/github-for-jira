@@ -2,11 +2,6 @@ export type FeatureFlagDefs = {
 	enable5KuExperienceBackfillPage: boolean;
 };
 
-export type envVarsType = {
-	LAUNCHDARKLY_CLIENT_KEY: string;
-	GLOBAL_HASH_SECRET: string;
-}
-
 export type GetRedirectUrlResponse = {
 	redirectUrl: string;
 	state: string;
