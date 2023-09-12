@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Button, { LoadingButton } from "@atlaskit/button";
 import AddIcon from "@atlaskit/icon/glyph/editor/add";
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";
@@ -33,16 +34,16 @@ type ErrorMessageCounterType = {
 	count: number;
 }
 
-const ConfigContainer = styled.div`
+const configContainerStyle = css`
   margin: 0 auto;
   width: 100%;
   min-height: 364px;
 `;
-const GitHubOptionContainer = styled.div`
+const gitHubOptionContainerStyle = css`
 	display: flex;
 	margin-bottom: ${token("space.200")};
 `;
-const TooltipContainer = styled.div`
+const tooltipContainerStyle = css`
 	margin-bottom: ${token("space.400")};
 	a {
 		cursor: pointer;
@@ -77,7 +78,7 @@ const InlineDialog = styled(TooltipPrimitive)`
 	position: absolute;
 	top: -22px;
 `;
-const AddOrganizationContainer = styled.div`
+const addOrganizationContainerStyle = css`
 	display: flex;
 	align-items: center;
 	justify-content: start;
@@ -96,7 +97,7 @@ const AddOrganizationContainer = styled.div`
 		}
 	}
 `;
-const Paragraph = styled.div`
+const paragraphStyle = css`
 	color: ${token("color.text.subtle")};
 	margin-bottom: ${token("space.100")};
 `;
@@ -331,24 +332,24 @@ const ConfigSteps = () => {
 			{
 				error && <ErrorUI type={error.type} message={error.message} />
 			}
-			<ConfigContainer>
+			<div css={configContainerStyle}>
 				{
 					isLoggedIn ? <>
 						{
 							loaderForOrgFetching ? <SkeletonForLoading /> : <>
 									<Step title="Select a GitHub organization">
 												<>
-													<Paragraph>
+													<div css={paragraphStyle}>
 														This organization's repositories will be available to all projects<br />
 														in <b>{hostUrl?.jiraHost}</b>.
-													</Paragraph>
+													</div>
 													<OrganizationsList
 														organizations={organizations}
 														loaderForOrgClicked={loaderForOrgClicked}
 														setLoaderForOrgClicked={setLoaderForOrgClicked}
 														resetCallback={setIsLoggedIn}
 														connectingOrg={(org) => doCreateConnection(org.id, "manual", org.account?.login)} />
-													<AddOrganizationContainer>
+													<div css={addOrganizationContainerStyle}>
 														<Button
 															iconBefore={<AddIcon label="add new org" size="medium"/>}
 															isDisabled={loaderForOrgClicked}
@@ -358,7 +359,7 @@ const ConfigSteps = () => {
 														<div onClick={() => !loaderForOrgClicked && installNewOrg("manual")}>
 															{ organizations.length === 0 ? "Select an organization in GitHub" : "Select another organization" }
 														</div>
-													</AddOrganizationContainer>
+													</div>
 												</>
 											</Step>
 									<LoggedinInfo
@@ -370,7 +371,7 @@ const ConfigSteps = () => {
 					</>
 					: <Step title="Select your GitHub product">
 						<>
-							<GitHubOptionContainer>
+							<div css={gitHubOptionContainerStyle}>
 									<GitHubOption
 										optionKey={1}
 										selectedOption={selectedOption}
@@ -393,8 +394,8 @@ const ConfigSteps = () => {
 										<img src="/public/assets/server.svg" alt=""/>
 										<span>GitHub Enterprise Server</span>
 									</GitHubOption>
-								</GitHubOptionContainer>
-								<TooltipContainer>
+								</div>
+								<div css={tooltipContainerStyle}>
 									<Tooltip
 										component={InlineDialog}
 										position="right-end"
@@ -402,7 +403,7 @@ const ConfigSteps = () => {
 									>
 										{(props) => <a {...props}>How do I check my GitHub product?</a>}
 									</Tooltip>
-								</TooltipContainer>
+								</div>
 								{
 									loaderForLogin ? <LoadingButton appearance="primary" isLoading>Loading</LoadingButton> :
 										<Button
@@ -416,7 +417,7 @@ const ConfigSteps = () => {
 							</>
 					</Step>
 				}
-			</ConfigContainer>
+			</div>
 		</Wrapper>
 	);
 };

@@ -1,10 +1,10 @@
 import Button from "@atlaskit/button";
-import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import { popup } from "../utils";
 import analyticsClient from "../analytics";
 import OAuthManager from "../services/oauth-manager";
 
-const LoggedInContent = styled.div`
+const loggedInContentStyle = css`
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -22,10 +22,16 @@ const LoggedinInfo = ({ username, logout }: { username: string; logout: () => vo
 		analyticsClient.sendUIEvent({ actionSubject: "switchGitHubAccount", action: "clicked" });
 	};
 
-	return <LoggedInContent>
-		<div data-testid="logged-in-as">Logged in as <b>{username}</b>.&nbsp;</div>
-		<Button style={{ paddingLeft: 0 }} appearance="link" onClick={clicked}>Change GitHub login</Button>
-	</LoggedInContent>;
+	return (
+		<div css={loggedInContentStyle}>
+			<div data-testid="logged-in-as">
+				Logged in as <b>{username}</b>.&nbsp;
+			</div>
+			<Button style={{ paddingLeft: 0 }} appearance="link" onClick={clicked}>
+				Change GitHub login
+			</Button>
+		</div>
+	);
 };
 
 export default LoggedinInfo;

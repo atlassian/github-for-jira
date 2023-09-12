@@ -1,4 +1,5 @@
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 import { token } from "@atlaskit/tokens";
 import WarningIcon from "@atlaskit/icon/glyph/warning";
 import ErrorIcon from "@atlaskit/icon/glyph/error";
@@ -23,7 +24,7 @@ const ErrorWrapper = styled.div<ErrorWrapperType>`
 		align-self: start;
 	}
 `;
-const ErrorContent = styled.div`
+const errorContentStyle = css`
 	padding-left: ${token("space.200")};
 `;
 
@@ -42,7 +43,7 @@ const Error = ({
 				type === "warning" ? <WarningIcon label="warning" primaryColor={token("color.background.warning.bold")} size="medium" /> :
 					<ErrorIcon label="warning" primaryColor={token("color.background.danger.bold")} size="medium" />
 			}
-			<ErrorContent>{message}</ErrorContent>
+			<div css={errorContentStyle}>{message}</div>
 		</ErrorWrapper>
 	);
 };

@@ -1,11 +1,12 @@
 import { token, useThemeObserver } from "@atlaskit/tokens";
 import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 
-const HeaderWrapper = styled.div`
+const headerWrapperStyle = css`
 	text-align: center;
 `;
 
-const LogoContainer = styled.div`
+const logoContainerStyle = css`
 	display: inline-flex;
 	align-items: center;
 `;
@@ -27,8 +28,8 @@ const SyncHeader = () => {
 	const { colorMode } = useThemeObserver();
 
 	return (
-		<HeaderWrapper>
-			<LogoContainer>
+		<div css={headerWrapperStyle}>
+			<div css={logoContainerStyle}>
 				<Logo className="logo" src="/public/assets/jira-logo.svg" alt=""/>
 				<SyncLogo className="sync-logo" src="/public/assets/sync.svg" alt=""/>
 				<Logo
@@ -36,9 +37,9 @@ const SyncHeader = () => {
 					src={colorMode === "dark" ? "/public/assets/github-logo-dark-theme.svg" : "/public/assets/github-logo.svg"}
 					alt=""
 				/>
-			</LogoContainer>
+			</div>
 			<Title>Connect Github to Jira</Title>
-		</HeaderWrapper>
+		</div>
 	);
 };
 
