@@ -4,6 +4,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import Logger from "bunyan";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { createHashWithSharedSecret } from "utils/encryption";
+import { shouldSendAll } from "config/feature-flags";
 
 // TODO: better typings
 export const getBranchTask = async (
@@ -26,8 +27,9 @@ export const getBranchTask = async (
 	const branches: Branch[] = edges.map(edge => edge?.node);
 	(logger.fields || {}).branchNameArray = (branches || []).map(b => createHashWithSharedSecret(String(b.name)));
 	(logger.fields || {}).branchShaArray = (branches || []).map(b => createHashWithSharedSecret(String(b.target?.oid)));
-
-	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl);
+	const alwaysSendBranches = await shouldSendAll("branches-backfill", _jiraHost, logger);
+	const alwaysSendCommits = await shouldSendAll("commits-backfill", _jiraHost, logger);
+	const jiraPayload = transformBranches({ branches, repository }, messagePayload.gitHubAppConfig?.gitHubBaseUrl, alwaysSendBranches, alwaysSendCommits);
 
 	logger.info({ processingTime: Date.now() - startTime, jiraPayloadLength: jiraPayload?.branches?.length }, "Backfill task complete");
 
