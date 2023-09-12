@@ -3,6 +3,17 @@
  * otherwise it won't be copied to spa
  */
 const fs = require("fs");
+const path = require("path");
+const dotenv = require("dotenv");
+
+[
+	`.env.${process.env.NODE_ENV}.local`,
+	`.env.local`,
+	`.env.${process.env.NODE_ENV}`,
+	".env"
+].map((env) => (dotenv.config({
+	path: path.resolve(__dirname, "../..", env)
+})));
 
 const ENV_VARS_TO_BE_COPIED = [
 	{ LAUNCHDARKLY_CLIENT_KEY: process.env.LAUNCHDARKLY_CLIENT_KEY },
