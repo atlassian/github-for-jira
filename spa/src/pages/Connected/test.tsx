@@ -44,10 +44,10 @@ test("Basic check for the Connected Page", async () => {
 	expect(screen.queryByText("Add another organization")).toBeInTheDocument();
 
 	await userEvent.click(screen.getByText("Learn about issue linking"));
-	expect(window.open).toHaveBeenCalled();
+	expect(window.open).toBeCalledWith("https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/", "_blank");
 
 	await userEvent.click(screen.getByText("Learn about development work in Jira"));
-	expect(window.open).toHaveBeenCalled();
+	expect(window.open).toBeCalledWith("https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/", "_blank");
 
 	await userEvent.click(screen.getByText("Check your backfill status"));
 	expect(AP.navigator.go).toHaveBeenCalled();
