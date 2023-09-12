@@ -19,7 +19,7 @@ SpaRouter.use("/*", async (req, res) => {
 		indexHtmlContent = (await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8"))
 			.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
 			.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
-			.replace("##LD_CLIENT_KEY##", envVars.LAUNCHDARKLY_CLIENT_KEY || "")
+			.replace("##FFF_API_KEY##", envVars.FFF_API_KEY || "")
 			.replace("##HASHED_JIRAHOST##", createHashWithSharedSecret(jiraHost));
 	}
 	res.status(200).send(indexHtmlContent);

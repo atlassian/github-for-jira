@@ -18,7 +18,6 @@ initSentry();
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 const App = () => {
-
 	setGlobalTheme({
 		light: "light",
 		dark: "dark",

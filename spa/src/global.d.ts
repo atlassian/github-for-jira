@@ -6,8 +6,8 @@ declare global {
 	const AP: AtlassianPlugin;
 	const SPA_APP_ENV: "" | "local" | "dev" | "staging" | "prod";
 	const SENTRY_SPA_DSN: string | undefined;
+	const FFF_API_KEY: string;
 	const HASHED_JIRAHOST: string;
-	const LD_CLIENT_KEY: string;
 }
 
 interface AtlassianPlugin {
