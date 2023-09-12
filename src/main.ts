@@ -80,7 +80,7 @@ const start = async () => {
 	}, 1000);
 };
 
-if (isNodeProd()) {
+if (isNodeProd() || CONF_WORKER_STARTUP_TIME_MSEC > 1) {
 	// Production clustering (one process per core)
 	throng({
 		master: troubleshootUnresponsiveWorkers_master,
