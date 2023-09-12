@@ -148,7 +148,7 @@ export interface JiraDeployment {
 		displayName: string;
 		type: string;
 	};
-	associations: JiraAssociation[];
+	associations: JiraAssociation[] | undefined;
 }
 
 export interface JiraDeploymentBulkSubmitData {
