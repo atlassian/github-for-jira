@@ -2,7 +2,6 @@ import { Router, static as Static } from "express";
 import path from "path";
 import fs from "fs/promises";
 import { envVars } from "config/env";
-import { createHashWithSharedSecret } from "utils/encryption";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 
 export const SpaRouter = Router();
@@ -23,7 +22,6 @@ SpaRouter.use("/*", async (req, res) => {
 			.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
 			.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
 			.replace("##ENABLE_5KU_BACKFILL_PAGE##", enableBackillPage)
-			.replace("##HASHED_JIRAHOST##", createHashWithSharedSecret(jiraHost));
 	}
 	res.status(200).send(indexHtmlContent);
 });
