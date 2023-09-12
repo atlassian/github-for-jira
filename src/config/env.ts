@@ -128,7 +128,6 @@ export interface EnvVars {
 	JIRA_LINK_TRACKING_ID?: string,
 	PROXY?: string,
 	LAUNCHDARKLY_KEY?: string;
-	FFF_API_KEY?: string;
 	GIT_COMMIT_SHA?: string;
 	GIT_COMMIT_DATE?: string;
 	GIT_BRANCH_NAME?: string;

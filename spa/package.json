@@ -36,6 +36,7 @@
     "@atlaskit/skeleton": "^0.2.3",
     "@atlaskit/tokens": "^1.11.1",
     "@atlaskit/tooltip": "^17.8.3",
+    "@atlassiansox/analytics-web-client": "^4.16.0",
     "@atlassiansox/feature-flag-web-client": "^8.4.0",
     "@emotion/styled": "^11.11.0",
     "@sentry/react": "^7.60.1",

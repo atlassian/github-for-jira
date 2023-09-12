@@ -10,8 +10,7 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
-import { useFlags } from "launchdarkly-react-client-sdk";
-import { FeatureFlagDefs } from "rest-interfaces";
+import FrontendFeatureFlagClient from "../../services/frontend-feature-flag-client";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -88,7 +87,7 @@ const screenAnalyticsAttributes = { from: getAnalyticsSourceFrom() };
 
 const StartConnection = () => {
 	const navigate = useNavigate();
-	const { enable5KuExperienceBackfillPage } = useFlags<FeatureFlagDefs>();
+	const enable5KuExperienceBackfillPage: boolean = new FrontendFeatureFlagClient().getFlagValue("enable-5ku-experience-backfill-page", true);
 
 	useEffectScreenEvent("StartConnectionEntryScreen", screenAnalyticsAttributes);
 
