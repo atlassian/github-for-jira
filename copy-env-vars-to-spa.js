@@ -3,7 +3,6 @@
  * otherwise it won't be copied to spa
  */
 const fs = require("fs");
-require("dotenv").config();
 
 const ENV_VARS_TO_BE_COPIED = [
 	{ LAUNCHDARKLY_CLIENT_KEY: process.env.LAUNCHDARKLY_CLIENT_KEY },
