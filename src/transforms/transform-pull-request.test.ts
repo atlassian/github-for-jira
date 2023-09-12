@@ -759,7 +759,7 @@ describe("pull_request transform GraphQL", () => {
 
 		const { updatedAt } = payload;
 
-		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, logger);
+		const data = await transformPullRequest(REPO_OBJ, jiraHost, payload as any, true, logger);
 
 		expect(data).toStrictEqual({
 			author: {
