@@ -9,7 +9,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { JiraReview } from "interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
-import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
 import { getLogger } from "config/logger";
 import { Repository } from "models/subscription";
 
@@ -124,7 +124,8 @@ export const transformPullRequestRest = async (
 	const issueKeys = await extractIssueKeysFromPrRest(pullRequest, jiraHost);
 
 	// This is the same thing we do in sync, concatenating these values
-	if (isEmpty(issueKeys) || !head?.repo) {
+	const alwaysSend = await shouldSendAll("prs", jiraHost, log);
+	if ((isEmpty(issueKeys) && !alwaysSend) || !head?.repo) {
 		log?.info({
 			pullRequestNumber: pullRequestNumber,
 			pullRequestId: id
@@ -197,10 +198,10 @@ const getBranches = async (gitHubInstallationClient: GitHubInstallationClient, p
 	];
 };
 
-export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, log: Logger) => {
+export const transformPullRequest = (repository: Repository, _jiraHost: string, pullRequest: pullRequestNode, alwaysSend: boolean, log: Logger) => {
 	const issueKeys = extractIssueKeysFromPr(pullRequest);
 
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		log.info({
 			pullRequestNumber: pullRequest.number,
 			pullRequestId: pullRequest.id
