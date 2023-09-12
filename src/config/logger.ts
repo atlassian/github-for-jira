@@ -40,8 +40,8 @@ const GIT_REF_URL_REGEX = /^(.*)\/git\/ref\/([^/]+)$/;
 const isGitRefUrl = (url: string) => url.match(GIT_REF_URL_REGEX);
 
 const removeGitRefFromUrl = (url: string) =>
-	url.replace(GIT_REF_URL_REGEX, (_, prefix, gitRef) =>
-		`${prefix as string}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
+	url.replace(GIT_REF_URL_REGEX, (_, prefix: string, gitRef) =>
+		`${prefix}/git/ref/${createHashWithSharedSecret(decodeURIComponent(gitRef))}`
 	);
 
 const USERS_URL_REGEX = /^(\/api\/v3)?\/users\/([^/]+)$/;
@@ -62,14 +62,14 @@ const REST_DEVINFO_BRANCH_URL_REGEX = /^\/rest\/devinfo\/([^/]+)\/repository\/([
 const isDevInfoBranchUrl = (url: string) => url.match(REST_DEVINFO_BRANCH_URL_REGEX);
 
 const removeBranchFromDevInfoUrl = (url: string) =>
-	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId) =>
+	url.replace(REST_DEVINFO_BRANCH_URL_REGEX, (_, version, repoNo, branchaName, updateSequenceId: string) =>
 		[
 			"/rest/devinfo",
 			version,
 			"repository",
 			repoNo,
 			"branch",
-			`${createHashWithSharedSecret(decodeURIComponent(branchaName))}?_updateSequenceId=${updateSequenceId as string}`
+			`${createHashWithSharedSecret(decodeURIComponent(branchaName))}?_updateSequenceId=${updateSequenceId}`
 		].join("/")
 	);
 

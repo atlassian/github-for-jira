@@ -58,6 +58,6 @@ export const RecoverCommitsFromDatePost = async (req: Request, res: Response): P
 
 	} catch (e) {
 		log.error({ err: e }, "Error happen when recovering commits from date");
-		res.end(`Error happen when recovering commits from date: ${safeJsonStringify(e) as string}`);
+		res.end(`Error happen when recovering commits from date: ${safeJsonStringify(e)}`);
 	}
 };

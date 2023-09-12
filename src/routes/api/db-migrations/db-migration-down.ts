@@ -53,7 +53,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	if (lastScript.length < 1) {
 		throw {
 			statusCode: 500,
-			message: `There're no scripts in db to migration down, stop proceeding. \n ${lastScript.toString()}`
+			message: `There're no scripts in db to migration down, stop proceeding. \n}`
 		};
 	}
 

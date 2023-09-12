@@ -111,7 +111,7 @@ export const ReEncryptGitHubServerAppKeysPost = async (req: Request, res: Respon
 			count++;
 
 		} catch (wrapE) {
-			const msg = `Skipping app ${app.id}, found error ${safeJsonStringify(wrapE) as string}\n`;
+			const msg = `Skipping app ${app.id}, found error ${safeJsonStringify(wrapE)}\n`;
 			log.error(msg);
 			res.write(msg);
 		}

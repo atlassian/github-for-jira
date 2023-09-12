@@ -69,7 +69,7 @@ export const RecoverClientKeyPost = async (req: Request, res: Response): Promise
 		failCount += errors.length;
 		for (const { id, err } of errors) {
 			log.warn({ id, err }, `Failed at processing installation`);
-			res.write(`SKIPPED: ${safeJsonStringify(err) as string}\n`);
+			res.write(`SKIPPED: ${safeJsonStringify(err)}\n`);
 		}
 		res.write(".".repeat(chunks.length) + "\n");
 	}

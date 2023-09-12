@@ -1235,6 +1235,11 @@
   dependencies:
     "@types/node" "*"
 
+"@types/safe-json-stringify@^1.1.2":
+  version "1.1.2"
+  resolved "https://packages.atlassian.com/api/npm/npm-remote/@types/safe-json-stringify/-/safe-json-stringify-1.1.2.tgz#913796617042de2259f62ce82843c239258ca287"
+  integrity sha512-Hj/LZMBXFH3Qj9sNmNu6syBpkZqBaM00HgP7naf9CnZhB3kdxmrenWUD2cY6vvTWjuBM3NPOLknPKDUOQuTWXA==
+
 "@types/semver@^7.3.12":
   version "7.5.1"
   resolved "https://packages.atlassian.com/api/npm/npm-remote/@types/semver/-/semver-7.5.1.tgz#0480eeb7221eb9bc398ad7432c9d7e14b1a5a367"

@@ -51,7 +51,7 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	if (result.length > 0) {
 		throw {
 			statusCode: 400,
-			message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table. DB query result ${safeJsonStringify(result) as string}`
+			message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table. DB query result ${safeJsonStringify(result)}`
 		};
 	}
 

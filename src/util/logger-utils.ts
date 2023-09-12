@@ -40,7 +40,7 @@ class RawLogStream extends Writable {
 			return next();
 		}
 
-		const chunk = `${safeJsonStringify(record) as string}\n`;
+		const chunk = `${safeJsonStringify(record)}\n`;
 		this.writeStream.write(chunk, encoding);
 		next();
 	}

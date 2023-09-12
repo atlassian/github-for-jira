@@ -69,9 +69,9 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const gheServerURL: string = req.body.gheServerURL?.trim();
-	const apiKeyHeaderName: string = req.body.apiKeyHeaderName?.trim();
-	const apiKeyValue: string = req.body.apiKeyValue?.trim();
+	const gheServerURL: string = req.body.gheServerURL?.trim() || "undefined";
+	const apiKeyHeaderName: string= req.body.apiKeyHeaderName?.trim() || "undefined";
+	const apiKeyValue: string = req.body.apiKeyValue?.trim() || "undefined";
 
 	const { id: installationId } = res.locals.installation;
 

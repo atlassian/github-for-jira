@@ -11,7 +11,7 @@ describe("metrics helper", () => {
 		{ repoNum: 1000, bucket: "1000+" },
 		{ repoNum: 10000, bucket: "1000+" }
 	])("for each repo num", ({ repoNum, bucket }) => {
-		it(`should show correct bucket ${bucket} for repo num ${repoNum ? repoNum.toString() : "undefined"}`, () => {
+		it(`should show correct bucket ${bucket} for repo num ${repoNum || "undefined"}`, () => {
 			expect(repoCountToBucket(repoNum)).toEqual(bucket);
 		});
 	});
