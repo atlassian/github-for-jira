@@ -101,10 +101,17 @@ export type DependabotAlertResponseItem = {
 		summary: string,
 		description: string,
 		identifiers: { type: string, value: string }[],
-		references: { url: string }[]
+		references: { url: string }[],
+		severity: string,
+		cvss: {
+			score?: number
+		}
 	},
 	security_vulnerability: {
-		severity: string
+		severity: string,
+		first_patched_version: {
+			identifier: number
+		}
 	},
 	dependency: {
 		scope: string,
