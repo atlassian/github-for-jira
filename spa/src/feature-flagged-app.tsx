@@ -13,7 +13,7 @@ const getJiraHost = (): string => {
 };
 
 // TODO: Remove this console later
-console.log("Checking keys: ", LD_CLIENT_KEY, getJiraHost());
+console.log("Checking keys: ", envVars, getJiraHost());
 
 const FeatureFlaggedApp = withLDProvider({
 	clientSideID: LD_CLIENT_KEY,
