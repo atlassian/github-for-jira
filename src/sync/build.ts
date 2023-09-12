@@ -5,7 +5,7 @@ import { GitHubInstallationClient } from "../github/client/github-installation-c
 import { transformWorkflow } from "../transforms/transform-workflow";
 import { GitHubWorkflowPayload } from "~/src/interfaces/github";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { numberFlag, NumberFlags } from "config/feature-flags";
+import { numberFlag, NumberFlags, shouldSendAll } from "config/feature-flags";
 import { fetchNextPagesInParallel } from "~/src/sync/parallel-page-fetcher";
 import { BackfillMessagePayload } from "../sqs/sqs.types";
 import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
@@ -13,11 +13,10 @@ import { PageSizeAwareCounterCursor } from "~/src/sync/page-counter-cursor";
 type BuildWithCursor = { cursor: string } & Octokit.ActionsListRepoWorkflowRunsResponse;
 
 // TODO: add types
-const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, logger) => {
-
+const getTransformedBuilds = async (workflowRun, gitHubInstallationClient, alwaysSend: boolean, logger) => {
 	const transformTasks = workflowRun.map(workflow => {
 		const workflowItem = { workflow_run: workflow, workflow: { id: workflow.id } } as GitHubWorkflowPayload;
-		return transformWorkflow(gitHubInstallationClient, workflowItem, logger);
+		return transformWorkflow(gitHubInstallationClient, workflowItem, alwaysSend, logger);
 	});
 
 	const transformedBuilds = await Promise.all(transformTasks);
@@ -103,7 +102,8 @@ const doGetBuildTask = async (
 	logger.info(`Found ${workflow_runs.length} workflow_runs`);
 	logger.info(`First workflow_run.updated_at=${workflow_runs[0].updated_at}`);
 
-	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, logger);
+	const alwaysSend = await shouldSendAll("builds-backfill", messagePayload.jiraHost, logger);
+	const builds = await getTransformedBuilds(workflow_runs, gitHubInstallationClient, alwaysSend, logger);
 
 	// When there are no valid builds return early with undefined JiraPayload so that no Jira calls are made
 	if (!builds?.length) {

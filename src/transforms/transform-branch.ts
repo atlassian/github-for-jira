@@ -27,15 +27,14 @@ const getLastCommit = async (github: GitHubInstallationClient, webhookPayload: C
 	};
 };
 
-export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: CreateEvent, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
+export const transformBranch = async (gitHubInstallationClient: GitHubInstallationClient, webhookPayload: CreateEvent, alwaysSend: boolean, logger: Logger = getLogger("transform-branch")): Promise<JiraBranchBulkSubmitData | undefined> => {
 	if (webhookPayload.ref_type !== "branch") {
 		return;
 	}
 
 	const { ref, repository } = webhookPayload;
 	const issueKeys = jiraIssueKeyParser(ref);
-
-	if (isEmpty(issueKeys)) {
+	if (isEmpty(issueKeys) && !alwaysSend) {
 		return;
 	}
 
