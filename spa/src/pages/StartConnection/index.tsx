@@ -128,14 +128,17 @@ const StartConnection = () => {
 				>
 					Continue
 				</Button>
-				<Button
-					appearance="subtle"
-					onClick={() => {
-						navigate("connections");
-					}}
-				>
-					Go to backfill page
-				</Button>
+				{
+					ENABLE_5KU_BACKFILL_PAGE &&
+						<Button
+							appearance="subtle"
+							onClick={() => {
+								navigate("/spa/connections");
+							}}
+						>
+							Go to backfill page
+						</Button>
+				}
 			</ButtonContainer>
 		</Wrapper>
 	);
