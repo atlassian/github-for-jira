@@ -36,19 +36,9 @@ const logRunningProcesses = (logger: Logger) => {
 			return;
 		}
 
-		let processList = stdout.split("\n");
-		processList = processList.slice(1); // remove the first row (column names)
-
-		const processes = processList.map((process) => {
-			const columns = process.split(/\s+/);
-			return {
-				pid: columns[1],
-				command: columns[columns.length - 1]
-			};
-		});
-
-		processes.forEach((runningProcess) => {
-			logger.info({ ...runningProcess }, "running process found");
+		const outputLines = stdout.split("\n");
+		outputLines.forEach((outputLine) => {
+			logger.info("running process found: " + outputLine);
 		});
 	});
 };
