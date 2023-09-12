@@ -32,7 +32,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 const logRunningProcesses = (logger: Logger) => {
 	exec("ps aux", (err, stdout) => {
 		if (err) {
-			logger.error({ err }, `exec error: ${err}`);
+			logger.error({ err }, `exec error: ${err.toString()}`);
 			return;
 		}
 
@@ -64,7 +64,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					logger.info(`registering a new worker with pid=${workerPid}`);
 					registeredWorkers[workerPid] = true;
 					worker.on("message", () => {
-						logInfoSampled(logger, "workerIsAlive:" + workerPid, `received message from worker ${workerPid}, marking as live`, 100);
+						logInfoSampled(logger, `workerIsAlive:${workerPid}`, `received message from worker ${workerPid}, marking as live`, 100);
 						liveWorkers[workerPid] = Date.now();
 					});
 					worker.on("exit", (code, signal) => {

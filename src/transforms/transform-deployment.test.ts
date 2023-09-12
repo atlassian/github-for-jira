@@ -288,7 +288,7 @@ describe("transform GitHub webhook payload to Jira payload", () => {
 				]);
 
 			// Compare commits
-			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deploymentPayload.deployment.sha}`)
+			githubNock.get(`/repos/${owner.login}/${repoName}/compare/6e87a40179eb7ecf5094b9c8d690db727472d5bc...${deploymentPayload.deployment.sha as string}`)
 				.reply(200, { commits: [] });
 
 			mockGetRepoConfigNoServices();
