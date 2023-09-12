@@ -122,7 +122,8 @@ export const getGHSubscriptionsRows = (
 							<div>
 								<Lozenge appearance={mapSyncStatus(cloudConnection.syncStatus)} maxWidth="500">
 									{cloudConnection.syncStatus}
-								</Lozenge> <br/>
+								</Lozenge>
+								<br/>
 								{isAllSyncSuccess(cloudConnection) && (
 									<>
 										{cloudConnection.backfillSince ? (
