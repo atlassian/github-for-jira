@@ -52,8 +52,8 @@
 		"test:e2e:debug": "PWDEBUG=1 yarn test:e2e:headed",
 		"test:e2e:watch": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e'",
 		"test:e2e:watch:headed": "nodemon --watch test/e2e -e ts --exec 'yarn test:e2e:headed'",
-		"spa:dev": "node copy-env-vars-to-spa.js && cd spa && yarn dev",
-		"spa:build": "node copy-env-vars-to-spa.js && etc/spa-build/spa-build.sh",
+		"spa:dev": "cd spa && yarn dev",
+		"spa:build": "etc/spa-build/spa-build.sh",
 		"spa:test": "cd spa && yarn test"
 	},
 	"dependencies": {

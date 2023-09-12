@@ -1,24 +1,16 @@
 import "@atlaskit/css-reset";
 import { withLDProvider } from "launchdarkly-react-client-sdk";
-import createHashWithSharedSecret from "./services/encryptor";
 import App from "./app";
-import envVars from "./envVars";
 
-const LD_CLIENT_KEY: string = envVars.LAUNCHDARKLY_CLIENT_KEY;
-
-// Getting the jiraHost name from the iframe URL
-const getJiraHost = (): string => {
-	const jiraHostFromUrl = new URLSearchParams(location.search).get("xdm_e");
-	return jiraHostFromUrl ? createHashWithSharedSecret(jiraHostFromUrl.toString()) : "global";
-};
-
-// TODO: Remove this console later
-console.log("Checking keys: ", envVars, getJiraHost());
-
+/**
+ * NOTE: FF doesn't work in local environment
+ * Cause LD_CLIENT_KEY AND HASHED_JIRAHOST are defined from the node app,
+ * doesn't work for local/dev environment
+ */
 const FeatureFlaggedApp = withLDProvider({
 	clientSideID: LD_CLIENT_KEY,
 	user: {
-		key: getJiraHost()
+		key: HASHED_JIRAHOST
 	},
 })(App);
 
