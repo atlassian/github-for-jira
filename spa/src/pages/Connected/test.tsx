@@ -10,6 +10,8 @@ import userEvent from "@testing-library/user-event";
 		go: jest.fn()
 	}
 };
+(global as any).open = jest.fn();
+
 const navigate = jest.fn();
 jest.mock("react-router-dom", () => ({
 	...jest.requireActual("react-router-dom"),
@@ -41,8 +43,11 @@ test("Basic check for the Connected Page", async () => {
 	expect(screen.queryByText("Check your backfill status")).toBeInTheDocument();
 	expect(screen.queryByText("Add another organization")).toBeInTheDocument();
 
-	expect(screen.getByText("Learn about issue linking")).toHaveAttribute("href", "https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/");
-	expect(screen.getByText("Learn about development work in Jira")).toHaveAttribute("href", "https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/");
+	await userEvent.click(screen.getByText("Learn about issue linking"));
+	expect(window.open).toHaveBeenCalled();
+
+	await userEvent.click(screen.getByText("Learn about development work in Jira"));
+	expect(window.open).toHaveBeenCalled();
 
 	await userEvent.click(screen.getByText("Check your backfill status"));
 	expect(AP.navigator.go).toHaveBeenCalled();
