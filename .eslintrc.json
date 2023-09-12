@@ -62,17 +62,7 @@
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
 		"no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-		"no-console": "error",
-		// To be removed later
-		"@typescript-eslint/no-unsafe-assignment": "off",
-		"@typescript-eslint/no-unsafe-argument": "off",
-		"@typescript-eslint/no-unsafe-member-access": "off",
-		"@typescript-eslint/no-unsafe-return": "off",
-		"@typescript-eslint/no-unsafe-call": "off",
-		"@typescript-eslint/unbound-method": "off",
-		"@typescript-eslint/require-await": "off",
-		"@typescript-eslint/await-thenable": "off",
-		"@typescript-eslint/no-misused-promises": "off"
+		"no-console": "error"
 		
 	},
 	"overrides": [{
@@ -96,6 +86,37 @@
 					]
 				}
 			]
+		}
+	},
+	{
+		"files": [ 
+			"test/**",
+			"src/*.ts",
+			"src/config/**",
+			"src/github/**",
+			"src/jira/**",
+			"src/middleware/**",
+			"src/models/**",
+			"src/rest/**",
+			"src/routes/**",
+			"src/services/**",
+			"src/sqs/**",
+			"src/sync/**",
+			"src/transforms/**",
+			"src/util/**",
+			"src/worker/**"
+		],
+		"rules": {
+			// To be removed later
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-argument": "off",
+			"@typescript-eslint/no-unsafe-member-access": "off",
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/unbound-method": "off",
+			"@typescript-eslint/require-await": "off",
+			"@typescript-eslint/await-thenable": "off",
+			"@typescript-eslint/no-misused-promises": "off"
 		}
 	}]
 }
