@@ -58,7 +58,7 @@ const Connected = () => {
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 
-		if (ENABLE_5KU_BACKFILL_PAGE) {
+		if (ENABLE_5KU_BACKFILL_PAGE === "true") {
 			navigate("/spa/connections");
 		} else {
 			AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });

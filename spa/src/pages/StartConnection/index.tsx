@@ -129,7 +129,7 @@ const StartConnection = () => {
 					Continue
 				</Button>
 				{
-					ENABLE_5KU_BACKFILL_PAGE &&
+					ENABLE_5KU_BACKFILL_PAGE === "true" &&
 						<Button
 							appearance="subtle"
 							onClick={() => {
