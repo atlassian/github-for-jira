@@ -36,9 +36,8 @@ export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (
 	}
 
 	try {
-		const { installation, accountId } = await verifySymmetricJwt(token, req.log, true);
+		const { installation } = await verifySymmetricJwt(token, req.log, true);
 		res.locals.jiraHost = installation.jiraHost;
-		res.locals.accountId = accountId;
 		next();
 
 	} catch (e) {
