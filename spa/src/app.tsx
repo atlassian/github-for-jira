@@ -13,7 +13,7 @@ import Connections from "./pages/Connections";
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
 import { useEffect } from "react";
-import { getFeatureFlagClient } from "~/src/frontend-feature-flag-client";
+import { getFeatureFlagClient } from "./frontend-feature-flag-client";
 
 initSentry();
 
