@@ -1,5 +1,4 @@
 import { startMonitorOnMaster, startMonitorOnWorker } from "utils/workers-health-monitor";
-import { waitUntil } from "test/utils/wait-until";
 import { stopHealthcheck } from "utils/healthcheck-stopper";
 import cluster from "cluster";
 jest.mock("cluster", () => {
@@ -13,10 +12,8 @@ jest.mock("cluster", () => {
 });
 
 jest.mock("utils/healthcheck-stopper");
+jest.useFakeTimers("modern");
 
-const sleep = async (ms: number) => {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-};
 describe("workers-health-monitor", () => {
 	let originalProcessSend;
 	let originalProcessOn;
@@ -48,9 +45,8 @@ describe("workers-health-monitor", () => {
 		it("should start the worker monitoring", async () => {
 			intervals.push(startMonitorOnWorker(logger, 10));
 
-			await waitUntil(async () => {
-				expect(process.send).toHaveBeenCalledWith(`${process.pid}`);
-			});
+			jest.advanceTimersByTime(11);
+			expect(process.send).toHaveBeenCalledWith(`${process.pid}`);
 		});
 
 		it("should stop healthchecks when shutdown is received", async () => {
@@ -70,49 +66,50 @@ describe("workers-health-monitor", () => {
 				numberOfWorkersThreshold: 2
 			}));
 
-			await waitUntil(async () => {
-				expect(cluster.workers[1]!.on).toBeCalled();
-				expect(cluster.workers[2]!.on).toBeCalled();
-			});
+			jest.advanceTimersByTime(20);
+
+			expect(cluster.workers[1]!.on).toBeCalled();
+			expect(cluster.workers[2]!.on).toBeCalled();
 		});
 
 		it("should not stop healthchecks when workers emit IAmAlive signals", async () => {
 			intervals.push(startMonitorOnMaster(logger, {
 				pollIntervalMsecs: 10,
-				workerStartupTimeMsecs: 200,
-				workerUnresponsiveThresholdMsecs: 400,
+				workerStartupTimeMsecs: 20,
+				workerUnresponsiveThresholdMsecs: 40,
 				numberOfWorkersThreshold: 1
 			}));
 
-			const interval = setInterval(() => {
+			const workerSendingImAliveToMasterInterval = setInterval(() => {
 				if ((cluster.workers[1]!.on as jest.Mock).mock.calls.length > 0) {
 					(cluster.workers[1]!.on as jest.Mock).mock.calls[0][1]();
 					(cluster.workers[2]!.on as jest.Mock).mock.calls[0][1]();
 				}
-			}, 100);
+			}, 9);
 
 			try {
-				await sleep(800);
+				jest.advanceTimersByTime(50);
 
 				expect(cluster.workers[1]!.send).not.toBeCalled();
 				expect(cluster.workers[2]!.send).not.toBeCalled();
+
 			} finally {
-				clearInterval(interval);
+				clearInterval(workerSendingImAliveToMasterInterval);
 			}
 		});
 
 		it("should stop healthchecks when workers do not emit IAmAlive signals", async () => {
 			intervals.push(startMonitorOnMaster(logger, {
 				pollIntervalMsecs: 10,
-				workerStartupTimeMsecs: 1,
-				workerUnresponsiveThresholdMsecs: 100,
+				workerStartupTimeMsecs: 20,
+				workerUnresponsiveThresholdMsecs: 40,
 				numberOfWorkersThreshold: 1
 			}));
 
-			await waitUntil(async () => {
-				expect(cluster.workers[1]!.send).toBeCalled();
-				expect(cluster.workers[2]!.send).toBeCalled();
-			});
+			jest.advanceTimersByTime(50);
+
+			expect(cluster.workers[1]!.send).toBeCalled();
+			expect(cluster.workers[2]!.send).toBeCalled();
 		});
 	});
 });

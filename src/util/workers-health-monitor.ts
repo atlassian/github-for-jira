@@ -1,6 +1,8 @@
 import { stopHealthcheck } from "utils/healthcheck-stopper";
 import Logger from "bunyan";
 import cluster from "cluster";
+import { exec } from "child_process";
+import { logInfoSampled } from "utils/log-sampled";
 const CONF_SHUTDOWN_MSG = "shutdown";
 
 export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: number) => {
@@ -17,7 +19,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 
 	const workerPingingServerInterval = setInterval(() => {
 		if (typeof process.send === "function") {
-			logger.info("sending I'm alive");
+			logInfoSampled(logger, "startMonitorOnWorker.alive", "sending I'm alive", 100);
 			process.send(`${process.pid}`);
 		} else {
 			logger.error("process.send is undefined in worker, shouldn't happen");
@@ -27,6 +29,19 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 	return workerPingingServerInterval;
 };
 
+const logRunningProcesses = (logger: Logger) => {
+	exec("ps aux", (err, stdout) => {
+		if (err) {
+			logger.error({ err }, `exec error: ${err}`);
+			return;
+		}
+
+		const outputLines = stdout.split("\n");
+		outputLines.forEach((outputLine) => {
+			logger.info("running process found: " + outputLine);
+		});
+	});
+};
 
 export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	pollIntervalMsecs: number,
@@ -49,8 +64,17 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					logger.info(`registering a new worker with pid=${workerPid}`);
 					registeredWorkers[workerPid] = true;
 					worker.on("message", () => {
-						logger.info(`received message from worker ${workerPid}, marking as live`);
+						logInfoSampled(logger, "workerIsAlive:" + workerPid, `received message from worker ${workerPid}, marking as live`, 100);
 						liveWorkers[workerPid] = Date.now();
+					});
+					worker.on("exit", (code, signal) => {
+						if (signal) {
+							logger.warn(`worker was killed by signal: ${signal}`);
+						} else if (code !== 0) {
+							logger.warn(`worker exited with error code: ${code}`);
+						} else {
+							logger.warn("worker exited with success code");
+						}
 					});
 				}
 			}
@@ -115,5 +139,6 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		maybeSetupWorkersReadyAt();
 		maybeRemoveDeadWorkers();
 		maybeSendShutdownToAllWorkers();
+		logRunningProcesses(logger);
 	}, config.pollIntervalMsecs);
 };
