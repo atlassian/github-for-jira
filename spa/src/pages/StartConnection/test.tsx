@@ -12,6 +12,7 @@ jest.mock("../../analytics/analytics-proxy-client", () => {
 		}
 	};
 });
+(global as any).ENABLE_5KU_BACKFILL_PAGE = false;
 
 test("Entry Config Screen", async () => {
 	render(

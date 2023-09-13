@@ -11,6 +11,7 @@ import userEvent from "@testing-library/user-event";
 	}
 };
 (global as any).open = jest.fn();
+(global as any).ENABLE_5KU_BACKFILL_PAGE = false;
 
 const navigate = jest.fn();
 jest.mock("react-router-dom", () => ({
