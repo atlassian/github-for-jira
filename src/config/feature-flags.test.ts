@@ -1,10 +1,9 @@
 import LaunchDarkly, { LDClient } from "launchdarkly-node-server-sdk";
 import { mocked } from "ts-jest/utils";
 
-jest.mock("config/feature-flags");
 jest.mock("launchdarkly-node-server-sdk");
 
-describe.skip("Feature Flag", () => {
+describe("Feature Flag", () => {
 
 	let featureFlags;
 
