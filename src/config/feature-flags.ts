@@ -95,13 +95,13 @@ type ShouldSendAllStringTypes =
 	"branches-backfill" | "builds-backfill" | "commits-backfill" | "deployments-backfill" | "prs-backfill" |
 	"branches" | "builds" | "commits" | "deployments" | "prs";
 
-export const shouldSendAll = async (type: ShouldSendAllStringTypes, jiraHost: string, logger: Logger): Promise<boolean> => {
+export const shouldSendAll = async (type: ShouldSendAllStringTypes, _jiraHost: string, logger: Logger): Promise<boolean> => {
 	try {
 		// Full set:
 		// ["branches-backfill", "builds-backfill", "commits-backfill", "deployments-backfill", "prs-backfill", "branches", "builds", "commits", "deployments", "prs"]
-		const sendAllString: string = await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
-		const sendAllArray: string[] = JSON.parse(sendAllString);
-		return sendAllArray.includes(type);
+		const sendAllString= await stringFlag(StringFlags.SEND_ALL, "[]", jiraHost);
+		const sendAllArray = JSON.parse(sendAllString);
+		return Array.isArray(sendAllArray) && sendAllArray.includes(type);
 	} catch (e) {
 		logger.error({ err: e, type }, "Cannot define if should send all");
 		return false;
