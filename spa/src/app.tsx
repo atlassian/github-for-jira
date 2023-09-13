@@ -12,6 +12,8 @@ import Connections from "./pages/Connections";
 
 import * as Sentry from "@sentry/react";
 import { initSentry } from "./sentry";
+import { useEffect } from "react";
+import { getFeatureFlagClient } from "~/src/frontend-feature-flag-client";
 
 initSentry();
 
@@ -25,6 +27,10 @@ const App = () => {
 		spacing: "spacing",
 		typography: "typography",
 	});
+
+	useEffect(() => {
+		getFeatureFlagClient();
+	}, []);
 
 	return (
 		<BrowserRouter>

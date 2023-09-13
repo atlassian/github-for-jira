@@ -5,7 +5,7 @@ import Heading from "@atlaskit/heading";
 import Button from "@atlaskit/button";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { useNavigate } from "react-router-dom";
-import FrontendFeatureFlagClient from "../../frontend-feature-flag-client";
+import { getBooleanFlagValue } from "../../frontend-feature-flag-client";
 
 const ConnectedContainer = styled.div`
 	margin: 0 auto;
@@ -49,7 +49,7 @@ const SectionImg = styled.img`
 
 const Connected = () => {
 	useEffectScreenEvent("SuccessfulConnectedScreen");
-	const enable5KuExperienceBackfillPage: boolean = new FrontendFeatureFlagClient().getFlagValue("enable-5ku-experience-backfill-page", true);
+	const enable5KuExperienceBackfillPage: boolean = getBooleanFlagValue("enable-5ku-experience-backfill-page", false);
 
 	const navigate = useNavigate();
 	const { colorMode } = useThemeObserver();

@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs/promises";
 import { envVars } from "config/env";
 import { createHashWithSharedSecret } from "utils/encryption";
-import { JiraClient } from "models/jira-client";
+import { JwtHandlerWithoutQsh } from "../../rest/middleware/jwt/jwt-handler";
 
 export const SpaRouter = Router();
 
@@ -14,18 +14,16 @@ SpaRouter.use("/static", Static(path.join(rootPath, 'spa/build/static')));
 
 //Because it is Single Page App, for all routes to /spa/screen1 , /spa/screen1/step2 should render the spa index.html anyway
 let indexHtmlContent: string = "";
-SpaRouter.use("/*", async (req, res) => {
-	const { installation } = res.locals;
+
+SpaRouter.use(JwtHandlerWithoutQsh);
+SpaRouter.use("/*", async (_, res) => {
+	const { jiraHost, accountId } = res.locals;
 
 	if (!indexHtmlContent) {
-		const jiraClient = await JiraClient.getNewClient(installation, req.log);
-		const { account_id } = await jiraClient.getAtlassianAccountId();
-
-		const jiraHost = req.query.xdm_e?.toString();
 		indexHtmlContent = (await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8"))
 			.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
 			.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
-			.replace("##ATLASSIAN_ACCOUNT_ID##", account_id || "")
+			.replace("##ATLASSIAN_ACCOUNT_ID##", accountId || "")
 			.replace("##HASHED_JIRAHOST##", createHashWithSharedSecret(jiraHost));
 	}
 	res.status(200).send(indexHtmlContent);

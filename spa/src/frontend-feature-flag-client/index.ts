@@ -1,9 +1,7 @@
-import FeatureFlagWebClient, {
-	GetValueOptions,
-	Identifiers,
-	SupportedFlagTypes
-} from "@atlassiansox/feature-flag-web-client";
+import FeatureFlagWebClient, { Identifiers } from "@atlassiansox/feature-flag-web-client";
 import createAnalyticsClient from "./analytics-client";
+
+let featureFlagClient: FeatureFlagWebClient | null = null;
 
 // TODO: Hard code these values
 const apiKeys = () => {
@@ -20,7 +18,7 @@ const apiKeys = () => {
 const featureFlagUser = {
 	isAnonymous: false,
 	identifier: {
-		type: Identifiers.TENANT_ID,
+		type: Identifiers.ATLASSIAN_ACCOUNT_ID,
 		value: ATLASSIAN_ACCOUNT_ID,
 	},
 	custom: {
@@ -35,21 +33,21 @@ const options = {
 	environment: SPA_APP_ENV
 };
 
-export default class FrontendFeatureFlagClient {
-	private fffClient: FeatureFlagWebClient | undefined;
-
-	async init() {
-		if (!this.fffClient) {
-			this.fffClient = new FeatureFlagWebClient(
-				apiKeys(),
-				createAnalyticsClient(),
-				featureFlagUser,
-				options
-			);
-		}
+export const getFeatureFlagClient = async (): Promise<FeatureFlagWebClient> => {
+	if (featureFlagClient === null) {
+		const fffClient = new FeatureFlagWebClient(
+			apiKeys(),
+			createAnalyticsClient(),
+			featureFlagUser,
+			options
+		);
+		await fffClient.ready();
+		featureFlagClient = fffClient;
+		return featureFlagClient;
+	} else {
+		return featureFlagClient;
 	}
+};
 
-	getFlagValue<T extends SupportedFlagTypes>(flagKey: string, defaultValue: T, options?: GetValueOptions<T>): T {
-		return this.fffClient ? this.fffClient.getFlagValue(flagKey, defaultValue, options) : defaultValue;
-	}
-}
+export const getBooleanFlagValue = (flagName: string, defaultValue = false): boolean =>
+	featureFlagClient ? featureFlagClient.getFlagValue(flagName, defaultValue) : defaultValue;
