@@ -112,7 +112,7 @@ export const isBlocked = async (jiraHost: string, installationId: number, logger
 	try {
 		const blockedInstallationsString = await stringFlag(StringFlags.BLOCKED_INSTALLATIONS, "[]", jiraHost);
 		const blockedInstallations: number[] = JSON.parse(blockedInstallationsString);
-		return blockedInstallations.includes(installationId);
+		return Array.isArray(blockedInstallations) && blockedInstallations.includes(installationId);
 	} catch (e) {
 		logger.error({ err: e, installationId }, "Cannot define if isBlocked");
 		return false;
