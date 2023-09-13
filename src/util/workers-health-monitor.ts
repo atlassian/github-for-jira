@@ -3,7 +3,28 @@ import Logger from "bunyan";
 import cluster from "cluster";
 import { exec } from "child_process";
 import { logInfoSampled } from "utils/log-sampled";
+import * as nodeOomHeapdump from "node-oom-heapdump";
+import * as fs from "fs";
+import * as path from "path";
+import { envVars } from "config/env";
+
+const heapdumpsDir = path.join("/tmp", "heapdumps");
+
+if (!fs.existsSync(heapdumpsDir)){
+	fs.mkdirSync(heapdumpsDir, { recursive: true });
+}
+
+const generateHeapDumpFilePath = (pid: number) => {
+	return path.resolve(heapdumpsDir, `heapdump_${envVars.MICROS_INSTANCE_ID}_${pid}`);
+};
+
 const CONF_SHUTDOWN_MSG = "shutdown";
+
+nodeOomHeapdump({
+	heapdumpOnOOM: true,
+
+	path: generateHeapDumpFilePath(process.pid)
+});
 
 export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: number) => {
 	const logger = parentLogger.child({ isWorker: true });

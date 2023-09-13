@@ -23,7 +23,6 @@ import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { extraLoggerInfo } from "./webhook-logging-extra";
 import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
 import { installationWebhookHandler } from "~/src/github/installation";
-import { logMemoryUsage } from "utils/logger-utils";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -39,7 +38,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		...extraLoggerInfo(payload, parentLogger)
 	});
 	logger.info("Webhook received");
-	logMemoryUsage(logger, "webhook_received");
 
 	let webhookContext;
 	try {
@@ -51,7 +49,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 			 * Once we stop receiving logs with index other than 0,
 			 * can then completely remove the old webhook secrets.
 			 */
-			logMemoryUsage(logger, "after_signature_validation");
 			if (matchesSignature) {
 				logger.info({ index }, "Matched webhook index");
 			}
@@ -99,7 +96,6 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 
 const webhookRouter = async (context: WebhookContext) => {
 	const VALID_PULL_REQUEST_ACTIONS = ["opened", "reopened", "closed", "edited", "review_requested"];
-	logMemoryUsage(context.log, `webhook_router_${context.name}`);
 	switch (context.name) {
 		case "push":
 			await GithubWebhookMiddleware(pushWebhookHandler)(context);
