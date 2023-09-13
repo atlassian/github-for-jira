@@ -6,7 +6,7 @@ declare global {
 	const AP: AtlassianPlugin;
 	const SPA_APP_ENV: "" | "local" | "dev" | "staging" | "prod";
 	const SENTRY_SPA_DSN: string | undefined;
-	const ENABLE_5KU_BACKFILL_PAGE: string;
+	const FRONTEND_FEATURE_FLAGS: any;
 }
 
 interface AtlassianPlugin {

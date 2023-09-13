@@ -19,12 +19,14 @@ SpaRouter.use(JwtHandlerWithoutQsh);
 SpaRouter.use("/*", async (_, res) => {
 	if (!indexHtmlContent) {
 		const { jiraHost } = res.locals;
-		const enableBackillPage = await booleanFlag(BooleanFlags.ENABLE_5KU_BACKFILL_PAGE, jiraHost)  ? "true" : "false";
+		const featureFlags = {
+			ENABLE_5KU_BACKFILL_PAGE: await booleanFlag(BooleanFlags.ENABLE_5KU_BACKFILL_PAGE, jiraHost)
+		};
 
 		indexHtmlContent = (await fs.readFile(path.join(process.cwd(), "spa/build/index.html"), "utf-8"))
 			.replace("##SPA_APP_ENV##", envVars.MICROS_ENVTYPE || "")
 			.replace("##SENTRY_SPA_DSN##", envVars.SENTRY_SPA_DSN || "")
-			.replace("##ENABLE_5KU_BACKFILL_PAGE##", enableBackillPage)
+			.replace("\"##FRONTEND_FEATURE_FLAGS##\"", JSON.stringify(featureFlags));
 	}
 	res.status(200).send(indexHtmlContent);
 });

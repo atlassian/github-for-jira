@@ -10,6 +10,7 @@ import SyncHeader from "../../components/SyncHeader";
 import { Wrapper } from "../../common/Wrapper";
 import analyticsClient, { useEffectScreenEvent } from "../../analytics";
 import { reportError } from "../../utils";
+import { enableBackfillStatusPage } from "./../../feature-flags";
 
 const BeforeText = styled.div`
 	color: ${token("color.text.subtle")};
@@ -129,7 +130,7 @@ const StartConnection = () => {
 					Continue
 				</Button>
 				{
-					ENABLE_5KU_BACKFILL_PAGE === "true" &&
+					enableBackfillStatusPage &&
 						<Button
 							appearance="subtle"
 							onClick={() => {

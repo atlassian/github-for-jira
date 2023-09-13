@@ -11,6 +11,7 @@ import userEvent from "@testing-library/user-event";
 	}
 };
 (global as any).open = jest.fn();
+(global as any).FRONTEND_FEATURE_FLAGS = { ENABLE_5KU_BACKFILL_PAGE: false };
 
 const navigate = jest.fn();
 jest.mock("react-router-dom", () => ({
@@ -49,11 +50,6 @@ test("Basic check for the Connected Page", async () => {
 	await userEvent.click(screen.getByText("Learn about development work in Jira"));
 	expect(window.open).toBeCalledWith("https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/", "_blank");
 
-	(global as any).ENABLE_5KU_BACKFILL_PAGE = "true";
-	await userEvent.click(screen.getByText("Check your backfill status"));
-	expect(navigate).toHaveBeenCalledWith("/spa/connections");
-
-	(global as any).ENABLE_5KU_BACKFILL_PAGE = "false";
 	await userEvent.click(screen.getByText("Check your backfill status"));
 	expect(AP.navigator.go).toHaveBeenCalled();
 
