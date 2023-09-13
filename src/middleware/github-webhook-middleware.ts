@@ -78,6 +78,7 @@ const moreWebhookSpecificTags = (webhookContext: WebhookContext): Record<string,
 export const GithubWebhookMiddleware = (
 	callback: (webhookContext: WebhookContext, jiraClient: any, util: any, githubInstallationId: number, subscription: Subscription) => Promise<void>
 ) => {
+
 	return withSentry(async (context: WebhookContext) => {
 		const webhookEvent = extractWebhookEventNameFromContext(context);
 

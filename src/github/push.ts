@@ -12,6 +12,7 @@ import { createInstallationClient } from "utils/get-github-client-config";
 
 
 export const pushWebhookHandler = async (context: WebhookContext, jiraClient, _util, gitHubInstallationId: number, subscription: Subscription): Promise<void> => {
+
 	const webhookReceived = getCurrentTime();
 
 	// Copy the shape of the context object for processing

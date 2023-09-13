@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { JiraConfigurationRouter } from "./configuration/jira-configuration-router";
 import { JiraSyncPost } from "./sync/jira-sync-post";
 import { JiraAtlassianConnectGet } from "./atlassian-connect/jira-atlassian-connect-get";
 import { JiraEventsRouter } from "./events/jira-events-router";
@@ -39,8 +38,3 @@ JiraRouter.use("/security", jiraSymmetricJwtMiddleware, JiraSecurityWorkspacesRo
 JiraRouter.get("/", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraGet);
 
 JiraRouter.get("/subscription/:subscriptionId/repos", csrfMiddleware, jiraSymmetricJwtMiddleware, jiraAdminPermissionsMiddleware, JiraConnectedReposGet);
-
-/********************************************************************************************************************
- * TODO: remove this later, keeping this for now cause its out in `Prod`
- * *******************************************************************************************************************/
-JiraRouter.use("/configuration", JiraConfigurationRouter);

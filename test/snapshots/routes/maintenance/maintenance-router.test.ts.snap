@@ -32,19 +32,6 @@ Object {
         },
         "url": "/jira",
       },
-      Object {
-        "conditions": Array [
-          Object {
-            "condition": "user_is_admin",
-          },
-        ],
-        "key": "gh-addon-admin-old",
-        "location": "none",
-        "name": Object {
-          "value": "Configure",
-        },
-        "url": "/jira/configuration",
-      },
     ],
     "generalPages": Array [
       Object {

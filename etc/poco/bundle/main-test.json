@@ -57,14 +57,6 @@
       "allowed": true
     },
 		{
-      "name": "Allow external users to open jira configuration page",
-      "path": "/jira/configuration",
-      "method": "GET",
-      "mechanism": "open",
-      "principals": [],
-      "allowed": true
-    },
-		{
       "name": "Allow external users to open maintenance page",
       "path": "/maintenance",
       "method": "GET",
@@ -148,14 +140,6 @@
 			"name": "Allow external users to access the setup route",
 			"path": "/setup",
 			"method": "GET",
-			"mechanism": "open",
-			"principals": [],
-			"allowed": true
-		},
-		{
-			"name": "Allow external users to disconnect github account",
-			"path": "/jira/configuration",
-			"method": "DELETE",
 			"mechanism": "open",
 			"principals": [],
 			"allowed": true

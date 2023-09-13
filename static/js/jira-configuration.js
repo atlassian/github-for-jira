@@ -207,6 +207,7 @@ const handleDisconnectRequest = (path, data) => {
 
 const mapDisconnectRequest = (disconnectType, data) => {
 	AP.context.getToken(function(token) {
+		console.log("CALLING DISCONNECT");
 		let payload = {
 			jwt: token,
 			jiraHost
@@ -222,9 +223,10 @@ const mapDisconnectRequest = (disconnectType, data) => {
 				handleDisconnectRequest(`/jira/connect/enterprise/app/${payload.uuid}`, payload);
 				return;
 			default:
+				console.log("CALLING DISCONNECT NEW VERSION");
 				payload.gitHubInstallationId = data.disconnectData;
 				payload.appId = data.optionalDisconnectData;
-				handleDisconnectRequest("/jira/configuration", payload);
+				handleDisconnectRequest(`/jira/subscription/${payload.gitHubInstallationId}`, payload);
 				return;
 		}
 	});
