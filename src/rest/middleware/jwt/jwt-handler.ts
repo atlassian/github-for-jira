@@ -29,7 +29,25 @@ export const JwtHandler = errorWrapper("JwtHandler", async (req: Request, res: R
 
 });
 
-const verifySymmetricJwt = async (token: string, logger: Logger) => {
+export const JwtHandlerWithoutQsh = errorWrapper("JwtHandlerWithoutQsh", async (req: Request, res: Response, next: NextFunction) => {
+	const token = req.query.jwt?.toString();
+	if (!token) {
+		throw new InvalidTokenError("Unauthorised");
+	}
+
+	try {
+		const { installation, accountId } = await verifySymmetricJwt(token, req.log, true);
+		res.locals.jiraHost = installation.jiraHost;
+		res.locals.accountId = accountId;
+		next();
+
+	} catch (e) {
+		req.log.warn({ err: e }, "Failed to verify JWT token");
+		throw new InvalidTokenError("Unauthorised");
+	}
+});
+
+const verifySymmetricJwt = async (token: string, logger: Logger, ignoreQsh: boolean = false) => {
 	const algorithm = getAlgorithm(token);
 
 	// Decode without verification;
@@ -55,7 +73,7 @@ const verifySymmetricJwt = async (token: string, logger: Logger) => {
 		throw new Error("JWT Verification Failed, token is expired");
 	}
 
-	if (claims.qsh !== "context-qsh") {
+	if (!ignoreQsh && claims.qsh !== "context-qsh") {
 		throw new Error("JWT Verification Failed, wrong qsh");
 	}
 
