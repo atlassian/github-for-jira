@@ -45,6 +45,9 @@ const Section = styled.div`
 const SectionImg = styled.img`
 	height: 100px;
 `;
+const StyledLink = styled.a`
+	cursor: pointer;
+`;
 
 const Connected = () => {
 	useEffectScreenEvent("SuccessfulConnectedScreen");
@@ -55,6 +58,16 @@ const Connected = () => {
 	const navigateToBackfillPage = () => {
 		analyticsClient.sendUIEvent({ actionSubject: "checkBackfillStatus", action: "clicked" });
 		AP.navigator.go( "addonmodule", { moduleKey: "gh-addon-admin" });
+	};
+
+	const learnAboutIssueLinking = () => {
+		analyticsClient.sendUIEvent({ actionSubject: "learnAboutIssueLinking", action: "clicked" });
+		window.open("https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/", "_blank");
+	};
+
+	const learnAboutDevelopmentWork = () => {
+		analyticsClient.sendUIEvent({ actionSubject: "learnAboutDevelopmentWork", action: "clicked" });
+		window.open("https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/", "_blank");
 	};
 
 	return (<Wrapper>
@@ -87,12 +100,9 @@ const Connected = () => {
 							titles, commit messages and<br />
 							more to bring them into Jira.
 						</Paragraph>
-						<a
-							href="https://support.atlassian.com/jira-software-cloud/docs/reference-issues-in-your-development-work/"
-							target="_blank"
-						>
+						<StyledLink onClick={learnAboutIssueLinking}>
 							Learn about issue linking
-						</a>
+						</StyledLink>
 					</Section>
 					<Section>
 						<SectionImg src="/public/assets/collaborate-in-jira.svg" alt=""/>
@@ -102,12 +112,9 @@ const Connected = () => {
 							will appear in issues and the<br />
 							code feature.
 						</Paragraph>
-						<a
-							href="https://support.atlassian.com/jira-cloud-administration/docs/integrate-with-development-tools/"
-							target="_blank"
-						>
+						<StyledLink onClick={learnAboutDevelopmentWork}>
 							Learn about development work in Jira
-						</a>
+						</StyledLink>
 					</Section>
 				</FlexWrapper>
 			</div>

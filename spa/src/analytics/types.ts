@@ -5,7 +5,8 @@ type UIEventActionSubject =
 	| "connectOrganisation" | "installToNewOrganisation"
 	| "checkBackfillStatus"
 	| "dropExperienceViaBackButton"
-	| "checkOrgAdmin";
+	| "checkOrgAdmin"
+	| "learnAboutIssueLinking" | "learnAboutDevelopmentWork";
 
 export type UIEventProps = {
 	actionSubject: UIEventActionSubject,
