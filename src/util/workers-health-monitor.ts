@@ -56,7 +56,8 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	const liveWorkers: Record<string, number> = { }; // pid => timestamp
 
 	const registerNewWorkers = () => {
-		logger.info(`registering workers`);
+		logInfoSampled(logger, "monRegWorkers", `registering workers`, 100);
+
 		for (const worker of Object.values(cluster.workers)) {
 			if (worker) {
 				const workerPid = worker.process.pid;
@@ -69,7 +70,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					});
 					worker.on("exit", (code, signal) => {
 						if (signal) {
-							logger.warn(`worker was killed by signal: ${signal}`);
+							logger.warn(`worker was killed by signal: ${signal}, code=${code}`);
 						} else if (code !== 0) {
 							logger.warn(`worker exited with error code: ${code}`);
 						} else {
@@ -84,6 +85,13 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 	let workersReadyAt: undefined | Date;
 	const areWorkersReady = () => workersReadyAt && workersReadyAt.getTime() < Date.now();
 	const maybeSetupWorkersReadyAt = () => {
+		if (areWorkersReady()) {
+			logInfoSampled(logger, "workersReadyNothingToDo", "all workers are considered ready, workersReadyAt", 100);
+			return ;
+		}
+
+		logRunningProcesses(logger);
+
 		if (!workersReadyAt) {
 			if (Object.keys(registeredWorkers).length > config.numberOfWorkersThreshold) {
 				workersReadyAt = new Date(Date.now() + config.workerStartupTimeMsecs);
@@ -94,7 +102,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		} else {
 			logger.info({
 				workersReadyAt
-			}, "workersReadyAt is defined");
+			}, `workersReadyAt is defined, idling during ${config.workerStartupTimeMsecs} msecs`);
 		}
 	};
 
@@ -111,6 +119,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			keysToKill.forEach((key) => {
 				logger.info(`remove worker with pid=${key} from live workers`);
 				delete liveWorkers[key];
+				logRunningProcesses(logger);
 			});
 		} else {
 			logger.warn("workers are not ready yet, skip removing logic");
@@ -126,11 +135,12 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			for (const worker of Object.values(cluster.workers)) {
 				worker?.send(CONF_SHUTDOWN_MSG);
 			}
+			logRunningProcesses(logger);
 		} else {
-			logger.info({
+			logInfoSampled(logger.child({
 				areWorkersReady: areWorkersReady(),
 				nLiveWorkers
-			}, "not sending shutdown signal");
+			}), "notSendingSignal", "not sending shutdown signal", 100);
 		}
 	};
 
@@ -139,6 +149,5 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		maybeSetupWorkersReadyAt();
 		maybeRemoveDeadWorkers();
 		maybeSendShutdownToAllWorkers();
-		logRunningProcesses(logger);
 	}, config.pollIntervalMsecs);
 };

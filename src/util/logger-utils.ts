@@ -3,6 +3,7 @@ import safeJsonStringify from "safe-json-stringify";
 import bformat from "bunyan-format";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { isNodeDev } from "utils/is-node-env";
+import Logger from "bunyan";
 
 const SENSITIVE_DATA_FIELDS = ["jiraHost", "orgName", "repoName", "userGroup", "userGroup", "aaid", "username", "prTitle", "prRef", "owner", "description", "repo"];
 // For any Micros env we want the logs to be in JSON format.
@@ -69,3 +70,17 @@ export class SafeRawLogStream extends RawLogStream {
 		return recordClone;
 	}
 }
+
+const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100} MB`;
+
+export const logMemoryUsage = (logger: Logger, point: string) => {
+	const memoryData = process.memoryUsage();
+	const memStats = {
+		rss: formatMemoryUsage(memoryData.rss),
+		heapTotal: formatMemoryUsage(memoryData.heapTotal),
+		heapUsed: formatMemoryUsage(memoryData.heapUsed),
+		external: formatMemoryUsage(memoryData.external),
+		arrayBuffers: formatMemoryUsage(memoryData.arrayBuffers)
+	};
+	logger.info({ memStats, point }, `Logging memStats at ${point}`);
+};

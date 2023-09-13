@@ -8,6 +8,7 @@ import { metricError } from "config/metric-names";
 import { v4 as uuidv4 } from "uuid";
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { createUrlWithQueryString } from "utils/create-url-with-query-string";
+import { getLogger } from "config/logger";
 
 export const attachErrorHandler = (router: Router) => {
 
@@ -46,8 +47,9 @@ export const attachErrorHandler = (router: Router) => {
 	// Error and Catch all route - Handle anything that's missing or has throw an error
 	const catchAllMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
 		const errorReference = uuidv4();
-
-		req.log.error({ payload: req.body, errorReference, err, req, res }, "Error in frontend");
+		const log = req.log || getLogger("catchAllMiddleware");
+		// Inject atl-traceid here as well because the call might fail before we reach frontend-log-middleware
+		log.error({ payload: req.body, errorReference, err, req, res, atlTraceId: req.headers["atl-traceid"] }, "Error in frontend");
 
 		if (!isNodeProd() && res.locals.showError) {
 			return next(err);
