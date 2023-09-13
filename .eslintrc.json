@@ -62,8 +62,12 @@
 		"@typescript-eslint/no-var-requires": "error",
 		"@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
 		"no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-		"no-console": "error"
-		
+		"no-console": "error",
+		"@typescript-eslint/restrict-template-expressions": ["error", {
+			"allowBoolean": true,
+			"allowNullish": true,
+			"allowNumber": true
+		}]
 	},
 	"overrides": [{
 		"files": [ "test/**/*.ts", "src/**/*.test.ts" ],

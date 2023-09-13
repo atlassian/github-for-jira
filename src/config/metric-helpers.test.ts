@@ -27,7 +27,7 @@ describe("metrics helper", () => {
 			if (daysAgo === undefined) return undefined;
 			return new Date(new Date().getTime() - (daysAgo * 24 * 60 * 60 * 1000));
 		};
-		it(`should show correct bucket ${bucket} for ${daysAgo ? daysAgo.toString() : "undefined"} days ago`, () => {
+		it(`should show correct bucket ${bucket} for ${daysAgo} days ago`, () => {
 			expect(backfillFromDateToBucket(getDate(daysAgo))).toEqual(bucket);
 		});
 	});

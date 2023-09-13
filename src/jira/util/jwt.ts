@@ -8,6 +8,7 @@ import { queryAtlassianConnectPublicKey } from "./query-atlassian-connect-public
 import { includes, isEmpty } from "lodash";
 import { createHash } from "crypto";
 import url, { UrlWithParsedQuery } from "url";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 const JWT_PARAM = "jwt";
 const AUTH_HEADER = "authorization"; // the header name appears as lower-case
@@ -140,7 +141,7 @@ const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: To
 	try {
 		unverifiedClaims = decodeSymmetric(token, "", algorithm, true); // decode without verification;
 	} catch (e: unknown) {
-		throw `Invalid JWT: ${e instanceof Error ? e.message : "unknown"}`;
+		throw `Invalid JWT: ${errorStringFromUnknown(e)}`;
 	}
 
 	if (!unverifiedClaims.iss) {
@@ -152,7 +153,7 @@ const validateSymmetricJwt = (secret: string, request: JWTRequest, tokenType: To
 	try {
 		verifiedClaims = decodeSymmetric(token, secret, algorithm, false);
 	} catch (e: unknown) {
-		throw `Unable to decode JWT token: ${e instanceof Error ? e.toString() : "unknown"}`;
+		throw `Unable to decode JWT token: ${errorStringFromUnknown(e)}`;
 	}
 
 	validateJwtClaims(verifiedClaims, tokenType, request);

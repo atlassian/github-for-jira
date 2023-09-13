@@ -17,6 +17,7 @@ import {
 	registerSubscriptionDeferredInstallPayloadRequest,
 	SubscriptionDeferredInstallPayload
 } from "services/subscription-deferred-install-service";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface ConnectedStatus {
 	// TODO: really need to type this sync status
@@ -139,7 +140,7 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 					gitHubAppId
 				});
 			} catch (err: unknown) {
-				const deleteSubscriptionError = `Failed to delete subscription: ${err instanceof Error ? err.toString() : "unkown"}`;
+				const deleteSubscriptionError = `Failed to delete subscription: ${errorStringFromUnknown(err)}`;
 				logger.error(deleteSubscriptionError);
 			}
 		}));

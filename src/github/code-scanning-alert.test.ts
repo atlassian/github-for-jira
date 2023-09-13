@@ -10,10 +10,7 @@ import { mocked } from "jest-mock";
 import { emitWebhookProcessedMetrics } from "utils/webhook-utils";
 import Logger from "bunyan";
 import { booleanFlag } from "config/feature-flags";
-import { DeploymentsResult, JiraClient } from "../jira/client/jira-client";
-import { AxiosResponse } from "axios";
-import { JiraIssue, JiraSubmitOptions, JiraBuildBulkSubmitData, JiraDeploymentBulkSubmitData } from "../interfaces/jira";
-import { TransformedRepositoryId } from "../transforms/transform-repository-id";
+import { JiraClient } from "../jira/client/jira-client";
 
 jest.mock("config/feature-flags");
 jest.mock("utils/webhook-utils");
@@ -49,6 +46,57 @@ const getWebhookContext = <T>(): WebhookContext<T> => {
 	};
 };
 
+const createMockJiraClient = () : JiraClient => {
+	return {
+		baseURL: JIRA_BASE_URL,
+		remoteLink: {
+			submit: jest.fn()
+		},
+		security: {
+			submitVulnerabilities: jest.fn()
+		},
+		issues: {
+			get: jest.fn(),
+			getAll: jest.fn(),
+			parse: jest.fn(),
+			comments: {
+				list: jest.fn(),
+				addForIssue: jest.fn(),
+				updateForIssue: jest.fn(),
+				deleteForIssue: jest.fn()
+			},
+			transitions: {
+				getForIssue: jest.fn(),
+				updateForIssue: jest.fn()
+			},
+			worklogs: {
+				addForIssue: jest.fn()
+			}
+		},
+		devinfo: {
+			branch: {
+				delete: jest.fn()
+			},
+			installation: {
+				delete: jest.fn()
+			},
+			pullRequest: {
+				delete: jest.fn()
+			},
+			repository: {
+				delete: jest.fn(),
+				update: jest.fn()
+			}
+		},
+		workflow: {
+			submit: jest.fn()
+		},
+		deployment: {
+			submit: jest.fn()
+		}
+	};
+};
+
 describe("Code Scanning Alert Webhook Handler", () => {
 	beforeEach(() => {
 		jest.resetAllMocks();
@@ -57,84 +105,11 @@ describe("Code Scanning Alert Webhook Handler", () => {
 
 	const mockJiraRemoteLinkSubmit = jest.fn();
 	const mockJiraSecuritySubmit = jest.fn();
-	const jiraClient: JiraClient = {
-		baseURL: JIRA_BASE_URL,
-		remoteLink: { submit: mockJiraRemoteLinkSubmit },
-		security: { submitVulnerabilities: mockJiraSecuritySubmit },
-		issues: {
-			get: function (_issueId: string, _query?: { fields: string; } | undefined): Promise<AxiosResponse<JiraIssue, any>> {
-				throw new Error("Function not implemented.");
-			},
-			getAll: function (_issueIds: string[], _query?: { fields: string; } | undefined): Promise<JiraIssue[]> {
-				throw new Error("Function not implemented.");
-			},
-			parse: function (_text: string): string[] | undefined {
-				throw new Error("Function not implemented.");
-			},
-			comments: {
-				list: function (_issue_id: string) {
-					throw new Error("Function not implemented.");
-				},
-				addForIssue: function (_issue_id: string, _payload: any) {
-					throw new Error("Function not implemented.");
-				},
-				updateForIssue: function (_issue_id: string, _comment_id: string, _payload: any) {
-					throw new Error("Function not implemented.");
-				},
-				deleteForIssue: function (_issue_id: string, _comment_id: string) {
-					throw new Error("Function not implemented.");
-				}
-			},
-			transitions: {
-				getForIssue: function (_issue_id: string) {
-					throw new Error("Function not implemented.");
-				},
-				updateForIssue: function (_issue_id: string, _transition_id: string) {
-					throw new Error("Function not implemented.");
-				}
-			},
-			worklogs: {
-				addForIssue: function (_issue_id: string, _payload: any) {
-					throw new Error("Function not implemented.");
-				}
-			}
-		},
-		devinfo: {
-			branch: {
-				delete: function (_transformedRepositoryId: TransformedRepositoryId, _branchRef: string) {
-					throw new Error("Function not implemented.");
-				}
-			},
-			installation: {
-				delete: function (_gitHubInstallationId: string | number): Promise<any[]> {
-					throw new Error("Function not implemented.");
-				}
-			},
-			pullRequest: {
-				delete: function (_transformedRepositoryId: TransformedRepositoryId, _pullRequestId: string) {
-					throw new Error("Function not implemented.");
-				}
-			},
-			repository: {
-				delete: function (_epositoryId: number, _gitHubBaseUrl?: string | undefined): Promise<any[]> {
-					throw new Error("Function not implemented.");
-				},
-				update: function (_data: any, _options?: JiraSubmitOptions | undefined) {
-					throw new Error("Function not implemented.");
-				}
-			}
-		},
-		workflow: {
-			submit: function (_data: JiraBuildBulkSubmitData, _repositoryId: number, _options?: JiraSubmitOptions | undefined): Promise<any> {
-				throw new Error("Function not implemented.");
-			}
-		},
-		deployment: {
-			submit: function (_data: JiraDeploymentBulkSubmitData, _repositoryId: number, _options?: JiraSubmitOptions | undefined): Promise<DeploymentsResult> {
-				throw new Error("Function not implemented.");
-			}
-		}
-	};
+	const jiraClient = createMockJiraClient();
+
+	jiraClient.baseURL = JIRA_BASE_URL;
+	jiraClient.remoteLink.submit = mockJiraRemoteLinkSubmit;
+	jiraClient.security.submitVulnerabilities = mockJiraSecuritySubmit;
 
 	it("transform and submit remote link to jira", async () => {
 		const jiraPayload = { remoteLinks: [] };

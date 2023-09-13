@@ -13,6 +13,7 @@ import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/commo
 import { getCloudOrServerFromGitHubAppId } from "utils/get-cloud-or-server";
 import { Errors } from "config/errors";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface FailedConnection {
 	id: number;
@@ -233,6 +234,6 @@ export const JiraGet = async (
 		await renderJiraCloudAndEnterpriseServer(res, req);
 		req.log.debug("Jira configuration rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira configuration: ${error instanceof Error ? error.toString() : "unknown"}`));
+		return next(new Error(`Failed to render Jira configuration: ${errorStringFromUnknown(error)}`));
 	}
 };

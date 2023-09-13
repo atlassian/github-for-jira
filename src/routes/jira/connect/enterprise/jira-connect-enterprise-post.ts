@@ -70,8 +70,8 @@ export const JiraConnectEnterprisePost = async (
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
 	const gheServerURL: string = req.body.gheServerURL?.trim() || "undefined";
-	const apiKeyHeaderName: string= req.body.apiKeyHeaderName?.trim() || "undefined";
-	const apiKeyValue: string = req.body.apiKeyValue?.trim() || "undefined";
+	const apiKeyHeaderName: string | undefined = req.body.apiKeyHeaderName?.trim();
+	const apiKeyValue: string | undefined = req.body.apiKeyValue?.trim();
 
 	const { id: installationId } = res.locals.installation;
 
@@ -127,7 +127,7 @@ export const JiraConnectEnterprisePost = async (
 			apiKeyHeaderName
 				? {
 					headerName: apiKeyHeaderName,
-					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
+					apiKeyGenerator: () => Promise.resolve(apiKeyValue || "undefined")
 				}
 				: undefined
 		);
@@ -176,7 +176,7 @@ export const JiraConnectEnterprisePost = async (
 			return;
 		}
 
-		const codeOrStatus = "" + (axiosError.code || axiosError.response?.status?.toString() || "undefined");
+		const codeOrStatus = (axiosError.code || axiosError.response?.status?.toString() || "undefined");
 		req.log.warn({ err, gheServerURL }, `Couldn't access GHE host`);
 
 		const reasons = [err.message];

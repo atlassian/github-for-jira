@@ -4,6 +4,7 @@ import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { isConnected } from "utils/is-connected";
 import { saveConfiguredAppProperties } from "utils/app-properties-utils";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseDelete = async (
 	req: Request,
@@ -43,6 +44,6 @@ export const JiraConnectEnterpriseDelete = async (
 		});
 
 		res.status(200).send({ success: false, message: "Failed to delete GitHub Enterprise Server." });
-		return next(new Error(`Failed to DELETE GitHub Enterprise Server: ${error instanceof Error ? error.toString() : "unkown"}`));
+		return next(new Error(`Failed to DELETE GitHub Enterprise Server: ${errorStringFromUnknown(error)}`));
 	}
 };

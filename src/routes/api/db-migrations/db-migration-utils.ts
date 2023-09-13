@@ -17,7 +17,7 @@ const logger = getLogger("DBMigration");
  *
  * @returns The common param in req.body `targetScript` to migrate up or down
  */
-export const getTargetScript = (req: Request) => {
+export const getTargetScript = (req: Request) : string => {
 	const targetScript: string | null = (req.body || {}).targetScript;
 	if (!targetScript) {
 		throw {

@@ -3,6 +3,7 @@ import { GitHubServerApp } from "~/src/models/github-server-app";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsTrackEventsEnum, AnalyticsTrackSource } from "interfaces/common";
 import { validateApiKeyInputsAndReturnErrorIfAny } from "utils/api-key-validator";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectEnterpriseAppPut = async (
 	req: Request,
@@ -58,6 +59,6 @@ export const JiraConnectEnterpriseAppPut = async (
 		});
 
 		res.status(404).send({ message: "Failed to update GitHub App." });
-		return next(new Error(`Failed to update GitHub app: ${error instanceof Error ? error.toString() : "unkown"}`));
+		return next(new Error(`Failed to update GitHub app: ${errorStringFromUnknown(error)}`));
 	}
 };

@@ -103,6 +103,6 @@ export class InstallationTokenCache {
 	}
 
 	private key(githubInstallationId: number, gitHubAppId: number | undefined): string {
-		return `${githubInstallationId}_${gitHubAppId ? gitHubAppId.toString() : "undefined"}`;
+		return `${githubInstallationId}_${gitHubAppId}`;
 	}
 }

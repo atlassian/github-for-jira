@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { sendAnalytics } from "utils/analytics-client";
 import { AnalyticsEventTypes, AnalyticsScreenEventsEnum } from "interfaces/common";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const JiraConnectGet = async (
 	req: Request,
@@ -20,6 +21,6 @@ export const JiraConnectGet = async (
 
 		req.log.info("Jira Connect page rendered successfully.");
 	} catch (error: unknown) {
-		return next(new Error(`Failed to render Jira Connect page: ${error instanceof Error ? error.toString() : "unknown"}`));
+		return next(new Error(`Failed to render Jira Connect page: ${errorStringFromUnknown(error)}`));
 	}
 };

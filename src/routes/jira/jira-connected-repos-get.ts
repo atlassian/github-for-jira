@@ -3,6 +3,7 @@ import { Op } from "sequelize";
 import { RepoSyncState } from "~/src/models/reposyncstate";
 import { Subscription, TaskStatus } from "~/src/models/subscription";
 import { sequelize } from "models/sequelize";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 interface Page {
 	pageNum: number;
@@ -132,7 +133,7 @@ export const JiraConnectedReposGet = async (
 
 	} catch (err: unknown) {
 		req.log.warn({ err }, "Failed to render connected repos");
-		return next(new Error(`Failed to render connected repos: ${err instanceof Error ? err.toString() : "unknown"}`));
+		return next(new Error(`Failed to render connected repos: ${errorStringFromUnknown(err)}`));
 	}
 };
 

@@ -61,7 +61,7 @@ const safeParseResult = (result: object, commitToDB: boolean) => {
 						}
 					]
 				*/
-			return `${(result[1].rowCount as number).toString()} rows deleted`;
+			return `${(result[1].rowCount as number)} rows deleted`;
 		} else {
 			/*
 			 * something like   result: [

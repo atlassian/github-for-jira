@@ -11,7 +11,7 @@ export const DBMigrationUp = async (req: Request, res: Response): Promise<void> 
 
 	try {
 
-		const targetScript: string = getTargetScript(req);
+		const targetScript = getTargetScript(req);
 		logger.info(`Received DB target script to mgiration UP: ${targetScript}`);
 
 		await validateScriptLocally(targetScript);

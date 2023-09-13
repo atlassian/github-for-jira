@@ -52,7 +52,7 @@ export const RecoverCommitsFromDatePost = async (req: Request, res: Response): P
 			}
 			lastId = sub.id;
 		}
-		info(`${count} subscriptions updated, last subscription id is ${lastId ? lastId.toString() : "undefined"})`);
+		info(`${count} subscriptions updated, last subscription id is ${lastId})`);
 
 		res.end();
 
