@@ -25,9 +25,14 @@ const AvatarWrapper = styled.span`
 const ifAllReposSynced = (
 	numberOfSyncedRepos: number,
 	totalNumberOfRepos: number
-): number | string =>
-	numberOfSyncedRepos === totalNumberOfRepos ? totalNumberOfRepos :
-		(totalNumberOfRepos ? `${numberOfSyncedRepos} / ${totalNumberOfRepos}` : "");
+): number | string => {
+	if (!totalNumberOfRepos) return "";// If the total number of repos is 0, then show nothing
+	if (numberOfSyncedRepos === totalNumberOfRepos) {
+		return totalNumberOfRepos;
+	} else {
+		return `${numberOfSyncedRepos} / ${totalNumberOfRepos}`;
+	}
+};
 
 const mapSyncStatus = (status: string): ThemeAppearance => {
 	switch (status) {
