@@ -9,6 +9,6 @@ export default () => {
 			useLegacyUrl: true
 		}
 	);
-	client.setUserInfo(userType.ATLASSIAN_ACCOUNT, HASHED_JIRAHOST);
+	client.setUserInfo(userType.ATLASSIAN_ACCOUNT, ATLASSIAN_ACCOUNT_ID);
 	return client;
 };

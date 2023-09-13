@@ -8,6 +8,7 @@ declare global {
 	const AP: AtlassianPlugin;
 	const SPA_APP_ENV: EnvironmentType;
 	const SENTRY_SPA_DSN: string | undefined;
+	const ATLASSIAN_ACCOUNT_ID: string;
 	const HASHED_JIRAHOST: string;
 }
 

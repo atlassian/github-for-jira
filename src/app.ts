@@ -7,7 +7,7 @@ import { elapsedTimeMetrics } from "config/statsd";
 import sslify from "express-sslify";
 import helmet from "helmet";
 import { RootRouter } from "routes/router";
-// import { proxyLocalUIForDev } from "~/src/spa-proxy";
+import { proxyLocalUIForDev } from "~/src/spa-proxy";
 
 export const setupFrontendApp = (app: Express): Express => {
 
@@ -24,7 +24,7 @@ export const setupFrontendApp = (app: Express): Express => {
 	 * Proxy server for running SPA locally,
 	 * Only for Dev environments for hot reload
 	 */
-	// proxyLocalUIForDev(app);
+	proxyLocalUIForDev(app);
 	// Add all routes
 	app.use(RootRouter);
 

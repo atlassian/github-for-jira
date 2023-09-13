@@ -20,8 +20,8 @@ const apiKeys = () => {
 const featureFlagUser = {
 	isAnonymous: false,
 	identifier: {
-		type: Identifiers.ATLASSIAN_ACCOUNT_ID,
-		value: HASHED_JIRAHOST,
+		type: Identifiers.TENANT_ID,
+		value: ATLASSIAN_ACCOUNT_ID,
 	},
 	custom: {
 		user: {
