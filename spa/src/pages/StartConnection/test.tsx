@@ -4,6 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import StartConnection from "./index";
 
+jest.mock("./../../feature-flags", () => ({
+	enableBackfillStatusPage: false
+}));
 jest.mock("../../analytics/analytics-proxy-client", () => {
 	return {
 		analyticsProxyClient: {
