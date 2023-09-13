@@ -146,7 +146,7 @@ export const JiraConnectEnterprisePost = async (
 					reason: "Received OK, but the host is not GitHub Enterprise server"
 				}]
 			});
-			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, "" + response.status.toString());
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, response?.status?.toString() || "undefined");
 			return;
 		}
 

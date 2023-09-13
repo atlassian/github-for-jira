@@ -127,11 +127,11 @@ export class GitHubClient {
 		);
 		this.axios.interceptors.response.use(
 			instrumentRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
-				withApiKey: (!!gitHubConfig.apiKeyConfig).toString(),
+				withApiKey: (!!gitHubConfig.apiKeyConfig)?.toString() || "undefined",
 				...this.metrics
 			}),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
-				withApiKey: (!!gitHubConfig.apiKeyConfig).toString(),
+				withApiKey: (!!gitHubConfig.apiKeyConfig)?.toString() || "undefined",
 				...this.metrics
 			})
 		);
