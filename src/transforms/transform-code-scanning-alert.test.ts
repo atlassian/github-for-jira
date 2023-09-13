@@ -18,6 +18,8 @@ const buildContext = (
 	payload,
 	gitHubAppConfig?: GitHubAppConfig
 ): WebhookContext => {
+	const logger = { info: jest.fn(), warn: jest.fn() } as unknown as Logger;
+	logger.child = jest.fn(() => logger);
 	return new WebhookContext({
 		id: "hi",
 		name: "hi",
@@ -30,8 +32,9 @@ const buildContext = (
 			gitHubApiUrl: "https://api.github.com",
 			uuid: undefined
 		},
-		log: { info: jest.fn() } as unknown as Logger
+		log: logger
 	});
+
 };
 
 describe("code_scanning_alert transform", () => {
@@ -174,46 +177,50 @@ describe("code_scanning_alert transform", () => {
 
 	describe("security vulnerabilities", () => {
 		it("transform code scanning alert to jira security payload", async () => {
+			githubUserTokenNock(gitHubInstallationId);
+			githubNock
+				.get(`/repos/${codeScanningCreatedPayload.repository.owner.login}/${codeScanningCreatedPayload.repository.name}/code-scanning/alerts/${codeScanningCreatedPayload.alert.number}/instances`)
+				.reply(200, [{ "ref": "refs/heads/main" }, { "ref": "refs/pull/123" }, { "ref": "refs/heads/dev" }]);
 			const result = await transformCodeScanningAlertToJiraSecurity(
 				buildContext(codeScanningCreatedPayload),
 				gitHubInstallationId,
 				jiraHost
 			);
-			expect(result?.vulnerabilities[0]).toMatchInlineSnapshot(`
-			Object {
-			  "additionalInfo": Object {
-			    "content": "CodeQL",
-			  },
-			  "containerId": "119484675",
-			  "description": "Hard-coding credentials in source code may enable an attacker to gain unauthorized access.",
-			  "displayName": "js/hardcoded-credentials",
-			  "id": "c-119484675-2",
-			  "identifiers": Array [
-			    Object {
-			      "displayName": "CWE-259",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259",
-			    },
-			    Object {
-			      "displayName": "CWE-321",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321",
-			    },
-			    Object {
-			      "displayName": "CWE-798",
-			      "url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798",
-			    },
-			  ],
-			  "introducedDate": "2023-08-01T00:25:22Z",
-			  "lastUpdated": "2023-08-01T00:25:22Z",
-			  "schemaVersion": "1.0",
-			  "severity": Object {
-			    "level": "critical",
-			  },
-			  "status": "open",
-			  "type": "sast",
-			  "updateSequenceNumber": 12345678,
-			  "url": "https://github.com/auzwang/sequelize-playground/security/code-scanning/2",
-			}
-		`);
+			expect(result?.vulnerabilities[0]).toMatchObject(
+				{
+					"additionalInfo": {
+						"content": "CodeQL"
+					},
+					"containerId": "119484675",
+					"displayName": "Hard-coded credentials",
+					"description": "**Vulnerability:** Hard-coded credentials\n\n**Impact:** The vulnerability in CodeQL impacts main branch and dev branch.\n\n**Severity:** Critical\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** Open\n\n**Weaknesses:** [CWE-259](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259), [CWE-321](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321), [CWE-798](https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798)\n\nVisit the vulnerability’s [code scanning alert page](https://github.com/auzwang/sequelize-playground/security/code-scanning/2) in GitHub for a recommendation and relevant example.",
+					"id": "c-119484675-2",
+					"identifiers": [
+						{
+							"displayName": "CWE-259",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=259"
+						},
+						{
+							"displayName": "CWE-321",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=321"
+						},
+						{
+							"displayName": "CWE-798",
+							"url": "https://cwe.mitre.org/cgi-bin/jumpmenu.cgi?id=798"
+						}
+					],
+					"introducedDate": "2023-08-01T00:25:22Z",
+					"lastUpdated": "2023-08-01T00:25:22Z",
+					"schemaVersion": "1.0",
+					"severity": {
+						"level": "critical"
+					},
+					"status": "open",
+					"type": "sast",
+					"updateSequenceNumber": 12345678,
+					"url": "https://github.com/auzwang/sequelize-playground/security/code-scanning/2"
+				}
+			);
 		});
 
 		it.each([
@@ -225,6 +232,7 @@ describe("code_scanning_alert transform", () => {
 		])(
 			"transform code scanning alert state %s to security vulnerability status %s",
 			async (state, expectedStatus) => {
+				setupNock(gitHubInstallationId, codeScanningCreatedPayload);
 				const payload = {
 					...codeScanningCreatedPayload,
 					alert: { ...codeScanningCreatedPayload.alert, state }
@@ -240,6 +248,7 @@ describe("code_scanning_alert transform", () => {
 		);
 
 		it("map fixed code scanning alert fixed_at to jira security lastUpdated", async () => {
+			setupNock(gitHubInstallationId, codeScanningFixedPayload);
 			const result = await transformCodeScanningAlertToJiraSecurity(
 				buildContext(codeScanningFixedPayload),
 				gitHubInstallationId,
@@ -251,6 +260,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("map closed by user code scanning alert dismissed_at to jira security lastUpdated", async () => {
+			setupNock(gitHubInstallationId, codeScanningClosedByUserPayload);
 			const result = await transformCodeScanningAlertToJiraSecurity(
 				buildContext(codeScanningClosedByUserPayload),
 				gitHubInstallationId,
@@ -271,6 +281,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("should log unmapped state", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedPayload);
 			const payload = {
 				...codeScanningCreatedPayload,
 				alert: { ...codeScanningCreatedPayload.alert, state: "unmapped_state" }
@@ -287,6 +298,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("should log unmapped severity", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedPayload);
 			const payload = {
 				...codeScanningCreatedPayload,
 				alert: {
@@ -309,6 +321,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("set identifiers when alert rule tags contains CWEs", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedJsXssPayload);
 			const payload = codeScanningCreatedJsXssPayload;
 			const context = buildContext(payload);
 			const result = await transformCodeScanningAlertToJiraSecurity(
@@ -331,6 +344,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("omit identifiers when alert rule tags is null", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedJsXssPayload);
 			const payload = {
 				...codeScanningCreatedJsXssPayload,
 				alert: {
@@ -351,6 +365,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("omit identifiers when alert rule tags is empty", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedJsXssPayload);
 			const payload = {
 				...codeScanningCreatedJsXssPayload,
 				alert: {
@@ -371,6 +386,7 @@ describe("code_scanning_alert transform", () => {
 		});
 
 		it("omit identifiers when alert rule tags have no CWEs", async () => {
+			setupNock(gitHubInstallationId, codeScanningCreatedJsXssPayload);
 			const payload = {
 				...codeScanningCreatedJsXssPayload,
 				alert: {
@@ -391,3 +407,11 @@ describe("code_scanning_alert transform", () => {
 		});
 	});
 });
+
+
+const setupNock = (gitHubInstallationId, codeScanningPayload) => {
+	githubUserTokenNock(gitHubInstallationId);
+	githubNock
+		.get(`/repos/${codeScanningPayload.repository.owner.login}/${codeScanningPayload.repository.name}/code-scanning/alerts/${codeScanningPayload.alert.number}/instances`)
+		.reply(200);
+};
