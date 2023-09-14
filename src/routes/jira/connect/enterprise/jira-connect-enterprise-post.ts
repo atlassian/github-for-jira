@@ -127,7 +127,7 @@ export const JiraConnectEnterprisePost = async (
 			apiKeyHeaderName
 				? {
 					headerName: apiKeyHeaderName,
-					apiKeyGenerator: () => Promise.resolve(apiKeyValue || "undefined")
+					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
 				}
 				: undefined
 		);

@@ -75,7 +75,7 @@ const maybeHandleNonRetryableResponseCode = <MessagePayload extends BaseMessageP
 	//Unfortunately we can't check if error is instance of Octokit.HookError because it is not a class, so we'll just rely on status
 	//New GitHub Client error (GithubClientError) also has status parameter, so it will be covered by the following check too
 	//TODO When we get rid of Octokit completely add check if (error instanceof GithubClientError) before the following code
-	const status: number = error["status"];
+	const status: number | undefined = error["status"];
 	if (status && UNRETRYABLE_STATUS_CODES.includes(status)) {
 		context.log.warn({ err: error }, `Received error with ${status} status. Unretryable. Discarding the message`);
 		return { retryable: false, isFailure: false };

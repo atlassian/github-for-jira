@@ -32,7 +32,7 @@ export const startMonitorOnWorker = (parentLogger: Logger, iAmAliveInervalMsec: 
 const logRunningProcesses = (logger: Logger) => {
 	exec("ps aux", (err, stdout) => {
 		if (err) {
-			logger.error({ err }, `exec error: ${err?.toString()}`);
+			logger.error({ err }, `exec error: ${err.toString()}`);
 			return;
 		}
 

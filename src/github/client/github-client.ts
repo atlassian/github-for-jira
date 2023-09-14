@@ -28,7 +28,7 @@ import { getLogger } from "config/logger";
 
 export interface GitHubClientApiKeyConfig {
 	headerName: string;
-	apiKeyGenerator: () => Promise<string>;
+	apiKeyGenerator: () => Promise<string | undefined>;
 }
 
 export interface GitHubConfig {
@@ -131,7 +131,7 @@ export class GitHubClient {
 				...this.metrics
 			}),
 			instrumentFailedRequest(metricHttpRequest.github, this.restApiUrl, jiraHost, {
-				withApiKey: (!!gitHubConfig.apiKeyConfig)?.toString() || "undefined",
+				withApiKey: (!!gitHubConfig.apiKeyConfig).toString(),
 				...this.metrics
 			})
 		);
@@ -142,7 +142,7 @@ export class GitHubClient {
 				if (!config.headers) {
 					config.headers = {};
 				}
-				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator();
+				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator() ?? "undefined";
 				return config;
 			});
 		}

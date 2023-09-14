@@ -534,6 +534,7 @@ export type DeploymentQueryNode = {
 	cursor: string,
 	node: {
 		createdAt: string,
+		updatedAt?: string,
 		repository: Repository,
 		databaseId: string,
 		commitOid: string,
