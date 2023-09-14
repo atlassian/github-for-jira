@@ -85,6 +85,12 @@ const mapReviewsRest = async (reviews: Array<{ state?: string, user: Octokit.Pul
 	}));
 };
 
+export const extractLinksFromPrDescription = (prDescription: string): string[] | null => {
+	// Look for http:// and https://
+	const findUrlRegex = /(https?:\/\/[^\s]+)/g;
+	return prDescription.match(findUrlRegex);
+};
+
 export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListResponseItem, jiraHost?: string) => {
 	const { title: prTitle, head, body } = pullRequest;
 	const logger = getLogger("extractIssueKeysFromPrRest");
@@ -150,7 +156,6 @@ export const transformPullRequestRest = async (
 				destinationBranchUrl: `${base.repo.html_url}/tree/${base.ref}`,
 				displayId: `#${pullRequestNumber}`,
 				id: pullRequestNumber,
-				issueKeys,
 				lastUpdate: updated_at,
 				reviewers: reviewers,
 				sourceBranch: head.ref || "",
@@ -159,7 +164,15 @@ export const transformPullRequestRest = async (
 				timestamp: updated_at,
 				title: title,
 				url: html_url,
-				updateSequenceId: Date.now()
+				updateSequenceId: Date.now(),
+				associations: [{
+					associationType: "issueKeys",
+					values: issueKeys
+				},
+				{
+					associationType: "links",
+					values: extractLinksFromPrDescription(pullRequest.body)
+				}]
 			}
 		]
 	};
@@ -218,7 +231,6 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		destinationBranchUrl: `https://github.com/${repository.owner?.login}/${repository.name}/tree/${pullRequest.baseRefName}`,
 		displayId: `#${pullRequest.number}`,
 		id: pullRequest.number,
-		issueKeys,
 		lastUpdate: pullRequest.updatedAt,
 		reviewers: mapReviews(pullRequest.reviews?.nodes, pullRequest.reviewRequests?.nodes),
 		sourceBranch: pullRequest.headRefName,
@@ -233,7 +245,15 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		timestamp: pullRequest.updatedAt,
 		title: pullRequest.title,
 		url: pullRequest.url,
-		updateSequenceId: Date.now()
+		updateSequenceId: Date.now(),
+		associations: [{
+			associationType: "issueKeys",
+			values: issueKeys
+		},
+		{
+			associationType: "links",
+			values: pullRequest.body ? extractLinksFromPrDescription(pullRequest.body) : ""
+		}]
 	};
 };
 

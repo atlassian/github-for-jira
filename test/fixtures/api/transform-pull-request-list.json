@@ -31,7 +31,7 @@
       "type": "User",
       "site_admin": true
     },
-    "body": "",
+    "body": "some random link https://google.com",
     "created_at": "2018-05-03T15:46:01Z",
     "updated_at": "2018-05-04T14:06:56Z",
     "closed_at": "2018-05-04T14:06:56Z",

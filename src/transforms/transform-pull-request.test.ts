@@ -52,7 +52,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TES-123"],
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -61,7 +60,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TES-123"]
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			url: "https://github.com/integrations/test",
@@ -109,7 +118,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TES-123"],
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -118,7 +126,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TES-123"]
+						},
+						{
+							associationType: "links",
+							values: null
+						}
+					]
 				}
 			],
 			branches: [
@@ -195,7 +213,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys,
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -204,7 +221,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: issueKeys
+						},
+						{
+							associationType: "links",
+							values: null
+						}
+					]
 				}
 			],
 			branches: [
@@ -266,7 +293,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -284,7 +310,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TEST-1"]
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			branches: [],
@@ -326,7 +362,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -344,7 +379,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TEST-1"]
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			branches: [],
@@ -384,7 +429,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -402,7 +446,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TEST-1"]
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			branches: [],
@@ -447,7 +501,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: ["TEST-1"],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -465,7 +518,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: ["TEST-1"]
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			branches: [],
@@ -508,7 +571,6 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
-					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -526,7 +588,17 @@ describe("pull_request transform REST", () => {
 					timestamp: updated_at,
 					title: title,
 					url: "https://github.com/integrations/test/pull/51",
-					updateSequenceId: 12345678
+					updateSequenceId: 12345678,
+					associations: [
+						{
+							associationType: "issueKeys",
+							values: []
+						},
+						{
+							associationType: "links",
+							values: ["https://google.com"]
+						}
+					]
 				}
 			],
 			branches: [],
@@ -690,7 +762,6 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
-			issueKeys: ["TES-123"],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -706,7 +777,17 @@ describe("pull_request transform GraphQL", () => {
 			timestamp: updatedAt,
 			title,
 			url: "https://github.com/integrations/test/pull/51",
-			updateSequenceId: 12345678
+			updateSequenceId: 12345678,
+			associations: [
+				{
+					associationType: "issueKeys",
+					values: ["TES-123"]
+				},
+				{
+					associationType: "links",
+					values: ""
+				}
+			]
 		});
 	});
 
@@ -714,6 +795,7 @@ describe("pull_request transform GraphQL", () => {
 		const title = "[TES-123] Branch payload Test";
 		const payload = { ...createPullPayload(title) };
 		payload.reviews = createReview("");
+		payload.body = "some description with link https://google.com blablabla";
 
 		const { updatedAt } = payload;
 
@@ -731,7 +813,6 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
-			issueKeys: ["TES-123"],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -748,7 +829,17 @@ describe("pull_request transform GraphQL", () => {
 			timestamp: updatedAt,
 			title,
 			url: "https://github.com/integrations/test/pull/51",
-			updateSequenceId: 12345678
+			updateSequenceId: 12345678,
+			associations: [
+				{
+					associationType: "issueKeys",
+					values: ["TES-123"]
+				},
+				{
+					associationType: "links",
+					values: ["https://google.com"]
+				}
+			]
 		});
 	});
 
@@ -756,6 +847,7 @@ describe("pull_request transform GraphQL", () => {
 		const title = "[TES-123] Branch payload Test";
 		const payload = { ...createPullPayload(title) };
 		payload.reviews = createReview("CHANGES_REQUESTED");
+		payload.body = "some description with link https://google.com blablabla";
 
 		const { updatedAt } = payload;
 
@@ -773,7 +865,6 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
-			issueKeys: ["TES-123"],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -790,7 +881,17 @@ describe("pull_request transform GraphQL", () => {
 			timestamp: updatedAt,
 			title,
 			url: "https://github.com/integrations/test/pull/51",
-			updateSequenceId: 12345678
+			updateSequenceId: 12345678,
+			associations: [
+				{
+					associationType: "issueKeys",
+					values: ["TES-123"]
+				},
+				{
+					associationType: "links",
+					values: ["https://google.com"]
+				}
+			]
 		});
 	});
 
@@ -812,7 +913,6 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
-			issueKeys: ["TES-123"],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -829,7 +929,17 @@ describe("pull_request transform GraphQL", () => {
 			timestamp: updatedAt,
 			title,
 			url: "https://github.com/integrations/test/pull/51",
-			updateSequenceId: 12345678
+			updateSequenceId: 12345678,
+			associations: [
+				{
+					associationType: "issueKeys",
+					values: ["TES-123"]
+				},
+				{
+					associationType: "links",
+					values: ""
+				}
+			]
 		});
 	});
 
