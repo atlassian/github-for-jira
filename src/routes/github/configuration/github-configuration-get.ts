@@ -141,7 +141,7 @@ const removeFailedConnectionsFromDb = async (logger: Logger, installations: Inst
 				});
 			} catch (err: unknown) {
 				const deleteSubscriptionError = `Failed to delete subscription: ${errorStringFromUnknown(err)}`;
-				logger.error(deleteSubscriptionError);
+				logger.error({ err }, deleteSubscriptionError);
 			}
 		}));
 };

@@ -1,10 +1,11 @@
 import { transformBranches } from "./transforms/branch";
-import { Repository, Branch } from "models/subscription";
+import { Repository } from "models/subscription";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
 import Logger from "bunyan";
 import { BackfillMessagePayload } from "~/src/sqs/sqs.types";
 import { createHashWithSharedSecret } from "utils/encryption";
 import { shouldSendAll } from "config/feature-flags";
+import { Branch } from "~/src/github/client/github-client.types";
 
 // TODO: better typings
 export const getBranchTask = async (

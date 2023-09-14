@@ -3,7 +3,8 @@ import { getJiraAuthor, jiraIssueKeyParser, limitCommitMessage } from "utils/jir
 import { isEmpty, union } from "lodash";
 import { generateCreatePullRequestUrl } from "../../transforms/util/pull-request-link-generator";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
-import { Repository, Branch } from "models/subscription";
+import { Repository } from "models/subscription";
+import { Branch } from "~/src/github/client/github-client.types";
 
 // TODO: better typing in file
 /**
