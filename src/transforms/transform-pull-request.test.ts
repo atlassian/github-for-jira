@@ -545,6 +545,7 @@ describe("pull_request transform REST", () => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		fixture.user = null;
+		fixture.body = "some description with one link https://google.com and then another link https://www.atlassian.com/";
 
 		githubUserTokenNock(gitHubInstallationId);
 		githubNock.get(`/users/${reviewersListHasUser[0].user.login}`)
@@ -596,7 +597,7 @@ describe("pull_request transform REST", () => {
 						},
 						{
 							associationType: "links",
-							values: ["https://google.com"]
+							values: ["https://google.com", "https://www.atlassian.com/"]
 						}
 					]
 				}

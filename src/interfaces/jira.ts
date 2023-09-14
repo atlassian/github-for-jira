@@ -28,7 +28,7 @@ interface JiraPullRequest {
 	destinationBranch: string;
 	displayId: string;
 	id: number;
-	issueKeys: string[];
+	issueKeys?: string[];
 	lastUpdate: string;
 	reviewers: JiraReview[];
 	sourceBranch: string;
@@ -38,6 +38,7 @@ interface JiraPullRequest {
 	title: string;
 	url: string;
 	updateSequenceId: number;
+	associations: JiraAssociation[];
 }
 
 export interface JiraBuild {
@@ -161,7 +162,7 @@ export interface JiraPullRequestBulkSubmitData extends BulkSubmitRepositoryInfo 
 }
 
 export interface JiraAssociation {
-	associationType: "issueKeys" | "issueIdOrKeys" | "commit" | "serviceIdOrKeys";
+	associationType: "issueKeys" | "issueIdOrKeys" | "commit" | "serviceIdOrKeys" | "links";
 	values: string[] | JiraCommitKey[];
 }
 
