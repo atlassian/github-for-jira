@@ -52,6 +52,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -118,6 +119,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -213,6 +215,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					sourceBranch: "use-the-force",
 					sourceBranchUrl:
@@ -293,6 +296,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -362,6 +366,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -429,6 +434,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -501,6 +507,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -572,6 +579,7 @@ describe("pull_request transform REST", () => {
 					destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 					displayId: "#51",
 					id: 51,
+					issueKeys: [],
 					lastUpdate: updated_at,
 					reviewers: [
 						{
@@ -763,6 +771,7 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
+			issueKeys: [],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -814,6 +823,7 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
+			issueKeys: [],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
@@ -866,6 +876,7 @@ describe("pull_request transform GraphQL", () => {
 			destinationBranchUrl: "https://github.com/integrations/test/tree/devel",
 			displayId: "#51",
 			id: 51,
+			issueKeys: [],
 			lastUpdate: updatedAt,
 			reviewers: [
 				{
