@@ -116,7 +116,7 @@ export const GithubWebhookMiddleware = (
 			fields: {
 				webhookId,
 				gitHubInstallationId,
-				gitHubServerAppIdPk: gitHubAppId?.toString() || "undefined",
+				gitHubServerAppIdPk: gitHubAppId?.toString() ?? "undefined",
 				event: webhookEvent,
 				webhookReceived,
 				repoName,

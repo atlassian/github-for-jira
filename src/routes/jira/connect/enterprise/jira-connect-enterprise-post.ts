@@ -69,7 +69,7 @@ export const JiraConnectEnterprisePost = async (
 	// inside the handler
 	const TIMEOUT_PERIOD_MS = parseInt(process.env.JIRA_CONNECT_ENTERPRISE_POST_TIMEOUT_MSEC || "30000");
 
-	const gheServerURL: string = req.body.gheServerURL?.trim() || "undefined";
+	const gheServerURL: string = req.body.gheServerURL?.trim() ?? "undefined";
 	const apiKeyHeaderName: string | undefined = req.body.apiKeyHeaderName?.trim();
 	const apiKeyValue: string | undefined = req.body.apiKeyValue?.trim();
 
@@ -146,7 +146,7 @@ export const JiraConnectEnterprisePost = async (
 					reason: "Received OK, but the host is not GitHub Enterprise server"
 				}]
 			});
-			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, response?.status?.toString() || "undefined");
+			sendErrorMetricAndAnalytics(jiraHost, ErrorResponseCode.CANNOT_CONNECT, response?.status?.toString() ?? "undefined");
 			return;
 		}
 
