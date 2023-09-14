@@ -6,7 +6,7 @@ import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import { JiraReview } from "interfaces/jira";
+import {JiraPullRequestBulkSubmitData, JiraReview} from "interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
 import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
@@ -111,7 +111,7 @@ export const transformPullRequestRest = async (
 	reviews: Array<{ state?: string, user: Octokit.PullsUpdateResponseRequestedReviewersItem }>,
 	log: Logger,
 	jiraHost: string
-) =>
+) : Promise<JiraPullRequestBulkSubmitData | undefined> =>
 {
 	const {
 		id,
@@ -171,7 +171,7 @@ export const transformPullRequestRest = async (
 				},
 				{
 					associationType: "links",
-					values: extractLinksFromPrDescription(pullRequest.body)
+					values: extractLinksFromPrDescription(pullRequest.body) || []
 				}]
 			}
 		]

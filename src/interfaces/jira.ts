@@ -26,6 +26,7 @@ interface JiraPullRequest {
 	author: JiraAuthor;
 	commentCount: number;
 	destinationBranch: string;
+	destinationBranchUrl?: string;
 	displayId: string;
 	id: number;
 	issueKeys?: string[];
