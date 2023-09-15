@@ -95,6 +95,7 @@
 		"minimatch": "^5.0.1",
 		"moment": "^2.29.4",
 		"moo": "^0.5.0",
+		"node-oom-heapdump": "^3.0.3",
 		"node_extra_ca_certs_mozilla_bundle": "^1.0.5",
 		"optional-require": "^1.1.8",
 		"pg": "^8.7.3",

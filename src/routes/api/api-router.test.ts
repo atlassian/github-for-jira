@@ -362,6 +362,19 @@ describe("API Router", () => {
 
 		});
 
+		describe("kill-worker-with-oom", () => {
+			it("should return 200", () => {
+				return supertest(app)
+					.post("/api/kill-worker-with-oom?arraySize=4000000000&nIter=4000000000")
+					.set("host", "127.0.0.1")
+					.set("X-Slauth-Mechanism", "slauthtoken")
+					.expect(200)
+					.then((response) => {
+						expect(response.body).toEqual({ data: 14 });
+					});
+			});
+		});
+
 		describe("Ping", () => {
 
 			it("Should fail on missing url", () => {

@@ -25,6 +25,7 @@ type Transforms<T, K extends keyof T = keyof T> = {
 const transforms: Transforms<EnvVars> = {
 	MICROS_ENV: (value?: string) => EnvironmentEnum[value || EnvironmentEnum.development],
 	MICROS_GROUP: (value?: string) => value || "",
+	MICROS_INSTANCE_ID: (value?: string) => value || "",
 	NODE_ENV: () => nodeEnv,
 	PROXY: () => {
 		const proxyHost = process.env.EXTERNAL_ONLY_PROXY_HOST;
@@ -95,6 +96,7 @@ export interface EnvVars {
 	MICROS_ENVTYPE: MicrosEnvTypeEnum | undefined,
 	MICROS_SERVICE_VERSION?: string;
 	MICROS_GROUP: string;
+	MICROS_INSTANCE_ID: string;
 	SQS_BACKFILL_QUEUE_URL: string;
 	SQS_BACKFILL_QUEUE_REGION: string;
 	SQS_PUSH_QUEUE_URL: string;

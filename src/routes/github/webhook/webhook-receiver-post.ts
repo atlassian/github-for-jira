@@ -38,6 +38,7 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		...extraLoggerInfo(payload, parentLogger)
 	});
 	logger.info("Webhook received");
+
 	let webhookContext;
 	try {
 		const { webhookSecrets, gitHubServerApp } = await getWebhookSecrets(uuid);

@@ -98,6 +98,28 @@ ApiRouter.post("/recrypt", ApiRecryptPost);
 
 ApiRouter.post("/ping", ApiPingPost);
 
+/**
+ * Query params to kill it for sure:
+ * 		arraySize=4000000000&nIter=4000000000
+ *
+ */
+const KillWorkerWithOom = (req: Request, res: Response) => {
+	const nIter = parseInt(req.query?.nIter?.toString() || "0");
+	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
+	const allocate = (iter) => {
+		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
+
+		if (iter + 1 < nIter) {
+			const anotherOne = allocate(iter + 1);
+			return arr.concat(anotherOne);
+		}
+		return arr;
+	};
+	res.json({ data: allocate(0).length });
+};
+
+ApiRouter.post("/kill-worker-with-oom", KillWorkerWithOom);
+
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
 	"/deleteInstallation/:installationId/:jiraHost/github-app-id/:gitHubAppId",
