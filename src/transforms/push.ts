@@ -217,5 +217,6 @@ export const processPush = async (github: GitHubInstallationClient, payload: Pus
 		log.info("Push has succeeded");
 	} catch (err) {
 		log.warn({ err }, "Push has failed");
+		throw err;
 	}
 };
