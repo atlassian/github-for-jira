@@ -80,19 +80,19 @@ const start = async () => {
 	}, 1000);
 };
 
-if (isNodeProd()) {
-	// Production clustering (one process per core)
-	throng({
-		master: troubleshootUnresponsiveWorkers_master,
-		worker: async () => {
-			await start();
-			troubleshootUnresponsiveWorkers_worker();
-		},
-		lifetime: Infinity
-	});
-} else {
-	// Dev/test single process, don't need clustering
-	// eslint-disable-next-line @typescript-eslint/no-floating-promises
-	start();
-}
+// if (isNodeProd()) {
+// Production clustering (one process per core)
+throng({
+	master: troubleshootUnresponsiveWorkers_master,
+	worker: async () => {
+		await start();
+		troubleshootUnresponsiveWorkers_worker();
+	},
+	lifetime: Infinity
+});
+// } else {
+// 	// Dev/test single process, don't need clustering
+// 	// eslint-disable-next-line @typescript-eslint/no-floating-promises
+// 	start();
+// }
 
