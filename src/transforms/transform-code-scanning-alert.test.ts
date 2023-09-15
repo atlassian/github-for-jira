@@ -412,6 +412,7 @@ describe("code_scanning_alert transform", () => {
 const setupNock = (gitHubInstallationId, codeScanningPayload) => {
 	githubUserTokenNock(gitHubInstallationId);
 	githubNock
+		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 		.get(`/repos/${codeScanningPayload.repository.owner.login}/${codeScanningPayload.repository.name}/code-scanning/alerts/${codeScanningPayload.alert.number}/instances`)
 		.reply(200);
 };
