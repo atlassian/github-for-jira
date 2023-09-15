@@ -87,8 +87,8 @@ const transformCodeScanningAlert = async (
 
 	const gitHubClientConfig = await getGitHubClientConfigFromAppId(gitHubAppId, jiraHost);
 
-	const handleUnmappedState = (state) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
-	const handleUnmappedSeverity = (severity) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity}`);
+	const handleUnmappedState = (state: string) => logger.info(`Received unmapped state from code_scanning_alert sync: ${state}`);
+	const handleUnmappedSeverity = (severity: string | null) => logger.info(`Received unmapped severity from code_scanning_alert sync: ${severity ?? "Missing Severity"}`);
 
 	const vulnerabilities = await Promise.all(alerts.map(async (alert) => {
 		const { data: alertInstances } = await gitHubClient.getCodeScanningAlertInstances(repository.owner.login, repository.name, alert.number);

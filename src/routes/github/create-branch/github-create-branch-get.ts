@@ -11,10 +11,8 @@ import { RepoSyncState } from "models/reposyncstate";
 const MAX_REPOS_RETURNED = 20;
 
 export const GithubCreateBranchGet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-	const {
-		gitHubAppConfig,
-		jiraHost
-	} = res.locals;
+	const gitHubAppConfig = res.locals.gitHubAppConfig;
+	const jiraHost: string = res.locals.jiraHost;
 	const logger = getLogger("github-create-branch-get", {
 		fields: {
 			...req.log?.fields,

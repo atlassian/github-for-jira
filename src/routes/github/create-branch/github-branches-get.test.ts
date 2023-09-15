@@ -144,7 +144,7 @@ describe("Getting GitHub Branches securely avoiding XSS attacks", () => {
 });
 
 const defaultBranchForXSS = "DEFAULTTESTXSS\"><script>alert('🔫🔫🔫🔫🔫🔫')</script>";
-const setupNockForXSSBranches = (gitHubInstallationId) => {
+const setupNockForXSSBranches = (gitHubInstallationId: number) => {
 
 	githubNock
 		.post(`/app/installations/${gitHubInstallationId}/access_tokens`)

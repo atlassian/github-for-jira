@@ -17,8 +17,8 @@ const logger = getLogger("DBMigration");
  *
  * @returns The common param in req.body `targetScript` to migrate up or down
  */
-export const getTargetScript = (req: Request) => {
-	const targetScript = (req.body || {}).targetScript;
+export const getTargetScript = (req: Request) : string => {
+	const targetScript: string | null = (req.body || {}).targetScript;
 	if (!targetScript) {
 		throw {
 			statusCode: 400,
@@ -71,7 +71,7 @@ export const runDbMigration = async (targetScript: string, ops: DBMigrationType)
 		default:
 			throw {
 				statusCode: 500,
-				message: `Fail to execute db migration type ${ops}`
+				message: `Fail to execute db migration type`
 			};
 	}
 	const { stdout, stderr } = await exec(cmd, {

@@ -151,6 +151,28 @@ export type CodeScanningAlertResponseItem = {
 	most_recent_instance: CodeScanningAlertResponseItemMostRecentInstance;
 };
 
+export interface Branch {
+	associatedPullRequests: {
+		nodes: {
+			title: string;
+		}[];
+	};
+	name: string;
+	target: {
+		author: {
+			avatarUrl: string;
+			email: string;
+			name: string;
+		};
+		authoredDate: string;
+		changedFiles: number;
+		oid: string;
+		message: string;
+		url: string;
+		history: any;
+	};
+}
+
 type CodeScanningAlertResponseItemRule = {
 	name: string;
 	description: string;
