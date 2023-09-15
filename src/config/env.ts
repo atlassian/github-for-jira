@@ -15,7 +15,7 @@ const nodeEnv: EnvironmentEnum = EnvironmentEnum[getNodeEnv()];
 	`.env.${nodeEnv}`,
 	".env"
 ].map((env) => expand(config({
-	path: path.resolve(__dirname, "../..", env)
+	path: path.resolve(process.cwd(), env)
 })));
 
 type Transforms<T, K extends keyof T = keyof T> = {

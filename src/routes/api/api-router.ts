@@ -24,6 +24,8 @@ import { ApiResetSubscriptionFailedTasks } from "./api-reset-subscription-failed
 import { RecoverCommitsFromDatePost } from "./commits-from-date/recover-commits-from-dates";
 import { ResetFailedAndPendingDeploymentCursorPost } from "./commits-from-date/reset-failed-and-pending-deployment-cursors";
 import { ApiRecryptPost } from "./api-recrypt-post";
+import { CoredumpGenerator } from "services/coredump-generator";
+
 export const ApiRouter = Router();
 
 // TODO: remove this duplication because of the horrible way to do logs through requests
@@ -97,6 +99,34 @@ ApiRouter.post("/hash", ApiHashPost);
 ApiRouter.post("/recrypt", ApiRecryptPost);
 
 ApiRouter.post("/ping", ApiPingPost);
+
+/**
+ * Query params to kill it for sure:
+ * 		arraySize=4000000000&nIter=4000000000
+ *
+ */
+const KillWorkerWithOom = (req: Request, res: Response) => {
+	const nIter = parseInt(req.query?.nIter?.toString() || "0");
+	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
+	const generator = new CoredumpGenerator({
+		logger: req.log,
+		memLeftPctThesholdBeforeGc: 20,
+		memLeftPctThesholdAfterGc: 25
+	});
+	const allocate = (iter: number) => {
+		generator.maybeGenerateCoreDump();
+		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
+
+		if (iter + 1 < nIter) {
+			const anotherOne = allocate(iter + 1);
+			return arr.concat(anotherOne);
+		}
+		return arr;
+	};
+	res.json({ data: allocate(0).length });
+};
+
+ApiRouter.post("/kill-worker-with-oom", KillWorkerWithOom);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(
