@@ -23,6 +23,7 @@ import { dependabotAlertWebhookHandler } from "~/src/github/dependabot-alert";
 import { extraLoggerInfo } from "./webhook-logging-extra";
 import { secretScanningAlertWebhookHandler } from "~/src/github/secret-scanning-alert";
 import { installationWebhookHandler } from "~/src/github/installation";
+import { errorStringFromUnknown } from "~/src/util/error-string-from-unknown";
 
 export const WebhookReceiverPost = async (request: Request, response: Response): Promise<void> => {
 	const eventName = request.headers["x-github-event"] as string;
@@ -87,8 +88,8 @@ export const WebhookReceiverPost = async (request: Request, response: Response):
 		webhookContext.log.info("Webhook was successfully processed");
 		response.sendStatus(204);
 
-	} catch (err) {
-		(webhookContext?.log || logger).error({ err }, "Something went wrong, returning 400: " + err.message);
+	} catch (err: unknown) {
+		(webhookContext?.log || logger).error({ err }, `Something went wrong, returning 400: ${errorStringFromUnknown(err)}`);
 		response.sendStatus(400);
 	}
 };

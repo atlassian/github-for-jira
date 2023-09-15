@@ -32,7 +32,7 @@ const mapFile = (
 		unchanged: JiraCommitFileChangeTypeEnum.UNKNOWN
 	};
 
-	const fallbackUrl = `https://github.com/${repoOwner}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
+	const fallbackUrl = `https://github.com/${repoOwner ?? "undefined"}/${repoName}/blob/${commitHash}/${githubFile.filename}`;
 
 	if (isEmpty(githubFile.filename)) {
 		return undefined;

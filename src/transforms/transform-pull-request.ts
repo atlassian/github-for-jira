@@ -96,7 +96,7 @@ export const extractIssueKeysFromPrRest = async (pullRequest: Octokit.PullsListR
 
 export const extractIssueKeysFromPr = (pullRequest: pullRequestNode) => {
 	const { title, headRef, body } = pullRequest;
-	return jiraIssueKeyParser(`${title}\n${headRef?.name}\n${body}`);
+	return jiraIssueKeyParser(`${title}\n${headRef?.name ?? ""}\n${body}`);
 };
 
 export const transformPullRequestRest = async (

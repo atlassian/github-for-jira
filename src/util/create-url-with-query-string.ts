@@ -13,7 +13,8 @@ export const createUrlWithQueryString = (req: Request, URL: string): string => {
 	const queryStrings = keys.reduce((_, current, index, array) => {
 		if (req.query[current]) {
 			queryString += index === 0 ? "?" : "";
-			queryString += current + "=" + req.query[current];
+			queryString += current + "=";
+			queryString += req.query[current];
 			queryString += index !== array.length - 1 ? "&" : "";
 		}
 		return queryString;

@@ -8,7 +8,7 @@ declare namespace jest {
 
 expect.extend({
 	toBeCalledWithDelaySec: async (received: jest.Mock<unknown>, expectedDelaySec: number) => {
-		const actual = received.mock?.calls[0][0].DelaySeconds;
+		const actual = received.mock?.calls[0][0].DelaySeconds as number;
 		const pass = actual == expectedDelaySec;
 		const message = () => `Expected parameter to have DelaySeconds = ${expectedDelaySec} ${pass ? "" : `but was ${actual}`}`;
 
