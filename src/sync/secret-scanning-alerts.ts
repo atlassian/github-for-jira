@@ -7,7 +7,7 @@ import { getGitHubClientConfigFromAppId } from "../util/get-github-client-config
 import { JiraVulnerabilityBulkSubmitData, JiraVulnerabilitySeverityEnum } from "../interfaces/jira";
 import { PageSizeAwareCounterCursor } from "./page-counter-cursor";
 import { SecretScanningAlertResponseItem, SortDirection } from "../github/client/github-client.types";
-import { transformGitHubStateToJiraStatus } from "../transforms/transform-secret-scanning-alert";
+import { getSecretScanningVulnDescription, transformGitHubStateToJiraStatus } from "../transforms/transform-secret-scanning-alert";
 
 export const getSecretScanningAlertTask = async (
 	parentLogger: Logger,
@@ -89,7 +89,7 @@ const transformSecretScanningAlert = async (
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubClientConfig.baseUrl),
 			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
-			description: "Secret scanning alert",
+			description: getSecretScanningVulnDescription(alert, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,

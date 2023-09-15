@@ -6,6 +6,7 @@ import { transformRepositoryId } from "~/src/transforms/transform-repository-id"
 import Logger from "bunyan";
 import { Repository } from "@octokit/webhooks-types";
 import { SecretScanningAlertResponseItem } from "../github/client/github-client.types";
+import { capitalize } from "lodash";
 
 export const transformSecretScanningAlert = async (
 	alert: SecretScanningAlertResponseItem,
@@ -22,7 +23,7 @@ export const transformSecretScanningAlert = async (
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, githubClientConfig.baseUrl),
 			displayName: alert.secret_type_display_name || `${alert.secret_type} secret exposed`,
-			description: "Secret scanning alert",
+			description: getSecretScanningVulnDescription(alert, logger),
 			url: alert.html_url,
 			type: "sast",
 			introducedDate: alert.created_at,
@@ -55,5 +56,14 @@ export const transformGitHubStateToJiraStatus = (state: string | undefined, logg
 		default:
 			logger.info(`Received unmapped state from secret_scanning_alert webhook: ${state}`);
 			return JiraVulnerabilityStatusEnum.UNKNOWN;
+	}
+};
+
+export const getSecretScanningVulnDescription = (alert: SecretScanningAlertResponseItem, logger: Logger) => {
+	try {
+		return `**Vulnerability:** Fix ${alert.secret_type_display_name}\n\n**State:** ${capitalize(alert.state)}\n\n**Secret type:** ${alert.secret_type}\n\nVisit the vulnerability’s [secret scanning alert page](${alert.html_url}) in GitHub to learn more about the potential active secret and remediation steps.`;
+	} catch (err) {
+		logger.warn({ err }, "Failed to construct vulnerability description");
+		return alert.secret_type_display_name;
 	}
 };

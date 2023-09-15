@@ -37,10 +37,11 @@ describe("transformSecretScanningAlert", () => {
 
 	it("should correctly map display name identifiers", async () => {
 		const result = await transformSecretScanningAlert(getSecretScanningAlert("open"), repository, jiraHost, undefined, logger);
+
 		expect(result.vulnerabilities).toEqual([
 			{
 				"containerId": "1",
-				"description": "Secret scanning alert",
+				"description": "**Vulnerability:** Fix GitHub Personal Access Token\n\n**State:** Open\n\n**Secret type:** personal_access_token\n\nVisit the vulnerability’s [secret scanning alert page](https://sample/123) in GitHub to learn more about the potential active secret and remediation steps.",
 				"displayName": "GitHub Personal Access Token",
 				"id": "s-1-123",
 				"identifiers": [{
