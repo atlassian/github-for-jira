@@ -122,6 +122,17 @@ describe("Push Webhook", () => {
 				await expect(pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload))).toResolve();
 			});
 
+			it("should throw an error when GitHub request fails", async () => {
+				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
+				githubNock
+					.get("/repos/test-repo-owner/test-repo-name/commits/commit-no-username")
+					.reply(403, {});
+
+				await expect(async () => {
+					await pushQueueMessageHandler(await createMessageProcessingContext(pushNoUsername.payload));
+				}).rejects.toThrow("Error executing Axios Request: Request failed with status code 403");
+			});
+
 			it("should only send 10 files if push contains more than 10 files changed", async () => {
 				githubUserTokenNock(DatabaseStateCreator.GITHUB_INSTALLATION_ID);
 				githubNock
