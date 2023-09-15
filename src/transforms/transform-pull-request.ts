@@ -6,7 +6,7 @@ import { getJiraAuthor, jiraIssueKeyParser } from "utils/jira-utils";
 import { getGithubUser } from "services/github/user";
 import { generateCreatePullRequestUrl } from "./util/pull-request-link-generator";
 import { GitHubInstallationClient } from "../github/client/github-installation-client";
-import {JiraPullRequestBulkSubmitData, JiraReview} from "interfaces/jira";
+import { JiraPullRequestBulkSubmitData, JiraReview } from "interfaces/jira";
 import { transformRepositoryDevInfoBulk } from "~/src/transforms/transform-repository";
 import { pullRequestNode } from "~/src/github/client/github-queries";
 import { booleanFlag, BooleanFlags, shouldSendAll } from "config/feature-flags";
@@ -254,7 +254,7 @@ export const transformPullRequest = (repository: Repository, _jiraHost: string, 
 		},
 		{
 			associationType: "links",
-			values: pullRequest.body ? extractLinksFromPrDescription(pullRequest.body) : ""
+			values: pullRequest.body ? extractLinksFromPrDescription(pullRequest.body) : []
 		}]
 	};
 };
