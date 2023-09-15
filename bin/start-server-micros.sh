@@ -2,6 +2,8 @@
 
 cd "$(dirname "$0")/.."
 
+export MICROS_GROUP="WebServer"
+
 case "$MICROS_GROUP" in
   "WebServer")
     COMMAND="start:main:production"
@@ -17,5 +19,5 @@ esac
 
 export DATABASE_URL=postgres://$PG_DATABASE_ROLE:$PG_DATABASE_PASSWORD@$PG_DATABASE_BOUNCER:$PG_DATABASE_PORT/$PG_DATABASE_SCHEMA
 export TS_NODE_BASEURL="./build"
-
+pwd
 npm run "${COMMAND}"
