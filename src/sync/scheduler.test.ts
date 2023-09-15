@@ -22,8 +22,8 @@ describe("scheduler", () => {
 			delete newRepoSyncState["commitStatus"];
 			delete newRepoSyncState["branchStatus"];
 			newRepoSyncState["repoId"] = repoSyncState.repoId + newRepoStateNo;
-			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo;
-			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo;
+			newRepoSyncState["repoName"] = repoSyncState.repoName + newRepoStateNo.toString();
+			newRepoSyncState["repoFullName"] = repoSyncState.repoFullName + newRepoStateNo.toString();
 			newRepoSyncStatesData.push(newRepoSyncState);
 		}
 		await RepoSyncState.bulkCreate(newRepoSyncStatesData);
@@ -158,9 +158,9 @@ describe("scheduler", () => {
 		const tasks = await getNextTasks(subscription, [], getLogger("test"));
 		const repoIdsAndTaskType = new Set<string>();
 		tasks.otherTasks.forEach(task => {
-			repoIdsAndTaskType.add("" + task.repositoryId + task.task);
+			repoIdsAndTaskType.add("" + task.repositoryId.toString() + task.task);
 		});
-		repoIdsAndTaskType.add("" + tasks.mainTask!.repositoryId + tasks.mainTask!.task);
+		repoIdsAndTaskType.add("" + tasks.mainTask!.repositoryId.toString() + tasks.mainTask!.task);
 		expect(tasks.otherTasks.length + 1).toEqual(repoIdsAndTaskType.size);
 	});
 
@@ -172,7 +172,7 @@ describe("scheduler", () => {
 		for (let i = 0; i < 50; i++) {
 			const tasks = await getNextTasks(subscription, [], getLogger("test"));
 			tasks.otherTasks.forEach(task => {
-				otherTasksAndTaskTypes.add("" + task.repositoryId);
+				otherTasksAndTaskTypes.add("" + task.repositoryId.toString());
 			});
 		}
 		// The pool size should be 100:

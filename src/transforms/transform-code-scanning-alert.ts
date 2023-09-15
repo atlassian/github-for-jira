@@ -91,9 +91,9 @@ export const transformCodeScanningAlert = async (context: WebhookContext, github
 	return {
 		remoteLinks: [{
 			schemaVersion: "1.0",
-			id: `${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
+			id: `${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number as number}`,
 			updateSequenceNumber: Date.now(),
-			displayName: `Alert #${alert.number}`,
+			displayName: `Alert #${alert.number as number}`,
 			description: alert.rule.description.substring(0, MAX_STRING_LENGTH) || undefined,
 			url: alert.html_url,
 			type: "security",
@@ -124,15 +124,15 @@ export const transformCodeScanningAlertToJiraSecurity = async (context: WebhookC
 	};
 	const gitHubInstallationClient = await createInstallationClient(githubInstallationId, jiraHost, metrics, context.log, context.gitHubAppConfig?.gitHubAppId);
 
-	const handleUnmappedState = (state) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
-	const handleUnmappedSeverity = (severity) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity}`);
+	const handleUnmappedState = (state: string) => context.log.info(`Received unmapped state from code_scanning_alert webhook: ${state}`);
+	const handleUnmappedSeverity = (severity: string | null) => context.log.info(`Received unmapped severity from code_scanning_alert webhook: ${severity ?? "Missing Severity"}`);
 
 	const identifiers = transformRuleTagsToIdentifiers(alert.rule.tags);
 
 	return {
 		vulnerabilities: [{
 			schemaVersion: "1.0",
-			id: `c-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number}`,
+			id: `c-${transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl)}-${alert.number as number}`,
 			updateSequenceNumber: Date.now(),
 			containerId: transformRepositoryId(repository.id, gitHubInstallationClient.baseUrl),
 			displayName: alert.rule.name,

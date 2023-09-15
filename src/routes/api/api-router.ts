@@ -130,7 +130,7 @@ const cryptorDebugEndpoint = async (_req: Request, resp: Response) => {
 	try {
 		let data = "";
 		for (let i = 0; i < 10; i++) {
-			data = data + "-" + Math.floor((Math.random() * 10));
+			data = `${data}-${Math.floor((Math.random() * 10))}`;
 		}
 
 		const encrypted = await EncryptionClient.encrypt(EncryptionSecretKeyEnum.GITHUB_SERVER_APP, data);

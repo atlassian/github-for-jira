@@ -21,7 +21,7 @@ export const registerHandlebarsHelpers = () => {
 
 	hbs.registerHelper(
 		"ifAllReposSynced",
-		(numberOfSyncedRepos, totalNumberOfRepos) =>
+		(numberOfSyncedRepos: number, totalNumberOfRepos: number): any =>
 			numberOfSyncedRepos === totalNumberOfRepos
 				? totalNumberOfRepos
 				: `${numberOfSyncedRepos} / ${totalNumberOfRepos}`
@@ -33,7 +33,7 @@ export const registerHandlebarsHelpers = () => {
 
 	hbs.registerHelper("isNotConnected", (syncStatus) => syncStatus == null);
 
-	hbs.registerHelper("setSubscriptionUrl", (uuid, installationId) => uuid
+	hbs.registerHelper("setSubscriptionUrl", (uuid: string, installationId: number) => uuid
 		? `/github/${uuid}/subscriptions/${installationId}`
 		: `/github/subscriptions/${installationId}`
 	);

@@ -33,7 +33,7 @@ Object {
   "failedConnections": Array [
     Object {
       "deleted": false,
-      "error": "Error executing Axios Request: Request failed with status code 500. More details in logs",
+      "error": "Error: Error executing Axios Request: Request failed with status code 500. More details in logs",
       "id": 1234,
     },
   ],

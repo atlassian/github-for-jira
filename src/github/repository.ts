@@ -55,7 +55,7 @@ export const deleteRepositoryWebhookHandler = async (context: WebhookContext, ji
 		return;
 	}
 
-	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id}`);
+	context.log.info(`Deleting dev info for repo ${context.payload.repository?.id as number}`);
 
 	const { id: repositoryId } = context.payload.repository;
 
