@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "removeComments": true,
-    "outDir": null
+    "outDir": "./build"
   },
   "include": [
     "src/**/*"
