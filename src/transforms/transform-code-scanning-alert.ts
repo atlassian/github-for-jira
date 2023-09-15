@@ -165,6 +165,7 @@ export const getCodeScanningVulnDescription = (
 	try {
 		const branches = getBranches(alertInstances);
 		const identifiersText = getIdentifiersText(identifiers);
+		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 		return `**Vulnerability:** ${alert.rule.description}\n\n**Impact:** The vulnerability in ${alert.tool.name} impacts ${toSentence(branches)}.\n\n**Severity:** ${capitalize(alert.rule?.security_severity_level)}\n\nGitHub uses  [Common Vulnerability Scoring System (CVSS)](https://www.atlassian.com/trust/security/security-severity-levels) data to calculate security severity.\n\n**Status:** ${capitalize(alert.state)}\n\n**Weaknesses:** ${identifiersText}\n\nVisit the vulnerability’s [code scanning alert page](${alert.html_url}) in GitHub for a recommendation and relevant example.`;
 	} catch (err) {
 		logger.warn({ err }, "Failed to construct vulnerability description");
