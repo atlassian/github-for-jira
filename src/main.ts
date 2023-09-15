@@ -3,7 +3,7 @@ import "config/env"; // Important to be before other dependencies
 import { getLogger } from "config/logger";
 import throng from "throng";
 import { initializeSentry } from "config/sentry";
-import { isNodeProd } from "utils/is-node-env";
+// import { isNodeProd } from "utils/is-node-env";
 import { getFrontendApp } from "./app";
 import createLag from "event-loop-lag";
 import { statsd } from "config/statsd";
