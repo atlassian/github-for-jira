@@ -28,7 +28,7 @@ import { getLogger } from "config/logger";
 
 export interface GitHubClientApiKeyConfig {
 	headerName: string;
-	apiKeyGenerator: () => Promise<string | undefined>;
+	apiKeyGenerator: () => Promise<string>;
 }
 
 export interface GitHubConfig {
@@ -142,7 +142,7 @@ export class GitHubClient {
 				if (!config.headers) {
 					config.headers = {};
 				}
-				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator() ?? "undefined";
+				config.headers[apiKeyConfig.headerName] = await apiKeyConfig.apiKeyGenerator();
 				return config;
 			});
 		}

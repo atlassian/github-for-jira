@@ -124,7 +124,7 @@ export const JiraConnectEnterprisePost = async (
 
 	try {
 		const client = await createAnonymousClient(gheServerURL, jiraHost, { trigger: "jira-connect-enterprise-post" }, req.log,
-			apiKeyHeaderName
+			apiKeyHeaderName && apiKeyValue !== undefined
 				? {
 					headerName: apiKeyHeaderName,
 					apiKeyGenerator: () => Promise.resolve(apiKeyValue)
