@@ -180,7 +180,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 			files.forEach((file) => {
 				const inProgressFile =  file + ".inprogress";
 				const key = `${file}_${new Date().toISOString().split(":").join("_").split(".").join("_")}`;
-				fs.renameSync(file, file + ".inprogress");
+				fs.renameSync(file, inProgressFile);
 				logger.info(`start uploading ${inProgressFile} with key ${key}`);
 
 				const s3 = new AWS.S3();
@@ -188,7 +188,7 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 				const uploadParams = {
 					Bucket: process.env.S3_COREDUMPS_BUCKET_NAME!,
 					Key: `${process.env.S3_COREDUMPS_BUCKET_PATH}/${key}`,
-					Body: fs.createReadStream("file"),
+					Body: fs.createReadStream(inProgressFile),
 					Region: process.env.S3_COREDUMPS_BUCKET_REGION!
 				};
 
