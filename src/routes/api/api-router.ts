@@ -105,16 +105,19 @@ ApiRouter.post("/ping", ApiPingPost);
  * 		arraySize=4000000000&nIter=4000000000
  *
  */
-const KillWorkerWithOom = (req: Request, res: Response) => {
+const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const nIter = parseInt(req.query?.nIter?.toString() || "0");
 	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
+	const pctThreshold = parseInt(req.query?.arraySize?.toString() || "50");
 	const generator = new CoredumpGenerator({
 		logger: req.log,
-		memLeftPctThesholdBeforeGc: 20,
-		memLeftPctThesholdAfterGc: 25
+		memLeftPctThesholdBeforeGc: pctThreshold,
+		memLeftPctThesholdAfterGc: pctThreshold
 	});
 	const allocate = (iter: number) => {
-		generator.maybeGenerateCoreDump();
+		if (generator.maybeGenerateCoreDump()) {
+			return [];
+		}
 		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
 
 		if (iter + 1 < nIter) {
@@ -126,7 +129,7 @@ const KillWorkerWithOom = (req: Request, res: Response) => {
 	res.json({ data: allocate(0).length });
 };
 
-ApiRouter.post("/kill-worker-with-oom", KillWorkerWithOom);
+ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);
 
 // TODO: remove once move to DELETE /:installationId/:jiraHost
 ApiRouter.delete(

@@ -28,7 +28,7 @@ describe("coredump-generator", () => {
 			heap_size_limit: 100,
 			total_available_size: 90
 		});
-		generator.maybeGenerateCoreDump();
+		expect(generator.maybeGenerateCoreDump()).toBeFalsy();
 		expect(dumpme).not.toBeCalled();
 		expect(fs.renameSync).not.toBeCalled();
 	});
@@ -42,7 +42,7 @@ describe("coredump-generator", () => {
 			heap_size_limit: 100,
 			total_available_size: 30
 		});
-		generator.maybeGenerateCoreDump();
+		expect(generator.maybeGenerateCoreDump()).toBeFalsy();
 		expect(v8.getHeapStatistics).toBeCalledTimes(2);
 		expect(dumpme).not.toBeCalled();
 		expect(fs.renameSync).not.toBeCalled();
@@ -53,7 +53,7 @@ describe("coredump-generator", () => {
 			heap_size_limit: 100,
 			total_available_size: 5
 		});
-		generator.maybeGenerateCoreDump();
+		expect(generator.maybeGenerateCoreDump()).toBeTruthy();
 		expect(dumpme).toBeCalled();
 		expect(fs.renameSync).toBeCalledWith(`${process.cwd()}/core.${process.pid.toString()}`, `${process.cwd()}/core.${process.pid.toString()}.outofmem`);
 	});
@@ -63,8 +63,8 @@ describe("coredump-generator", () => {
 			heap_size_limit: 100,
 			total_available_size: 5
 		});
-		generator.maybeGenerateCoreDump();
-		generator.maybeGenerateCoreDump();
+		expect(generator.maybeGenerateCoreDump()).toBeTruthy();
+		expect(generator.maybeGenerateCoreDump()).toBeFalsy();
 		expect(dumpme).toBeCalledTimes(1);
 	});
 });

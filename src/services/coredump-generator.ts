@@ -29,9 +29,9 @@ export class CoredumpGenerator {
 		return (totalAvailableSize / heapSizeLimit) * 100;
 	}
 
-	public maybeGenerateCoreDump() {
+	public maybeGenerateCoreDump(): boolean {
 		if (this.coreDumpGenerated) {
-			return;
+			return false;
 		}
 
 		const freeHeapPctBeforeGc = this.getFreeHeapPercentage();
@@ -56,10 +56,12 @@ export class CoredumpGenerator {
 
 				fs.renameSync(process.cwd() + "/core." + process.pid.toString(), process.cwd() + "/core." + process.pid.toString() + ".outofmem");
 				this.coreDumpGenerated = true;
+				return true;
 
 			} else {
 				this.config.logger.info(`Free heap size after GC is ${freeHeapPctAfterGc}, which more than ${this.config.memLeftPctThesholdAfterGc}, do nothing`);
 			}
 		}
+		return false;
 	}
 }
