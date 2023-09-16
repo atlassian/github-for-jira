@@ -6,6 +6,7 @@ import { logInfoSampled } from "utils/log-sampled";
 import glob from "glob";
 import fs from "fs";
 import AWS from "aws-sdk";
+import { v4 as UUID } from "uuid";
 // import nodeOomHeapdump from "node-oom-heapdump";
 // import * as fs from "fs";
 // import * as path from "path";
@@ -178,10 +179,12 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 				return;
 			}
 			files.forEach((file) => {
+				const uploadId = UUID();
+				const uploadLogger = logger.child({ uploadId });
 				const inProgressFile =  file + ".inprogress";
 				const key = `${file}_${new Date().toISOString().split(":").join("_").split(".").join("_")}`;
 				fs.renameSync(file, inProgressFile);
-				logger.info(`start uploading ${inProgressFile} with key ${key}`);
+				uploadLogger.info(`start uploading ${inProgressFile} with key ${key}`);
 
 				const s3 = new AWS.S3();
 
@@ -192,13 +195,13 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 					Region: process.env.S3_COREDUMPS_BUCKET_REGION!
 				};
 
-				logger.info({ uploadParams }, "about to upload coredump");
+				uploadLogger.info({ uploadParams }, "about to upload coredump");
 
 				s3.upload(uploadParams, (err, data) => {
 					if (err) {
-						logger.error({ err }, `cannot upload ${inProgressFile}`);
+						uploadLogger.error({ err }, `cannot upload ${inProgressFile}`);
 					} else {
-						logger.info({ data }, `file was successfully uploaded`);
+						uploadLogger.info({ data }, `file was successfully uploaded`);
 					}
 					fs.unlinkSync(inProgressFile);
 				});
