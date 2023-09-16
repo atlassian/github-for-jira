@@ -108,7 +108,7 @@ ApiRouter.post("/ping", ApiPingPost);
 const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const nIter = parseInt(req.query?.nIter?.toString() || "0");
 	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
-	const pctThreshold = parseInt(req.query?.arraySize?.toString() || "50");
+	const pctThreshold = parseInt(req.query?.pctThreshold?.toString() || "50");
 	const generator = new CoredumpGenerator({
 		logger: req.log,
 		memLeftPctThesholdBeforeGc: pctThreshold,

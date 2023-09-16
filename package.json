@@ -18,7 +18,7 @@
 		"start:main": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9229 --respawn --transpile-only -- src/main.ts",
 		"start:worker": "tsnd -r tsconfig-paths/register --watch=.env*,db/config.json --inspect=0.0.0.0:9230 --respawn --transpile-only -- src/worker.ts",
 		"start:production": "run-p start:main:production start:worker:production",
-		"start:main:production": "TS_NODE_BASEURL=\"build\" node --expose-gc --max-old-space-size=250 -r tsconfig-paths/register build/src/main",
+		"start:main:production": "TS_NODE_BASEURL=\"build\" node --expose-gc -r tsconfig-paths/register build/src/main",
 		"start:worker:production": "TS_NODE_BASEURL=\"build\" node --expose-gc -r tsconfig-paths/register build/src/worker",
 		"setup": "dotenv -- ts-node -r tsconfig-paths/register prestart.ts",
 		"build": "tsc -p ./tsconfig.json && yarn spa:build",
