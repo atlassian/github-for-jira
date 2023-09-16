@@ -101,9 +101,8 @@ ApiRouter.post("/recrypt", ApiRecryptPost);
 ApiRouter.post("/ping", ApiPingPost);
 
 /**
- * Query params to kill it for sure:
- * 		arraySize=4000000000&nIter=4000000000
- *
+ * Workable parameters for ddev (250Mb heap):
+ * 	?arraySize=20000&nIter=400&pctThreshold=75
  */
 const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const nIter = parseInt(req.query?.nIter?.toString() || "0");
@@ -114,8 +113,10 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 		memLeftPctThesholdBeforeGc: pctThreshold,
 		memLeftPctThesholdAfterGc: pctThreshold
 	});
+	let coreDumpGenerated = false;
 	const allocate = (iter: number) => {
 		if (generator.maybeGenerateCoreDump()) {
+			coreDumpGenerated = true;
 			return [];
 		}
 		const arr = new Array(arraySize).fill(`${Math.random()} This is a test string. ${Math.random()}`);
@@ -126,7 +127,7 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 		}
 		return arr;
 	};
-	res.json({ data: allocate(0).length });
+	res.json({ allocated: allocate(0).length, coreDumpGenerated });
 };
 
 ApiRouter.post("/fill-mem-and-generate-coredump", FillMemAndGenerateCoreDump);

@@ -158,6 +158,9 @@ resources:
         # Name of the RDS resource from above
         resource: rds
 
+  - type: s3
+    name: "coredumps"
+
   - name: deployment-history-cache
     type: dynamo-db
     attributes: &table-attributes

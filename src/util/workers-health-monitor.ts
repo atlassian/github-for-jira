@@ -3,6 +3,9 @@ import Logger from "bunyan";
 import cluster from "cluster";
 import { exec } from "child_process";
 import { logInfoSampled } from "utils/log-sampled";
+import glob from "glob";
+import fs from "fs";
+import AWS from "aws-sdk";
 // import nodeOomHeapdump from "node-oom-heapdump";
 // import * as fs from "fs";
 // import * as path from "path";
@@ -168,10 +171,46 @@ export const startMonitorOnMaster = (parentLogger: Logger, config: {
 		}
 	};
 
+	const maybeUploadCoredumps = () => {
+		glob("/tmp/core*.ready", (err: Error, files: Array<string>) => {
+			if (err) {
+				logger.error("Cannot get files using glob");
+				return;
+			}
+			files.forEach((file) => {
+				const inProgressFile =  file + ".inprogress";
+				const key = `${file}_${new Date().toISOString().split(":").join("_").split(".").join("_")}`;
+				fs.renameSync(file, file + ".inprogress");
+				logger.info(`start uploading ${inProgressFile} with key ${key}`);
+
+				const s3 = new AWS.S3();
+
+				const uploadParams = {
+					Bucket: process.env.S3_COREDUMPS_BUCKET_NAME!,
+					Key: `${process.env.S3_COREDUMPS_BUCKET_PATH}/${key}`,
+					Body: fs.createReadStream("file"),
+					Region: process.env.S3_COREDUMPS_BUCKET_REGION!
+				};
+
+				logger.info({ uploadParams }, "about to upload coredump");
+
+				s3.upload(uploadParams, (err, data) => {
+					if (err) {
+						logger.error({ err }, `cannot upload ${inProgressFile}`);
+					} else {
+						logger.info({ data }, `file was successfully uploaded`);
+					}
+					fs.unlinkSync(inProgressFile);
+				});
+			});
+		});
+	};
+
 	return setInterval(() => {
 		registerNewWorkers(); // must be called periodically to make sure we pick up new/respawned workers
 		maybeSetupWorkersReadyAt();
 		maybeRemoveDeadWorkers();
 		maybeSendShutdownToAllWorkers();
+		maybeUploadCoredumps();
 	}, config.pollIntervalMsecs);
 };

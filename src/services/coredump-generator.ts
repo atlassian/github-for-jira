@@ -50,7 +50,7 @@ export class CoredumpGenerator {
 			if (freeHeapPctAfterGc < this.config.memLeftPctThesholdAfterGc) {
 
 				this.config.logger.info(`Free heap size after GC is ${freeHeapPctAfterGc}, which is less than ${this.config.memLeftPctThesholdAfterGc}, creating coredump`);
-				dumpme(undefined, `/tmp/core.${process.pid.toString()}`);
+				dumpme(undefined, `/tmp/core`); // pid will be updated by dumpme()
 				const timestampAfterCoreDump = Date.now();
 				this.config.logger.info(`Core dump was created, took ${timestampAfterCoreDump - timestampAfterGc}`);
 
