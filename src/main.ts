@@ -26,6 +26,8 @@ const CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC = 7000;
 const CONF_MASTER_WORKERS_POLL_INTERVAL_MSEC = Math.floor(
 	CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC * (2 + Math.random()) // different from KEEP_ALIVE to keep logs separated
 );
+const CONF_WORKER_DUMP_INTERVAL_MSEC = 10000;
+const CONF_WORKER_DUMP_LOW_HEAP_PCT = 25;
 
 const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout[]) => {
 	process.on("uncaughtExceptionMonitor", (err, origin) => {
@@ -52,7 +54,11 @@ const handleErrorsGracefully = (logger: Logger, intervalsToClear: NodeJS.Timeout
 
 const troubleshootUnresponsiveWorkers_worker = () => {
 	handleErrorsGracefully(unresponsiveWorkersLogger,
-		[startMonitorOnWorker(unresponsiveWorkersLogger, CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC)]
+		startMonitorOnWorker(unresponsiveWorkersLogger, {
+			iAmAliveInervalMsec: CONF_WORKER_KEEP_ALIVE_PERIOD_MSEC,
+			dumpIntervalMsec: CONF_WORKER_DUMP_INTERVAL_MSEC,
+			lowHeapAvailPct: CONF_WORKER_DUMP_LOW_HEAP_PCT
+		})
 	);
 };
 

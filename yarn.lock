@@ -1839,7 +1839,7 @@ binary-extensions@^2.0.0:
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.2.0.tgz#75f502eeaf9ffde42fc98829645be4ea76bd9e2d"
   integrity sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
 
-bindings@^1.3.0:
+bindings@^1.3.0, bindings@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/bindings/-/bindings-1.5.0.tgz#10353c9e945334bc0511a6d90b38fbc7c9c504df"
   integrity sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==
@@ -2727,6 +2727,14 @@ dtrace-provider@~0.8:
   resolved "https://registry.yarnpkg.com/dtrace-provider/-/dtrace-provider-0.8.8.tgz#2996d5490c37e1347be263b423ed7b297fb0d97e"
   integrity sha512-b7Z7cNtHPhH9EJhNNbbeqTcXB8LGFFZhq1PGgEvpeHlzd36bhbdTWoE/Ba/YguqpBSlAPKnARWhVlhunCMwfxg==
   dependencies:
+    nan "^2.14.0"
+
+dumpme@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/dumpme/-/dumpme-1.0.3.tgz#0a33bfa7c6256ea35845d3e718ed658c12707c74"
+  integrity sha512-OKsH4VcOq5GopNwEo6Qb6KwtPFZ3mo7m1nutcQcN4VXhGxlZ/3xhfy2kKmx5cpqdN59uqIKWMXA+mw0y8PgKQg==
+  dependencies:
+    bindings "^1.5.0"
     nan "^2.14.0"
 
 dynamic-dedupe@^0.3.0:
