@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import { css } from "@emotion/react";
 import { Wrapper } from "../../common/Wrapper";
 import { token, useThemeObserver } from "@atlaskit/tokens";

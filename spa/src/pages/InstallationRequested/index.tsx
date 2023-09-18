@@ -1,3 +1,5 @@
+/** @jsxImportSource @emotion/react */
+
 import LoggedinInfo from "../../common/LoggedinInfo";
 import { Wrapper } from "../../common/Wrapper";
 import Step from "../../components/Step";

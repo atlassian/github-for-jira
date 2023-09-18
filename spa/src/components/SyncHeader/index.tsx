@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import { token, useThemeObserver } from "@atlaskit/tokens";
 import { css } from "@emotion/react";
 

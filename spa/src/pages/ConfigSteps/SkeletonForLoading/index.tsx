@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import Step from "../../../components/Step";
 import Skeleton from "@atlaskit/skeleton";
 import { css } from "@emotion/react";

@@ -1,3 +1,5 @@
+/** @jsxImportSource @emotion/react */
+
 import Button, { LoadingButton } from "@atlaskit/button";
 import { GitHubInstallationType } from "../../../../../src/rest-interfaces";
 import styled from "@emotion/styled";

@@ -1,3 +1,4 @@
+/** @jsxImportSource @emotion/react */
 import { useNavigate } from "react-router-dom";
 import Button from "@atlaskit/button";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
@@ -26,7 +27,6 @@ const listContainerStyle = css`
 `;
 const listItemStyle = css`
 	display: flex;
-	margin-bottom: ${token("space.075")};
 `;
 const logoStyle = css`
 	margin: ${token("space.025")} ${token("space.075")} 0 0;
