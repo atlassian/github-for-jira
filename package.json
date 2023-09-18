@@ -63,6 +63,7 @@
 		"@octokit/auth-app": "^2.6.0",
 		"@octokit/graphql-schema": "^10.73.0",
 		"@sentry/node": "^6.8.0",
+		"@types/event-loop-lag": "^1.0.30",
 		"@types/safe-json-stringify": "^1.1.2",
 		"atlassian-jwt": "^2.0.0",
 		"aws-sdk": "^2.1015.0",

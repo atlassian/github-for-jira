@@ -512,7 +512,7 @@ describe("Push Webhook", () => {
 
 			beforeEach(async () => {
 				mockSystemTime(12345678);
-				sqsQueues.push.start();
+				await sqsQueues.push.start();
 			});
 
 			afterEach(async () => {

@@ -31,7 +31,7 @@ describe("Branch Webhook", () => {
 			jiraHost,
 			jiraClientKey: clientKey
 		});
-		sqsQueues.branch.start();
+		await sqsQueues.branch.start();
 	});
 
 	afterEach(async () => {

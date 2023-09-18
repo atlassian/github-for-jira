@@ -67,7 +67,7 @@ describe("Discovery Queue Test - GitHub Client", () => {
 			gitHubAppId: gitHubServerApp.id
 		});
 
-		await sqsQueues.backfill.start();
+		sqsQueues.backfill.start();
 
 		when(numberFlag).calledWith(
 			NumberFlags.PREEMPTIVE_RATE_LIMIT_THRESHOLD,
