@@ -51,7 +51,6 @@ const validateScriptAgainstDB = async (targetScript: string) => {
 	if (result.length > 0) {
 		throw {
 			statusCode: 400,
-			// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 			message: `"targetScript: ${targetScript} already present/migrated in db "SequelizeMeta" table. DB query result ${safeJsonStringify(result)}`
 		};
 	}

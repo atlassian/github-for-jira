@@ -61,7 +61,6 @@ export const ResetFailedAndPendingDeploymentCursorPost = async (req: Request, re
 
 	} catch (e) {
 		log.error({ err: e }, "Error happen when reseting deployment cursor");
-		// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 		res.end(`Error happen when reseting deployment cursor: ${safeJsonStringify(e)}`);
 	}
 
