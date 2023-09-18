@@ -103,7 +103,6 @@
 			"src/models/**",
 			"src/rest/**",
 			"src/routes/**",
-			"src/services/**",
 			"src/sqs/**",
 			"src/sync/**",
 			"src/transforms/**",

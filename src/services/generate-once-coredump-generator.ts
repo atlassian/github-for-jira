@@ -34,6 +34,7 @@ export class GenerateOnceCoredumpGenerator {
 			this.config.logger.info(`Triggering coredump...`);
 
 			const tsBeforeDump = Date.now();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			dumpme(undefined, `/tmp/dump_core`); // pid will be added by dumpme() as a suffix
 			const tsAfterDump = Date.now();
 
