@@ -122,6 +122,9 @@ const FillMemAndGenerateCoreDump = (req: Request, res: Response) => {
 	const arraySize = parseInt(req.query?.arraySize?.toString() || "10");
 	const pctThreshold = parseInt(req.query?.pctThreshold?.toString() || "50");
 	const heap = !!req.query?.heap;
+	req.log.info({
+		nIter, arraySize, pctThreshold, heap
+	}, "FillMemAndGenerateCoreDump triggered");
 
 	const generator: GenerateOncePerNodeHeadumpGenerator | GenerateOnceCoredumpGenerator =
 		heap ? new GenerateOncePerNodeHeadumpGenerator({

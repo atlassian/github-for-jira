@@ -42,10 +42,8 @@ export class GenerateOnceCoredumpGenerator {
 			fs.renameSync(`/tmp/dump_core.${process.pid.toString()}`, `/tmp/dump_core.${process.pid.toString()}.ready`);
 			this.coreDumpGenerated = true;
 			return true;
-
-		} else {
-			this.config.logger.info(`Plenty of free heap, skip`);
 		}
+
 		return false;
 	}
 }
