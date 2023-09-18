@@ -1,0 +1,17 @@
+
+
+# Ignore everything:
+**/.github
+**/.husky
+**/.localstack
+**/bin
+**/db
+**/deploy
+**/docs
+**/etc
+**/github-server
+**/src
+**/static
+**/test
+**/views
+

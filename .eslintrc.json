@@ -19,7 +19,8 @@
 		"plugin:import/recommended",
 		"plugin:import/typescript",
 		"plugin:@typescript-eslint/eslint-recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking"
+		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:prettier/recommended"
 	],
 	"settings": {
 		"import/parsers": {

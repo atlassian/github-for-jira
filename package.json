@@ -143,24 +143,27 @@
 		"chai": "^4.3.6",
 		"dotenv-cli": "^6.0.0",
 		"eslint": "~8.9.0",
-		"eslint-config-prettier": "~8.3.0",
+		"eslint-config-prettier": "^9.0.0",
 		"eslint-import-resolver-typescript": "^2.5.0",
 		"eslint-plugin-import": "^2.25.4",
 		"eslint-plugin-jest": "~26.1.1",
 		"eslint-plugin-jsdoc": "^37.9.3",
 		"eslint-plugin-no-only-tests": "^2.6.0",
 		"eslint-plugin-node": "^11.1.0",
+		"eslint-plugin-prettier": "^5.0.0",
 		"eslint-plugin-promise": "^6.0.0",
 		"husky": "^6.0.0",
 		"jest": "^27.5.1",
 		"jest-diff": "^27.5.1",
 		"jest-when": "^3.5.1",
 		"keygrip": "^1.0.2",
+		"lint-staged": "13.0.3",
 		"nock": "^13.2.4",
 		"nodemon": "^2.0.18",
 		"npm-run-all": "^4.1.5",
 		"playwright": "^1.33.0",
-		"prettier": "~2.5.1",
+		"prettier": "^3.0.3",
+		"prettier-eslint": "^15.0.1",
 		"rimraf": "~3.0.2",
 		"smee-client": "^1.2.2",
 		"sqlite3": "^5.1.5",
@@ -176,5 +179,11 @@
 	"volta": {
 		"node": "14.21.1",
 		"yarn": "1.22.18"
+	},
+	"lint-staged": {
+		"**/*.{js,jsx,ts,tsx}": [
+			"prettier --write",
+			"git add"
+		]
 	}
 }
