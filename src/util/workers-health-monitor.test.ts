@@ -8,6 +8,7 @@ import AWS from "aws-sdk";
 import { waitUntil } from "test/utils/wait-until";
 import { booleanFlag, BooleanFlags } from "config/feature-flags";
 import { when } from "jest-when";
+import oom from "node-oom-heapdump";
 jest.mock("cluster", () => {
 	const workers = {
 		1: { send: jest.fn(), on: jest.fn(), process: { pid: 1 } },
@@ -22,6 +23,7 @@ jest.mock("utils/healthcheck-stopper");
 jest.mock("services/generate-once-coredump-generator");
 jest.mock("services/generate-once-per-node-headump-generator");
 jest.mock("aws-sdk");
+jest.mock("node-oom-heapdump");
 jest.mock("config/feature-flags");
 
 describe("workers-health-monitor", () => {
@@ -88,6 +90,28 @@ describe("workers-health-monitor", () => {
 			expect(stopHealthcheck).toBeCalled();
 		});
 
+		it("should charge heapdump generation on OOM", async () => {
+			intervals.push(...startMonitorOnWorker(logger, {
+				iAmAliveInervalMsec: 10,
+				dumpIntervalMsec: 1000,
+				lowHeapAvailPct: 10
+			}));
+			(process.on as jest.Mock).mock.calls[0][1]("heapdump_on_crash");
+
+			expect(oom).toBeCalledWith({
+				path: expect.stringMatching(/^\/tmp\/dump_heap_oom_[0-9]+$/)
+			});
+		});
+
+		it("should not charge heapdump generation on OOM by default", async () => {
+			intervals.push(...startMonitorOnWorker(logger, {
+				iAmAliveInervalMsec: 10,
+				dumpIntervalMsec: 1000,
+				lowHeapAvailPct: 10
+			}));
+			expect(oom).not.toBeCalled();
+		});
+
 		it("should generate core and heap dumps", async () => {
 			intervals.push(...startMonitorOnWorker(logger, {
 				iAmAliveInervalMsec: 1000,
@@ -144,8 +168,45 @@ describe("workers-health-monitor", () => {
 			try {
 				jest.advanceTimersByTime(50);
 
-				expect(cluster.workers[1]!.send).not.toBeCalled();
-				expect(cluster.workers[2]!.send).not.toBeCalled();
+				try {
+					expect(cluster.workers[1]!.send).not.toBeCalled();
+				} catch (err) {
+					// eslint-disable-next-line jest/no-conditional-expect
+					expect(cluster.workers[1]!.send).toBeCalledWith("heapdump_on_crash");
+				}
+				try {
+					expect(cluster.workers[2]!.send).not.toBeCalled();
+				} catch (err) {
+					// eslint-disable-next-line jest/no-conditional-expect
+					expect(cluster.workers[2]!.send).toBeCalledWith("heapdump_on_crash");
+				}
+
+			} finally {
+				clearInterval(workerSendingImAliveToMasterInterval);
+			}
+		});
+
+		it("charges one worker to trigger headump on oom", async () => {
+			intervals.push(startMonitorOnMaster(logger, {
+				pollIntervalMsecs: 10,
+				workerStartupTimeMsecs: 20,
+				workerUnresponsiveThresholdMsecs: 40,
+				numberOfWorkersThreshold: 1
+			}));
+
+			const workerSendingImAliveToMasterInterval = setInterval(() => {
+				if ((cluster.workers[1]!.on as jest.Mock).mock.calls.length > 0) {
+					(cluster.workers[1]!.on as jest.Mock).mock.calls[0][1]();
+					(cluster.workers[2]!.on as jest.Mock).mock.calls[0][1]();
+				}
+			}, 9);
+
+			try {
+				jest.advanceTimersByTime(50);
+
+				const sendMsgs = (cluster.workers[1]!.send as jest.Mock).mock.calls.map(call => call[0]).join(",") +
+					(cluster.workers[2]!.send as jest.Mock).mock.calls.map(call => call[0]).join(",");
+				expect(sendMsgs).toStrictEqual("heapdump_on_crash");
 
 			} finally {
 				clearInterval(workerSendingImAliveToMasterInterval);
@@ -168,6 +229,8 @@ describe("workers-health-monitor", () => {
 
 		const DUMP_READY_FILEPATH = "/tmp/dump_core.123.ready";
 		const DUMP_UPLOAD_FILEPATH = "/tmp/dump_core.123.ready.uploadinprogress";
+		const DUMP_OOM_FILEPATH = "/tmp/dump_heap_oom_1.heapsnapshot";
+		const DUMP_OOM_READY_FILEPATH = "/tmp/dump_heap_oom_1.heapsnapshot.ready";
 
 		const deleteFileSafe = (path: string) => {
 			try {
@@ -181,11 +244,30 @@ describe("workers-health-monitor", () => {
 		beforeEach(() => {
 			deleteFileSafe(DUMP_READY_FILEPATH);
 			deleteFileSafe(DUMP_UPLOAD_FILEPATH);
+			deleteFileSafe(DUMP_OOM_FILEPATH);
+			deleteFileSafe(DUMP_OOM_READY_FILEPATH);
 		});
 
 		afterEach(() => {
 			deleteFileSafe(DUMP_READY_FILEPATH);
 			deleteFileSafe(DUMP_UPLOAD_FILEPATH);
+			deleteFileSafe(DUMP_OOM_FILEPATH);
+			deleteFileSafe(DUMP_OOM_READY_FILEPATH);
+		});
+
+		it("should prepare oom heapdump for uploading on worker crash", async () => {
+			intervals.push(startMonitorOnMaster(logger, {
+				pollIntervalMsecs: 10,
+				workerStartupTimeMsecs: 20,
+				workerUnresponsiveThresholdMsecs: 40,
+				numberOfWorkersThreshold: 1
+			}));
+
+			jest.advanceTimersByTime(50);
+
+			fs.writeFileSync(DUMP_OOM_FILEPATH, "foo");
+			(cluster.workers[1]!.on as jest.Mock).mock.calls.find(call => call[0] === "exit")![1]();
+			expect(fs.existsSync(DUMP_OOM_READY_FILEPATH)).toBeTruthy();
 		});
 
 		it("should upload dumps to S3", async () => {
