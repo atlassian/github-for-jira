@@ -159,7 +159,15 @@ resources:
         resource: rds
 
   - type: s3
-    name: "dumps"
+    name: "dumps" # for heapdumps, temp resource, will be deleted after the investigation is over
+    attributes:
+      dataType:
+        - UGC/Label                # name of GitHub org / Jira site
+        - PII/IndirectConfidential # name of GitHub org
+        - UGC/Configuration        # data about the installation of the GitHub app into Jira sites
+        - Security/Secret          # shared Connect secret
+        - UGC/PrimaryIdentifier    # references to GitHub entities (commits, pull requests, etc.) and Jira issues
+        - UGC/Primary              # GitHub entities (non-persistent) like commits, pull requests, etc.
 
   - name: deployment-history-cache
     type: dynamo-db
